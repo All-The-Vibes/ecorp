@@ -1,0 +1,613 @@
+{
+  "chronology": "Actual observed regression sequence; original private failure logs and prior packets are preserved. Failure logs that may contain fencing values are represented only by counts and hashes.",
+  "runs": [
+    {
+      "receipt": "issue219-execution-stalered-r1.json",
+      "receipt_sha256": "3a61223bdf7fbbb21a66dee4ac3d460b87af8943ad99cb7f7f27cfc0a517ef66",
+      "explanation": "14 pass / 7 genuine stale-intent assertion failures.",
+      "status": "failed",
+      "source_head": "e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a",
+      "started_at_utc": "2026-09-28T13:02:29.8505225Z",
+      "finished_at_utc": "2026-09-28T13:06:20.2513455Z",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "sha256": "4142b2227a785e6f22fcdc2f45387aa0633b0712aed378cc8faed5c5fe18ce24",
+          "counts": {
+            "passed": 0,
+            "summaries": 0,
+            "ignored": 0,
+            "failed": 0
+          }
+        },
+        {
+          "name": "human-publication-request-and-execution",
+          "exit_code": 101,
+          "sha256": "9c3739f3b22032f50af685759c554d0caccd22704cabecf7abf35be35d073e17",
+          "counts": {
+            "passed": 14,
+            "summaries": 1,
+            "ignored": 0,
+            "failed": 7
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-execution-stalegreen-r1.json",
+      "receipt_sha256": "18a51fd03d9e71a2eaea56002aaafcea0064ad2d24476c9facab45b608730eed",
+      "explanation": "21 pass after durable stale-intent rejection; lock regression not yet added.",
+      "status": "passed",
+      "source_head": "e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a",
+      "started_at_utc": "2026-09-28T13:11:56.4279974Z",
+      "finished_at_utc": "2026-09-28T13:15:37.7635328Z",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "sha256": "010c27cf9969b7de36555c43a9e5bd53767d9d5abf870b306577e852daaf0a90",
+          "counts": {
+            "ignored": 0,
+            "failed": 0,
+            "passed": 0,
+            "summaries": 0
+          }
+        },
+        {
+          "name": "human-publication-request-and-execution",
+          "exit_code": 0,
+          "sha256": "e6788adb13f5a26684f8332b464d1657d789a75764fa99854c3af638485facbc",
+          "counts": {
+            "ignored": 0,
+            "failed": 0,
+            "passed": 21,
+            "summaries": 1
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-execution-lockred-r1.json",
+      "receipt_sha256": "28eeb43bbd2d0389ee1d2a3c654e9f29a7b8dddd1872c780e853fd056026c57a",
+      "explanation": "0 pass / 1 genuine PostgreSQL deadlock failure under native/direct claim contention.",
+      "status": "failed",
+      "source_head": "e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a",
+      "started_at_utc": "2026-09-28T13:17:26.3397148Z",
+      "finished_at_utc": "2026-09-28T13:19:38.7149193Z",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "sha256": "45f01078da7cc6bce36d83e74c7d48c88f1348f0d4d62f9f82cec8bd15823e58",
+          "counts": {
+            "summaries": 0,
+            "failed": 0,
+            "passed": 0,
+            "ignored": 0
+          }
+        },
+        {
+          "name": "human-publication-request-and-execution",
+          "exit_code": 101,
+          "sha256": "46a6fa3db09f2b39c8894c6f3726911d4fc84840e58465629a0b1e501927f25c",
+          "counts": {
+            "summaries": 1,
+            "failed": 1,
+            "passed": 0,
+            "ignored": 0
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-execution-stalegreen-r2.json",
+      "receipt_sha256": "16eb46b67c786b98b4197d281de7b54a2538b3c61dcaf4ba46d8794160bb5fb8",
+      "explanation": "22 pass after aligning native and worker credential/publication lock ordering.",
+      "status": "passed",
+      "source_head": "e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a",
+      "started_at_utc": "2026-09-28T13:21:45.8204885Z",
+      "finished_at_utc": "2026-09-28T13:24:54.2482877Z",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "sha256": "857a6d829dc893e8acb295fa3d760cc772531ea75462b7b0d05e8489fe0b95ff",
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "summaries": 0,
+            "ignored": 0
+          }
+        },
+        {
+          "name": "human-publication-request-and-execution",
+          "exit_code": 0,
+          "sha256": "56874b0ab9f043fcc2af92c901b4c0e9614fb9180b8edc7518b1bd7e5e011403",
+          "counts": {
+            "passed": 22,
+            "failed": 0,
+            "summaries": 1,
+            "ignored": 0
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-handler-stale-r1.json",
+      "receipt_sha256": "4733a9edc991ca398d0df8db38156f4f84d546a04a82ab544d80b40160183213",
+      "explanation": "4 pass / 1 invalid synthetic fixture prerequisite failure; not an implementation red.",
+      "status": "failed",
+      "source_head": "e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a",
+      "started_at_utc": "2026-09-28T13:27:18.7505809Z",
+      "finished_at_utc": "2026-09-28T13:29:20.1968884Z",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "sha256": "7f392765288c2435e4ca6cc1c4305656d6ee173d0871db03f5c6c820bba82078",
+          "counts": {
+            "summaries": 0,
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        {
+          "name": "human-publication-http-authorization",
+          "exit_code": 101,
+          "sha256": "cee3c85e2f73398f53907b719f7b65e49698c787bdad24fb8562541faa605857",
+          "counts": {
+            "summaries": 2,
+            "passed": 4,
+            "failed": 1,
+            "ignored": 0
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-handler-stale-r2.json",
+      "receipt_sha256": "4a06a64dd419f4cd595f7b27309ccf705c76e8d58da898d41d852a31a4058070",
+      "explanation": "6 pass / 1 genuine withdrawn-verification preview denial failure.",
+      "status": "failed",
+      "source_head": "e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a",
+      "started_at_utc": "2026-09-28T13:38:07.2616266Z",
+      "finished_at_utc": "2026-09-28T13:39:28.9821489Z",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "sha256": "99b604fc53f97fbaa66c21fd0d7c8ed25a9d74e6c9477a543349c3cfef376af3",
+          "counts": {
+            "failed": 0,
+            "passed": 0,
+            "ignored": 0,
+            "summaries": 0
+          }
+        },
+        {
+          "name": "human-publication-http-authorization",
+          "exit_code": 101,
+          "sha256": "88a5ac4e58b00af385ac5f59f5a2435fd2bb42846ac5c19164ef60ffc15610d0",
+          "counts": {
+            "failed": 1,
+            "passed": 6,
+            "ignored": 0,
+            "summaries": 2
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-handler-stale-r3.json",
+      "receipt_sha256": "a1f516350accc3ede0b656df38fc1c234714fd7722e7d1a7074dfedc7d053214",
+      "explanation": "7 pass after typed verification denial preserves HTTP authorization semantics; before the final lint correction.",
+      "status": "passed",
+      "source_head": "e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a",
+      "started_at_utc": "2026-09-28T13:42:00.4841196Z",
+      "finished_at_utc": "2026-09-28T13:44:01.5989821Z",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "sha256": "dcfdf8118c1764e3f969b22037854f8037282e8edee36cb56796cd2a738a2ec1",
+          "counts": {
+            "passed": 0,
+            "summaries": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        {
+          "name": "human-publication-http-authorization",
+          "exit_code": 0,
+          "sha256": "f06ff1723cd5d8820d993ba91964cabe2fee9bf6915cfa640701d73e5d91f6fb",
+          "counts": {
+            "passed": 7,
+            "summaries": 2,
+            "failed": 0,
+            "ignored": 0
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-execution-stalegreen-r3.json",
+      "receipt_sha256": "ba26566d8c7f6d79bb20f9ec65205e16dbf9a34fa462c1fba67710aa734290f9",
+      "explanation": "22 pass on the earlier pre-lint-correction source; subsequent canonical r3 failed Clippy.",
+      "status": "passed",
+      "source_head": "e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a",
+      "started_at_utc": "2026-09-28T13:45:30.8024935Z",
+      "finished_at_utc": "2026-09-28T13:49:58.1553194Z",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "sha256": "da2a4463d9af1b1542f137470540f25c68ac1451291c86796355a05c1597dc0e",
+          "counts": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 0,
+            "summaries": 0
+          }
+        },
+        {
+          "name": "human-publication-request-and-execution",
+          "exit_code": 0,
+          "sha256": "b6a669c957c86481f5b91afd63deb5bd199cae68050d6a2d4c6dbfabb43b55c5",
+          "counts": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 22,
+            "summaries": 1
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-watcher-green3.json",
+      "receipt_sha256": "e4fc4a9b8e166c270bf76d41681877daf8f29de2ebbbfffe68f5218f28ea59e4",
+      "explanation": "7 pass on the earlier routing and claim-before-context source; before the final lint correction.",
+      "status": "passed",
+      "head": "e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a",
+      "started_at_utc": "2026-09-28T13:26:20.9752439Z",
+      "finished_at_utc": "2026-09-28T13:26:46.2910832Z",
+      "checks": [
+        {
+          "name": "watcher",
+          "exit_code": 0,
+          "sha256": "24c5739038425153754f0811f3e80f90f5f99343e36eb317e6e27797df4c588f",
+          "counts": {
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0,
+            "summaries": 1
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-execution-stalegreen-r4.json",
+      "receipt_sha256": "727bcdc6e12114340df8789a2579b06c24c38c74ae1514a4d1e6fc200d944eb2",
+      "explanation": "22 pass after the short-circuiting Clippy correction on the final tested source.",
+      "status": "passed",
+      "source_head": "e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a",
+      "started_at_utc": "2026-09-28T14:48:27.0188890Z",
+      "finished_at_utc": "2026-09-28T14:51:47.4072117Z",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "sha256": "c6e556817f1ea0d52ac6a5b59efd689d19196d3c9c9b3b6d7e34665fd7e248c4",
+          "counts": {
+            "failed": 0,
+            "passed": 0,
+            "summaries": 0,
+            "ignored": 0
+          }
+        },
+        {
+          "name": "human-publication-request-and-execution",
+          "exit_code": 0,
+          "sha256": "10002991233c4362f1c3258f05a732b3c90eb4bec18e3f90590ea34b2042f9f1",
+          "counts": {
+            "failed": 0,
+            "passed": 22,
+            "summaries": 1,
+            "ignored": 0
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-handler-stale-r4.json",
+      "receipt_sha256": "d6bc4d55ec972088f2adc1a17c75f113c59a25c9ef5121389fdc461c414f6b3b",
+      "explanation": "7 pass after the short-circuiting Clippy correction on the final tested source.",
+      "status": "passed",
+      "source_head": "e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a",
+      "started_at_utc": "2026-09-28T14:51:59.6959832Z",
+      "finished_at_utc": "2026-09-28T14:53:06.2524446Z",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "sha256": "90754bb6797fe70d127a0516b05a7636ee10c9defea725374a3a45c47f4c77f6",
+          "counts": {
+            "summaries": 0,
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        {
+          "name": "human-publication-http-authorization",
+          "exit_code": 0,
+          "sha256": "f8fb3d17f1ff6547492de61de52dec99fa121dcfd196a12d4965c4465b3f100f",
+          "counts": {
+            "summaries": 2,
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-watcher-green4.json",
+      "receipt_sha256": "cf619366dc47c143907c082203e64c7d91fbf52f86f2a7391a98defbb00ff5fc",
+      "explanation": "7 pass after the short-circuiting Clippy correction on the final tested source.",
+      "status": "passed",
+      "head": "e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a",
+      "started_at_utc": "2026-09-28T14:51:47.9958168Z",
+      "finished_at_utc": "2026-09-28T14:51:56.7234393Z",
+      "checks": [
+        {
+          "name": "watcher",
+          "exit_code": 0,
+          "sha256": "c11025b8674ac4b0a3327ec0eed7612e992a28178bd8700fc5a47f7a643b4ec5",
+          "counts": {
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0,
+            "summaries": 1
+          }
+        }
+      ]
+    }
+  ],
+  "canonical_validation": [
+    {
+      "receipt": "issue219-canonical-r3.json",
+      "receipt_sha256": "41a238100b1a2782ec00f63e99b9d61c78ee60c530896c8a76ab4510b0a23e18",
+      "invocation": "issue219-canonical-invocation-r3.json",
+      "invocation_sha256": "401df0705f076e55af17763a87dec9534380a938bcd751749fdfd4c1fc5261b8",
+      "tested_head": "e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a",
+      "tested_tree": "6dfd465d2b4053f40bf35167f011160d41294c19",
+      "status": "failed",
+      "explanation": "Canonical r3 reached and passed full Node discovery and formatting, then failed the genuine Clippy collapsible_if check. Rust workspace tests and web build/lint were not reached.",
+      "report_sha256": "243cd4cde7eb1371e550245dee291a2f80f306ff01020573310d5e6b7d0575ec",
+      "checks": [
+        {
+          "name": "migrations",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": null,
+            "node": null
+          }
+        },
+        {
+          "name": "state-audit-compatibility",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": null,
+            "node": null
+          }
+        },
+        {
+          "name": "state-audit-evm",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": {
+              "passed": 1,
+              "failed": 0,
+              "ignored": 0,
+              "summaries": 1
+            },
+            "node": null
+          }
+        },
+        {
+          "name": "docs",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": null,
+            "node": null
+          }
+        },
+        {
+          "name": "repository-docs",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": null,
+            "node": null
+          }
+        },
+        {
+          "name": "node-tests",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": null,
+            "node": {
+              "tests": 3126,
+              "passed": 3061,
+              "failed": 0,
+              "skipped": 65,
+              "todo": 0,
+              "cancelled": 0
+            }
+          }
+        },
+        {
+          "name": "format",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": null,
+            "node": null
+          }
+        },
+        {
+          "name": "clippy",
+          "exitCode": 101,
+          "passed": false,
+          "counts": {
+            "rust": null,
+            "node": null
+          }
+        }
+      ],
+      "not_run": [
+        "rust-tests",
+        "web-build",
+        "web-lint"
+      ]
+    },
+    {
+      "receipt": "issue219-canonical-r4.json",
+      "receipt_sha256": "3e8fff67125fb31a3cc2c6d77a9dca1d9bfb721b4b8ed9b663f8670809829712",
+      "invocation": "issue219-canonical-invocation-r4.json",
+      "invocation_sha256": "096fb9c81ff624de853e007e250f9d3faa6f2d192c1149c5fb6bc18862efd4e9",
+      "tested_head": "e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a",
+      "tested_tree": "84dc8e65f6d13cba2722e2a9e4969741bf0aca52",
+      "status": "passed",
+      "explanation": "Fresh full canonical validation after collapsing the equivalent expired-lease/admission-error condition. No warning suppression; prior failed receipts remain unchanged.",
+      "report_sha256": "93b39d4182247cf2c20984ca0be9a122c92d4071367759b74d07e612687b7a23",
+      "checks": [
+        {
+          "name": "migrations",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": null,
+            "node": null
+          }
+        },
+        {
+          "name": "state-audit-compatibility",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": null,
+            "node": null
+          }
+        },
+        {
+          "name": "state-audit-evm",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": {
+              "passed": 1,
+              "failed": 0,
+              "ignored": 0,
+              "summaries": 1
+            },
+            "node": null
+          }
+        },
+        {
+          "name": "docs",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": null,
+            "node": null
+          }
+        },
+        {
+          "name": "repository-docs",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": null,
+            "node": null
+          }
+        },
+        {
+          "name": "node-tests",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": null,
+            "node": {
+              "tests": 3126,
+              "passed": 3061,
+              "failed": 0,
+              "skipped": 65,
+              "todo": 0,
+              "cancelled": 0
+            }
+          }
+        },
+        {
+          "name": "format",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": null,
+            "node": null
+          }
+        },
+        {
+          "name": "clippy",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": null,
+            "node": null
+          }
+        },
+        {
+          "name": "rust-tests",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": {
+              "passed": 884,
+              "failed": 0,
+              "ignored": 593,
+              "summaries": 41
+            },
+            "node": null
+          }
+        },
+        {
+          "name": "web-build",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": null,
+            "node": null
+          }
+        },
+        {
+          "name": "web-lint",
+          "exitCode": 0,
+          "passed": true,
+          "counts": {
+            "rust": null,
+            "node": null
+          }
+        }
+      ],
+      "not_run": []
+    }
+  ]
+}

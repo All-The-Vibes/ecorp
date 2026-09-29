@@ -1,0 +1,74 @@
+param(
+    [Parameter(Mandatory)][string]$RepositoryPath,
+    [Parameter(Mandatory)][int]$Issue,
+    [Parameter(Mandatory)][ValidatePattern('^r[0-9]+$')][string]$Revision
+)
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$repo = (Resolve-Path -LiteralPath $RepositoryPath).Path
+$prefix = "issue$Issue-canonical-$Revision"
+$receiptPath = Join-Path $PSScriptRoot "$prefix.json"
+if (Test-Path -LiteralPath $receiptPath) { throw 'Preserve the existing canonical receipt.' }
+foreach ($key in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($key -match '^(CRONY_|ECORP_|GH_|GITHUB_|AZURE_)' -or $key -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN')) {
+        [Environment]::SetEnvironmentVariable($key,$null,'Process')
+    }
+}
+$pythonDirectory = '<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\python'
+$nodeDirectory = '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64'
+foreach ($binary in @((Join-Path $pythonDirectory 'python.exe'), (Join-Path $nodeDirectory 'node.exe'))) {
+    if (!(Test-Path -LiteralPath $binary -PathType Leaf)) { throw 'Required native runtime unavailable.' }
+}
+$env:PATH = "$nodeDirectory;$pythonDirectory;$env:PATH"
+$env:PYTHON = Join-Path $pythonDirectory 'python.exe'
+$env:CARGO_BUILD_JOBS = '2'
+$env:CARGO_NET_OFFLINE = 'true'
+$env:RUST_TEST_THREADS = '1'
+$record = [ordered]@{issue=$Issue;repository=$repo;head=(& git -C $repo rev-parse HEAD).Trim();started_at_utc=[DateTime]::UtcNow.ToString('o');status='running';checks=@();canonical_report=$null}
+function Save { [IO.File]::WriteAllText($receiptPath,($record | ConvertTo-Json -Depth 14)+"`n") }
+Save
+Push-Location -LiteralPath $repo
+try {
+    foreach ($step in @(
+        @{name='install-root';arguments=@('install','--frozen-lockfile','--offline')},
+        @{name='install-web';arguments=@('--dir','apps/web','install','--frozen-lockfile','--offline')},
+        @{name='install-steward';program='npm';workingDirectory='scenarios/repo-steward';arguments=@('ci','--ignore-scripts','--no-audit','--no-fund','--workspaces=false','--offline')},
+        @{name='pnpm-check';arguments=@('check')}
+    )) {
+        $log = Join-Path $PSScriptRoot "$prefix-$($step.name).log"
+        if (Test-Path -LiteralPath $log) { throw 'Preserve the existing gate log.' }
+        $started = [DateTime]::UtcNow
+        $arguments = $step.arguments
+        $program = if ($step.program) { $step.program } else { 'pnpm' }
+        $workingDirectory = if ($step.workingDirectory) { Join-Path $repo $step.workingDirectory } else { $repo }
+        Push-Location -LiteralPath $workingDirectory
+        try {
+            & $program @arguments *> $log
+            $code = $LASTEXITCODE
+        } finally { Pop-Location }
+        $record.checks += [ordered]@{name=$step.name;program=$program;working_directory=$workingDirectory;arguments=$arguments;exit_code=$code;started_at_utc=$started.ToString('o');finished_at_utc=[DateTime]::UtcNow.ToString('o');log=$log;sha256=(Get-FileHash -LiteralPath $log).Hash.ToLowerInvariant()}
+        Save
+        Write-Output "$($step.name) exit=$code"
+        if ($step.name -eq 'pnpm-check') {
+            $match = [regex]::Match((Get-Content -LiteralPath $log -Raw),'Validation report: ([^\r\n]+)')
+            if ($match.Success) {
+                $reportPath = $match.Groups[1].Value.Trim()
+                $report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
+                $record.canonical_report = [ordered]@{path=$reportPath;sha256=(Get-FileHash -LiteralPath $reportPath).Hash.ToLowerInvariant();status=$report.status;source=$report.source;sourceChangedDuringValidation=$report.sourceChangedDuringValidation;checks=$report.checks;notRun=$report.notRun}
+                Save
+            }
+        }
+        if ($code) { throw "$($step.name) failed; retain the observed failure." }
+    }
+    if ($record.canonical_report.status -ne 'passed' -or $record.canonical_report.sourceChangedDuringValidation -or @($record.canonical_report.checks).Count -ne 11 -or @($record.canonical_report.notRun).Count) { throw 'A complete source-stable canonical gate is required.' }
+    $record.status = 'passed'
+} catch {
+    $record.status = 'failed'
+    $record.failure = $_.Exception.Message
+} finally {
+    Pop-Location
+    $record.finished_at_utc = [DateTime]::UtcNow.ToString('o')
+    Save
+}
+[pscustomobject]$record | Select-Object issue,status,head,failure,@{n='report';e={$_.canonical_report.path}} | ConvertTo-Json
+if ($record.status -ne 'passed') { exit 1 }

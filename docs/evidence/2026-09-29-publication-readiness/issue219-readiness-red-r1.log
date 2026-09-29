@@ -1,0 +1,1144 @@
+TAP version 13
+# Subtest: scope requires every explicit identity and repository and freezes the view generation
+ok 1 - scope requires every explicit identity and repository and freezes the view generation
+  ---
+  duration_ms: 2.8273
+  type: 'test'
+  ...
+# Subtest: the exact scope object, not equal IDs or a prior A -> B -> A view, selects the load
+ok 2 - the exact scope object, not equal IDs or a prior A -> B -> A view, selects the load
+  ---
+  duration_ms: 0.4801
+  type: 'test'
+  ...
+# Subtest: one encoded GET is uncached, abortable and body/header/credential free
+ok 3 - one encoded GET is uncached, abortable and body/header/credential free
+  ---
+  duration_ms: 10.0466
+  type: 'test'
+  ...
+# Subtest: published DTO retains only bound result metadata and leaves raw input untouched
+ok 4 - published DTO retains only bound result metadata and leaves raw input untouched
+  ---
+  duration_ms: 1.8894
+  type: 'test'
+  ...
+# Subtest: only explicit null publication in a correctly scoped response is known absence
+ok 5 - only explicit null publication in a correctly scoped response is known absence
+  ---
+  duration_ms: 2.4493
+  type: 'test'
+  ...
+# Subtest: unpublished source stays bound to the selected run and contains no raw authority
+ok 6 - unpublished source stays bound to the selected run and contains no raw authority
+  ---
+  duration_ms: 1.1411
+  type: 'test'
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is claimed
+not ok 7 - unpublished ready source cannot offer publication while the exact Factory state is claimed
+  ---
+  duration_ms: 3.3738
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp\\apps\\web\\src\\missionResultContext.test.mjs:258:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+    + [
+    +   {
+    +     artifact_id: 'artifact-a',
+    +     base_commit: 'cccccccccccccccccccccccccccccccccccccccc',
+    +     branch: 'crony/source',
+    +     bytes: 1234,
+    +     file_name: 'result.bundle',
+    +     form: 'commit_branch',
+    +     head_commit: 'dddddddddddddddddddddddddddddddddddddddd',
+    +     id: 'deliverable-a',
+    +     integration_state: 'ready_for_review',
+    +     media_type: 'application/octet-stream',
+    +     provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    +     retention_until: '2030-01-01T00:00:00Z',
+    +     run_id: 'run-a',
+    +     sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    +     task_id: 'task-a',
+    +     uri: '/api/corps/corp-a/artifacts/artifact-a',
+    +     verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    +   }
+    + ]
+    - []
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      id: 'deliverable-a'
+      task_id: 'task-a'
+      run_id: 'run-a'
+      artifact_id: 'artifact-a'
+      form: 'commit_branch'
+      file_name: 'result.bundle'
+      uri: '/api/corps/corp-a/artifacts/artifact-a'
+      sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      media_type: 'application/octet-stream'
+      bytes: 1234
+      provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+      verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+      base_commit: 'cccccccccccccccccccccccccccccccccccccccc'
+      head_commit: 'dddddddddddddddddddddddddddddddddddddddd'
+      branch: 'crony/source'
+      integration_state: 'ready_for_review'
+      retention_until: '2030-01-01T00:00:00Z'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue219-publication/ecorp/apps/web/src/missionResultContext.test.mjs:264:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is mission_created
+not ok 8 - unpublished ready source cannot offer publication while the exact Factory state is mission_created
+  ---
+  duration_ms: 1.7448
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp\\apps\\web\\src\\missionResultContext.test.mjs:258:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+    + [
+    +   {
+    +     artifact_id: 'artifact-a',
+    +     base_commit: 'cccccccccccccccccccccccccccccccccccccccc',
+    +     branch: 'crony/source',
+    +     bytes: 1234,
+    +     file_name: 'result.bundle',
+    +     form: 'commit_branch',
+    +     head_commit: 'dddddddddddddddddddddddddddddddddddddddd',
+    +     id: 'deliverable-a',
+    +     integration_state: 'ready_for_review',
+    +     media_type: 'application/octet-stream',
+    +     provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    +     retention_until: '2030-01-01T00:00:00Z',
+    +     run_id: 'run-a',
+    +     sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    +     task_id: 'task-a',
+    +     uri: '/api/corps/corp-a/artifacts/artifact-a',
+    +     verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    +   }
+    + ]
+    - []
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      id: 'deliverable-a'
+      task_id: 'task-a'
+      run_id: 'run-a'
+      artifact_id: 'artifact-a'
+      form: 'commit_branch'
+      file_name: 'result.bundle'
+      uri: '/api/corps/corp-a/artifacts/artifact-a'
+      sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      media_type: 'application/octet-stream'
+      bytes: 1234
+      provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+      verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+      base_commit: 'cccccccccccccccccccccccccccccccccccccccc'
+      head_commit: 'dddddddddddddddddddddddddddddddddddddddd'
+      branch: 'crony/source'
+      integration_state: 'ready_for_review'
+      retention_until: '2030-01-01T00:00:00Z'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue219-publication/ecorp/apps/web/src/missionResultContext.test.mjs:264:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is running
+not ok 9 - unpublished ready source cannot offer publication while the exact Factory state is running
+  ---
+  duration_ms: 1.1087
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp\\apps\\web\\src\\missionResultContext.test.mjs:258:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+    + [
+    +   {
+    +     artifact_id: 'artifact-a',
+    +     base_commit: 'cccccccccccccccccccccccccccccccccccccccc',
+    +     branch: 'crony/source',
+    +     bytes: 1234,
+    +     file_name: 'result.bundle',
+    +     form: 'commit_branch',
+    +     head_commit: 'dddddddddddddddddddddddddddddddddddddddd',
+    +     id: 'deliverable-a',
+    +     integration_state: 'ready_for_review',
+    +     media_type: 'application/octet-stream',
+    +     provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    +     retention_until: '2030-01-01T00:00:00Z',
+    +     run_id: 'run-a',
+    +     sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    +     task_id: 'task-a',
+    +     uri: '/api/corps/corp-a/artifacts/artifact-a',
+    +     verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    +   }
+    + ]
+    - []
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      id: 'deliverable-a'
+      task_id: 'task-a'
+      run_id: 'run-a'
+      artifact_id: 'artifact-a'
+      form: 'commit_branch'
+      file_name: 'result.bundle'
+      uri: '/api/corps/corp-a/artifacts/artifact-a'
+      sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      media_type: 'application/octet-stream'
+      bytes: 1234
+      provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+      verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+      base_commit: 'cccccccccccccccccccccccccccccccccccccccc'
+      head_commit: 'dddddddddddddddddddddddddddddddddddddddd'
+      branch: 'crony/source'
+      integration_state: 'ready_for_review'
+      retention_until: '2030-01-01T00:00:00Z'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue219-publication/ecorp/apps/web/src/missionResultContext.test.mjs:264:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is blocked
+not ok 10 - unpublished ready source cannot offer publication while the exact Factory state is blocked
+  ---
+  duration_ms: 1.2162
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp\\apps\\web\\src\\missionResultContext.test.mjs:258:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+    + [
+    +   {
+    +     artifact_id: 'artifact-a',
+    +     base_commit: 'cccccccccccccccccccccccccccccccccccccccc',
+    +     branch: 'crony/source',
+    +     bytes: 1234,
+    +     file_name: 'result.bundle',
+    +     form: 'commit_branch',
+    +     head_commit: 'dddddddddddddddddddddddddddddddddddddddd',
+    +     id: 'deliverable-a',
+    +     integration_state: 'ready_for_review',
+    +     media_type: 'application/octet-stream',
+    +     provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    +     retention_until: '2030-01-01T00:00:00Z',
+    +     run_id: 'run-a',
+    +     sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    +     task_id: 'task-a',
+    +     uri: '/api/corps/corp-a/artifacts/artifact-a',
+    +     verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    +   }
+    + ]
+    - []
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      id: 'deliverable-a'
+      task_id: 'task-a'
+      run_id: 'run-a'
+      artifact_id: 'artifact-a'
+      form: 'commit_branch'
+      file_name: 'result.bundle'
+      uri: '/api/corps/corp-a/artifacts/artifact-a'
+      sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      media_type: 'application/octet-stream'
+      bytes: 1234
+      provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+      verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+      base_commit: 'cccccccccccccccccccccccccccccccccccccccc'
+      head_commit: 'dddddddddddddddddddddddddddddddddddddddd'
+      branch: 'crony/source'
+      integration_state: 'ready_for_review'
+      retention_until: '2030-01-01T00:00:00Z'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue219-publication/ecorp/apps/web/src/missionResultContext.test.mjs:264:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is awaiting_approval
+not ok 11 - unpublished ready source cannot offer publication while the exact Factory state is awaiting_approval
+  ---
+  duration_ms: 1.0612
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp\\apps\\web\\src\\missionResultContext.test.mjs:258:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+    + [
+    +   {
+    +     artifact_id: 'artifact-a',
+    +     base_commit: 'cccccccccccccccccccccccccccccccccccccccc',
+    +     branch: 'crony/source',
+    +     bytes: 1234,
+    +     file_name: 'result.bundle',
+    +     form: 'commit_branch',
+    +     head_commit: 'dddddddddddddddddddddddddddddddddddddddd',
+    +     id: 'deliverable-a',
+    +     integration_state: 'ready_for_review',
+    +     media_type: 'application/octet-stream',
+    +     provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    +     retention_until: '2030-01-01T00:00:00Z',
+    +     run_id: 'run-a',
+    +     sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    +     task_id: 'task-a',
+    +     uri: '/api/corps/corp-a/artifacts/artifact-a',
+    +     verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    +   }
+    + ]
+    - []
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      id: 'deliverable-a'
+      task_id: 'task-a'
+      run_id: 'run-a'
+      artifact_id: 'artifact-a'
+      form: 'commit_branch'
+      file_name: 'result.bundle'
+      uri: '/api/corps/corp-a/artifacts/artifact-a'
+      sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      media_type: 'application/octet-stream'
+      bytes: 1234
+      provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+      verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+      base_commit: 'cccccccccccccccccccccccccccccccccccccccc'
+      head_commit: 'dddddddddddddddddddddddddddddddddddddddd'
+      branch: 'crony/source'
+      integration_state: 'ready_for_review'
+      retention_until: '2030-01-01T00:00:00Z'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue219-publication/ecorp/apps/web/src/missionResultContext.test.mjs:264:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is verification_failed
+not ok 12 - unpublished ready source cannot offer publication while the exact Factory state is verification_failed
+  ---
+  duration_ms: 1.0604
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp\\apps\\web\\src\\missionResultContext.test.mjs:258:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+    + [
+    +   {
+    +     artifact_id: 'artifact-a',
+    +     base_commit: 'cccccccccccccccccccccccccccccccccccccccc',
+    +     branch: 'crony/source',
+    +     bytes: 1234,
+    +     file_name: 'result.bundle',
+    +     form: 'commit_branch',
+    +     head_commit: 'dddddddddddddddddddddddddddddddddddddddd',
+    +     id: 'deliverable-a',
+    +     integration_state: 'ready_for_review',
+    +     media_type: 'application/octet-stream',
+    +     provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    +     retention_until: '2030-01-01T00:00:00Z',
+    +     run_id: 'run-a',
+    +     sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    +     task_id: 'task-a',
+    +     uri: '/api/corps/corp-a/artifacts/artifact-a',
+    +     verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    +   }
+    + ]
+    - []
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      id: 'deliverable-a'
+      task_id: 'task-a'
+      run_id: 'run-a'
+      artifact_id: 'artifact-a'
+      form: 'commit_branch'
+      file_name: 'result.bundle'
+      uri: '/api/corps/corp-a/artifacts/artifact-a'
+      sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      media_type: 'application/octet-stream'
+      bytes: 1234
+      provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+      verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+      base_commit: 'cccccccccccccccccccccccccccccccccccccccc'
+      head_commit: 'dddddddddddddddddddddddddddddddddddddddd'
+      branch: 'crony/source'
+      integration_state: 'ready_for_review'
+      retention_until: '2030-01-01T00:00:00Z'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue219-publication/ecorp/apps/web/src/missionResultContext.test.mjs:264:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is publishing
+not ok 13 - unpublished ready source cannot offer publication while the exact Factory state is publishing
+  ---
+  duration_ms: 1.038
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp\\apps\\web\\src\\missionResultContext.test.mjs:258:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+    + [
+    +   {
+    +     artifact_id: 'artifact-a',
+    +     base_commit: 'cccccccccccccccccccccccccccccccccccccccc',
+    +     branch: 'crony/source',
+    +     bytes: 1234,
+    +     file_name: 'result.bundle',
+    +     form: 'commit_branch',
+    +     head_commit: 'dddddddddddddddddddddddddddddddddddddddd',
+    +     id: 'deliverable-a',
+    +     integration_state: 'ready_for_review',
+    +     media_type: 'application/octet-stream',
+    +     provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    +     retention_until: '2030-01-01T00:00:00Z',
+    +     run_id: 'run-a',
+    +     sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    +     task_id: 'task-a',
+    +     uri: '/api/corps/corp-a/artifacts/artifact-a',
+    +     verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    +   }
+    + ]
+    - []
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      id: 'deliverable-a'
+      task_id: 'task-a'
+      run_id: 'run-a'
+      artifact_id: 'artifact-a'
+      form: 'commit_branch'
+      file_name: 'result.bundle'
+      uri: '/api/corps/corp-a/artifacts/artifact-a'
+      sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      media_type: 'application/octet-stream'
+      bytes: 1234
+      provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+      verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+      base_commit: 'cccccccccccccccccccccccccccccccccccccccc'
+      head_commit: 'dddddddddddddddddddddddddddddddddddddddd'
+      branch: 'crony/source'
+      integration_state: 'ready_for_review'
+      retention_until: '2030-01-01T00:00:00Z'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue219-publication/ecorp/apps/web/src/missionResultContext.test.mjs:264:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is published
+not ok 14 - unpublished ready source cannot offer publication while the exact Factory state is published
+  ---
+  duration_ms: 0.8647
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp\\apps\\web\\src\\missionResultContext.test.mjs:258:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+    + [
+    +   {
+    +     artifact_id: 'artifact-a',
+    +     base_commit: 'cccccccccccccccccccccccccccccccccccccccc',
+    +     branch: 'crony/source',
+    +     bytes: 1234,
+    +     file_name: 'result.bundle',
+    +     form: 'commit_branch',
+    +     head_commit: 'dddddddddddddddddddddddddddddddddddddddd',
+    +     id: 'deliverable-a',
+    +     integration_state: 'ready_for_review',
+    +     media_type: 'application/octet-stream',
+    +     provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    +     retention_until: '2030-01-01T00:00:00Z',
+    +     run_id: 'run-a',
+    +     sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    +     task_id: 'task-a',
+    +     uri: '/api/corps/corp-a/artifacts/artifact-a',
+    +     verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    +   }
+    + ]
+    - []
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      id: 'deliverable-a'
+      task_id: 'task-a'
+      run_id: 'run-a'
+      artifact_id: 'artifact-a'
+      form: 'commit_branch'
+      file_name: 'result.bundle'
+      uri: '/api/corps/corp-a/artifacts/artifact-a'
+      sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      media_type: 'application/octet-stream'
+      bytes: 1234
+      provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+      verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+      base_commit: 'cccccccccccccccccccccccccccccccccccccccc'
+      head_commit: 'dddddddddddddddddddddddddddddddddddddddd'
+      branch: 'crony/source'
+      integration_state: 'ready_for_review'
+      retention_until: '2030-01-01T00:00:00Z'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue219-publication/ecorp/apps/web/src/missionResultContext.test.mjs:264:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is failed
+not ok 15 - unpublished ready source cannot offer publication while the exact Factory state is failed
+  ---
+  duration_ms: 1.031
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp\\apps\\web\\src\\missionResultContext.test.mjs:258:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+    + [
+    +   {
+    +     artifact_id: 'artifact-a',
+    +     base_commit: 'cccccccccccccccccccccccccccccccccccccccc',
+    +     branch: 'crony/source',
+    +     bytes: 1234,
+    +     file_name: 'result.bundle',
+    +     form: 'commit_branch',
+    +     head_commit: 'dddddddddddddddddddddddddddddddddddddddd',
+    +     id: 'deliverable-a',
+    +     integration_state: 'ready_for_review',
+    +     media_type: 'application/octet-stream',
+    +     provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    +     retention_until: '2030-01-01T00:00:00Z',
+    +     run_id: 'run-a',
+    +     sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    +     task_id: 'task-a',
+    +     uri: '/api/corps/corp-a/artifacts/artifact-a',
+    +     verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    +   }
+    + ]
+    - []
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      id: 'deliverable-a'
+      task_id: 'task-a'
+      run_id: 'run-a'
+      artifact_id: 'artifact-a'
+      form: 'commit_branch'
+      file_name: 'result.bundle'
+      uri: '/api/corps/corp-a/artifacts/artifact-a'
+      sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      media_type: 'application/octet-stream'
+      bytes: 1234
+      provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+      verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+      base_commit: 'cccccccccccccccccccccccccccccccccccccccc'
+      head_commit: 'dddddddddddddddddddddddddddddddddddddddd'
+      branch: 'crony/source'
+      integration_state: 'ready_for_review'
+      retention_until: '2030-01-01T00:00:00Z'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue219-publication/ecorp/apps/web/src/missionResultContext.test.mjs:264:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is cancelled
+not ok 16 - unpublished ready source cannot offer publication while the exact Factory state is cancelled
+  ---
+  duration_ms: 1.2107
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp\\apps\\web\\src\\missionResultContext.test.mjs:258:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+    + [
+    +   {
+    +     artifact_id: 'artifact-a',
+    +     base_commit: 'cccccccccccccccccccccccccccccccccccccccc',
+    +     branch: 'crony/source',
+    +     bytes: 1234,
+    +     file_name: 'result.bundle',
+    +     form: 'commit_branch',
+    +     head_commit: 'dddddddddddddddddddddddddddddddddddddddd',
+    +     id: 'deliverable-a',
+    +     integration_state: 'ready_for_review',
+    +     media_type: 'application/octet-stream',
+    +     provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    +     retention_until: '2030-01-01T00:00:00Z',
+    +     run_id: 'run-a',
+    +     sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    +     task_id: 'task-a',
+    +     uri: '/api/corps/corp-a/artifacts/artifact-a',
+    +     verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    +   }
+    + ]
+    - []
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      id: 'deliverable-a'
+      task_id: 'task-a'
+      run_id: 'run-a'
+      artifact_id: 'artifact-a'
+      form: 'commit_branch'
+      file_name: 'result.bundle'
+      uri: '/api/corps/corp-a/artifacts/artifact-a'
+      sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      media_type: 'application/octet-stream'
+      bytes: 1234
+      provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+      verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+      base_commit: 'cccccccccccccccccccccccccccccccccccccccc'
+      head_commit: 'dddddddddddddddddddddddddddddddddddddddd'
+      branch: 'crony/source'
+      integration_state: 'ready_for_review'
+      retention_until: '2030-01-01T00:00:00Z'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue219-publication/ecorp/apps/web/src/missionResultContext.test.mjs:264:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is undefined
+not ok 17 - unpublished ready source cannot offer publication while the exact Factory state is undefined
+  ---
+  duration_ms: 2.0602
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp\\apps\\web\\src\\missionResultContext.test.mjs:258:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+    + [
+    +   {
+    +     artifact_id: 'artifact-a',
+    +     base_commit: 'cccccccccccccccccccccccccccccccccccccccc',
+    +     branch: 'crony/source',
+    +     bytes: 1234,
+    +     file_name: 'result.bundle',
+    +     form: 'commit_branch',
+    +     head_commit: 'dddddddddddddddddddddddddddddddddddddddd',
+    +     id: 'deliverable-a',
+    +     integration_state: 'ready_for_review',
+    +     media_type: 'application/octet-stream',
+    +     provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    +     retention_until: '2030-01-01T00:00:00Z',
+    +     run_id: 'run-a',
+    +     sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    +     task_id: 'task-a',
+    +     uri: '/api/corps/corp-a/artifacts/artifact-a',
+    +     verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    +   }
+    + ]
+    - []
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      id: 'deliverable-a'
+      task_id: 'task-a'
+      run_id: 'run-a'
+      artifact_id: 'artifact-a'
+      form: 'commit_branch'
+      file_name: 'result.bundle'
+      uri: '/api/corps/corp-a/artifacts/artifact-a'
+      sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      media_type: 'application/octet-stream'
+      bytes: 1234
+      provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+      verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+      base_commit: 'cccccccccccccccccccccccccccccccccccccccc'
+      head_commit: 'dddddddddddddddddddddddddddddddddddddddd'
+      branch: 'crony/source'
+      integration_state: 'ready_for_review'
+      retention_until: '2030-01-01T00:00:00Z'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue219-publication/ecorp/apps/web/src/missionResultContext.test.mjs:264:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is null
+not ok 18 - unpublished ready source cannot offer publication while the exact Factory state is null
+  ---
+  duration_ms: 0.8386
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp\\apps\\web\\src\\missionResultContext.test.mjs:258:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+    + [
+    +   {
+    +     artifact_id: 'artifact-a',
+    +     base_commit: 'cccccccccccccccccccccccccccccccccccccccc',
+    +     branch: 'crony/source',
+    +     bytes: 1234,
+    +     file_name: 'result.bundle',
+    +     form: 'commit_branch',
+    +     head_commit: 'dddddddddddddddddddddddddddddddddddddddd',
+    +     id: 'deliverable-a',
+    +     integration_state: 'ready_for_review',
+    +     media_type: 'application/octet-stream',
+    +     provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    +     retention_until: '2030-01-01T00:00:00Z',
+    +     run_id: 'run-a',
+    +     sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    +     task_id: 'task-a',
+    +     uri: '/api/corps/corp-a/artifacts/artifact-a',
+    +     verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    +   }
+    + ]
+    - []
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      id: 'deliverable-a'
+      task_id: 'task-a'
+      run_id: 'run-a'
+      artifact_id: 'artifact-a'
+      form: 'commit_branch'
+      file_name: 'result.bundle'
+      uri: '/api/corps/corp-a/artifacts/artifact-a'
+      sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      media_type: 'application/octet-stream'
+      bytes: 1234
+      provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+      verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+      base_commit: 'cccccccccccccccccccccccccccccccccccccccc'
+      head_commit: 'dddddddddddddddddddddddddddddddddddddddd'
+      branch: 'crony/source'
+      integration_state: 'ready_for_review'
+      retention_until: '2030-01-01T00:00:00Z'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue219-publication/ecorp/apps/web/src/missionResultContext.test.mjs:264:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is unknown
+not ok 19 - unpublished ready source cannot offer publication while the exact Factory state is unknown
+  ---
+  duration_ms: 0.8489
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp\\apps\\web\\src\\missionResultContext.test.mjs:258:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+    + [
+    +   {
+    +     artifact_id: 'artifact-a',
+    +     base_commit: 'cccccccccccccccccccccccccccccccccccccccc',
+    +     branch: 'crony/source',
+    +     bytes: 1234,
+    +     file_name: 'result.bundle',
+    +     form: 'commit_branch',
+    +     head_commit: 'dddddddddddddddddddddddddddddddddddddddd',
+    +     id: 'deliverable-a',
+    +     integration_state: 'ready_for_review',
+    +     media_type: 'application/octet-stream',
+    +     provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    +     retention_until: '2030-01-01T00:00:00Z',
+    +     run_id: 'run-a',
+    +     sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    +     task_id: 'task-a',
+    +     uri: '/api/corps/corp-a/artifacts/artifact-a',
+    +     verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    +   }
+    + ]
+    - []
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      id: 'deliverable-a'
+      task_id: 'task-a'
+      run_id: 'run-a'
+      artifact_id: 'artifact-a'
+      form: 'commit_branch'
+      file_name: 'result.bundle'
+      uri: '/api/corps/corp-a/artifacts/artifact-a'
+      sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      media_type: 'application/octet-stream'
+      bytes: 1234
+      provenance_signature: 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+      verification_sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+      base_commit: 'cccccccccccccccccccccccccccccccccccccccc'
+      head_commit: 'dddddddddddddddddddddddddddddddddddddddd'
+      branch: 'crony/source'
+      integration_state: 'ready_for_review'
+      retention_until: '2030-01-01T00:00:00Z'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue219-publication/ecorp/apps/web/src/missionResultContext.test.mjs:264:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: existing publication remains visible after the Factory item leaves verified
+ok 20 - existing publication remains visible after the Factory item leaves verified
+  ---
+  duration_ms: 1.1645
+  type: 'test'
+  ...
+# Subtest: unpublished alternatives require explicit selection and never pick the first available run
+ok 21 - unpublished alternatives require explicit selection and never pick the first available run
+  ---
+  duration_ms: 0.9026
+  type: 'test'
+  ...
+# Subtest: unpublished candidates reject foreign scope, invalid metadata and duplicate identities
+ok 22 - unpublished candidates reject foreign scope, invalid metadata and duplicate identities
+  ---
+  duration_ms: 1.4322
+  type: 'test'
+  ...
+# Subtest: item and publication scope mismatches never expose links or known absence
+ok 23 - item and publication scope mismatches never expose links or known absence
+  ---
+  duration_ms: 4.8117
+  type: 'test'
+  ...
+# Subtest: publication source issue matches the work item without equating authorizer, revisions or checkpoint generations
+ok 24 - publication source issue matches the work item without equating authorizer, revisions or checkpoint generations
+  ---
+  duration_ms: 0.9638
+  type: 'test'
+  ...
+# Subtest: publication and artifact identity tuples plus full digests must all match
+ok 25 - publication and artifact identity tuples plus full digests must all match
+  ---
+  duration_ms: 2.0241
+  type: 'test'
+  ...
+# Subtest: missing, duplicate and unrelated-first deliverables cannot substitute a result
+ok 26 - missing, duplicate and unrelated-first deliverables cannot substitute a result
+  ---
+  duration_ms: 0.7635
+  type: 'test'
+  ...
+# Subtest: native provenance identity, source/target branches and digests are checked without retaining authority
+ok 27 - native provenance identity, source/target branches and digests are checked without retaining authority
+  ---
+  duration_ms: 2.6715
+  type: 'test'
+  ...
+# Subtest: raw GitHub PR URLs allow native slash suffixes but retain exact repository and number checks
+ok 28 - raw GitHub PR URLs allow native slash suffixes but retain exact repository and number checks
+  ---
+  duration_ms: 4.2799
+  type: 'test'
+  ...
+# Subtest: owner/repository display case is preserved while full hex values compare by bytes
+ok 29 - owner/repository display case is preserved while full hex values compare by bytes
+  ---
+  duration_ms: 0.5459
+  type: 'test'
+  ...
+# Subtest: PR state, exact head, owner, recorded metadata and phase cannot contradict each other
+ok 30 - PR state, exact head, owner, recorded metadata and phase cannot contradict each other
+  ---
+  duration_ms: 2.0518
+  type: 'test'
+  ...
+# Subtest: download metadata rejects controls, external/native paths, malformed hashes and invalid sizes
+ok 31 - download metadata rejects controls, external/native paths, malformed hashes and invalid sizes
+  ---
+  duration_ms: 9.4985
+  type: 'test'
+  ...
+# Subtest: pending, PR-created, published and failed publication are distinct without claiming a live app
+ok 32 - pending, PR-created, published and failed publication are distinct without claiming a live app
+  ---
+  duration_ms: 1.1986
+  type: 'test'
+  ...
+# Subtest: only a different valid pinned run is a mismatch; same-run contradictions stay unavailable
+ok 33 - only a different valid pinned run is a mismatch; same-run contradictions stay unavailable
+  ---
+  duration_ms: 0.6042
+  type: 'test'
+  ...
+# Subtest: loading, denied and stale contexts cannot become a result or known absence
+ok 34 - loading, denied and stale contexts cannot become a result or known absence
+  ---
+  duration_ms: 0.5718
+  type: 'test'
+  ...
+# Subtest: denials, missing endpoints and sync/async transport failures stay unavailable without raw errors
+ok 35 - denials, missing endpoints and sync/async transport failures stay unavailable without raw errors
+  ---
+  duration_ms: 1.5585
+  type: 'test'
+  ...
+# Subtest: timeout aborts and suppresses late successes and failures without retries
+ok 36 - timeout aborts and suppresses late successes and failures without retries
+  ---
+  duration_ms: 0.6398
+  type: 'test'
+  ...
+# Subtest: queued timeout callbacks cannot overwrite a settled success, absence or denial
+ok 37 - queued timeout callbacks cannot overwrite a settled success, absence or denial
+  ---
+  duration_ms: 0.825
+  type: 'test'
+  ...
+# Subtest: cancellation before start issues no GET; in-flight cancellation publishes no late data
+ok 38 - cancellation before start issues no GET; in-flight cancellation publishes no late data
+  ---
+  duration_ms: 0.4993
+  type: 'test'
+  ...
+# Subtest: new same-ID generation remains unavailable after denial despite a prior response completing later
+ok 39 - new same-ID generation remains unavailable after denial despite a prior response completing later
+  ---
+  duration_ms: 0.5323
+  type: 'test'
+  ...
+# Subtest: card requires a source choice and exact preview before offering the request
+ok 40 - card requires a source choice and exact preview before offering the request
+  ---
+  duration_ms: 22.5445
+  type: 'test'
+  ...
+# Subtest: hook fences changed source and scope, including old submit callbacks
+ok 41 - hook fences changed source and scope, including old submit callbacks
+  ---
+  duration_ms: 4.5134
+  type: 'test'
+  ...
+# Subtest: effect reconnect clears stale readiness without a duplicate request
+ok 42 - effect reconnect clears stale readiness without a duplicate request
+  ---
+  duration_ms: 2.371
+  type: 'test'
+  ...
+# Subtest: an uncertain request offers refresh and never resubmits itself
+ok 43 - an uncertain request offers refresh and never resubmits itself
+  ---
+  duration_ms: 3.0882
+  type: 'test'
+  ...
+# Subtest: WorkResultCard exposes its status and supplied content with metadata collapsed by default
+ok 44 - WorkResultCard exposes its status and supplied content with metadata collapsed by default
+  ---
+  duration_ms: 11.4322
+  type: 'test'
+  ...
+# Subtest: ready PR retains its exact URL and only an explicit download invokes the matching callback
+ok 45 - ready PR retains its exact URL and only an explicit download invokes the matching callback
+  ---
+  duration_ms: 11.0859
+  type: 'test'
+  ...
+# Subtest: loading, unavailable and no-publication states do not fabricate a PR or perform actions
+ok 46 - loading, unavailable and no-publication states do not fabricate a PR or perform actions
+  ---
+  duration_ms: 3.9498
+  type: 'test'
+  ...
+# Subtest: a historical review mismatch changes selection only through explicit Go to delivered result
+ok 47 - a historical review mismatch changes selection only through explicit Go to delivered result
+  ---
+  duration_ms: 4.4059
+  type: 'test'
+  ...
+# Subtest: a durable requested publication waits for a trusted publisher without claiming work has started
+ok 48 - a durable requested publication waits for a trusted publisher without claiming work has started
+  ---
+  duration_ms: 152.0778
+  type: 'test'
+  ...
+# Subtest: an unavailable delivered-run target preserves the historical selection and only offers refresh
+ok 49 - an unavailable delivered-run target preserves the historical selection and only offers refresh
+  ---
+  duration_ms: 2.1292
+  type: 'test'
+  ...
+# Subtest: a failed publication with a recorded PR remains inspectable without being labeled Published
+ok 50 - a failed publication with a recorded PR remains inspectable without being labeled Published
+  ---
+  duration_ms: 5.7985
+  type: 'test'
+  ...
+# Subtest: Published is not merged or deployed and its collapsed details never invent a running preview
+ok 51 - Published is not merged or deployed and its collapsed details never invent a running preview
+  ---
+  duration_ms: 7.5947
+  type: 'test'
+  ...
+# Subtest: expired artifact retention does not hide an existing PR or replace server download validation
+ok 52 - expired artifact retention does not hide an existing PR or replace server download validation
+  ---
+  duration_ms: 3.4594
+  type: 'test'
+  ...
+# Subtest: actual hook hides prior result before cleanup and aborts on each exact scope change
+ok 53 - actual hook hides prior result before cleanup and aborts on each exact scope change
+  ---
+  duration_ms: 41.4025
+  type: 'test'
+  ...
+# Subtest: actual hook fences late success and failure before cleanup and after replacement
+ok 54 - actual hook fences late success and failure before cleanup and after replacement
+  ---
+  duration_ms: 14.5334
+  type: 'test'
+  ...
+# Subtest: actual hook close and reopen with identical IDs cannot revive old ready or pending data
+ok 55 - actual hook close and reopen with identical IDs cannot revive old ready or pending data
+  ---
+  duration_ms: 14.8497
+  type: 'test'
+  ...
+# Subtest: actual hook treats positive revision as one refresh hint and never retries failure on render
+ok 56 - actual hook treats positive revision as one refresh hint and never retries failure on render
+  ---
+  duration_ms: 33.6317
+  type: 'test'
+  ...
+# Subtest: actual App withholds publication until the exact Factory context is verified, despite a ready snapshot
+not ok 57 - actual App withholds publication until the exact Factory context is verified, despite a ready snapshot
+  ---
+  duration_ms: 14.2424
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp\\apps\\web\\src\\workResultCard.test.mjs:997:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input was expected to not match the regular expression /Preview pull request|Request pull request/. Input:
+
+    'Result / next step Send this result for review Not published Review the selected source, then check its publication target. A trusted publisher handles GitHub delivery. Preview pull request Download source bundle Refresh result Repository owner/repo Selected commit dddddddddddddddddddddddddddddddddddddddd Selected run 00000000-0000-4000-8000-000000000145  '
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: 'Result / next step Send this result for review Not published Review the selected source, then check its publication target. A trusted publisher handles GitHub delivery. Preview pull request Download source bundle Refresh result Repository owner/repo Selected commit dddddddddddddddddddddddddddddddddddddddd Selected run 00000000-0000-4000-8000-000000000145  '
+  operator: 'doesNotMatch'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue219-publication/ecorp/apps/web/src/workResultCard.test.mjs:1009:14)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: actual App requests the exact verified result and then shows durable waiting, including a stale running mission snapshot
+ok 58 - actual App requests the exact verified result and then shows durable waiting, including a stale running mission snapshot
+  ---
+  duration_ms: 37.5417
+  type: 'test'
+  ...
+# Subtest: actual App disconnect leaves an explicit request in flight without retry or late refresh
+ok 59 - actual App disconnect leaves an explicit request in flight without retry or late refresh
+  ---
+  duration_ms: 7.5139
+  type: 'test'
+  ...
+# Subtest: actual App keeps a historical pin and does not offer another run for publication
+ok 60 - actual App keeps a historical pin and does not offer another run for publication
+  ---
+  duration_ms: 4.5448
+  type: 'test'
+  ...
+# Subtest: actual App origin-unavailable branch offers manual Refresh work context with no PR CTA
+ok 61 - actual App origin-unavailable branch offers manual Refresh work context with no PR CTA
+  ---
+  duration_ms: 5.733
+  type: 'test'
+  ...
+# Subtest: actual App first-hop retry exposes the authorized result without moving pinned evidence
+ok 62 - actual App first-hop retry exposes the authorized result without moving pinned evidence
+  ---
+  duration_ms: 17.3699
+  type: 'test'
+  ...
+# Subtest: actual App fallback reports unavailable review details for an unresolved run or request
+ok 63 - actual App fallback reports unavailable review details for an unresolved run or request
+  ---
+  duration_ms: 10.9685
+  type: 'test'
+  ...
+# Subtest: actual work pickers retain a deep-linked historical mission outside the recent eight
+ok 64 - actual work pickers retain a deep-linked historical mission outside the recent eight
+  ---
+  duration_ms: 64.0483
+  type: 'test'
+  ...
+# Subtest: actual work pickers do not duplicate a recent selection or invent an absent mission
+ok 65 - actual work pickers do not duplicate a recent selection or invent an absent mission
+  ---
+  duration_ms: 52.4159
+  type: 'test'
+  ...
+1..65
+# tests 65
+# suites 0
+# pass 51
+# fail 14
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2833.9298

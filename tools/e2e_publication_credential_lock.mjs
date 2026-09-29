@@ -27,7 +27,7 @@ const select = source.match(new RegExp(`const ${constant}: &str = r#"([\\s\\S]*?
 assert.ok(select, 'The exact production credential-lock SQL must be available')
 const functionBody = source.slice(source.indexOf('async fn revalidate_publication_publisher_credential_tx('),
   source.indexOf('\nfn replayable_publication_token('))
-assert.ok(functionBody.includes(`sqlx::query_scalar::<_, Uuid>(${constant})`),
+assert.ok(functionBody.includes(`sqlx::query_as::<_, (Uuid, Option<String>)>(${constant})`),
   'Production revalidation must use the selected SQL')
 const update = functionBody.match(/sqlx::query\("(UPDATE publication_publisher_credentials[^"]+)"\)/)?.[1]
 assert.ok(update, 'Use the exact production last-used update')
@@ -121,11 +121,11 @@ try {
     CREATE TABLE "${schema}".publication_publisher_credentials (
       id uuid PRIMARY KEY, corp_id uuid NOT NULL, publisher_id text NOT NULL,
       credential_hash text NOT NULL, revoked_at timestamptz, expires_at timestamptz NOT NULL,
-      last_used_at timestamptz
+      last_used_at timestamptz, repository text
     );
     INSERT INTO "${schema}".publication_publisher_credentials
       VALUES ('${credentialId}', '${corpId}', '${publisher}', '${credentialHash}',
-              NULL, now() + interval '10 minutes', NULL);
+              NULL, now() + interval '10 minutes', NULL, 'fixture/publication');
     COMMIT;
   `)
   created = true

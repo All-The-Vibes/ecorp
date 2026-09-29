@@ -1,0 +1,32 @@
+{
+  "created_at_utc": "2026-09-28T07:49:16.061348+00:00",
+  "reason": "r2 failed before native coding because the fixture explicitly disabled bootstrap crew seeding, leaving the single-task strategy without any worker agent.",
+  "fix": "Restore native demo crew seeding in both driver and scenario setup. Retain the repository-casing correction and all acceptance assertions; use a fresh fixture.",
+  "source_references": [
+    "crates/crony-store/src/lib.rs:1289",
+    "crates/crony-store/src/lib.rs:1444",
+    "crates/crony-server/src/planning.rs:105"
+  ],
+  "product_changed": false,
+  "prior_failed_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-r2.json",
+  "derivations": [
+    {
+      "original": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-native-r2.mjs",
+      "original_sha256": "8babd0d7185baeb9ded74fb604da30712ac6673f88d1dcbfccb3425e3218dd63",
+      "derivative": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-native-r3.mjs",
+      "derivative_sha256": "20d471b226bdf782750021ec2986a3c1586fdaf9f11a3a09faaefa4159b5a846"
+    },
+    {
+      "original": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-driver-r2.ps1",
+      "original_sha256": "886a4981d757ec549db1d3a042961a2fbfef301a5c77afb494b7fe6ed17ccdf3",
+      "derivative": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-driver-r3.ps1",
+      "derivative_sha256": "d9b16f9d32740ca9cf4e6f26d2ad6d1d3954bc03a0af2658de3f53fb00a15425"
+    },
+    {
+      "original": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\run-issue219-browser-r2.py",
+      "original_sha256": "3b66c7addd802c17b23c927979acfea200b5ce54e335517b3dfcae06571c7097",
+      "derivative": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\run-issue219-browser-r3.py",
+      "derivative_sha256": "981e8d36b8da34d09e8cd6d58cb3a460504a1d4c5e30f6d6f603c7841efed219"
+    }
+  ]
+}

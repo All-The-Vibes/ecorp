@@ -1,0 +1,50 @@
+{
+  "issue": 219,
+  "purpose": "Focused actual CLI watcher loopback regressions; responses model queue eligibility, not native lease-expiry acceptance",
+  "revision": "green2",
+  "repository": "<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp",
+  "started_at_utc": "2026-09-28T11:15:20.9508199Z",
+  "status": "passed",
+  "head": "35eaa7010ab46edb23361795a43ad7c9cca7ec6c",
+  "source": [
+    {
+      "path": "crates/crony-cli/src/publish/requests.rs",
+      "sha256": "ae492b56dc679b857f13407503d01275c351ad2c8ba3128b3be8d714bf519b13"
+    },
+    {
+      "path": "crates/crony-cli/src/publish.rs",
+      "sha256": "f48eae2c11b2f1e8fc3e34f837e9c8a2a14e4beffb37d75bd1934125596c59d7"
+    },
+    {
+      "path": "crates/crony-cli/src/transport.rs",
+      "sha256": "91b88367e2e66dbe4cf1b6ad288a7b837533ff4f814e4d9e3c588329b25c1e72"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+    }
+  ],
+  "arguments": [
+    "test",
+    "--locked",
+    "--offline",
+    "-p",
+    "crony-cli",
+    "publish::requests::tests",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-watcher-green2.log",
+  "log_sha256": "c10dd49ad075947e23be23b0ee2115d3a0815010f966eadd735e7b9bac09cbf9",
+  "source_unchanged": true,
+  "test_summary": [
+    "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 156 filtered out; finished in 5.56s"
+  ],
+  "finished_at_utc": "2026-09-28T11:16:06.5088948Z"
+}

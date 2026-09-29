@@ -1,0 +1,5 @@
+On September 28, 2026, handler green-r2 observed four passes and one fixture failure. The fifth case had already observed the existing native HTTP 400 role-change rejection, HTTP 409 artifact denial without a valid lease, and zero publisher attempts. It then failed while installing explicitly synthetic published metadata because migration 0026 requires a resolved pull-request base ref.
+
+The fixture now supplies `pull_request_base_ref='main'` and the matching synthetic head SHA, repository owner and same-repository flag. No production constraint or error mapping was changed. Handler green-r3 observed five passes, zero failures and zero ignored cases on fresh owned PostgreSQL, with the Rust/migration source unchanged during execution. The fixture does not claim a real verifier, human decision, Git effect or browser acceptance.
+
+Preserve red-r2/r3 fixture failures, red-r4 behavioral failures, green-r1's incorrect status-code expectation, green-r2's incomplete metadata failure, and all associated receipts and logs.

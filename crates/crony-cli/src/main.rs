@@ -86,6 +86,11 @@ enum Command {
         #[command(flatten)]
         args: Box<publish::FactoryPublishArgs>,
     },
+    /// Deliver saved human publication requests using an enrolled workload credential.
+    FactoryPublisherWatch {
+        #[command(flatten)]
+        args: Box<publish::FactoryPublisherWatchArgs>,
+    },
     Mission {
         corp_id: Uuid,
         actor_id: Uuid,
@@ -238,7 +243,12 @@ impl From<DeliverableArg> for DeliverableForm {
 #[tokio::main]
 async fn main() -> Result<()> {
     let mut args = Args::parse();
-    let (server, client) = transport::api_client(&args.server, args.access_token.as_deref())?;
+    let access_token = if matches!(&args.command, Command::FactoryPublisherWatch { .. }) {
+        None
+    } else {
+        args.access_token.as_deref()
+    };
+    let (server, client) = transport::api_client(&args.server, access_token)?;
     args.server = server;
     let response = match args.command {
         Command::FactoryAuthority {
@@ -355,6 +365,9 @@ async fn main() -> Result<()> {
         }
         Command::FactoryPublish { args: publish_args } => {
             publish::run(&client, &args.server, *publish_args).await?
+        }
+        Command::FactoryPublisherWatch { args: watch_args } => {
+            publish::watch(&client, &args.server, *watch_args).await?
         }
         Command::Mission {
             corp_id,

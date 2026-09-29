@@ -1008,6 +1008,28 @@ pub struct SourceDeliverable {
     pub created_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PullRequestPublicationPlan {
+    pub source_deliverable_id: Uuid,
+    pub target_repository: String,
+    pub base_ref: String,
+    pub branch: String,
+    pub title: String,
+    pub body: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PullRequestPublicationPreview {
+    pub plan: PullRequestPublicationPlan,
+    pub commit_sha: String,
+    pub artifact_sha256: String,
+    pub verification_sha256: String,
+    pub source_revision: String,
+    pub fingerprint: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PullRequestPublication {
     pub id: Uuid,

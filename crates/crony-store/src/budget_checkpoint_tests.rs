@@ -18,6 +18,9 @@ mod retained_receipts;
 #[path = "canonical_source_verification_tests.rs"]
 mod canonical_source;
 
+#[path = "human_publication_request_tests.rs"]
+mod human_requests;
+
 const CORP: Uuid = Uuid::from_u128(1);
 const MISSION: Uuid = Uuid::from_u128(2);
 const TASK: Uuid = Uuid::from_u128(3);
@@ -1995,6 +1998,7 @@ async fn publication_fixture(
             OWNER,
             "issue148-store-publisher",
             &publisher_hash,
+            None,
             Utc::now() + Duration::hours(1),
         )
         .await
@@ -2034,6 +2038,27 @@ async fn publication_fixture(
     (store, command, artifact_id, input)
 }
 
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue219_native_publication_requires_publish_permission(pool: PgPool) {
+    let (store, _, _, mut input) = publication_fixture(pool).await;
+    sqlx::query("UPDATE actors SET role='member' WHERE id=$1 AND corp_id=$2")
+        .bind(input.actor_id)
+        .bind(input.corp_id)
+        .execute(&store.pool)
+        .await
+        .unwrap();
+    input.actor_role = "member".into();
+    let before = publication_state(&store).await;
+    let result = store.start_pull_request_publication(input).await;
+    assert!(
+        result.is_err(),
+        "a matching member role must not authorize publication without Publish permission"
+    );
+    assert!(result.unwrap_err().to_string().contains("forbidden"));
+    assert_eq!(publication_state(&store).await, before);
+}
+
 fn publication_renewal(
     input: &StartPullRequestPublicationInput,
     started: &PullRequestPublicationOutcome,
@@ -2049,6 +2074,118 @@ fn publication_renewal(
         idempotency_key: Uuid::new_v4().to_string(),
         lease_seconds: 300,
     }
+}
+
+fn human_publication_preview(
+    input: &StartPullRequestPublicationInput,
+) -> PreviewPullRequestPublicationInput {
+    PreviewPullRequestPublicationInput {
+        corp_id: input.corp_id,
+        work_item_id: input.work_item_id,
+        actor_id: input.actor_id,
+        actor_role: input.actor_role.clone(),
+        plan: crony_domain::PullRequestPublicationPlan {
+            source_deliverable_id: input.source_deliverable_id,
+            target_repository: input.target_repository.clone(),
+            base_ref: input.base_ref.clone(),
+            branch: input.branch.clone(),
+            title: input.title.clone(),
+            body: input.body.clone(),
+        },
+    }
+}
+
+async fn human_publication_request(
+    store: &PgStore,
+    input: &StartPullRequestPublicationInput,
+) -> RequestPullRequestPublicationInput {
+    RequestPullRequestPublicationInput {
+        corp_id: input.corp_id,
+        work_item_id: input.work_item_id,
+        actor_id: input.actor_id,
+        actor_role: input.actor_role.clone(),
+        preview: store
+            .preview_pull_request_publication(human_publication_preview(input))
+            .await
+            .unwrap(),
+        authorization_id: input.authorization_id,
+        authorization_reason: input.authorization_reason.clone(),
+        idempotency_key: Uuid::new_v4().to_string(),
+    }
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue219_native_publication_request_waits_without_effect_authority(pool: PgPool) {
+    let (store, _, _, input) = publication_fixture(pool).await;
+    let before = publication_state(&store).await;
+    let request = human_publication_request(&store, &input).await;
+    assert_eq!(
+        publication_state(&store).await,
+        before,
+        "preview is read only"
+    );
+    let result = store.request_pull_request_publication(request).await;
+    assert!(
+        result.is_ok(),
+        "a verified human request must be saved: {result:?}"
+    );
+    let requested = result.unwrap();
+    assert_eq!(
+        requested.publication.state,
+        PullRequestPublicationState::Requested
+    );
+    assert_eq!(requested.publication.attempt_count, 0);
+    assert!(requested.publisher_token.is_none());
+    assert!(requested.publication.publisher_id.is_none());
+    assert!(requested.publication.publisher_lease_expires_at.is_none());
+    let after = publication_state(&store).await;
+    assert_eq!(after["item"]["state"], "verified");
+    assert_eq!(after["publication"]["attempts"], json!([]));
+    assert!(after["publication"]["rows"][0]["publisher_token"].is_null());
+    assert_publication_preserves_models(&before, &after);
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue219_native_publication_request_replay_converges_without_a_lease(pool: PgPool) {
+    let (store, _, _, input) = publication_fixture(pool).await;
+    let request = human_publication_request(&store, &input).await;
+    let (first, second) = tokio::join!(
+        store.request_pull_request_publication(request.clone()),
+        store.request_pull_request_publication(request.clone())
+    );
+    assert!(
+        first.is_ok() && second.is_ok(),
+        "both requests must converge: {first:?} {second:?}"
+    );
+    let (first, second) = (first.unwrap(), second.unwrap());
+    assert_eq!(first.publication.id, second.publication.id);
+    assert_ne!(first.replayed, second.replayed);
+    assert!(first.publisher_token.is_none() && second.publisher_token.is_none());
+    let mut duplicate = request.clone();
+    duplicate.idempotency_key = Uuid::new_v4().to_string();
+    duplicate.authorization_id = Uuid::new_v4();
+    let duplicate = store
+        .request_pull_request_publication(duplicate)
+        .await
+        .unwrap();
+    assert_eq!(duplicate.publication.id, first.publication.id);
+    assert_eq!(
+        duplicate.publication.authorization_id,
+        request.authorization_id
+    );
+    assert!(duplicate.publisher_token.is_none() && duplicate.replayed);
+    let before = publication_state(&store).await;
+    let mut collision = request;
+    collision.preview.plan.branch = "ecorp/conflicting-human-intent".into();
+    assert!(
+        store
+            .request_pull_request_publication(collision)
+            .await
+            .is_err()
+    );
+    assert_eq!(publication_state(&store).await, before);
 }
 
 #[sqlx::test(migrations = "../../db/migrations")]

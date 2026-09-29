@@ -1,0 +1,904 @@
+import { captureOwnedTestServerManifest, restartOwnedTestServer, stopOwnedTestServer } from "file:///<USERPROFILE>/.codex/worktrees/issue219-publication/ecorp/tools/owned_test_stack.mjs"
+import { createRequire } from 'node:module'
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import { execFile as execFileCallback } from 'node:child_process'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
+import { promisify } from 'node:util'
+import { createServer } from 'node:http'
+
+const execFile = promisify(execFileCallback)
+const server = process.env.CRONY_SERVER_HTTP ?? 'http://127.0.0.1:8791'
+const socketBase = server.replace(/^http/, 'ws')
+const databaseUrl =
+  process.env.DATABASE_URL ?? 'postgres://crony:crony@127.0.0.1:54329/crony'
+const root = "<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp"
+const sourceRepository = process.env.ECORP_TEST_SOURCE_REPOSITORY
+if (!sourceRepository) {
+  throw new Error('ECORP_TEST_SOURCE_REPOSITORY must identify the isolated source clone')
+}
+const cli =
+  process.env.CRONY_CLI_BINARY ??
+  path.join(
+    root,
+    'target',
+    'debug',
+    process.platform === 'win32' ? 'crony-cli.exe' : 'crony-cli',
+  )
+const serverBinary =
+  process.env.CRONY_TEST_SERVER_BINARY ??
+  path.join(
+    root,
+    'target',
+    'debug',
+    process.platform === 'win32' ? 'crony-server.exe' : 'crony-server',
+  )
+const fakeGithub = path.join(root, 'tools', 'fake_github_cli.mjs')
+const nonce = crypto.randomUUID()
+const authorizationId = crypto.randomUUID()
+const artifactRoot = path.resolve(
+  process.env.ECORP_TEST_ARTIFACT_ROOT ??
+    path.join(os.tmpdir(), `ecorp-cockpit-publication-${nonce}`),
+)
+await mkdir(artifactRoot, { recursive: true })
+const statePath = path.join(artifactRoot, 'fake-github-state.json')
+const remotePath = path.join(artifactRoot, 'target-remote.git')
+const credentialPath = path.join(artifactRoot, 'publisher.credential')
+
+async function request(url, init) {
+  const response = await fetch(`${server}${url}`, init)
+  const body = response.status === 204 ? null : await response.json()
+  return { response, body }
+}
+
+async function requestOk(url, init) {
+  const result = await request(url, init)
+  if (!result.response.ok) {
+    throw new Error(
+      `${init?.method ?? 'GET'} ${url}: ${result.response.status} ${JSON.stringify(result.body)}`,
+    )
+  }
+  return result.body
+}
+
+function post(url, body) {
+  return request(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
+function postOk(url, body) {
+  return requestOk(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
+async function snapshot(demo, actorId = demo.alice_actor_id) {
+  return requestOk(
+    `/api/corps/${demo.corp_id}/snapshot?actor_id=${actorId}`,
+  )
+}
+
+async function waitFor(demo, predicate, description, timeoutMs = 300_000) {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    const state = await snapshot(demo)
+    const value = predicate(state)
+    if (value) return { state, value }
+    await new Promise((resolve) => setTimeout(resolve, 100))
+  }
+  throw new Error(`timed out waiting for ${description}`)
+}
+
+async function openBrowserClient(demo, actorId, afterSeq = 0) {
+  const events = []
+  let cursor = afterSeq
+  let readyResolve
+  let readyReject
+  let closedResolve
+  const ready = new Promise((resolve, reject) => {
+    readyResolve = resolve
+    readyReject = reject
+  })
+  const closed = new Promise((resolve) => {
+    closedResolve = resolve
+  })
+  const socket = new WebSocket(
+    `${socketBase}/ws/corps/${demo.corp_id}?actor_id=${actorId}&after_seq=${afterSeq}`,
+  )
+  const timeout = setTimeout(() => {
+    socket.close()
+    readyReject(new Error(`browser ${actorId} replay timed out`))
+  }, 10_000)
+  socket.onerror = () => {
+    clearTimeout(timeout)
+    readyReject(new Error(`browser ${actorId} websocket failed`))
+  }
+  socket.onclose = () => closedResolve()
+  socket.onmessage = (message) => {
+    const payload = JSON.parse(message.data)
+    if (payload.type === 'event') {
+      events.push(payload.event)
+      cursor = Math.max(cursor, payload.event.seq)
+    } else if (payload.type === 'ready') {
+      clearTimeout(timeout)
+      cursor = Math.max(cursor, payload.replayed_through)
+      readyResolve()
+    }
+  }
+  await ready
+  return { actorId, events, socket, closed, cursor: () => cursor }
+}
+
+function assertUniqueReplay(events, afterSeq) {
+  const sequences = events.map((event) => event.seq)
+  assert.equal(new Set(sequences).size, sequences.length)
+  assert.ok(sequences.every((sequence) => sequence > afterSeq))
+  assert.ok(
+    sequences.every(
+      (sequence, index) => index === 0 || sequence > sequences[index - 1],
+    ),
+  )
+}
+
+async function runController(demo, issueNumber) {
+  const { stdout } = await execFile(
+    cli,
+    [
+      'factory',
+      demo.corp_id,
+      demo.alice_actor_id,
+      '--owner',
+      'acme',
+      '--project-number',
+      '7',
+      '--repository',
+      'All-The-Vibes/ecorp',
+      '--source-repository-path',
+      sourceRepository,
+      '--source-base-ref',
+      'HEAD',
+      '--publication-base-ref',
+      'HEAD',
+      '--adapter',
+      'fake-process',
+      '--strategy',
+      'single',
+      '--budget-tokens',
+      '20000',
+      '--budget-cost-microusd',
+      '1000000',
+      '--lease-seconds',
+      '300',
+      '--issue',
+      String(issueNumber),
+      '--github-cli',
+      process.execPath,
+      '--write-scope',
+      '**',
+    ],
+    {
+      cwd: process.env.CRONY_TEST_FIXTURE_ROOT,
+      env: {
+        ...process.env,
+        ECORP_GITHUB_CLI_PREFIX_ARGS_JSON: JSON.stringify([fakeGithub]),
+        ECORP_FAKE_GITHUB_STATE: statePath,
+      },
+      timeout: 90000, maxBuffer: 4 * 1024 * 1024,
+      windowsHide: true,
+    },
+  )
+  return JSON.parse(stdout)
+}
+
+async function enrollPublisher(demo, publisherId, destination = credentialPath) {
+  const enrollment = await postOk(
+    `/api/corps/${demo.corp_id}/factory/publication-publishers/credentials`,
+    {
+      actor_id: demo.alice_actor_id,
+      publisher_id: publisherId,
+      repository: 'all-the-vibes/ecorp',
+      expires_in_seconds: 3600,
+    },
+  )
+  await writeFile(destination, enrollment.credential)
+  return enrollment
+}
+
+const web = process.env.CRONY_TEST_WEB_URL
+const fixture = process.env.CRONY_TEST_FIXTURE_ROOT
+const manifestPath = process.env.CRONY_TEST_SERVER_PID_FILE
+assert.ok(web && fixture && manifestPath && path.isAbsolute(fixture))
+const reportPath = path.join(artifactRoot, 'browser-publication-report.json')
+const report = {
+  suite: 'issue219-human-intent-native-publisher-browser-v1', status: 'running',
+  started_at_utc: new Date().toISOString(), real_provider_calls: 0, real_github_mutations: 0,
+  environment: 'Fresh owned PostgreSQL, native server/runner/publisher, actual Edge, deterministic agent and simulated GitHub CLI with a real private Git remote.',
+  limitations: ['Development authentication; production OIDC is covered separately.', 'GitHub effects are controlled local simulations, not hosted publication.'],
+  stage: 'native verified source', screenshots: [], browser_mutations: [], blocked_requests: [], page_errors: [], watcher_runs: [],
+}
+let browser, page, context, queueProxy
+const clients = []
+const secrets = []
+const pendingWatchers = []
+const save = async () => writeFile(reportPath, JSON.stringify(report, null, 2) + '\n')
+function safeError(error) {
+  let message = String(error?.stack ?? error)
+  for (const secret of [...secrets, databaseUrl]) if (secret) message = message.split(secret).join('[private fixture value]')
+  return message.slice(0, 6000)
+}
+const browserEnvironment = Object.fromEntries(Object.entries(process.env).filter(([name]) =>
+  /^(PATH|PATHEXT|SystemRoot|windir|ComSpec|TEMP|TMP|USERPROFILE|HOMEDRIVE|HOMEPATH|HOME|APPDATA|LOCALAPPDATA|PROGRAMDATA|PROGRAMFILES|PROGRAMFILES\(X86\)|PROGRAMW6432|SYSTEMDRIVE|USERNAME|USERDOMAIN|COMPUTERNAME|NUMBER_OF_PROCESSORS|PROCESSOR_ARCHITECTURE|OS)$/i.test(name)))
+// Edge needs its normal Windows known-directory environment even when its
+// actual browser data is a fresh Playwright profile under this owned fixture.
+// Restore only these public OS paths for the browser; native workers keep their
+// private homes and the browser still receives no application credentials.
+const browserOsPaths = JSON.parse(process.env.CRONY_TEST_BROWSER_OS_PATHS ?? '{}')
+const browserPathKeys = ['HOME', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA']
+assert.ok(Object.keys(browserOsPaths).every(key => browserPathKeys.includes(key)))
+for (const key of browserPathKeys) {
+  for (const existing of Object.keys(browserEnvironment)) {
+    if (existing.toLowerCase() === key.toLowerCase()) delete browserEnvironment[existing]
+  }
+  const value = browserOsPaths[key]
+  if (value !== undefined) {
+    assert.ok(typeof value === 'string' && path.isAbsolute(value) && !value.includes('\0'))
+    browserEnvironment[key] = value
+  } else assert.equal(key, 'HOME', 'Required Windows browser path is missing')
+}
+const restartOptions = {
+  root: fixture, server, databaseUrl, binary: serverBinary, manifestPath,
+  args: ['--mode', 'development', '--object-store-local-root', path.join(fixture, 'artifact-objects')],
+  logPrefix: 'human-publication-restart', minimumRunners: 1,
+}
+function runWatcher(demo, credential, label, crashAfter, options = {}) {
+  const token = `synthetic-github-${crypto.randomUUID()}`
+  secrets.push(token)
+  let child
+  const promise = (async () => {
+    const startedAt = new Date().toISOString()
+    let result, exitCode = 0
+    try {
+      const invocation = execFile(cli, [
+        '--server', options.server ?? server,
+        'factory-publisher-watch', demo.corp_id,
+        '--repository', 'All-The-Vibes/ecorp', '--publisher-credential-file', credential,
+        '--github-cli', process.execPath, '--polls', String(options.polls ?? 1),
+        '--poll-interval-seconds', String(options.interval ?? 1),
+        '--max-attempts', String(options.attempts ?? 4),
+        '--page-size', '2', '--max-pages', '3', '--lease-seconds', '5',
+      ], {
+        cwd: fixture, windowsHide: true, timeout: 240000, maxBuffer: 4 * 1024 * 1024,
+        env: {
+          ...process.env, GH_TOKEN: token, ECORP_FAKE_GITHUB_EXPECT_TOKEN: token,
+          ECORP_GITHUB_CLI_PREFIX_ARGS_JSON: JSON.stringify([fakeGithub]),
+          ECORP_FAKE_GITHUB_STATE: statePath, ECORP_PUBLICATION_TEST_REMOTE_URL: remotePath,
+          ECORP_PUBLICATION_EFFECT_LEASE_SECONDS: '30', ECORP_GITHUB_COMMAND_TIMEOUT_MS: '15000',
+          ECORP_SOURCE_GIT_COMMAND_TIMEOUT_MS: '30000',
+          ...(crashAfter ? { ECORP_PUBLICATION_TEST_CRASH_AFTER: crashAfter } : {}),
+        },
+      })
+      child = invocation.child
+      assert.ok(child?.pid > 0, 'Retain the exact native watcher process identity')
+      const { stdout } = await invocation
+      result = JSON.parse(stdout)
+      assert.equal(Boolean(crashAfter), false, 'The requested native crash hook must terminate the publisher')
+    } catch (error) {
+      if (crashAfter && error.code === 86) { exitCode = 86; result = { crashed: true, stage: crashAfter } }
+      else throw new Error(`Watcher ${label}: ${safeError(error)}`)
+    }
+    report.watcher_runs.push({ label, process_id: child.pid, started_at_utc: startedAt,
+      finished_at_utc: new Date().toISOString(), exit_code: exitCode, result })
+    await save()
+    return result
+  })().then(value => ({ value }), error => ({ error }))
+  pendingWatchers.push(promise)
+  const completed = async () => { const result = await promise; if (result.error) throw result.error; return result.value }
+  completed.pid = () => child?.pid
+  completed.isRunning = () => child?.exitCode === null && child?.signalCode === null
+  return completed
+}
+
+// Fixture-only scheduling proxy: all responses come from the real native server.
+// It never changes eligibility, lease timestamps, publication state or replies.
+async function createQueueSchedulingProxy(demo, publicationId) {
+  const gate = () => {
+    let resolve
+    const promise = new Promise(done => { resolve = done })
+    return { promise, resolve }
+  }
+  const firstObserved = gate(), firstRelease = gate(), busyObserved = gate()
+  const secondObserved = gate(), secondRelease = gate()
+  const events = [], errors = []
+  let queueReads = 0, closed = false
+  const wait = async (signal, label) => {
+    let timer
+    try {
+      return await Promise.race([signal.promise, new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`Scheduling proxy timed out: ${label}`)), 60000)
+      })])
+    } finally { clearTimeout(timer) }
+  }
+  const proxy = createServer((incoming, outgoing) => {
+    const handle = async () => {
+      const url = new URL(incoming.url, server)
+      assert.equal(url.origin, server)
+      assert.ok(url.pathname.startsWith(`/api/corps/${demo.corp_id}/factory/`))
+      const queue = incoming.method === 'GET' && url.pathname.endsWith('/publisher/queue')
+      const ordinal = queue ? ++queueReads : null
+      if (ordinal === 2) {
+        events.push({ event: 'second_queue_waiting_before_native_request', at: new Date().toISOString() })
+        secondObserved.resolve()
+        await secondRelease.promise
+      }
+      if (closed) { outgoing.writeHead(503); outgoing.end(); return }
+      const chunks = []
+      let length = 0
+      for await (const chunk of incoming) {
+        length += chunk.length
+        assert.ok(length <= 4 * 1024 * 1024)
+        chunks.push(chunk)
+      }
+      const headers = Object.fromEntries(Object.entries(incoming.headers).filter(([name]) =>
+        !['host', 'connection', 'content-length', 'transfer-encoding'].includes(name)))
+      const response = await fetch(url, {
+        method: incoming.method, headers,
+        ...(chunks.length ? { body: Buffer.concat(chunks) } : {}),
+        redirect: 'error', signal: AbortSignal.timeout(60000),
+      })
+      const bytes = Buffer.from(await response.arrayBuffer())
+      if (queue) {
+        assert.equal(response.status, 200)
+        const page = JSON.parse(bytes.toString('utf8'))
+        assert.deepEqual(page.publication_ids, [publicationId])
+        events.push({ event: 'native_queue_reply', ordinal, at: new Date().toISOString(), publication_id: publicationId })
+        if (ordinal === 1) {
+          firstObserved.resolve()
+          await firstRelease.promise
+        }
+      }
+      if (incoming.method === 'POST' && url.pathname.endsWith(`/publications/${publicationId}/claim`)) {
+        assert.equal(response.status, 200)
+        const reply = JSON.parse(bytes.toString('utf8'))
+        const busy = reply.busy === true
+        events.push({ event: 'native_claim_reply', busy, at: new Date().toISOString(), publication_id: reply.publication.id })
+        if (busy) busyObserved.resolve()
+      }
+      outgoing.writeHead(response.status, {
+        'content-type': response.headers.get('content-type') ?? 'application/octet-stream',
+        'content-length': String(bytes.length),
+      })
+      outgoing.end(bytes)
+    }
+    void handle().catch(error => {
+      errors.push(safeError(error))
+      outgoing.destroy()
+    })
+  })
+  await new Promise((resolve, reject) => {
+    proxy.once('error', reject)
+    proxy.listen(0, '127.0.0.1', resolve)
+  })
+  return {
+    origin: `http://127.0.0.1:${proxy.address().port}`, events, errors,
+    firstObserved: () => wait(firstObserved, 'eligible first native queue response'),
+    busyObserved: () => wait(busyObserved, 'actual busy claim'),
+    secondObserved: () => wait(secondObserved, 'same watcher second poll'),
+    releaseFirst: () => { events.push({ event: 'first_queue_released_after_winner_claim', at: new Date().toISOString() }); firstRelease.resolve() },
+    releaseSecond: () => { events.push({ event: 'second_queue_released_after_observed_expiry', at: new Date().toISOString() }); secondRelease.resolve() },
+    releaseAll: () => { closed = true; firstRelease.resolve(); secondRelease.resolve() },
+    close: async () => { proxy.closeAllConnections(); await new Promise(resolve => proxy.close(resolve)) },
+  }
+}
+async function updateFake(patch) {
+  const state = JSON.parse(await readFile(statePath, 'utf8'))
+  await patch(state)
+  await writeFile(statePath, JSON.stringify(state, null, 2) + '\n')
+}
+async function screenshot(label) {
+  const originalViewport = page.viewportSize()
+  try {
+    for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 1050 }]) {
+      await page.setViewportSize(viewport)
+      const card = page.getByTestId('factory-publication')
+      await card.waitFor({ state: 'visible' })
+      await card.scrollIntoViewIfNeeded()
+      const layout = await card.evaluate(element => {
+        const rect = element.getBoundingClientRect()
+        return { viewport_width: window.innerWidth, document_width: document.documentElement.scrollWidth,
+          card_x: rect.x, card_right: rect.right, card_width: rect.width,
+          card_client_width: element.clientWidth, card_scroll_width: element.scrollWidth }
+      })
+      assert.ok(layout.document_width <= viewport.width + 1, `Document overflows at ${viewport.width}px`)
+      assert.ok(layout.card_x >= -1 && layout.card_right <= viewport.width + 1, `Publication card exceeds ${viewport.width}px viewport`)
+      assert.ok(layout.card_scroll_width <= layout.card_client_width + 1, `Publication card overflows at ${viewport.width}px`)
+      const name = `${label}-${viewport.width}px`
+      const destination = path.join(artifactRoot, `${name}.png`)
+      await page.screenshot({ path: destination, fullPage: true })
+      report.screenshots.push({ label: name, viewport, layout, path: destination,
+        sha256: crypto.createHash('sha256').update(await readFile(destination)).digest('hex') })
+      await save()
+    }
+  } finally {
+    await page.setViewportSize(originalViewport)
+  }
+}
+async function openPage(demo) {
+  page = await context.newPage()
+  page.setDefaultTimeout(30000)
+  page.on('pageerror', error => report.page_errors.push(safeError(error)))
+  const bootstrap = page.waitForResponse(response => {
+    const url = new URL(response.url())
+    return url.origin === server && url.pathname === '/api/demo/bootstrap' && response.request().method() === 'POST'
+  })
+  await page.goto(web + '/?actor=alice#factory', { waitUntil: 'networkidle', timeout: 45000 })
+  const response = await bootstrap
+  assert.equal(response.status(), 200)
+  assert.equal((await response.json()).corp_id, demo.corp_id)
+  await page.locator('.live-indicator.live-live').waitFor({ state: 'visible', timeout: 45000 })
+}
+async function selectItem(itemId) {
+  const selector = page.locator('#factory-work-switch')
+  const option = selector.locator(`option[value="${itemId}"]`)
+  await option.waitFor({ state: 'attached' })
+  const issue = /^#(\d+) · /.exec((await option.textContent()).trim())
+  assert.ok(issue, 'Every Factory option identifies its source issue')
+  let mode
+  if (await selector.isVisible()) {
+    await selector.selectOption(itemId)
+    mode = 'mobile-quick-switch'
+  } else {
+    const button = page.getByRole('navigation', { name: 'Factory work items', exact: true })
+      .getByRole('button').filter({ hasText: new RegExp(`GitHub #${issue[1]} ·`) })
+    assert.equal(await button.count(), 1, 'The desktop queue must identify exactly one source item')
+    await button.click()
+    assert.equal(await button.getAttribute('aria-pressed'), 'true')
+    mode = 'desktop-queue'
+  }
+  const dossier = page.locator(`[data-factory-item-id="${itemId}"]`)
+  assert.equal(await dossier.count(), 1, 'The selected dossier has the exact work-item identity')
+  const card = dossier.getByTestId('factory-publication')
+  await card.waitFor({ state: 'visible' })
+  assert.equal(await selector.inputValue(), itemId)
+  report.item_selections ??= []
+  report.item_selections.push({ item_id: itemId, issue_number: Number(issue[1]), mode, viewport: page.viewportSize() })
+  return card
+}
+async function previewThroughUI(demo, item, sourceResult) {
+  const card = await selectItem(item.id)
+  const responsePromise = page.waitForResponse(response => new URL(response.url()).pathname ===
+    `/api/corps/${demo.corp_id}/factory/work-items/${item.id}/publication/preview`)
+  await card.getByRole('button', { name: 'Preview pull request', exact: true }).click()
+  const response = await responsePromise
+  assert.equal(response.status(), 200)
+  assert.equal(response.headers()['cache-control'], 'no-store')
+  const preview = await response.json()
+  assert.equal(preview.plan.source_deliverable_id, sourceResult.id)
+  assert.equal(preview.commit_sha, sourceResult.head_commit)
+  assert.equal(preview.plan.target_repository.toLowerCase(), 'all-the-vibes/ecorp')
+  await card.getByRole('heading', { name: 'Review the pull request target', exact: true }).waitFor()
+  await updateFake(fake => { fake.branch_heads[preview.plan.branch] = sourceResult.head_commit })
+  return { card, preview }
+}
+async function requestThroughUI(demo, item, card, preview) {
+  const route = `/api/corps/${demo.corp_id}/factory/work-items/${item.id}/publication/request`
+  const responsePromise = page.waitForResponse(response => new URL(response.url()).pathname === route)
+  await card.getByRole('button', { name: 'Request pull request', exact: true }).click()
+  const response = await responsePromise
+  assert.equal(response.status(), 200)
+  assert.equal(response.headers()['cache-control'], 'no-store')
+  assert.deepEqual(response.request().postDataJSON(), { actor_id: demo.alice_actor_id, preview })
+  const saved = await response.json()
+  assert.equal(saved.publisher_token, null)
+  assert.equal(saved.publication.state, 'requested')
+  assert.equal(saved.publication.attempt_count, 0)
+  assert.equal(saved.publication.publisher_lease_expires_at, null)
+  assert.equal(saved.publication.pull_request_url, null)
+  report.human_requests ??= []
+  report.human_requests.push({ route, publication_id: saved.publication.id, selected_source: preview.plan.source_deliverable_id,
+    commit: preview.commit_sha, fingerprint: preview.fingerprint, state: saved.publication.state,
+    attempt_count: saved.publication.attempt_count, tokenless: true })
+  await card.getByRole('heading', { name: 'Waiting for a trusted publisher', exact: true }).waitFor()
+  return saved.publication
+}
+async function resultState(demo, id, predicate, label) {
+  const observed = await waitFor(demo, state => {
+    const value = state.snapshot.pull_request_publications.find(publication => publication.id === id)
+    return value && predicate(value) ? value : null
+  }, label, 240000)
+  return observed.value
+}
+
+try {
+  await save()
+  const sourceBaseCommit = (
+  await execFile('git', ['rev-parse', 'HEAD'], {
+    cwd: sourceRepository,
+    windowsHide: true,
+  })
+).stdout.trim()
+await execFile('git', ['clone', '--quiet', '--bare', '--no-hardlinks', sourceRepository, remotePath], {
+  cwd: artifactRoot,
+  windowsHide: true,
+})
+await execFile(
+  'git',
+  ['--git-dir', remotePath, 'update-ref', 'refs/heads/main', sourceBaseCommit],
+  { cwd: artifactRoot, windowsHide: true },
+)
+await execFile(
+  'git',
+  ['--git-dir', remotePath, 'symbolic-ref', 'HEAD', 'refs/heads/main'],
+  { cwd: artifactRoot, windowsHide: true },
+)
+
+// This owned full-history mirror models a packed Git remote. Native fetches
+// retain the product's existing 30-second cap; no source or refs are shortened.
+const prepareRemoteGit = async args => (await execFile('git', ['--git-dir', remotePath, ...args], {
+  cwd: artifactRoot, windowsHide: true, timeout: 180_000, maxBuffer: 4 * 1024 * 1024,
+})).stdout.trim()
+const remoteRefsBeforePacking = await prepareRemoteGit(['show-ref', '--head'])
+const remotePackingStarted = Date.now()
+await prepareRemoteGit(['repack', '-a', '-d', '--write-bitmap-index'])
+await prepareRemoteGit(['commit-graph', 'write', '--reachable'])
+await prepareRemoteGit(['fsck', '--full'])
+assert.equal(await prepareRemoteGit(['show-ref', '--head']), remoteRefsBeforePacking)
+assert.equal(await prepareRemoteGit(['rev-parse', 'HEAD']), sourceBaseCommit)
+report.remote_preparation = {
+  native_packing: true, complete_history_preserved: true, refs_unchanged: true,
+  fsck_passed: true, preparation_elapsed_ms: Date.now() - remotePackingStarted,
+  product_git_timeout_ms: 30_000,
+}
+await save()
+
+const issueNumber = 9201
+const issue = {
+  id: `I_COCKPIT_PUBLICATION_${nonce}`,
+  number: issueNumber,
+  title: 'Publish one dark-factory cockpit result exactly once',
+  body: `## Outcome
+
+Create one verified commit and publish one reviewable pull request.
+
+## Acceptance criteria
+
+- [ ] one work item, mission, task, and run
+- [ ] one verified commit branch
+- [ ] one pull request with auto-merge disabled
+- [ ] Project moves to In Review after the pull request exists
+
+## Dependencies
+
+No blockers.
+`,
+  url: `https://github.com/All-The-Vibes/ecorp/issues/${issueNumber}`,
+  state: 'OPEN',
+  createdAt: '2026-09-04T20:00:00Z',
+  updatedAt: '2026-09-04T20:00:00Z',
+  labels: [{ name: 'factory:ready' }],
+}
+await writeFile(
+  statePath,
+  `${JSON.stringify(
+    {
+      repository: 'all-the-vibes/ecorp',
+      canonical_repository: 'All-The-Vibes/ecorp',
+      project: {
+        id: 'PVT_COCKPIT_PUBLICATION',
+        number: 7,
+        owner: 'acme',
+        title: 'Cockpit Publication Test',
+        status_field_id: 'PVTSSF_COCKPIT_PUBLICATION',
+        status_options: [
+          { id: 'todo', name: 'Todo' },
+          { id: 'in-progress', name: 'In Progress' },
+          { id: 'in-review', name: 'In Review' },
+          { id: 'done', name: 'Done' },
+        ],
+      },
+      items: [
+        {
+          id: `PVTI_COCKPIT_PUBLICATION_${nonce}`,
+          status: 'Todo',
+          content: {
+            body: issue.body,
+            number: issue.number,
+            repository: 'All-The-Vibes/ecorp',
+            title: issue.title,
+            type: 'Issue',
+            url: issue.url,
+          },
+        },
+      ],
+      issues: { [String(issueNumber)]: issue },
+      pull_requests: [],
+      next_pr_number: 51,
+      item_edits: 0,
+      pr_create_calls: 0,
+      effect_log: [],
+      branch_heads: {},
+    },
+    null,
+    2,
+  )}\n`,
+)
+
+const demo = await postOk('/api/demo/bootstrap?seed_crew=true', {})
+const aliceBrowser = await openBrowserClient(demo, demo.alice_actor_id)
+clients.push(aliceBrowser)
+const bobBrowser = await openBrowserClient(demo, demo.bob_actor_id)
+clients.push(bobBrowser)
+
+const firstController = await runController(demo, issueNumber)
+assert.equal(firstController.factory_state, 'running')
+const completed = await waitFor(
+  demo,
+  (state) => {
+    const mission = state.snapshot.missions.find(
+      (candidate) => candidate.id === firstController.mission_id,
+    )
+    return mission?.status === 'completed' ? mission : null
+  },
+  'factory mission completion',
+)
+const verifiedController = await runController(demo, issueNumber)
+assert.equal(verifiedController.factory_state, 'verified')
+assert.equal(
+  verifiedController.factory_work_item_id,
+  firstController.factory_work_item_id,
+)
+
+const verified = await snapshot(demo)
+const workItem = verified.snapshot.factory_work_items.find(
+  (item) => item.id === firstController.factory_work_item_id,
+)
+assert.ok(workItem)
+const tasks = verified.snapshot.tasks.filter(
+  (task) => task.mission_id === firstController.mission_id,
+)
+assert.equal(tasks.length, 1)
+const runs = verified.snapshot.runs.filter((run) => run.task_id === tasks[0].id)
+assert.equal(runs.length, 1)
+const source = verified.snapshot.source_deliverables.find(
+  (deliverable) =>
+    deliverable.task_id === tasks[0].id &&
+    deliverable.form === 'commit_branch' &&
+    deliverable.integration_state === 'ready_for_review',
+)
+assert.ok(source?.head_commit)
+
+
+  const firstItem = workItem, firstSource = source
+  report.native_source = { work_item_id: workItem.id, mission_id: firstController.mission_id, task_id: tasks[0].id,
+    run_id: runs[0].id, source_deliverable_id: source.id, commit: source.head_commit, artifact_sha256: source.sha256,
+    verification_sha256: source.verification_sha256, integration_state: source.integration_state }
+  assert.ok(source.verification_sha256)
+  await captureOwnedTestServerManifest({ root: fixture, server, binary: serverBinary, pidPath: manifestPath,
+    pid: Number(process.env.CRONY_TEST_SERVER_PID) })
+  const enrollment = await enrollPublisher(demo, 'trusted-human-publication-a')
+  secrets.push(enrollment.credential)
+  const secondCredential = path.join(artifactRoot, 'publisher-b.credential')
+  const secondEnrollment = await enrollPublisher(demo, 'trusted-human-publication-b', secondCredential)
+  secrets.push(secondEnrollment.credential)
+  const { chromium } = createRequire(import.meta.url)(process.env.CRONY_PLAYWRIGHT_MODULE)
+  browser = await chromium.launch({ channel: 'msedge', headless: true, env: browserEnvironment, timeout: 60000 })
+  report.browser_version = browser.version()
+  context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' })
+  await context.route('**/*', async route => {
+    const req = route.request(), url = new URL(req.url())
+    const read = ['GET', 'HEAD', 'OPTIONS'].includes(req.method())
+    const permittedWrite = req.method() === 'POST' && url.origin === server &&
+      (url.pathname === '/api/demo/bootstrap' || new RegExp(`^/api/corps/${demo.corp_id}/factory/work-items/[0-9a-f-]{36}/publication/(preview|request)$`).test(url.pathname))
+    if (![server, web].includes(url.origin) || (!read && !permittedWrite)) {
+      report.blocked_requests.push({ method: req.method(), origin: url.origin, path: url.pathname })
+      await route.abort()
+    } else {
+      if (!read) report.browser_mutations.push({ method: req.method(), path: url.pathname })
+      await route.continue()
+    }
+  })
+  await context.routeWebSocket('**/*', socket => {
+    const url = new URL(socket.url())
+    if ((url.origin === server.replace(/^http/, 'ws') && url.pathname === `/ws/corps/${demo.corp_id}`) ||
+        url.origin === web.replace(/^http/, 'ws')) socket.connectToServer()
+    else { report.blocked_requests.push({ method: 'WEBSOCKET', origin: url.origin, path: url.pathname }); socket.close() }
+  })
+  report.stage = 'actual browser preview and saved waiting intent'; await save()
+  await openPage(demo)
+  let { card, preview } = await previewThroughUI(demo, firstItem, firstSource)
+  await screenshot('01-exact-result-preview')
+  const requested = await requestThroughUI(demo, firstItem, card, preview)
+  await screenshot('02-waiting-for-trusted-publisher')
+  const duplicate = await postOk(`/api/corps/${demo.corp_id}/factory/work-items/${firstItem.id}/publication/request`,
+    { actor_id: demo.alice_actor_id, preview })
+  assert.equal(duplicate.publication.id, requested.id)
+  assert.equal(duplicate.publisher_token, null)
+  assert.equal(duplicate.replayed, true)
+  const untouched = JSON.parse(await readFile(statePath, 'utf8'))
+  assert.equal(untouched.pr_create_calls, 0)
+  report.duplicate_request = { publication_id: duplicate.publication.id, replayed: true, attempts: duplicate.publication.attempt_count }
+  await page.close()
+  report.caller_disconnected_before_publisher = true
+  const offline = await resultState(demo, requested.id, value => value.state === 'requested', 'saved request after caller disconnect')
+  assert.equal(offline.attempt_count, 0)
+  await updateFake(fake => { fake.pr_create_delay_ms = 7000 })
+  queueProxy = await createQueueSchedulingProxy(demo, requested.id)
+  const survivingWatch = runWatcher(demo, secondCredential, 'same-watcher-busy-then-adopt', undefined,
+    { server: queueProxy.origin, polls: 2, attempts: 2, interval: 1 })
+  await queueProxy.firstObserved()
+  const survivingPid = survivingWatch.pid()
+  assert.ok(survivingPid > 0 && survivingWatch.isRunning())
+  const firstWatch = runWatcher(demo, credentialPath, 'first-with-native-crash', 'after_pull_request_remote')
+  const activeWinner = await resultState(demo, requested.id, value =>
+    (value.state === 'publishing' || value.state === 'branch_pushed') &&
+    value.publisher_id === 'trusted-human-publication-a' && Date.parse(value.publisher_lease_expires_at) > Date.now(),
+    'active native winning publisher lease')
+  report.active_winner_lease = { publisher_id: activeWinner.publisher_id, expires_at: activeWinner.publisher_lease_expires_at }
+  queueProxy.releaseFirst()
+  await queueProxy.busyObserved()
+  await queueProxy.secondObserved()
+  assert.ok(survivingWatch.isRunning())
+  const competingWatch = runWatcher(demo, secondCredential, 'active-lease-excluded-from-queue')
+  await openPage(demo)
+  card = await selectItem(firstItem.id)
+  await card.getByRole('heading', { name: 'Preparing the pull request', exact: true }).waitFor()
+  await screenshot('03-working-after-caller-reconnect')
+  const firstCrash = await firstWatch()
+  assert.equal(firstCrash.crashed, true)
+  const competing = await competingWatch()
+  assert.equal(competing.attempted, 0)
+  const remoteAfterCrash = JSON.parse(await readFile(statePath, 'utf8'))
+  assert.equal(remoteAfterCrash.pr_create_calls, 1)
+  assert.equal(remoteAfterCrash.pull_requests.length, 1)
+  const priorCursor = aliceBrowser.cursor()
+  const previousServerPid = Number(process.env.CRONY_TEST_SERVER_PID)
+  report.stage = 'native remote effect crash and owned server restart'; await save()
+  const restarted = await restartOwnedTestServer(restartOptions)
+  await Promise.all([aliceBrowser.closed, bobBrowser.closed])
+  const afterRestart = await openBrowserClient(demo, demo.alice_actor_id, priorCursor)
+  clients.push(afterRestart)
+  assertUniqueReplay(afterRestart.events, priorCursor)
+  report.server_restart = { previous_pid: previousServerPid, result: restarted, ordered_replay_events: afterRestart.events.length }
+  await page.locator('.live-indicator.live-live').waitFor({ state: 'visible', timeout: 60000 })
+  const expired = await resultState(demo, requested.id, value => {
+    const expiry = Date.parse(value.publisher_lease_expires_at)
+    return Number.isFinite(expiry) && expiry <= Date.now()
+  }, 'observed native publication lease expiry after crash')
+  report.crash_lease_expiry = { persisted: expired.publisher_lease_expires_at, observed_at: new Date().toISOString() }
+  assert.equal(survivingWatch.pid(), survivingPid)
+  assert.ok(survivingWatch.isRunning(), 'The exact process that lost the claim must survive through expiry')
+  queueProxy.releaseSecond()
+  const recovered = await survivingWatch()
+  assert.equal(recovered.attempted, 2)
+  assert.equal(recovered.polls, 2)
+  assert.equal(recovered.results[0].publication_id, requested.id)
+  assert.equal(recovered.results[0].status, 'failed')
+  assert.match(recovered.results[0].detail, /remains leased/)
+  assert.equal(recovered.results[1].publication_id, requested.id)
+  assert.equal(recovered.results[1].status, 'published')
+  assert.deepEqual(queueProxy.errors, [])
+  assert.equal(queueProxy.events.filter(event => event.event === 'native_queue_reply').length, 2)
+  assert.equal(queueProxy.events.filter(event => event.event === 'native_claim_reply' && event.busy).length, 1)
+  report.same_watcher_recovery = { process_id: survivingPid, watcher_invocations: 1,
+    attempted: recovered.attempted, results: recovered.results, events: queueProxy.events,
+    queue_and_claim_responses: 'Unmodified actual server replies; the proxy only schedules delivery and request forwarding.' }
+  const remoteAfterRecovery = JSON.parse(await readFile(statePath, 'utf8'))
+  assert.equal(remoteAfterRecovery.pr_create_calls, 1)
+  assert.equal(remoteAfterRecovery.pull_requests.length, 1)
+  const published = await resultState(demo, requested.id, value => value.state === 'published', 'persisted native publication')
+  card = await selectItem(firstItem.id)
+  await card.getByRole('heading', { name: 'Your pull request is ready', exact: true }).waitFor()
+  const link = card.getByRole('link', { name: 'Open pull request #51', exact: true })
+  assert.equal(await link.getAttribute('href'), published.pull_request_url)
+  assert.equal(published.pull_request_url, 'https://github.com/All-The-Vibes/ecorp/pull/51')
+  for (const flag of ['auto_merge_enabled', 'merge_authorized', 'deployment_authorized']) assert.equal(published[flag], false)
+  await screenshot('04-published-exact-link')
+  const stable = await runWatcher(demo, credentialPath, 'completed-publication-not-repeated')()
+  assert.equal(stable.attempted, 0)
+  report.recovery = { publication_id: published.id, state: published.state, pull_request_url: published.pull_request_url,
+    attempts: published.attempt_count, competing_attempts: competing.attempted, repeated_attempts: stable.attempted,
+    auto_merge_enabled: false, merge_authorized: false, deployment_authorized: false }
+
+  report.stage = 'second actual native result and visible publication failure'; await save()
+  const secondNumber = issueNumber + 1
+  await updateFake(fake => {
+    const secondIssue = { ...issue, id: `I_HUMAN_FAILURE_${nonce}`, number: secondNumber,
+      title: 'Show a failed publication without retrying the saved request',
+      url: `https://github.com/All-The-Vibes/ecorp/issues/${secondNumber}` }
+    fake.issues[String(secondNumber)] = secondIssue
+    fake.items.push({ id: `PVTI_HUMAN_FAILURE_${nonce}`, status: 'Todo', content: {
+      body: secondIssue.body, number: secondNumber, repository: 'All-The-Vibes/ecorp',
+      title: secondIssue.title, type: 'Issue', url: secondIssue.url } })
+    fake.pr_create_delay_ms = 0
+  })
+  const secondStarted = await runController(demo, secondNumber)
+  assert.equal(secondStarted.factory_state, 'running')
+  await waitFor(demo, state => state.snapshot.missions.find(item => item.id === secondStarted.mission_id)?.status === 'completed', 'second verified native mission')
+  const secondVerified = await runController(demo, secondNumber)
+  assert.equal(secondVerified.factory_state, 'verified')
+  const secondSnapshot = await snapshot(demo)
+  const secondItem = secondSnapshot.snapshot.factory_work_items.find(item => item.id === secondStarted.factory_work_item_id)
+  const secondTask = secondSnapshot.snapshot.tasks.find(task => task.mission_id === secondStarted.mission_id)
+  const secondSource = secondSnapshot.snapshot.source_deliverables.find(item => item.task_id === secondTask.id && item.integration_state === 'ready_for_review')
+  assert.ok(secondSource?.verification_sha256)
+  const secondPreview = await previewThroughUI(demo, secondItem, secondSource)
+  const failedRequest = await requestThroughUI(demo, secondItem, secondPreview.card, secondPreview.preview)
+  await updateFake(fake => { fake.fail_next_item_edit = true })
+  const failedWatch = await runWatcher(demo, credentialPath, 'controlled-project-update-failure')()
+  assert.equal(failedWatch.attempted, 1)
+  assert.equal(failedWatch.results[0].status, 'failed')
+  const failure = await resultState(demo, failedRequest.id, value => Boolean(value.failure_detail), 'persisted native failure detail')
+  const failedCard = await selectItem(secondItem.id)
+  await failedCard.getByRole('heading', { name: 'Publication needs attention', exact: true }).waitFor()
+  assert.equal(await failedCard.getByRole('link', { name: 'Open pull request #52', exact: true }).getAttribute('href'), failure.pull_request_url)
+  await screenshot('05-failure-with-existing-pr')
+  const failureNoLoop = await runWatcher(demo, secondCredential, 'failed-request-is-not-automatically-retried')()
+  assert.equal(failureNoLoop.attempted, 0)
+  report.controlled_failure = { publication_id: failure.id, state: failure.state, failure_persisted: true,
+    pull_request_url: failure.pull_request_url, attempted_after_failure: failureNoLoop.attempted }
+  const final = await snapshot(demo)
+  assert.equal(final.snapshot.pull_request_publications.length, 2)
+  for (const item of [firstItem, secondItem]) {
+    assert.equal(final.snapshot.factory_work_items.filter(candidate => candidate.id === item.id).length, 1)
+    assert.equal(final.snapshot.pull_request_publications.filter(candidate => candidate.factory_work_item_id === item.id).length, 1)
+    const itemTasks = final.snapshot.tasks.filter(candidate => candidate.mission_id === item.mission_id)
+    assert.equal(itemTasks.length, 1)
+    assert.equal(final.snapshot.runs.filter(candidate => candidate.task_id === itemTasks[0].id).length, 1)
+  }
+  const finalFake = JSON.parse(await readFile(statePath, 'utf8'))
+  assert.equal(finalFake.pr_create_calls, 2)
+  assert.equal(finalFake.pull_requests.length, 2)
+  assert.ok(finalFake.pull_requests.every(pr => pr.autoMergeRequest === null))
+  assert.equal(finalFake.items.find(item => item.id === firstItem.source_project_item_id).status, 'In Review')
+  const firstPR = finalFake.effect_log.findIndex(effect => effect.kind === 'pull_request_created')
+  const firstProject = finalFake.effect_log.findIndex(effect => effect.kind === 'project_status' && effect.status === 'In Review')
+  assert.ok(firstPR >= 0 && firstProject > firstPR)
+  const remoteRef = async ref => (await execFile('git', ['--git-dir', remotePath, 'rev-parse', ref], { cwd: fixture, windowsHide: true })).stdout.trim()
+  assert.equal(await remoteRef('refs/heads/main'), sourceBaseCommit)
+  assert.equal(await remoteRef(`refs/heads/${preview.plan.branch}`), firstSource.head_commit)
+  const browserStorage = JSON.stringify(await context.storageState())
+  const browserMarkup = await page.content()
+  for (const secret of secrets) {
+    assert.equal(browserStorage.includes(secret), false)
+    assert.equal(browserMarkup.includes(secret), false)
+    assert.equal(JSON.stringify(report).includes(secret), false)
+  }
+  assert.deepEqual(report.page_errors, [])
+  assert.deepEqual(report.blocked_requests, [])
+  assert.equal(report.screenshots.length, 10)
+  assert.ok(report.item_selections.length >= 4 && report.item_selections.every(item => item.mode === 'mobile-quick-switch' && item.viewport.width === 390))
+  report.acceptance = { mobile_flow_width: 390, screenshot_widths: [390, 1440], no_horizontal_overflow: true, genuine_native_verified_results: 2, publication_intents: 2, simulated_pr_create_calls: 2,
+    caller_disconnect_survived: true, native_crash_adopted: true, same_watcher_recovered_after_busy: true, failed_request_retry_loop: false,
+    no_extra_coding_runs: true, no_browser_publisher_credential: true, remote_main_unchanged: true,
+    project_after_pr: true, all_browser_requests_loopback_only: true }
+  report.status = 'passed'
+} catch (error) {
+  report.status = 'failed'; report.failure = safeError(error)
+  try { if (page && !page.isClosed()) await screenshot('failure-diagnostic') } catch {}
+  process.exitCode = 1
+} finally {
+  // Release fixture gates before awaiting native workers, including failed runs.
+  queueProxy?.releaseAll()
+  await Promise.all(pendingWatchers)
+  if (queueProxy) await queueProxy.close()
+  for (const client of clients) client.socket.close()
+  if (browser) await browser.close()
+  try {
+    await readFile(manifestPath, 'utf8')
+    await stopOwnedTestServer(restartOptions)
+    report.owned_server_stopped = true
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      report.cleanup_failure = safeError(error); report.status = 'failed'; process.exitCode = 1
+    }
+  }
+  report.finished_at_utc = new Date().toISOString(); await save()
+  console.log(JSON.stringify({ status: report.status, stage: report.stage, acceptance: report.acceptance,
+    failure: report.failure, cleanup_failure: report.cleanup_failure, report: reportPath }))
+}

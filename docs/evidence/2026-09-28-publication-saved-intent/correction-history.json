@@ -1,0 +1,50 @@
+{
+  "test_chronology": "The eleven saved-intent regression cases ran before the implementation correction and produced two passes and nine failures. The existing-watcher-key regression was added afterward; it did not run red. The subsequent twelve-case saved-intent suite and 53/15/9 family, correction and HTTP suites passed. These are observed new regressions; no earlier development tests or human decisions are invented.",
+  "pre_fix_red": {
+    "receipt": "pre-fix-red-receipt.json",
+    "original_sha256": "820888f1d9efe6b9c2eda8f6475eb0736c04a4c52f175b8f53f3d602222a9df2",
+    "source_head": "98ac5c31d6af9b41970dd2bf0bf344d221da9fd9",
+    "recorded_input_files": 7471,
+    "source_inventory_scope": "All 7,471 physical files were bound by the original red receipt. The pre-fix source differs from the later accepted correction and is not represented as the same tested tree.",
+    "status": "failed",
+    "counts": {
+      "failed": 9,
+      "ignored": 0,
+      "passed": 2,
+      "summaries": 1
+    },
+    "cargo_exit_code": 101,
+    "started_at_utc": "2026-09-28T21:31:41.8125068Z",
+    "finished_at_utc": "2026-09-28T21:35:19.5873122Z"
+  },
+  "added_after_red": [
+    "issue219_native_publication_saved_intent_retires_existing_watcher_key"
+  ],
+  "failed_current_source_browsers": [
+    {
+      "receipt": "failed-browser-r14.json",
+      "original_sha256": "8d23bdfa2b7096d526cf8134e5116189876c45bb13c95a84daf7b1ed7a941f03",
+      "source_head": "98ac5c31d6af9b41970dd2bf0bf344d221da9fd9",
+      "status": "failed",
+      "exit_code": 1,
+      "diagnosis": "The local native publisher exceeded the unchanged 30-second Git-fetch cap. Two later diagnostic fetches completed in about 3.45 seconds, but the cause of the original timeout remains unconfirmed. No acceptance pass is claimed."
+    },
+    {
+      "receipt": "failed-browser-r15.json",
+      "original_sha256": "b56b41a603d2361069f483f3d719995248667ae2bf57cda3654038f23e50d710",
+      "source_head": "98ac5c31d6af9b41970dd2bf0bf344d221da9fd9",
+      "status": "failed",
+      "exit_code": 1,
+      "diagnosis": "The native watcher correctly returned rejected for malformed saved intent. The fixture expected failed, contrary to the existing CLI contract, and stopped at that assertion. Later assertions did not execute. R16 changes only that expected status plus fresh owned names and ports, retaining source, binaries, timeouts and remaining assertions."
+    }
+  ],
+  "current_browser": {
+    "receipt": "issue219-browser-r16.json",
+    "receipt_sha256": "d1fc5875abdeca9a87febc1905c7cca1d50ec10f44d68d4c53e152113f633a4d",
+    "status": "passed",
+    "source_head": "98ac5c31d6af9b41970dd2bf0bf344d221da9fd9",
+    "fixture": "fresh owned r16 fixture",
+    "source_and_binaries_unchanged": true,
+    "file_count": 7471
+  }
+}

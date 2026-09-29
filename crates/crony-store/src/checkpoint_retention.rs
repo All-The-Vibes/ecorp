@@ -76,11 +76,11 @@ pub(super) async fn exported_head_tx(
     match heads.as_slice() {
         [] => Ok(None),
         [head] => {
-            validate_factory_base_commit(head)?;
+            validate_factory_base_commit(head).map_err(admission::validation)?;
             Ok(Some(head.clone()))
         }
-        _ => Err(anyhow!(
-            "checkpoint export has ambiguous artifact provenance"
+        _ => Err(admission::denied(
+            "checkpoint export has ambiguous artifact provenance",
         )),
     }
 }

@@ -1,0 +1,57 @@
+param([Parameter(Mandatory)][ValidatePattern('^(red|green)[0-9]+$')][string]$Revision)
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$repo = '<USERPROFILE>\.codex\worktrees\issue219-publication\ecorp'
+$receipt = Join-Path $PSScriptRoot "issue219-watcher-$Revision.json"
+$log = Join-Path $PSScriptRoot "issue219-watcher-$Revision.log"
+if ((Test-Path -LiteralPath $receipt) -or (Test-Path -LiteralPath $log)) { throw 'Preserve existing watcher regression evidence.' }
+foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN')) {
+        [Environment]::SetEnvironmentVariable($name,$null,'Process')
+    }
+}
+$env:CARGO_BUILD_JOBS = '2'
+$env:CARGO_NET_OFFLINE = 'true'
+$env:GIT_TERMINAL_PROMPT = '0'
+$target = [IO.Path]::GetFullPath((Join-Path $repo 'target'))
+$key = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($target.ToLowerInvariant())))
+$mutex = [Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$key")
+$locked = $false
+$record = [ordered]@{issue=219;purpose='Focused actual CLI watcher loopback regressions; responses model queue eligibility, not native lease-expiry acceptance';revision=$Revision;repository=$repo;started_at_utc=[DateTime]::UtcNow.ToString('o');status='starting'}
+try {
+    try { $locked = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $locked = $true }
+    if (!$locked) { throw 'An active Cargo operation owns this target.' }
+    $record.head = (& git -C $repo rev-parse HEAD).Trim()
+    if ($record.head -cne 'a953c6e0c15ab523bf6f124068b7a6a1c96146f2') { throw 'Reconcile changed source before running.' }
+    $record.source = @('crates/crony-cli/src/publish/requests.rs','crates/crony-cli/src/publish.rs','crates/crony-cli/src/transport.rs','crates/crony-protocol/src/publication_requests.rs','crates/crony-protocol/src/lib.rs','Cargo.lock','rust-toolchain.toml' | ForEach-Object { [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $repo $_)).Hash.ToLowerInvariant()} })
+    $arguments = @('test','--locked','--offline','-p','crony-cli','publish::requests::tests','--','--nocapture','--test-threads=1')
+    $record.arguments = $arguments
+    $record.status = 'running'
+    [IO.File]::WriteAllText($receipt,($record | ConvertTo-Json -Depth 8)+"`n")
+    Push-Location -LiteralPath $repo
+    try { & cargo @arguments *> $log; $record.exit_code = $LASTEXITCODE }
+    finally { Pop-Location }
+    $record.log = $log
+    $record.log_sha256 = (Get-FileHash -LiteralPath $log).Hash.ToLowerInvariant()
+    $record.source_unchanged = $true
+    foreach ($item in $record.source) {
+        if ((Get-FileHash -LiteralPath (Join-Path $repo $item.path)).Hash.ToLowerInvariant() -cne $item.sha256) { $record.source_unchanged = $false }
+    }
+    $record.counts = [ordered]@{passed=0;failed=0;ignored=0;summaries=0}
+    foreach ($match in [regex]::Matches((Get-Content -LiteralPath $log -Raw),'test result: \w+\. (\d+) passed; (\d+) failed; (\d+) ignored;')) {
+        $record.counts.passed += [int]$match.Groups[1].Value
+        $record.counts.failed += [int]$match.Groups[2].Value
+        $record.counts.ignored += [int]$match.Groups[3].Value
+        $record.counts.summaries++
+    }
+    $record.status = if ($record.exit_code -eq 0 -and $record.source_unchanged -and $record.counts.passed -eq 7 -and $record.counts.failed -eq 0 -and $record.counts.ignored -eq 0) { 'passed' } else { 'failed' }
+    $record.test_summary = @(Select-String -LiteralPath $log -Pattern '^test result:' | ForEach-Object { $_.Line })
+} catch { $record.status = 'failed'; $record.failure = $_.Exception.Message }
+finally {
+    $record.finished_at_utc = [DateTime]::UtcNow.ToString('o')
+    [IO.File]::WriteAllText($receipt,($record | ConvertTo-Json -Depth 8)+"`n")
+    if ($locked) { $mutex.ReleaseMutex() }
+    $mutex.Dispose()
+}
+[pscustomobject]$record | Select-Object issue,revision,status,exit_code,source_unchanged,test_summary,failure | ConvertTo-Json
+if ($record.status -ne 'passed') { exit 1 }

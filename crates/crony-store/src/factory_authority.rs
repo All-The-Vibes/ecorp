@@ -29,7 +29,7 @@ pub(super) async fn validate_tx(
     corp_id: Uuid,
     policy: &Value,
 ) -> Result<()> {
-    let Some(expected) = factory_claim_authority_id(policy).map_err(anyhow::Error::msg)? else {
+    let Some(expected) = factory_claim_authority_id(policy).map_err(admission::denied)? else {
         return Ok(()); // Historical policy remains byte-for-byte unbound.
     };
     let actual =
@@ -37,10 +37,12 @@ pub(super) async fn validate_tx(
             .bind(corp_id)
             .fetch_optional(&mut **tx)
             .await?
-            .context("forbidden: claim authority Corp is unavailable")?;
+            .context(admission::Denied(
+                "forbidden: claim authority Corp is unavailable".into(),
+            ))?;
     if expected != actual {
-        return Err(anyhow!(
-            "conflict: factory claim authority mismatch; use the approved shared control plane and Corp"
+        return Err(admission::denied(
+            "conflict: factory claim authority mismatch; use the approved shared control plane and Corp",
         ));
     }
     Ok(())

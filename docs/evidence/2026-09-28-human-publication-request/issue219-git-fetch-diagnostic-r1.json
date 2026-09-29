@@ -1,0 +1,134 @@
+{
+  "issue": 219,
+  "status": "measured",
+  "started_at_utc": "2026-09-28T08:15:33.174040+00:00",
+  "purpose": "Measure native local Git fetch duration after the failed acceptance; no product timeout or source change.",
+  "failure_receipt_sha256": "57f06bbd7c53f344e34f2dfca0579a12f4b13cc9875876cd480e00aebc364d82",
+  "owned_root": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r1",
+  "read_only_remote": "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r5\\evidence\\browser\\target-remote.git",
+  "commands": [
+    {
+      "label": "remote-refs-before",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r5\\evidence\\browser\\target-remote.git",
+        "show-ref",
+        "--head"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 93,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r1\\remote-refs-before.log",
+      "log_sha256": "c415b1e2a810c64629a995c284fce053fa676a9f9a8f156ba13f2f9c60439bda"
+    },
+    {
+      "label": "remote-base",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r5\\evidence\\browser\\target-remote.git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 78,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r1\\remote-base.log",
+      "log_sha256": "bdce503caceb763440943d738070155200a1a3a12b00ab0e8ceac492daf5630d"
+    },
+    {
+      "label": "remote-object-count",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r5\\evidence\\browser\\target-remote.git",
+        "count-objects",
+        "-v"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 125,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r1\\remote-object-count.log",
+      "log_sha256": "1185be32c6e2143258cfb5ad3a3fc1a3f791e6339e654ee18bdc84b74cc92383"
+    },
+    {
+      "label": "initialize",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r1\\fresh-fetch.git",
+        "init",
+        "--bare"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 125,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r1\\initialize.log",
+      "log_sha256": "80d82c440a0f05884f0beb8d6c27b9f1faa7da81911a4dba2a31ee6c4a9f85a6"
+    },
+    {
+      "label": "configure-local-remote",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r1\\fresh-fetch.git",
+        "remote",
+        "add",
+        "origin",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r5\\evidence\\browser\\target-remote.git"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 94,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r1\\configure-local-remote.log",
+      "log_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "label": "native-fetch",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r1\\fresh-fetch.git",
+        "fetch",
+        "--no-tags",
+        "origin",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 31859,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r1\\native-fetch.log",
+      "log_sha256": "a39ae4ecfad74a7f60926296d72b8d45ac645b568a9acf377b8e9a79ad6b2def"
+    },
+    {
+      "label": "fetched-base",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r1\\fresh-fetch.git",
+        "rev-parse",
+        "FETCH_HEAD^{commit}"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 93,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r1\\fetched-base.log",
+      "log_sha256": "bdce503caceb763440943d738070155200a1a3a12b00ab0e8ceac492daf5630d"
+    },
+    {
+      "label": "remote-refs-after",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r5\\evidence\\browser\\target-remote.git",
+        "show-ref",
+        "--head"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 78,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r1\\remote-refs-after.log",
+      "log_sha256": "c415b1e2a810c64629a995c284fce053fa676a9f9a8f156ba13f2f9c60439bda"
+    }
+  ],
+  "network_calls": 0,
+  "production_timeout_ms": 30000,
+  "remote_refs_unchanged": true,
+  "base_commit": "1f515103b7c4e6d02631fe2006921085f8e8d79e",
+  "fetch_elapsed_ms": 31859,
+  "exceeds_production_timeout": true,
+  "finished_at_utc": "2026-09-28T08:16:05.821576+00:00"
+}

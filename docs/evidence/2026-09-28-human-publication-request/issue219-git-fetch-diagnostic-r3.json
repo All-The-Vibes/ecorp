@@ -1,0 +1,308 @@
+{
+  "issue": 219,
+  "status": "measured",
+  "started_at_utc": "2026-09-28T08:21:04.202810+00:00",
+  "purpose": "Measure full-history native Git repacking on a newly owned mirror, without changing the production timeout, source, or retained failure fixture.",
+  "prior_measurement": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r1.json",
+    "sha256": "eacca2bc257fb14958d9790d98413903cef78fb1693d39f6c09a997e08b18d04"
+  },
+  "owned_root": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3",
+  "read_only_remote": "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r5\\evidence\\browser\\target-remote.git",
+  "commands": [
+    {
+      "label": "original-refs-before",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r5\\evidence\\browser\\target-remote.git",
+        "show-ref",
+        "--head"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 94,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\original-refs-before.log",
+      "log_sha256": "c415b1e2a810c64629a995c284fce053fa676a9f9a8f156ba13f2f9c60439bda"
+    },
+    {
+      "label": "original-base",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r5\\evidence\\browser\\target-remote.git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 93,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\original-base.log",
+      "log_sha256": "bdce503caceb763440943d738070155200a1a3a12b00ab0e8ceac492daf5630d"
+    },
+    {
+      "label": "copy-owned-mirror",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3",
+        "clone",
+        "--quiet",
+        "--mirror",
+        "--no-hardlinks",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r5\\evidence\\browser\\target-remote.git",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\packed-remote.git"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 1032,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\copy-owned-mirror.log",
+      "log_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "label": "mirror-refs-before",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\packed-remote.git",
+        "show-ref",
+        "--head"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 93,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\mirror-refs-before.log",
+      "log_sha256": "c415b1e2a810c64629a995c284fce053fa676a9f9a8f156ba13f2f9c60439bda"
+    },
+    {
+      "label": "object-count-before",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\packed-remote.git",
+        "count-objects",
+        "-v"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 125,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\object-count-before.log",
+      "log_sha256": "1185be32c6e2143258cfb5ad3a3fc1a3f791e6339e654ee18bdc84b74cc92383"
+    },
+    {
+      "label": "pack-all-history",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\packed-remote.git",
+        "repack",
+        "-a",
+        "-d",
+        "--write-bitmap-index"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 2078,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\pack-all-history.log",
+      "log_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "label": "mirror-refs-after",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\packed-remote.git",
+        "show-ref",
+        "--head"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 94,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\mirror-refs-after.log",
+      "log_sha256": "c415b1e2a810c64629a995c284fce053fa676a9f9a8f156ba13f2f9c60439bda"
+    },
+    {
+      "label": "object-count-after",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\packed-remote.git",
+        "count-objects",
+        "-v"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 109,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\object-count-after.log",
+      "log_sha256": "5ca7061e0577d8dc94b2a33b82289ab9e16cf9c6b6e2c8be246e3799e8c337c4"
+    },
+    {
+      "label": "rebuild-owned-commit-graph",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\packed-remote.git",
+        "commit-graph",
+        "write",
+        "--reachable"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 94,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\rebuild-owned-commit-graph.log",
+      "log_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "label": "mirror-fsck",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\packed-remote.git",
+        "fsck",
+        "--full"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 2937,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\mirror-fsck.log",
+      "log_sha256": "39838a318a6b2fdd4c2ff18501b447d38c018cd8e88cc7dbec2dbcbf582f5b3c"
+    },
+    {
+      "label": "initialize-1",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\fresh-fetch-1.git",
+        "init",
+        "--bare"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 110,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\initialize-1.log",
+      "log_sha256": "9b6c36193b411deaaed2b7a57f572a4c270a45243e552fa73c9bd55ab2349339"
+    },
+    {
+      "label": "configure-remote-1",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\fresh-fetch-1.git",
+        "remote",
+        "add",
+        "origin",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\packed-remote.git"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 94,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\configure-remote-1.log",
+      "log_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "label": "native-fetch-1",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\fresh-fetch-1.git",
+        "fetch",
+        "--no-tags",
+        "origin",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 2484,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\native-fetch-1.log",
+      "log_sha256": "4666e614bb2b96621c8c1e594cd6a451384371f551c8782537091ce5062f08e9"
+    },
+    {
+      "label": "fetched-base-1",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\fresh-fetch-1.git",
+        "rev-parse",
+        "FETCH_HEAD^{commit}"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 110,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\fetched-base-1.log",
+      "log_sha256": "bdce503caceb763440943d738070155200a1a3a12b00ab0e8ceac492daf5630d"
+    },
+    {
+      "label": "initialize-2",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\fresh-fetch-2.git",
+        "init",
+        "--bare"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 140,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\initialize-2.log",
+      "log_sha256": "481f2e3cb886820c93a901b3f9a1fe836f9ec42b2a91cbb43c050c1ae861eac5"
+    },
+    {
+      "label": "configure-remote-2",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\fresh-fetch-2.git",
+        "remote",
+        "add",
+        "origin",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\packed-remote.git"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 94,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\configure-remote-2.log",
+      "log_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "label": "native-fetch-2",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\fresh-fetch-2.git",
+        "fetch",
+        "--no-tags",
+        "origin",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 2437,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\native-fetch-2.log",
+      "log_sha256": "4666e614bb2b96621c8c1e594cd6a451384371f551c8782537091ce5062f08e9"
+    },
+    {
+      "label": "fetched-base-2",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\fresh-fetch-2.git",
+        "rev-parse",
+        "FETCH_HEAD^{commit}"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 94,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\fetched-base-2.log",
+      "log_sha256": "bdce503caceb763440943d738070155200a1a3a12b00ab0e8ceac492daf5630d"
+    },
+    {
+      "label": "original-refs-after",
+      "command": [
+        "git",
+        "-C",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r5\\evidence\\browser\\target-remote.git",
+        "show-ref",
+        "--head"
+      ],
+      "exit_code": 0,
+      "elapsed_ms": 94,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3\\original-refs-after.log",
+      "log_sha256": "c415b1e2a810c64629a995c284fce053fa676a9f9a8f156ba13f2f9c60439bda"
+    }
+  ],
+  "network_calls": 0,
+  "production_timeout_ms": 30000,
+  "original_remote_refs_unchanged": true,
+  "full_history_and_refs_preserved": true,
+  "base_commit": "1f515103b7c4e6d02631fe2006921085f8e8d79e",
+  "fetch_elapsed_ms": [
+    2484,
+    2437
+  ],
+  "all_below_production_timeout": true,
+  "product_source_changed": false,
+  "production_timeout_changed": false,
+  "finished_at_utc": "2026-09-28T08:21:16.712422+00:00"
+}

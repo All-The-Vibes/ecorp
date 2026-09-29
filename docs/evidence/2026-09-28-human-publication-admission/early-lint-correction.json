@@ -1,0 +1,44 @@
+{
+  "issue": 219,
+  "purpose": "Early formatting and Clippy verification after collapsing the short-circuited stale-admission condition; canonical r3 failure is preserved",
+  "started_at_utc": "2026-09-28T14:45:58.9785215Z",
+  "repository": "<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "format",
+      "arguments": [
+        "fmt",
+        "--check"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-28T14:45:59.5322289Z",
+      "finished_at_utc": "2026-09-28T14:46:06.8187346Z",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-lint-correction-r1-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "clippy",
+      "arguments": [
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-28T14:46:06.8296996Z",
+      "finished_at_utc": "2026-09-28T14:47:55.9045946Z",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-lint-correction-r1-clippy.log",
+      "sha256": "c5d081adcb9a2848b5aaec6f5c2f22dbe206fab9d3c294b287422574b6e7c6cb"
+    }
+  ],
+  "head": "e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a",
+  "tree": "84dc8e65f6d13cba2722e2a9e4969741bf0aca52",
+  "worker_sha256": "b9ce0c378246800733644d7cdbad06200e01cc51a484786eeae1641dfcc2fca1",
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-28T14:47:56.1143438Z"
+}

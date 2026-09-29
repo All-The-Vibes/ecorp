@@ -1,0 +1,67 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$repo = '<USERPROFILE>\.codex\worktrees\issue219-publication\ecorp'
+$expected = 'a953c6e0c15ab523bf6f124068b7a6a1c96146f2'
+$receiptPath = Join-Path $PSScriptRoot 'issue219-canonical-invocation-r6.json'
+if (Test-Path -LiteralPath $receiptPath) { throw 'Preserve the existing invocation.' }
+$target = [IO.Path]::GetFullPath((Join-Path $repo 'target'))
+$key = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($target.ToLowerInvariant())))
+$mutex = [Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$key")
+$acquired = $false
+$record = [ordered]@{issue=219;repository=$repo;started_at_utc=[DateTime]::UtcNow.ToString('o');status='preparing';purpose='Canonical validation of exact-credential repository grants, preserved direct CLI compatibility and repository isolation across workload, replay and cleanup paths'}
+try {
+    try { $acquired = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $acquired = $true }
+    if (!$acquired) { throw 'An active validation owns this target.' }
+    foreach ($name in @('issue219-execution-repository-r2.json','issue219-watcher-green5.json','issue219-handler-repository-r2.json')) {
+        $native = Get-Content -LiteralPath (Join-Path $PSScriptRoot $name) -Raw | ConvertFrom-Json
+        if ($native.status -cne 'passed' -or !$native.source_unchanged) { throw "Native regression is not verified: $name" }
+        $bound = if ($native.source_files) { $native.source_files } else { $native.source }
+        foreach ($item in $bound) {
+            if ((Get-FileHash -LiteralPath (Join-Path $repo $item.path)).Hash.ToLowerInvariant() -cne $item.sha256) { throw "Native regression source changed: $($item.path)" }
+        }
+    }
+    $build = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'issue219-acceptance-build-r6.json') -Raw | ConvertFrom-Json
+    $browser = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'issue219-browser-r12.json') -Raw | ConvertFrom-Json
+    if ($build.status -cne 'passed' -or !$build.source_unchanged -or $build.source.head -cne $expected -or
+        $browser.status -cne 'passed' -or !$browser.source_and_binaries_unchanged -or
+        !$browser.fixture_report.acceptance.same_watcher_recovered_after_busy) { throw 'Native corrected-source acceptance is not verified.' }
+    if ((& git -C $repo rev-parse HEAD).Trim() -cne $expected -or (& git -C $repo branch --show-current).Trim() -cne 'codex/issue219-publication-intent') { throw 'Unexpected source identity.' }
+    $paths = @(& git -C $repo ls-files --cached --others --exclude-standard | Sort-Object -Unique)
+    if ($paths.Count -ne $build.source.files.Count) { throw 'Source inventory changed.' }
+    foreach ($item in $build.source.files) {
+        if ($item.path -cnotin $paths -or (Get-FileHash -LiteralPath (Join-Path $repo $item.path)).Hash.ToLowerInvariant() -cne $item.sha256) { throw "Source changed: $($item.path)" }
+    }
+    $changes = @(@(& git -C $repo diff HEAD --name-only) + @(& git -C $repo ls-files --others --exclude-standard) | Sort-Object -Unique)
+    $expectedChanges = @('crates/crony-protocol/src/lib.rs','crates/crony-server/src/main.rs','crates/crony-server/src/publication_repository_tests.rs','crates/crony-server/src/publication_request_tests.rs','crates/crony-server/src/publication_requests.rs','crates/crony-store/src/budget_checkpoint_tests.rs','crates/crony-store/src/checkpoint_correction_publication_tests.rs','crates/crony-store/src/human_publication_repository_tests.rs','crates/crony-store/src/human_publication_request_tests.rs','crates/crony-store/src/lib.rs','crates/crony-store/src/publication.rs','crates/crony-store/src/publication/worker.rs','db/migrations/0058_publication_publisher_repository_grants.sql','db/migrations/manifest.json','docs/ARCHITECTURE.md','docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md','docs/SECURITY.md','tools/e2e_factory_cockpit_publication.mjs','tools/e2e_factory_publication.mjs','tools/e2e_publication_credential_lock.mjs')
+    if ($changes.Count -ne 20 -or @(Compare-Object $changes $expectedChanges).Count) { throw 'Unexpected unpublished change inventory.' }
+    & git -C $repo add -- @changes
+    if ($LASTEXITCODE) { throw 'Staging failed.' }
+    & git -C $repo diff --cached --check
+    if ($LASTEXITCODE) { throw 'Staged whitespace validation failed.' }
+    if (@(& git -C $repo diff --name-only).Count -or @(& git -C $repo ls-files --others --exclude-standard).Count) { throw 'Source is not completely staged.' }
+    $record.head = $expected
+    $record.staged_tree = (& git -C $repo write-tree).Trim()
+    $record.source_file_count = $paths.Count
+    $record.staged_paths = $changes
+    $record.source_binding = Join-Path $PSScriptRoot 'issue219-acceptance-build-r6.json'
+    $record.source_binding_sha256 = (Get-FileHash -LiteralPath $record.source_binding).Hash.ToLowerInvariant()
+    $record.status = 'running'
+    [IO.File]::WriteAllText($receiptPath,($record | ConvertTo-Json -Depth 10)+"`n")
+    & (Join-Path $PSScriptRoot 'run-canonical-r4.ps1') -RepositoryPath $repo -Issue 219 -Revision r6
+    $record.canonical_exit_code = $LASTEXITCODE
+    $canonical = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'issue219-canonical-r6.json') -Raw | ConvertFrom-Json
+    if ($record.canonical_exit_code -or $canonical.status -cne 'passed') { throw 'Canonical validation failed; preserve its actual results.' }
+    if ((& git -C $repo write-tree).Trim() -cne $record.staged_tree) { throw 'Staged source changed during validation.' }
+    $record.status = 'passed'
+} catch {
+    $record.status = 'failed'
+    $record.failure = $_.Exception.Message
+} finally {
+    $record.finished_at_utc = [DateTime]::UtcNow.ToString('o')
+    [IO.File]::WriteAllText($receiptPath,($record | ConvertTo-Json -Depth 10)+"`n")
+    if ($acquired) { $mutex.ReleaseMutex() }
+    $mutex.Dispose()
+}
+[pscustomobject]$record | Select-Object issue,status,head,staged_tree,canonical_exit_code,failure | ConvertTo-Json
+if ($record.status -cne 'passed') { exit 1 }

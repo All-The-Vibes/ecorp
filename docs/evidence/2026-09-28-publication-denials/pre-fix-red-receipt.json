@@ -1,0 +1,77 @@
+{
+  "issue": 219,
+  "purpose": "Human publication worker compilation and execution-authority regressions with current real migrations and an owned database; source hashes bind Rust and migration inputs only; not browser or remote effect acceptance",
+  "source_head": "b3fbd3bcf5bd0aeef032ca0ea7ed2ca5841b07ab",
+  "parent_tree": "d0b2a1cab992dfd0c485dc822c0ea5a60b7f8a7c",
+  "source_files": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+    },
+    {
+      "path": "crates/crony-store/src/budget_checkpoint_tests.rs",
+      "sha256": "0ecd798e03d898d21bcc946f4a7cb6a981c244ba9ce8f39a4a74061e171b391a"
+    },
+    {
+      "path": "crates/crony-store/src/human_publication_denial_tests.rs",
+      "sha256": "b38646bf964247d2fd32ad50a6d536aa2e5d70ce269ae1dd5138de4421ea5221"
+    },
+    {
+      "path": "crates/crony-store/src/human_publication_request_tests.rs",
+      "sha256": "c9b2347c5b6eb014f0a1ce1c7e0138c9559b0884c9a41f5fd80aaa7292ba5f2a"
+    },
+    {
+      "path": "crates/crony-store/src/publication.rs",
+      "sha256": "d501607b79b454bc3eccee02566c17e4b362a3678c8cf6d5c1305665678c6890"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+    }
+  ],
+  "dirty_source": [
+    " M crates/crony-store/src/human_publication_request_tests.rs",
+    "?? crates/crony-store/src/human_publication_denial_tests.rs"
+  ],
+  "qa_root": "<USERPROFILE>\\code\\qa\\issue219-denial-20260928-red-r1",
+  "started_at_utc": "2026-09-28T18:48:10.5430652Z",
+  "status": "failed",
+  "test_filter": "admission_denials",
+  "expected_passed": 11,
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-denial-red-r1-initdb.log",
+      "sha256": "d461158a999eae024fc382b61b6b2e089a03df912e620ae13d00226b17d6a149",
+      "counts": {
+        "failed": 0,
+        "summaries": 0,
+        "ignored": 0,
+        "passed": 0
+      }
+    },
+    {
+      "name": "human-publication-request-and-execution",
+      "exit_code": 101,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-denial-red-r1-tests.log",
+      "sha256": "523954b4d1be35d581b2637f93e6da01185c4e8e7f57af47f349333b2832d02c",
+      "counts": {
+        "failed": 9,
+        "summaries": 1,
+        "ignored": 0,
+        "passed": 2
+      }
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; fixture data, credentials and logs retained.",
+  "authentication": {
+    "method": "scram-sha-256",
+    "wrong_password_rejected": true,
+    "delivery": "Private PGPASSFILE for clients. SQLx environment-only delivery is reduced assurance.",
+    "authenticated_query": true
+  },
+  "failure": "human-publication-request-and-execution did not satisfy its native acceptance.",
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-28T18:51:35.7762358Z"
+}

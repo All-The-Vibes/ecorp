@@ -1,0 +1,2133 @@
+diff --git a/crates/crony-store/src/admission.rs b/crates/crony-store/src/admission.rs
+new file mode 100644
+index 0000000..c136f52
+--- /dev/null
++++ b/crates/crony-store/src/admission.rs
+@@ -0,0 +1,28 @@
++//! Explicit native admission denials, distinct from unavailable validation.
++//!
++//! Shared validators keep their existing policy and messages. Only a confirmed
++//! denial of authority or proof receives this marker; database, transport and
++//! pending workflow errors must retain their native retry semantics.
++
++#[derive(Debug)]
++pub(super) struct Denied(pub(super) String);
++
++impl std::fmt::Display for Denied {
++    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
++        f.write_str(&self.0)
++    }
++}
++
++impl std::error::Error for Denied {}
++
++pub(super) fn denied(message: impl Into<String>) -> anyhow::Error {
++    Denied(message.into()).into()
++}
++
++/// Mark a pure policy/proof validation error, preserving its original cause.
++/// Never apply this to an asynchronous validator or a database operation.
++pub(super) fn validation(error: impl Into<anyhow::Error>) -> anyhow::Error {
++    let error = error.into();
++    let message = error.to_string();
++    error.context(Denied(message))
++}
+diff --git a/crates/crony-store/src/budget_checkpoint.rs b/crates/crony-store/src/budget_checkpoint.rs
+index 16f5100..ec6a8d5 100644
+--- a/crates/crony-store/src/budget_checkpoint.rs
++++ b/crates/crony-store/src/budget_checkpoint.rs
+@@ -53,8 +53,8 @@ async fn ensure_no_explicit_stop_tx(
+     .fetch_one(&mut **tx)
+     .await?;
+     if stopped {
+-        return Err(anyhow!(
+-            "checkpoint verification cannot bypass an explicit stop request"
++        return Err(admission::denied(
++            "checkpoint verification cannot bypass an explicit stop request",
+         ));
+     }
+     Ok(())
+@@ -108,7 +108,7 @@ pub(super) async fn source_authority_with_contract_tx(
+     .bind(work_item_id)
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context("checkpoint verification source is not in this factory item")?;
++    .context(admission::Denied("checkpoint verification source is not in this factory item".into()))?;
+     let source_mode: String = source.get("execution_mode");
+     if !matches!(
+         source.get::<String, _>("status").as_str(),
+@@ -121,8 +121,8 @@ pub(super) async fn source_authority_with_contract_tx(
+             .get::<Option<String>, _>("workspace_path")
+             .is_none_or(|p| p.is_empty())
+     {
+-        return Err(anyhow!(
+-            "checkpoint verification requires a terminal preserved source"
++        return Err(admission::denied(
++            "checkpoint verification requires a terminal preserved source",
+         ));
+     }
+     ensure_no_explicit_stop_tx(tx, corp_id, source.get("workspace_run_id")).await?;
+@@ -131,18 +131,25 @@ pub(super) async fn source_authority_with_contract_tx(
+             != source.get::<Option<Uuid>, _>("resumed_from_run_id")
+             || source.get::<Option<Uuid>, _>("parent_id").is_none()
+         {
+-            return Err(anyhow!("checkpoint retry has no exact recovery parent"));
++            return Err(admission::denied(
++                "checkpoint retry has no exact recovery parent",
++            ));
+         }
+-        Some(serde_json::from_value::<Authority>(
+-            source
+-                .get::<Option<Value>, _>("checkpoint_authority")
+-                .context("checkpoint retry has no persisted checkpoint authority")?,
+-        )?)
++        Some(
++            serde_json::from_value::<Authority>(
++                source
++                    .get::<Option<Value>, _>("checkpoint_authority")
++                    .context(admission::Denied(
++                        "checkpoint retry has no persisted checkpoint authority".into(),
++                    ))?,
++            )
++            .map_err(admission::validation)?,
++        )
+     } else if source_mode == "provider" && source.get::<String, _>("status") != "lost" {
+         None
+     } else {
+-        return Err(anyhow!(
+-            "checkpoint verification has no proven provider source"
++        return Err(admission::denied(
++            "checkpoint verification has no proven provider source",
+         ));
+     };
+     let origin_id = inherited
+@@ -166,7 +173,7 @@ pub(super) async fn source_authority_with_contract_tx(
+     .bind(corp_id)
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context("checkpoint origin is missing")?;
++    .context(admission::Denied("checkpoint origin is missing".into()))?;
+     let stage: String = origin.get("breaker_stage");
+     if !matches!(stage.as_str(), "suspend" | "stop")
+         || !matches!(
+@@ -179,8 +186,8 @@ pub(super) async fn source_authority_with_contract_tx(
+             .as_deref()
+             != Some("preserved")
+     {
+-        return Err(anyhow!(
+-            "checkpoint origin is not preserved budget-stopped provider work"
++        return Err(admission::denied(
++            "checkpoint origin is not preserved budget-stopped provider work",
+         ));
+     }
+     for (count, limit) in [
+@@ -194,8 +201,8 @@ pub(super) async fn source_authority_with_contract_tx(
+         ),
+     ] {
+         if limit > 0 && count >= limit {
+-            return Err(anyhow!(
+-                "checkpoint verification cannot waive a loop breaker"
++            return Err(admission::denied(
++                "checkpoint verification cannot waive a loop breaker",
+             ));
+         }
+     }
+@@ -208,7 +215,9 @@ pub(super) async fn source_authority_with_contract_tx(
+     .bind(&stage)
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context("checkpoint origin has no native budget incident")?;
++    .context(admission::Denied(
++        "checkpoint origin has no native budget incident".into(),
++    ))?;
+     if !incident
+         .get("metric")
+         .and_then(Value::as_str)
+@@ -219,8 +228,8 @@ pub(super) async fn source_authority_with_contract_tx(
+             (Some(used), Some(limit)) if limit > 0 && used >= limit
+         )
+     {
+-        return Err(anyhow!(
+-            "checkpoint verification requires a measured model-budget boundary"
++        return Err(admission::denied(
++            "checkpoint verification requires a measured model-budget boundary",
+         ));
+     }
+     let event = sqlx::query(
+@@ -233,20 +242,22 @@ pub(super) async fn source_authority_with_contract_tx(
+     .bind(origin_id)
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context("checkpoint origin has no native preservation event")?;
++    .context(admission::Denied(
++        "checkpoint origin has no native preservation event".into(),
++    ))?;
+     if event.get::<String, _>("event_type") != "run.workspace_preserved" {
+-        return Err(anyhow!(
+-            "checkpoint origin has a newer unverified cleanup state"
++        return Err(admission::denied(
++            "checkpoint origin has a newer unverified cleanup state",
+         ));
+     }
+     let payload: Value = event.get("payload");
+-    let proof: StoppedSourceCheckpoint = serde_json::from_value(
+-        payload
+-            .get("source_checkpoint")
+-            .cloned()
+-            .context("source preservation has no stopped-source checkpoint proof")?,
+-    )
+-    .context("invalid stopped-source checkpoint proof")?;
++    let proof: StoppedSourceCheckpoint =
++        serde_json::from_value(payload.get("source_checkpoint").cloned().context(
++            admission::Denied("source preservation has no stopped-source checkpoint proof".into()),
++        )?)
++        .context(admission::Denied(
++            "invalid stopped-source checkpoint proof".into(),
++        ))?;
+     let termination = sqlx::query(
+         "SELECT id,seq,payload,room_id,correlation_id FROM events
+          WHERE corp_id=$1 AND aggregate_id=$2 AND aggregate_type='run'
+@@ -256,7 +267,9 @@ pub(super) async fn source_authority_with_contract_tx(
+     .bind(origin_id)
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context("checkpoint source provider termination is not proven")?;
++    .context(admission::Denied(
++        "checkpoint source provider termination is not proven".into(),
++    ))?;
+     let termination_payload: Value = termination.get("payload");
+     if termination.get::<i64, _>("seq") >= event.get::<i64, _>("seq")
+         || termination_payload
+@@ -264,8 +277,8 @@ pub(super) async fn source_authority_with_contract_tx(
+             .and_then(Value::as_bool)
+             != Some(false)
+     {
+-        return Err(anyhow!(
+-            "checkpoint source provider quiescence is not proven"
++        return Err(admission::denied(
++            "checkpoint source provider quiescence is not proven",
+         ));
+     }
+     for journal_row in [&event, &termination] {
+@@ -273,8 +286,8 @@ pub(super) async fn source_authority_with_contract_tx(
+             || journal_row.get::<Option<Uuid>, _>("correlation_id")
+                 != Some(source.get("mission_id"))
+         {
+-            return Err(anyhow!(
+-                "checkpoint journal does not match the source mission room"
++            return Err(admission::denied(
++                "checkpoint journal does not match the source mission room",
+             ));
+         }
+     }
+@@ -290,8 +303,10 @@ pub(super) async fn source_authority_with_contract_tx(
+     let (contract, policy) = match archived {
+         Some((contract, policy)) => (contract.clone(), policy.clone()),
+         None => (
+-            serde_json::from_value::<TaskContract>(source.get("contract"))?,
+-            serde_json::from_value::<VerificationPolicy>(source.get("verification_policy"))?,
++            serde_json::from_value::<TaskContract>(source.get("contract"))
++                .map_err(admission::validation)?,
++            serde_json::from_value::<VerificationPolicy>(source.get("verification_policy"))
++                .map_err(admission::validation)?,
+         ),
+     };
+     if proof.schema_version != 1
+@@ -315,12 +330,12 @@ pub(super) async fn source_authority_with_contract_tx(
+         || proof.deliverable_policy_sha256 != digest(&contract.deliverable)?
+         || !valid_sha256(&proof.workspace_fingerprint)
+     {
+-        return Err(anyhow!(
+-            "stopped checkpoint does not match its exact assignment and policy"
++        return Err(admission::denied(
++            "stopped checkpoint does not match its exact assignment and policy",
+         ));
+     }
+-    validate_factory_base_commit(&proof.head_commit)?;
+-    validate_factory_base_commit(&proof.source_base_commit)?;
++    validate_factory_base_commit(&proof.head_commit).map_err(admission::validation)?;
++    validate_factory_base_commit(&proof.source_base_commit).map_err(admission::validation)?;
+     for row in [&source, &origin] {
+         for (field, expected) in [
+             ("source_repository", &proof.source_repository),
+@@ -331,7 +346,9 @@ pub(super) async fn source_authority_with_contract_tx(
+             ("workspace_fingerprint", &proof.workspace_fingerprint),
+         ] {
+             if row.get::<Option<String>, _>(field).as_ref() != Some(expected) {
+-                return Err(anyhow!("stopped checkpoint {field} no longer matches"));
++                return Err(admission::denied(format!(
++                    "stopped checkpoint {field} no longer matches"
++                )));
+             }
+         }
+     }
+@@ -339,8 +356,8 @@ pub(super) async fn source_authority_with_contract_tx(
+         || payload.get("workspace_fingerprint").and_then(Value::as_str)
+             != Some(proof.workspace_fingerprint.as_str())
+     {
+-        return Err(anyhow!(
+-            "stopped checkpoint disagrees with its native preservation event"
++        return Err(admission::denied(
++            "stopped checkpoint disagrees with its native preservation event",
+         ));
+     }
+     let authority = Authority {
+@@ -351,8 +368,8 @@ pub(super) async fn source_authority_with_contract_tx(
+     if let Some(inherited) = inherited
+         && serde_json::to_value(inherited)? != serde_json::to_value(&authority)?
+     {
+-        return Err(anyhow!(
+-            "checkpoint authority changed after recovery authorization"
++        return Err(admission::denied(
++            "checkpoint authority changed after recovery authorization",
+         ));
+     }
+     Ok(authority)
+@@ -429,8 +446,8 @@ async fn validate_lineage_prefix_tx(
+     .fetch_all(&mut **tx)
+     .await?;
+     if rows.is_empty() || rows.len() > 64 {
+-        return Err(anyhow!(
+-            "checkpoint lineage is missing or exceeds the native bound"
++        return Err(admission::denied(
++            "checkpoint lineage is missing or exceeds the native bound",
+         ));
+     }
+     let proof = &authority.checkpoint;
+@@ -459,8 +476,8 @@ async fn validate_lineage_prefix_tx(
+             || (id != proof.run_id && stage == "stop")
+             || (after_origin && stage == "suspend")
+         {
+-            return Err(anyhow!(
+-                "checkpoint lineage contains active, changed, quarantined or stopped work"
++            return Err(admission::denied(
++                "checkpoint lineage contains active, changed, quarantined or stopped work",
+             ));
+         }
+         if after_origin
+@@ -468,8 +485,8 @@ async fn validate_lineage_prefix_tx(
+                 || row.get::<Option<bool>, _>("parent_matches") != Some(true)
+                 || row.get::<Option<Value>, _>("checkpoint_authority").as_ref() != Some(&expected))
+         {
+-            return Err(anyhow!(
+-                "checkpoint lineage contains an unauthorized replacement"
++            return Err(admission::denied(
++                "checkpoint lineage contains an unauthorized replacement",
+             ));
+         }
+     }
+diff --git a/crates/crony-store/src/checkpoint_correction.rs b/crates/crony-store/src/checkpoint_correction.rs
+index 6aa93cb..ca9345f 100644
+--- a/crates/crony-store/src/checkpoint_correction.rs
++++ b/crates/crony-store/src/checkpoint_correction.rs
+@@ -59,12 +59,14 @@ async fn lock_authorizer_tx(
+         .bind(item.corp_id)
+         .fetch_optional(&mut **tx)
+         .await?
+-        .context("source correction author is unavailable")?;
++        .context(admission::Denied(
++            "source correction author is unavailable".into(),
++        ))?;
+     ensure_factory_recovery_authorizer_tx(
+         tx,
+         item.corp_id,
+         item.mission_id
+-            .context("source correction has no mission")?,
++            .context(admission::Denied("source correction has no mission".into()))?,
+         actor_id,
+     )
+     .await
+@@ -127,8 +129,8 @@ async fn origin_with_publication_tx(
+     .fetch_one(&mut **tx)
+     .await?;
+     if invalid_lineage {
+-        return Err(anyhow!(
+-            "source correction lineage has another stop, suspension or quarantine"
++        return Err(admission::denied(
++            "source correction lineage has another stop, suspension or quarantine",
+         ));
+     }
+     Ok(authority)
+@@ -720,34 +722,39 @@ pub(super) async fn publication_authority_tx(
+     ).bind(item.corp_id).bind(selected_run_id).bind(item.id).fetch_optional(&mut **tx).await?;
+     let Some(row) = row else {
+         if history::requires_authority_tx(tx, item, selected_run_id).await? {
+-            return Err(anyhow!(
+-                "source-correction publication provenance is missing"
++            return Err(admission::denied(
++                "source-correction publication provenance is missing",
+             ));
+         }
+         return Ok(());
+     };
+     let Some(encoded) = row.get::<Option<Value>, _>("source_correction_authority") else {
+         if history::requires_authority_tx(tx, item, selected_run_id).await? {
+-            return Err(anyhow!(
+-                "source-correction publication provenance is missing"
++            return Err(admission::denied(
++                "source-correction publication provenance is missing",
+             ));
+         }
+         return Ok(());
+     };
+-    let expected: Authority = serde_json::from_value(encoded)
+-        .context("invalid source-correction publication provenance")?;
++    let expected: Authority = serde_json::from_value(encoded).context(admission::Denied(
++        "invalid source-correction publication provenance".into(),
++    ))?;
+     let current = origin_tx(
+         tx,
+         item,
+         row.get("source_run_id"),
+         row.get::<Option<Uuid>, _>("contract_revision_id")
+-            .context("publication correction revision is absent")?,
++            .context(admission::Denied(
++                "publication correction revision is absent".into(),
++            ))?,
+         row.get("authorized_by"),
+         true,
+     )
+     .await?;
+     if serde_json::to_value(expected)? != serde_json::to_value(current)? {
+-        return Err(anyhow!("source-correction publication authority changed"));
++        return Err(admission::denied(
++            "source-correction publication authority changed",
++        ));
+     }
+     Ok(())
+ }
+@@ -769,8 +776,8 @@ async fn checkpoint_publication_lineage_tx(
+         // Native admission bounds the source prefix at 64; the completed
+         // verifier itself is the one additional node.
+         if seen.len() == 65 || !seen.insert(run_id) {
+-            return Err(anyhow!(
+-                "publication correction lineage is cyclic or exceeds its bound"
++            return Err(admission::denied(
++                "publication correction lineage is cyclic or exceeds its bound",
+             ));
+         }
+         let row = sqlx::query(
+@@ -784,7 +791,9 @@ async fn checkpoint_publication_lineage_tx(
+         .bind(run_id)
+         .fetch_optional(&mut **tx)
+         .await?
+-        .context("publication correction lineage has a missing or foreign parent")?;
++        .context(admission::Denied(
++            "publication correction lineage has a missing or foreign parent".into(),
++        ))?;
+         if row.get::<Uuid, _>("task_id") != proof.task_id
+             || row.get::<Uuid, _>("mission_id") != proof.mission_id
+             || row.get::<Uuid, _>("agent_id") != proof.agent_id
+@@ -798,16 +807,16 @@ async fn checkpoint_publication_lineage_tx(
+             || row.get::<Option<String>, _>("source_base_commit").as_ref()
+                 != Some(&proof.source_base_commit)
+         {
+-            return Err(anyhow!(
+-                "publication correction lineage changed assignment or source"
++            return Err(admission::denied(
++                "publication correction lineage changed assignment or source",
+             ));
+         }
+         lineage.push(run_id);
+         next = row.get("resumed_from_run_id");
+     }
+     if lineage.last() != Some(&proof.workspace_run_id) || !seen.contains(&proof.run_id) {
+-        return Err(anyhow!(
+-            "publication checkpoint is outside the exact workspace ancestry"
++        return Err(admission::denied(
++            "publication checkpoint is outside the exact workspace ancestry",
+         ));
+     }
+     Ok(lineage)
+@@ -916,7 +925,7 @@ pub(super) async fn publication_authority_with_checkpoint_tx(
+     .bind(proof.mission_id)
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context("publication checkpoint origin is missing")?;
++    .context(admission::Denied("publication checkpoint origin is missing".into()))?;
+     let connection_id: Option<Uuid> = origin.get("workspace_connection_id");
+     let lineage =
+         checkpoint_publication_lineage_tx(tx, selected_run_id, authority, connection_id).await?;
+@@ -951,16 +960,16 @@ pub(super) async fn publication_authority_with_checkpoint_tx(
+             Some("checkpoint_verification") => {}
+             Some("verifier_only") if !requires_origin => {}
+             _ => {
+-                return Err(anyhow!(
+-                    "publication correction predecessor provenance is missing or inconsistent"
++                return Err(admission::denied(
++                    "publication correction predecessor provenance is missing or inconsistent",
+                 ));
+             }
+         }
+     }
+     let Some(correction) = correction else {
+         if requires_origin || verifier_predecessor {
+-            return Err(anyhow!(
+-                "checkpoint source-correction publication provenance is missing"
++            return Err(admission::denied(
++                "checkpoint source-correction publication provenance is missing",
+             ));
+         }
+         return publication_authority_tx(tx, item, selected_run_id).await;
+@@ -973,28 +982,34 @@ pub(super) async fn publication_authority_with_checkpoint_tx(
+         || correction.get::<Option<Uuid>, _>("replacement_run_id") != Some(proof.run_id)
+         || origin.get::<Option<Uuid>, _>("resumed_from_run_id") != Some(source_run_id)
+     {
+-        return Err(anyhow!(
+-            "publication checkpoint lost its exact correction parent binding"
++        return Err(admission::denied(
++            "publication checkpoint lost its exact correction parent binding",
+         ));
+     }
+     let Some(encoded) = correction.get::<Option<Value>, _>("source_correction_authority") else {
+         if requires_origin {
+-            return Err(anyhow!(
+-                "source-correction publication provenance is missing"
++            return Err(admission::denied(
++                "source-correction publication provenance is missing",
+             ));
+         }
+         return publication_authority_tx(tx, item, selected_run_id).await;
+     };
+-    let expected: Authority = serde_json::from_value(encoded)
+-        .context("invalid source-correction publication provenance")?;
+-    let origin_index = lineage
+-        .iter()
+-        .position(|id| *id == proof.run_id)
+-        .context("publication checkpoint origin is outside the selected ancestry")?;
++    let expected: Authority = serde_json::from_value(encoded).context(admission::Denied(
++        "invalid source-correction publication provenance".into(),
++    ))?;
++    let origin_index =
++        lineage
++            .iter()
++            .position(|id| *id == proof.run_id)
++            .context(admission::Denied(
++                "publication checkpoint origin is outside the selected ancestry".into(),
++            ))?;
+     let historical_index = lineage
+         .iter()
+         .position(|id| *id == expected.checkpoint.checkpoint.run_id)
+-        .context("publication correction suspension is outside the selected ancestry")?;
++        .context(admission::Denied(
++            "publication correction suspension is outside the selected ancestry".into(),
++        ))?;
+     if lineage.get(origin_index + 1) != Some(&source_run_id)
+         || historical_index <= origin_index + 1
+         || expected.workspace_connection_id != connection_id
+@@ -1003,8 +1018,8 @@ pub(super) async fn publication_authority_with_checkpoint_tx(
+             .as_ref()
+             != Some(&expected.provider_session_id)
+     {
+-        return Err(anyhow!(
+-            "publication correction suffix no longer matches its historical grant"
++        return Err(admission::denied(
++            "publication correction suffix no longer matches its historical grant",
+         ));
+     }
+     let current = origin_with_publication_tx(
+@@ -1013,14 +1028,18 @@ pub(super) async fn publication_authority_with_checkpoint_tx(
+         source_run_id,
+         correction
+             .get::<Option<Uuid>, _>("contract_revision_id")
+-            .context("publication correction revision is absent")?,
++            .context(admission::Denied(
++                "publication correction revision is absent".into(),
++            ))?,
+         correction.get("authorized_by"),
+         true,
+         Some(checkpoint),
+     )
+     .await?;
+     if serde_json::to_value(expected)? != serde_json::to_value(current)? {
+-        return Err(anyhow!("source-correction publication authority changed"));
++        return Err(admission::denied(
++            "source-correction publication authority changed",
++        ));
+     }
+     Ok(())
+ }
+diff --git a/crates/crony-store/src/checkpoint_correction_history.rs b/crates/crony-store/src/checkpoint_correction_history.rs
+index 2961791..7dcc1c1 100644
+--- a/crates/crony-store/src/checkpoint_correction_history.rs
++++ b/crates/crony-store/src/checkpoint_correction_history.rs
+@@ -40,7 +40,9 @@ async fn run_tx(
+     .bind(item.mission_id)
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context("correction history has a missing or foreign run")
++    .context(admission::Denied(
++        "correction history has a missing or foreign run".into(),
++    ))
+ }
+ 
+ async fn revision_tx(
+@@ -69,7 +71,9 @@ async fn revision_tx(
+     .bind(item.mission_id)
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context("source correction has no exact immutable Resume revision")?;
++    .context(admission::Denied(
++        "source correction has no exact immutable Resume revision".into(),
++    ))?;
+     if current
+         && (row.get::<i64, _>("version") != row.get::<i64, _>("contract_version")
+             || row.get::<Value, _>("replacement_contract")
+@@ -77,7 +81,9 @@ async fn revision_tx(
+             || row.get::<Value, _>("replacement_verification_policy")
+                 != row.get::<Value, _>("current_policy"))
+     {
+-        return Err(anyhow!("source correction revision was superseded"));
++        return Err(admission::denied(
++            "source correction revision was superseded",
++        ));
+     }
+     let revision = Revision {
+         id,
+@@ -86,18 +92,26 @@ async fn revision_tx(
+             .get::<Value, _>("request")
+             .get("expected_contract_version")
+             .and_then(Value::as_i64)
+-            .context("correction revision omitted its previous task version")?,
++            .context(admission::Denied(
++                "correction revision omitted its previous task version".into(),
++            ))?,
+         source_run_id: source,
+-        previous_contract: serde_json::from_value(row.get("previous_contract"))?,
+-        contract: serde_json::from_value(row.get("replacement_contract"))?,
+-        previous_policy: serde_json::from_value(row.get("previous_verification_policy"))?,
+-        policy: serde_json::from_value(row.get("replacement_verification_policy"))?,
++        previous_contract: serde_json::from_value(row.get("previous_contract"))
++            .map_err(admission::validation)?,
++        contract: serde_json::from_value(row.get("replacement_contract"))
++            .map_err(admission::validation)?,
++        previous_policy: serde_json::from_value(row.get("previous_verification_policy"))
++            .map_err(admission::validation)?,
++        policy: serde_json::from_value(row.get("replacement_verification_policy"))
++            .map_err(admission::validation)?,
+     };
+     ensure_factory_recovery_verification_policy_not_weakened(
+         &revision.previous_policy,
+         &revision.policy,
+-    )?;
+-    ensure_factory_recovery_policy(item, &revision.contract, &revision.policy)?;
++    )
++    .map_err(admission::validation)?;
++    ensure_factory_recovery_policy(item, &revision.contract, &revision.policy)
++        .map_err(admission::validation)?;
+     validate_revision_record_tx(tx, item, &row, &revision).await?;
+     Ok(revision)
+ }
+@@ -109,7 +123,9 @@ async fn validate_revision_record_tx(
+     revision: &Revision,
+ ) -> Result<()> {
+     if revision.previous_version < 1 || revision.previous_version >= revision.version {
+-        return Err(anyhow!("correction revision has invalid version ancestry"));
++        return Err(admission::denied(
++            "correction revision has invalid version ancestry",
++        ));
+     }
+     let request: Value = row.get("request");
+     let description: String = row.get("replacement_description");
+@@ -126,22 +142,23 @@ async fn validate_revision_record_tx(
+         ),
+     ] {
+         if request.get(field) != Some(&expected) {
+-            return Err(anyhow!(
++            return Err(admission::denied(format!(
+                 "native revision request changed its {field} binding"
+-            ));
++            )));
+         }
+     }
+     // Native revision admission composes the task objective from descriptions;
+     // the immutable event binds that normalized objective and the whole contract.
+-    let mut requested: TaskContract = serde_json::from_value(
+-        request
+-            .get("contract")
+-            .cloned()
+-            .context("native revision request omitted its contract")?,
+-    )?;
++    let mut requested: TaskContract =
++        serde_json::from_value(request.get("contract").cloned().context(admission::Denied(
++            "native revision request omitted its contract".into(),
++        ))?)
++        .map_err(admission::validation)?;
+     requested.objective = revision.contract.objective.clone();
+     if serde_json::to_value(&requested)? != serde_json::to_value(&revision.contract)? {
+-        return Err(anyhow!("native revision contract differs from its request"));
++        return Err(admission::denied(
++            "native revision contract differs from its request",
++        ));
+     }
+     let event: Value = sqlx::query_scalar(
+         "SELECT payload FROM events WHERE corp_id=$1 AND aggregate_id=$2
+@@ -156,7 +173,9 @@ async fn validate_revision_record_tx(
+     .bind(format!("mission-contract-revision:{}", revision.id))
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context("correction revision omitted its native event")?;
++    .context(admission::Denied(
++        "correction revision omitted its native event".into(),
++    ))?;
+     for (field, expected) in [
+         ("mission_id", json!(item.mission_id)),
+         ("task_id", json!(row.get::<Uuid, _>("task_id"))),
+@@ -174,7 +193,9 @@ async fn validate_revision_record_tx(
+         ),
+     ] {
+         if event.get(field) != Some(&expected) {
+-            return Err(anyhow!("native revision event changed its {field} binding"));
++            return Err(admission::denied(format!(
++                "native revision event changed its {field} binding"
++            )));
+         }
+     }
+     Ok(())
+@@ -199,8 +220,8 @@ async fn revision_bridge_tx(
+     .fetch_all(&mut **tx)
+     .await?;
+     if rows.len() > 64 {
+-        return Err(anyhow!(
+-            "correction revision bridge exceeds its native bound"
++        return Err(admission::denied(
++            "correction revision bridge exceeds its native bound",
+         ));
+     }
+     let mut version = previous.revision_version;
+@@ -222,7 +243,9 @@ async fn revision_bridge_tx(
+             || serde_json::to_value(&next.previous_contract)? != contract
+             || serde_json::to_value(&next.previous_policy)? != policy
+         {
+-            return Err(anyhow!("correction revision bridge is not contiguous"));
++            return Err(admission::denied(
++                "correction revision bridge is not contiguous",
++            ));
+         }
+         version = next.version;
+         contract = serde_json::to_value(&next.contract)?;
+@@ -232,8 +255,8 @@ async fn revision_bridge_tx(
+         || serde_json::to_value(&current.previous_contract)? != contract
+         || serde_json::to_value(&current.previous_policy)? != policy
+     {
+-        return Err(anyhow!(
+-            "correction revision does not continue its historical policy"
++        return Err(admission::denied(
++            "correction revision does not continue its historical policy",
+         ));
+     }
+     Ok(())
+@@ -332,8 +355,8 @@ pub(super) async fn source_context_tx(
+     if current.get::<Value, _>("contract") != serde_json::to_value(&previous.contract)?
+         || current.get::<Value, _>("verification_policy") != serde_json::to_value(&previous.policy)?
+     {
+-        return Err(anyhow!(
+-            "correction context requires the current source-bound revision"
++        return Err(admission::denied(
++            "correction context requires the current source-bound revision",
+         ));
+     }
+     validate_admission_suffix_tx(tx, item, source_id).await?;
+@@ -349,8 +372,8 @@ async fn historical_inner_tx(
+     seen: &mut HashSet<Uuid>,
+ ) -> Result<Option<HistoricalCorrection>> {
+     if seen.len() >= 64 || !seen.insert(replacement_id) {
+-        return Err(anyhow!(
+-            "correction history is cyclic or exceeds its native bound"
++        return Err(admission::denied(
++            "correction history is cyclic or exceeds its native bound",
+         ));
+     }
+     let required = requires_authority_tx(tx, item, replacement_id).await?;
+@@ -364,8 +387,8 @@ async fn historical_inner_tx(
+     .await?;
+     let Some(correction) = correction else {
+         if required {
+-            return Err(anyhow!(
+-                "checkpoint correction history omitted its native recovery"
++            return Err(admission::denied(
++                "checkpoint correction history omitted its native recovery",
+             ));
+         }
+         seen.remove(&replacement_id);
+@@ -374,15 +397,16 @@ async fn historical_inner_tx(
+     let saved: Option<Value> = correction.get("source_correction_authority");
+     let Some(saved) = saved else {
+         if required {
+-            return Err(anyhow!(
+-                "checkpoint correction history omitted its authority"
++            return Err(admission::denied(
++                "checkpoint correction history omitted its authority",
+             ));
+         }
+         seen.remove(&replacement_id);
+         return Ok(None);
+     };
+-    let expected: Authority = serde_json::from_value(saved.clone())
+-        .context("historical correction authority is malformed")?;
++    let expected: Authority = serde_json::from_value(saved.clone()).context(admission::Denied(
++        "historical correction authority is malformed".into(),
++    ))?;
+     let replacement = run_tx(tx, item, replacement_id).await?;
+     let source_id: Uuid = correction.get("source_run_id");
+     if correction.get::<String, _>("mode") != "source_correction"
+@@ -400,8 +424,8 @@ async fn historical_inner_tx(
+         || correction.get::<Option<Uuid>, _>("contract_revision_id")
+             != Some(expected.contract_revision_id)
+     {
+-        return Err(anyhow!(
+-            "historical correction does not match its exact replacement"
++        return Err(admission::denied(
++            "historical correction does not match its exact replacement",
+         ));
+     }
+     let revision = revision_tx(
+@@ -446,15 +470,15 @@ async fn historical_inner_tx(
+         || correction.get::<Value, _>("replacement_verification_policy")
+             != serde_json::to_value(&revision.policy)?
+     {
+-        return Err(anyhow!(
+-            "historical correction contract or provider binding changed"
++        return Err(admission::denied(
++            "historical correction contract or provider binding changed",
+         ));
+     }
+     validate_native_edge_tx(tx, item, &correction, &replacement, &revision, &expected).await?;
+     let authority = Box::pin(derive_tx(tx, item, &revision, seen)).await?;
+     if serde_json::to_value(&authority)? != saved {
+-        return Err(anyhow!(
+-            "historical correction no longer matches its persisted authority"
++        return Err(admission::denied(
++            "historical correction no longer matches its persisted authority",
+         ));
+     }
+     seen.remove(&replacement_id);
+@@ -490,7 +514,9 @@ async fn validate_native_edge_tx(
+     .bind(format!("factory-verification-recovery:{recovery_id}"))
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context("historical correction omitted its exact runner command")?;
++    .context(admission::Denied(
++        "historical correction omitted its exact runner command".into(),
++    ))?;
+     for (field, value) in [
+         ("work_item_id", json!(item.id)),
+         ("source_run_id", json!(revision.source_run_id)),
+@@ -507,9 +533,9 @@ async fn validate_native_edge_tx(
+         ),
+     ] {
+         if request.get(field) != Some(&value) {
+-            return Err(anyhow!(
++            return Err(admission::denied(format!(
+                 "historical correction request changed its {field} binding"
+-            ));
++            )));
+         }
+     }
+     for (field, value) in [
+@@ -562,22 +588,24 @@ async fn validate_native_edge_tx(
+         ("secret_refs", json!(revision.contract.secret_refs)),
+     ] {
+         if command.get(field) != Some(&value) {
+-            return Err(anyhow!(
++            return Err(admission::denied(format!(
+                 "historical correction command changed its {field} binding"
+-            ));
++            )));
+         }
+     }
+     for field in ["expected_workspace_fingerprint", "expected_head_commit"] {
+         if command.get(field) != request.get(field) {
+-            return Err(anyhow!(
+-                "historical correction command changed its source checkpoint"
++            return Err(admission::denied(
++                "historical correction command changed its source checkpoint",
+             ));
+         }
+     }
+     let checkpoint =
+         source_workspace_checkpoint_with_lock_tx(tx, item.corp_id, revision.source_run_id, false)
+             .await?;
+-    checkpoint.ensure_preserved()?;
++    checkpoint
++        .ensure_preserved()
++        .map_err(admission::validation)?;
+     if request.get("expected_workspace_fingerprint") != Some(&json!(checkpoint.fingerprint))
+         || request.get("expected_head_commit") != Some(&json!(checkpoint.expected_head_commit))
+         || command.get("workspace_base_commit")
+@@ -589,8 +617,8 @@ async fn validate_native_edge_tx(
+             && replacement.get::<Option<String>, _>("workspace_base_commit")
+                 != source.get::<Option<String>, _>("workspace_base_commit"))
+     {
+-        return Err(anyhow!(
+-            "historical command does not match its immutable source checkpoint"
++        return Err(admission::denied(
++            "historical command does not match its immutable source checkpoint",
+         ));
+     }
+     let authorized_row = sqlx::query(
+@@ -610,7 +638,9 @@ async fn validate_native_edge_tx(
+     ))
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context("historical correction omitted its native authorization event")?;
++    .context(admission::Denied(
++        "historical correction omitted its native authorization event".into(),
++    ))?;
+     let authorized: Value = authorized_row.get("payload");
+     let seal = sqlx::query(
+         "SELECT type,payload,room_id,correlation_id FROM events
+@@ -623,7 +653,9 @@ async fn validate_native_edge_tx(
+     .bind(authorized_row.get::<i64, _>("seq"))
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context("historical source has no native preservation seal")?;
++    .context(admission::Denied(
++        "historical source has no native preservation seal".into(),
++    ))?;
+     let seal_payload: Value = seal.get("payload");
+     if seal.get::<String, _>("type") != "run.workspace_preserved"
+         || seal.get::<Option<Uuid>, _>("room_id") != Some(source.get("room_id"))
+@@ -636,8 +668,8 @@ async fn validate_native_edge_tx(
+             == Some(true)
+         || !source_seal_head_matches(&checkpoint, &seal_payload)
+     {
+-        return Err(anyhow!(
+-            "historical request no longer matches its native source seal"
++        return Err(admission::denied(
++            "historical request no longer matches its native source seal",
+         ));
+     }
+     for (field, value) in [
+@@ -659,9 +691,9 @@ async fn validate_native_edge_tx(
+         ),
+     ] {
+         if authorized.get(field) != Some(&value) {
+-            return Err(anyhow!(
++            return Err(admission::denied(format!(
+                 "historical correction event changed its {field} binding"
+-            ));
++            )));
+         }
+     }
+     Ok(())
+@@ -712,7 +744,9 @@ async fn derive_tx(
+         Some(
+             Box::pin(historical_inner_tx(tx, item, source_id, seen))
+                 .await?
+-                .context("provider correction has no proven historical authority")?,
++                .context(admission::Denied(
++                    "provider correction has no proven historical authority".into(),
++                ))?,
+         )
+     } else {
+         // Native pre-dispatch failures do not become the source, but their
+@@ -734,15 +768,17 @@ async fn derive_tx(
+         .fetch_all(&mut **tx)
+         .await?;
+         if prior.len() > 64 {
+-            return Err(anyhow!(
+-                "correction revision history exceeds its native bound"
++            return Err(admission::denied(
++                "correction revision history exceeds its native bound",
+             ));
+         }
+         if let Some(prior) = prior.iter().find(|run| pre_dispatch_failure(run)) {
+             Some(
+                 Box::pin(historical_inner_tx(tx, item, prior.get("id"), seen))
+                     .await?
+-                    .context("failed pre-dispatch correction omitted its historical authority")?,
++                    .context(admission::Denied(
++                        "failed pre-dispatch correction omitted its historical authority".into(),
++                    ))?,
+             )
+         } else {
+             None
+@@ -766,7 +802,7 @@ async fn derive_tx(
+                AND source.verification_status='failed' AND source.provider_session_id IS NULL",
+         ).bind(item.corp_id).bind(item.id).bind(source_id).bind(item.mission_id)
+             .fetch_optional(&mut **tx).await?
+-            .context("source correction requires the exact failed checkpoint")?;
++            .context(admission::Denied("source correction requires the exact failed checkpoint".into()))?;
+         let proof = budget_checkpoint::source_authority_with_contract_tx(
+             tx,
+             item.corp_id,
+@@ -778,7 +814,9 @@ async fn derive_tx(
+         if checkpoint.get::<Option<Value>, _>("checkpoint_authority")
+             != Some(serde_json::to_value(&proof)?)
+         {
+-            return Err(anyhow!("historical failed checkpoint proof changed"));
++            return Err(admission::denied(
++                "historical failed checkpoint proof changed",
++            ));
+         }
+         budget_checkpoint::validate_lineage_until_tx(
+             tx,
+@@ -795,7 +833,7 @@ async fn derive_tx(
+                ON incident.run_id=origin.id AND incident.corp_id=origin.corp_id AND incident.stage='suspend'
+              WHERE origin.corp_id=$1 AND origin.id=$2 AND origin.breaker_stage='suspend'",
+         ).bind(item.corp_id).bind(proof.checkpoint.run_id).fetch_optional(&mut **tx).await?
+-            .context("historical correction no longer has its native suspension")?;
++            .context(admission::Denied("historical correction no longer has its native suspension".into()))?;
+         Authority {
+             schema_version: 1,
+             checkpoint_recovery_id: checkpoint.get("id"),
+@@ -812,7 +850,9 @@ async fn derive_tx(
+             provider_session_id: origin
+                 .get::<Option<String>, _>("provider_session_id")
+                 .filter(|session| !session.is_empty())
+-                .context("historical correction origin lost its provider session")?,
++                .context(admission::Denied(
++                    "historical correction origin lost its provider session".into(),
++                ))?,
+             prefix_run_ids: Vec::new(),
+         }
+     };
+@@ -820,15 +860,15 @@ async fn derive_tx(
+     if source.get::<Option<Uuid>, _>("workspace_connection_id") != connection
+         || revision.previous_contract.workspace_connection_id != connection
+         || revision.contract.workspace_connection_id != connection
+-        || factory_workspace_connection_id(&item.policy).map_err(anyhow::Error::msg)? != connection
++        || factory_workspace_connection_id(&item.policy).map_err(admission::denied)? != connection
+         || (source.get::<String, _>("execution_mode") == "provider"
+             && source
+                 .get::<Option<String>, _>("provider_session_id")
+                 .as_ref()
+                 != Some(&authority.provider_session_id))
+     {
+-        return Err(anyhow!(
+-            "source correction execution connection or session changed"
++        return Err(admission::denied(
++            "source correction execution connection or session changed",
+         ));
+     }
+     let lineage =
+@@ -849,7 +889,9 @@ async fn derive_tx(
+     .await?;
+     let prefix_ids: Vec<Uuid> = prefix.iter().map(|run| run.get("id")).collect();
+     if prefix_ids.is_empty() || prefix_ids.len() > 64 || prefix_ids.last() != Some(&source_id) {
+-        return Err(anyhow!("source correction checkpoint prefix is invalid"));
++        return Err(admission::denied(
++            "source correction checkpoint prefix is invalid",
++        ));
+     }
+     for run in &prefix {
+         let id: Uuid = run.get("id");
+@@ -865,19 +907,21 @@ async fn derive_tx(
+             || (run.get::<i32, _>("tool_limit") > 0
+                 && run.get::<i32, _>("repeated_tool_count") >= run.get::<i32, _>("tool_limit"))
+         {
+-            return Err(anyhow!(
+-                "historical correction prefix has unrelated protected work"
++            return Err(admission::denied(
++                "historical correction prefix has unrelated protected work",
+             ));
+         }
+         if !lineage.contains(&id) {
+             if !pre_dispatch_failure(run) {
+-                return Err(anyhow!(
+-                    "correction prefix contains an unrelated source generation"
++                return Err(admission::denied(
++                    "correction prefix contains an unrelated source generation",
+                 ));
+             }
+             Box::pin(historical_inner_tx(tx, item, id, seen))
+                 .await?
+-                .context("pre-dispatch generation omitted its historical correction proof")?;
++                .context(admission::Denied(
++                    "pre-dispatch generation omitted its historical correction proof".into(),
++                ))?;
+         }
+     }
+     authority.contract_revision_id = revision.id;
+@@ -907,15 +951,21 @@ pub(super) async fn validate_admission_suffix_tx(
+     .fetch_all(&mut **tx)
+     .await?;
+     if suffix.len() > 64 {
+-        return Err(anyhow!("correction source suffix exceeds its native bound"));
++        return Err(admission::denied(
++            "correction source suffix exceeds its native bound",
++        ));
+     }
+     for run in suffix {
+         if !pre_dispatch_failure(&run) {
+-            return Err(anyhow!("correction source has a newer unproven generation"));
++            return Err(admission::denied(
++                "correction source has a newer unproven generation",
++            ));
+         }
+         historical_tx(tx, item, run.get("id"))
+             .await?
+-            .context("failed pre-dispatch generation has no historical correction proof")?;
++            .context(admission::Denied(
++                "failed pre-dispatch generation has no historical correction proof".into(),
++            ))?;
+     }
+     Ok(())
+ }
+@@ -933,8 +983,8 @@ pub(super) async fn previous_context_tx(
+     if serde_json::to_value(&previous.contract)? != serde_json::to_value(contract)?
+         || serde_json::to_value(&previous.policy)? != serde_json::to_value(policy)?
+     {
+-        return Err(anyhow!(
+-            "historical correction contract or policy chain changed"
++        return Err(admission::denied(
++            "historical correction contract or policy chain changed",
+         ));
+     }
+     let origin = previous.authority.checkpoint.checkpoint.run_id;
+diff --git a/crates/crony-store/src/checkpoint_correction_publication_tests.rs b/crates/crony-store/src/checkpoint_correction_publication_tests.rs
+index b302efa..7602b37 100644
+--- a/crates/crony-store/src/checkpoint_correction_publication_tests.rs
++++ b/crates/crony-store/src/checkpoint_correction_publication_tests.rs
+@@ -24,6 +24,13 @@ struct PublicationFixture {
+     publisher_credential_id: Uuid,
+ }
+ 
++pub(super) async fn human_request_fixture(
++    pool: PgPool,
++) -> (PgStore, StartPullRequestPublicationInput) {
++    let fixture = corrected_publication_fixture(pool).await;
++    (fixture.store, fixture.input)
++}
++
+ fn fixture_artifact(
+     input: &RunnerEventInput,
+     bytes: &[u8],
+diff --git a/crates/crony-store/src/checkpoint_publication.rs b/crates/crony-store/src/checkpoint_publication.rs
+index 8b52008..5c9a310 100644
+--- a/crates/crony-store/src/checkpoint_publication.rs
++++ b/crates/crony-store/src/checkpoint_publication.rs
+@@ -32,8 +32,8 @@ impl CheckpointPublication {
+             || self.authority.checkpoint.corp_id != item.corp_id
+             || Some(self.authority.checkpoint.mission_id) != item.mission_id
+         {
+-            return Err(anyhow!(
+-                "publication checkpoint receipt belongs to another scope"
++            return Err(admission::denied(
++                "publication checkpoint receipt belongs to another scope",
+             ));
+         }
+         Ok(&self.authority)
+@@ -72,8 +72,8 @@ pub(super) async fn authority_tx(
+         return Ok(None);
+     };
+     if !budget_checkpoint::zero_provider_allocation_tx(tx, corp_id, run_id).await? {
+-        return Err(anyhow!(
+-            "checkpoint publication lost its zero-provider authority"
++        return Err(admission::denied(
++            "checkpoint publication lost its zero-provider authority",
+         ));
+     }
+     let authority =
+@@ -92,7 +92,7 @@ pub(super) async fn authority_tx(
+             .as_deref()
+             != Some(verified_head)
+     {
+-        return Err(publication::publication_admission_denied(
++        return Err(admission::denied(
+             "checkpoint publication does not match its native source and verified export",
+         ));
+     }
+@@ -112,8 +112,8 @@ pub(super) async fn authority_tx(
+     .fetch_one(&mut **tx)
+     .await?;
+     if explicit_stop {
+-        return Err(anyhow!(
+-            "checkpoint publication cannot override an explicit stop"
++        return Err(admission::denied(
++            "checkpoint publication cannot override an explicit stop",
+         ));
+     }
+     Ok(Some(CheckpointPublication {
+@@ -152,16 +152,22 @@ pub(super) fn revalidated_provenance(persisted: &Value, expected: Option<&Value>
+     let schema = persisted.get("schema_version").and_then(Value::as_u64);
+     let legacy = matches!(schema, Some(1 | 2));
+     if !legacy && schema != Some(3) {
+-        return Err(anyhow!("unsupported publication provenance schema"));
++        return Err(admission::denied(
++            "unsupported publication provenance schema",
++        ));
+     }
+     let mut upgraded = persisted.clone();
+     if let Some(expected) = expected {
+         match persisted.get("checkpoint") {
+             Some(proof) if !proof.is_null() && proof != expected => {
+-                return Err(anyhow!("publication checkpoint provenance changed"));
++                return Err(admission::denied(
++                    "publication checkpoint provenance changed",
++                ));
+             }
+             None | Some(Value::Null) if !legacy => {
+-                return Err(anyhow!("publication checkpoint provenance is missing"));
++                return Err(admission::denied(
++                    "publication checkpoint provenance is missing",
++                ));
+             }
+             _ => {}
+         }
+@@ -170,11 +176,13 @@ pub(super) fn revalidated_provenance(persisted: &Value, expected: Option<&Value>
+             upgraded["schema_version"] = json!(3);
+         }
+     } else if schema == Some(3) {
+-        return Err(anyhow!("checkpoint publication lost its native authority"));
++        return Err(admission::denied(
++            "checkpoint publication lost its native authority",
++        ));
+     }
+     if !provenance_matches(&upgraded, expected) {
+-        return Err(anyhow!(
+-            "publication authority no longer matches its checkpoint provenance"
++        return Err(admission::denied(
++            "publication authority no longer matches its checkpoint provenance",
+         ));
+     }
+     Ok(upgraded)
+diff --git a/crates/crony-store/src/checkpoint_retention.rs b/crates/crony-store/src/checkpoint_retention.rs
+index bb8ac57..e2a27b5 100644
+--- a/crates/crony-store/src/checkpoint_retention.rs
++++ b/crates/crony-store/src/checkpoint_retention.rs
+@@ -76,11 +76,11 @@ pub(super) async fn exported_head_tx(
+     match heads.as_slice() {
+         [] => Ok(None),
+         [head] => {
+-            validate_factory_base_commit(head)?;
++            validate_factory_base_commit(head).map_err(admission::validation)?;
+             Ok(Some(head.clone()))
+         }
+-        _ => Err(anyhow!(
+-            "checkpoint export has ambiguous artifact provenance"
++        _ => Err(admission::denied(
++            "checkpoint export has ambiguous artifact provenance",
+         )),
+     }
+ }
+diff --git a/crates/crony-store/src/factory_authority.rs b/crates/crony-store/src/factory_authority.rs
+index 26162f7..a1f6f14 100644
+--- a/crates/crony-store/src/factory_authority.rs
++++ b/crates/crony-store/src/factory_authority.rs
+@@ -29,7 +29,7 @@ pub(super) async fn validate_tx(
+     corp_id: Uuid,
+     policy: &Value,
+ ) -> Result<()> {
+-    let Some(expected) = factory_claim_authority_id(policy).map_err(anyhow::Error::msg)? else {
++    let Some(expected) = factory_claim_authority_id(policy).map_err(admission::denied)? else {
+         return Ok(()); // Historical policy remains byte-for-byte unbound.
+     };
+     let actual =
+@@ -37,10 +37,12 @@ pub(super) async fn validate_tx(
+             .bind(corp_id)
+             .fetch_optional(&mut **tx)
+             .await?
+-            .context("forbidden: claim authority Corp is unavailable")?;
++            .context(admission::Denied(
++                "forbidden: claim authority Corp is unavailable".into(),
++            ))?;
+     if expected != actual {
+-        return Err(anyhow!(
+-            "conflict: factory claim authority mismatch; use the approved shared control plane and Corp"
++        return Err(admission::denied(
++            "conflict: factory claim authority mismatch; use the approved shared control plane and Corp",
+         ));
+     }
+     Ok(())
+diff --git a/crates/crony-store/src/human_publication_denial_tests.rs b/crates/crony-store/src/human_publication_denial_tests.rs
+new file mode 100644
+index 0000000..5a4f3f4
+--- /dev/null
++++ b/crates/crony-store/src/human_publication_denial_tests.rs
+@@ -0,0 +1,305 @@
++//! A queued authorization can be rejected by native budget/checkpoint gates.
++//! These real-transaction fixtures prove durable retirement, not GitHub effects.
++use super::*;
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_retires_stopped_run(pool: PgPool) {
++    let detail = assert_stale_worker_request_rejected(
++        pool,
++        "UPDATE runs SET breaker_stage='stop' WHERE status='completed'",
++    )
++    .await;
++    assert!(detail.contains("circuit breaker stage stop"), "{detail}");
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_retires_suspended_run(pool: PgPool) {
++    let detail = assert_stale_worker_request_rejected(
++        pool,
++        "UPDATE runs SET breaker_stage='suspend' WHERE status='completed'",
++    )
++    .await;
++    assert!(detail.contains("circuit breaker stage suspend"), "{detail}");
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_retires_current_loop_breaker(pool: PgPool) {
++    let detail = assert_stale_worker_request_rejected(
++        pool,
++        "UPDATE runs SET no_progress_events=8 WHERE status='completed'",
++    )
++    .await;
++    assert!(
++        detail.contains("current budget or loop metrics"),
++        "{detail}"
++    );
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_retires_origin_loop_breaker(pool: PgPool) {
++    let detail = assert_stale_worker_request_rejected(
++        pool,
++        "UPDATE runs SET repeated_tool_count=5 WHERE execution_mode='provider'",
++    )
++    .await;
++    assert!(detail.contains("cannot waive a loop breaker"), "{detail}");
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_retires_withdrawn_budget_incident(pool: PgPool) {
++    let detail =
++        assert_stale_worker_request_rejected(pool, "DELETE FROM circuit_breaker_incidents").await;
++    assert!(detail.contains("no native budget incident"), "{detail}");
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_retires_withdrawn_checkpoint(pool: PgPool) {
++    let detail = assert_stale_worker_request_rejected(
++        pool,
++        "UPDATE events SET type='fixture.withdrawn' WHERE type='run.workspace_preserved'
++         AND aggregate_id IN (SELECT id FROM runs WHERE execution_mode='provider')",
++    )
++    .await;
++    assert!(detail.contains("no native preservation event"), "{detail}");
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_retires_withdrawn_termination(pool: PgPool) {
++    let detail = assert_stale_worker_request_rejected(
++        pool,
++        "UPDATE events SET type='fixture.withdrawn' WHERE type='run.session_terminated'
++         AND aggregate_id IN (SELECT id FROM runs WHERE execution_mode='provider')",
++    )
++    .await;
++    assert!(
++        detail.contains("provider termination is not proven"),
++        "{detail}"
++    );
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_retires_invalid_termination(pool: PgPool) {
++    let detail = assert_stale_worker_request_rejected(
++        pool,
++        r#"UPDATE events SET payload=jsonb_set(payload,'{outcome}','"unsupported"')
++           WHERE type='run.session_terminated'
++             AND aggregate_id IN (SELECT id FROM runs WHERE execution_mode='provider')"#,
++    )
++    .await;
++    assert!(
++        detail.contains("invalid native provider-termination evidence"),
++        "{detail}"
++    );
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_retires_changed_checkpoint_proof(pool: PgPool) {
++    let detail = assert_stale_worker_request_rejected(
++        pool,
++        "UPDATE events SET payload=jsonb_set(payload,'{source_checkpoint,head_commit}',to_jsonb(repeat('e',40)))
++         WHERE type='run.workspace_preserved'
++           AND aggregate_id IN (SELECT id FROM runs WHERE execution_mode='provider')",
++    )
++    .await;
++    assert!(
++        detail.contains("disagrees with its native preservation event"),
++        "{detail}"
++    );
++}
++
++async fn assert_pending(
++    store: &PgStore,
++    scope: &PublicationPublisherScope,
++    queued: &PullRequestPublicationOutcome,
++) {
++    let saved = store
++        .human_requested_publication_for_publisher(scope, queued.publication.id, None)
++        .await
++        .unwrap()
++        .publication;
++    assert_eq!(saved.version, queued.publication.version);
++    assert_eq!(saved.attempt_count, 0);
++    assert!(saved.failure_detail.is_none() && saved.publisher_lease_expires_at.is_none());
++    assert_eq!(
++        store
++            .requested_publications_for_publisher(scope, None, 25)
++            .await
++            .unwrap(),
++        [queued.publication.id]
++    );
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_keeps_checkpoint_database_failure_retryable(
++    pool: PgPool,
++) {
++    let (store, input, queued) = queued_request(pool).await;
++    let scope = publisher_scope(&input);
++    sqlx::query(
++        "ALTER TABLE circuit_breaker_incidents RENAME TO temporarily_unavailable_incidents",
++    )
++    .execute(&store.pool)
++    .await
++    .unwrap();
++    let failed = store
++        .claim_human_requested_publication(
++            &scope,
++            queued.publication.id,
++            "checkpoint-unavailable".into(),
++            300,
++        )
++        .await;
++    sqlx::query(
++        "ALTER TABLE temporarily_unavailable_incidents RENAME TO circuit_breaker_incidents",
++    )
++    .execute(&store.pool)
++    .await
++    .unwrap();
++    assert!(failed.unwrap_err().downcast_ref::<sqlx::Error>().is_some());
++    assert_pending(&store, &scope, &queued).await;
++    let recovered = store
++        .claim_human_requested_publication(
++            &scope,
++            queued.publication.id,
++            "checkpoint-unavailable".into(),
++            300,
++        )
++        .await
++        .unwrap();
++    assert!(recovered.publisher_token.is_some());
++}
++
++async fn queued_corrected_request(
++    pool: PgPool,
++) -> (
++    PgStore,
++    StartPullRequestPublicationInput,
++    PullRequestPublicationOutcome,
++) {
++    let (store, input) = correction_publication::human_request_fixture(pool).await;
++    queue_request(store, input).await
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_retires_invalid_correction_ancestry(pool: PgPool) {
++    let (store, input, queued) = queued_corrected_request(pool).await;
++    let detail = assert_request_retired(
++        store,
++        input,
++        queued,
++        "UPDATE mission_contract_revisions
++         SET request=jsonb_set(request,'{expected_contract_version}','0')",
++    )
++    .await;
++    assert!(detail.contains("invalid version ancestry"), "{detail}");
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_retires_withdrawn_correction_event(pool: PgPool) {
++    let (store, input, queued) = queued_corrected_request(pool).await;
++    let detail = assert_request_retired(
++        store,
++        input,
++        queued,
++        "UPDATE events SET type='fixture.withdrawn' WHERE type='mission.contract_revised'",
++    )
++    .await;
++    assert!(
++        detail.contains("revision omitted its native event"),
++        "{detail}"
++    );
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_keeps_correction_database_failure_retryable(
++    pool: PgPool,
++) {
++    let (store, input, queued) = queued_corrected_request(pool).await;
++    let scope = publisher_scope(&input);
++    sqlx::query(
++        "ALTER TABLE mission_contract_revisions RENAME TO temporarily_unavailable_revisions",
++    )
++    .execute(&store.pool)
++    .await
++    .unwrap();
++    let failed = store
++        .claim_human_requested_publication(
++            &scope,
++            queued.publication.id,
++            "correction-unavailable".into(),
++            300,
++        )
++        .await;
++    sqlx::query(
++        "ALTER TABLE temporarily_unavailable_revisions RENAME TO mission_contract_revisions",
++    )
++    .execute(&store.pool)
++    .await
++    .unwrap();
++    let error = failed.unwrap_err();
++    assert!(error.downcast_ref::<sqlx::Error>().is_some());
++    assert!(error.downcast_ref::<admission::Denied>().is_none());
++    assert_pending(&store, &scope, &queued).await;
++    let recovered = store
++        .claim_human_requested_publication(
++            &scope,
++            queued.publication.id,
++            "correction-unavailable".into(),
++            300,
++        )
++        .await
++        .unwrap();
++    assert!(recovered.publisher_token.is_some());
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_keeps_pending_audit_retryable(pool: PgPool) {
++    let (store, input, queued) = queued_request(pool).await;
++    let scope = publisher_scope(&input);
++    sqlx::query("INSERT INTO state_audit_ledgers(corp_id,ledger_id,last_sequence) VALUES($1,$2,1)")
++        .bind(input.corp_id)
++        .bind(Uuid::new_v4())
++        .execute(&store.pool)
++        .await
++        .unwrap();
++    sqlx::query("INSERT INTO state_audit_destinations(id,corp_id,kind,config,interval_seconds,workflow_gate)
++                 VALUES($1,$2,'github','{}',60,'published')")
++        .bind(Uuid::new_v4()).bind(input.corp_id).execute(&store.pool).await.unwrap();
++    for key in ["audit-pending", "later-audit-poll"] {
++        let error = store
++            .claim_human_requested_publication(&scope, queued.publication.id, key.into(), 300)
++            .await
++            .unwrap_err();
++        assert!(error.to_string().contains("audit assurance workflow gate"));
++        assert_pending(&store, &scope, &queued).await;
++    }
++    sqlx::query("UPDATE state_audit_destinations SET last_published_sequence=1 WHERE corp_id=$1")
++        .bind(input.corp_id)
++        .execute(&store.pool)
++        .await
++        .unwrap();
++    let recovered = store
++        .claim_human_requested_publication(
++            &scope,
++            queued.publication.id,
++            "audit-pending".into(),
++            300,
++        )
++        .await
++        .unwrap();
++    assert!(recovered.publisher_token.is_some());
++}
+diff --git a/crates/crony-store/src/human_publication_request_tests.rs b/crates/crony-store/src/human_publication_request_tests.rs
+index 6211913..2a0e0d7 100644
+--- a/crates/crony-store/src/human_publication_request_tests.rs
++++ b/crates/crony-store/src/human_publication_request_tests.rs
+@@ -5,6 +5,9 @@ use super::*;
+ #[path = "human_publication_repository_tests.rs"]
+ mod repository_grants;
+ 
++#[path = "human_publication_denial_tests.rs"]
++mod admission_denials;
++
+ async fn queued_request(
+     pool: PgPool,
+ ) -> (
+@@ -12,7 +15,18 @@ async fn queued_request(
+     StartPullRequestPublicationInput,
+     PullRequestPublicationOutcome,
+ ) {
+-    let (store, _, _, mut input) = publication_fixture(pool).await;
++    let (store, _, _, input) = publication_fixture(pool).await;
++    queue_request(store, input).await
++}
++
++async fn queue_request(
++    store: PgStore,
++    mut input: StartPullRequestPublicationInput,
++) -> (
++    PgStore,
++    StartPullRequestPublicationInput,
++    PullRequestPublicationOutcome,
++) {
+     // Enroll a separate repository grant. The shared fixture retains its
+     // unscoped credential to exercise legacy human-authenticated CLI behavior.
+     input.publisher_credential_hash = digest(&"issue219 SQLx-only repository publisher");
+@@ -162,8 +176,17 @@ async fn issue219_native_publication_worker_and_direct_claim_share_lock_order(po
+     direct_pool.close().await;
+ }
+ 
+-async fn assert_stale_worker_request_rejected(pool: PgPool, change: &str) {
++async fn assert_stale_worker_request_rejected(pool: PgPool, change: &str) -> String {
+     let (store, input, queued) = queued_request(pool).await;
++    assert_request_retired(store, input, queued, change).await
++}
++
++async fn assert_request_retired(
++    store: PgStore,
++    input: StartPullRequestPublicationInput,
++    queued: PullRequestPublicationOutcome,
++    change: &str,
++) -> String {
+     let scope = publisher_scope(&input);
+     let id = queued.publication.id;
+     sqlx::query(change).execute(&store.pool).await.unwrap();
+@@ -234,6 +257,7 @@ async fn assert_stale_worker_request_rejected(pool: PgPool, change: &str) {
+             .unwrap()
+             .is_empty()
+     );
++    rejected.publication.failure_detail.unwrap()
+ }
+ 
+ #[sqlx::test(migrations = "../../db/migrations")]
+diff --git a/crates/crony-store/src/lib.rs b/crates/crony-store/src/lib.rs
+index 21f74e8..f0a6f2e 100644
+--- a/crates/crony-store/src/lib.rs
++++ b/crates/crony-store/src/lib.rs
+@@ -20,6 +20,7 @@ use sha2::{Digest, Sha256};
+ use sqlx::{Acquire, PgPool, Postgres, Row, Transaction, postgres::PgPoolOptions};
+ use uuid::Uuid;
+ 
++mod admission;
+ mod agent_pinning;
+ mod aggregate_breaker;
+ use crate::state_audit::native_policy;
+@@ -13010,8 +13011,8 @@ fn checkpoint_head_commit(
+     if let (Some(deliverable), Some(authorized)) = (&deliverable_head, &authorized_head)
+         && deliverable != authorized
+     {
+-        return Err(anyhow!(
+-            "verifier source head conflicts with its authorized checkpoint"
++        return Err(admission::denied(
++            "verifier source head conflicts with its authorized checkpoint",
+         ));
+     }
+     Ok(authorized_head.or(deliverable_head))
+@@ -13079,7 +13080,7 @@ async fn source_workspace_checkpoint_with_lock_tx(
+     .bind(corp_id)
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context("source workspace checkpoint was not found")?;
++    .context(admission::Denied("source workspace checkpoint was not found".into()))?;
+     let execution_mode: String = row.get("execution_mode");
+     let status: String = row.get("status");
+     // A lost ordinary provider remains ineligible. Only this exact governed
+@@ -13096,14 +13097,16 @@ async fn source_workspace_checkpoint_with_lock_tx(
+             || (status == "lost"
+                 && row.get::<Option<String>, _>("recovery_status").as_deref() != Some("failed"))
+         {
+-            return Err(anyhow!(
+-                "verifier source checkpoint has no matching recovery lineage"
++            return Err(admission::denied(
++                "verifier source checkpoint has no matching recovery lineage",
+             ));
+         }
+         let fingerprint: String = row
+             .get::<Option<String>, _>("authorized_fingerprint")
+             .filter(|value| valid_sha256(value))
+-            .context("verifier source checkpoint omitted its authorized fingerprint")?;
++            .context(admission::Denied(
++                "verifier source checkpoint omitted its authorized fingerprint".into(),
++            ))?;
+         // Native verifier cleanup emits this fingerprint only after checking both
+         // assigned guards. Keep the authorized head even when a lost/cancelled
+         // run never exported a deliverable; never weaken Some(head) to None.
+@@ -13114,8 +13117,8 @@ async fn source_workspace_checkpoint_with_lock_tx(
+             && row.get::<Option<String>, _>("deliverable_sha256").is_some()
+             && exported_head.is_none()
+         {
+-            return Err(anyhow!(
+-                "checkpoint export head has no exact ready artifact binding"
++            return Err(admission::denied(
++                "checkpoint export head has no exact ready artifact binding",
+             ));
+         }
+         head = match exported_head {
+@@ -13127,7 +13130,7 @@ async fn source_workspace_checkpoint_with_lock_tx(
+         None
+     };
+     if let Some(head) = head.as_deref() {
+-        validate_factory_base_commit(head)?;
++        validate_factory_base_commit(head).map_err(admission::validation)?;
+     }
+     Ok(SourceWorkspaceCheckpoint {
+         status,
+@@ -13161,14 +13164,16 @@ async fn ensure_factory_recovery_authorizer_tx(
+     .bind(actor_id)
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context("factory recovery mission or actor was not found")?;
++    .context(admission::Denied(
++        "factory recovery mission or actor was not found".into(),
++    ))?;
+     let room_id: Uuid = row.get("room_id");
+     assert_room_membership_tx(tx, corp_id, room_id, actor_id).await?;
+     let kind: String = row.get("kind");
+     let role: String = row.get("role");
+     if kind != "human" || !matches!(role.as_str(), "owner" | "admin" | "manager") {
+-        return Err(anyhow!(
+-            "forbidden: factory verification recovery requires owner, admin, or manager authority"
++        return Err(admission::denied(
++            "forbidden: factory verification recovery requires owner, admin, or manager authority",
+         ));
+     }
+     Ok(())
+@@ -14598,7 +14603,9 @@ async fn assert_room_membership_tx(
+     .fetch_optional(&mut **tx)
+     .await?;
+     if member.is_none() {
+-        return Err(anyhow!("forbidden: actor is not a member of this room"));
++        return Err(admission::denied(
++            "forbidden: actor is not a member of this room",
++        ));
+     }
+     Ok(())
+ }
+@@ -15758,9 +15765,9 @@ fn should_retry_runner_failure(
+ 
+ fn ensure_breaker_allows_human_progress(stage: &str, action: &str) -> Result<()> {
+     if breaker_is_hard(stage) {
+-        return Err(anyhow!(
++        return Err(admission::denied(format!(
+             "{action} is blocked by circuit breaker stage {stage}"
+-        ));
++        )));
+     }
+     Ok(())
+ }
+@@ -15859,9 +15866,9 @@ async fn ensure_run_not_hard_blocked_tx(
+ ) -> Result<()> {
+     ensure_breaker_allows_human_progress(stage, action)?;
+     if hard_breaker_reached_tx(tx, corp_id, run_id).await? {
+-        return Err(anyhow!(
++        return Err(admission::denied(format!(
+             "{action} is blocked because current budget or loop metrics require a hard breaker"
+-        ));
++        )));
+     }
+     Ok(())
+ }
+diff --git a/crates/crony-store/src/publication.rs b/crates/crony-store/src/publication.rs
+index 5322c24..8d4aeab 100644
+--- a/crates/crony-store/src/publication.rs
++++ b/crates/crony-store/src/publication.rs
+@@ -3,23 +3,6 @@ use super::*;
+ mod request;
+ mod worker;
+ 
+-// Only known domain denials may terminalize saved intent. Database failures and
+-// unclassified admission errors keep their native retry/rollback semantics.
+-#[derive(Debug)]
+-struct PublicationAdmissionDenied(String);
+-
+-impl std::fmt::Display for PublicationAdmissionDenied {
+-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+-        f.write_str(&self.0)
+-    }
+-}
+-
+-impl std::error::Error for PublicationAdmissionDenied {}
+-
+-pub(super) fn publication_admission_denied(message: impl Into<String>) -> anyhow::Error {
+-    PublicationAdmissionDenied(message.into()).into()
+-}
+-
+ const PUBLICATION_SELECT: &str = r#"
+     SELECT publication.id, publication.corp_id, publication.factory_work_item_id,
+            publication.mission_id, publication.source_deliverable_id,
+@@ -1898,9 +1881,7 @@ async fn validate_publication_prerequisites(
+     PgStore::ensure_audit_workflow_gates_tx(tx, request.corp_id).await?;
+     let (work_item, _) = factory_work_item_tx(tx, request.corp_id, request.work_item_id, true)
+         .await?
+-        .context(PublicationAdmissionDenied(
+-            "factory work item not found".into(),
+-        ))?;
++        .context(admission::Denied("factory work item not found".into()))?;
+     let allowed_state = if existing {
+         matches!(
+             work_item.state,
+@@ -1910,49 +1891,46 @@ async fn validate_publication_prerequisites(
+         work_item.state == FactoryWorkItemState::Verified
+     };
+     if !allowed_state {
+-        return Err(publication_admission_denied(format!(
++        return Err(admission::denied(format!(
+             "conflict: pull-request publication requires a verified factory work item, not {}",
+             work_item.state.as_str()
+         )));
+     }
+-    let mission_id = work_item.mission_id.context(PublicationAdmissionDenied(
++    let mission_id = work_item.mission_id.context(admission::Denied(
+         "verified factory work item has no mission".into(),
+     ))?;
+     ensure_factory_mission_verified_tx(tx, request.corp_id, mission_id)
+         .await
+         .map_err(|error| {
+             if error.is::<FactoryMissionVerificationDenied>() {
+-                publication_admission_denied(error.to_string())
++                admission::denied(error.to_string())
+             } else {
+                 error
+             }
+         })?;
+-    let policy = work_item
+-        .policy
+-        .as_object()
+-        .context(PublicationAdmissionDenied(
+-            "factory policy snapshot must be an object".into(),
+-        ))?;
++    let policy = work_item.policy.as_object().context(admission::Denied(
++        "factory policy snapshot must be an object".into(),
++    ))?;
+     if policy.get("auto_merge").and_then(Value::as_bool) != Some(false) {
+-        return Err(publication_admission_denied(
++        return Err(admission::denied(
+             "factory policy must explicitly disable auto_merge before publication",
+         ));
+     }
+     let publication_policy = policy
+         .get("publication")
+         .and_then(Value::as_object)
+-        .context(PublicationAdmissionDenied(
++        .context(admission::Denied(
+             "factory policy does not authorize pull-request publication".into(),
+         ))?;
+     if publication_policy.get("allowed").and_then(Value::as_bool) != Some(true) {
+-        return Err(publication_admission_denied(
++        return Err(admission::denied(
+             "factory policy does not authorize pull-request publication",
+         ));
+     }
+     let target_allowlist = publication_policy
+         .get("repository_allowlist")
+         .and_then(Value::as_array)
+-        .context(PublicationAdmissionDenied(
++        .context(admission::Denied(
+             "publication policy omitted repository_allowlist".into(),
+         ))?;
+     if !target_allowlist
+@@ -1960,7 +1938,7 @@ async fn validate_publication_prerequisites(
+         .filter_map(Value::as_str)
+         .any(|repository| repository.eq_ignore_ascii_case(request.target_repository))
+     {
+-        return Err(publication_admission_denied(
++        return Err(admission::denied(
+             "publication target repository is outside the factory policy allowlist",
+         ));
+     }
+@@ -1969,7 +1947,7 @@ async fn validate_publication_prerequisites(
+         work_item.source_repository_owner, work_item.source_repository_name
+     );
+     if request.target_repository != expected_repository {
+-        return Err(publication_admission_denied(
++        return Err(admission::denied(
+             "publication target repository must match the claimed source repository",
+         ));
+     }
+@@ -1977,29 +1955,29 @@ async fn validate_publication_prerequisites(
+         .get("base_ref")
+         .and_then(Value::as_str)
+         .filter(|value| !value.trim().is_empty() && value.len() <= 240)
+-        .context(PublicationAdmissionDenied(
++        .context(admission::Denied(
+             "publication policy omitted base_ref".into(),
+         ))?
+         .to_owned();
+     validate_factory_publication_base_ref(&expected_base_ref)
+-        .map_err(|error| publication_admission_denied(error.to_string()))?;
++        .map_err(|error| admission::denied(error.to_string()))?;
+     if request.base_ref != expected_base_ref {
+-        return Err(publication_admission_denied(format!(
++        return Err(admission::denied(format!(
+             "publication base ref {} does not match factory policy {}",
+             request.base_ref, expected_base_ref
+         )));
+     }
+     let expected_base_commit = factory_policy_required_string(policy, "source_base_commit", 64)
+-        .map_err(|error| publication_admission_denied(error.to_string()))?
++        .map_err(|error| admission::denied(error.to_string()))?
+         .to_ascii_lowercase();
+     validate_factory_base_commit(&expected_base_commit)
+-        .map_err(|error| publication_admission_denied(error.to_string()))?;
++        .map_err(|error| admission::denied(error.to_string()))?;
+     let branch_prefix = publication_policy
+         .get("branch_prefix")
+         .and_then(Value::as_str)
+         .unwrap_or("ecorp/");
+     if !request.branch.starts_with(branch_prefix) {
+-        return Err(publication_admission_denied(format!(
++        return Err(admission::denied(format!(
+             "publication branch must start with the authorized prefix {branch_prefix}"
+         )));
+     }
+@@ -2007,7 +1985,7 @@ async fn validate_publication_prerequisites(
+         .get("review_status")
+         .and_then(Value::as_str)
+         .filter(|value| !value.trim().is_empty())
+-        .context(PublicationAdmissionDenied(
++        .context(admission::Denied(
+             "publication policy omitted review_status".into(),
+         ))?
+         .to_owned();
+@@ -2015,12 +1993,12 @@ async fn validate_publication_prerequisites(
+         .get("status_before")
+         .and_then(Value::as_str)
+         .filter(|value| !value.trim().is_empty())
+-        .context(PublicationAdmissionDenied(
++        .context(admission::Denied(
+             "publication policy omitted status_before".into(),
+         ))?
+         .to_owned();
+     if !request.body.contains(&work_item.source_issue_url) {
+-        return Err(publication_admission_denied(
++        return Err(admission::denied(
+             "pull request body must link the claimed source issue URL",
+         ));
+     }
+@@ -2065,26 +2043,26 @@ async fn validate_publication_prerequisites(
+     .bind(mission_id)
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context(PublicationAdmissionDenied(
++    .context(admission::Denied(
+         "source deliverable is not linked to the factory mission".into(),
+     ))?;
+     let form: String = row.get("form");
+     let head_commit: Option<String> = row.get("head_commit");
+     let commit_sha = head_commit
+         .filter(|value| !value.is_empty())
+-        .context(PublicationAdmissionDenied(
++        .context(admission::Denied(
+             "merge-ready publication requires a committed deliverable".into(),
+         ))?
+         .to_ascii_lowercase();
+     validate_factory_base_commit(&commit_sha)
+-        .map_err(|error| publication_admission_denied(error.to_string()))?;
++        .map_err(|error| admission::denied(error.to_string()))?;
+     let base_commit: String = row.get::<String, _>("base_commit").to_ascii_lowercase();
+     if form != "commit_branch"
+         || row.get::<String, _>("integration_state") != "ready_for_review"
+         || base_commit != expected_base_commit
+         || commit_sha == base_commit
+     {
+-        return Err(publication_admission_denied(
++        return Err(admission::denied(
+             "source deliverable is not a merge-ready commit/branch result",
+         ));
+     }
+@@ -2098,7 +2076,7 @@ async fn validate_publication_prerequisites(
+             .and_then(Value::as_str)
+             .is_none_or(str::is_empty)
+     {
+-        return Err(publication_admission_denied(
++        return Err(admission::denied(
+             "source deliverable does not include a verified portable Git bundle",
+         ));
+     }
+@@ -2123,7 +2101,7 @@ async fn validate_publication_prerequisites(
+             .as_deref()
+             != Some(deliverable_sha256.as_str())
+     {
+-        return Err(publication_admission_denied(
++        return Err(admission::denied(
+             "source deliverable is not linked to passing persisted verifier state",
+         ));
+     }
+@@ -2195,7 +2173,7 @@ async fn validate_publication_prerequisites(
+                 .as_deref()
+                 == Some("quarantined")
+     }) {
+-        return Err(publication_admission_denied(
++        return Err(admission::denied(
+             "quarantined source lineage cannot be published",
+         ));
+     }
+@@ -2308,7 +2286,7 @@ async fn validate_publication_prerequisites(
+     .fetch_all(&mut **tx)
+     .await?;
+     if evidence_ids.is_empty() {
+-        return Err(publication_admission_denied(
++        return Err(admission::denied(
+             "pull-request publication requires persisted passing verification evidence",
+         ));
+     }
+@@ -2738,22 +2716,22 @@ fn publication_resume_lineage(
+ ) -> Result<HashSet<Uuid>> {
+     let parents = resume_edges.iter().copied().collect::<HashMap<_, _>>();
+     if parents.len() != resume_edges.len() {
+-        return Err(anyhow!(
+-            "pull-request publication run lineage contains duplicate run identifiers"
++        return Err(admission::denied(
++            "pull-request publication run lineage contains duplicate run identifiers",
+         ));
+     }
+     let mut lineage = HashSet::new();
+     let mut current = Some(selected_run_id);
+     while let Some(run_id) = current {
+         if !lineage.insert(run_id) {
+-            return Err(anyhow!(
+-                "pull-request publication run lineage contains a resume cycle"
++            return Err(admission::denied(
++                "pull-request publication run lineage contains a resume cycle",
+             ));
+         }
+         current = *parents.get(&run_id).with_context(|| {
+-            format!(
++            admission::Denied(format!(
+                 "pull-request publication run lineage references run {run_id} outside the factory mission"
+-            )
++            ))
+         })?;
+     }
+     Ok(lineage)
+@@ -2777,8 +2755,8 @@ fn ensure_recovered_suspend_loop_metrics_allow_publication(
+     if (no_progress_limit > 0 && no_progress_events >= no_progress_limit)
+         || (repeated_tool_limit > 0 && repeated_tool_count >= repeated_tool_limit)
+     {
+-        return Err(anyhow!(
+-            "pull-request publication is blocked because current loop metrics require a hard breaker"
++        return Err(admission::denied(
++            "pull-request publication is blocked because current loop metrics require a hard breaker",
+         ));
+     }
+     Ok(())
+@@ -3421,30 +3399,36 @@ mod tests {
+             selected, selected, "suspend", &lineage
+         ));
+         assert!(ensure_recovered_suspend_loop_metrics_allow_publication(7, 4, 8, 5).is_ok());
+-        assert!(ensure_recovered_suspend_loop_metrics_allow_publication(8, 4, 8, 5).is_err());
+-        assert!(ensure_recovered_suspend_loop_metrics_allow_publication(7, 5, 8, 5).is_err());
++        for (progress, repeated) in [(8, 4), (7, 5)] {
++            let error =
++                ensure_recovered_suspend_loop_metrics_allow_publication(progress, repeated, 8, 5)
++                    .unwrap_err();
++            assert!(error.downcast_ref::<admission::Denied>().is_some());
++        }
+     }
+ 
+     #[test]
+-    fn publication_resume_lineage_fails_closed_on_missing_or_cyclic_parents() {
++    fn publication_resume_lineage_denies_missing_cyclic_or_duplicate_parents() {
+         let selected = Uuid::from_u128(1);
+         let missing = Uuid::from_u128(2);
+-        assert!(
+-            publication_resume_lineage(selected, &[(selected, Some(missing))])
+-                .unwrap_err()
+-                .to_string()
+-                .contains("outside the factory mission")
+-        );
+-
+         let other = Uuid::from_u128(3);
+-        assert!(
+-            publication_resume_lineage(
+-                selected,
+-                &[(selected, Some(other)), (other, Some(selected))]
+-            )
+-            .unwrap_err()
+-            .to_string()
+-            .contains("resume cycle")
+-        );
++        for (edges, reason) in [
++            (
++                vec![(selected, Some(missing))],
++                "outside the factory mission",
++            ),
++            (
++                vec![(selected, Some(other)), (other, Some(selected))],
++                "resume cycle",
++            ),
++            (
++                vec![(selected, None), (selected, None)],
++                "duplicate run identifiers",
++            ),
++        ] {
++            let error = publication_resume_lineage(selected, &edges).unwrap_err();
++            assert!(error.to_string().contains(reason), "{error}");
++            assert!(error.downcast_ref::<admission::Denied>().is_some());
++        }
+     }
+ }
+diff --git a/crates/crony-store/src/publication/request.rs b/crates/crony-store/src/publication/request.rs
+index cc473bf..4165b74 100644
+--- a/crates/crony-store/src/publication/request.rs
++++ b/crates/crony-store/src/publication/request.rs
+@@ -435,7 +435,7 @@ pub(super) async fn revalidate_human_request_prerequisites_tx(
+         &request.actor_role,
+     )? != request.preview
+     {
+-        return Err(publication_admission_denied(
++        return Err(admission::denied(
+             "conflict: saved human publication intent no longer matches current authority, policy or verified source",
+         ));
+     }
+@@ -466,7 +466,7 @@ async fn lock_request_membership_tx(
+     if role.as_deref() != Some(expected_role)
+         || !matches!(expected_role, "owner" | "admin" | "manager")
+     {
+-        return Err(publication_admission_denied(
++        return Err(admission::denied(
+             "forbidden: current human room membership and Publish permission are required",
+         ));
+     }
+diff --git a/crates/crony-store/src/publication/worker.rs b/crates/crony-store/src/publication/worker.rs
+index 5b459b8..8b14302 100644
+--- a/crates/crony-store/src/publication/worker.rs
++++ b/crates/crony-store/src/publication/worker.rs
+@@ -252,7 +252,7 @@ impl PgStore {
+             && let Err(error) =
+                 request::revalidate_human_request_tx(&mut tx, &publication, &intent).await
+         {
+-            let Some(denial) = error.downcast_ref::<PublicationAdmissionDenied>() else {
++            let Some(denial) = error.downcast_ref::<admission::Denied>() else {
+                 return Err(error);
+             };
+             let detail = format!("Saved human publication request rejected: {denial}");
+diff --git a/crates/crony-store/src/terminal_accounting.rs b/crates/crony-store/src/terminal_accounting.rs
+index ade9b67..7713fc4 100644
+--- a/crates/crony-store/src/terminal_accounting.rs
++++ b/crates/crony-store/src/terminal_accounting.rs
+@@ -33,8 +33,8 @@ pub(super) async fn validate_termination_tx(
+         (Some(adapter), [Some(started)]) if adapter == *started => adapter,
+         (None, [Some(started)]) => started.clone(),
+         _ => {
+-            return Err(anyhow!(
+-                "provider-termination assignment adapter is unproven"
++            return Err(admission::denied(
++                "provider-termination assignment adapter is unproven",
+             ));
+         }
+     };
+@@ -66,7 +66,9 @@ fn validate_termination(payload: &Value, adapter: &str, execution_mode: &str) ->
+             })
+         });
+     if !valid {
+-        return Err(anyhow!("invalid native provider-termination evidence"));
++        return Err(admission::denied(
++            "invalid native provider-termination evidence",
++        ));
+     }
+     Ok(())
+ }

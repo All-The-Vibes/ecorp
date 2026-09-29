@@ -1173,6 +1173,38 @@ repository, base ref, branch, commit, pull-request title/body, source issue, exp
 authorization snapshot, and effect key. Attempts have independent publisher leases and fencing
 tokens; tokens never enter snapshots or events.
 
+Human-requested publication first uses that same aggregate in `requested`. An authenticated human
+with current Corp, mission-room, and `Publish` authority previews the exact selected deliverable,
+target, source identity, and policy. The request transaction rechecks that preview and saves its
+fingerprint, human authorization, and request operation as distinct `human_requested` intent
+provenance. It creates no publisher attempt, token, lease, coding run, or remote effect. A duplicate
+request converges on the same intent; changed source, policy, or authorizer cannot silently replace
+it. This provenance does not authorize the prospective machine-intent path.
+
+The trusted publisher can watch a bounded queue for the Corp and repository explicitly granted on
+its separately enrolled workload credential. Repository selection must match that persisted grant;
+queue and publication transactions revalidate the exact credential, including when another credential
+shares its publisher ID. Dedicated request routes derive the human and immutable plan from
+the saved intent; they accept no caller-selected authorizer, grant, or replacement plan and cannot
+start a direct-CLI publication as queued human intent. Claims, renewals, artifact access, and
+effect checkpoints reuse the native publication transactions and fencing. Before effects they
+recheck the recorded human's current authority, exact source and policy, and live attempt ownership.
+The watcher invokes the existing `factory-publish` effect engine. Direct human-authorized CLI
+publication remains supported. The watcher claims the saved intent before reading its source
+context. A known admission denial, such as changed source or policy or revoked human room access,
+is recorded durably with failure detail and one failure event, without granting an effect token.
+The claim transaction uses the native credential-before-publication lock order, preserves any
+active lease, and clears an expired lease while failing its running attempt. Database failures and
+unclassified admission errors roll back and remain retryable. Published or failed intent returns
+tokenless readback; failed intent leaves the watcher queue and requires manual reconciliation.
+There is no automatic replacement-human-request flow. Expired attempts whose source and authority
+remain valid can adopt their matching external effects after a restart.
+
+The browser projects the saved request and native attempt state, including waiting for a trusted
+publisher, working, failed with any existing PR link, and published. A caller disconnect does not
+cancel durable intent. Browser responses expose no publisher credential or lease token, and the
+request grants neither merge nor deployment authority.
+
 When the selected verified run completed through factory verification recovery, publication
 provenance keeps the original claim and the reviewed recovery source distinct. The source issue's
 `claimed_revision` remains the revision captured by the factory claim, while `revision` records the
@@ -1192,7 +1224,11 @@ checkpoint upgrades are combined, and renewal replay returns the upgraded persis
 
 Publisher workloads have a separate Corp-scoped identity and credential from the authorizing human.
 Owners or admins enroll bounded credentials whose plaintext is returned once and whose SHA-256 hash,
-expiry, revocation state, and last-use time are stored. Start, renewal and effect advancement require
+optional normalized repository grant, expiry, revocation state, and last-use time are stored.
+Workload routes require an explicit repository grant. Legacy unscoped credentials remain limited to
+the separately human-authenticated direct CLI path. A scoped credential constrains both paths,
+including idempotent replay and failure-only checkpoints. Changing the grant requires enrollment
+and revocation; caller parameters cannot change it. Start, renewal and effect advancement require
 current publication authority and the independently authenticated publisher identity. Failure
 reporting retains authenticated Corp identity plus exact actor, publisher, token, version and lease
 ownership, but can close that attempt after effect authority changes. It advances no external
@@ -1247,8 +1283,10 @@ Omitting the option derives it from the selected source base ref, so `HEAD` rema
 default while an explicit source branch such as `release` also becomes the publication base unless
 the operator overrides it.
 
-The state sequence is `publishing -> branch_pushed -> pull_request_created -> published`. A
-checkpoint can be replayed after duplicate delivery, process restart, or external success followed
+The human-request state sequence is
+`requested -> publishing -> branch_pushed -> pull_request_created -> published`; a direct CLI start
+acquires its native attempt at `publishing`. A checkpoint can be replayed after duplicate delivery,
+process restart, or external success followed
 by local failure. Project status is not changed until the pull-request identity is durable, and the
 final transaction moves the factory item to `published` and the source deliverable to integration
 state `published`. Auto-merge, merge, and deployment remain false and separately unauthorized. See

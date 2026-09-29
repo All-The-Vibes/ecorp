@@ -751,6 +751,7 @@ async function enrollPublicationPublisher(
     {
       actor_id: demo.alice_actor_id,
       publisher_id: publisherId,
+      repository: fixtureSource.repository,
       expires_in_seconds: 3600,
     },
   )
@@ -996,6 +997,7 @@ const memberPublisherEnrollment = await post(
   {
     actor_id: demo.bob_actor_id,
     publisher_id: 'member-must-not-enroll',
+    repository: fixtureSource.repository,
     expires_in_seconds: 3600,
   },
 )
@@ -1052,6 +1054,7 @@ const crossCorpPublisherCredential = await postOk(
   {
     actor_id: otherCorpOwnerId,
     publisher_id: 'trusted-publication-e2e',
+    repository: fixtureSource.repository,
     expires_in_seconds: 3600,
   },
 )
@@ -2024,7 +2027,9 @@ const projectEffectPauseMarker = path.join(
 )
 await rm(projectEffectPauseMarker, { force: true })
 const stalePublisherAttempt = runPublisher(demo, workItem.id, {
-  expectFailure: /not a member of this room/,
+  // The native CLI reports the status without echoing potentially secret-bearing
+  // response bodies. The direct API checks above verify the membership reason.
+  expectFailure: /^Error: trusted publisher API returned HTTP 403 Forbidden\s*$/,
   pauseAt: 'before_project_effect_renewal',
   pauseMarker: projectEffectPauseMarker,
   pauseMs: 5000,

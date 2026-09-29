@@ -1,0 +1,536 @@
+diff --git a/crates/crony-server/src/publication_artifact_tests.rs b/crates/crony-server/src/publication_artifact_tests.rs
+new file mode 100644
+index 0000000..61ecea5
+--- /dev/null
++++ b/crates/crony-server/src/publication_artifact_tests.rs
+@@ -0,0 +1,207 @@
++//! Exercise the real HTTP artifact route while PostgreSQL stalls its artifact
++//! lookup. Source metadata is synthetic and the object is deliberately absent:
++//! reaching object verification returns 500, never a successful source export.
++use super::*;
++use std::time::Duration;
++
++fn artifact_request(fixture: &Fixture, claim: &Value) -> reqwest::RequestBuilder {
++    reqwest::Client::builder()
++        .no_proxy()
++        .timeout(Duration::from_secs(20))
++        .build()
++        .unwrap()
++        .post(format!(
++            "{}/api/corps/{}/factory/publisher/publications/{}/artifact",
++            fixture.base, fixture.ids.corp_id, fixture.publication_id
++        ))
++        .header(
++            "x-crony-publication-publisher-credential",
++            &fixture.credential,
++        )
++        .json(&json!({
++            "repository": REPOSITORY,
++            "publisher_token": claim["publisher_token"],
++            "expected_version": claim["publication"]["version"],
++        }))
++}
++
++async fn wait_for_artifact_lookup(pool: &PgPool) {
++    tokio::time::timeout(Duration::from_secs(10), async {
++        loop {
++            let waiting: bool = sqlx::query_scalar(
++                "SELECT EXISTS (SELECT 1 FROM pg_stat_activity
++                 WHERE datname = current_database() AND wait_event_type = 'Lock'
++                   AND query LIKE '%FROM artifacts artifact%'
++                   AND query LIKE '%JOIN room_memberships membership%')",
++            )
++            .fetch_one(pool)
++            .await
++            .unwrap();
++            if waiting {
++                break;
++            }
++            tokio::time::sleep(Duration::from_millis(10)).await;
++        }
++    })
++    .await
++    .expect("HTTP request did not reach the controlled artifact lookup");
++}
++
++async fn assert_authority_change_serialized(pool: PgPool, change: &str) {
++    let fixture = Fixture::new(pool).await.unwrap();
++    let claim = fixture.claim("artifact-serialization").await;
++    let (query, id) = match change {
++        "credential" => (
++            "UPDATE publication_publisher_credentials SET revoked_at=clock_timestamp()
++             WHERE corp_id=$1",
++            fixture.ids.corp_id,
++        ),
++        "version" => (
++            "UPDATE pull_request_publications SET version=version+1 WHERE id=$1",
++            fixture.publication_id,
++        ),
++        "role" => (
++            "UPDATE actors SET role='member' WHERE id=$1",
++            fixture.ids.alice_actor_id,
++        ),
++        "membership" => (
++            "DELETE FROM room_memberships WHERE actor_id=$1",
++            fixture.ids.alice_actor_id,
++        ),
++        _ => unreachable!(),
++    };
++    let mut blocker = fixture.pool.begin().await.unwrap();
++    // Only the final download query uses this table, including for legacy
++    // source metadata. The preceding publication checks can finish normally.
++    sqlx::query("LOCK TABLE verification_requests IN ACCESS EXCLUSIVE MODE")
++        .execute(&mut *blocker)
++        .await
++        .unwrap();
++    let request = artifact_request(&fixture, &claim);
++    let download = tokio::spawn(async move { request.send().await.unwrap() });
++    wait_for_artifact_lookup(&fixture.pool).await;
++
++    let mut mutation = fixture.pool.begin().await.unwrap();
++    sqlx::query("SET LOCAL lock_timeout = '250ms'")
++        .execute(&mut *mutation)
++        .await
++        .unwrap();
++    let result = sqlx::query(query).bind(id).execute(&mut *mutation).await;
++    let serialized = result
++        .as_ref()
++        .err()
++        .and_then(sqlx::Error::as_database_error)
++        .and_then(|error| error.code())
++        .is_some_and(|code| code == "55P03");
++    // Retain the actual race on the old implementation: an unblocked change
++    // commits before lookup resumes. A correctly blocked write is rolled back.
++    if result.is_ok() {
++        mutation.commit().await.unwrap();
++    } else {
++        mutation.rollback().await.unwrap();
++    }
++    blocker.commit().await.unwrap();
++    let response = download.await.unwrap();
++    assert!(
++        serialized,
++        "{change} changed authority before the artifact lookup completed"
++    );
++    assert_eq!(
++        response.status(),
++        reqwest::StatusCode::INTERNAL_SERVER_ERROR
++    );
++    assert_eq!(response.headers()["cache-control"], "no-store");
++    // The request was authorized before the mutation; deliberately invalid
++    // fixture object provenance prevents confusing it with artifact acceptance.
++    sqlx::query(query)
++        .bind(id)
++        .execute(&fixture.pool)
++        .await
++        .unwrap();
++    let denied = artifact_request(&fixture, &claim).send().await.unwrap();
++    let expected = if change == "version" {
++        reqwest::StatusCode::CONFLICT
++    } else {
++        reqwest::StatusCode::FORBIDDEN
++    };
++    assert_eq!(denied.status(), expected, "authority change: {change}");
++    assert!(!denied.text().await.unwrap().contains(&fixture.credential));
++}
++
++async fn assert_expiry_after_artifact_wait(pool: PgPool, credential: bool) {
++    let fixture = Fixture::new(pool).await.unwrap();
++    let claim = fixture.claim("artifact-expiry").await;
++    let query = if credential {
++        "UPDATE publication_publisher_credentials
++         SET expires_at=clock_timestamp()+interval '3 seconds' WHERE corp_id=$1
++         RETURNING expires_at"
++    } else {
++        "UPDATE pull_request_publications
++         SET publisher_lease_expires_at=clock_timestamp()+interval '3 seconds' WHERE corp_id=$1
++         RETURNING publisher_lease_expires_at"
++    };
++    let expiry: chrono::DateTime<Utc> = sqlx::query_scalar(query)
++        .bind(fixture.ids.corp_id)
++        .fetch_one(&fixture.pool)
++        .await
++        .unwrap();
++    let mut blocker = fixture.pool.begin().await.unwrap();
++    sqlx::query("LOCK TABLE verification_requests IN ACCESS EXCLUSIVE MODE")
++        .execute(&mut *blocker)
++        .await
++        .unwrap();
++    let request = artifact_request(&fixture, &claim);
++    let download = tokio::spawn(async move { request.send().await.unwrap() });
++    wait_for_artifact_lookup(&fixture.pool).await;
++    sqlx::query("SELECT pg_sleep_until($1::timestamptz + interval '50 milliseconds')")
++        .bind(expiry)
++        .execute(&fixture.pool)
++        .await
++        .unwrap();
++    blocker.commit().await.unwrap();
++    let response = download.await.unwrap();
++    let expected = if credential {
++        reqwest::StatusCode::FORBIDDEN
++    } else {
++        reqwest::StatusCode::CONFLICT
++    };
++    assert_eq!(response.status(), expected);
++    assert_eq!(response.headers()["cache-control"], "no-store");
++    assert!(!response.text().await.unwrap().contains(&fixture.credential));
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_publication_artifact_serializes_credential_revocation(pool: PgPool) {
++    assert_authority_change_serialized(pool, "credential").await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_publication_artifact_serializes_publication_version(pool: PgPool) {
++    assert_authority_change_serialized(pool, "version").await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_publication_artifact_serializes_human_role_revocation(pool: PgPool) {
++    assert_authority_change_serialized(pool, "role").await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_publication_artifact_serializes_room_membership_revocation(pool: PgPool) {
++    assert_authority_change_serialized(pool, "membership").await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_publication_artifact_rejects_lease_expiry_during_lookup(pool: PgPool) {
++    assert_expiry_after_artifact_wait(pool, false).await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_publication_artifact_rejects_credential_expiry_during_lookup(pool: PgPool) {
++    assert_expiry_after_artifact_wait(pool, true).await;
++}
+diff --git a/crates/crony-server/src/publication_request_tests.rs b/crates/crony-server/src/publication_request_tests.rs
+index 1b653bc..d837a17 100644
+--- a/crates/crony-server/src/publication_request_tests.rs
++++ b/crates/crony-server/src/publication_request_tests.rs
+@@ -16,0 +17,3 @@ mod repository_grants;
++#[path = "publication_artifact_tests.rs"]
++mod artifact_authority;
++
+diff --git a/crates/crony-server/src/publication_requests.rs b/crates/crony-server/src/publication_requests.rs
+index dfaed6e..931869a 100644
+--- a/crates/crony-server/src/publication_requests.rs
++++ b/crates/crony-server/src/publication_requests.rs
+@@ -306 +306 @@ async fn renew(
+-        .human_requested_publication_for_publisher(&scope, publication_id, None)
++        .human_requested_publication_for_publisher(&scope, publication_id)
+@@ -337 +337 @@ async fn checkpoint(
+-        .human_requested_publication_for_publisher(&scope, publication_id, None)
++        .human_requested_publication_for_publisher(&scope, publication_id)
+@@ -368 +368 @@ async fn artifact(
+-    let requested = state
++    let artifact = state
+@@ -370 +370 @@ async fn artifact(
+-        .human_requested_publication_for_publisher(
++        .human_requested_publication_artifact_for_publisher(
+@@ -373 +373 @@ async fn artifact(
+-            Some(PublicationLeaseControl {
++            PublicationLeaseControl {
+@@ -376 +376 @@ async fn artifact(
+-            }),
++            },
+@@ -380,7 +379,0 @@ async fn artifact(
+-    let publication = requested.publication;
+-    let artifact = state
+-        .store
+-        .artifact_for_download(corp_id, publication.artifact_id, publication.actor_id)
+-        .await
+-        .map_err(workload_error)?
+-        .ok_or_else(|| ApiError::not_found("requested publication artifact was not found"))?;
+diff --git a/crates/crony-store/src/human_publication_denial_tests.rs b/crates/crony-store/src/human_publication_denial_tests.rs
+index 5a4f3f4..8db7e99 100644
+--- a/crates/crony-store/src/human_publication_denial_tests.rs
++++ b/crates/crony-store/src/human_publication_denial_tests.rs
+@@ -125 +125 @@ async fn assert_pending(
+-        .human_requested_publication_for_publisher(scope, queued.publication.id, None)
++        .human_requested_publication_for_publisher(scope, queued.publication.id)
+diff --git a/crates/crony-store/src/human_publication_repository_tests.rs b/crates/crony-store/src/human_publication_repository_tests.rs
+index 7fc0231..df089f0 100644
+--- a/crates/crony-store/src/human_publication_repository_tests.rs
++++ b/crates/crony-store/src/human_publication_repository_tests.rs
+@@ -52 +52 @@ async fn assert_workload_denied(
+-                .human_requested_publication_for_publisher(scope, id, None)
++                .human_requested_publication_for_publisher(scope, id)
+@@ -64 +64 @@ async fn assert_workload_denied(
+-                .human_requested_publication_for_publisher(scope, id, Some(control))
++                .human_requested_publication_artifact_for_publisher(scope, id, control)
+@@ -215 +215 @@ async fn issue219_native_publication_worker_binds_repository_to_exact_credential
+-            .human_requested_publication_for_publisher(
++            .human_requested_publication_artifact_for_publisher(
+@@ -218 +218 @@ async fn issue219_native_publication_worker_binds_repository_to_exact_credential
+-                Some(control)
++                control
+diff --git a/crates/crony-store/src/human_publication_request_tests.rs b/crates/crony-store/src/human_publication_request_tests.rs
+index 3848dc0..a1afadb 100644
+--- a/crates/crony-store/src/human_publication_request_tests.rs
++++ b/crates/crony-store/src/human_publication_request_tests.rs
+@@ -393 +393 @@ async fn issue219_native_publication_worker_keeps_database_failures_retryable(po
+-        .human_requested_publication_for_publisher(&scope, id, None)
++        .human_requested_publication_for_publisher(&scope, id)
+@@ -514 +514 @@ async fn issue219_native_publication_worker_scopes_queue_and_readback(pool: PgPo
+-                .human_requested_publication_for_publisher(&other, id, None)
++                .human_requested_publication_for_publisher(&other, id)
+@@ -528 +528 @@ async fn issue219_native_publication_worker_scopes_queue_and_readback(pool: PgPo
+-        .human_requested_publication_for_publisher(&scope, id, None)
++        .human_requested_publication_for_publisher(&scope, id)
+@@ -547 +547 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
+-            .human_requested_publication_for_publisher(
++            .human_requested_publication_artifact_for_publisher(
+@@ -550 +550 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
+-                Some(PublicationLeaseControl {
++                PublicationLeaseControl {
+@@ -553 +553 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
+-                })
++                }
+@@ -574 +574 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
+-            .human_requested_publication_for_publisher(&scope, id, Some(control))
++            .human_requested_publication_artifact_for_publisher(&scope, id, control)
+@@ -587 +587 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
+-            .human_requested_publication_for_publisher(
++            .human_requested_publication_artifact_for_publisher(
+@@ -590 +590 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
+-                Some(PublicationLeaseControl {
++                PublicationLeaseControl {
+@@ -593 +593 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
+-                })
++                }
+@@ -605 +605 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
+-            .human_requested_publication_for_publisher(&scope, id, Some(control))
++            .human_requested_publication_artifact_for_publisher(&scope, id, control)
+@@ -618 +618 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
+-            .human_requested_publication_for_publisher(&scope, id, None)
++            .human_requested_publication_for_publisher(&scope, id)
+@@ -669 +669 @@ async fn issue219_native_publication_worker_cannot_adopt_direct_cli_intent(pool:
+-            .human_requested_publication_for_publisher(&scope, direct.publication.id, None)
++            .human_requested_publication_for_publisher(&scope, direct.publication.id)
+diff --git a/crates/crony-store/src/lib.rs b/crates/crony-store/src/lib.rs
+index f0a6f2e..f5e4b3e 100644
+--- a/crates/crony-store/src/lib.rs
++++ b/crates/crony-store/src/lib.rs
+@@ -8002,62 +8002 @@ impl PgStore {
+-        let row = sqlx::query(
+-            r#"
+-            SELECT artifact.id, artifact.corp_id, artifact.task_id, artifact.run_id,
+-                   artifact.producer_agent_id, artifact.producer_runner_id,
+-                   artifact.verifier, artifact.object_key, artifact.uri,
+-                    artifact.sha256, artifact.media_type, artifact.bytes,
+-                    artifact.artifact_role, artifact.file_name, artifact.metadata,
+-                    artifact.provenance_signature, artifact.retention_until
+-            FROM artifacts artifact
+-            JOIN tasks task ON task.id = artifact.task_id AND task.corp_id = artifact.corp_id
+-            JOIN missions mission ON mission.id = task.mission_id AND mission.corp_id = task.corp_id
+-            JOIN room_memberships membership
+-              ON membership.room_id = mission.room_id AND membership.actor_id = $3
+-            WHERE artifact.id = $1 AND artifact.corp_id = $2
+-              AND artifact.status = 'ready'
+-              AND (
+-                artifact.artifact_role <> 'source_deliverable'
+-                -- Only absence of both fields identifies immutable historical exports.
+-                OR NOT (artifact.metadata ? 'verified_tree' OR artifact.metadata ? 'source_verification')
+-                OR EXISTS (
+-                    SELECT 1 FROM source_deliverables deliverable
+-                    JOIN runs run ON run.id = deliverable.run_id
+-                      AND run.corp_id = deliverable.corp_id AND run.task_id = deliverable.task_id
+-                    WHERE deliverable.artifact_id = artifact.id
+-                      AND deliverable.corp_id = artifact.corp_id
+-                      AND deliverable.task_id = artifact.task_id
+-                      AND run.id = artifact.run_id
+-                      AND run.agent_id = artifact.producer_agent_id
+-                      AND run.runner_id = artifact.producer_runner_id
+-                      AND deliverable.form = artifact.metadata->>'form'
+-                      AND deliverable.verification_sha256 = run.verification_sha256
+-                      AND deliverable.verification_sha256 = artifact.metadata->>'verification_sha256'
+-                      AND artifact.sha256 = run.deliverable_sha256
+-                      AND deliverable.base_commit = run.workspace_base_commit
+-                      AND deliverable.base_commit = artifact.metadata->>'base_commit'
+-                      AND (run.source_base_commit IS NULL OR run.source_base_commit = deliverable.base_commit)
+-                      AND (task.contract->>'source_base_commit' IS NULL
+-                           OR task.contract->>'source_base_commit' = deliverable.base_commit)
+-                      AND (
+-                        run.verification_status = 'passed'
+-                        -- Reviewers must inspect the accepted automated result before deciding.
+-                        OR (run.verification_status = 'waiting_for_approval' AND EXISTS (
+-                            SELECT 1 FROM verification_requests request
+-                            WHERE request.run_id = run.id AND request.corp_id = run.corp_id
+-                              AND request.task_id = run.task_id AND request.status = 'pending'
+-                        ))
+-                      )
+-                )
+-              )
+-            "#,
+-        )
+-        .bind(artifact_id)
+-        .bind(corp_id)
+-        .bind(actor_id)
+-        .fetch_optional(&self.pool)
+-        .await?;
+-        Ok(row.map(map_stored_artifact).filter(|artifact| {
+-            artifact.artifact_role != "source_deliverable"
+-                || (artifact.metadata.get("verified_tree").is_none()
+-                    && artifact.metadata.get("source_verification").is_none())
+-                || crony_domain::SourceVerification::from_payload(&artifact.metadata).is_ok()
+-        }))
++        artifact_for_download_using(&self.pool, corp_id, artifact_id, actor_id).await
+@@ -15269,0 +15209,70 @@ fn map_factory_verification_recovery(
++async fn artifact_for_download_using<'e>(
++    executor: impl sqlx::Executor<'e, Database = Postgres>,
++    corp_id: Uuid,
++    artifact_id: Uuid,
++    actor_id: Uuid,
++) -> Result<Option<StoredArtifact>> {
++    let row = sqlx::query(
++        r#"
++        SELECT artifact.id, artifact.corp_id, artifact.task_id, artifact.run_id,
++               artifact.producer_agent_id, artifact.producer_runner_id,
++               artifact.verifier, artifact.object_key, artifact.uri,
++                artifact.sha256, artifact.media_type, artifact.bytes,
++                artifact.artifact_role, artifact.file_name, artifact.metadata,
++                artifact.provenance_signature, artifact.retention_until
++        FROM artifacts artifact
++        JOIN tasks task ON task.id = artifact.task_id AND task.corp_id = artifact.corp_id
++        JOIN missions mission ON mission.id = task.mission_id AND mission.corp_id = task.corp_id
++        JOIN room_memberships membership
++          ON membership.room_id = mission.room_id AND membership.actor_id = $3
++        WHERE artifact.id = $1 AND artifact.corp_id = $2
++          AND artifact.status = 'ready'
++          AND (
++            artifact.artifact_role <> 'source_deliverable'
++            -- Only absence of both fields identifies immutable historical exports.
++            OR NOT (artifact.metadata ? 'verified_tree' OR artifact.metadata ? 'source_verification')
++            OR EXISTS (
++                SELECT 1 FROM source_deliverables deliverable
++                JOIN runs run ON run.id = deliverable.run_id
++                  AND run.corp_id = deliverable.corp_id AND run.task_id = deliverable.task_id
++                WHERE deliverable.artifact_id = artifact.id
++                  AND deliverable.corp_id = artifact.corp_id
++                  AND deliverable.task_id = artifact.task_id
++                  AND run.id = artifact.run_id
++                  AND run.agent_id = artifact.producer_agent_id
++                  AND run.runner_id = artifact.producer_runner_id
++                  AND deliverable.form = artifact.metadata->>'form'
++                  AND deliverable.verification_sha256 = run.verification_sha256
++                  AND deliverable.verification_sha256 = artifact.metadata->>'verification_sha256'
++                  AND artifact.sha256 = run.deliverable_sha256
++                  AND deliverable.base_commit = run.workspace_base_commit
++                  AND deliverable.base_commit = artifact.metadata->>'base_commit'
++                  AND (run.source_base_commit IS NULL OR run.source_base_commit = deliverable.base_commit)
++                  AND (task.contract->>'source_base_commit' IS NULL
++                       OR task.contract->>'source_base_commit' = deliverable.base_commit)
++                  AND (
++                    run.verification_status = 'passed'
++                    -- Reviewers must inspect the accepted automated result before deciding.
++                    OR (run.verification_status = 'waiting_for_approval' AND EXISTS (
++                        SELECT 1 FROM verification_requests request
++                        WHERE request.run_id = run.id AND request.corp_id = run.corp_id
++                          AND request.task_id = run.task_id AND request.status = 'pending'
++                    ))
++                  )
++            )
++          )
++        "#,
++    )
++    .bind(artifact_id)
++    .bind(corp_id)
++    .bind(actor_id)
++    .fetch_optional(executor)
++    .await?;
++    Ok(row.map(map_stored_artifact).filter(|artifact| {
++        artifact.artifact_role != "source_deliverable"
++            || (artifact.metadata.get("verified_tree").is_none()
++                && artifact.metadata.get("source_verification").is_none())
++            || crony_domain::SourceVerification::from_payload(&artifact.metadata).is_ok()
++    }))
++}
++
+diff --git a/crates/crony-store/src/publication.rs b/crates/crony-store/src/publication.rs
+index 58653a5..1cfc256 100644
+--- a/crates/crony-store/src/publication.rs
++++ b/crates/crony-store/src/publication.rs
+@@ -1595 +1595 @@ async fn ensure_actor_role_tx(
+-            "publication authorization role changed from {expected_role} to {role}"
++            "forbidden: publication authorization role changed from {expected_role} to {role}"
+@@ -2866 +2866 @@ const PUBLICATION_PUBLISHER_CREDENTIAL_LOCK_SQL: &str = r#"
+-      AND expires_at > now()
++      AND expires_at > clock_timestamp()
+@@ -3185 +3185 @@ mod tests {
+-            "expires_at > now()",
++            "expires_at > clock_timestamp()",
+diff --git a/crates/crony-store/src/publication/worker.rs b/crates/crony-store/src/publication/worker.rs
+index 5184842..560d4eb 100644
+--- a/crates/crony-store/src/publication/worker.rs
++++ b/crates/crony-store/src/publication/worker.rs
+@@ -44 +43,0 @@ impl PgStore {
+-        artifact_control: Option<PublicationLeaseControl>,
+@@ -47 +46 @@ impl PgStore {
+-        let (publication, token, intent) =
++        let (publication, _, intent) =
+@@ -49,16 +48,2 @@ impl PgStore {
+-        if let Some(control) = artifact_control {
+-            ensure_active_publication_control_tx(
+-                &mut tx,
+-                &publication,
+-                token,
+-                ActivePublicationControl {
+-                    actor_id: intent.actor_id,
+-                    publisher_id: &scope.publisher_id,
+-                    presented_token: control.publisher_token,
+-                    expected_version: control.expected_version,
+-                    now: Utc::now(),
+-                },
+-            )
+-            .await?;
+-            revalidate_publication_authority_tx(&mut tx, &publication, intent.actor_id).await?;
+-        }
++        // This readback supports native effect/checkpoint inputs. It does not
++        // authorize artifact retrieval or replace the native effect transaction.
+@@ -72,0 +58,38 @@ impl PgStore {
++    pub async fn human_requested_publication_artifact_for_publisher(
++        &self,
++        scope: &PublicationPublisherScope,
++        publication_id: Uuid,
++        control: PublicationLeaseControl,
++    ) -> Result<StoredArtifact> {
++        let mut tx = self.pool.begin().await?;
++        let (publication, token, intent) =
++            human_requested_publication_tx(&mut tx, scope, publication_id).await?;
++        let active_control = || ActivePublicationControl {
++            actor_id: intent.actor_id,
++            publisher_id: &scope.publisher_id,
++            presented_token: control.publisher_token,
++            expected_version: control.expected_version,
++            now: Utc::now(),
++        };
++        ensure_active_publication_control_tx(&mut tx, &publication, token, active_control())
++            .await?;
++        revalidate_publication_authority_tx(&mut tx, &publication, intent.actor_id).await?;
++        // Keep the native credential, publication, human membership and source
++        // locks until the canonical artifact lookup has completed.
++        let artifact = artifact_for_download_using(
++            &mut *tx,
++            scope.corp_id,
++            publication.artifact_id,
++            intent.actor_id,
++        )
++        .await?
++        .context("not found: requested publication artifact was not found")?;
++        // Row locks prevent concurrent revocation, not the passage of time.
++        // A blocked lookup must not retain an expired credential or lease.
++        revalidate_publisher_repository_tx(&mut tx, scope).await?;
++        ensure_active_publication_control_tx(&mut tx, &publication, token, active_control())
++            .await?;
++        tx.commit().await?;
++        Ok(artifact)
++    }
++

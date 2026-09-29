@@ -1,0 +1,921 @@
+{
+  "issue": 219,
+  "pr": 380,
+  "recorded_at_utc": "2026-09-29T02:51:59.703293+00:00",
+  "status": "local-implementation-accepted",
+  "implementation_acceptance_passed": true,
+  "issue_completed": false,
+  "tested_tree": "50a7d97fa6497fa96bb0d9e4939012c84ffb3ed8",
+  "integration_base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parents": [
+    "08f041f267f403f69f948666170f8e915104dd6f"
+  ],
+  "canonical_original_sha256": "f4ae07528de1da730729b52a41259ed41e2fab14dd96587843b8efdb8bc811bb",
+  "canonical_checks": [
+    {
+      "name": "migrations",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-compatibility",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-evm",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "repository-docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "node-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3142,
+          "passed": 3077,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      }
+    },
+    {
+      "name": "format",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "clippy",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "rust-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 884,
+          "failed": 0,
+          "ignored": 632,
+          "summaries": 41
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "web-build",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "web-lint",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    }
+  ],
+  "acceptance_source_equivalence": {
+    "acceptance_parent": "08f041f267f403f69f948666170f8e915104dd6f",
+    "canonical_parent": "08f041f267f403f69f948666170f8e915104dd6f",
+    "identical_parent_tree": "31862ef5a3d5e8e7bc5673c151fe17b5f8545494",
+    "all_physical_source_files_equal": true,
+    "file_count": 7593,
+    "acceptance_build_receipt_sha256": "fa4132f77858ad3ea2dcadaf1dc3fde0f23d46d22c9d57d432aabe6a8b18e8a4",
+    "browser_receipt_sha256": "cbaf86c63298d614f06a9c64c04042c7702283ca47f617f896e0e40b270a6f8d",
+    "focused_green_receipt_sha256": "3759e3e9b27656125d82d302b095c5ef079a7d9afb325c522b7ae5481b368297"
+  },
+  "focused_regression": {
+    "red": {
+      "tests": 65,
+      "pass": 51,
+      "fail": 14,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "green": {
+      "tests": 65,
+      "pass": 65,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    }
+  },
+  "controlled_acceptance": {
+    "mobile_flow_width": 390,
+    "screenshot_widths": [
+      390,
+      1440
+    ],
+    "no_horizontal_overflow": true,
+    "genuine_native_verified_results": 3,
+    "publication_intents": 3,
+    "simulated_pr_create_calls": 2,
+    "malformed_saved_intent_retired": true,
+    "unverified_factory_hides_both_publication_entry_points": true,
+    "verified_factory_enables_both_publication_entry_points": true,
+    "native_readiness_transition_without_fixture_state_injection": true,
+    "native_manual_verification_gate_exercised": true,
+    "caller_disconnect_survived": true,
+    "native_crash_adopted": true,
+    "same_watcher_recovered_after_busy": true,
+    "failed_request_retry_loop": false,
+    "no_extra_coding_runs": true,
+    "no_browser_publisher_credential": true,
+    "remote_main_unchanged": true,
+    "project_after_pr": true,
+    "all_browser_requests_loopback_only": true
+  },
+  "readiness_before_verification": {
+    "factory_state": "awaiting_approval",
+    "mission_state": "running",
+    "source_state": "ready_for_review",
+    "publication_controls": 0,
+    "publication_mutations": 0,
+    "selected_run": "14996952-2a7f-46f4-8443-2da4418fed9d",
+    "native_lifecycle": true,
+    "state_injection": false
+  },
+  "readiness_after_verification": {
+    "factory_state": "verified",
+    "selected_run_unchanged": true,
+    "mission_refresh_from_native_event": true,
+    "publication_mutations": 0
+  },
+  "readiness_context_reads": [
+    {
+      "view": "factory",
+      "method": "GET",
+      "status": 200,
+      "actor_id": "00000000-0000-4000-8000-000000000011",
+      "from_service_worker": false,
+      "response_cache_control": null,
+      "request_cache_control": null,
+      "request_pragma": null,
+      "work_item_id": "75b8ebeb-f7b9-440c-be25-abbdf14a5386",
+      "mission_id": "1f5c459b-1578-4175-8131-27c4ec5b1def",
+      "work_item_state": "awaiting_approval",
+      "work_item_version": 8,
+      "source_deliverable_id": "c7c3436c-f230-409c-9366-237aac6773c9",
+      "source_state": "ready_for_review",
+      "commit": "b58fe4fa3cfab455583fdc30462f954ec8187a71",
+      "verification_sha256": "7ef1e303de1396c2d5fbd2b8d3f35d33af17df0e42c4db1da7b71fc5f1abb59e"
+    },
+    {
+      "view": "mission",
+      "method": "GET",
+      "status": 200,
+      "actor_id": "00000000-0000-4000-8000-000000000011",
+      "from_service_worker": false,
+      "response_cache_control": null,
+      "request_cache_control": null,
+      "request_pragma": null,
+      "work_item_id": "75b8ebeb-f7b9-440c-be25-abbdf14a5386",
+      "mission_id": "1f5c459b-1578-4175-8131-27c4ec5b1def",
+      "work_item_state": "awaiting_approval",
+      "work_item_version": 8,
+      "source_deliverable_id": "c7c3436c-f230-409c-9366-237aac6773c9",
+      "source_state": "ready_for_review",
+      "commit": "b58fe4fa3cfab455583fdc30462f954ec8187a71",
+      "verification_sha256": "7ef1e303de1396c2d5fbd2b8d3f35d33af17df0e42c4db1da7b71fc5f1abb59e"
+    },
+    {
+      "view": "mission",
+      "method": "GET",
+      "status": 200,
+      "actor_id": "00000000-0000-4000-8000-000000000011",
+      "from_service_worker": false,
+      "response_cache_control": null,
+      "request_cache_control": null,
+      "request_pragma": null,
+      "work_item_id": "75b8ebeb-f7b9-440c-be25-abbdf14a5386",
+      "mission_id": "1f5c459b-1578-4175-8131-27c4ec5b1def",
+      "work_item_state": "verified",
+      "work_item_version": 9,
+      "source_deliverable_id": "c7c3436c-f230-409c-9366-237aac6773c9",
+      "source_state": "ready_for_review",
+      "commit": "b58fe4fa3cfab455583fdc30462f954ec8187a71",
+      "verification_sha256": "7ef1e303de1396c2d5fbd2b8d3f35d33af17df0e42c4db1da7b71fc5f1abb59e"
+    },
+    {
+      "view": "factory",
+      "method": "GET",
+      "status": 200,
+      "actor_id": "00000000-0000-4000-8000-000000000011",
+      "from_service_worker": false,
+      "response_cache_control": null,
+      "request_cache_control": null,
+      "request_pragma": null,
+      "work_item_id": "75b8ebeb-f7b9-440c-be25-abbdf14a5386",
+      "mission_id": "1f5c459b-1578-4175-8131-27c4ec5b1def",
+      "work_item_state": "verified",
+      "work_item_version": 9,
+      "source_deliverable_id": "c7c3436c-f230-409c-9366-237aac6773c9",
+      "source_state": "ready_for_review",
+      "commit": "b58fe4fa3cfab455583fdc30462f954ec8187a71",
+      "verification_sha256": "7ef1e303de1396c2d5fbd2b8d3f35d33af17df0e42c4db1da7b71fc5f1abb59e"
+    }
+  ],
+  "same_watcher_recovery": {
+    "process_id": 35772,
+    "watcher_invocations": 1,
+    "attempted": 2,
+    "results": [
+      {
+        "detail": "publication 359fd723-961f-43bf-9f72-920816a87be0 remains leased to another trusted publisher",
+        "publication_id": "359fd723-961f-43bf-9f72-920816a87be0",
+        "status": "failed"
+      },
+      {
+        "detail": null,
+        "publication_id": "359fd723-961f-43bf-9f72-920816a87be0",
+        "pull_request_url": "https://github.com/All-The-Vibes/ecorp/pull/51",
+        "status": "published"
+      }
+    ],
+    "events": [
+      {
+        "event": "native_queue_reply",
+        "ordinal": 1,
+        "at": "2026-09-29T02:18:12.736Z",
+        "publication_id": "359fd723-961f-43bf-9f72-920816a87be0"
+      },
+      {
+        "event": "first_queue_released_after_winner_claim",
+        "at": "2026-09-29T02:18:13.022Z"
+      },
+      {
+        "event": "native_claim_reply",
+        "busy": true,
+        "at": "2026-09-29T02:18:13.077Z",
+        "publication_id": "359fd723-961f-43bf-9f72-920816a87be0"
+      },
+      {
+        "event": "second_queue_waiting_before_native_request",
+        "at": "2026-09-29T02:18:14.083Z"
+      },
+      {
+        "event": "second_queue_released_after_observed_expiry",
+        "at": "2026-09-29T02:18:53.757Z"
+      },
+      {
+        "event": "native_queue_reply",
+        "ordinal": 2,
+        "at": "2026-09-29T02:18:53.779Z",
+        "publication_id": "359fd723-961f-43bf-9f72-920816a87be0"
+      },
+      {
+        "event": "native_claim_reply",
+        "busy": false,
+        "at": "2026-09-29T02:18:53.916Z",
+        "publication_id": "359fd723-961f-43bf-9f72-920816a87be0"
+      },
+      {
+        "event": "native_claim_reply",
+        "busy": false,
+        "at": "2026-09-29T02:18:54.166Z",
+        "publication_id": "359fd723-961f-43bf-9f72-920816a87be0"
+      }
+    ],
+    "queue_and_claim_responses": "Unmodified actual server replies; the proxy only schedules delivery and request forwarding."
+  },
+  "recovery": {
+    "publication_id": "359fd723-961f-43bf-9f72-920816a87be0",
+    "state": "published",
+    "pull_request_url": "https://github.com/All-The-Vibes/ecorp/pull/51",
+    "attempts": 2,
+    "competing_attempts": 0,
+    "repeated_attempts": 0,
+    "auto_merge_enabled": false,
+    "merge_authorized": false,
+    "deployment_authorized": false
+  },
+  "screenshots": 20,
+  "review_thread": "PRRT_kwDOUIQ-ns6m7TAv",
+  "review_comment_id": 4128768508,
+  "prior_evidence_packets_unchanged": true,
+  "limitations": [
+    "Local source-bound success does not satisfy unavailable required hosted CI, CodeQL, code quality, security or native integration checks. Org-disabled GitHub Actions remains a separate merge blocker.",
+    "Controlled browser acceptance uses development authentication, deterministic providers and simulated GitHub; zero real provider calls or GitHub mutations. Bob's native verification decision is automated synthetic fixture activity, not human or GitHub approval.",
+    "Twenty screenshots cover ten states at 390px and 1440px and were inspected at original resolution. Existing focused skip-link overlap and one transient earlier mobile intake label are recorded, not hidden.",
+    "Actual context GETs corroborate state but do not establish a Cache-Control header. Explicit Review this run navigation refreshes Mission; ordinary tab visibility is not asserted to refetch.",
+    "Environment-only SQLx credential delivery remains reduced assurance. Serial Rust checks do not resolve Windows concurrency issue213. Skipped and ignored cases are not passes.",
+    "Historical Cargo debt remains twelve advisories (two high, one moderate, nine low); this packet does not claim a clean audit.",
+    "Evidence was added after code execution and requires separate source/tree, complete-plan, documentation, path, whitespace and secret checks before publication."
+  ],
+  "artifacts": [
+    {
+      "file": "canonical-driver.json",
+      "source_name": "issue219-canonical-r10.json",
+      "original_sha256": "ecde1d779666a2b90d623a501284f92f1ab5c8738c9cffdb8fcf6f2ccacb9346",
+      "published_sha256": "e5cf107857b3ac6fbd578340c671cbec46b0eca393fdee4264138654bbe72ded",
+      "bytes": 637361,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "canonical-report.json",
+      "source_name": "2026-09-29T01-53-18-713Z-ecb3db4a-63ce-4262-aeb9-ac6a6c329ec2-full.json",
+      "original_sha256": "f4ae07528de1da730729b52a41259ed41e2fab14dd96587843b8efdb8bc811bb",
+      "published_sha256": "f4ae07528de1da730729b52a41259ed41e2fab14dd96587843b8efdb8bc811bb",
+      "bytes": 618745,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "canonical-install-root.log",
+      "source_name": "issue219-canonical-r10-install-root.log",
+      "original_sha256": "836efe92e3787bcceb928d330f48fc4da553195fcdedfa4cd8c5dbe7b5c7503b",
+      "published_sha256": "006c89e94e508eb08fb38c277f906d02abbcf13b71c17cf25d09227287174610",
+      "bytes": 85,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "canonical-install-web.log",
+      "source_name": "issue219-canonical-r10-install-web.log",
+      "original_sha256": "411191f2df22ab1815e3a350d94d44ea39fce9c3c1758ea82c47cf5936126b31",
+      "published_sha256": "5e7828e4c3f364ce8385bbf3f84a6f619f1052a4e8cb2e86a23e4d579c66f165",
+      "bytes": 85,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "canonical-install-steward.log",
+      "source_name": "issue219-canonical-r10-install-steward.log",
+      "original_sha256": "daf9a45148579a4fd674ff756a977b2762afb94e46c5b04647f23a0501e86cb2",
+      "published_sha256": "269072b76a1864462b7c800b5a08986f9069846491d482d09038720b577ce3e1",
+      "bytes": 27,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "canonical-pnpm-check.log",
+      "source_name": "issue219-canonical-r10-pnpm-check.log",
+      "original_sha256": "39354f3c6c25cd15d254188b848b20b4fd2447e40005a68c93e64cbb21c4879e",
+      "published_sha256": "d3c26d44e5a5c7ee3ec210f13f7576af662c6099102f0fe2eb785fe2e651faa5",
+      "bytes": 9620,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "canonical-invocation.json",
+      "source_name": "issue219-readiness-validation-r1.json",
+      "original_sha256": "c0babae6d33b14ce436dfc8fac0f1bea70209fc65c15b820ecddbeb69c802a48",
+      "published_sha256": "6dd15025a2a0805f8b916f99cf93316a6c23ef0b724b8bc52ecc2508eca7e1d8",
+      "bytes": 1029,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "acceptance-build.json",
+      "source_name": "issue219-acceptance-build-r10.json",
+      "original_sha256": "fa4132f77858ad3ea2dcadaf1dc3fde0f23d46d22c9d57d432aabe6a8b18e8a4",
+      "published_sha256": "f6c52888d6bbbd12fd4df63b11152165be9b8b6165e100c1fb8ac01831556dc9",
+      "bytes": 1461763,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "acceptance-build-install-root.log",
+      "source_name": "issue219-acceptance-build-r10-install-root.log",
+      "original_sha256": "7f0bc0d76245cb658615b58c9ef63316b8c15db9a42ebac7d23163d70c2f2606",
+      "published_sha256": "62ac20a837d95d9511818796b68a1d6ba8b28df8585fe053b3af720e63951f1b",
+      "bytes": 84,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "acceptance-build-install-web.log",
+      "source_name": "issue219-acceptance-build-r10-install-web.log",
+      "original_sha256": "94fd745e7ce3e515451a9a6f277f454b06695041284bf2c5d2ea56617c4c4e9b",
+      "published_sha256": "097f07ed5d011b5d286ec8de1637179f7d565b1e593024b42eb1995bd9a7f6bd",
+      "bytes": 85,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "acceptance-build-native.log",
+      "source_name": "issue219-acceptance-build-r10-native.log",
+      "original_sha256": "ad3fa40eb058db1d332a50feb5144501c6765ef194657ecb36dbd0922f2e0a30",
+      "published_sha256": "f69d6101aaeb03006e2cc69baea4f3df718cf6a503a07bf7b1eb67915b16b95c",
+      "bytes": 186,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "acceptance-build-web.log",
+      "source_name": "issue219-acceptance-build-r10-web.log",
+      "original_sha256": "1f51436258caa5a6d65cf780285f4f53dbfbc4fb56ba835410be4fdd13b6e2eb",
+      "published_sha256": "4558baa7901ebca4603e52075ac3d32cbf8ce8c7fadcb300b04724819808f245",
+      "bytes": 920,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "controlled-browser-driver.json",
+      "source_name": "issue219-browser-r21.json",
+      "original_sha256": "cbaf86c63298d614f06a9c64c04042c7702283ca47f617f896e0e40b270a6f8d",
+      "published_sha256": "658793869523a2b2cd3d3a95f85b400f99a36b30af1fc2175558e7b285c071b2",
+      "bytes": 4684,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "controlled-browser-driver.log",
+      "source_name": "issue219-browser-r21.log",
+      "original_sha256": "53de37fa50049d9aeeff5e83efa3a258a35263a83b5f72cc61c673554fc703ac",
+      "published_sha256": "0ac0dedf0c5c3341a028e5e7c20a6a26fd25c3961cd93ede9ab9d56b8ac244aa",
+      "bytes": 2482,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "controlled-native-report.json",
+      "source_name": "fixture-report.json",
+      "original_sha256": "a43d8c80358ae9d75baa37bd479301bd4a532551ce7c3c3ea3523f337b24f4db",
+      "published_sha256": "0ac0dedf0c5c3341a028e5e7c20a6a26fd25c3961cd93ede9ab9d56b8ac244aa",
+      "bytes": 2482,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "controlled-browser-report.json",
+      "source_name": "browser-publication-report.json",
+      "original_sha256": "06b573424dbbc478c146b4f23551846760c132b19e7851e75edc483fce554666",
+      "published_sha256": "8a09d7f5f0035a140b8aea11200f14f16291f470fdc510e01731a636150e0747",
+      "bytes": 31786,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "screenshot-review.json",
+      "source_name": "issue219-screenshot-review-r10.json",
+      "original_sha256": "50fe32a15bd8998f00d25adf1799753851777a515b23e6f19854f990d4ac4851",
+      "published_sha256": "527b3c7cae4b1c0ab38135729ace8b6a0a8113b4c33c36a0bc349a1612accfa1",
+      "bytes": 19689,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "readiness-01-factory-awaiting-verification-390px.png",
+      "source_name": "readiness-01-factory-awaiting-verification-390px.png",
+      "original_sha256": "0de5bf76aef19dcc21cd746562fa2e76bb69e1c75819d6b9b2f83eea2c4b773c",
+      "published_sha256": "0de5bf76aef19dcc21cd746562fa2e76bb69e1c75819d6b9b2f83eea2c4b773c",
+      "bytes": 232553,
+      "transform": "none"
+    },
+    {
+      "file": "readiness-01-factory-awaiting-verification-1440px.png",
+      "source_name": "readiness-01-factory-awaiting-verification-1440px.png",
+      "original_sha256": "614fef7fc9a50d614a8117bbe7b3604f014b551ad5266e9fe2e6c816a88b1912",
+      "published_sha256": "614fef7fc9a50d614a8117bbe7b3604f014b551ad5266e9fe2e6c816a88b1912",
+      "bytes": 253986,
+      "transform": "none"
+    },
+    {
+      "file": "readiness-02-mission-awaiting-verification-390px.png",
+      "source_name": "readiness-02-mission-awaiting-verification-390px.png",
+      "original_sha256": "b454404c49b2334aff68a47213f37b7819f7755ecdff8e3bac2b2bb844d4fc30",
+      "published_sha256": "b454404c49b2334aff68a47213f37b7819f7755ecdff8e3bac2b2bb844d4fc30",
+      "bytes": 268045,
+      "transform": "none"
+    },
+    {
+      "file": "readiness-02-mission-awaiting-verification-1440px.png",
+      "source_name": "readiness-02-mission-awaiting-verification-1440px.png",
+      "original_sha256": "d74608b097ee843330678416ed8906595561b02777bbd43c946fc1b475d99b5d",
+      "published_sha256": "d74608b097ee843330678416ed8906595561b02777bbd43c946fc1b475d99b5d",
+      "bytes": 289787,
+      "transform": "none"
+    },
+    {
+      "file": "readiness-03-mission-verified-390px.png",
+      "source_name": "readiness-03-mission-verified-390px.png",
+      "original_sha256": "fa95ecd56ca24d2219e9ce7e7b2d8035ac488746779bd6a66b7816f2a1cb186b",
+      "published_sha256": "fa95ecd56ca24d2219e9ce7e7b2d8035ac488746779bd6a66b7816f2a1cb186b",
+      "bytes": 241246,
+      "transform": "none"
+    },
+    {
+      "file": "readiness-03-mission-verified-1440px.png",
+      "source_name": "readiness-03-mission-verified-1440px.png",
+      "original_sha256": "8b051b61bc15d137606545ae42a84e4b00bc3a064e20909677219782ecaa2317",
+      "published_sha256": "8b051b61bc15d137606545ae42a84e4b00bc3a064e20909677219782ecaa2317",
+      "bytes": 261894,
+      "transform": "none"
+    },
+    {
+      "file": "readiness-04-factory-verified-390px.png",
+      "source_name": "readiness-04-factory-verified-390px.png",
+      "original_sha256": "bf3a468630ddbff5fe8d0aee3ff30147a0e478e21e27560afce7abac5bd79737",
+      "published_sha256": "bf3a468630ddbff5fe8d0aee3ff30147a0e478e21e27560afce7abac5bd79737",
+      "bytes": 226333,
+      "transform": "none"
+    },
+    {
+      "file": "readiness-04-factory-verified-1440px.png",
+      "source_name": "readiness-04-factory-verified-1440px.png",
+      "original_sha256": "d414ba0ff197b84625653f10c0bf40e6c1974a79a9d69e92d4a8fd7408a5f5d8",
+      "published_sha256": "d414ba0ff197b84625653f10c0bf40e6c1974a79a9d69e92d4a8fd7408a5f5d8",
+      "bytes": 248010,
+      "transform": "none"
+    },
+    {
+      "file": "01-exact-result-preview-390px.png",
+      "source_name": "01-exact-result-preview-390px.png",
+      "original_sha256": "b408e53259b6fd799c17d6978715f9a84b6d0ffd23827bb41354668f4a646834",
+      "published_sha256": "b408e53259b6fd799c17d6978715f9a84b6d0ffd23827bb41354668f4a646834",
+      "bytes": 233311,
+      "transform": "none"
+    },
+    {
+      "file": "01-exact-result-preview-1440px.png",
+      "source_name": "01-exact-result-preview-1440px.png",
+      "original_sha256": "b3c05398edab0c9e059edc4852d3a49aab4e9958c331487f1dbf43c3f14f6374",
+      "published_sha256": "b3c05398edab0c9e059edc4852d3a49aab4e9958c331487f1dbf43c3f14f6374",
+      "bytes": 253568,
+      "transform": "none"
+    },
+    {
+      "file": "02-waiting-for-trusted-publisher-390px.png",
+      "source_name": "02-waiting-for-trusted-publisher-390px.png",
+      "original_sha256": "e2f0efd8a1ded071a1b1db8922f35315027df77c10a4fe1c8ce27067a521381a",
+      "published_sha256": "e2f0efd8a1ded071a1b1db8922f35315027df77c10a4fe1c8ce27067a521381a",
+      "bytes": 217940,
+      "transform": "none"
+    },
+    {
+      "file": "02-waiting-for-trusted-publisher-1440px.png",
+      "source_name": "02-waiting-for-trusted-publisher-1440px.png",
+      "original_sha256": "0fae943104760b39835590a2488a1b83121cd928cd6da45b40143b3d35f48150",
+      "published_sha256": "0fae943104760b39835590a2488a1b83121cd928cd6da45b40143b3d35f48150",
+      "bytes": 240510,
+      "transform": "none"
+    },
+    {
+      "file": "03-working-after-caller-reconnect-390px.png",
+      "source_name": "03-working-after-caller-reconnect-390px.png",
+      "original_sha256": "ba2f25360b770bc6418a24c6b93ef5ca01f9865e5e2866fa024c11de60d957c2",
+      "published_sha256": "ba2f25360b770bc6418a24c6b93ef5ca01f9865e5e2866fa024c11de60d957c2",
+      "bytes": 217204,
+      "transform": "none"
+    },
+    {
+      "file": "03-working-after-caller-reconnect-1440px.png",
+      "source_name": "03-working-after-caller-reconnect-1440px.png",
+      "original_sha256": "080e1e8cc8dd04fe540be411cc3fe8950500b08d04a774dcb74886e693af87e7",
+      "published_sha256": "080e1e8cc8dd04fe540be411cc3fe8950500b08d04a774dcb74886e693af87e7",
+      "bytes": 238069,
+      "transform": "none"
+    },
+    {
+      "file": "04-published-exact-link-390px.png",
+      "source_name": "04-published-exact-link-390px.png",
+      "original_sha256": "a1a8c8206e7bc065a89776631cbc09ac1a5486ef2214a83b8d406c9855a01cd0",
+      "published_sha256": "a1a8c8206e7bc065a89776631cbc09ac1a5486ef2214a83b8d406c9855a01cd0",
+      "bytes": 217305,
+      "transform": "none"
+    },
+    {
+      "file": "04-published-exact-link-1440px.png",
+      "source_name": "04-published-exact-link-1440px.png",
+      "original_sha256": "aa1d78c77d22cea3f52951d1b0359f725b7020f49b5790a03324ddd77f5c8e1b",
+      "published_sha256": "aa1d78c77d22cea3f52951d1b0359f725b7020f49b5790a03324ddd77f5c8e1b",
+      "bytes": 240707,
+      "transform": "none"
+    },
+    {
+      "file": "05-failure-with-existing-pr-390px.png",
+      "source_name": "05-failure-with-existing-pr-390px.png",
+      "original_sha256": "bf4ffab99b376857eed81ed1786733e60ef2ac73a023c4f4b49278f51f71058c",
+      "published_sha256": "bf4ffab99b376857eed81ed1786733e60ef2ac73a023c4f4b49278f51f71058c",
+      "bytes": 220550,
+      "transform": "none"
+    },
+    {
+      "file": "05-failure-with-existing-pr-1440px.png",
+      "source_name": "05-failure-with-existing-pr-1440px.png",
+      "original_sha256": "87eecc77d73ab5871478fa67c5cceb30176bd713a29354303ecd5d8358f381e1",
+      "published_sha256": "87eecc77d73ab5871478fa67c5cceb30176bd713a29354303ecd5d8358f381e1",
+      "bytes": 253585,
+      "transform": "none"
+    },
+    {
+      "file": "06-malformed-intent-retired-without-effects-390px.png",
+      "source_name": "06-malformed-intent-retired-without-effects-390px.png",
+      "original_sha256": "a5ce5e7ee998b2d9b0c70ec7bdec1c20b1fb1908edb3cd31d088a3ebec604240",
+      "published_sha256": "a5ce5e7ee998b2d9b0c70ec7bdec1c20b1fb1908edb3cd31d088a3ebec604240",
+      "bytes": 218332,
+      "transform": "none"
+    },
+    {
+      "file": "06-malformed-intent-retired-without-effects-1440px.png",
+      "source_name": "06-malformed-intent-retired-without-effects-1440px.png",
+      "original_sha256": "d39022cc1c5813e634ca582d5faf001a3fafc7e5edb9c63e35acb9b3878a98dc",
+      "published_sha256": "d39022cc1c5813e634ca582d5faf001a3fafc7e5edb9c63e35acb9b3878a98dc",
+      "bytes": 263811,
+      "transform": "none"
+    },
+    {
+      "file": "issue219-readiness-red-r1.json",
+      "source_name": "issue219-readiness-red-r1.json",
+      "original_sha256": "0b127f8c18f84c29cabd396e23901a72eec1d7ea140fa1c62db269743d4f4833",
+      "published_sha256": "1313141c6246a86aeb4b7db58a013ea9349fa9a6669d51411e2e8f32f8e2f2cb",
+      "bytes": 3381,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "issue219-readiness-red-r1.log",
+      "source_name": "issue219-readiness-red-r1.log",
+      "original_sha256": "ff9f29d0c47e09344379b436a78a8c724c47920161ac63ce02a11eb6e938ab4b",
+      "published_sha256": "6545b372d5806fb775f24fa39781f816bbae7f7d51baadf3d446fa86cd12c91e",
+      "bytes": 48178,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "issue219-readiness-green-r1.json",
+      "source_name": "issue219-readiness-green-r1.json",
+      "original_sha256": "3759e3e9b27656125d82d302b095c5ef079a7d9afb325c522b7ae5481b368297",
+      "published_sha256": "f89c3b6c0251c85336bcacc54c93420dd83edb1b68e3d61cdadf3dc614fe2d00",
+      "bytes": 1941,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "issue219-readiness-green-r1.log",
+      "source_name": "issue219-readiness-green-r1.log",
+      "original_sha256": "eb5e398d7362bec8ad5a8f3ceb5c043453dddb4fe8a2eafee57fdf19274f2345",
+      "published_sha256": "eb5e398d7362bec8ad5a8f3ceb5c043453dddb4fe8a2eafee57fdf19274f2345",
+      "bytes": 15989,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "source-equivalence.json",
+      "source_name": "issue219-readiness-source-r1.json",
+      "original_sha256": "686a50473fe25cfc877a4a53ae508c7a132b7d78d3797dac967de8b64b30db75",
+      "published_sha256": "1f89775bf7e860dfff61e9b82acad9b368037a911483741c6dc1c9698b015b6c",
+      "bytes": 1266757,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "tested-code.patch",
+      "source_name": "52-file implementation diff against current main (native zero-context diff)",
+      "original_sha256": "f6e2a325b6b3c29359f10f59613cfbb865136a58f6796b23945e82934ba6f4b9",
+      "published_sha256": "f6e2a325b6b3c29359f10f59613cfbb865136a58f6796b23945e82934ba6f4b9",
+      "bytes": 411709,
+      "transform": "Native Git diff with zero context; patch contents otherwise unchanged; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "review-corrections.patch",
+      "source_name": "three-file Factory readiness correction against 08f041f2 (native zero-context diff)",
+      "original_sha256": "32ed6c8014449385aaa681cd12bdb7873943bb9a6d1596c8b825c89b9a5cb785",
+      "published_sha256": "32ed6c8014449385aaa681cd12bdb7873943bb9a6d1596c8b825c89b9a5cb785",
+      "bytes": 5048,
+      "transform": "Native Git diff with zero context; patch contents otherwise unchanged; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "regression-history.json",
+      "source_name": "retained private regression receipts",
+      "original_sha256": "f911df3663c80728931eb66c28f688198fc1c25e81337693423bc0e647fe9d6f",
+      "published_sha256": "9e0c478e5d011d659cd0d29df47c80a85753f4a931cef779315f0a07bc10886d",
+      "bytes": 3113,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-source-binding-r1.py.txt",
+      "source_name": "issue219-source-binding-r1.py",
+      "original_sha256": "4146ba231569a11136ed4b6332f362db46e8a58aaf02f7258e0423fc19823c39",
+      "published_sha256": "4146ba231569a11136ed4b6332f362db46e8a58aaf02f7258e0423fc19823c39",
+      "bytes": 5960,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "run-issue219-readiness-validation-r1.ps1.txt",
+      "source_name": "run-issue219-readiness-validation-r1.ps1",
+      "original_sha256": "6ff84ea331f37130f5e11d60909854997f5477106ae5553fa5d1b35600f3b6d3",
+      "published_sha256": "c4766ad269b7cb795c3af7d92393473de9bdb6b947762472dfa1d110c19422a2",
+      "bytes": 4298,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "run-canonical-r4.ps1.txt",
+      "source_name": "run-canonical-r4.ps1",
+      "original_sha256": "24710f508cbc4e23575f457b21fb3a929e4a3928f28b72b8ee10c2b129329b1b",
+      "published_sha256": "f91f754934aefab74d44db1dbe19559a371d8581aa6f352a810828902cfd9f13",
+      "bytes": 4645,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "build-issue219-acceptance-r10.ps1.txt",
+      "source_name": "build-issue219-acceptance-r10.ps1",
+      "original_sha256": "5f6d33c3a971c6c783ad6a5e9ef6ea4e58cc5dc4f4dac9339449e8b5f6bf0998",
+      "published_sha256": "f49304f3588d5c5194fb78cab32bf3d9446f12719f59186bdd5e8ff7c392c82a",
+      "bytes": 4420,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "run-issue219-browser-r21.py.txt",
+      "source_name": "run-issue219-browser-r21.py",
+      "original_sha256": "ac8cdf9c0fe8c790aa36313d0aec8a10908e33c43e29a0c6a2405abb72ff5ca6",
+      "published_sha256": "d18516a4d7a91e4a52a164674288d9f26a5a8a1aba17e393007554dc8b9b5a5a",
+      "bytes": 4695,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-browser-driver-r21.ps1.txt",
+      "source_name": "issue219-browser-driver-r21.ps1",
+      "original_sha256": "80b71be47f0cb1a7313eac7f336a382e748972f7d2018c7b18061bb7a9c53c0b",
+      "published_sha256": "7e10b43eff9d5565dd2f4a520e42f32e4b3b13e2f8fcb499e90f27c521b9992a",
+      "bytes": 27083,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-browser-native-r21.mjs.txt",
+      "source_name": "issue219-browser-native-r21.mjs",
+      "original_sha256": "1aa9c4724b518ea9b059684d90fcf9bbed892b47c34095e3ffbb61b308d1e8db",
+      "published_sha256": "aa82e2a94ba52ded230517d0c4877d73a61d0980027f3b7cc878dbcdb95a0568",
+      "bytes": 59250,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "record-issue219-screenshot-review-r10.py.txt",
+      "source_name": "record-issue219-screenshot-review-r10.py",
+      "original_sha256": "7df538fedee7620e25caa410ea100a0474e9ef22b64937e867b246beb4605d77",
+      "published_sha256": "ae96c5bd05bf221cdceab8f89e4b3d4ff17cf4ee213d56b8c6dfe308ea844ee4",
+      "bytes": 7004,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    }
+  ],
+  "publication_preparation": {
+    "initial_validation_status": "failed",
+    "initial_validation_receipt_sha256": "3e5265bed225f0eab89655657e9b075abc363b2978345cdde74e03491fe2874a",
+    "explanation": "The first publication-only whitespace check rejected copied log/helper trailing whitespace, extra EOF blank lines and blank native Git context lines. Original executions and their logs remain unchanged. Publication text copies were normalized and patches regenerated with native zero context against the same tested tree. Fresh publication validation is required.",
+    "changes": [
+      {
+        "file": "canonical-driver.json",
+        "before_sha256": "e22fc55d92cb4055a72ae61adc52757f67807da877a617f1b967212051909612",
+        "after_sha256": "e5cf107857b3ac6fbd578340c671cbec46b0eca393fdee4264138654bbe72ded",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "canonical-install-root.log",
+        "before_sha256": "836efe92e3787bcceb928d330f48fc4da553195fcdedfa4cd8c5dbe7b5c7503b",
+        "after_sha256": "006c89e94e508eb08fb38c277f906d02abbcf13b71c17cf25d09227287174610",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "canonical-install-web.log",
+        "before_sha256": "411191f2df22ab1815e3a350d94d44ea39fce9c3c1758ea82c47cf5936126b31",
+        "after_sha256": "5e7828e4c3f364ce8385bbf3f84a6f619f1052a4e8cb2e86a23e4d579c66f165",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "canonical-install-steward.log",
+        "before_sha256": "daf9a45148579a4fd674ff756a977b2762afb94e46c5b04647f23a0501e86cb2",
+        "after_sha256": "269072b76a1864462b7c800b5a08986f9069846491d482d09038720b577ce3e1",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "canonical-pnpm-check.log",
+        "before_sha256": "9be22f209444b78be901943013c07cb415444b00022b9bbe22f118898b5e17c3",
+        "after_sha256": "d3c26d44e5a5c7ee3ec210f13f7576af662c6099102f0fe2eb785fe2e651faa5",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "canonical-invocation.json",
+        "before_sha256": "06fc915e7586e633bfc1b7fdedb2188b22e40ca4d3e6418d940a61a7d5acc0fb",
+        "after_sha256": "6dd15025a2a0805f8b916f99cf93316a6c23ef0b724b8bc52ecc2508eca7e1d8",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "acceptance-build.json",
+        "before_sha256": "0c2500ed068fd68aefb7fd3cd8cc4e240d0828860b2192cd5e2499eb5dfd73b1",
+        "after_sha256": "f6c52888d6bbbd12fd4df63b11152165be9b8b6165e100c1fb8ac01831556dc9",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "acceptance-build-install-root.log",
+        "before_sha256": "7f0bc0d76245cb658615b58c9ef63316b8c15db9a42ebac7d23163d70c2f2606",
+        "after_sha256": "62ac20a837d95d9511818796b68a1d6ba8b28df8585fe053b3af720e63951f1b",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "acceptance-build-install-web.log",
+        "before_sha256": "94fd745e7ce3e515451a9a6f277f454b06695041284bf2c5d2ea56617c4c4e9b",
+        "after_sha256": "097f07ed5d011b5d286ec8de1637179f7d565b1e593024b42eb1995bd9a7f6bd",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "acceptance-build-native.log",
+        "before_sha256": "8c497347ed761d6286fd21cb6f3f3f4439e727ebfd6c3447a65bf820f8fde8a2",
+        "after_sha256": "f69d6101aaeb03006e2cc69baea4f3df718cf6a503a07bf7b1eb67915b16b95c",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "acceptance-build-web.log",
+        "before_sha256": "1f51436258caa5a6d65cf780285f4f53dbfbc4fb56ba835410be4fdd13b6e2eb",
+        "after_sha256": "4558baa7901ebca4603e52075ac3d32cbf8ce8c7fadcb300b04724819808f245",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "controlled-browser-driver.json",
+        "before_sha256": "b5acdd08032a4b213c1adf9c825d12eb930172c1dac1cd79148ebe3197c700e3",
+        "after_sha256": "658793869523a2b2cd3d3a95f85b400f99a36b30af1fc2175558e7b285c071b2",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "controlled-browser-driver.log",
+        "before_sha256": "aacab0c5b3d55caf651dcf59b4ecd710506c485f93a35c68448b7222b35ae14c",
+        "after_sha256": "0ac0dedf0c5c3341a028e5e7c20a6a26fd25c3961cd93ede9ab9d56b8ac244aa",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "controlled-native-report.json",
+        "before_sha256": "b821dfa71165ff99e2bcc61b2044c1613d0c3e85e94d518b32f72addce0f4c65",
+        "after_sha256": "0ac0dedf0c5c3341a028e5e7c20a6a26fd25c3961cd93ede9ab9d56b8ac244aa",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "issue219-readiness-red-r1.json",
+        "before_sha256": "7b8d22e087e15064a56fa2fff2a4ea3eefa2d135a9792b8a49068571f666ae9e",
+        "after_sha256": "1313141c6246a86aeb4b7db58a013ea9349fa9a6669d51411e2e8f32f8e2f2cb",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "issue219-readiness-red-r1.log",
+        "before_sha256": "9eda2c5ed3b7884a36a47ed6a5f4a26aab3d25d9f4b8fd92d5412a26cf900710",
+        "after_sha256": "6545b372d5806fb775f24fa39781f816bbae7f7d51baadf3d446fa86cd12c91e",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "issue219-readiness-green-r1.json",
+        "before_sha256": "025e29f5e0b15c7e757549ff36831cf3e19f5680e7a5ccf2f1fbb3a603626241",
+        "after_sha256": "f89c3b6c0251c85336bcacc54c93420dd83edb1b68e3d61cdadf3dc614fe2d00",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "tested-code.patch",
+        "before_sha256": "cf3129abfbb6d2fe4e0f04fcf5b6ac14abcb59b678bf6836a5f6d1f2f467e168",
+        "after_sha256": "f6e2a325b6b3c29359f10f59613cfbb865136a58f6796b23945e82934ba6f4b9",
+        "transform": "Native Git diff with zero context; patch contents otherwise unchanged; local profile roots replaced with <USERPROFILE>"
+      },
+      {
+        "file": "review-corrections.patch",
+        "before_sha256": "b0a237c2a086a48e8267d9b2168ba4b13279f17fe78b3c509a5bdec0c385363a",
+        "after_sha256": "32ed6c8014449385aaa681cd12bdb7873943bb9a6d1596c8b825c89b9a5cb785",
+        "transform": "Native Git diff with zero context; patch contents otherwise unchanged; local profile roots replaced with <USERPROFILE>"
+      },
+      {
+        "file": "build-issue219-acceptance-r10.ps1.txt",
+        "before_sha256": "e12c8e71ef3ea5ef847c63866d26ae0dac632fa9d00945fc6f2ca294594cb7dd",
+        "after_sha256": "f49304f3588d5c5194fb78cab32bf3d9446f12719f59186bdd5e8ff7c392c82a",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "record-issue219-screenshot-review-r10.py.txt",
+        "before_sha256": "29124122a897b23ca0e645b12311ebd3efee897cb1aa8f1d0b16f0f74b3ed2a5",
+        "after_sha256": "ae96c5bd05bf221cdceab8f89e4b3d4ff17cf4ee213d56b8c6dfe308ea844ee4",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      }
+    ]
+  }
+}

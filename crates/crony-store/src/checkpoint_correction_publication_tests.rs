@@ -24,6 +24,13 @@ struct PublicationFixture {
     publisher_credential_id: Uuid,
 }
 
+pub(super) async fn human_request_fixture(
+    pool: PgPool,
+) -> (PgStore, StartPullRequestPublicationInput) {
+    let fixture = corrected_publication_fixture(pool).await;
+    (fixture.store, fixture.input)
+}
+
 fn fixture_artifact(
     input: &RunnerEventInput,
     bytes: &[u8],
@@ -585,6 +592,7 @@ async fn corrected_publication_fixture(pool: PgPool) -> PublicationFixture {
             OWNER,
             "issue216-store-publisher",
             &publisher_hash,
+            None,
             Utc::now() + Duration::hours(1),
         )
         .await
@@ -2508,6 +2516,7 @@ async fn issue216_ordinary_source_only_predecessor_correction_stop_checkpoint_pu
             OWNER,
             "issue216-source-only-publisher",
             &publisher_hash,
+            None,
             Utc::now() + Duration::hours(1),
         )
         .await

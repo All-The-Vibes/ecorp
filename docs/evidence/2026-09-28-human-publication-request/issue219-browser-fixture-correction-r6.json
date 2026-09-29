@@ -1,0 +1,56 @@
+{
+  "issue": 219,
+  "created_at_utc": "2026-09-28T08:22:44.385719+00:00",
+  "previous_failure": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-r5.json",
+    "sha256": "57f06bbd7c53f344e34f2dfca0579a12f4b13cc9875876cd480e00aebc364d82"
+  },
+  "native_measurement": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-git-fetch-diagnostic-r3.json",
+    "sha256": "eb3848bb711476c6770d5c1a0487b4020e8b1c42c868cf6c4b89649324c34a1b"
+  },
+  "reason": "r5 recovery failed the native 30-second fetch cap; a separate unchanged local fetch measured 31,859ms. Full-history native packing measured 2,484ms and 2,437ms in fresh repositories.",
+  "correction": "Pack only the new owned mirror with native Git, rebuild its commit graph, verify all objects and unchanged refs, then execute all original browser/native crash, restart, lease-adoption, competing-worker and explicit-failure assertions.",
+  "production_source_changed": false,
+  "production_timeout_changed": false,
+  "acceptance_assertions_removed": false,
+  "full_history_preserved": true,
+  "fixture": "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r6",
+  "ports": {
+    "server": 18918,
+    "postgres": 59118,
+    "web": 18558
+  },
+  "derivations": [
+    {
+      "original": {
+        "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-native-r5.mjs",
+        "sha256": "ce425a1c574a6472682c574742f5426ce465292347229c04feb836e8a6443520"
+      },
+      "derived": {
+        "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-native-r6.mjs",
+        "sha256": "b927fa542047b400f4058ca26f50adbbfc685e4ba55c381e231110d10235004a"
+      }
+    },
+    {
+      "original": {
+        "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-driver-r5.ps1",
+        "sha256": "27c882041a4258d751aff1ea34fe8529c0c2d14560dffd2d1487a8badb9a8c6b"
+      },
+      "derived": {
+        "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-driver-r6.ps1",
+        "sha256": "97c8a9dd7580fdb52b3524a94c64fdbc9454a586814b4531e9f5e764414c2fce"
+      }
+    },
+    {
+      "original": {
+        "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\run-issue219-browser-r5.py",
+        "sha256": "955fd9ffd1614269309f8a906fc75fdcc277f89efff1d9a263f9d648021b55fe"
+      },
+      "derived": {
+        "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\run-issue219-browser-r6.py",
+        "sha256": "debe91c3a245206bd9f148adcade77d186b86d9bc30dc9e84c9302ca658efe8d"
+      }
+    }
+  ]
+}

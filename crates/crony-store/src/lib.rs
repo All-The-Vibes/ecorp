@@ -20,6 +20,7 @@ use sha2::{Digest, Sha256};
 use sqlx::{Acquire, PgPool, Postgres, Row, Transaction, postgres::PgPoolOptions};
 use uuid::Uuid;
 
+mod admission;
 mod agent_pinning;
 mod aggregate_breaker;
 use crate::state_audit::native_policy;
@@ -363,6 +364,47 @@ pub struct FactoryMissionOutcome {
 }
 
 #[derive(Debug, Clone)]
+pub struct PreviewPullRequestPublicationInput {
+    pub corp_id: Uuid,
+    pub work_item_id: Uuid,
+    pub actor_id: Uuid,
+    pub actor_role: String,
+    pub plan: crony_domain::PullRequestPublicationPlan,
+}
+
+#[derive(Clone)]
+pub struct PublicationPublisherScope {
+    pub corp_id: Uuid,
+    pub repository: String,
+    pub publisher_id: String,
+    pub credential_hash: String,
+}
+
+#[derive(Clone, Copy)]
+pub struct PublicationLeaseControl {
+    pub publisher_token: Uuid,
+    pub expected_version: i64,
+}
+
+pub struct HumanRequestedPublication {
+    pub publication: PullRequestPublication,
+    pub actor_role: String,
+    pub authorization_reason: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct RequestPullRequestPublicationInput {
+    pub corp_id: Uuid,
+    pub work_item_id: Uuid,
+    pub actor_id: Uuid,
+    pub actor_role: String,
+    pub preview: crony_domain::PullRequestPublicationPreview,
+    pub authorization_id: Uuid,
+    pub authorization_reason: String,
+    pub idempotency_key: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct StartPullRequestPublicationInput {
     pub corp_id: Uuid,
     pub work_item_id: Uuid,
@@ -459,8 +501,14 @@ pub struct FactoryPublicationContext {
 pub struct PublicationPublisherCredentialOutcome {
     pub credential_id: Uuid,
     pub publisher_id: String,
+    pub repository: Option<String>,
     pub expires_at: chrono::DateTime<Utc>,
     pub event: DomainEvent,
+}
+
+pub struct PublicationPublisherCredentialIdentity {
+    pub publisher_id: String,
+    pub repository: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -2308,9 +2356,13 @@ impl PgStore {
         actor_id: Uuid,
         publisher_id: &str,
         credential_hash: &str,
+        repository: Option<&str>,
         expires_at: chrono::DateTime<Utc>,
     ) -> Result<PublicationPublisherCredentialOutcome> {
         let publisher_id = normalize_factory_identifier(publisher_id, "trusted publisher id", 160)?;
+        let repository = repository
+            .map(normalize_publication_repository)
+            .transpose()?;
         let credential_hash = credential_hash.trim().to_ascii_lowercase();
         if credential_hash.len() != 64
             || !credential_hash.bytes().all(|byte| byte.is_ascii_hexdigit())
@@ -2343,8 +2395,8 @@ impl PgStore {
         sqlx::query(
             r#"
             INSERT INTO publication_publisher_credentials
-                (id, corp_id, publisher_id, credential_hash, created_by, expires_at)
-            VALUES ($1, $2, $3, $4, $5, $6)
+                (id, corp_id, publisher_id, credential_hash, created_by, expires_at, repository)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
         .bind(credential_id)
@@ -2353,6 +2405,7 @@ impl PgStore {
         .bind(&credential_hash)
         .bind(actor_id)
         .bind(expires_at)
+        .bind(&repository)
         .execute(&mut *tx)
         .await?;
         let event = append_event_tx(
@@ -2366,6 +2419,7 @@ impl PgStore {
                 format!("publication-publisher-enrolled:{credential_id}"),
                 json!({
                     "publisher_id": publisher_id,
+                    "repository": repository,
                     "expires_at": expires_at
                 }),
             ),
@@ -2376,6 +2430,7 @@ impl PgStore {
         Ok(PublicationPublisherCredentialOutcome {
             credential_id,
             publisher_id,
+            repository,
             expires_at,
             event,
         })
@@ -2385,7 +2440,7 @@ impl PgStore {
         &self,
         corp_id: Uuid,
         credential_hash: &str,
-    ) -> Result<String> {
+    ) -> Result<PublicationPublisherCredentialIdentity> {
         let credential_hash = credential_hash.trim().to_ascii_lowercase();
         if credential_hash.len() != 64
             || !credential_hash.bytes().all(|byte| byte.is_ascii_hexdigit())
@@ -2394,7 +2449,7 @@ impl PgStore {
                 "forbidden: invalid publication publisher credential"
             ));
         }
-        let publisher_id = sqlx::query_scalar(
+        let row = sqlx::query(
             r#"
             UPDATE publication_publisher_credentials
             SET last_used_at = now()
@@ -2407,7 +2462,7 @@ impl PgStore {
                   AND expires_at > now()
                 FOR UPDATE
             )
-            RETURNING publisher_id
+            RETURNING publisher_id, repository
             "#,
         )
         .bind(corp_id)
@@ -2415,7 +2470,10 @@ impl PgStore {
         .fetch_optional(&self.pool)
         .await?
         .context("forbidden: unknown, expired, or revoked publication publisher credential")?;
-        Ok(publisher_id)
+        Ok(PublicationPublisherCredentialIdentity {
+            publisher_id: row.try_get("publisher_id")?,
+            repository: row.try_get("repository")?,
+        })
     }
 
     pub async fn revoke_publication_publisher_credential(
@@ -7941,68 +7999,7 @@ impl PgStore {
         artifact_id: Uuid,
         actor_id: Uuid,
     ) -> Result<Option<StoredArtifact>> {
-        let row = sqlx::query(
-            r#"
-            SELECT artifact.id, artifact.corp_id, artifact.task_id, artifact.run_id,
-                   artifact.producer_agent_id, artifact.producer_runner_id,
-                   artifact.verifier, artifact.object_key, artifact.uri,
-                    artifact.sha256, artifact.media_type, artifact.bytes,
-                    artifact.artifact_role, artifact.file_name, artifact.metadata,
-                    artifact.provenance_signature, artifact.retention_until
-            FROM artifacts artifact
-            JOIN tasks task ON task.id = artifact.task_id AND task.corp_id = artifact.corp_id
-            JOIN missions mission ON mission.id = task.mission_id AND mission.corp_id = task.corp_id
-            JOIN room_memberships membership
-              ON membership.room_id = mission.room_id AND membership.actor_id = $3
-            WHERE artifact.id = $1 AND artifact.corp_id = $2
-              AND artifact.status = 'ready'
-              AND (
-                artifact.artifact_role <> 'source_deliverable'
-                -- Only absence of both fields identifies immutable historical exports.
-                OR NOT (artifact.metadata ? 'verified_tree' OR artifact.metadata ? 'source_verification')
-                OR EXISTS (
-                    SELECT 1 FROM source_deliverables deliverable
-                    JOIN runs run ON run.id = deliverable.run_id
-                      AND run.corp_id = deliverable.corp_id AND run.task_id = deliverable.task_id
-                    WHERE deliverable.artifact_id = artifact.id
-                      AND deliverable.corp_id = artifact.corp_id
-                      AND deliverable.task_id = artifact.task_id
-                      AND run.id = artifact.run_id
-                      AND run.agent_id = artifact.producer_agent_id
-                      AND run.runner_id = artifact.producer_runner_id
-                      AND deliverable.form = artifact.metadata->>'form'
-                      AND deliverable.verification_sha256 = run.verification_sha256
-                      AND deliverable.verification_sha256 = artifact.metadata->>'verification_sha256'
-                      AND artifact.sha256 = run.deliverable_sha256
-                      AND deliverable.base_commit = run.workspace_base_commit
-                      AND deliverable.base_commit = artifact.metadata->>'base_commit'
-                      AND (run.source_base_commit IS NULL OR run.source_base_commit = deliverable.base_commit)
-                      AND (task.contract->>'source_base_commit' IS NULL
-                           OR task.contract->>'source_base_commit' = deliverable.base_commit)
-                      AND (
-                        run.verification_status = 'passed'
-                        -- Reviewers must inspect the accepted automated result before deciding.
-                        OR (run.verification_status = 'waiting_for_approval' AND EXISTS (
-                            SELECT 1 FROM verification_requests request
-                            WHERE request.run_id = run.id AND request.corp_id = run.corp_id
-                              AND request.task_id = run.task_id AND request.status = 'pending'
-                        ))
-                      )
-                )
-              )
-            "#,
-        )
-        .bind(artifact_id)
-        .bind(corp_id)
-        .bind(actor_id)
-        .fetch_optional(&self.pool)
-        .await?;
-        Ok(row.map(map_stored_artifact).filter(|artifact| {
-            artifact.artifact_role != "source_deliverable"
-                || (artifact.metadata.get("verified_tree").is_none()
-                    && artifact.metadata.get("source_verification").is_none())
-                || crony_domain::SourceVerification::from_payload(&artifact.metadata).is_ok()
-        }))
+        artifact_for_download_using(&self.pool, corp_id, artifact_id, actor_id).await
     }
 
     pub async fn verification_artifact_for_recovery(
@@ -12451,6 +12448,18 @@ fn normalize_factory_source(input: FactorySourceInput) -> Result<FactorySourceIn
     })
 }
 
+fn normalize_publication_repository(repository: &str) -> Result<String> {
+    let (owner, name) = repository
+        .trim()
+        .split_once('/')
+        .context("publication repository must use owner/name form")?;
+    Ok(format!(
+        "{}/{}",
+        normalize_github_component(owner, "publication repository owner", 100)?,
+        normalize_github_component(name, "publication repository name", 100)?,
+    ))
+}
+
 fn normalize_github_component(value: &str, field: &str, max_len: usize) -> Result<String> {
     let value = normalize_factory_text(value, field, max_len)?;
     if !value
@@ -12941,8 +12950,8 @@ fn checkpoint_head_commit(
     if let (Some(deliverable), Some(authorized)) = (&deliverable_head, &authorized_head)
         && deliverable != authorized
     {
-        return Err(anyhow!(
-            "verifier source head conflicts with its authorized checkpoint"
+        return Err(admission::denied(
+            "verifier source head conflicts with its authorized checkpoint",
         ));
     }
     Ok(authorized_head.or(deliverable_head))
@@ -13010,7 +13019,7 @@ async fn source_workspace_checkpoint_with_lock_tx(
     .bind(corp_id)
     .fetch_optional(&mut **tx)
     .await?
-    .context("source workspace checkpoint was not found")?;
+    .context(admission::Denied("source workspace checkpoint was not found".into()))?;
     let execution_mode: String = row.get("execution_mode");
     let status: String = row.get("status");
     // A lost ordinary provider remains ineligible. Only this exact governed
@@ -13027,14 +13036,16 @@ async fn source_workspace_checkpoint_with_lock_tx(
             || (status == "lost"
                 && row.get::<Option<String>, _>("recovery_status").as_deref() != Some("failed"))
         {
-            return Err(anyhow!(
-                "verifier source checkpoint has no matching recovery lineage"
+            return Err(admission::denied(
+                "verifier source checkpoint has no matching recovery lineage",
             ));
         }
         let fingerprint: String = row
             .get::<Option<String>, _>("authorized_fingerprint")
             .filter(|value| valid_sha256(value))
-            .context("verifier source checkpoint omitted its authorized fingerprint")?;
+            .context(admission::Denied(
+                "verifier source checkpoint omitted its authorized fingerprint".into(),
+            ))?;
         // Native verifier cleanup emits this fingerprint only after checking both
         // assigned guards. Keep the authorized head even when a lost/cancelled
         // run never exported a deliverable; never weaken Some(head) to None.
@@ -13045,8 +13056,8 @@ async fn source_workspace_checkpoint_with_lock_tx(
             && row.get::<Option<String>, _>("deliverable_sha256").is_some()
             && exported_head.is_none()
         {
-            return Err(anyhow!(
-                "checkpoint export head has no exact ready artifact binding"
+            return Err(admission::denied(
+                "checkpoint export head has no exact ready artifact binding",
             ));
         }
         head = match exported_head {
@@ -13058,7 +13069,7 @@ async fn source_workspace_checkpoint_with_lock_tx(
         None
     };
     if let Some(head) = head.as_deref() {
-        validate_factory_base_commit(head)?;
+        validate_factory_base_commit(head).map_err(admission::validation)?;
     }
     Ok(SourceWorkspaceCheckpoint {
         status,
@@ -13092,14 +13103,16 @@ async fn ensure_factory_recovery_authorizer_tx(
     .bind(actor_id)
     .fetch_optional(&mut **tx)
     .await?
-    .context("factory recovery mission or actor was not found")?;
+    .context(admission::Denied(
+        "factory recovery mission or actor was not found".into(),
+    ))?;
     let room_id: Uuid = row.get("room_id");
     assert_room_membership_tx(tx, corp_id, room_id, actor_id).await?;
     let kind: String = row.get("kind");
     let role: String = row.get("role");
     if kind != "human" || !matches!(role.as_str(), "owner" | "admin" | "manager") {
-        return Err(anyhow!(
-            "forbidden: factory verification recovery requires owner, admin, or manager authority"
+        return Err(admission::denied(
+            "forbidden: factory verification recovery requires owner, admin, or manager authority",
         ));
     }
     Ok(())
@@ -13817,6 +13830,19 @@ async fn factory_event_room_id_tx(
         .map(Some)
 }
 
+#[derive(Debug)]
+struct FactoryMissionVerificationDenied;
+
+impl std::fmt::Display for FactoryMissionVerificationDenied {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(
+            "conflict: factory work item cannot enter verified before its mission and task verification pass",
+        )
+    }
+}
+
+impl std::error::Error for FactoryMissionVerificationDenied {}
+
 async fn ensure_factory_mission_verified_tx(
     tx: &mut Transaction<'_, Postgres>,
     corp_id: Uuid,
@@ -13852,9 +13878,7 @@ async fn ensure_factory_mission_verified_tx(
     .fetch_one(&mut **tx)
     .await?;
     if !verified {
-        return Err(anyhow!(
-            "conflict: factory work item cannot enter verified before its mission and task verification pass"
-        ));
+        return Err(FactoryMissionVerificationDenied.into());
     }
     Ok(())
 }
@@ -14518,7 +14542,9 @@ async fn assert_room_membership_tx(
     .fetch_optional(&mut **tx)
     .await?;
     if member.is_none() {
-        return Err(anyhow!("forbidden: actor is not a member of this room"));
+        return Err(admission::denied(
+            "forbidden: actor is not a member of this room",
+        ));
     }
     Ok(())
 }
@@ -15180,6 +15206,76 @@ fn map_factory_verification_recovery(
     })
 }
 
+async fn artifact_for_download_using<'e>(
+    executor: impl sqlx::Executor<'e, Database = Postgres>,
+    corp_id: Uuid,
+    artifact_id: Uuid,
+    actor_id: Uuid,
+) -> Result<Option<StoredArtifact>> {
+    let row = sqlx::query(
+        r#"
+        SELECT artifact.id, artifact.corp_id, artifact.task_id, artifact.run_id,
+               artifact.producer_agent_id, artifact.producer_runner_id,
+               artifact.verifier, artifact.object_key, artifact.uri,
+                artifact.sha256, artifact.media_type, artifact.bytes,
+                artifact.artifact_role, artifact.file_name, artifact.metadata,
+                artifact.provenance_signature, artifact.retention_until
+        FROM artifacts artifact
+        JOIN tasks task ON task.id = artifact.task_id AND task.corp_id = artifact.corp_id
+        JOIN missions mission ON mission.id = task.mission_id AND mission.corp_id = task.corp_id
+        JOIN room_memberships membership
+          ON membership.room_id = mission.room_id AND membership.actor_id = $3
+        WHERE artifact.id = $1 AND artifact.corp_id = $2
+          AND artifact.status = 'ready'
+          AND (
+            artifact.artifact_role <> 'source_deliverable'
+            -- Only absence of both fields identifies immutable historical exports.
+            OR NOT (artifact.metadata ? 'verified_tree' OR artifact.metadata ? 'source_verification')
+            OR EXISTS (
+                SELECT 1 FROM source_deliverables deliverable
+                JOIN runs run ON run.id = deliverable.run_id
+                  AND run.corp_id = deliverable.corp_id AND run.task_id = deliverable.task_id
+                WHERE deliverable.artifact_id = artifact.id
+                  AND deliverable.corp_id = artifact.corp_id
+                  AND deliverable.task_id = artifact.task_id
+                  AND run.id = artifact.run_id
+                  AND run.agent_id = artifact.producer_agent_id
+                  AND run.runner_id = artifact.producer_runner_id
+                  AND deliverable.form = artifact.metadata->>'form'
+                  AND deliverable.verification_sha256 = run.verification_sha256
+                  AND deliverable.verification_sha256 = artifact.metadata->>'verification_sha256'
+                  AND artifact.sha256 = run.deliverable_sha256
+                  AND deliverable.base_commit = run.workspace_base_commit
+                  AND deliverable.base_commit = artifact.metadata->>'base_commit'
+                  AND (run.source_base_commit IS NULL OR run.source_base_commit = deliverable.base_commit)
+                  AND (task.contract->>'source_base_commit' IS NULL
+                       OR task.contract->>'source_base_commit' = deliverable.base_commit)
+                  AND (
+                    run.verification_status = 'passed'
+                    -- Reviewers must inspect the accepted automated result before deciding.
+                    OR (run.verification_status = 'waiting_for_approval' AND EXISTS (
+                        SELECT 1 FROM verification_requests request
+                        WHERE request.run_id = run.id AND request.corp_id = run.corp_id
+                          AND request.task_id = run.task_id AND request.status = 'pending'
+                    ))
+                  )
+            )
+          )
+        "#,
+    )
+    .bind(artifact_id)
+    .bind(corp_id)
+    .bind(actor_id)
+    .fetch_optional(executor)
+    .await?;
+    Ok(row.map(map_stored_artifact).filter(|artifact| {
+        artifact.artifact_role != "source_deliverable"
+            || (artifact.metadata.get("verified_tree").is_none()
+                && artifact.metadata.get("source_verification").is_none())
+            || crony_domain::SourceVerification::from_payload(&artifact.metadata).is_ok()
+    }))
+}
+
 fn map_stored_artifact(row: sqlx::postgres::PgRow) -> StoredArtifact {
     StoredArtifact {
         id: row.get("id"),
@@ -15678,9 +15774,9 @@ fn should_retry_runner_failure(
 
 fn ensure_breaker_allows_human_progress(stage: &str, action: &str) -> Result<()> {
     if breaker_is_hard(stage) {
-        return Err(anyhow!(
+        return Err(admission::denied(format!(
             "{action} is blocked by circuit breaker stage {stage}"
-        ));
+        )));
     }
     Ok(())
 }
@@ -15779,9 +15875,9 @@ async fn ensure_run_not_hard_blocked_tx(
 ) -> Result<()> {
     ensure_breaker_allows_human_progress(stage, action)?;
     if hard_breaker_reached_tx(tx, corp_id, run_id).await? {
-        return Err(anyhow!(
+        return Err(admission::denied(format!(
             "{action} is blocked because current budget or loop metrics require a hard breaker"
-        ));
+        )));
     }
     Ok(())
 }

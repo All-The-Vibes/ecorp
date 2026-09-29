@@ -1165,6 +1165,25 @@ export recipe. This command-level evidence does not replace the real-stack expor
 or retroactively update any persisted verifier policy. See the
 [Windows red/green report](evidence/2026-09-18-deliverable-diff-check.md).
 
+Human-requested publication has separate regression coverage for its intent and delivery boundary.
+The `issue219_` native store and handler tests use real migrations in explicitly owned SQLx
+databases. They cover tokenless intent, exact preview and human binding, duplicate/replay behavior,
+room and authority revocation, source/policy drift, malformed or missing provenance, transaction
+rollback, narrow workload scope, live artifact fencing, and failure-only cleanup. These opt-in
+tests remain ignored in ordinary workspace discovery unless deliberately selected; their native
+execution receipts must be recorded separately. CLI queue tests exercise bounded pagination and
+the absence of human or plan override options. The web model/component tests run in full `pnpm test:js`
+discovery and cover the selected result, stale responses, waiting, working, failure, and exact PR
+link without exposing a publisher token.
+
+Acceptance additionally requires an owned browser/server/runner/publisher stack with native Git
+and PostgreSQL: persist intent from a selected verified result, detach and reconnect the browser,
+race two publishers, restart after PR creation, adopt the same PR after actual lease expiry, and
+show a failure retaining an already-created PR without a retry loop. Check 390px presentation,
+unchanged remote main, Project mutation after PR persistence, and no extra coding run. A controlled
+GitHub fixture demonstrates local recovery, not production OIDC or live hosted effects; preserve
+that distinction and bind the receipts and screenshots to the actual tested source.
+
 `tools/e2e_factory_publication.mjs` uses a real server, runner, isolated worktrees, portable Git
 bundle, bare Git remote, and deterministic fake GitHub API. It proves policy, role, Corp, budget,
 and breaker rejection; manage-only publisher enrollment; independent publisher workload

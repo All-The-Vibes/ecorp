@@ -1,0 +1,1440 @@
+diff --git a/crates/crony-protocol/src/lib.rs b/crates/crony-protocol/src/lib.rs
+index 8a0bdb0..78f7bef 100644
+--- a/crates/crony-protocol/src/lib.rs
++++ b/crates/crony-protocol/src/lib.rs
+@@ -868,6 +868,9 @@ pub struct FactoryPublicationContextResponse {
+ pub struct CreatePublicationPublisherCredentialRequest {
+     pub actor_id: Uuid,
+     pub publisher_id: String,
++    /// Required for workload queue access; omission retains direct CLI access only.
++    #[serde(default)]
++    pub repository: Option<String>,
+     #[serde(default = "default_publication_publisher_credential_ttl_seconds")]
+     pub expires_in_seconds: i64,
+ }
+@@ -876,6 +879,7 @@ pub struct CreatePublicationPublisherCredentialRequest {
+ pub struct CreatePublicationPublisherCredentialResponse {
+     pub credential_id: Uuid,
+     pub publisher_id: String,
++    pub repository: Option<String>,
+     pub credential: String,
+     pub expires_at: String,
+ }
+diff --git a/crates/crony-server/src/main.rs b/crates/crony-server/src/main.rs
+index b20e606..a4bff64 100644
+--- a/crates/crony-server/src/main.rs
++++ b/crates/crony-server/src/main.rs
+@@ -313,6 +313,7 @@ struct RunnerConnection {
+ 
+ struct AuthenticatedPublicationPublisher {
+     publisher_id: String,
++    repository: Option<String>,
+     credential_hash: String,
+ }
+ 
+@@ -4444,6 +4445,7 @@ async fn create_publication_publisher_credential(
+             actor_id,
+             &request.publisher_id,
+             &hash_secret(&credential),
++            request.repository.as_deref(),
+             expires_at,
+         )
+         .await
+@@ -4452,6 +4454,7 @@ async fn create_publication_publisher_credential(
+     Ok(Json(CreatePublicationPublisherCredentialResponse {
+         credential_id: outcome.credential_id,
+         publisher_id: outcome.publisher_id,
++        repository: outcome.repository,
+         credential,
+         expires_at: outcome.expires_at.to_rfc3339(),
+     }))
+@@ -4505,7 +4508,7 @@ async fn authenticate_publication_publisher(
+         ));
+     }
+     let credential_hash = hash_secret(credential);
+-    let publisher_id = state
++    let identity = state
+         .store
+         .authenticate_publication_publisher(corp_id, &credential_hash)
+         .await
+@@ -4513,7 +4516,8 @@ async fn authenticate_publication_publisher(
+             ApiError::forbidden("trusted publication publisher credential was rejected")
+         })?;
+     Ok(AuthenticatedPublicationPublisher {
+-        publisher_id,
++        publisher_id: identity.publisher_id,
++        repository: identity.repository,
+         credential_hash,
+     })
+ }
+diff --git a/crates/crony-server/src/publication_repository_tests.rs b/crates/crony-server/src/publication_repository_tests.rs
+new file mode 100644
+index 0000000..1459761
+--- /dev/null
++++ b/crates/crony-server/src/publication_repository_tests.rs
+@@ -0,0 +1,181 @@
++//! Real HTTP and SQLx regressions; synthetic metadata grants no remote effect.
++use super::*;
++
++async fn publication_state(fixture: &Fixture) -> Value {
++    // Authentication audits last use even when repository selection is denied.
++    // Every other credential field, publication effect and event must remain.
++    sqlx::query_scalar(
++        "SELECT jsonb_build_object(
++          'rows',(SELECT coalesce(jsonb_agg(to_jsonb(p) ORDER BY id),'[]') FROM pull_request_publications p),
++          'attempts',(SELECT coalesce(jsonb_agg(to_jsonb(a) ORDER BY id),'[]') FROM pull_request_publication_attempts a),
++          'operations',(SELECT coalesce(jsonb_agg(to_jsonb(o) ORDER BY idempotency_key),'[]') FROM pull_request_publication_operations o),
++          'items',(SELECT coalesce(jsonb_agg(to_jsonb(i) ORDER BY id),'[]') FROM factory_work_items i),
++          'credentials',(SELECT coalesce(jsonb_agg(to_jsonb(c)-'last_used_at' ORDER BY id),'[]') FROM publication_publisher_credentials c),
++          'events',(SELECT coalesce(jsonb_agg(to_jsonb(e) ORDER BY seq),'[]') FROM events e))",
++    ).fetch_one(&fixture.pool).await.unwrap()
++}
++
++async fn enroll(fixture: &Fixture, repository: Option<&str>) -> (String, Uuid) {
++    let credential = format!("fixture-{}", Uuid::new_v4());
++    let grant = fixture
++        .state
++        .store
++        .create_publication_publisher_credential(
++            fixture.ids.corp_id,
++            fixture.ids.alice_actor_id,
++            PUBLISHER,
++            &hash_secret(&credential),
++            repository,
++            Utc::now() + chrono::Duration::minutes(10),
++        )
++        .await
++        .unwrap();
++    (credential, grant.credential_id)
++}
++
++async fn assert_workload_forbidden(
++    fixture: &Fixture,
++    credential: &str,
++    repository: &str,
++    token: &Value,
++    version: &Value,
++) {
++    let before = publication_state(fixture).await;
++    let client = reqwest::Client::builder().no_proxy().build().unwrap();
++    let prefix = format!(
++        "{}/api/corps/{}/factory/publisher",
++        fixture.base, fixture.ids.corp_id
++    );
++    let publication = format!("{prefix}/publications/{}", fixture.publication_id);
++    for operation in [
++        "queue", "context", "claim", "renew", "effect", "failure", "artifact",
++    ] {
++        let request = match operation {
++            "queue" => client.get(format!("{prefix}/queue")).query(&[("repository", repository)]),
++            "context" => client.get(&publication).query(&[("repository", repository)]),
++            "claim" => client.post(format!("{publication}/claim")).json(&json!({
++                "repository": repository, "idempotency_key": "denied-repository-claim", "lease_seconds": 60,
++            })),
++            "renew" => client.post(format!("{publication}/renew")).json(&json!({
++                "repository": repository, "publisher_token": token, "expected_version": version,
++                "idempotency_key": "denied-repository-renewal", "lease_seconds": 60,
++            })),
++            "effect" | "failure" => {
++                let checkpoint = if operation == "effect" {
++                    PullRequestPublicationCheckpoint::BranchPushed { commit_sha: "b".repeat(40) }
++                } else {
++                    PullRequestPublicationCheckpoint::Failed { failure_detail: "Unauthorized cleanup".into() }
++                };
++                client.post(format!("{publication}/checkpoint")).json(&json!({
++                    "repository": repository, "publisher_token": token, "expected_version": version,
++                    "idempotency_key": "denied-repository-checkpoint", "checkpoint": checkpoint,
++                }))
++            }
++            "artifact" => client.post(format!("{publication}/artifact")).json(&json!({
++                "repository": repository, "publisher_token": token, "expected_version": version,
++            })),
++            _ => unreachable!(),
++        };
++        let response = request
++            .header("x-crony-publication-publisher-credential", credential)
++            .send()
++            .await
++            .unwrap();
++        assert_eq!(
++            response.status(),
++            reqwest::StatusCode::FORBIDDEN,
++            "{operation}"
++        );
++        assert_eq!(response.headers()["cache-control"], "no-store");
++        let body = response.text().await.unwrap();
++        assert!(!body.contains(credential) && !body.contains(token.as_str().unwrap()));
++        // Boolean comparison prevents an assertion from printing fencing tokens.
++        assert!(
++            publication_state(fixture).await == before,
++            "{operation} mutated publication state"
++        );
++    }
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_publication_handler_enforces_repository_on_every_workload_route(pool: PgPool) {
++    let fixture = Fixture::new(pool).await.unwrap();
++    let (other, _) = enroll(&fixture, Some("other/repository")).await;
++    let (legacy, _) = enroll(&fixture, None).await;
++    let token = json!(Uuid::new_v4());
++    let context = fixture.assert_context().await;
++    let selections = [
++        (other.as_str(), REPOSITORY),
++        (legacy.as_str(), REPOSITORY),
++        (fixture.credential.as_str(), "other/repository"),
++    ];
++    for (credential, repository) in selections {
++        assert_workload_forbidden(
++            &fixture,
++            credential,
++            repository,
++            &token,
++            &context["publication"]["version"],
++        )
++        .await;
++    }
++    assert_eq!(fixture.queue().await, json!([fixture.publication_id]));
++    let response = fixture
++        .read(
++            fixture.ids.corp_id,
++            fixture.publication_id,
++            " FIXTURE/PUBLICATION ",
++            true,
++        )
++        .await;
++    assert_eq!(response.status(), reqwest::StatusCode::OK);
++    let started = fixture.claim("correct-repository-grant").await;
++    assert!(started["publisher_token"].is_string());
++    for (credential, repository) in selections {
++        assert_workload_forbidden(
++            &fixture,
++            credential,
++            repository,
++            &started["publisher_token"],
++            &started["publication"]["version"],
++        )
++        .await;
++    }
++    fixture.assert_context().await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_publication_handler_rechecks_repository_credential_lifecycle(pool: PgPool) {
++    let fixture = Fixture::new(pool).await.unwrap();
++    let started = fixture.claim("repository-lifecycle").await;
++    for lifecycle in ["revoked", "expired"] {
++        let (credential, id) = enroll(&fixture, Some(REPOSITORY)).await;
++        if lifecycle == "revoked" {
++            fixture
++                .state
++                .store
++                .revoke_publication_publisher_credential(
++                    fixture.ids.corp_id,
++                    fixture.ids.alice_actor_id,
++                    id,
++                    "Synthetic HTTP grant revocation",
++                )
++                .await
++                .unwrap();
++        } else {
++            sqlx::query("UPDATE publication_publisher_credentials SET created_at=now()-interval '2 hours', expires_at=now()-interval '1 hour' WHERE id=$1")
++                .bind(id).execute(&fixture.pool).await.unwrap();
++        }
++        assert_workload_forbidden(
++            &fixture,
++            &credential,
++            REPOSITORY,
++            &started["publisher_token"],
++            &started["publication"]["version"],
++        )
++        .await;
++    }
++    fixture.assert_context().await;
++}
+diff --git a/crates/crony-server/src/publication_request_tests.rs b/crates/crony-server/src/publication_request_tests.rs
+index eccf2fa..1b653bc 100644
+--- a/crates/crony-server/src/publication_request_tests.rs
++++ b/crates/crony-server/src/publication_request_tests.rs
+@@ -11,6 +11,9 @@ use crony_store::{
+ use serde_json::Value;
+ use sqlx::{ConnectOptions, PgPool};
+ 
++#[path = "publication_repository_tests.rs"]
++mod repository_grants;
++
+ const REPOSITORY: &str = "fixture/publication";
+ const PUBLISHER: &str = "issue219-handler-publisher";
+ 
+@@ -51,6 +54,7 @@ impl Fixture {
+                 ids.alice_actor_id,
+                 PUBLISHER,
+                 &hash_secret(&credential),
++                Some(REPOSITORY),
+                 Utc::now() + chrono::Duration::minutes(10),
+             )
+             .await?;
+@@ -530,7 +534,7 @@ async fn issue219_publication_handler_rejects_other_scope_and_malformed_intent(p
+             fixture.publication_id,
+             "fixture/other",
+             true,
+-            404,
++            403,
+         ),
+         (
+             fixture.ids.corp_id,
+diff --git a/crates/crony-server/src/publication_requests.rs b/crates/crony-server/src/publication_requests.rs
+index c9fa6ba..dfaed6e 100644
+--- a/crates/crony-server/src/publication_requests.rs
++++ b/crates/crony-server/src/publication_requests.rs
+@@ -207,9 +207,19 @@ async fn publisher_scope(
+     repository: String,
+ ) -> Result<PublicationPublisherScope, ApiError> {
+     let publisher = authenticate_publication_publisher(state, headers, corp_id).await?;
++    let granted_repository = publisher.repository.ok_or_else(|| {
++        ApiError::forbidden("publication workload access requires a repository grant")
++    })?;
++    if !granted_repository.eq_ignore_ascii_case(repository.trim()) {
++        return Err(ApiError::forbidden(
++            "publication publisher credential does not authorize this repository",
++        ));
++    }
+     Ok(PublicationPublisherScope {
+         corp_id,
+-        repository,
++        // Caller input selects a grant; it cannot establish one. Each store
++        // transaction independently rechecks this exact credential's grant.
++        repository: granted_repository,
+         publisher_id: publisher.publisher_id,
+         credential_hash: publisher.credential_hash,
+     })
+diff --git a/crates/crony-store/src/budget_checkpoint_tests.rs b/crates/crony-store/src/budget_checkpoint_tests.rs
+index ae92345..3d5a85f 100644
+--- a/crates/crony-store/src/budget_checkpoint_tests.rs
++++ b/crates/crony-store/src/budget_checkpoint_tests.rs
+@@ -1998,6 +1998,7 @@ async fn publication_fixture(
+             OWNER,
+             "issue148-store-publisher",
+             &publisher_hash,
++            None,
+             Utc::now() + Duration::hours(1),
+         )
+         .await
+diff --git a/crates/crony-store/src/checkpoint_correction_publication_tests.rs b/crates/crony-store/src/checkpoint_correction_publication_tests.rs
+index 00f97d5..b302efa 100644
+--- a/crates/crony-store/src/checkpoint_correction_publication_tests.rs
++++ b/crates/crony-store/src/checkpoint_correction_publication_tests.rs
+@@ -585,6 +585,7 @@ async fn corrected_publication_fixture(pool: PgPool) -> PublicationFixture {
+             OWNER,
+             "issue216-store-publisher",
+             &publisher_hash,
++            None,
+             Utc::now() + Duration::hours(1),
+         )
+         .await
+@@ -2508,6 +2509,7 @@ async fn issue216_ordinary_source_only_predecessor_correction_stop_checkpoint_pu
+             OWNER,
+             "issue216-source-only-publisher",
+             &publisher_hash,
++            None,
+             Utc::now() + Duration::hours(1),
+         )
+         .await
+diff --git a/crates/crony-store/src/human_publication_repository_tests.rs b/crates/crony-store/src/human_publication_repository_tests.rs
+new file mode 100644
+index 0000000..7fc0231
+--- /dev/null
++++ b/crates/crony-store/src/human_publication_repository_tests.rs
+@@ -0,0 +1,458 @@
++//! Native transaction regressions for credential-bound repository grants.
++//! Synthetic SQLx metadata proves no GitHub effect or browser acceptance.
++use super::*;
++
++async fn enroll(
++    store: &PgStore,
++    input: &StartPullRequestPublicationInput,
++    label: &str,
++    repository: Option<&str>,
++) -> (String, PublicationPublisherCredentialOutcome) {
++    let hash = digest(&label);
++    let outcome = store
++        .create_publication_publisher_credential(
++            input.corp_id,
++            input.actor_id,
++            &input.publisher_id,
++            &hash,
++            repository,
++            Utc::now() + Duration::hours(1),
++        )
++        .await
++        .unwrap();
++    (hash, outcome)
++}
++
++async fn assert_denied<T>(store: &PgStore, before: &Value, result: Result<T>) {
++    let error = result
++        .err()
++        .expect("repository grant must deny this operation");
++    assert!(error.to_string().contains("forbidden"));
++    // Never print persisted publication fencing tokens on a failed assertion.
++    assert!(
++        publication_state(store).await == *before,
++        "denial must roll back"
++    );
++}
++
++async fn assert_workload_denied(
++    store: &PgStore,
++    scope: &PublicationPublisherScope,
++    id: Uuid,
++    control: PublicationLeaseControl,
++) {
++    let before = publication_state(store).await;
++    for operation in 0..5 {
++        let result = match operation {
++            0 => store
++                .requested_publications_for_publisher(scope, None, 25)
++                .await
++                .map(|_| ()),
++            1 => store
++                .human_requested_publication_for_publisher(scope, id, None)
++                .await
++                .map(|_| ()),
++            2 => store
++                .human_requested_publication_context_for_publisher(scope, id)
++                .await
++                .map(|_| ()),
++            3 => store
++                .claim_human_requested_publication(scope, id, "denied-grant".into(), 300)
++                .await
++                .map(|_| ()),
++            4 => store
++                .human_requested_publication_for_publisher(scope, id, Some(control))
++                .await
++                .map(|_| ()),
++            _ => unreachable!(),
++        };
++        assert_denied(store, &before, result).await;
++    }
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_repository_grant_is_enrolled_and_normalized(pool: PgPool) {
++    let (store, _, _, input) = publication_fixture(pool).await;
++    let (hash, grant) = enroll(
++        &store,
++        &input,
++        "normalized repository grant",
++        Some(" Fixture/Source "),
++    )
++    .await;
++    assert_eq!(grant.repository.as_deref(), Some("fixture/source"));
++    assert_eq!(grant.event.payload["repository"], "fixture/source");
++    let identity = store
++        .authenticate_publication_publisher(input.corp_id, &hash)
++        .await
++        .unwrap();
++    assert_eq!(identity.publisher_id, input.publisher_id);
++    assert_eq!(identity.repository.as_deref(), Some("fixture/source"));
++    let persisted: Option<String> =
++        sqlx::query_scalar("SELECT repository FROM publication_publisher_credentials WHERE id=$1")
++            .bind(grant.credential_id)
++            .fetch_one(&store.pool)
++            .await
++            .unwrap();
++    assert_eq!(persisted, grant.repository);
++
++    for repository in [
++        "",
++        "owner",
++        "owner/repo/extra",
++        "owner/*",
++        "owner/repo?x",
++        "owner/\u{00e9}",
++    ] {
++        let before = publication_state(&store).await;
++        assert!(
++            store
++                .create_publication_publisher_credential(
++                    input.corp_id,
++                    input.actor_id,
++                    &input.publisher_id,
++                    &digest(&repository),
++                    Some(repository),
++                    Utc::now() + Duration::hours(1),
++                )
++                .await
++                .is_err()
++        );
++        assert!(publication_state(&store).await == before);
++    }
++    let before = publication_state(&store).await;
++    let result = store
++        .create_publication_publisher_credential(
++            input.corp_id,
++            REVIEWER,
++            &input.publisher_id,
++            &digest(&"unprivileged repository enrollment"),
++            Some("other/repository"),
++            Utc::now() + Duration::hours(1),
++        )
++        .await;
++    assert_denied(&store, &before, result).await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_binds_repository_to_exact_credential(pool: PgPool) {
++    let (store, input, queued) = queued_request(pool).await;
++    let scope = publisher_scope(&input);
++    let (other_hash, _) = enroll(
++        &store,
++        &input,
++        "same publisher other repository",
++        Some("other/repository"),
++    )
++    .await;
++    let (legacy_hash, _) = enroll(&store, &input, "same publisher legacy credential", None).await;
++    let mut other = scope.clone();
++    other.credential_hash = other_hash;
++    let mut legacy = scope.clone();
++    legacy.credential_hash = legacy_hash;
++    let mut changed_selection = scope.clone();
++    changed_selection.repository = "other/repository".into();
++    let denied = [other.clone(), legacy, changed_selection];
++    let before_claim = PublicationLeaseControl {
++        publisher_token: Uuid::new_v4(),
++        expected_version: queued.publication.version,
++    };
++    for selected in &denied {
++        assert_workload_denied(&store, selected, queued.publication.id, before_claim).await;
++    }
++
++    // A legitimate grant for another repository has an empty queue and cannot
++    // use a known ID to cross into this publication's repository.
++    other.repository = "other/repository".into();
++    assert!(
++        store
++            .requested_publications_for_publisher(&other, None, 25)
++            .await
++            .unwrap()
++            .is_empty()
++    );
++    let before = publication_state(&store).await;
++    assert!(
++        store
++            .human_requested_publication_context_for_publisher(&other, queued.publication.id)
++            .await
++            .is_err()
++    );
++    assert!(publication_state(&store).await == before);
++
++    let mut normalized = scope.clone();
++    normalized.repository = " FIXTURE/SOURCE ".into();
++    assert_eq!(
++        store
++            .requested_publications_for_publisher(&normalized, None, 25)
++            .await
++            .unwrap(),
++        [queued.publication.id]
++    );
++    assert!(
++        store
++            .human_requested_publication_context_for_publisher(&normalized, queued.publication.id)
++            .await
++            .is_ok()
++    );
++    let started = store
++        .claim_human_requested_publication(
++            &normalized,
++            queued.publication.id,
++            "granted-claim".into(),
++            300,
++        )
++        .await
++        .unwrap();
++    let control = PublicationLeaseControl {
++        publisher_token: started.publisher_token.unwrap(),
++        expected_version: started.publication.version,
++    };
++    assert!(
++        store
++            .human_requested_publication_for_publisher(
++                &normalized,
++                queued.publication.id,
++                Some(control)
++            )
++            .await
++            .is_ok()
++    );
++    // Knowing the live token does not turn another credential into this grant.
++    for selected in &denied {
++        assert_workload_denied(&store, selected, queued.publication.id, control).await;
++    }
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_repository_grant_fences_effects_and_replays(pool: PgPool) {
++    let (store, input, _) = queued_request(pool).await;
++    let (other_hash, _) = enroll(
++        &store,
++        &input,
++        "same publisher wrong grant for effects",
++        Some("other/repository"),
++    )
++    .await;
++    let mut other = input.clone();
++    other.publisher_credential_hash = other_hash.clone();
++    let before = publication_state(&store).await;
++    assert_denied(
++        &store,
++        &before,
++        store.start_pull_request_publication(other.clone()).await,
++    )
++    .await;
++    let started = store
++        .start_pull_request_publication(input.clone())
++        .await
++        .unwrap();
++    let before = publication_state(&store).await;
++    assert_denied(
++        &store,
++        &before,
++        store.start_pull_request_publication(other.clone()).await,
++    )
++    .await;
++    other.idempotency_key = "different-key-same-wrong-grant".into();
++    assert_denied(
++        &store,
++        &before,
++        store.start_pull_request_publication(other.clone()).await,
++    )
++    .await;
++
++    let renewal = publication_renewal(&input, &started);
++    let mut other_renewal = renewal.clone();
++    other_renewal.publisher_credential_hash = other_hash.clone();
++    assert_denied(
++        &store,
++        &before,
++        store
++            .renew_pull_request_publication(other_renewal.clone())
++            .await,
++    )
++    .await;
++    let renewed = store.renew_pull_request_publication(renewal).await.unwrap();
++    let before = publication_state(&store).await;
++    assert_denied(
++        &store,
++        &before,
++        store.renew_pull_request_publication(other_renewal).await,
++    )
++    .await;
++
++    let checkpoint = branch_checkpoint(&input, &renewed);
++    let mut other_checkpoint = checkpoint.clone();
++    other_checkpoint.publisher_credential_hash = other_hash;
++    assert_denied(
++        &store,
++        &before,
++        store
++            .record_pull_request_publication_checkpoint(other_checkpoint.clone())
++            .await,
++    )
++    .await;
++    let pushed = store
++        .record_pull_request_publication_checkpoint(checkpoint)
++        .await
++        .unwrap();
++    let before = publication_state(&store).await;
++    assert_denied(
++        &store,
++        &before,
++        store
++            .record_pull_request_publication_checkpoint(other_checkpoint)
++            .await,
++    )
++    .await;
++
++    let mut failure = branch_checkpoint(&input, &pushed);
++    failure.checkpoint = PullRequestPublicationCheckpointInput::Failed {
++        failure_detail: "Synthetic cleanup".into(),
++    };
++    let mut other_failure = failure.clone();
++    other_failure.publisher_credential_hash = other.publisher_credential_hash.clone();
++    assert_denied(
++        &store,
++        &before,
++        store
++            .record_pull_request_publication_checkpoint(other_failure.clone())
++            .await,
++    )
++    .await;
++    let failed = store
++        .record_pull_request_publication_checkpoint(failure)
++        .await
++        .unwrap();
++    assert!(failed.publisher_token.is_none());
++    let before = publication_state(&store).await;
++    assert_denied(
++        &store,
++        &before,
++        store
++            .record_pull_request_publication_checkpoint(other_failure)
++            .await,
++    )
++    .await;
++    other.idempotency_key = input.idempotency_key;
++    assert_denied(
++        &store,
++        &before,
++        store.start_pull_request_publication(other).await,
++    )
++    .await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_legacy_credential_requires_direct_human_path(pool: PgPool) {
++    let (store, _, _, input) = publication_fixture(pool).await;
++    let identity = store
++        .authenticate_publication_publisher(input.corp_id, &input.publisher_credential_hash)
++        .await
++        .unwrap();
++    assert!(identity.repository.is_none());
++    let started = store
++        .start_pull_request_publication(input.clone())
++        .await
++        .unwrap();
++    let control = PublicationLeaseControl {
++        publisher_token: started.publisher_token.unwrap(),
++        expected_version: started.publication.version,
++    };
++    assert_workload_denied(
++        &store,
++        &publisher_scope(&input),
++        started.publication.id,
++        control,
++    )
++    .await;
++    let renewed = store
++        .renew_pull_request_publication(publication_renewal(&input, &started))
++        .await
++        .unwrap();
++    let pushed = store
++        .record_pull_request_publication_checkpoint(branch_checkpoint(&input, &renewed))
++        .await
++        .unwrap();
++    assert_eq!(
++        pushed.publication.state,
++        PullRequestPublicationState::BranchPushed
++    );
++    assert!(pushed.publisher_token.is_some());
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_repository_grant_rechecks_revocation_and_expiry(pool: PgPool) {
++    let (store, input, queued) = queued_request(pool).await;
++    let started = store
++        .start_pull_request_publication(input.clone())
++        .await
++        .unwrap();
++    let control = PublicationLeaseControl {
++        publisher_token: started.publisher_token.unwrap(),
++        expected_version: started.publication.version,
++    };
++    for lifecycle in ["revoked", "expired"] {
++        let (hash, grant) = enroll(&store, &input, lifecycle, Some(&input.target_repository)).await;
++        // This authentication succeeds before the lifecycle change. Each later
++        // native transaction must reject the now-stale identity independently.
++        assert!(
++            store
++                .authenticate_publication_publisher(input.corp_id, &hash)
++                .await
++                .is_ok()
++        );
++        if lifecycle == "revoked" {
++            store
++                .revoke_publication_publisher_credential(
++                    input.corp_id,
++                    input.actor_id,
++                    grant.credential_id,
++                    "Synthetic repository grant revocation",
++                )
++                .await
++                .unwrap();
++        } else {
++            sqlx::query("UPDATE publication_publisher_credentials SET created_at=now()-interval '2 hours', expires_at=now()-interval '1 hour' WHERE id=$1")
++                .bind(grant.credential_id).execute(&store.pool).await.unwrap();
++        }
++        let mut changed = input.clone();
++        changed.publisher_credential_hash = hash;
++        assert_workload_denied(
++            &store,
++            &publisher_scope(&changed),
++            queued.publication.id,
++            control,
++        )
++        .await;
++        let before = publication_state(&store).await;
++        assert_denied(
++            &store,
++            &before,
++            store.start_pull_request_publication(changed.clone()).await,
++        )
++        .await;
++        assert_denied(
++            &store,
++            &before,
++            store
++                .renew_pull_request_publication(publication_renewal(&changed, &started))
++                .await,
++        )
++        .await;
++        assert_denied(
++            &store,
++            &before,
++            store
++                .record_pull_request_publication_checkpoint(branch_checkpoint(&changed, &started))
++                .await,
++        )
++        .await;
++    }
++}
+diff --git a/crates/crony-store/src/human_publication_request_tests.rs b/crates/crony-store/src/human_publication_request_tests.rs
+index de844a0..6211913 100644
+--- a/crates/crony-store/src/human_publication_request_tests.rs
++++ b/crates/crony-store/src/human_publication_request_tests.rs
+@@ -2,6 +2,9 @@
+ //! authority and do not establish browser or native publisher acceptance.
+ use super::*;
+ 
++#[path = "human_publication_repository_tests.rs"]
++mod repository_grants;
++
+ async fn queued_request(
+     pool: PgPool,
+ ) -> (
+@@ -10,6 +13,20 @@ async fn queued_request(
+     PullRequestPublicationOutcome,
+ ) {
+     let (store, _, _, mut input) = publication_fixture(pool).await;
++    // Enroll a separate repository grant. The shared fixture retains its
++    // unscoped credential to exercise legacy human-authenticated CLI behavior.
++    input.publisher_credential_hash = digest(&"issue219 SQLx-only repository publisher");
++    store
++        .create_publication_publisher_credential(
++            input.corp_id,
++            input.actor_id,
++            &input.publisher_id,
++            &input.publisher_credential_hash,
++            Some(&input.target_repository),
++            Utc::now() + Duration::hours(1),
++        )
++        .await
++        .unwrap();
+     let request = human_publication_request(&store, &input).await;
+     let queued = store
+         .request_pull_request_publication(request)
+@@ -420,6 +437,7 @@ async fn issue219_native_publication_worker_scopes_queue_and_readback(pool: PgPo
+             OWNER,
+             "unrelated-publication-worker",
+             &digest(&"unrelated SQLx-only publisher credential"),
++            Some("other/repository"),
+             Utc::now() + Duration::hours(1),
+         )
+         .await
+@@ -462,16 +480,8 @@ async fn issue219_native_publication_worker_scopes_queue_and_readback(pool: PgPo
+         let page = store
+             .requested_publications_for_publisher(&other, None, 25)
+             .await;
+-        if alteration == "repository" {
+-            assert!(page.unwrap().is_empty());
+-            assert_only_publisher_use_audited(&before, &publication_state(&store).await, &scope);
+-        } else {
+-            assert!(page.is_err());
+-            assert!(publication_state(&store).await == before);
+-        }
+-        // An authorized empty queue still audits credential use. Denied
+-        // readback and adoption must roll back against that fresh baseline.
+-        let before = publication_state(&store).await;
++        assert!(page.is_err());
++        assert!(publication_state(&store).await == before);
+         assert!(
+             store
+                 .human_requested_publication_for_publisher(&other, id, None)
+@@ -602,7 +612,19 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
+ #[sqlx::test(migrations = "../../db/migrations")]
+ #[ignore = "requires explicitly owned disposable PostgreSQL"]
+ async fn issue219_native_publication_worker_cannot_adopt_direct_cli_intent(pool: PgPool) {
+-    let (store, _, _, input) = publication_fixture(pool).await;
++    let (store, _, _, mut input) = publication_fixture(pool).await;
++    input.publisher_credential_hash = digest(&"issue219 scoped direct-only fixture");
++    store
++        .create_publication_publisher_credential(
++            input.corp_id,
++            input.actor_id,
++            &input.publisher_id,
++            &input.publisher_credential_hash,
++            Some(&input.target_repository),
++            Utc::now() + Duration::hours(1),
++        )
++        .await
++        .unwrap();
+     let scope = publisher_scope(&input);
+     let direct = store.start_pull_request_publication(input).await.unwrap();
+     let before = publication_state(&store).await;
+@@ -704,6 +726,7 @@ async fn issue219_native_publication_claim_preserves_intent_and_factory_state(po
+             OWNER,
+             &competitor.publisher_id,
+             &competitor.publisher_credential_hash,
++            Some(&competitor.target_repository),
+             Utc::now() + Duration::hours(1),
+         )
+         .await
+diff --git a/crates/crony-store/src/lib.rs b/crates/crony-store/src/lib.rs
+index 6fd4ef2..21f74e8 100644
+--- a/crates/crony-store/src/lib.rs
++++ b/crates/crony-store/src/lib.rs
+@@ -500,10 +500,16 @@ pub struct FactoryPublicationContext {
+ pub struct PublicationPublisherCredentialOutcome {
+     pub credential_id: Uuid,
+     pub publisher_id: String,
++    pub repository: Option<String>,
+     pub expires_at: chrono::DateTime<Utc>,
+     pub event: DomainEvent,
+ }
+ 
++pub struct PublicationPublisherCredentialIdentity {
++    pub publisher_id: String,
++    pub repository: Option<String>,
++}
++
+ #[derive(Debug, Clone)]
+ pub struct PublicationPublisherCredentialRevocationOutcome {
+     pub credential_id: Uuid,
+@@ -2349,9 +2355,13 @@ impl PgStore {
+         actor_id: Uuid,
+         publisher_id: &str,
+         credential_hash: &str,
++        repository: Option<&str>,
+         expires_at: chrono::DateTime<Utc>,
+     ) -> Result<PublicationPublisherCredentialOutcome> {
+         let publisher_id = normalize_factory_identifier(publisher_id, "trusted publisher id", 160)?;
++        let repository = repository
++            .map(normalize_publication_repository)
++            .transpose()?;
+         let credential_hash = credential_hash.trim().to_ascii_lowercase();
+         if credential_hash.len() != 64
+             || !credential_hash.bytes().all(|byte| byte.is_ascii_hexdigit())
+@@ -2384,8 +2394,8 @@ impl PgStore {
+         sqlx::query(
+             r#"
+             INSERT INTO publication_publisher_credentials
+-                (id, corp_id, publisher_id, credential_hash, created_by, expires_at)
+-            VALUES ($1, $2, $3, $4, $5, $6)
++                (id, corp_id, publisher_id, credential_hash, created_by, expires_at, repository)
++            VALUES ($1, $2, $3, $4, $5, $6, $7)
+             "#,
+         )
+         .bind(credential_id)
+@@ -2394,6 +2404,7 @@ impl PgStore {
+         .bind(&credential_hash)
+         .bind(actor_id)
+         .bind(expires_at)
++        .bind(&repository)
+         .execute(&mut *tx)
+         .await?;
+         let event = append_event_tx(
+@@ -2407,6 +2418,7 @@ impl PgStore {
+                 format!("publication-publisher-enrolled:{credential_id}"),
+                 json!({
+                     "publisher_id": publisher_id,
++                    "repository": repository,
+                     "expires_at": expires_at
+                 }),
+             ),
+@@ -2417,6 +2429,7 @@ impl PgStore {
+         Ok(PublicationPublisherCredentialOutcome {
+             credential_id,
+             publisher_id,
++            repository,
+             expires_at,
+             event,
+         })
+@@ -2426,7 +2439,7 @@ impl PgStore {
+         &self,
+         corp_id: Uuid,
+         credential_hash: &str,
+-    ) -> Result<String> {
++    ) -> Result<PublicationPublisherCredentialIdentity> {
+         let credential_hash = credential_hash.trim().to_ascii_lowercase();
+         if credential_hash.len() != 64
+             || !credential_hash.bytes().all(|byte| byte.is_ascii_hexdigit())
+@@ -2435,7 +2448,7 @@ impl PgStore {
+                 "forbidden: invalid publication publisher credential"
+             ));
+         }
+-        let publisher_id = sqlx::query_scalar(
++        let row = sqlx::query(
+             r#"
+             UPDATE publication_publisher_credentials
+             SET last_used_at = now()
+@@ -2448,7 +2461,7 @@ impl PgStore {
+                   AND expires_at > now()
+                 FOR UPDATE
+             )
+-            RETURNING publisher_id
++            RETURNING publisher_id, repository
+             "#,
+         )
+         .bind(corp_id)
+@@ -2456,7 +2469,10 @@ impl PgStore {
+         .fetch_optional(&self.pool)
+         .await?
+         .context("forbidden: unknown, expired, or revoked publication publisher credential")?;
+-        Ok(publisher_id)
++        Ok(PublicationPublisherCredentialIdentity {
++            publisher_id: row.try_get("publisher_id")?,
++            repository: row.try_get("repository")?,
++        })
+     }
+ 
+     pub async fn revoke_publication_publisher_credential(
+@@ -12492,6 +12508,18 @@ fn normalize_factory_source(input: FactorySourceInput) -> Result<FactorySourceIn
+     })
+ }
+ 
++fn normalize_publication_repository(repository: &str) -> Result<String> {
++    let (owner, name) = repository
++        .trim()
++        .split_once('/')
++        .context("publication repository must use owner/name form")?;
++    Ok(format!(
++        "{}/{}",
++        normalize_github_component(owner, "publication repository owner", 100)?,
++        normalize_github_component(name, "publication repository name", 100)?,
++    ))
++}
++
+ fn normalize_github_component(value: &str, field: &str, max_len: usize) -> Result<String> {
+     let value = normalize_factory_text(value, field, max_len)?;
+     if !value
+diff --git a/crates/crony-store/src/publication.rs b/crates/crony-store/src/publication.rs
+index ca23c12..5322c24 100644
+--- a/crates/crony-store/src/publication.rs
++++ b/crates/crony-store/src/publication.rs
+@@ -240,13 +240,14 @@ impl PgStore {
+         let operation_request = start_operation_request(&normalized);
+         let mut tx = self.pool.begin().await?;
+         assert_actor_scope_tx(&mut tx, normalized.corp_id, normalized.actor_id).await?;
+-        revalidate_publication_publisher_credential_tx(
++        let publisher_grant = revalidate_publication_publisher_credential_tx(
+             &mut tx,
+             normalized.corp_id,
+             &normalized.publisher_id,
+             &normalized.publisher_credential_hash,
+         )
+         .await?;
++        publisher_grant.ensure_target(&normalized.target_repository)?;
+         ensure_actor_role_tx(
+             &mut tx,
+             normalized.corp_id,
+@@ -271,6 +272,7 @@ impl PgStore {
+                 publication_by_id_tx(&mut tx, normalized.corp_id, operation.publication_id, true)
+                     .await?
+                     .context("idempotent publication start references a missing publication")?;
++            publisher_grant.ensure_target(&publication.target_repository)?;
+             assert_publication_room_membership_tx(&mut tx, &publication, normalized.actor_id)
+                 .await?;
+             // A live-token replay grants effect authority; a tokenless readback does not.
+@@ -663,7 +665,7 @@ impl PgStore {
+         let lease_expires_at = now + Duration::seconds(lease_seconds);
+         let mut tx = self.pool.begin().await?;
+         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
+-        revalidate_publication_publisher_credential_tx(
++        let publisher_grant = revalidate_publication_publisher_credential_tx(
+             &mut tx,
+             input.corp_id,
+             &publisher_id,
+@@ -698,6 +700,7 @@ impl PgStore {
+                 publication_by_id_tx(&mut tx, input.corp_id, input.publication_id, true)
+                     .await?
+                     .context("idempotent publication renewal references a missing publication")?;
++            publisher_grant.ensure_target(&publication.target_repository)?;
+             revalidate_publication_authority_tx(&mut tx, &publication, input.actor_id).await?;
+             let (publication, current_token) =
+                 publication_by_id_tx(&mut tx, input.corp_id, input.publication_id, false)
+@@ -718,6 +721,7 @@ impl PgStore {
+             publication_by_id_tx(&mut tx, input.corp_id, input.publication_id, true)
+                 .await?
+                 .context("pull-request publication not found")?;
++        publisher_grant.ensure_target(&current.target_repository)?;
+         ensure_active_publication_control_tx(
+             &mut tx,
+             &current,
+@@ -810,7 +814,7 @@ impl PgStore {
+         let now = Utc::now();
+         let mut tx = self.pool.begin().await?;
+         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
+-        revalidate_publication_publisher_credential_tx(
++        let publisher_grant = revalidate_publication_publisher_credential_tx(
+             &mut tx,
+             input.corp_id,
+             &publisher_id,
+@@ -847,6 +851,7 @@ impl PgStore {
+                     .context(
+                         "idempotent publication checkpoint references a missing publication",
+                     )?;
++            publisher_grant.ensure_target(&publication.target_repository)?;
+             // Keep completed and failure-only readbacks non-authorizing.
+             if replayable_publication_token(
+                 &publication,
+@@ -881,6 +886,7 @@ impl PgStore {
+             publication_by_id_tx(&mut tx, input.corp_id, input.publication_id, true)
+                 .await?
+                 .context("pull-request publication not found")?;
++        publisher_grant.ensure_target(&current.target_repository)?;
+         ensure_active_publication_control_tx(
+             &mut tx,
+             &current,
+@@ -2867,7 +2873,7 @@ async fn ensure_active_publication_control_tx(
+ // This transaction touches last_used_at below. Take its write lock immediately:
+ // concurrent FOR SHARE readers cannot both upgrade without a deadlock.
+ const PUBLICATION_PUBLISHER_CREDENTIAL_LOCK_SQL: &str = r#"
+-    SELECT id
++    SELECT id, repository
+     FROM publication_publisher_credentials
+     WHERE corp_id = $1
+       AND publisher_id = $2
+@@ -2877,24 +2883,53 @@ const PUBLICATION_PUBLISHER_CREDENTIAL_LOCK_SQL: &str = r#"
+     FOR UPDATE
+ "#;
+ 
++struct PublicationPublisherRepositoryGrant(Option<String>);
++
++impl PublicationPublisherRepositoryGrant {
++    fn ensure_target(&self, repository: &str) -> Result<()> {
++        // Unscoped legacy credentials remain usable only with the separate
++        // human-authenticated direct CLI path. A scoped credential never widens.
++        if self
++            .0
++            .as_ref()
++            .is_some_and(|grant| !grant.eq_ignore_ascii_case(repository))
++        {
++            return Err(anyhow!(
++                "forbidden: publication publisher credential does not authorize this repository"
++            ));
++        }
++        Ok(())
++    }
++
++    fn require_workload_target(&self, repository: &str) -> Result<()> {
++        if self.0.is_none() {
++            return Err(anyhow!(
++                "forbidden: publication workload access requires a repository grant"
++            ));
++        }
++        self.ensure_target(repository)
++    }
++}
++
+ async fn revalidate_publication_publisher_credential_tx(
+     tx: &mut Transaction<'_, Postgres>,
+     corp_id: Uuid,
+     publisher_id: &str,
+     credential_hash: &str,
+-) -> Result<()> {
+-    let credential_id = sqlx::query_scalar::<_, Uuid>(PUBLICATION_PUBLISHER_CREDENTIAL_LOCK_SQL)
+-        .bind(corp_id)
+-        .bind(publisher_id)
+-        .bind(credential_hash)
+-        .fetch_optional(&mut **tx)
+-        .await?
+-        .context("forbidden: publication publisher credential is no longer authorized")?;
++) -> Result<PublicationPublisherRepositoryGrant> {
++    let (credential_id, repository) =
++        sqlx::query_as::<_, (Uuid, Option<String>)>(PUBLICATION_PUBLISHER_CREDENTIAL_LOCK_SQL)
++            .bind(corp_id)
++            .bind(publisher_id)
++            .bind(credential_hash)
++            .fetch_optional(&mut **tx)
++            .await?
++            .context("forbidden: publication publisher credential is no longer authorized")?;
+     sqlx::query("UPDATE publication_publisher_credentials SET last_used_at = now() WHERE id = $1")
+         .bind(credential_id)
+         .execute(&mut **tx)
+         .await?;
+-    Ok(())
++    Ok(PublicationPublisherRepositoryGrant(repository))
+ }
+ 
+ fn replayable_publication_token(
+diff --git a/crates/crony-store/src/publication/worker.rs b/crates/crony-store/src/publication/worker.rs
+index 77eb9c3..5b459b8 100644
+--- a/crates/crony-store/src/publication/worker.rs
++++ b/crates/crony-store/src/publication/worker.rs
+@@ -12,15 +12,8 @@ impl PgStore {
+         if !(1..=100).contains(&limit) {
+             return Err(anyhow!("publication queue limit must be between 1 and 100"));
+         }
+-        let repository = publisher_repository(&scope.repository)?;
+         let mut tx = self.pool.begin().await?;
+-        revalidate_publication_publisher_credential_tx(
+-            &mut tx,
+-            scope.corp_id,
+-            &scope.publisher_id,
+-            &scope.credential_hash,
+-        )
+-        .await?;
++        let repository = revalidate_publisher_repository_tx(&mut tx, scope).await?;
+         // A failed attempt requires explicit recovery. Lease expiry after a
+         // process crash remains recoverable through the normal start gate.
+         let ids = sqlx::query_scalar(
+@@ -214,13 +207,7 @@ impl PgStore {
+         let mut tx = self.pool.begin().await?;
+         // Native start locks the credential before the shared publication gates.
+         // Keep that ordering when a worker and a direct claim run concurrently.
+-        revalidate_publication_publisher_credential_tx(
+-            &mut tx,
+-            scope.corp_id,
+-            &scope.publisher_id,
+-            &scope.credential_hash,
+-        )
+-        .await?;
++        revalidate_publisher_repository_tx(&mut tx, scope).await?;
+         lock_publication_start_tx(&mut tx, &input).await?;
+         // Re-read the exact authenticated request before deciding whether it can
+         // be retired. The credential lock above remains held by this transaction.
+@@ -325,14 +312,7 @@ async fn human_requested_publication_tx(
+     Option<Uuid>,
+     request::HumanPublicationRequest,
+ )> {
+-    let repository = publisher_repository(&scope.repository)?;
+-    revalidate_publication_publisher_credential_tx(
+-        tx,
+-        scope.corp_id,
+-        &scope.publisher_id,
+-        &scope.credential_hash,
+-    )
+-    .await?;
++    let repository = revalidate_publisher_repository_tx(tx, scope).await?;
+     let (publication, token) = publication_by_id_tx(tx, scope.corp_id, publication_id, true)
+         .await?
+         .context("not found: requested publication was not found")?;
+@@ -348,14 +328,18 @@ async fn human_requested_publication_tx(
+     Ok((publication, token, intent))
+ }
+ 
+-fn publisher_repository(repository: &str) -> Result<String> {
+-    let (owner, name) = repository
+-        .trim()
+-        .split_once('/')
+-        .context("publication repository must use owner/name form")?;
+-    Ok(format!(
+-        "{}/{}",
+-        normalize_github_component(owner, "publication repository owner", 100)?,
+-        normalize_github_component(name, "publication repository name", 100)?,
+-    ))
++async fn revalidate_publisher_repository_tx(
++    tx: &mut Transaction<'_, Postgres>,
++    scope: &PublicationPublisherScope,
++) -> Result<String> {
++    let repository = normalize_publication_repository(&scope.repository)?;
++    let grant = revalidate_publication_publisher_credential_tx(
++        tx,
++        scope.corp_id,
++        &scope.publisher_id,
++        &scope.credential_hash,
++    )
++    .await?;
++    grant.require_workload_target(&repository)?;
++    Ok(repository)
+ }
+diff --git a/db/migrations/0058_publication_publisher_repository_grants.sql b/db/migrations/0058_publication_publisher_repository_grants.sql
+new file mode 100644
+index 0000000..a997619
+--- /dev/null
++++ b/db/migrations/0058_publication_publisher_repository_grants.sql
+@@ -0,0 +1,6 @@
++-- Existing credentials retain only their human-authenticated direct CLI access.
++-- Workload queue access requires a repository explicitly granted at enrollment.
++ALTER TABLE publication_publisher_credentials
++    ADD COLUMN repository TEXT
++        CHECK (repository IS NULL OR
++               repository ~ '^[a-z0-9_.-]{1,100}/[a-z0-9_.-]{1,100}$');
+diff --git a/db/migrations/manifest.json b/db/migrations/manifest.json
+index 6779e1b..613d96a 100644
+--- a/db/migrations/manifest.json
++++ b/db/migrations/manifest.json
+@@ -285,6 +285,11 @@
+       "version": 57,
+       "file": "0057_human_publication_requests.sql",
+       "sha384": "fd028da82e856290a0488aa2a94b7b9839570c3aebcc659db0dfd56032ba7fbb8d24b6e727b63ed2d5e38a252b309755"
++    },
++    {
++      "version": 58,
++      "file": "0058_publication_publisher_repository_grants.sql",
++      "sha384": "ae0a96be1609f924f566b35e7971ec2f8e284158a126ed07d521904d7ec30be147983b45edf046060e6cd78e5c805476"
+     }
+   ]
+ }
+diff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md
+index 7ff1943..0f15edd 100644
+--- a/docs/ARCHITECTURE.md
++++ b/docs/ARCHITECTURE.md
+@@ -1181,8 +1181,10 @@ provenance. It creates no publisher attempt, token, lease, coding run, or remote
+ request converges on the same intent; changed source, policy, or authorizer cannot silently replace
+ it. This provenance does not authorize the prospective machine-intent path.
+ 
+-The trusted publisher can watch a bounded queue for one Corp and repository using its separately
+-enrolled workload credential. Dedicated request routes derive the human and immutable plan from
++The trusted publisher can watch a bounded queue for the Corp and repository explicitly granted on
++its separately enrolled workload credential. Repository selection must match that persisted grant;
++queue and publication transactions revalidate the exact credential, including when another credential
++shares its publisher ID. Dedicated request routes derive the human and immutable plan from
+ the saved intent; they accept no caller-selected authorizer, grant, or replacement plan and cannot
+ start a direct-CLI publication as queued human intent. Claims, renewals, artifact access, and
+ effect checkpoints reuse the native publication transactions and fencing. Before effects they
+@@ -1222,7 +1224,11 @@ checkpoint upgrades are combined, and renewal replay returns the upgraded persis
+ 
+ Publisher workloads have a separate Corp-scoped identity and credential from the authorizing human.
+ Owners or admins enroll bounded credentials whose plaintext is returned once and whose SHA-256 hash,
+-expiry, revocation state, and last-use time are stored. Start, renewal and effect advancement require
++optional normalized repository grant, expiry, revocation state, and last-use time are stored.
++Workload routes require an explicit repository grant. Legacy unscoped credentials remain limited to
++the separately human-authenticated direct CLI path. A scoped credential constrains both paths,
++including idempotent replay and failure-only checkpoints. Changing the grant requires enrollment
++and revocation; caller parameters cannot change it. Start, renewal and effect advancement require
+ current publication authority and the independently authenticated publisher identity. Failure
+ reporting retains authenticated Corp identity plus exact actor, publisher, token, version and lease
+ ownership, but can close that attempt after effect authority changes. It advances no external
+diff --git a/docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md b/docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md
+index efdadb6..de98d7f 100644
+--- a/docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md
++++ b/docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md
+@@ -1078,6 +1078,7 @@ $Publisher = Invoke-RestMethod `
+   -Body (@{
+     actor_id = $ActorId
+     publisher_id = $PublisherId
++    repository = 'owner/repository'
+     expires_in_seconds = 600
+   } | ConvertTo-Json)
+ 
+@@ -1087,6 +1088,14 @@ Set-Content `
+   -NoNewline
+ ```
+ 
++Replace `owner/repository` with the exact publication target. The server records the normalized
++repository on this credential and returns it as `repository`. Queue, context, claim, renewal,
++checkpoint and artifact workload routes require that persisted grant; choosing a repository in
++a request cannot widen it. Enroll a separate credential for another repository and revoke an
++obsolete credential. Credentials issued without a repository remain usable only through the
++separately human-authenticated direct CLI path and cannot use workload routes. Scoped credentials
++remain restricted to their repository through either path, including replay and failure cleanup.
++
+ The plaintext is returned once. Production requests also require the configured human
+ authentication token.
+ 
+diff --git a/docs/SECURITY.md b/docs/SECURITY.md
+index 5ead1d6..8d1683c 100644
+--- a/docs/SECURITY.md
++++ b/docs/SECURITY.md
+@@ -492,7 +492,8 @@ portable bundle, persisted in authorization/provenance records, or included in c
+ Publisher fencing tokens are opaque, expiring capabilities omitted from shared state and events.
+ They are insufficient by themselves: each publication mutation also requires a separate enrolled
+ publisher workload credential. Enrollment and revocation require owner/admin `Manage` authority;
+-only credential hashes are stored. Corp, publisher ID, hash, expiry, and revocation are rechecked and
++only credential hashes are stored. Enrollment can bind each credential to one normalized repository.
++Corp, publisher ID, exact credential hash, repository grant, expiry, and revocation are rechecked and
+ row-locked inside the same transaction that starts, renews, fails, or checkpoints publication. The
+ authenticated credential determines the publisher ID; a caller cannot choose another workload
+ identity while presenting a valid credential.
+@@ -503,8 +504,13 @@ the human authorizer plus the original request operation. Its `requested` aggreg
+ lease, or token and performs no external effect. Human intent provenance is distinct from direct
+ CLI authorization and prospective machine intent; missing or malformed provenance fails closed.
+ 
+-Dedicated workload routes can deliver only this saved human intent in the credential's Corp and
+-the requested repository. They derive its human authorizer and plan server-side, then reuse the
++Dedicated workload routes require an explicit repository grant persisted on that credential and
++can deliver only saved human intent in the granted Corp and repository. Caller-selected repository
++strings never grant access, and another credential with the same publisher ID cannot inherit a
++repository grant. Existing unscoped credentials retain only the separately human-authenticated
++direct CLI path; scoped credentials also constrain that path, including replay and failure cleanup.
++Grant changes require enrollment/revocation rather than request parameters. Workload routes derive
++the human authorizer and plan server-side, then reuse the
+ native start, renewal, and checkpoint authority checks. A workload cannot mint intent, substitute
+ another human's authority, or use these routes for general Corp, runner, or secret access. Signed
+ artifact access additionally requires the live attempt's exact publisher token and version plus
+diff --git a/tools/e2e_factory_cockpit_publication.mjs b/tools/e2e_factory_cockpit_publication.mjs
+index e5f3bb6..aa544db 100644
+--- a/tools/e2e_factory_cockpit_publication.mjs
++++ b/tools/e2e_factory_cockpit_publication.mjs
+@@ -201,6 +201,7 @@ async function enrollPublisher(demo, publisherId) {
+     {
+       actor_id: demo.alice_actor_id,
+       publisher_id: publisherId,
++      repository: 'shyamsridhar123/ecorp',
+       expires_in_seconds: 3600,
+     },
+   )
+diff --git a/tools/e2e_factory_publication.mjs b/tools/e2e_factory_publication.mjs
+index 8cb01ca..5abedd8 100644
+--- a/tools/e2e_factory_publication.mjs
++++ b/tools/e2e_factory_publication.mjs
+@@ -751,6 +751,7 @@ async function enrollPublicationPublisher(
+     {
+       actor_id: demo.alice_actor_id,
+       publisher_id: publisherId,
++      repository: fixtureSource.repository,
+       expires_in_seconds: 3600,
+     },
+   )
+@@ -996,6 +997,7 @@ const memberPublisherEnrollment = await post(
+   {
+     actor_id: demo.bob_actor_id,
+     publisher_id: 'member-must-not-enroll',
++    repository: fixtureSource.repository,
+     expires_in_seconds: 3600,
+   },
+ )
+@@ -1052,6 +1054,7 @@ const crossCorpPublisherCredential = await postOk(
+   {
+     actor_id: otherCorpOwnerId,
+     publisher_id: 'trusted-publication-e2e',
++    repository: fixtureSource.repository,
+     expires_in_seconds: 3600,
+   },
+ )
+diff --git a/tools/e2e_publication_credential_lock.mjs b/tools/e2e_publication_credential_lock.mjs
+index 1b2f727..65aee5d 100644
+--- a/tools/e2e_publication_credential_lock.mjs
++++ b/tools/e2e_publication_credential_lock.mjs
+@@ -27,7 +27,7 @@ const select = source.match(new RegExp(`const ${constant}: &str = r#"([\\s\\S]*?
+ assert.ok(select, 'The exact production credential-lock SQL must be available')
+ const functionBody = source.slice(source.indexOf('async fn revalidate_publication_publisher_credential_tx('),
+   source.indexOf('\nfn replayable_publication_token('))
+-assert.ok(functionBody.includes(`sqlx::query_scalar::<_, Uuid>(${constant})`),
++assert.ok(functionBody.includes(`sqlx::query_as::<_, (Uuid, Option<String>)>(${constant})`),
+   'Production revalidation must use the selected SQL')
+ const update = functionBody.match(/sqlx::query\("(UPDATE publication_publisher_credentials[^"]+)"\)/)?.[1]
+ assert.ok(update, 'Use the exact production last-used update')
+@@ -121,11 +121,11 @@ try {
+     CREATE TABLE "${schema}".publication_publisher_credentials (
+       id uuid PRIMARY KEY, corp_id uuid NOT NULL, publisher_id text NOT NULL,
+       credential_hash text NOT NULL, revoked_at timestamptz, expires_at timestamptz NOT NULL,
+-      last_used_at timestamptz
++      last_used_at timestamptz, repository text
+     );
+     INSERT INTO "${schema}".publication_publisher_credentials
+       VALUES ('${credentialId}', '${corpId}', '${publisher}', '${credentialHash}',
+-              NULL, now() + interval '10 minutes', NULL);
++              NULL, now() + interval '10 minutes', NULL, 'fixture/publication');
+     COMMIT;
+   `)
+   created = true

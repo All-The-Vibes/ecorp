@@ -1,0 +1,1773 @@
+diff --git a/crates/crony-cli/src/publish.rs b/crates/crony-cli/src/publish.rs
+index b590d13..553aa18 100644
+--- a/crates/crony-cli/src/publish.rs
++++ b/crates/crony-cli/src/publish.rs
+@@ -414,6 +414,14 @@ async fn wait_or_recover_publication(
+     plan: &PublicationPlan,
+     mut response: PullRequestPublicationResponse,
+ ) -> Result<PullRequestPublicationResponse> {
++    if args.requested_publication_id.is_some()
++        && let Some(detail) = &response.publication.failure_detail
++    {
++        bail!(
++            "saved publication request failed: {}",
++            sanitize_failure_detail(detail)
++        );
++    }
+     let deadline = Instant::now() + Duration::from_secs(args.wait_seconds);
+     while response.busy && Instant::now() < deadline {
+         std::thread::sleep(Duration::from_millis(250));
+diff --git a/crates/crony-cli/src/publish/requests.rs b/crates/crony-cli/src/publish/requests.rs
+index 983b0e6..1258b2e 100644
+--- a/crates/crony-cli/src/publish/requests.rs
++++ b/crates/crony-cli/src/publish/requests.rs
+@@ -4,6 +4,15 @@ use super::*;
+ 
+ use crony_protocol::publication_requests::PublisherQueueResponse;
+ 
++#[derive(serde::Deserialize)]
++struct SavedHumanRequestRouting {
++    kind: String,
++    corp_id: Uuid,
++    actor_id: Uuid,
++    work_item_id: Uuid,
++    authorization_reason: String,
++}
++
+ #[derive(Debug, Args)]
+ pub struct FactoryPublisherWatchArgs {
+     pub corp_id: Uuid,
+@@ -83,11 +92,12 @@ pub async fn watch(
+                 // The authoritative queue excludes published/failed requests
+                 // and active leases. Reconsider a later eligible request after
+                 // losing a lease race or encountering a transient read error.
+-                let result = publish_requested(client, server, &args, id).await;
++                let result = publish_requested(client, server, &args, &page.publisher_id, id).await;
+                 results.push(match result {
+                     Ok(value) => json!({
+                         "publication_id": id, "status": value.get("mode"),
+                         "pull_request_url": value.pointer("/publication/pull_request_url"),
++                        "detail": value.get("detail"),
+                     }),
+                     Err(error) => json!({
+                         "publication_id": id, "status": "failed",
+@@ -153,8 +163,58 @@ async fn publish_requested(
+     client: &Client,
+     server: &str,
+     watch: &FactoryPublisherWatchArgs,
++    publisher_id: &str,
+     publication_id: Uuid,
+ ) -> Result<Value> {
++    // Claim before reading source context: stale source can make context
++    // unavailable, and only the native claim gate can durably reject intent.
++    // The authenticated workload identifier is metadata, never a credential.
++    let identity = serde_json::to_vec(&(
++        watch.corp_id,
++        publication_id,
++        publisher_id,
++        &watch.repository,
++        watch.lease_seconds,
++    ))?;
++    let claim_key = format!(
++        "human-publication-claim:{}",
++        hex::encode(Sha256::digest(identity))
++    );
++    let response = publisher_json(
++        client,
++        Method::POST,
++        &format!(
++            "{server}/api/corps/{}/factory/publisher/publications/{publication_id}/claim",
++            watch.corp_id
++        ),
++        Some(json!({
++            "repository": watch.repository, "idempotency_key": claim_key,
++            "lease_seconds": watch.lease_seconds,
++        })),
++        &watch.publisher_credential_file,
++    )
++    .await?;
++    let response: PullRequestPublicationResponse =
++        serde_json::from_value(response).context("decode requested publication admission")?;
++    let publication = &response.publication;
++    if publication.id != publication_id
++        || publication.corp_id != watch.corp_id
++        || !publication
++            .target_repository
++            .eq_ignore_ascii_case(&watch.repository)
++    {
++        bail!("publisher claim does not match the requested publication");
++    }
++    if let Some(detail) = &publication.failure_detail {
++        return Ok(json!({"mode": "rejected", "publication": publication,
++            "detail": sanitize_failure_detail(detail)}));
++    }
++    if publication.state == PullRequestPublicationState::Published {
++        return Ok(json!({"mode": "recovered", "publication": publication}));
++    }
++    if response.busy {
++        bail!("publication {publication_id} remains leased to another trusted publisher");
++    }
+     let context = read_context(
+         client,
+         server,
+@@ -164,7 +224,12 @@ async fn publish_requested(
+         &watch.publisher_credential_file,
+     )
+     .await?;
+-    let args = requested_args(watch, publication_id, &context)?;
++    let mut args = requested_args(watch, publication_id, &context)?;
++    if args.publisher_id.as_deref() != Some(publisher_id) {
++        bail!("publisher identity changed between admission and context");
++    }
++    // Reuse native replay and recovery with exactly the preliminary claim key.
++    args.idempotency_key = Some(claim_key);
+     run_context(client, server, args, context).await
+ }
+ 
+@@ -182,19 +247,23 @@ fn requested_args(
+             .clone(),
+     )
+     .context("decode saved publication metadata")?;
+-    let intent = publication
+-        .provenance
+-        .get("intent")
+-        .context("saved human intent is missing")?;
++    let intent: SavedHumanRequestRouting = serde_json::from_value(
++        publication
++            .provenance
++            .get("intent")
++            .context("saved human intent is missing")?
++            .clone(),
++    )
++    .context("decode saved human intent routing")?;
+     if publication.id != publication_id
+         || publication.corp_id != watch.corp_id
+         || !publication
+             .target_repository
+             .eq_ignore_ascii_case(&watch.repository)
+-        || intent.get("kind").and_then(Value::as_str) != Some("human_requested")
+-        || value_uuid(intent, "/corp_id")? != watch.corp_id
+-        || value_uuid(intent, "/actor_id")? != publication.actor_id
+-        || value_uuid(intent, "/work_item_id")? != publication.factory_work_item_id
++        || intent.kind != "human_requested"
++        || intent.corp_id != watch.corp_id
++        || intent.actor_id != publication.actor_id
++        || intent.work_item_id != publication.factory_work_item_id
+     {
+         bail!("publisher context does not match the requested human publication");
+     }
+@@ -209,7 +278,7 @@ fn requested_args(
+         title: None,
+         body_file: None,
+         authorization_id: None,
+-        authorization_reason: value_string(intent, "/authorization_reason")?,
++        authorization_reason: intent.authorization_reason,
+         effect_key: None,
+         idempotency_key: None,
+         publisher_id: Some(value_string(context, "/publisher_id")?),
+@@ -275,6 +344,10 @@ mod tests {
+         BusyThenPublished,
+         UnavailableContextThenPublished,
+         AlwaysBusy,
++        RejectedBeforeContext,
++        ChangedIntentActor,
++        InvalidIntentUuid,
++        ChangedPublisher,
+     }
+ 
+     // The server controls later eligibility. These loopback tests model its
+@@ -327,7 +400,7 @@ mod tests {
+             let prefix = format!("/api/corps/{corp}/factory/publisher");
+             let mut claims = 0;
+             let mut contexts = 0;
+-            let mut published = false;
++            let mut finished = false;
+             let mut claim_key = None;
+             loop {
+                 let (mut stream, _) = tokio::select! {
+@@ -367,14 +440,24 @@ mod tests {
+                 }
+                 let mut status = "200 OK";
+                 let body = if headers.starts_with(&format!("GET {prefix}/queue?")) {
+-                    json!({ "publication_ids": if published { vec![] } else { vec![id] } })
++                    json!({ "publisher_id": "fixture-survivor", "publication_ids": if finished { vec![] } else { vec![id] } })
+                 } else if headers.starts_with(&format!("GET {prefix}/publications/{id}?")) {
+                     contexts += 1;
+                     if matches!(scenario, QueueScenario::UnavailableContextThenPublished) && contexts == 1 {
+                         status = "503 Service Unavailable";
+                         json!({})
+                     } else {
+-                        context.clone()
++                        let mut context = context.clone();
++                        if matches!(scenario, QueueScenario::ChangedIntentActor) {
++                            context["publication"]["provenance"]["intent"]["actor_id"] = json!(Uuid::from_u128(99));
++                        }
++                        if matches!(scenario, QueueScenario::InvalidIntentUuid) {
++                            context["publication"]["provenance"]["intent"]["work_item_id"] = json!("not-a-uuid");
++                        }
++                        if matches!(scenario, QueueScenario::ChangedPublisher) {
++                            context["publisher_id"] = json!("another-publisher");
++                        }
++                        context
+                     }
+                 } else {
+                     assert!(headers.starts_with(&format!("POST {prefix}/publications/{id}/claim HTTP/1.1")));
+@@ -388,12 +471,24 @@ mod tests {
+                     let busy = matches!(scenario, QueueScenario::AlwaysBusy)
+                         || (matches!(scenario, QueueScenario::BusyThenPublished) && claims == 1);
+                     let mut response = publication.clone();
+-                    if !busy {
++                    let admitted = (matches!(scenario, QueueScenario::UnavailableContextThenPublished) && claims < 3)
++                        || matches!(scenario, QueueScenario::ChangedIntentActor | QueueScenario::InvalidIntentUuid | QueueScenario::ChangedPublisher);
++                    let rejected = matches!(scenario, QueueScenario::RejectedBeforeContext);
++                    if rejected {
++                        response["state"] = json!("requested");
++                        response["failure_detail"] = json!("Saved human publication request rejected: source changed");
++                        response["publisher_id"] = Value::Null;
++                        response["publisher_lease_expires_at"] = Value::Null;
++                        response["attempt_count"] = json!(0);
++                        finished = true;
++                    } else if admitted {
++                        response["publisher_id"] = json!("fixture-survivor");
++                    } else if !busy {
+                         response["state"] = json!("published");
+                         response["pull_request_url"] = json!("https://github.com/owner/repo/pull/2");
+-                        published = true;
++                        finished = true;
+                     }
+-                    json!({ "publication": response, "publisher_token": null, "replayed": true, "busy": busy })
++                    json!({ "publication": response, "publisher_token": if admitted { Some(Uuid::from_u128(11)) } else { None }, "replayed": true, "busy": busy })
+                 }.to_string();
+                 stream.write_all(format!(
+                     "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len()
+@@ -417,10 +512,11 @@ mod tests {
+                     polls: 3,
+                     page_size: 2,
+                     max_pages: 2,
+-                    max_attempts: if matches!(scenario, QueueScenario::AlwaysBusy) {
+-                        2
+-                    } else {
+-                        3
++                    max_attempts: match scenario {
++                        QueueScenario::AlwaysBusy => 2,
++                        QueueScenario::BusyThenPublished
++                        | QueueScenario::UnavailableContextThenPublished => 3,
++                        _ => 1,
+                     },
+                 },
+             ),
+@@ -439,7 +535,7 @@ mod tests {
+     async fn same_watcher_reconsiders_busy_request_on_later_eligible_poll() {
+         let (result, claims, contexts) =
+             watch_repeated_request(QueueScenario::BusyThenPublished).await;
+-        assert_eq!((claims, contexts), (2, 2));
++        assert_eq!((claims, contexts), (2, 0));
+         assert_eq!(result["attempted"], 2);
+         assert_eq!(result["results"][0]["status"], "failed");
+         assert!(
+@@ -460,7 +556,7 @@ mod tests {
+     async fn same_watcher_reconsiders_transient_context_failure() {
+         let (result, claims, contexts) =
+             watch_repeated_request(QueueScenario::UnavailableContextThenPublished).await;
+-        assert_eq!((claims, contexts), (1, 2));
++        assert_eq!((claims, contexts), (3, 2));
+         assert_eq!(result["attempted"], 2);
+         assert!(
+             result["results"][0]["detail"]
+@@ -474,7 +570,7 @@ mod tests {
+     #[tokio::test]
+     async fn repeated_eligibility_still_stops_at_attempt_limit() {
+         let (result, claims, contexts) = watch_repeated_request(QueueScenario::AlwaysBusy).await;
+-        assert_eq!((claims, contexts), (2, 2));
++        assert_eq!((claims, contexts), (2, 0));
+         assert_eq!(result["attempted"], 2);
+         assert_eq!(result["polls"], 2);
+         assert_eq!(result["pages"], 2);
+@@ -486,4 +582,44 @@ mod tests {
+                 .all(|item| item["detail"].as_str().unwrap().contains("remains leased"))
+         );
+     }
++
++    #[tokio::test]
++    async fn rejected_intent_is_reported_without_source_context_or_git() {
++        let (result, claims, contexts) =
++            watch_repeated_request(QueueScenario::RejectedBeforeContext).await;
++        assert_eq!((claims, contexts), (1, 0));
++        assert_eq!(result["attempted"], 1);
++        assert_eq!(result["results"][0]["status"], "rejected");
++        assert_eq!(
++            result["results"][0]["detail"],
++            "Saved human publication request rejected: source changed"
++        );
++        assert!(result["results"][0]["pull_request_url"].is_null());
++    }
++
++    #[tokio::test]
++    async fn watcher_rejects_changed_or_malformed_routing_before_effects() {
++        for (scenario, expected) in [
++            (QueueScenario::ChangedIntentActor, "context does not match"),
++            (
++                QueueScenario::InvalidIntentUuid,
++                "decode saved human intent routing",
++            ),
++            (
++                QueueScenario::ChangedPublisher,
++                "publisher identity changed",
++            ),
++        ] {
++            let (result, claims, contexts) = watch_repeated_request(scenario).await;
++            assert_eq!((claims, contexts), (1, 1));
++            assert_eq!(result["attempted"], 1);
++            assert_eq!(result["results"][0]["status"], "failed");
++            assert!(
++                result["results"][0]["detail"]
++                    .as_str()
++                    .unwrap()
++                    .contains(expected)
++            );
++        }
++    }
+ }
+diff --git a/crates/crony-protocol/src/publication_requests.rs b/crates/crony-protocol/src/publication_requests.rs
+index 07f7cb4..a3aad42 100644
+--- a/crates/crony-protocol/src/publication_requests.rs
++++ b/crates/crony-protocol/src/publication_requests.rs
+@@ -30,6 +30,7 @@ const fn default_queue_limit() -> i64 {
+ 
+ #[derive(Debug, Clone, Serialize, Deserialize)]
+ pub struct PublisherQueueResponse {
++    pub publisher_id: String,
+     pub publication_ids: Vec<Uuid>,
+ }
+ 
+diff --git a/crates/crony-server/src/publication_request_tests.rs b/crates/crony-server/src/publication_request_tests.rs
+index 2f5fa1a..eccf2fa 100644
+--- a/crates/crony-server/src/publication_request_tests.rs
++++ b/crates/crony-server/src/publication_request_tests.rs
+@@ -1,9 +1,13 @@
+ //! Actual workload HTTP routes with real migrations and explicitly synthetic
+-//! saved publication metadata. This fixture proves read/authority boundaries;
+-//! it does not claim a verifier run, human decision, Git effect or browser test.
++//! source/verifier metadata. Requests use the native preview/request transactions.
++//! This proves admission/read boundaries, not a verifier execution, human
++//! decision, Git effect or browser test.
+ use super::*;
+ use anyhow::Result;
+-use crony_store::DemoIds;
++use crony_domain::PullRequestPublicationPlan;
++use crony_store::{
++    DemoIds, PreviewPullRequestPublicationInput, RequestPullRequestPublicationInput,
++};
+ use serde_json::Value;
+ use sqlx::{ConnectOptions, PgPool};
+ 
+@@ -39,7 +43,6 @@ impl Fixture {
+         let artifact_id = Uuid::new_v4();
+         let deliverable_id = Uuid::new_v4();
+         let work_item_id = Uuid::new_v4();
+-        let publication_id = Uuid::new_v4();
+         let authorization_id = Uuid::new_v4();
+         let credential = format!("fixture-{}", Uuid::new_v4());
+         store
+@@ -62,34 +65,19 @@ impl Fixture {
+             })
+             .await?;
+ 
+-        let authorization = json!({
+-            "id": authorization_id, "kind": "explicit_human",
+-            "permission": "publish_pull_request", "actor_id": ids.alice_actor_id,
+-            "actor_role": "owner", "reason": "Synthetic saved-request metadata",
+-            "authorized_at": Utc::now(), "auto_merge": false, "merge": false, "deploy": false,
+-        });
+-        let intent = json!({
+-            "schema_version": 1, "kind": "human_requested", "corp_id": ids.corp_id,
+-            "work_item_id": work_item_id, "actor_id": ids.alice_actor_id,
+-            "actor_role": "owner", "authorization_id": authorization_id,
+-            "authorization_reason": "Synthetic saved-request metadata",
+-            "preview": {
+-                "plan": {
+-                    "source_deliverable_id": deliverable_id, "target_repository": REPOSITORY,
+-                    "base_ref": "main", "branch": "ecorp/issue219-handler",
+-                    "title": "Synthetic publication", "body": "Synthetic metadata only",
+-                },
+-                "commit_sha": "b".repeat(40), "artifact_sha256": "c".repeat(64),
+-                "verification_sha256": "d".repeat(64), "source_revision": "synthetic",
+-                "fingerprint": "e".repeat(64),
+-            },
+-        });
+         let fixture = json!({
+             "corp": ids.corp_id, "room": ids.room_id, "actor": ids.alice_actor_id,
+             "agent": ids.worker_agent_id, "mission": mission_id, "task": task_id,
+             "run": run_id, "artifact": artifact_id, "deliverable": deliverable_id,
+-            "work_item": work_item_id, "publication": publication_id,
+-            "authorization": authorization, "intent": intent,
++            "work_item": work_item_id,
++            "policy": {
++                "auto_merge": false, "source_base_commit": "a".repeat(40),
++                "publication": {
++                    "allowed": true, "repository_allowlist": [REPOSITORY],
++                    "base_ref": "main", "branch_prefix": "ecorp/",
++                    "status_before": "In Progress", "review_status": "In Review",
++                },
++            },
+             "task_contract": {
+                 "objective": "Handler authorization only", "expected_output": "synthetic.bundle",
+                 "acceptance_tests": [], "allowed_tools": [], "prohibited_actions": [],
+@@ -112,28 +100,41 @@ impl Fixture {
+                        100, 100, 1000000, 1000000 FROM f RETURNING id
+             ), task AS (
+                 INSERT INTO tasks (id, mission_id, corp_id, title, objective, status,
+-                    plan_key, contract, verification_policy)
++                    plan_key, contract, verification_policy, verification_status)
+                 SELECT (j->>'task')::uuid, mission.id, (j->>'corp')::uuid,
+                        'Synthetic metadata', 'Handler authorization only', 'completed',
+-                       'synthetic-handler', j->'task_contract', '{"checks":[],"manual_gate":null}'
++                       'synthetic-handler', j->'task_contract', '{"checks":[],"manual_gate":null}',
++                       'passed'
+                 FROM f, mission RETURNING id
+             ), run AS (
+                 INSERT INTO runs (id, corp_id, task_id, agent_id, runner_id, status,
+-                    assignment_token, workspace_run_id)
++                    assignment_token, workspace_run_id, verification_status,
++                    verification_sha256, deliverable_sha256)
+                 SELECT (j->>'run')::uuid, (j->>'corp')::uuid, task.id, (j->>'agent')::uuid,
+                        'issue219-handler-publisher', 'completed', gen_random_uuid(),
+-                       (j->>'run')::uuid
++                       (j->>'run')::uuid, 'passed', repeat('d',64), repeat('c',64)
+                 FROM f, task RETURNING id
++            ), evidence AS (
++                INSERT INTO verification_evidence (id, corp_id, task_id, run_id,
++                    check_index, kind, status, summary, payload)
++                SELECT gen_random_uuid(), (j->>'corp')::uuid, (j->>'task')::uuid, run.id,
++                       0, 'synthetic', 'passed', 'Synthetic metadata; no verifier executed',
++                       '{"synthetic":true}'::jsonb
++                FROM f, run RETURNING id
+             ), artifact AS (
+                 INSERT INTO artifacts (id, corp_id, task_id, run_id, producer_agent_id,
+                     producer_runner_id, verifier, object_key, uri, sha256, media_type,
+-                    bytes, retention_until, provenance_signature, finalized_at, artifact_role)
+-                SELECT (j->>'artifact')::uuid, (j->>'corp')::uuid, (j->>'task')::uuid, run.id,
++                    bytes, retention_until, provenance_signature, finalized_at, artifact_role,
++                    metadata)
++                SELECT (j->>'artifact')::uuid, (j->>'corp')::uuid, (j->>'task')::uuid,
++                       (j->>'run')::uuid,
+                        (j->>'agent')::uuid, 'issue219-handler-publisher', 'synthetic',
+                        'synthetic.bundle', 'artifact://synthetic', repeat('c',64),
+                        'application/octet-stream', 0, now() + interval '1 day', repeat('f',64),
+-                       now(), 'source_deliverable'
+-                FROM f, run RETURNING id
++                       now(), 'source_deliverable',
++                       jsonb_build_object('synthetic', true, 'publication_ready', true,
++                           'git_bundle_sha256', repeat('f',64))
++                FROM f, evidence RETURNING id
+             ), deliverable AS (
+                 INSERT INTO source_deliverables (id, corp_id, task_id, run_id, artifact_id,
+                     form, file_name, verification_sha256, base_commit, head_commit, branch,
+@@ -148,43 +149,55 @@ impl Fixture {
+                     source_project_number, source_project_item_id, source_repository_owner,
+                     source_repository_name, source_issue_number, source_issue_node_id,
+                     source_issue_url, source_title, source_revision, state, claim_owner_id,
+-                    claim_token, lease_expires_at, mission_id)
++                    claim_token, lease_expires_at, mission_id, policy)
+                 SELECT (j->>'work_item')::uuid, (j->>'corp')::uuid, 'github_project_issue',
+                        'fixture', 1, 'synthetic-item', 'fixture', 'publication', 219,
+                        'synthetic-issue', 'https://github.com/fixture/publication/issues/219',
+                        'Synthetic publication', 'synthetic', 'verified', (j->>'actor')::uuid,
+-                       gen_random_uuid(), now() + interval '10 minutes', (j->>'mission')::uuid
++                       gen_random_uuid(), now() + interval '10 minutes', (j->>'mission')::uuid,
++                       j->'policy'
+                 FROM f, deliverable RETURNING id
+-            ), publication AS (
+-                INSERT INTO pull_request_publications (id, corp_id, factory_work_item_id,
+-                    mission_id, source_deliverable_id, artifact_id, task_id, run_id,
+-                    source_issue_number, source_issue_url, target_repository, base_ref, branch,
+-                    commit_sha, title, body, actor_id, authorization_id, authorization_snapshot,
+-                    effect_key, idempotency_key, state, project_owner, project_number,
+-                    project_item_id, project_status_before, provenance)
+-                SELECT (j->>'publication')::uuid, (j->>'corp')::uuid, item.id,
+-                       (j->>'mission')::uuid, (j->>'deliverable')::uuid, (j->>'artifact')::uuid,
+-                       (j->>'task')::uuid, (j->>'run')::uuid, 219,
+-                       'https://github.com/fixture/publication/issues/219', 'fixture/publication',
+-                       'main', 'ecorp/issue219-handler', repeat('b',40), 'Synthetic publication',
+-                       'Synthetic metadata only', (j->>'actor')::uuid,
+-                       (j->'authorization'->>'id')::uuid, j->'authorization',
+-                       'github-pr:' || item.id || ':' || repeat('e',64), 'synthetic-request',
+-                       'requested', 'fixture', 1, 'synthetic-item', 'In Progress',
+-                       jsonb_build_object('intent', j->'intent', 'authorization_snapshot', j->'authorization')
+-                FROM f, item RETURNING id
+             )
+-            INSERT INTO pull_request_publication_operations
+-                (corp_id, idempotency_key, publication_id, actor_id, operation, resulting_version, request)
+-            SELECT (j->>'corp')::uuid, 'synthetic-request', publication.id,
+-                   (j->>'actor')::uuid, 'request', 1, j->'intent'
+-            FROM f, publication
++            SELECT id FROM item
+             "#,
+         )
+         .bind(fixture)
+         .execute(&pool)
+         .await?;
+ 
++        let preview = store
++            .preview_pull_request_publication(PreviewPullRequestPublicationInput {
++                corp_id: ids.corp_id,
++                work_item_id,
++                actor_id: ids.alice_actor_id,
++                actor_role: "owner".into(),
++                plan: PullRequestPublicationPlan {
++                    source_deliverable_id: deliverable_id,
++                    target_repository: REPOSITORY.into(),
++                    base_ref: "main".into(),
++                    branch: "ecorp/issue219-handler".into(),
++                    title: "Synthetic publication".into(),
++                    body:
++                        "Synthetic metadata only: https://github.com/fixture/publication/issues/219"
++                            .into(),
++                },
++            })
++            .await?;
++        let requested = store
++            .request_pull_request_publication(RequestPullRequestPublicationInput {
++                corp_id: ids.corp_id,
++                work_item_id,
++                actor_id: ids.alice_actor_id,
++                actor_role: "owner".into(),
++                preview,
++                authorization_id,
++                authorization_reason: "Synthetic saved-request metadata".into(),
++                idempotency_key: "synthetic-request".into(),
++            })
++            .await?;
++        assert!(requested.publisher_token.is_none());
++        let publication_id = requested.publication.id;
++
+         let artifact_root =
+             std::env::temp_dir().join(format!("ecorp-issue219-handler-{}", Uuid::new_v4()));
+         let artifacts = ArtifactStore::initialize(
+@@ -293,6 +306,89 @@ impl Fixture {
+         assert_eq!(response.status(), reqwest::StatusCode::NOT_FOUND);
+         assert_eq!(response.headers()["cache-control"], "no-store");
+     }
++
++    async fn claim(&self, key: &str) -> Value {
++        let response = reqwest::Client::builder()
++            .no_proxy()
++            .build()
++            .unwrap()
++            .post(format!(
++                "{}/api/corps/{}/factory/publisher/publications/{}/claim",
++                self.base, self.ids.corp_id, self.publication_id
++            ))
++            .header("x-crony-publication-publisher-credential", &self.credential)
++            .json(&json!({
++                "repository": REPOSITORY, "idempotency_key": key, "lease_seconds": 60,
++            }))
++            .send()
++            .await
++            .unwrap();
++        let status = response.status();
++        assert_eq!(response.headers()["cache-control"], "no-store");
++        let text = response.text().await.unwrap();
++        assert!(!text.contains(&self.credential));
++        let body: Value = serde_json::from_str(&text).unwrap();
++        assert_eq!(status, reqwest::StatusCode::OK, "{}", body["error"]);
++        body
++    }
++
++    async fn queue(&self) -> Value {
++        let response = reqwest::Client::builder()
++            .no_proxy()
++            .build()
++            .unwrap()
++            .get(format!(
++                "{}/api/corps/{}/factory/publisher/queue",
++                self.base, self.ids.corp_id
++            ))
++            .header("x-crony-publication-publisher-credential", &self.credential)
++            .query(&[("repository", REPOSITORY)])
++            .send()
++            .await
++            .unwrap();
++        assert_eq!(response.status(), reqwest::StatusCode::OK);
++        assert_eq!(response.headers()["cache-control"], "no-store");
++        let body: Value = response.json().await.unwrap();
++        assert_eq!(body["publisher_id"], PUBLISHER);
++        body["publication_ids"].clone()
++    }
++
++    async fn assert_durable_rejection(&self, reason: &str) -> Value {
++        let rejected = self.claim("rejected-request").await;
++        assert!(rejected["publisher_token"].is_null());
++        assert_eq!(rejected["replayed"], false);
++        assert_eq!(rejected["busy"], false);
++        let publication = &rejected["publication"];
++        assert_eq!(publication["id"], self.publication_id.to_string());
++        assert_eq!(publication["state"], "requested");
++        assert_eq!(publication["attempt_count"], 0);
++        assert_eq!(
++            publication["failure_detail"],
++            format!("Saved human publication request rejected: {reason}")
++        );
++        assert!(publication["publisher_id"].is_null());
++        assert!(publication["publisher_lease_expires_at"].is_null());
++        for key in ["rejected-request", "later-worker-poll"] {
++            let replay = self.claim(key).await;
++            assert_eq!(replay["replayed"], true);
++            assert!(replay["publisher_token"].is_null());
++            assert_eq!(&replay["publication"], publication);
++        }
++        assert_eq!(self.queue().await, json!([]));
++        let (tokenless, attempts, failures): (bool, i64, i64) = sqlx::query_as(
++            "SELECT publication.publisher_token IS NULL,
++                (SELECT count(*) FROM pull_request_publication_attempts WHERE publication_id=$1),
++                (SELECT count(*) FROM events WHERE aggregate_id=$1 AND type='factory.publication_failed')
++             FROM pull_request_publications publication WHERE id=$1",
++        )
++        .bind(self.publication_id)
++        .fetch_one(&self.pool)
++        .await
++        .unwrap();
++        assert!(tokenless);
++        assert_eq!((attempts, failures), (0, 1));
++        rejected
++    }
+ }
+ 
+ impl Drop for Fixture {
+@@ -308,6 +404,7 @@ impl Drop for Fixture {
+ async fn issue219_publication_handler_tokenless_context_survives_human_revocation(pool: PgPool) {
+     let fixture = Fixture::new(pool).await.unwrap();
+     fixture.assert_context().await;
++    assert_eq!(fixture.queue().await, json!([fixture.publication_id]));
+     sqlx::query("DELETE FROM room_memberships WHERE room_id=$1 AND actor_id=$2")
+         .bind(fixture.ids.room_id)
+         .bind(fixture.ids.alice_actor_id)
+@@ -335,31 +432,11 @@ async fn issue219_publication_handler_tokenless_context_survives_human_revocatio
+         .unwrap();
+     fixture.assert_context().await;
+     let client = reqwest::Client::builder().no_proxy().build().unwrap();
+-    let claim = client
+-        .post(format!(
+-            "{}/api/corps/{}/factory/publisher/publications/{}/claim",
+-            fixture.base, fixture.ids.corp_id, fixture.publication_id
+-        ))
+-        .header(
+-            "x-crony-publication-publisher-credential",
+-            &fixture.credential,
++    let rejected = fixture
++        .assert_durable_rejection(
++            "forbidden: current human room membership and Publish permission are required",
+         )
+-        .json(&json!({
+-            "repository": REPOSITORY,
+-            "idempotency_key": "revoked-authorizer-must-not-claim",
+-            "lease_seconds": 60,
+-        }))
+-        .send()
+-        .await
+-        .unwrap();
+-    // Preserve the native start gate's existing error contract for a changed
+-    // saved role, and prove that this is the gate rejecting the claim.
+-    assert_eq!(claim.status(), reqwest::StatusCode::BAD_REQUEST);
+-    let claim_error: Value = claim.json().await.unwrap();
+-    assert_eq!(
+-        claim_error["error"],
+-        "publication authorization role changed from owner to guest"
+-    );
++        .await;
+     let artifact = client
+         .post(format!(
+             "{}/api/corps/{}/factory/publisher/publications/{}/artifact",
+@@ -370,16 +447,19 @@ async fn issue219_publication_handler_tokenless_context_survives_human_revocatio
+             &fixture.credential,
+         )
+         .json(&json!({
+-            "repository": REPOSITORY, "publisher_token": Uuid::new_v4(), "expected_version": 1,
++            "repository": REPOSITORY, "publisher_token": Uuid::new_v4(),
++            "expected_version": rejected["publication"]["version"],
+         }))
+         .send()
+         .await
+         .unwrap();
+     assert_eq!(artifact.status(), reqwest::StatusCode::CONFLICT);
+-    let unchanged = fixture.assert_context().await;
+-    assert_eq!(unchanged["publication"]["attempt_count"], 0);
++    let saved = fixture.assert_context().await;
++    assert_eq!(saved["publication"], rejected["publication"]);
++    // Synthetic completed-state readback only; this is not a native Git effect
++    // or a transition that a failed request is permitted to perform itself.
+     sqlx::query(
+-        "UPDATE pull_request_publications SET state='published', attempt_count=1,
++        "UPDATE pull_request_publications SET state='published', attempt_count=1, failure_detail=NULL,
+         pull_request_number=219, pull_request_node_id='synthetic-pr',
+         pull_request_url='https://github.com/fixture/publication/pull/219',
+         pull_request_state='OPEN', pull_request_draft=true,
+@@ -399,6 +479,39 @@ async fn issue219_publication_handler_tokenless_context_survives_human_revocatio
+     );
+ }
+ 
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_publication_handler_claim_uses_native_admission(pool: PgPool) {
++    let fixture = Fixture::new(pool).await.unwrap();
++    assert_eq!(fixture.queue().await, json!([fixture.publication_id]));
++    let claim = fixture.claim("current-request").await;
++    assert!(claim["publisher_token"].as_str().is_some());
++    assert_eq!(claim["publication"]["attempt_count"], 1);
++    assert_eq!(claim["publication"]["publisher_id"], PUBLISHER);
++    assert!(claim["publication"]["failure_detail"].is_null());
++    assert_eq!(fixture.queue().await, json!([]));
++    let replay = fixture.claim("current-request").await;
++    assert_eq!(replay["replayed"], true);
++    assert_eq!(replay["publisher_token"], claim["publisher_token"]);
++    assert_eq!(replay["publication"], claim["publication"]);
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_publication_handler_rejects_withdrawn_verification(pool: PgPool) {
++    let fixture = Fixture::new(pool).await.unwrap();
++    sqlx::query("UPDATE tasks SET verification_status='failed' WHERE id=$1")
++        .bind(fixture.task_id)
++        .execute(&fixture.pool)
++        .await
++        .unwrap();
++    fixture
++        .assert_durable_rejection(
++            "conflict: factory work item cannot enter verified before its mission and task verification pass",
++        )
++        .await;
++}
++
+ #[sqlx::test(migrations = "../../db/migrations")]
+ #[ignore = "requires explicitly owned disposable PostgreSQL"]
+ async fn issue219_publication_handler_rejects_other_scope_and_malformed_intent(pool: PgPool) {
+diff --git a/crates/crony-server/src/publication_requests.rs b/crates/crony-server/src/publication_requests.rs
+index d643601..c9fa6ba 100644
+--- a/crates/crony-server/src/publication_requests.rs
++++ b/crates/crony-server/src/publication_requests.rs
+@@ -235,7 +235,10 @@ async fn queue(
+         .requested_publications_for_publisher(&scope, query.after, query.limit)
+         .await
+         .map_err(workload_error)?;
+-    Ok(Json(PublisherQueueResponse { publication_ids }))
++    Ok(Json(PublisherQueueResponse {
++        publisher_id: scope.publisher_id,
++        publication_ids,
++    }))
+ }
+ 
+ async fn context(
+diff --git a/crates/crony-store/src/checkpoint_publication.rs b/crates/crony-store/src/checkpoint_publication.rs
+index 45adc95..8b52008 100644
+--- a/crates/crony-store/src/checkpoint_publication.rs
++++ b/crates/crony-store/src/checkpoint_publication.rs
+@@ -92,8 +92,8 @@ pub(super) async fn authority_tx(
+             .as_deref()
+             != Some(verified_head)
+     {
+-        return Err(anyhow!(
+-            "checkpoint publication does not match its native source and verified export"
++        return Err(publication::publication_admission_denied(
++            "checkpoint publication does not match its native source and verified export",
+         ));
+     }
+     let explicit_stop: bool = sqlx::query_scalar(
+diff --git a/crates/crony-store/src/human_publication_request_tests.rs b/crates/crony-store/src/human_publication_request_tests.rs
+index b982aad..de844a0 100644
+--- a/crates/crony-store/src/human_publication_request_tests.rs
++++ b/crates/crony-store/src/human_publication_request_tests.rs
+@@ -28,6 +28,345 @@ fn publisher_scope(input: &StartPullRequestPublicationInput) -> PublicationPubli
+     }
+ }
+ 
++async fn wait_for_publication_lock(pool: &PgPool, application: &str) {
++    tokio::time::timeout(std::time::Duration::from_secs(10), async {
++        loop {
++            let waiting: bool = sqlx::query_scalar(
++                "SELECT EXISTS (SELECT 1 FROM pg_stat_activity
++                 WHERE datname = current_database() AND application_name = $1
++                   AND wait_event_type = 'Lock')",
++            )
++            .bind(application)
++            .fetch_one(pool)
++            .await
++            .unwrap();
++            if waiting {
++                break;
++            }
++            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
++        }
++    })
++    .await
++    .expect("publication claim did not reach the controlled lock contention");
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_and_direct_claim_share_lock_order(pool: PgPool) {
++    let (store, mut input, queued) = queued_request(pool).await;
++    let scope = publisher_scope(&input);
++    let worker_pool = PgPoolOptions::new()
++        .max_connections(1)
++        .connect_with(
++            store
++                .pool
++                .connect_options()
++                .as_ref()
++                .clone()
++                .application_name("issue219-worker-claim"),
++        )
++        .await
++        .unwrap();
++    let direct_pool = PgPoolOptions::new()
++        .max_connections(1)
++        .connect_with(
++            store
++                .pool
++                .connect_options()
++                .as_ref()
++                .clone()
++                .application_name("issue219-direct-claim"),
++        )
++        .await
++        .unwrap();
++    // Hold the shared branch gate until both real claim paths are waiting.
++    // If the worker takes this gate before the credential row while native
++    // start does the reverse, releasing it creates a deterministic deadlock.
++    let mut blocker = store.pool.begin().await.unwrap();
++    lock_factory_keys_tx(
++        &mut blocker,
++        &[format!(
++            "publication:branch:{}:{}:{}",
++            input.corp_id, input.target_repository, input.branch
++        )],
++    )
++    .await
++    .unwrap();
++    let worker = PgStore {
++        pool: worker_pool.clone(),
++    };
++    let mut claims = tokio::task::JoinSet::new();
++    claims.spawn(async move {
++        worker
++            .claim_human_requested_publication(
++                &scope,
++                queued.publication.id,
++                "worker-lock-order".into(),
++                300,
++            )
++            .await
++    });
++    wait_for_publication_lock(&store.pool, "issue219-worker-claim").await;
++    let direct = PgStore {
++        pool: direct_pool.clone(),
++    };
++    input.idempotency_key = "direct-lock-order".into();
++    claims.spawn(async move { direct.start_pull_request_publication(input).await });
++    wait_for_publication_lock(&store.pool, "issue219-direct-claim").await;
++    blocker.commit().await.unwrap();
++    let mut tokens = 0;
++    let mut busy = 0;
++    for _ in 0..2 {
++        let outcome = tokio::time::timeout(std::time::Duration::from_secs(20), claims.join_next())
++            .await
++            .expect("publication claims did not finish after the gate was released")
++            .expect("both claim tasks must be retained")
++            .expect("publication claim task panicked")
++            .expect("concurrent worker and native publication claims must not deadlock");
++        assert_eq!(outcome.publication.id, queued.publication.id);
++        assert_eq!(outcome.publication.attempt_count, 1);
++        tokens += usize::from(outcome.publisher_token.is_some());
++        busy += usize::from(outcome.busy);
++    }
++    assert_eq!(
++        (tokens, busy),
++        (1, 1),
++        "only one claim may acquire effect authority"
++    );
++    let attempts: i64 = sqlx::query_scalar(
++        "SELECT count(*) FROM pull_request_publication_attempts WHERE publication_id = $1",
++    )
++    .bind(queued.publication.id)
++    .fetch_one(&store.pool)
++    .await
++    .unwrap();
++    assert_eq!(attempts, 1);
++    worker_pool.close().await;
++    direct_pool.close().await;
++}
++
++async fn assert_stale_worker_request_rejected(pool: PgPool, change: &str) {
++    let (store, input, queued) = queued_request(pool).await;
++    let scope = publisher_scope(&input);
++    let id = queued.publication.id;
++    sqlx::query(change).execute(&store.pool).await.unwrap();
++    // A scoped workload may report a server-proven stale request; a different
++    // repository or credential must not be able to reject it.
++    for alteration in ["repository", "credential"] {
++        let mut other = scope.clone();
++        if alteration == "repository" {
++            other.repository = "other/repository".into();
++        } else {
++            other.credential_hash = digest(&"wrong stale-request credential");
++        }
++        let before = publication_state(&store).await;
++        assert!(
++            store
++                .claim_human_requested_publication(&other, id, "stale-denial".into(), 300)
++                .await
++                .is_err()
++        );
++        assert!(publication_state(&store).await == before);
++    }
++    let rejected = store
++        .claim_human_requested_publication(&scope, id, "stale-denial".into(), 300)
++        .await
++        .unwrap();
++    assert!(rejected.publisher_token.is_none() && !rejected.busy && !rejected.replayed);
++    assert_eq!(rejected.publication.version, queued.publication.version + 1);
++    assert_eq!(
++        rejected.publication.state,
++        PullRequestPublicationState::Requested
++    );
++    assert_eq!(rejected.publication.attempt_count, 0);
++    assert!(
++        rejected
++            .publication
++            .failure_detail
++            .as_deref()
++            .is_some_and(|detail| detail.contains("rejected"))
++    );
++    assert!(
++        rejected.publication.publisher_id.is_none()
++            && rejected.publication.publisher_lease_expires_at.is_none()
++    );
++    assert_eq!(
++        rejected.publication.authorization_snapshot,
++        queued.publication.authorization_snapshot
++    );
++    assert_eq!(
++        rejected.publication.provenance,
++        queued.publication.provenance
++    );
++    assert_eq!(rejected.events.len(), 1);
++    for key in ["stale-denial", "later-worker-poll"] {
++        let before = publication_state(&store).await;
++        let replay = store
++            .claim_human_requested_publication(&scope, id, key.into(), 300)
++            .await
++            .unwrap();
++        assert!(replay.replayed && !replay.busy && replay.publisher_token.is_none());
++        assert_eq!(replay.publication.version, rejected.publication.version);
++        assert!(replay.events.is_empty());
++        assert_only_publisher_use_audited(&before, &publication_state(&store).await, &scope);
++    }
++    assert!(
++        store
++            .requested_publications_for_publisher(&scope, None, 25)
++            .await
++            .unwrap()
++            .is_empty()
++    );
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_rejects_changed_policy(pool: PgPool) {
++    assert_stale_worker_request_rejected(
++        pool,
++        "UPDATE factory_work_items SET policy=policy || '{\"human_request_revision\":2}'::jsonb",
++    )
++    .await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_rejects_withdrawn_policy(pool: PgPool) {
++    assert_stale_worker_request_rejected(
++        pool,
++        "UPDATE factory_work_items SET policy=jsonb_set(policy, '{publication,allowed}', 'false')",
++    )
++    .await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_rejects_changed_source_commit(pool: PgPool) {
++    assert_stale_worker_request_rejected(
++        pool,
++        "UPDATE source_deliverables SET head_commit=repeat('c',40)",
++    )
++    .await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_rejects_changed_source_digest(pool: PgPool) {
++    assert_stale_worker_request_rejected(pool, "UPDATE artifacts SET sha256=repeat('c',64)").await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_rejects_revoked_role(pool: PgPool) {
++    assert_stale_worker_request_rejected(
++        pool,
++        "UPDATE actors SET role='member' WHERE kind='human'",
++    )
++    .await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_rejects_revoked_membership(pool: PgPool) {
++    assert_stale_worker_request_rejected(pool, "DELETE FROM room_memberships").await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_preserves_live_lease_then_rejects_expired_intent(
++    pool: PgPool,
++) {
++    let (store, input, queued) = queued_request(pool).await;
++    let scope = publisher_scope(&input);
++    let id = queued.publication.id;
++    let started = store
++        .claim_human_requested_publication(&scope, id, "before-revocation".into(), 300)
++        .await
++        .unwrap();
++    sqlx::query(
++        "UPDATE factory_work_items SET policy=policy || '{\"human_request_revision\":2}'::jsonb",
++    )
++    .execute(&store.pool)
++    .await
++    .unwrap();
++    let before = publication_state(&store).await;
++    assert!(
++        store
++            .claim_human_requested_publication(&scope, id, "after-revocation".into(), 300)
++            .await
++            .is_err()
++    );
++    assert_only_publisher_use_audited(&before, &publication_state(&store).await, &scope);
++    sqlx::query("UPDATE pull_request_publications SET publisher_lease_expires_at=now()-interval '1 second' WHERE id=$1").bind(id).execute(&store.pool).await.unwrap();
++    let rejected = store
++        .claim_human_requested_publication(&scope, id, "before-revocation".into(), 300)
++        .await
++        .unwrap();
++    assert!(rejected.publisher_token.is_none() && rejected.publication.failure_detail.is_some());
++    assert_eq!(
++        rejected.publication.version,
++        started.publication.version + 1
++    );
++    assert_eq!(
++        rejected.publication.attempt_count,
++        started.publication.attempt_count
++    );
++    let attempt: String = sqlx::query_scalar(
++        "SELECT state FROM pull_request_publication_attempts WHERE publication_id=$1",
++    )
++    .bind(id)
++    .fetch_one(&store.pool)
++    .await
++    .unwrap();
++    assert_eq!(attempt, "failed");
++    assert!(
++        store
++            .record_pull_request_publication_checkpoint(branch_checkpoint(&input, &started))
++            .await
++            .is_err()
++    );
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned disposable PostgreSQL"]
++async fn issue219_native_publication_worker_keeps_database_failures_retryable(pool: PgPool) {
++    let (store, input, queued) = queued_request(pool).await;
++    let scope = publisher_scope(&input);
++    let id = queued.publication.id;
++    sqlx::query("ALTER TABLE source_deliverables RENAME TO temporarily_unavailable_source")
++        .execute(&store.pool)
++        .await
++        .unwrap();
++    let failed = store
++        .claim_human_requested_publication(&scope, id, "temporary-unavailability".into(), 300)
++        .await;
++    sqlx::query("ALTER TABLE temporarily_unavailable_source RENAME TO source_deliverables")
++        .execute(&store.pool)
++        .await
++        .unwrap();
++    assert!(failed.is_err());
++    let saved = store
++        .human_requested_publication_for_publisher(&scope, id, None)
++        .await
++        .unwrap()
++        .publication;
++    assert_eq!(saved.version, queued.publication.version);
++    assert_eq!(saved.attempt_count, 0);
++    assert!(saved.failure_detail.is_none());
++    assert_eq!(
++        store
++            .requested_publications_for_publisher(&scope, None, 25)
++            .await
++            .unwrap(),
++        [id]
++    );
++    let recovered = store
++        .claim_human_requested_publication(&scope, id, "temporary-unavailability".into(), 300)
++        .await
++        .unwrap();
++    assert!(recovered.publisher_token.is_some());
++}
++
+ fn assert_only_publisher_use_audited(
+     before: &Value,
+     after: &Value,
+diff --git a/crates/crony-store/src/lib.rs b/crates/crony-store/src/lib.rs
+index a0ffb1e..6fd4ef2 100644
+--- a/crates/crony-store/src/lib.rs
++++ b/crates/crony-store/src/lib.rs
+@@ -13858,6 +13858,19 @@ async fn factory_event_room_id_tx(
+         .map(Some)
+ }
+ 
++#[derive(Debug)]
++struct FactoryMissionVerificationDenied;
++
++impl std::fmt::Display for FactoryMissionVerificationDenied {
++    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
++        f.write_str(
++            "conflict: factory work item cannot enter verified before its mission and task verification pass",
++        )
++    }
++}
++
++impl std::error::Error for FactoryMissionVerificationDenied {}
++
+ async fn ensure_factory_mission_verified_tx(
+     tx: &mut Transaction<'_, Postgres>,
+     corp_id: Uuid,
+@@ -13893,9 +13906,7 @@ async fn ensure_factory_mission_verified_tx(
+     .fetch_one(&mut **tx)
+     .await?;
+     if !verified {
+-        return Err(anyhow!(
+-            "conflict: factory work item cannot enter verified before its mission and task verification pass"
+-        ));
++        return Err(FactoryMissionVerificationDenied.into());
+     }
+     Ok(())
+ }
+diff --git a/crates/crony-store/src/publication.rs b/crates/crony-store/src/publication.rs
+index 2cef127..ca23c12 100644
+--- a/crates/crony-store/src/publication.rs
++++ b/crates/crony-store/src/publication.rs
+@@ -3,6 +3,23 @@ use super::*;
+ mod request;
+ mod worker;
+ 
++// Only known domain denials may terminalize saved intent. Database failures and
++// unclassified admission errors keep their native retry/rollback semantics.
++#[derive(Debug)]
++struct PublicationAdmissionDenied(String);
++
++impl std::fmt::Display for PublicationAdmissionDenied {
++    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
++        f.write_str(&self.0)
++    }
++}
++
++impl std::error::Error for PublicationAdmissionDenied {}
++
++pub(super) fn publication_admission_denied(message: impl Into<String>) -> anyhow::Error {
++    PublicationAdmissionDenied(message.into()).into()
++}
++
+ const PUBLICATION_SELECT: &str = r#"
+     SELECT publication.id, publication.corp_id, publication.factory_work_item_id,
+            publication.mission_id, publication.source_deliverable_id,
+@@ -237,28 +254,7 @@ impl PgStore {
+             &normalized.actor_role,
+         )
+         .await?;
+-        lock_factory_keys_tx(
+-            &mut tx,
+-            &[
+-                format!(
+-                    "publication:idempotency:{}:{}",
+-                    normalized.corp_id, normalized.idempotency_key
+-                ),
+-                format!(
+-                    "publication:factory:{}:{}",
+-                    normalized.corp_id, normalized.work_item_id
+-                ),
+-                format!(
+-                    "publication:effect:{}:{}",
+-                    normalized.corp_id, normalized.effect_key
+-                ),
+-                format!(
+-                    "publication:branch:{}:{}:{}",
+-                    normalized.corp_id, normalized.target_repository, normalized.branch
+-                ),
+-            ],
+-        )
+-        .await?;
++        lock_publication_start_tx(&mut tx, &normalized).await?;
+ 
+         if let Some(operation) =
+             publication_operation_tx(&mut tx, normalized.corp_id, &normalized.idempotency_key)
+@@ -1355,42 +1351,7 @@ impl PgStore {
+                         "conflict: a published pull request cannot be marked failed"
+                     ));
+                 }
+-                let row = sqlx::query(&format!(
+-                    r#"
+-                    UPDATE pull_request_publications publication
+-                    SET version = version + 1,
+-                        publisher_id = NULL,
+-                        publisher_token = NULL,
+-                        publisher_lease_expires_at = NULL,
+-                        failure_detail = $1,
+-                        updated_at = now()
+-                    WHERE id = $2 AND corp_id = $3
+-                    RETURNING {}
+-                    "#,
+-                    publication_returning_columns()
+-                ))
+-                .bind(&failure_detail)
+-                .bind(current.id)
+-                .bind(input.corp_id)
+-                .fetch_one(&mut *tx)
+-                .await?;
+-                let publication = map_pull_request_publication(row)?;
+-                sqlx::query(
+-                    r#"
+-                    UPDATE pull_request_publication_attempts
+-                    SET state = 'failed', failure_detail = $1, finished_at = now()
+-                    WHERE publication_id = $2
+-                      AND corp_id = $3
+-                      AND attempt = $4
+-                      AND state = 'running'
+-                    "#,
+-                )
+-                .bind(&failure_detail)
+-                .bind(publication.id)
+-                .bind(input.corp_id)
+-                .bind(publication.attempt_count)
+-                .execute(&mut *tx)
+-                .await?;
++                let publication = fail_publication_tx(&mut tx, &current, &failure_detail).await?;
+                 record_publication_operation_tx(
+                     &mut tx,
+                     NewPublicationOperation {
+@@ -1850,6 +1811,77 @@ async fn revalidate_publication_authority_tx(
+     Ok(())
+ }
+ 
++async fn lock_publication_start_tx(
++    tx: &mut Transaction<'_, Postgres>,
++    normalized: &StartPullRequestPublicationInput,
++) -> Result<()> {
++    lock_factory_keys_tx(
++        tx,
++        &[
++            format!(
++                "publication:idempotency:{}:{}",
++                normalized.corp_id, normalized.idempotency_key
++            ),
++            format!(
++                "publication:factory:{}:{}",
++                normalized.corp_id, normalized.work_item_id
++            ),
++            format!(
++                "publication:effect:{}:{}",
++                normalized.corp_id, normalized.effect_key
++            ),
++            format!(
++                "publication:branch:{}:{}:{}",
++                normalized.corp_id, normalized.target_repository, normalized.branch
++            ),
++        ],
++    )
++    .await
++}
++
++async fn fail_publication_tx(
++    tx: &mut Transaction<'_, Postgres>,
++    current: &PullRequestPublication,
++    failure_detail: &str,
++) -> Result<PullRequestPublication> {
++    let row = sqlx::query(&format!(
++        r#"
++        UPDATE pull_request_publications publication
++        SET version = version + 1,
++            publisher_id = NULL,
++            publisher_token = NULL,
++            publisher_lease_expires_at = NULL,
++            failure_detail = $1,
++            updated_at = now()
++        WHERE id = $2 AND corp_id = $3
++        RETURNING {}
++        "#,
++        publication_returning_columns()
++    ))
++    .bind(failure_detail)
++    .bind(current.id)
++    .bind(current.corp_id)
++    .fetch_one(&mut **tx)
++    .await?;
++    let publication = map_pull_request_publication(row)?;
++    sqlx::query(
++        r#"
++        UPDATE pull_request_publication_attempts
++        SET state = 'failed', failure_detail = $1, finished_at = now()
++        WHERE publication_id = $2
++          AND corp_id = $3
++          AND attempt = $4
++          AND state = 'running'
++        "#,
++    )
++    .bind(failure_detail)
++    .bind(publication.id)
++    .bind(current.corp_id)
++    .bind(publication.attempt_count)
++    .execute(&mut **tx)
++    .await?;
++    Ok(publication)
++}
+ async fn validate_publication_prerequisites(
+     tx: &mut Transaction<'_, Postgres>,
+     request: &PublicationPrerequisiteRequest<'_>,
+@@ -1860,7 +1892,9 @@ async fn validate_publication_prerequisites(
+     PgStore::ensure_audit_workflow_gates_tx(tx, request.corp_id).await?;
+     let (work_item, _) = factory_work_item_tx(tx, request.corp_id, request.work_item_id, true)
+         .await?
+-        .context("factory work item not found")?;
++        .context(PublicationAdmissionDenied(
++            "factory work item not found".into(),
++        ))?;
+     let allowed_state = if existing {
+         matches!(
+             work_item.state,
+@@ -1870,44 +1904,58 @@ async fn validate_publication_prerequisites(
+         work_item.state == FactoryWorkItemState::Verified
+     };
+     if !allowed_state {
+-        return Err(anyhow!(
++        return Err(publication_admission_denied(format!(
+             "conflict: pull-request publication requires a verified factory work item, not {}",
+             work_item.state.as_str()
+-        ));
+-    }
+-    let mission_id = work_item
+-        .mission_id
+-        .context("verified factory work item has no mission")?;
+-    ensure_factory_mission_verified_tx(tx, request.corp_id, mission_id).await?;
++        )));
++    }
++    let mission_id = work_item.mission_id.context(PublicationAdmissionDenied(
++        "verified factory work item has no mission".into(),
++    ))?;
++    ensure_factory_mission_verified_tx(tx, request.corp_id, mission_id)
++        .await
++        .map_err(|error| {
++            if error.is::<FactoryMissionVerificationDenied>() {
++                publication_admission_denied(error.to_string())
++            } else {
++                error
++            }
++        })?;
+     let policy = work_item
+         .policy
+         .as_object()
+-        .context("factory policy snapshot must be an object")?;
++        .context(PublicationAdmissionDenied(
++            "factory policy snapshot must be an object".into(),
++        ))?;
+     if policy.get("auto_merge").and_then(Value::as_bool) != Some(false) {
+-        return Err(anyhow!(
+-            "factory policy must explicitly disable auto_merge before publication"
++        return Err(publication_admission_denied(
++            "factory policy must explicitly disable auto_merge before publication",
+         ));
+     }
+     let publication_policy = policy
+         .get("publication")
+         .and_then(Value::as_object)
+-        .context("factory policy does not authorize pull-request publication")?;
++        .context(PublicationAdmissionDenied(
++            "factory policy does not authorize pull-request publication".into(),
++        ))?;
+     if publication_policy.get("allowed").and_then(Value::as_bool) != Some(true) {
+-        return Err(anyhow!(
+-            "factory policy does not authorize pull-request publication"
++        return Err(publication_admission_denied(
++            "factory policy does not authorize pull-request publication",
+         ));
+     }
+     let target_allowlist = publication_policy
+         .get("repository_allowlist")
+         .and_then(Value::as_array)
+-        .context("publication policy omitted repository_allowlist")?;
++        .context(PublicationAdmissionDenied(
++            "publication policy omitted repository_allowlist".into(),
++        ))?;
+     if !target_allowlist
+         .iter()
+         .filter_map(Value::as_str)
+         .any(|repository| repository.eq_ignore_ascii_case(request.target_repository))
+     {
+-        return Err(anyhow!(
+-            "publication target repository is outside the factory policy allowlist"
++        return Err(publication_admission_denied(
++            "publication target repository is outside the factory policy allowlist",
+         ));
+     }
+     let expected_repository = format!(
+@@ -1915,51 +1963,59 @@ async fn validate_publication_prerequisites(
+         work_item.source_repository_owner, work_item.source_repository_name
+     );
+     if request.target_repository != expected_repository {
+-        return Err(anyhow!(
+-            "publication target repository must match the claimed source repository"
++        return Err(publication_admission_denied(
++            "publication target repository must match the claimed source repository",
+         ));
+     }
+     let expected_base_ref = publication_policy
+         .get("base_ref")
+         .and_then(Value::as_str)
+         .filter(|value| !value.trim().is_empty() && value.len() <= 240)
+-        .context("publication policy omitted base_ref")?
++        .context(PublicationAdmissionDenied(
++            "publication policy omitted base_ref".into(),
++        ))?
+         .to_owned();
+-    validate_factory_publication_base_ref(&expected_base_ref)?;
++    validate_factory_publication_base_ref(&expected_base_ref)
++        .map_err(|error| publication_admission_denied(error.to_string()))?;
+     if request.base_ref != expected_base_ref {
+-        return Err(anyhow!(
++        return Err(publication_admission_denied(format!(
+             "publication base ref {} does not match factory policy {}",
+-            request.base_ref,
+-            expected_base_ref
+-        ));
++            request.base_ref, expected_base_ref
++        )));
+     }
+-    let expected_base_commit =
+-        factory_policy_required_string(policy, "source_base_commit", 64)?.to_ascii_lowercase();
+-    validate_factory_base_commit(&expected_base_commit)?;
++    let expected_base_commit = factory_policy_required_string(policy, "source_base_commit", 64)
++        .map_err(|error| publication_admission_denied(error.to_string()))?
++        .to_ascii_lowercase();
++    validate_factory_base_commit(&expected_base_commit)
++        .map_err(|error| publication_admission_denied(error.to_string()))?;
+     let branch_prefix = publication_policy
+         .get("branch_prefix")
+         .and_then(Value::as_str)
+         .unwrap_or("ecorp/");
+     if !request.branch.starts_with(branch_prefix) {
+-        return Err(anyhow!(
++        return Err(publication_admission_denied(format!(
+             "publication branch must start with the authorized prefix {branch_prefix}"
+-        ));
++        )));
+     }
+     let review_status = publication_policy
+         .get("review_status")
+         .and_then(Value::as_str)
+         .filter(|value| !value.trim().is_empty())
+-        .context("publication policy omitted review_status")?
++        .context(PublicationAdmissionDenied(
++            "publication policy omitted review_status".into(),
++        ))?
+         .to_owned();
+     let project_status_before = publication_policy
+         .get("status_before")
+         .and_then(Value::as_str)
+         .filter(|value| !value.trim().is_empty())
+-        .context("publication policy omitted status_before")?
++        .context(PublicationAdmissionDenied(
++            "publication policy omitted status_before".into(),
++        ))?
+         .to_owned();
+     if !request.body.contains(&work_item.source_issue_url) {
+-        return Err(anyhow!(
+-            "pull request body must link the claimed source issue URL"
++        return Err(publication_admission_denied(
++            "pull request body must link the claimed source issue URL",
+         ));
+     }
+ 
+@@ -2003,22 +2059,27 @@ async fn validate_publication_prerequisites(
+     .bind(mission_id)
+     .fetch_optional(&mut **tx)
+     .await?
+-    .context("source deliverable is not linked to the factory mission")?;
++    .context(PublicationAdmissionDenied(
++        "source deliverable is not linked to the factory mission".into(),
++    ))?;
+     let form: String = row.get("form");
+     let head_commit: Option<String> = row.get("head_commit");
+     let commit_sha = head_commit
+         .filter(|value| !value.is_empty())
+-        .context("merge-ready publication requires a committed deliverable")?
++        .context(PublicationAdmissionDenied(
++            "merge-ready publication requires a committed deliverable".into(),
++        ))?
+         .to_ascii_lowercase();
+-    validate_factory_base_commit(&commit_sha)?;
++    validate_factory_base_commit(&commit_sha)
++        .map_err(|error| publication_admission_denied(error.to_string()))?;
+     let base_commit: String = row.get::<String, _>("base_commit").to_ascii_lowercase();
+     if form != "commit_branch"
+         || row.get::<String, _>("integration_state") != "ready_for_review"
+         || base_commit != expected_base_commit
+         || commit_sha == base_commit
+     {
+-        return Err(anyhow!(
+-            "source deliverable is not a merge-ready commit/branch result"
++        return Err(publication_admission_denied(
++            "source deliverable is not a merge-ready commit/branch result",
+         ));
+     }
+     let artifact_metadata: Value = row.get("metadata");
+@@ -2031,8 +2092,8 @@ async fn validate_publication_prerequisites(
+             .and_then(Value::as_str)
+             .is_none_or(str::is_empty)
+     {
+-        return Err(anyhow!(
+-            "source deliverable does not include a verified portable Git bundle"
++        return Err(publication_admission_denied(
++            "source deliverable does not include a verified portable Git bundle",
+         ));
+     }
+     let deliverable_sha256: String = row.get("deliverable_sha256");
+@@ -2056,8 +2117,8 @@ async fn validate_publication_prerequisites(
+             .as_deref()
+             != Some(deliverable_sha256.as_str())
+     {
+-        return Err(anyhow!(
+-            "source deliverable is not linked to passing persisted verifier state"
++        return Err(publication_admission_denied(
++            "source deliverable is not linked to passing persisted verifier state",
+         ));
+     }
+     let selected_run_id: Uuid = row.get("run_id");
+@@ -2128,7 +2189,9 @@ async fn validate_publication_prerequisites(
+                 .as_deref()
+                 == Some("quarantined")
+     }) {
+-        return Err(anyhow!("quarantined source lineage cannot be published"));
++        return Err(publication_admission_denied(
++            "quarantined source lineage cannot be published",
++        ));
+     }
+     let completed_recoveries = sqlx::query(
+         r#"
+@@ -2239,8 +2302,8 @@ async fn validate_publication_prerequisites(
+     .fetch_all(&mut **tx)
+     .await?;
+     if evidence_ids.is_empty() {
+-        return Err(anyhow!(
+-            "pull-request publication requires persisted passing verification evidence"
++        return Err(publication_admission_denied(
++            "pull-request publication requires persisted passing verification evidence",
+         ));
+     }
+     Ok(PublicationPrerequisites {
+diff --git a/crates/crony-store/src/publication/request.rs b/crates/crony-store/src/publication/request.rs
+index 9840e56..cc473bf 100644
+--- a/crates/crony-store/src/publication/request.rs
++++ b/crates/crony-store/src/publication/request.rs
+@@ -435,8 +435,8 @@ pub(super) async fn revalidate_human_request_prerequisites_tx(
+         &request.actor_role,
+     )? != request.preview
+     {
+-        return Err(anyhow!(
+-            "conflict: saved human publication intent no longer matches current authority, policy or verified source"
++        return Err(publication_admission_denied(
++            "conflict: saved human publication intent no longer matches current authority, policy or verified source",
+         ));
+     }
+     Ok(())
+@@ -466,8 +466,8 @@ async fn lock_request_membership_tx(
+     if role.as_deref() != Some(expected_role)
+         || !matches!(expected_role, "owner" | "admin" | "manager")
+     {
+-        return Err(anyhow!(
+-            "forbidden: current human room membership and Publish permission are required"
++        return Err(publication_admission_denied(
++            "forbidden: current human room membership and Publish permission are required",
+         ));
+     }
+     Ok(())
+diff --git a/crates/crony-store/src/publication/worker.rs b/crates/crony-store/src/publication/worker.rs
+index 7bea37f..77eb9c3 100644
+--- a/crates/crony-store/src/publication/worker.rs
++++ b/crates/crony-store/src/publication/worker.rs
+@@ -192,7 +192,7 @@ impl PgStore {
+         let publication = requested.publication;
+         // The native start transaction rechecks this exact intent, current human
+         // authority, source/policy, credential, collision and fencing state.
+-        self.start_pull_request_publication(StartPullRequestPublicationInput {
++        let input = normalize_start_input(StartPullRequestPublicationInput {
+             corp_id: scope.corp_id,
+             work_item_id: publication.factory_work_item_id,
+             actor_id: publication.actor_id,
+@@ -210,8 +210,109 @@ impl PgStore {
+             publisher_id: scope.publisher_id.clone(),
+             publisher_credential_hash: scope.credential_hash.clone(),
+             lease_seconds,
+-        })
+-        .await
++        })?;
++        let mut tx = self.pool.begin().await?;
++        // Native start locks the credential before the shared publication gates.
++        // Keep that ordering when a worker and a direct claim run concurrently.
++        revalidate_publication_publisher_credential_tx(
++            &mut tx,
++            scope.corp_id,
++            &scope.publisher_id,
++            &scope.credential_hash,
++        )
++        .await?;
++        lock_publication_start_tx(&mut tx, &input).await?;
++        // Re-read the exact authenticated request before deciding whether it can
++        // be retired. The credential lock above remains held by this transaction.
++        let (publication, _, intent) =
++            human_requested_publication_tx(&mut tx, scope, publication_id).await?;
++        ensure_publication_matches_start(&publication, &input)?;
++        request::ensure_human_request_matches_start(&intent, &input)?;
++        let operation_request = start_operation_request(&input);
++        let operation =
++            publication_operation_tx(&mut tx, scope.corp_id, &input.idempotency_key).await?;
++        if let Some(operation) = &operation {
++            ensure_publication_operation_matches(
++                operation,
++                "start",
++                intent.actor_id,
++                None,
++                &operation_request,
++            )?;
++            if operation.publication_id != publication.id {
++                return Err(anyhow!(
++                    "conflict: publication claim key belongs to another request"
++                ));
++            }
++        }
++        if publication.state == PullRequestPublicationState::Published
++            || publication.failure_detail.is_some()
++        {
++            tx.commit().await?;
++            return Ok(PullRequestPublicationOutcome {
++                publication,
++                publisher_token: None,
++                events: Vec::new(),
++                replayed: true,
++                busy: false,
++            });
++        }
++        // A competing or replayed live claim retains the existing native lease
++        // checks. Admission rejection must never terminate an active publisher.
++        if publication
++            .publisher_lease_expires_at
++            .is_none_or(|expiry| expiry <= Utc::now())
++            && let Err(error) =
++                request::revalidate_human_request_tx(&mut tx, &publication, &intent).await
++        {
++            let Some(denial) = error.downcast_ref::<PublicationAdmissionDenied>() else {
++                return Err(error);
++            };
++            let detail = format!("Saved human publication request rejected: {denial}");
++            let rejected = fail_publication_tx(&mut tx, &publication, &detail).await?;
++            if operation.is_none() {
++                record_publication_operation_tx(
++                    &mut tx,
++                    NewPublicationOperation {
++                        corp_id: scope.corp_id,
++                        idempotency_key: &input.idempotency_key,
++                        publication_id: rejected.id,
++                        actor_id: intent.actor_id,
++                        operation: "start",
++                        resulting_version: rejected.version,
++                        publisher_token: None,
++                        request: &operation_request,
++                    },
++                )
++                .await?;
++            }
++            let events = publication_event_tx(
++                &mut tx,
++                &rejected,
++                intent.actor_id,
++                "factory.publication_failed",
++                json!({
++                    "state": rejected.state.as_str(), "attempt": rejected.attempt_count,
++                    "failure_detail": rejected.failure_detail, "admission": "rejected",
++                    "publisher_id": scope.publisher_id,
++                }),
++            )
++            .await?
++            .into_iter()
++            .collect();
++            tx.commit().await?;
++            return Ok(PullRequestPublicationOutcome {
++                publication: rejected,
++                publisher_token: None,
++                events,
++                replayed: false,
++                busy: false,
++            });
++        }
++        tx.commit().await?;
++        // Recheck every native prerequisite after preflight; a concurrent change
++        // never inherits authority from this earlier, non-authorizing read.
++        self.start_pull_request_publication(input).await
+     }
+ }
+ 
+diff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md
+index 156ad32..7ff1943 100644
+--- a/docs/ARCHITECTURE.md
++++ b/docs/ARCHITECTURE.md
+@@ -1188,8 +1188,15 @@ start a direct-CLI publication as queued human intent. Claims, renewals, artifac
+ effect checkpoints reuse the native publication transactions and fencing. Before effects they
+ recheck the recorded human's current authority, exact source and policy, and live attempt ownership.
+ The watcher invokes the existing `factory-publish` effect engine. Direct human-authorized CLI
+-publication remains supported. Failed requests are visible and are not retried in a tight loop;
+-expired attempts can adopt their matching external effects after a restart.
++publication remains supported. The watcher claims the saved intent before reading its source
++context. A known admission denial, such as changed source or policy or revoked human room access,
++is recorded durably with failure detail and one failure event, without granting an effect token.
++The claim transaction uses the native credential-before-publication lock order, preserves any
++active lease, and clears an expired lease while failing its running attempt. Database failures and
++unclassified admission errors roll back and remain retryable. Published or failed intent returns
++tokenless readback; failed intent leaves the watcher queue and requires manual reconciliation.
++There is no automatic replacement-human-request flow. Expired attempts whose source and authority
++remain valid can adopt their matching external effects after a restart.
+ 
+ The browser projects the saved request and native attempt state, including waiting for a trusted
+ publisher, working, failed with any existing PR link, and published. A caller disconnect does not
+diff --git a/docs/SECURITY.md b/docs/SECURITY.md
+index 9d28a1c..5ead1d6 100644
+--- a/docs/SECURITY.md
++++ b/docs/SECURITY.md
+@@ -512,6 +512,15 @@ current effect authority. Tokenless context readback remains narrower than permi
+ The bounded watcher reuses the trusted native effect engine; browser and producing agents receive
+ neither the workload credential nor GitHub credentials.
+ 
++The workload claim may durably reject a saved request only after authenticating the enrolled
++credential and matching the exact Corp, repository, original human intent and operation key.
++Known source, policy and human-access denials record failure without issuing a token, terminate
++only an expired attempt, and leave an active lease intact. The native credential lock precedes
++publication advisory and row locks on both worker and direct start paths. A database error or
++unclassified admission failure rolls back instead of retiring the request. Failed and published
++claims return tokenless readback, and failed intent is excluded from the watcher queue. Manual
++reconciliation is required; tokenless readback does not authorize a replacement request or effect.
++
+ Publication revalidates persisted verifier, deliverable, policy, budget, breaker, Corp, role, target,
+ base, branch, and source-issue authority before acquiring an attempt. The publisher accepts only an
+ exact signed Git bundle, never force-pushes a conflicting branch, refuses closed or auto-merge

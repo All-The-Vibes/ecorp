@@ -1,0 +1,132 @@
+{
+  "purpose": "Diagnose retained browser r11 local Git fetch timeout without changing product limits or retained fixture",
+  "status": "passed",
+  "owned_root": "<USERPROFILE>\\code\\qa\\ecorp-issue219-fetch-diagnostic-r1",
+  "retained_remote": "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r11\\evidence\\browser\\target-remote.git",
+  "started_at_utc": "2026-09-28T17:01:56.185363+00:00",
+  "commands": [
+    {
+      "label": "retained-refs-before",
+      "args": [
+        "--git-dir",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r11\\evidence\\browser\\target-remote.git",
+        "show-ref",
+        "--head"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.157
+    },
+    {
+      "label": "first-init",
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-fetch-diagnostic-r1\\first.git",
+        "init",
+        "--bare"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.172
+    },
+    {
+      "label": "first-origin",
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-fetch-diagnostic-r1\\first.git",
+        "remote",
+        "add",
+        "origin",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r11\\evidence\\browser\\target-remote.git"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.156
+    },
+    {
+      "label": "first-fetch",
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-fetch-diagnostic-r1\\first.git",
+        "fetch",
+        "--no-tags",
+        "origin",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.438
+    },
+    {
+      "label": "first-head",
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-fetch-diagnostic-r1\\first.git",
+        "rev-parse",
+        "FETCH_HEAD^{commit}"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.156
+    },
+    {
+      "label": "second-init",
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-fetch-diagnostic-r1\\second.git",
+        "init",
+        "--bare"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.172
+    },
+    {
+      "label": "second-origin",
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-fetch-diagnostic-r1\\second.git",
+        "remote",
+        "add",
+        "origin",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r11\\evidence\\browser\\target-remote.git"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.156
+    },
+    {
+      "label": "second-fetch",
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-fetch-diagnostic-r1\\second.git",
+        "fetch",
+        "--no-tags",
+        "origin",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 6.547
+    },
+    {
+      "label": "second-head",
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-fetch-diagnostic-r1\\second.git",
+        "rev-parse",
+        "FETCH_HEAD^{commit}"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.156
+    },
+    {
+      "label": "retained-refs-after",
+      "args": [
+        "--git-dir",
+        "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r11\\evidence\\browser\\target-remote.git",
+        "show-ref",
+        "--head"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.141
+    }
+  ],
+  "retained_refs_before": "878a1774774b0630c904cbaf4b05e1b346777817 HEAD\na953c6e0c15ab523bf6f124068b7a6a1c96146f2 refs/heads/codex/issue219-publication-intent\nc371df04ae648848fcb8e3c59562693c669229dd refs/heads/ecorp/issue-9201-c371df04ae64\n878a1774774b0630c904cbaf4b05e1b346777817 refs/heads/main",
+  "first_fetched_head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "second_fetched_head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "retained_refs_after": "878a1774774b0630c904cbaf4b05e1b346777817 HEAD\na953c6e0c15ab523bf6f124068b7a6a1c96146f2 refs/heads/codex/issue219-publication-intent\nc371df04ae648848fcb8e3c59562693c669229dd refs/heads/ecorp/issue-9201-c371df04ae64\n878a1774774b0630c904cbaf4b05e1b346777817 refs/heads/main",
+  "finished_at_utc": "2026-09-28T17:02:07.506822+00:00"
+}

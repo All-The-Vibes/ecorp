@@ -1,0 +1,96 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$repo = '<USERPROFILE>\.codex\worktrees\issue219-publication\ecorp'
+$expected = 'f822f0929f53b160e568f2569bc9e24e6a2efca4'
+$receiptPath = Join-Path $PSScriptRoot 'issue219-canonical-invocation-r9.json'
+if (Test-Path -LiteralPath $receiptPath) { throw 'Preserve the existing invocation.' }
+$target = [IO.Path]::GetFullPath((Join-Path $repo 'target'))
+$key = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($target.ToLowerInvariant())))
+$mutex = [Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$key")
+$acquired = $false
+$record = [ordered]@{
+    issue=219;repository=$repo;started_at_utc=[DateTime]::UtcNow.ToString('o');status='preparing'
+    purpose='Canonical validation of atomic publication artifact authorization, concurrent revocation fencing and credential/lease expiry after a blocked lookup.'
+}
+function VerifySource($Files) {
+    if ($paths.Count -ne $Files.Count -or @(Compare-Object $paths @($Files.path)).Count) { throw 'Validated source inventory changed.' }
+    foreach ($item in $Files) {
+        if ((Get-FileHash -LiteralPath (Join-Path $repo $item.path)).Hash.ToLowerInvariant() -cne $item.sha256) { throw "Validated source changed: $($item.path)" }
+    }
+}
+try {
+    try { $acquired = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $acquired = $true }
+    if (!$acquired) { throw 'An active validation owns this target.' }
+    if ((& git -C $repo rev-parse HEAD).Trim() -cne $expected -or (& git -C $repo branch --show-current).Trim() -cne 'codex/issue219-publication-intent') { throw 'Unexpected source identity.' }
+    $paths = @(& git -C $repo ls-files --cached --others --exclude-standard | Sort-Object -Unique)
+    if ($LASTEXITCODE) { throw 'Cannot inventory source.' }
+    $nativePlan = @(
+        @{file='issue219-artifact-green-r2.json';name='human-publication-http-authorization';count=15},
+        @{file='issue219-artifact-store-r2.json';name='publication-family';count=53},
+        @{file='issue219-artifact-store-r2.json';name='correction-publication';count=15},
+        @{file='issue219-artifact-store-r2.json';name='canonical-source-download';count=7}
+    )
+    foreach ($test in $nativePlan) {
+        $native = Get-Content -LiteralPath (Join-Path $PSScriptRoot $test.file) -Raw | ConvertFrom-Json
+        if ($native.status -cne 'passed' -or !$native.source_unchanged -or $native.source_head -cne $expected) { throw "Native regression is not verified: $($test.file)" }
+        $result = @($native.checks | Where-Object name -eq $test.name)
+        if ($result.Count -ne 1 -or $result[0].exit_code -ne 0 -or $result[0].counts.passed -ne $test.count -or $result[0].counts.failed -ne 0 -or $result[0].counts.ignored -ne 0) { throw "Native regression counts are not complete: $($test.name)" }
+        if ((Get-FileHash -LiteralPath $result[0].log).Hash.ToLowerInvariant() -cne $result[0].sha256) { throw 'Native regression log changed.' }
+        VerifySource $native.source_files
+    }
+    $buildPath = Join-Path $PSScriptRoot 'issue219-acceptance-build-r9.json'
+    $build = Get-Content -LiteralPath $buildPath -Raw | ConvertFrom-Json
+    $browserPath = Join-Path $PSScriptRoot 'issue219-browser-r17.json'
+    $browser = Get-Content -LiteralPath $browserPath -Raw | ConvertFrom-Json
+    if ($build.status -cne 'passed' -or !$build.source_unchanged -or $build.source.head -cne $expected -or
+        $browser.status -cne 'passed' -or !$browser.source_and_binaries_unchanged -or $browser.head -cne $expected -or
+        $browser.source_binding_sha256 -cne (Get-FileHash -LiteralPath $buildPath).Hash.ToLowerInvariant() -or
+        !$browser.fixture_report.acceptance.same_watcher_recovered_after_busy -or
+        !$browser.fixture_report.acceptance.malformed_saved_intent_retired) { throw 'Complete browser/native acceptance is not verified.' }
+    VerifySource $build.source.files
+    $changes = @(& git -C $repo diff --cached --name-only)
+    $expectedChanges = @(
+        'crates/crony-server/src/publication_artifact_tests.rs',
+        'crates/crony-server/src/publication_request_tests.rs',
+        'crates/crony-server/src/publication_requests.rs',
+        'crates/crony-store/src/human_publication_denial_tests.rs',
+        'crates/crony-store/src/human_publication_repository_tests.rs',
+        'crates/crony-store/src/human_publication_request_tests.rs',
+        'crates/crony-store/src/lib.rs',
+        'crates/crony-store/src/publication.rs',
+        'crates/crony-store/src/publication/worker.rs'
+    )
+    if ($changes.Count -ne $expectedChanges.Count -or @(Compare-Object $changes $expectedChanges).Count) { throw 'Unexpected staged source inventory.' }
+    & git -C $repo diff --cached --check
+    if ($LASTEXITCODE) { throw 'Staged whitespace validation failed.' }
+    if (@(& git -C $repo diff --name-only).Count -or @(& git -C $repo ls-files --others --exclude-standard).Count) { throw 'Source is not completely staged.' }
+    $record.head = $expected
+    $record.staged_tree = (& git -C $repo write-tree).Trim()
+    $record.source_file_count = $paths.Count
+    $record.staged_paths = $changes
+    $record.source_binding = $buildPath
+    $record.source_binding_sha256 = (Get-FileHash -LiteralPath $buildPath).Hash.ToLowerInvariant()
+    $record.native_plan = $nativePlan
+    $record.browser_receipt = $browserPath
+    $record.browser_receipt_sha256 = (Get-FileHash -LiteralPath $browserPath).Hash.ToLowerInvariant()
+    $record.status = 'running'
+    [IO.File]::WriteAllText($receiptPath,($record | ConvertTo-Json -Depth 10)+[Environment]::NewLine)
+    & (Join-Path $PSScriptRoot 'run-canonical-r4.ps1') -RepositoryPath $repo -Issue 219 -Revision r9
+    $record.canonical_exit_code = $LASTEXITCODE
+    $canonical = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'issue219-canonical-r9.json') -Raw | ConvertFrom-Json
+    if ($record.canonical_exit_code -or $canonical.status -cne 'passed') { throw 'Canonical validation failed; preserve its actual results.' }
+    if ((& git -C $repo write-tree).Trim() -cne $record.staged_tree) { throw 'Staged source changed during validation.' }
+    VerifySource $build.source.files
+    $record.status = 'passed'
+} catch {
+    $record.status = 'failed'
+    $record.failure = $_.Exception.Message
+} finally {
+    $record.finished_at_utc = [DateTime]::UtcNow.ToString('o')
+    [IO.File]::WriteAllText($receiptPath,($record | ConvertTo-Json -Depth 10)+[Environment]::NewLine)
+    if ($acquired) { $mutex.ReleaseMutex() }
+    $mutex.Dispose()
+}
+[pscustomobject]$record | Select-Object issue,status,head,staged_tree,canonical_exit_code,failure | ConvertTo-Json
+if ($record.status -cne 'passed') { exit 1 }
