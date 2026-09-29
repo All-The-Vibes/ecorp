@@ -1,0 +1,712 @@
+{
+  "issue": 213,
+  "status": "local-serial-policy-validated",
+  "issue_completed": false,
+  "recorded_at_utc": "2026-09-29T08:34:07.425899+00:00",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "tested_tree": "7a554383bb7aacd5f013efb1fabbedc2c129e4a1",
+  "source_file_count": 7146,
+  "physical_files_sha256": "0cafb4ffacc7fa07733f095439b61d236e4ee0aacde9b44263c6e8eed23a79cf",
+  "canonical_checks": [
+    {
+      "name": "migrations",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-compatibility",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-evm",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "repository-docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "node-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3105,
+          "passed": 3040,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      }
+    },
+    {
+      "name": "format",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "clippy",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "rust-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 877,
+          "failed": 0,
+          "ignored": 564,
+          "summaries": 41
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "web-build",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "web-lint",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    }
+  ],
+  "canonical_original_sha256": "e79561ed834736a1e92461138e98abf82b75871de2570d7ecde05ad914b26287",
+  "canonical_complete_physical_source_matches": true,
+  "ambient_rust_test_threads": 8,
+  "actual_rust_argv": [
+    "cargo",
+    "test",
+    "--workspace",
+    "--locked",
+    "--",
+    "--test-threads=1"
+  ],
+  "policy_red": {
+    "tests": 3,
+    "suites": 0,
+    "pass": 0,
+    "fail": 3,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "policy_green": {
+    "tests": 35,
+    "suites": 0,
+    "pass": 35,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "full_diagnostic_binary_sha256": "181798c4d35ce989ac30612d365deceaaee7f57573db75b0726f396a9636643d",
+  "full_diagnostic_lanes": [
+    {
+      "name": "native-default",
+      "counts": {
+        "passed": 281,
+        "failed": 0,
+        "ignored": 5,
+        "measured": 0,
+        "filtered_out": 0
+      },
+      "threads": null,
+      "max_observed_active_git": 12,
+      "process_ownership": {
+        "root_pid": 22272,
+        "ownership": "suspended-native-job",
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "timed_out": false,
+        "timeout_seconds": 1800,
+        "duration_seconds": 122.031,
+        "after_root": {
+          "total_processes": 8633,
+          "active_processes": 0,
+          "terminated_processes": 0
+        },
+        "cleanup": {
+          "total_processes": 8633,
+          "active_processes": 0,
+          "terminated_processes": 0
+        },
+        "all_owned_processes_stopped": true
+      }
+    },
+    {
+      "name": "serial-1",
+      "counts": {
+        "passed": 281,
+        "failed": 0,
+        "ignored": 5,
+        "measured": 0,
+        "filtered_out": 0
+      },
+      "threads": 1,
+      "max_observed_active_git": 1,
+      "process_ownership": {
+        "root_pid": 30760,
+        "ownership": "suspended-native-job",
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "timed_out": false,
+        "timeout_seconds": 1800,
+        "duration_seconds": 786.265,
+        "after_root": {
+          "total_processes": 8633,
+          "active_processes": 0,
+          "terminated_processes": 0
+        },
+        "cleanup": {
+          "total_processes": 8633,
+          "active_processes": 0,
+          "terminated_processes": 0
+        },
+        "all_owned_processes_stopped": true
+      }
+    }
+  ],
+  "limitations": [
+    "Issue213 remains open. Historical parallel and serial failures were not reproduced by the current matched experiments; cause remains inconclusive.",
+    "The native serial Windows contributor command is a supported scheduling policy, not a production lifecycle repair, a parallel stability claim, or removal of existing assertions and deadlines.",
+    "Each diagnostic pair used the same instrumented binary; the selected and full pairs used different builds. Passive instrumentation was removed and production bytes restored before canonical validation.",
+    "Historical long-root, ambient-Git, Windows symlink privilege and private-directory permission observations are distinct; this policy does not diagnose or repair all of them.",
+    "The complete local canonical gate does not replace required hosted CI, CodeQL, code-quality, security or eligible review. Organization-disabled GitHub Actions remains a merge blocker.",
+    "Historical Cargo debt remains 12 advisories: 2 high, 1 moderate, 9 low. This is not a clean audit.",
+    "Ignored, skipped and filtered cases are not passes. Counts overlap across lanes and must not be added as a unique-test total.",
+    "This evidence was added after implementation validation and requires separate source/tree, full-plan, documentation, personal-path, whitespace and committed-secret checks."
+  ],
+  "artifacts": [
+    {
+      "file": "source-equivalence.json",
+      "source_name": "issue213-publication-source-r1.json",
+      "original_sha256": "3b787f4b3cc01378b103261cb7564bc6b365624ec366dcdbc68f05bde08b79c1",
+      "published_sha256": "ecb223bcbf6b0ff9a0132ddee02562a9681f5ca8aaca3c2b46ade3c15567ba5d",
+      "bytes": 1183617,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "reviewed-code.patch.json",
+      "source_name": "complete six-file candidate diff",
+      "original_sha256": "ededa218fe358017429be5de4e7c5a8d50dbe6cacfebe0e9226e82f32c557d5d",
+      "published_sha256": "ea6fa3578dc3d349de2b6a756a3d808e8c7d13250a37ebf7618983e85fe868a4",
+      "bytes": 10403,
+      "transform": "JSON UTF-8 string envelope; decoded patch is the exact original byte sequence",
+      "source_hash_maps": [],
+      "exact_patch_envelope": true
+    },
+    {
+      "file": "canonical-driver.json",
+      "source_name": "issue213-canonical-r2.json",
+      "original_sha256": "1b3ff299c197407eb6c0a24621e80ebe7ce7eca0e54dd551f7740e0d16622748",
+      "published_sha256": "4f4dc232fbed933bd94fab59e6cdd2bca657a86f763d77eebb8b521e57017b6d",
+      "bytes": 595289,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "canonical-source-binding.json",
+      "source_name": "issue213-canonical-bound-r2.json",
+      "original_sha256": "eb096ab3d42769b2554564f88b2a4fa5402ac5d4f142c1392658149992550c78",
+      "published_sha256": "41649cdf210ce5dfbdbcad9bc23ea0dea7e3ba4f7aaef72f10243416ffacfcac",
+      "bytes": 2737679,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "policy-green.json",
+      "source_name": "issue213-plan-green-r1.json",
+      "original_sha256": "d5bede9e570e70493b82c69796828a1e15cf013a42160ea6079a1390c1389e64",
+      "published_sha256": "aec3c8c0cbfc57039ce162a940b54f58cfac1444bb521492573b5075b5f556a7",
+      "bytes": 2691,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; source-file hash maps rendered as ordered path/sha256 objects with lossless reconstruction hashes",
+      "source_hash_maps": [
+        {
+          "json_path": [
+            "source"
+          ],
+          "entries": 10,
+          "canonical_sha256": "ad9232b964620216359945da8344b1ed18b403e7733822ed5551337d9519c30f"
+        }
+      ],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "policy-red.json",
+      "source_name": "issue213-plan-red-r1.json",
+      "original_sha256": "b443e1e18aea5d8bea3b1db0421a0433673b9187631f58624a3d208c50afe31e",
+      "published_sha256": "3be6f5dcbaba2d83ed7d319694ef38d1996acf81e7982da5a29169a54f8c8452",
+      "bytes": 2800,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; source-file hash maps rendered as ordered path/sha256 objects with lossless reconstruction hashes",
+      "source_hash_maps": [
+        {
+          "json_path": [
+            "source"
+          ],
+          "entries": 10,
+          "canonical_sha256": "274be39b65826c3861de3d708bff91994cd21a3b12832eba2e807df6a42de2da"
+        }
+      ],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "canonical-report.json",
+      "source_name": "2026-09-29T07-34-25-056Z-24beb11d-a885-4214-b66e-a9a078e22639-full.json",
+      "original_sha256": "e79561ed834736a1e92461138e98abf82b75871de2570d7ecde05ad914b26287",
+      "published_sha256": "e79561ed834736a1e92461138e98abf82b75871de2570d7ecde05ad914b26287",
+      "bytes": 577565,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "canonical-install-root.log",
+      "source_name": "issue213-canonical-r2-install-root.log",
+      "original_sha256": "7f0bc0d76245cb658615b58c9ef63316b8c15db9a42ebac7d23163d70c2f2606",
+      "published_sha256": "62ac20a837d95d9511818796b68a1d6ba8b28df8585fe053b3af720e63951f1b",
+      "bytes": 84,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "canonical-install-web.log",
+      "source_name": "issue213-canonical-r2-install-web.log",
+      "original_sha256": "9b6a2a2ef3d860a57c9c3cedd88b3e86e378da4957a7600b99b2f9d1efcb930c",
+      "published_sha256": "8f27abefac8829749b23f27fd255b80f9a728ebf38794cf98606aed9afc15fb3",
+      "bytes": 85,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "canonical-install-steward.log",
+      "source_name": "issue213-canonical-r2-install-steward.log",
+      "original_sha256": "a4ea6a5b4ef4ee7c94c343a445a8c4ce77ae5baa79292f89c9c51d64949d559a",
+      "published_sha256": "52995698c9c366ce4723898c79ca26b45e8d26d73587d12fc1135e85227c8915",
+      "bytes": 27,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "canonical-pnpm-check.log",
+      "source_name": "issue213-canonical-r2-pnpm-check.log",
+      "original_sha256": "0c82204c205f4a5901628767fb9af808e96396f919ee3d621ed953a028a128a6",
+      "published_sha256": "0d17909009a2f8867e0fd17179a84a38f2272f9597e2311db8350e21c131e078",
+      "bytes": 9492,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "issue213-plan-red-r1.log",
+      "source_name": "issue213-plan-red-r1.log",
+      "original_sha256": "ec5a36a2c6a75551b911914511755af782e29b1e2a0c1e29d42022b064f1e5d4",
+      "published_sha256": "a535786a87a440282e5ea600032d9d1ea0da220eb40f01d636e0ac1f1b8e276f",
+      "bytes": 3527,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "issue213-plan-green-r1.log",
+      "source_name": "issue213-plan-green-r1.log",
+      "original_sha256": "002747b7bfb49e8ab1bcd5f3f4614b9110374942c032636d942015f8f35efe95",
+      "published_sha256": "002747b7bfb49e8ab1bcd5f3f4614b9110374942c032636d942015f8f35efe95",
+      "bytes": 7861,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "issue213-doc-generation-r1.json",
+      "source_name": "issue213-doc-generation-r1.json",
+      "original_sha256": "0f7ce3cc20f7fb180d4e03e754add7e1b33bcfb6157d030023cad619aa1e0997",
+      "published_sha256": "0448e4566d1d857b2729237cc97794dd88820783c375603ee7e6697a9cdae5c0",
+      "bytes": 403,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "issue213-doc-generation-r1-preview.json",
+      "source_name": "issue213-doc-generation-r1-preview.json",
+      "original_sha256": "326351f16b2d22ed99123000804d648a66ce06419accba303af0ac81baff0890",
+      "published_sha256": "326351f16b2d22ed99123000804d648a66ce06419accba303af0ac81baff0890",
+      "bytes": 2461,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "issue213-full-runner-plan-r1.json",
+      "source_name": "issue213-full-runner-plan-r1.json",
+      "original_sha256": "d785220e6a684821cf1ff36cd7b7fce237d54598f0da04ca75091cdee18c2dbf",
+      "published_sha256": "dfe4671ad2c8760679f56810e90a57dd611963314d931da350bdbcd516a1219a",
+      "bytes": 1907,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "issue213-export-diagnostic-analysis-r2.json",
+      "source_name": "issue213-export-diagnostic-analysis-r2.json",
+      "original_sha256": "13bcbb1533a693b7ebee02970fc3fd34fba38d1e76cb12ff3e8ef57ef9d84c68",
+      "published_sha256": "ca8590aa1058661fca6b40ecb970bf3cb45bb2bdced09af94d73fc1c981ced37",
+      "bytes": 25419,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "diagnostics/issue213-export-diagnostics-r2.json",
+      "source_name": "issue213-export-diagnostics-r2.json",
+      "original_sha256": "538b7dbad8c50de539acde4924b993116709a1abd9e52af4a34bd7f8060a70f6",
+      "published_sha256": "e3dcc57029c28b42a12810d67415adb01fafa9c6fb7a044a6a76171878ef2b21",
+      "bytes": 15870,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; source-file hash maps rendered as ordered path/sha256 objects with lossless reconstruction hashes",
+      "source_hash_maps": [
+        {
+          "json_path": [
+            "original_files"
+          ],
+          "entries": 4,
+          "canonical_sha256": "908d449daf4d3cda821d657e72926b438f8be1aa6b07a27b246e49b3e0689963"
+        },
+        {
+          "json_path": [
+            "diagnostic_files"
+          ],
+          "entries": 4,
+          "canonical_sha256": "cf3455796c1323657136b075bc7d2e71c2f6d944b39bb04cbc1004c05c5bb744"
+        }
+      ],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "diagnostics/issue213-export-diagnostic-source-r2.patch.json",
+      "source_name": "temporary-diagnostics.patch",
+      "original_sha256": "5eb606a277d65e309b0cdf8d2ac8d158027f21413473d363fe980371e7fdee53",
+      "published_sha256": "0d092982edef994998935a2f83a659bb174cda3f5b1812178682c5627b3685f1",
+      "bytes": 4511,
+      "transform": "JSON UTF-8 string envelope; decoded patch is the exact original byte sequence",
+      "source_hash_maps": [],
+      "exact_patch_envelope": true
+    },
+    {
+      "file": "diagnostics/issue213-export-diagnostic-r2-build.log",
+      "source_name": "issue213-export-diagnostic-r2-build.log",
+      "original_sha256": "3f7a9fbf10f626a438c7045d5de43bb6719612be5fb42a06d2298d4122eb1f67",
+      "published_sha256": "d2eb9d84b5587880f10e5a81c118e19278f78013134a0ad6b5d9c9c37077a29d",
+      "bytes": 268090,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "diagnostics/issue213-export-diagnostic-r2-list.log",
+      "source_name": "issue213-export-diagnostic-r2-list.log",
+      "original_sha256": "6aec7808e87e302c1b586b1d5a82bee7427fd4388023388eb781261cd2dc5586",
+      "published_sha256": "6aec7808e87e302c1b586b1d5a82bee7427fd4388023388eb781261cd2dc5586",
+      "bytes": 4823,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "diagnostics/issue213-export-diagnostic-r2-parallel-8.log",
+      "source_name": "issue213-export-diagnostic-r2-parallel-8.log",
+      "original_sha256": "f3c69f92864edbb7a980f0a11e3020e7b27f1a8b8e24904bb29bbb9c75d79c04",
+      "published_sha256": "69d1a9379b6b63d0b3cb041d20c443d9b9155e4c21d2e9e82a3c23e1de72d2c0",
+      "bytes": 571838,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "diagnostics/issue213-export-diagnostic-r2-serial-1.log",
+      "source_name": "issue213-export-diagnostic-r2-serial-1.log",
+      "original_sha256": "f07d788fcdbf75eb30ce69f26dcd792b14d2b912e799282a5f5677862e50ee73",
+      "published_sha256": "7dee03b3683964ac55f11cc82c7afa55cc5610f6f47aa3622b4ae5dd76e11f1d",
+      "bytes": 573121,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "diagnostics/issue213-export-diagnostic-r2-parallel-8-spans.json",
+      "source_name": "issue213-export-diagnostic-r2-parallel-8-spans.json",
+      "original_sha256": "8c2cd8ff19199f84b948a12a63fc74e28ce4f9d37b495363fa8585b9506c6e5b",
+      "published_sha256": "41ece7a439ce6cffcd77bb994fa9c53a35a9c002f2a119eba6e001f5c7ff0321",
+      "bytes": 613652,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "diagnostics/issue213-export-diagnostic-r2-serial-1-spans.json",
+      "source_name": "issue213-export-diagnostic-r2-serial-1-spans.json",
+      "original_sha256": "f40e0a225a3dc46a6151c3c2c41d5f227bc779a157ababe28a49cd2ca06e4f6b",
+      "published_sha256": "3556661bfd70015e08b35174136055ac2e06a4500c2a14294d0fa150cfc0fe7d",
+      "bytes": 615086,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "diagnostics/issue213-full-runner-comparison-r1.json",
+      "source_name": "issue213-full-runner-comparison-r1.json",
+      "original_sha256": "11ffe41910f73d287e83e916fb5e19dd05a51737fd6d74e252a80a8d5a52ffeb",
+      "published_sha256": "138d9092475cf5a589a5619f612b20c494dd1dfcf2c50284c32777365128b599",
+      "bytes": 36719,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; source-file hash maps rendered as ordered path/sha256 objects with lossless reconstruction hashes",
+      "source_hash_maps": [
+        {
+          "json_path": [
+            "original_files"
+          ],
+          "entries": 4,
+          "canonical_sha256": "908d449daf4d3cda821d657e72926b438f8be1aa6b07a27b246e49b3e0689963"
+        },
+        {
+          "json_path": [
+            "diagnostic_files"
+          ],
+          "entries": 4,
+          "canonical_sha256": "cf3455796c1323657136b075bc7d2e71c2f6d944b39bb04cbc1004c05c5bb744"
+        }
+      ],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "diagnostics/issue213-full-runner-source-r1.patch.json",
+      "source_name": "temporary-diagnostics.patch",
+      "original_sha256": "5eb606a277d65e309b0cdf8d2ac8d158027f21413473d363fe980371e7fdee53",
+      "published_sha256": "0d092982edef994998935a2f83a659bb174cda3f5b1812178682c5627b3685f1",
+      "bytes": 4511,
+      "transform": "JSON UTF-8 string envelope; decoded patch is the exact original byte sequence",
+      "source_hash_maps": [],
+      "exact_patch_envelope": true
+    },
+    {
+      "file": "diagnostics/issue213-full-runner-r1-build.log",
+      "source_name": "issue213-full-runner-r1-build.log",
+      "original_sha256": "cf90ecbf7fa6c14e6db6dc01a9443a2af9f807071ea0474b8ad24d4dbcf7de09",
+      "published_sha256": "12e8c3f476261a059a54c1826e7a87c3177c763d6618307c9be00d175834f714",
+      "bytes": 268090,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "diagnostics/issue213-full-runner-r1-list.log",
+      "source_name": "issue213-full-runner-r1-list.log",
+      "original_sha256": "65846dd9f20f47747a1a936233064f5c4472d0b5063f02fc918c2669ea5d255d",
+      "published_sha256": "65846dd9f20f47747a1a936233064f5c4472d0b5063f02fc918c2669ea5d255d",
+      "bytes": 26147,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "diagnostics/issue213-full-runner-r1-native-default.log",
+      "source_name": "issue213-full-runner-r1-native-default.log",
+      "original_sha256": "e89457e004263576cd70ec79245329c90af8b78a0afc4f2d48a1563b098f96f2",
+      "published_sha256": "46f52a82b55dc90f7a9d6c33a65bc581b38254fd2bd9371edf5fb148d3fe1876",
+      "bytes": 1358517,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "diagnostics/issue213-full-runner-r1-serial-1.log",
+      "source_name": "issue213-full-runner-r1-serial-1.log",
+      "original_sha256": "5619fdc5f9f2d7dac5c1222817a56ee1d78c15661a13e8ab81f95ff8929553a0",
+      "published_sha256": "dcd1fa9d10d171383c9c60c1f19add8a02d20808c5567339a3a0f8ecca8185ee",
+      "bytes": 1360612,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "diagnostics/issue213-full-runner-r1-native-default-spans.json",
+      "source_name": "issue213-full-runner-r1-native-default-spans.json",
+      "original_sha256": "801a07c76594c2fe196a9e771995bcb40c06f2e519973745d1b5e519d43824ac",
+      "published_sha256": "bfa66e7fbf96fcd7032902a97dbfd7b9556df0b1d3cb93f9ec08bc5d747b3827",
+      "bytes": 1465078,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "diagnostics/issue213-full-runner-r1-serial-1-spans.json",
+      "source_name": "issue213-full-runner-r1-serial-1-spans.json",
+      "original_sha256": "245c524f1271d58a3a40b68742881b2b82b17fcbc65c2e272f968685916aed10",
+      "published_sha256": "01749497cb69d780c22482a7c479b4ebcc40b660d7fbfcf145ac5e82141c4e42",
+      "bytes": 1467474,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "helpers/run-issue213-canonical-bound-r2.ps1.txt",
+      "source_name": "run-issue213-canonical-bound-r2.ps1",
+      "original_sha256": "a03d9f9bb2f4303e6e8ae2958b6b37af33ce67a4ede58b31ba69b3b90ce9f2c5",
+      "published_sha256": "cb9e8cbaf25649e9020da790970ba64cdd211c97a7d902fe86c3604a3a15904a",
+      "bytes": 7909,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "helpers/run-issue213-canonical-plan-r1.ps1.txt",
+      "source_name": "run-issue213-canonical-plan-r1.ps1",
+      "original_sha256": "c69b815c0209f0970c1d7f6def303428d6f8de8847d371785b047586fd6121eb",
+      "published_sha256": "b4323c9430f1b25ce01acd6432cf0295b9b69fc762cf96f952e4ac8bb1b8b62f",
+      "bytes": 4645,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "helpers/run-issue213-plan-regressions-r1.py.txt",
+      "source_name": "run-issue213-plan-regressions-r1.py",
+      "original_sha256": "ad8b746aa8948ea6078ad134595a3453f61a3f21d2b8e90ce066a79b501e64bd",
+      "published_sha256": "bf2ad5645222191f2686d3c51e62cd872df9131c92d55582ff78a55edf3ba443",
+      "bytes": 4903,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "helpers/run-issue213-export-diagnostics-r2.py.txt",
+      "source_name": "run-issue213-export-diagnostics-r2.py",
+      "original_sha256": "a886868383e265da006c49e5b4e86b3aaf4e2757f65d3abf188247ba00ab4c1d",
+      "published_sha256": "0332a237c201aabfd6b135084b77cf185d6f5e02ad3509368837107d3ebcee09",
+      "bytes": 15148,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "helpers/run-issue213-full-runner-comparison-r1.py.txt",
+      "source_name": "run-issue213-full-runner-comparison-r1.py",
+      "original_sha256": "aa5fe7bb1920ac84d0404f7d1543796e8eacb20f5ac669cf97f98ddf3202776e",
+      "published_sha256": "56f002654d29ca26d6fe50d24c9a48d418dcf7c60552a4d16b3e9977e019a21c",
+      "bytes": 15239,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "helpers/prepare-issue213-full-runner-r1.py.txt",
+      "source_name": "prepare-issue213-full-runner-r1.py",
+      "original_sha256": "23f159124ef11a8d4b89b5ae64003142fe2e37897a12d528928604ef051482d0",
+      "published_sha256": "23f159124ef11a8d4b89b5ae64003142fe2e37897a12d528928604ef051482d0",
+      "bytes": 7234,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "helpers/issue213-owned-windows-process-r1.py.txt",
+      "source_name": "issue213-owned-windows-process-r1.py",
+      "original_sha256": "8f7cd362fa5678c0ae43567f79787aaab30c5a84567468e2176d7c72ef741c9e",
+      "published_sha256": "8f7cd362fa5678c0ae43567f79787aaab30c5a84567468e2176d7c72ef741c9e",
+      "bytes": 7796,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "helpers/issue213-passive-diagnostics-r1.rs.txt.txt",
+      "source_name": "issue213-passive-diagnostics-r1.rs.txt",
+      "original_sha256": "57f6272b22a3e8b36c8a3a7fb331f5f85f5f4b5952c503ba1780915fb06f9c23",
+      "published_sha256": "57f6272b22a3e8b36c8a3a7fb331f5f85f5f4b5952c503ba1780915fb06f9c23",
+      "bytes": 3528,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from publication copy only",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "history/canonical-wait-r1.json",
+      "source_name": "issue213-canonical-bound-r1.json",
+      "original_sha256": "a7f8b372a26835ab27677732b7b446a8647afd8c0e6bc92da20ed34b67df014b",
+      "published_sha256": "ad5d80e4faca7857818239c9211f6ecff1e0d4d8703a7999c04855cb16236960",
+      "bytes": 1369382,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    },
+    {
+      "file": "historical-observations.json",
+      "source_name": "issue213-observation-r1.json",
+      "original_sha256": "eb4e9013cfb129120907089c18cdfd2ad55062fac72322169c9df0844202e058",
+      "published_sha256": "eb4e9013cfb129120907089c18cdfd2ad55062fac72322169c9df0844202e058",
+      "bytes": 15499,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>",
+      "source_hash_maps": [],
+      "exact_patch_envelope": false
+    }
+  ]
+}

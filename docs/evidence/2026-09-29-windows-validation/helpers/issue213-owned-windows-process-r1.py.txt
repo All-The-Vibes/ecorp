@@ -1,0 +1,169 @@
+"""Own diagnostic descendants with a native Windows Job Object.
+
+This local evidence helper adapts the suspended-launch/job pattern already used
+by tools/launch_verified_evidence.py. It is not a product execution mechanism or
+an operating-system sandbox. No executable, environment, or output is trusted on
+the strength of process ownership alone.
+"""
+import contextlib
+import ctypes as c
+from ctypes import wintypes as w
+import hashlib
+import os
+from pathlib import Path
+import subprocess
+import time
+
+assert os.name == "nt"
+kernel = c.WinDLL("kernel32", use_last_error=True)
+native = c.WinDLL("ntdll")
+kernel.CloseHandle.argtypes = [w.HANDLE]
+kernel.CloseHandle.restype = w.BOOL
+kernel.CreateJobObjectW.argtypes = [c.c_void_p, w.LPCWSTR]
+kernel.CreateJobObjectW.restype = w.HANDLE
+kernel.SetInformationJobObject.argtypes = [w.HANDLE, c.c_int, c.c_void_p, w.DWORD]
+kernel.SetInformationJobObject.restype = w.BOOL
+kernel.AssignProcessToJobObject.argtypes = [w.HANDLE, w.HANDLE]
+kernel.AssignProcessToJobObject.restype = w.BOOL
+kernel.TerminateJobObject.argtypes = [w.HANDLE, w.UINT]
+kernel.TerminateJobObject.restype = w.BOOL
+kernel.QueryInformationJobObject.argtypes = [w.HANDLE, c.c_int, c.c_void_p, w.DWORD, c.POINTER(w.DWORD)]
+kernel.QueryInformationJobObject.restype = w.BOOL
+kernel.CreateMutexW.argtypes = [c.c_void_p, w.BOOL, w.LPCWSTR]
+kernel.CreateMutexW.restype = w.HANDLE
+kernel.WaitForSingleObject.argtypes = [w.HANDLE, w.DWORD]
+kernel.WaitForSingleObject.restype = w.DWORD
+kernel.ReleaseMutex.argtypes = [w.HANDLE]
+kernel.ReleaseMutex.restype = w.BOOL
+native.NtResumeProcess.argtypes = [w.HANDLE]
+native.NtResumeProcess.restype = w.LONG
+
+
+class Limits(c.Structure):
+    _fields_ = [("process_time", c.c_int64), ("job_time", c.c_int64),
+                ("flags", w.DWORD), ("minimum", c.c_size_t), ("maximum", c.c_size_t),
+                ("processes", w.DWORD), ("affinity", c.c_size_t),
+                ("priority", w.DWORD), ("scheduling", w.DWORD)]
+
+
+class ExtendedLimits(c.Structure):
+    _fields_ = [("basic", Limits), ("io", c.c_uint64 * 6),
+                ("process_memory", c.c_size_t), ("job_memory", c.c_size_t),
+                ("peak_process_memory", c.c_size_t), ("peak_job_memory", c.c_size_t)]
+
+
+class Accounting(c.Structure):
+    _fields_ = [("user_time", c.c_int64), ("kernel_time", c.c_int64),
+                ("period_user_time", c.c_int64), ("period_kernel_time", c.c_int64),
+                ("page_faults", w.DWORD), ("total_processes", w.DWORD),
+                ("active_processes", w.DWORD), ("terminated_processes", w.DWORD)]
+
+
+def _check(ok, action):
+    if not ok:
+        raise OSError(c.get_last_error(), action)
+
+
+def _accounting(job):
+    value = Accounting()
+    _check(kernel.QueryInformationJobObject(job, 1, c.byref(value), c.sizeof(value), None),
+           "Unable to verify owned diagnostic process accounting")
+    return {name: int(getattr(value, name)) for name in
+            ["total_processes", "active_processes", "terminated_processes"]}
+
+
+@contextlib.contextmanager
+def target_mutex(target):
+    absolute = str(Path(target).resolve()).lower()
+    key = hashlib.sha256(absolute.encode("utf-8")).hexdigest().upper()
+    name = "Local\\ECorpCompletionCargo" + key
+    mutex = kernel.CreateMutexW(None, False, name)
+    _check(mutex, "Unable to create the diagnostic target mutex")
+    acquired = False
+    try:
+        status = kernel.WaitForSingleObject(mutex, 0)
+        if status not in (0, 0x80):  # acquired or abandoned by a former owner
+            raise RuntimeError("Another validation owns this diagnostic target")
+        acquired = True
+        yield name
+    finally:
+        try:
+            if acquired:
+                _check(kernel.ReleaseMutex(mutex), "Unable to release diagnostic target mutex")
+        finally:
+            _check(kernel.CloseHandle(mutex), "Unable to close diagnostic target mutex")
+
+
+def run_owned(args, *, cwd, env, timeout):
+    """Return a CompletedProcess and verified lifetime receipt, including timeout.
+
+    Assignment happens before any child user code executes. Normal completion
+    still reaps any descendants. The job is non-inherited and forbids breakaway;
+    closing the helper also kills descendants if an outer supervisor stops it.
+    """
+    assert timeout > 0 and all(isinstance(item, (str, Path)) for item in args)
+    argv = [str(item) for item in args]
+    job = kernel.CreateJobObjectW(None, None)
+    _check(job, "Unable to create diagnostic process job")
+    process = None
+    assigned = False
+    completed = None
+    timed_out = False
+    after_root = None
+    cleanup = None
+    started = time.monotonic()
+    try:
+        limits = ExtendedLimits()
+        limits.basic.flags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+        _check(kernel.SetInformationJobObject(job, 9, c.byref(limits), c.sizeof(limits)),
+               "Unable to constrain diagnostic process lifetime")
+        process = subprocess.Popen(argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   close_fds=True, creationflags=0x4 | 0x08000000)
+        handle = w.HANDLE(int(process._handle))
+        _check(kernel.AssignProcessToJobObject(job, handle),
+               "Unable to assign suspended diagnostic process to owned job")
+        assigned = True
+        if native.NtResumeProcess(handle) != 0:
+            raise RuntimeError("Unable to resume owned diagnostic process")
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            timed_out = True
+            _check(kernel.TerminateJobObject(job, 1), "Unable to stop timed-out diagnostic process tree")
+            stdout, stderr = process.communicate(timeout=15)
+        after_root = _accounting(job)
+        completed = subprocess.CompletedProcess(argv, process.returncode, stdout, stderr)
+    finally:
+        try:
+            if process is not None:
+                if assigned:
+                    remaining = _accounting(job)
+                    if remaining["active_processes"]:
+                        _check(kernel.TerminateJobObject(job, 1), "Unable to stop remaining owned diagnostic descendants")
+                elif process.poll() is None:
+                    # This child is still suspended; it could not spawn descendants.
+                    process.kill()
+                process.wait(timeout=15)
+                if assigned:
+                    deadline = time.monotonic() + 10
+                    while True:
+                        cleanup = _accounting(job)
+                        if cleanup["active_processes"] == 0:
+                            break
+                        if time.monotonic() >= deadline:
+                            raise RuntimeError("Owned diagnostic descendants did not stop within the cleanup bound")
+                        time.sleep(0.05)
+                for pipe in (process.stdout, process.stderr):
+                    if pipe is not None:
+                        pipe.close()
+        finally:
+            # Kill-on-close is also a final fallback when explicit cleanup raises.
+            _check(kernel.CloseHandle(job), "Unable to close diagnostic process job")
+    assert completed is not None and cleanup is not None and cleanup["active_processes"] == 0
+    return completed, {"root_pid": process.pid, "ownership": "suspended-native-job",
+                       "kill_on_close": True, "breakaway_allowed": False,
+                       "timed_out": timed_out, "timeout_seconds": timeout,
+                       "duration_seconds": round(time.monotonic() - started, 3),
+                       "after_root": after_root, "cleanup": cleanup,
+                       "all_owned_processes_stopped": True}
