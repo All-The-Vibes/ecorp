@@ -29,6 +29,7 @@ function contextFor(selected = scope, phase = 'published') {
   return {
     work_item: {
       id: selected.workItemId, corp_id: selected.corpId, mission_id: selected.missionId,
+      state: phase === 'published' ? 'published' : phase === 'requested' ? 'verified' : 'publishing',
       version: 9, source_repository_owner: owner, source_repository_name: name,
       source_issue_number: 71, source_issue_url: `https://github.com/${owner}/${name}/issues/71`,
       policy: { secret: 'not-for-result-state' },
@@ -247,6 +248,44 @@ test('unpublished source stays bound to the selected run and contains no raw aut
     { id: 'run-a', verification_sha256: 'f'.repeat(64) },
     { id: 'run-a', deliverable_sha256: null },
   ]) assert.equal(missionResultPresentation(scope, load, selected).state, 'unavailable')
+})
+
+for (const state of [
+  'claimed', 'mission_created', 'running', 'blocked', 'awaiting_approval',
+  'verification_failed', 'publishing', 'published', 'failed', 'cancelled',
+  undefined, null, 'unknown',
+]) {
+  test(`unpublished ready source cannot offer publication while the exact Factory state is ${String(state)}`, async () => {
+    const input = contextFor(scope, 'requested')
+    input.publication = null
+    setAt(input, 'work_item.state', state)
+    const load = await readResult(input)
+    assert.equal(load.status, 'ready')
+    assert.deepEqual(load.context.candidates, [])
+    for (const selected of [undefined, { id: 'run-a', task_id: 'task-a' }]) {
+      const view = missionResultPresentation(scope, load, selected)
+      assert.equal(view.state, 'none')
+      assert.equal(view.deliverable, null)
+      assert.equal(view.pullRequestUrl, null)
+    }
+    input.source_deliverables[0].uri = 'https://untrusted.invalid/'
+    unavailable(await readResult(input))
+  })
+}
+
+test('existing publication remains visible after the Factory item leaves verified', async () => {
+  for (const [phase, itemState, expected] of [
+    ['requested', 'publishing', 'pending'],
+    ['publishing', 'publishing', 'pending'],
+    ['published', 'published', 'published'],
+  ]) {
+    const input = contextFor(scope, phase)
+    input.work_item.state = itemState
+    const view = missionResultPresentation(scope, await readResult(input))
+    assert.equal(view.state, expected)
+    assert.equal(view.publication.id, input.publication.id)
+    assert.equal(view.deliverable.id, input.source_deliverables[0].id)
+  }
 })
 
 test('unpublished alternatives require explicit selection and never pick the first available run', async () => {

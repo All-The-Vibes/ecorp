@@ -1,0 +1,91 @@
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+
+EV = Path(__file__).resolve().parent
+OUT = EV / "issue219-screenshot-review-r10.json"
+REPORT = Path(r"<USERPROFILE>\code\qa\ecorp-issue219-browser-r21\evidence\browser\browser-publication-report.json")
+BUILD = EV / "issue219-acceptance-build-r10.json"
+WRAPPER = EV / "issue219-browser-r21.json"
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def load(path):
+    return json.loads(path.read_text(encoding="utf-8-sig"))
+
+
+ui = load(REPORT)
+wrapper = load(WRAPPER)
+invocation = load(EV / "issue219-readiness-validation-r1.json")
+assert invocation["status"] == "passed" and invocation["source_unchanged"]
+assert invocation["canonical_exit_code"] == 0
+assert invocation["build_receipt_sha256"] == sha(BUILD)
+assert invocation["canonical_receipt_sha256"] == sha(EV / "issue219-canonical-r10.json")
+assert ui["status"] == wrapper["status"] == "passed"
+assert wrapper["source_and_binaries_unchanged"]
+assert wrapper["source_binding_sha256"] == sha(BUILD)
+assert len(ui["screenshots"]) == 20
+assert {shot["viewport"]["width"] for shot in ui["screenshots"]} == {390, 1440}
+assert not ui["blocked_requests"] and not ui["page_errors"]
+assert ui["owned_server_stopped"]
+for shot in ui["screenshots"]:
+    assert sha(Path(shot["path"])) == shot["sha256"]
+    assert shot["layout"]["document_width"] == shot["layout"]["viewport_width"]
+    assert shot["layout"]["card_client_width"] == shot["layout"]["card_scroll_width"]
+assert len(ui["readiness_context_reads"]) == 4
+assert {read["work_item_state"] for read in ui["readiness_context_reads"]} == {"awaiting_approval", "verified"}
+assert ui["readiness_before_verification"]["publication_controls"] == 0
+assert ui["readiness_before_verification"]["publication_mutations"] == 0
+assert ui["readiness_before_verification"]["native_lifecycle"]
+assert not ui["readiness_before_verification"]["state_injection"]
+assert ui["readiness_after_verification"]["factory_state"] == "verified"
+assert ui["readiness_after_verification"]["selected_run_unchanged"]
+assert ui["readiness_after_verification"]["mission_refresh_from_native_event"]
+assert not ui["readiness_fixture_decision"]["real_human_decision"]
+
+record = {
+    "issue": 219,
+    "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+    "status": "inspected",
+    "reviewer_kind": "Codex assistant visual inspection; not an independent human approval",
+    "method": "All twenty original r21 PNGs were opened with view_image(detail='original') and visually inspected across the continued review. The first eight were inspected before context compaction and the remaining twelve afterward. Original PNG hashes and recorded layout measurements were separately verified; no image modification or recapture.",
+    "head": invocation["head"],
+    "tested_tree": invocation["staged_tree"],
+    "candidate_is_uncommitted": True,
+    "source_binding": str(BUILD),
+    "source_binding_sha256": sha(BUILD),
+    "wrapper": str(WRAPPER),
+    "wrapper_sha256": sha(WRAPPER),
+    "browser_report": str(REPORT),
+    "browser_report_sha256": sha(REPORT),
+    "screenshots": ui["screenshots"],
+    "readiness_context_reads": ui["readiness_context_reads"],
+    "observations": [
+        "Twenty screenshots cover ten states at both 390px and 1440px; they are not twenty independent scenarios.",
+        "Pending Factory work shows This outcome needs review and Review this run without publication controls. Pending Mission shows Awaiting an eligible reviewer, one passing check and a waiting outcome; source downloads remain available.",
+        "After the synthetic native verification decision, Mission and Factory show Send this result for review, Preview pull request, Download source bundle and Refresh result. The selected run remains 14996952-2a7f-46f4-8443-2da4418fed9d.",
+        "Exact-result preview identifies the repository, selected commit b58fe4fa3cfab455583fdc30462f954ec8187a71, selected run and delivery branch, with Request pull request, Download source bundle and Refresh result. Long identifiers wrap inside the narrow card.",
+        "Waiting for a trusted publisher states that the request is saved and the user can leave the page. Download and refresh remain available without another request action.",
+        "Preparing the pull request shows Publishing and states that no pull-request link has been confirmed. The source commit remains b58fe4fa3cfa after caller reconnect.",
+        "Your pull request is ready shows Published, Open pull request #51 and Download source bundle for b58fe4fa3cfa. Publication is explicitly separate from merging or deployment. The first mobile capture retains an earlier Publishing intake label; the subsequent desktop capture has Published intake and zero active items.",
+        "The controlled Project failure shows Publication needs attention and retains Open pull request #52 and Download source bundle for d76052a21278. The copy explains that the PR exists but publication has not finished and no new run is needed to view it.",
+        "The malformed saved request shows Publication needs attention for fdbf29dba2c4. Download source bundle and Refresh result remain available without a fabricated PR link or repeated request action. Source and verification history are explicitly preserved.",
+        "Publication content and action buttons fit both widths. The keyboard-focused Skip to workspace control overlaps portions of existing headings or card edges in several captures without covering publication action buttons. The existing independent-review prompt is tall and narrow at 390px. No new readiness-layout defect was established.",
+        "Recorded browser assertions found no horizontal overflow, blocked requests or page errors. The four native context GET receipts corroborate the pending and verified Factory/Mission states."
+    ],
+    "limitations": [
+        "Controlled fixture with development authentication, deterministic providers and simulated GitHub; zero real provider calls and zero real GitHub mutations.",
+        "The Bob verification decision is automated synthetic fixture activity through the native endpoint, not a human or GitHub approval.",
+        "Visual inspection supplements browser interactions and native receipts. It is not independent human approval or proof of live GitHub publication.",
+        "Context GET receipts do not assert a response Cache-Control header. Explicit Review this run navigation triggers the fresh Mission context; ordinary tab visibility is not asserted to refetch."
+    ]
+}
+assert record["head"] == "08f041f267f403f69f948666170f8e915104dd6f"
+assert record["tested_tree"] == "50a7d97fa6497fa96bb0d9e4939012c84ffb3ed8"
+with OUT.open("x", encoding="utf-8", newline="\n") as stream:
+    stream.write(json.dumps(record, indent=2) + "\n")
+print(json.dumps({"status": record["status"], "screenshots": len(ui["screenshots"]), "tested_tree": record["tested_tree"], "receipt": str(OUT)}))

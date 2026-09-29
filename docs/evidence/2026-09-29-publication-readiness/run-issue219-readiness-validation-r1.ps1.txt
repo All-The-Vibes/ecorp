@@ -1,0 +1,58 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$repo = '<USERPROFILE>\.codex\worktrees\issue219-publication\ecorp'
+$expected = '08f041f267f403f69f948666170f8e915104dd6f'
+$receiptPath = Join-Path $PSScriptRoot 'issue219-readiness-validation-r1.json'
+if (Test-Path -LiteralPath $receiptPath) { throw 'Preserve the existing validation receipt.' }
+$record = [ordered]@{issue=219;pr=380;head=$expected;status='preparing';started_at_utc=[DateTime]::UtcNow.ToString('o');purpose='Exact Factory verified-state admission for both publication request views';source_unchanged=$false}
+function Save { [IO.File]::WriteAllText($receiptPath,($record | ConvertTo-Json -Depth 14)+[Environment]::NewLine) }
+$key = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes((Join-Path $repo 'target').ToLowerInvariant())))
+$mutex = [Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$key")
+$locked = $false
+try {
+    if ((& git -C $repo rev-parse HEAD).Trim() -cne $expected -or (& git -C $repo branch --show-current).Trim() -cne 'codex/issue219-publication-intent') { throw 'Unexpected source identity.' }
+    $wanted = @('apps/web/src/missionResultContext.ts','apps/web/src/missionResultContext.test.mjs','apps/web/src/workResultCard.test.mjs')
+    $staged = @(& git -C $repo diff --cached --name-only)
+    if ($staged.Count -ne $wanted.Count -or @(Compare-Object $staged $wanted).Count -or @(& git -C $repo diff --name-only).Count -or @(& git -C $repo ls-files --others --exclude-standard).Count) { throw 'Unexpected source inventory.' }
+    $record.staged_paths=$staged
+    $record.staged_tree=(& git -C $repo write-tree).Trim()
+    $record.status='building'
+    Save
+    & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'build-issue219-acceptance-r10.ps1')
+    if ($LASTEXITCODE) { throw 'Acceptance build failed; preserve its receipt.' }
+    $buildPath=Join-Path $PSScriptRoot 'issue219-acceptance-build-r10.json'
+    $build=Get-Content -LiteralPath $buildPath -Raw | ConvertFrom-Json
+    if ($build.status -cne 'passed' -or !$build.source_unchanged -or $build.source.head -cne $expected) { throw 'Acceptance build is not source-stable.' }
+    $record.build_receipt=$buildPath
+    $record.build_receipt_sha256=(Get-FileHash -LiteralPath $buildPath).Hash.ToLowerInvariant()
+    try { $locked=$mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $locked=$true }
+    if (!$locked) { throw 'An active validation owns this target.' }
+    $record.status='running-canonical'
+    Save
+    & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'run-canonical-r4.ps1') -RepositoryPath $repo -Issue 219 -Revision r10
+    $record.canonical_exit_code=$LASTEXITCODE
+    $canonicalPath=Join-Path $PSScriptRoot 'issue219-canonical-r10.json'
+    $canonical=Get-Content -LiteralPath $canonicalPath -Raw | ConvertFrom-Json
+    $record.canonical_receipt=$canonicalPath
+    $record.canonical_receipt_sha256=(Get-FileHash -LiteralPath $canonicalPath).Hash.ToLowerInvariant()
+    if ($record.canonical_exit_code -or $canonical.status -cne 'passed') { throw 'Canonical validation failed; preserve actual results.' }
+    if ((& git -C $repo write-tree).Trim() -cne $record.staged_tree -or (& git -C $repo rev-parse HEAD).Trim() -cne $expected) { throw 'Source identity changed during validation.' }
+    $paths=@(& git -C $repo ls-files --cached --others --exclude-standard | Sort-Object -Unique)
+    if ($paths.Count -ne $build.source.files.Count -or @(Compare-Object $paths @($build.source.files.path)).Count) { throw 'Physical source inventory changed.' }
+    foreach ($file in $build.source.files) {
+        if ((Get-FileHash -LiteralPath (Join-Path $repo $file.path)).Hash.ToLowerInvariant() -cne $file.sha256) { throw "Physical source changed: $($file.path)" }
+    }
+    $record.source_unchanged=$true
+    $record.status='passed'
+} catch {
+    $record.status='failed'
+    $record.failure=$_.Exception.Message
+} finally {
+    $record.finished_at_utc=[DateTime]::UtcNow.ToString('o')
+    Save
+    if ($locked) { $mutex.ReleaseMutex() }
+    $mutex.Dispose()
+}
+[pscustomobject]$record | Select-Object issue,pr,status,head,canonical_exit_code,source_unchanged,failure | ConvertTo-Json
+if ($record.status -cne 'passed') { exit 1 }

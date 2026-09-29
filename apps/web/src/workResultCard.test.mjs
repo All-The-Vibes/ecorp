@@ -62,6 +62,7 @@ function contextFor(selected = scope, {
   const issueUrl = `https://github.com/${owner}/${name}/issues/71`
   const work_item = {
     id: selected.workItemId, corp_id: selected.corpId, mission_id: selected.missionId,
+    state: phase === 'published' ? 'published' : phase === 'requested' || phase === null ? 'verified' : 'publishing',
     version: 9, source_repository_owner: owner, source_repository_name: name,
     source_issue_number: 71, source_issue_url: issueUrl,
   }
@@ -993,7 +994,41 @@ async function loadAppPublicationContext(view, context) {
   assert.ok(view.calls.every((call) => call.init.method === 'GET'), 'loading an available result never creates intent')
 }
 
-test('actual App requests the exact verified result and then shows durable waiting, including a running mission', async () => {
+test('actual App withholds publication until the exact Factory context is verified, despite a ready snapshot', async () => {
+  for (const status of ['running', 'completed']) {
+    const view = appResultFixture()
+    try {
+      view.update({
+        ...view.props,
+        mission: { ...view.props.mission, status },
+        factoryItem: { ...view.props.factoryItem, state: 'verified' },
+      })
+      const running = appUnpublishedContext()
+      running.work_item.state = 'running'
+      await loadAppPublicationContext(view, running)
+      assert.doesNotMatch(text(view.tree), /Preview pull request|Request pull request/)
+      assert.equal(view.calls.length, 2)
+      assert.equal(view.pinned, deliveredRunId)
+      view.update({
+        ...view.props,
+        factoryItem: { ...view.props.factoryItem, version: view.props.factoryItem.version + 1 },
+      })
+      await view.flush()
+      assert.equal(view.calls.length, 3)
+      assert.doesNotMatch(text(view.tree), /Preview pull request|Request pull request/)
+      const verified = appUnpublishedContext()
+      verified.work_item.version = view.props.factoryItem.version
+      view.calls[2].response.resolve(verified)
+      await view.flush()
+      assert.match(text(view.tree), /Preview pull request/)
+      assert.ok(view.calls.every((call) => call.init.method === 'GET'))
+      assert.deepEqual(view.storageWrites, [])
+      assert.deepEqual(view.actions, [])
+    } finally { view.unmount() }
+  }
+})
+
+test('actual App requests the exact verified result and then shows durable waiting, including a stale running mission snapshot', async () => {
   for (const status of ['completed', 'running']) {
     const view = appResultFixture()
     try {

@@ -1,0 +1,50 @@
+{
+  "chronology": "Observed retrospective regression and acceptance evidence; no original development chronology or human decision is invented.",
+  "focused_red": {
+    "tests": 65,
+    "pass": 51,
+    "fail": 14,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "focused_green": {
+    "tests": 65,
+    "pass": 65,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "retained_failed_fixture_runs": [
+    {
+      "receipt": "issue219-browser-r18.json",
+      "receipt_sha256": "24e21b5e50a88d8e7682759418ed33d17f3c59162dfea87befd0fef17f809c76",
+      "status": "failed",
+      "source_and_binaries_unchanged": true,
+      "browser_report_sha256": "fcf74b0e3b7ed8ad10b2f66cbb03506b0bf08dcb59dae911d2ef4fe8feb4f687",
+      "stage": "native verified source",
+      "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'verified'\n- 'running'\n\n    at file:///<USERPROFILE>/code/ecorp/output/issue-completion/20260926T112626Z/issue219-browser-native-r18.mjs:730:8\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    },
+    {
+      "receipt": "issue219-browser-r19.json",
+      "receipt_sha256": "50d81b0f55f49b3191bd2e0b4d64db275d0a10f816eb992677873dfd93c863a8",
+      "status": "failed",
+      "source_and_binaries_unchanged": true,
+      "browser_report_sha256": "094ef9e4906fc5f22cceea774fc23c528cf358a5c6c41f1155a97ce42f2ada1d",
+      "stage": "real browser rejects ready source before Factory verification",
+      "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'no-store'\n\n    at recordReadinessContext (file:///<USERPROFILE>/code/ecorp/output/issue-completion/20260926T112626Z/issue219-browser-native-r19.mjs:501:10)\n    at file:///<USERPROFILE>/code/ecorp/output/issue-completion/20260926T112626Z/issue219-browser-native-r19.mjs:750:7"
+    },
+    {
+      "receipt": "issue219-browser-r20.json",
+      "receipt_sha256": "ba8cdf4f5ca018e0415b7e636310b98b83a69cc60397469a8025b0284a23435a",
+      "status": "failed",
+      "source_and_binaries_unchanged": true,
+      "browser_report_sha256": "21beef6b0f685d0421eaae322cfc25e3d5c828d258b0291d410edf78ccc52607",
+      "stage": "real browser rejects ready source before Factory verification",
+      "failure": "page.waitForResponse: Timeout 30000ms exceeded while waiting for event \"response\"\n    at <USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-native-r20.mjs:767:37"
+    }
+  ],
+  "fixture_corrections": "The final r21 fixture uses native manual verification with a synthetic Bob actor, records actual context GETs without asserting a Cache-Control header, and explicitly navigates Review this run for Mission refresh. Earlier failures remain failures.",
+  "evidence_preparation": "Screenshot helper r9 referenced a canonical-invocation filename that no wrapper produced and failed without a receipt. Helper r10 uses the actual readiness-validation wrapper, verifies both actual hashes, and runs after completion."
+}

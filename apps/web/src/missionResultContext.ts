@@ -215,7 +215,9 @@ function readContext(value: unknown, scope: MissionResultScope): MissionResultCo
       seen.add(source.id)
       if (source.form !== 'commit_branch') continue
       const candidate = unpublishedCandidate(source, scope)
-      if (candidate.integration_state === 'ready_for_review') candidates.push(candidate)
+      // One ready source can precede the rest of the mission's verification.
+      // Both views require the exact Factory state before offering a request.
+      if (item.state === 'verified' && candidate.integration_state === 'ready_for_review') candidates.push(candidate)
     }
     return { ...identity, publication: null, deliverable: null, candidates: Object.freeze(candidates) }
   }

@@ -1,0 +1,97 @@
+diff --git a/apps/web/src/missionResultContext.test.mjs b/apps/web/src/missionResultContext.test.mjs
+index b07b1d5..5e1705c 100644
+--- a/apps/web/src/missionResultContext.test.mjs
++++ b/apps/web/src/missionResultContext.test.mjs
+@@ -31,0 +32 @@ function contextFor(selected = scope, phase = 'published') {
++      state: phase === 'published' ? 'published' : phase === 'requested' ? 'verified' : 'publishing',
+@@ -251,0 +253,38 @@ test('unpublished source stays bound to the selected run and contains no raw aut
++for (const state of [
++  'claimed', 'mission_created', 'running', 'blocked', 'awaiting_approval',
++  'verification_failed', 'publishing', 'published', 'failed', 'cancelled',
++  undefined, null, 'unknown',
++]) {
++  test(`unpublished ready source cannot offer publication while the exact Factory state is ${String(state)}`, async () => {
++    const input = contextFor(scope, 'requested')
++    input.publication = null
++    setAt(input, 'work_item.state', state)
++    const load = await readResult(input)
++    assert.equal(load.status, 'ready')
++    assert.deepEqual(load.context.candidates, [])
++    for (const selected of [undefined, { id: 'run-a', task_id: 'task-a' }]) {
++      const view = missionResultPresentation(scope, load, selected)
++      assert.equal(view.state, 'none')
++      assert.equal(view.deliverable, null)
++      assert.equal(view.pullRequestUrl, null)
++    }
++    input.source_deliverables[0].uri = 'https://untrusted.invalid/'
++    unavailable(await readResult(input))
++  })
++}
++
++test('existing publication remains visible after the Factory item leaves verified', async () => {
++  for (const [phase, itemState, expected] of [
++    ['requested', 'publishing', 'pending'],
++    ['publishing', 'publishing', 'pending'],
++    ['published', 'published', 'published'],
++  ]) {
++    const input = contextFor(scope, phase)
++    input.work_item.state = itemState
++    const view = missionResultPresentation(scope, await readResult(input))
++    assert.equal(view.state, expected)
++    assert.equal(view.publication.id, input.publication.id)
++    assert.equal(view.deliverable.id, input.source_deliverables[0].id)
++  }
++})
++
+diff --git a/apps/web/src/missionResultContext.ts b/apps/web/src/missionResultContext.ts
+index 730c88a..3273dbf 100644
+--- a/apps/web/src/missionResultContext.ts
++++ b/apps/web/src/missionResultContext.ts
+@@ -218 +218,3 @@ function readContext(value: unknown, scope: MissionResultScope): MissionResultCo
+-      if (candidate.integration_state === 'ready_for_review') candidates.push(candidate)
++      // One ready source can precede the rest of the mission's verification.
++      // Both views require the exact Factory state before offering a request.
++      if (item.state === 'verified' && candidate.integration_state === 'ready_for_review') candidates.push(candidate)
+diff --git a/apps/web/src/workResultCard.test.mjs b/apps/web/src/workResultCard.test.mjs
+index 80fbc09..ebbcf3c 100644
+--- a/apps/web/src/workResultCard.test.mjs
++++ b/apps/web/src/workResultCard.test.mjs
+@@ -64,0 +65 @@ function contextFor(selected = scope, {
++    state: phase === 'published' ? 'published' : phase === 'requested' || phase === null ? 'verified' : 'publishing',
+@@ -996 +997,35 @@ async function loadAppPublicationContext(view, context) {
+-test('actual App requests the exact verified result and then shows durable waiting, including a running mission', async () => {
++test('actual App withholds publication until the exact Factory context is verified, despite a ready snapshot', async () => {
++  for (const status of ['running', 'completed']) {
++    const view = appResultFixture()
++    try {
++      view.update({
++        ...view.props,
++        mission: { ...view.props.mission, status },
++        factoryItem: { ...view.props.factoryItem, state: 'verified' },
++      })
++      const running = appUnpublishedContext()
++      running.work_item.state = 'running'
++      await loadAppPublicationContext(view, running)
++      assert.doesNotMatch(text(view.tree), /Preview pull request|Request pull request/)
++      assert.equal(view.calls.length, 2)
++      assert.equal(view.pinned, deliveredRunId)
++      view.update({
++        ...view.props,
++        factoryItem: { ...view.props.factoryItem, version: view.props.factoryItem.version + 1 },
++      })
++      await view.flush()
++      assert.equal(view.calls.length, 3)
++      assert.doesNotMatch(text(view.tree), /Preview pull request|Request pull request/)
++      const verified = appUnpublishedContext()
++      verified.work_item.version = view.props.factoryItem.version
++      view.calls[2].response.resolve(verified)
++      await view.flush()
++      assert.match(text(view.tree), /Preview pull request/)
++      assert.ok(view.calls.every((call) => call.init.method === 'GET'))
++      assert.deepEqual(view.storageWrites, [])
++      assert.deepEqual(view.actions, [])
++    } finally { view.unmount() }
++  }
++})
++
++test('actual App requests the exact verified result and then shows durable waiting, including a stale running mission snapshot', async () => {

@@ -1,0 +1,400 @@
+TAP version 13
+# Subtest: scope requires every explicit identity and repository and freezes the view generation
+ok 1 - scope requires every explicit identity and repository and freezes the view generation
+  ---
+  duration_ms: 2.7061
+  type: 'test'
+  ...
+# Subtest: the exact scope object, not equal IDs or a prior A -> B -> A view, selects the load
+ok 2 - the exact scope object, not equal IDs or a prior A -> B -> A view, selects the load
+  ---
+  duration_ms: 0.485
+  type: 'test'
+  ...
+# Subtest: one encoded GET is uncached, abortable and body/header/credential free
+ok 3 - one encoded GET is uncached, abortable and body/header/credential free
+  ---
+  duration_ms: 8.7192
+  type: 'test'
+  ...
+# Subtest: published DTO retains only bound result metadata and leaves raw input untouched
+ok 4 - published DTO retains only bound result metadata and leaves raw input untouched
+  ---
+  duration_ms: 1.6835
+  type: 'test'
+  ...
+# Subtest: only explicit null publication in a correctly scoped response is known absence
+ok 5 - only explicit null publication in a correctly scoped response is known absence
+  ---
+  duration_ms: 2.4054
+  type: 'test'
+  ...
+# Subtest: unpublished source stays bound to the selected run and contains no raw authority
+ok 6 - unpublished source stays bound to the selected run and contains no raw authority
+  ---
+  duration_ms: 1.2614
+  type: 'test'
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is claimed
+ok 7 - unpublished ready source cannot offer publication while the exact Factory state is claimed
+  ---
+  duration_ms: 1.9758
+  type: 'test'
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is mission_created
+ok 8 - unpublished ready source cannot offer publication while the exact Factory state is mission_created
+  ---
+  duration_ms: 0.8727
+  type: 'test'
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is running
+ok 9 - unpublished ready source cannot offer publication while the exact Factory state is running
+  ---
+  duration_ms: 0.6695
+  type: 'test'
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is blocked
+ok 10 - unpublished ready source cannot offer publication while the exact Factory state is blocked
+  ---
+  duration_ms: 0.7518
+  type: 'test'
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is awaiting_approval
+ok 11 - unpublished ready source cannot offer publication while the exact Factory state is awaiting_approval
+  ---
+  duration_ms: 0.6113
+  type: 'test'
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is verification_failed
+ok 12 - unpublished ready source cannot offer publication while the exact Factory state is verification_failed
+  ---
+  duration_ms: 0.7112
+  type: 'test'
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is publishing
+ok 13 - unpublished ready source cannot offer publication while the exact Factory state is publishing
+  ---
+  duration_ms: 0.5197
+  type: 'test'
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is published
+ok 14 - unpublished ready source cannot offer publication while the exact Factory state is published
+  ---
+  duration_ms: 0.5695
+  type: 'test'
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is failed
+ok 15 - unpublished ready source cannot offer publication while the exact Factory state is failed
+  ---
+  duration_ms: 0.7627
+  type: 'test'
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is cancelled
+ok 16 - unpublished ready source cannot offer publication while the exact Factory state is cancelled
+  ---
+  duration_ms: 0.7795
+  type: 'test'
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is undefined
+ok 17 - unpublished ready source cannot offer publication while the exact Factory state is undefined
+  ---
+  duration_ms: 0.5878
+  type: 'test'
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is null
+ok 18 - unpublished ready source cannot offer publication while the exact Factory state is null
+  ---
+  duration_ms: 0.4781
+  type: 'test'
+  ...
+# Subtest: unpublished ready source cannot offer publication while the exact Factory state is unknown
+ok 19 - unpublished ready source cannot offer publication while the exact Factory state is unknown
+  ---
+  duration_ms: 0.5566
+  type: 'test'
+  ...
+# Subtest: existing publication remains visible after the Factory item leaves verified
+ok 20 - existing publication remains visible after the Factory item leaves verified
+  ---
+  duration_ms: 0.8805
+  type: 'test'
+  ...
+# Subtest: unpublished alternatives require explicit selection and never pick the first available run
+ok 21 - unpublished alternatives require explicit selection and never pick the first available run
+  ---
+  duration_ms: 0.8091
+  type: 'test'
+  ...
+# Subtest: unpublished candidates reject foreign scope, invalid metadata and duplicate identities
+ok 22 - unpublished candidates reject foreign scope, invalid metadata and duplicate identities
+  ---
+  duration_ms: 1.9524
+  type: 'test'
+  ...
+# Subtest: item and publication scope mismatches never expose links or known absence
+ok 23 - item and publication scope mismatches never expose links or known absence
+  ---
+  duration_ms: 4.1233
+  type: 'test'
+  ...
+# Subtest: publication source issue matches the work item without equating authorizer, revisions or checkpoint generations
+ok 24 - publication source issue matches the work item without equating authorizer, revisions or checkpoint generations
+  ---
+  duration_ms: 0.9306
+  type: 'test'
+  ...
+# Subtest: publication and artifact identity tuples plus full digests must all match
+ok 25 - publication and artifact identity tuples plus full digests must all match
+  ---
+  duration_ms: 2.5577
+  type: 'test'
+  ...
+# Subtest: missing, duplicate and unrelated-first deliverables cannot substitute a result
+ok 26 - missing, duplicate and unrelated-first deliverables cannot substitute a result
+  ---
+  duration_ms: 0.8014
+  type: 'test'
+  ...
+# Subtest: native provenance identity, source/target branches and digests are checked without retaining authority
+ok 27 - native provenance identity, source/target branches and digests are checked without retaining authority
+  ---
+  duration_ms: 3.0076
+  type: 'test'
+  ...
+# Subtest: raw GitHub PR URLs allow native slash suffixes but retain exact repository and number checks
+ok 28 - raw GitHub PR URLs allow native slash suffixes but retain exact repository and number checks
+  ---
+  duration_ms: 4.1443
+  type: 'test'
+  ...
+# Subtest: owner/repository display case is preserved while full hex values compare by bytes
+ok 29 - owner/repository display case is preserved while full hex values compare by bytes
+  ---
+  duration_ms: 0.5253
+  type: 'test'
+  ...
+# Subtest: PR state, exact head, owner, recorded metadata and phase cannot contradict each other
+ok 30 - PR state, exact head, owner, recorded metadata and phase cannot contradict each other
+  ---
+  duration_ms: 1.7782
+  type: 'test'
+  ...
+# Subtest: download metadata rejects controls, external/native paths, malformed hashes and invalid sizes
+ok 31 - download metadata rejects controls, external/native paths, malformed hashes and invalid sizes
+  ---
+  duration_ms: 8.879
+  type: 'test'
+  ...
+# Subtest: pending, PR-created, published and failed publication are distinct without claiming a live app
+ok 32 - pending, PR-created, published and failed publication are distinct without claiming a live app
+  ---
+  duration_ms: 1.3593
+  type: 'test'
+  ...
+# Subtest: only a different valid pinned run is a mismatch; same-run contradictions stay unavailable
+ok 33 - only a different valid pinned run is a mismatch; same-run contradictions stay unavailable
+  ---
+  duration_ms: 0.6254
+  type: 'test'
+  ...
+# Subtest: loading, denied and stale contexts cannot become a result or known absence
+ok 34 - loading, denied and stale contexts cannot become a result or known absence
+  ---
+  duration_ms: 0.7498
+  type: 'test'
+  ...
+# Subtest: denials, missing endpoints and sync/async transport failures stay unavailable without raw errors
+ok 35 - denials, missing endpoints and sync/async transport failures stay unavailable without raw errors
+  ---
+  duration_ms: 1.0394
+  type: 'test'
+  ...
+# Subtest: timeout aborts and suppresses late successes and failures without retries
+ok 36 - timeout aborts and suppresses late successes and failures without retries
+  ---
+  duration_ms: 0.584
+  type: 'test'
+  ...
+# Subtest: queued timeout callbacks cannot overwrite a settled success, absence or denial
+ok 37 - queued timeout callbacks cannot overwrite a settled success, absence or denial
+  ---
+  duration_ms: 0.8365
+  type: 'test'
+  ...
+# Subtest: cancellation before start issues no GET; in-flight cancellation publishes no late data
+ok 38 - cancellation before start issues no GET; in-flight cancellation publishes no late data
+  ---
+  duration_ms: 1.167
+  type: 'test'
+  ...
+# Subtest: new same-ID generation remains unavailable after denial despite a prior response completing later
+ok 39 - new same-ID generation remains unavailable after denial despite a prior response completing later
+  ---
+  duration_ms: 0.4704
+  type: 'test'
+  ...
+# Subtest: card requires a source choice and exact preview before offering the request
+ok 40 - card requires a source choice and exact preview before offering the request
+  ---
+  duration_ms: 19.2634
+  type: 'test'
+  ...
+# Subtest: hook fences changed source and scope, including old submit callbacks
+ok 41 - hook fences changed source and scope, including old submit callbacks
+  ---
+  duration_ms: 7.5017
+  type: 'test'
+  ...
+# Subtest: effect reconnect clears stale readiness without a duplicate request
+ok 42 - effect reconnect clears stale readiness without a duplicate request
+  ---
+  duration_ms: 2.5255
+  type: 'test'
+  ...
+# Subtest: an uncertain request offers refresh and never resubmits itself
+ok 43 - an uncertain request offers refresh and never resubmits itself
+  ---
+  duration_ms: 3.164
+  type: 'test'
+  ...
+# Subtest: WorkResultCard exposes its status and supplied content with metadata collapsed by default
+ok 44 - WorkResultCard exposes its status and supplied content with metadata collapsed by default
+  ---
+  duration_ms: 11.0489
+  type: 'test'
+  ...
+# Subtest: ready PR retains its exact URL and only an explicit download invokes the matching callback
+ok 45 - ready PR retains its exact URL and only an explicit download invokes the matching callback
+  ---
+  duration_ms: 11.9303
+  type: 'test'
+  ...
+# Subtest: loading, unavailable and no-publication states do not fabricate a PR or perform actions
+ok 46 - loading, unavailable and no-publication states do not fabricate a PR or perform actions
+  ---
+  duration_ms: 3.9513
+  type: 'test'
+  ...
+# Subtest: a historical review mismatch changes selection only through explicit Go to delivered result
+ok 47 - a historical review mismatch changes selection only through explicit Go to delivered result
+  ---
+  duration_ms: 2.6759
+  type: 'test'
+  ...
+# Subtest: a durable requested publication waits for a trusted publisher without claiming work has started
+ok 48 - a durable requested publication waits for a trusted publisher without claiming work has started
+  ---
+  duration_ms: 163.7016
+  type: 'test'
+  ...
+# Subtest: an unavailable delivered-run target preserves the historical selection and only offers refresh
+ok 49 - an unavailable delivered-run target preserves the historical selection and only offers refresh
+  ---
+  duration_ms: 2.1771
+  type: 'test'
+  ...
+# Subtest: a failed publication with a recorded PR remains inspectable without being labeled Published
+ok 50 - a failed publication with a recorded PR remains inspectable without being labeled Published
+  ---
+  duration_ms: 5.6432
+  type: 'test'
+  ...
+# Subtest: Published is not merged or deployed and its collapsed details never invent a running preview
+ok 51 - Published is not merged or deployed and its collapsed details never invent a running preview
+  ---
+  duration_ms: 11.2593
+  type: 'test'
+  ...
+# Subtest: expired artifact retention does not hide an existing PR or replace server download validation
+ok 52 - expired artifact retention does not hide an existing PR or replace server download validation
+  ---
+  duration_ms: 3.311
+  type: 'test'
+  ...
+# Subtest: actual hook hides prior result before cleanup and aborts on each exact scope change
+ok 53 - actual hook hides prior result before cleanup and aborts on each exact scope change
+  ---
+  duration_ms: 38.0939
+  type: 'test'
+  ...
+# Subtest: actual hook fences late success and failure before cleanup and after replacement
+ok 54 - actual hook fences late success and failure before cleanup and after replacement
+  ---
+  duration_ms: 14.3841
+  type: 'test'
+  ...
+# Subtest: actual hook close and reopen with identical IDs cannot revive old ready or pending data
+ok 55 - actual hook close and reopen with identical IDs cannot revive old ready or pending data
+  ---
+  duration_ms: 15.3585
+  type: 'test'
+  ...
+# Subtest: actual hook treats positive revision as one refresh hint and never retries failure on render
+ok 56 - actual hook treats positive revision as one refresh hint and never retries failure on render
+  ---
+  duration_ms: 34.0154
+  type: 'test'
+  ...
+# Subtest: actual App withholds publication until the exact Factory context is verified, despite a ready snapshot
+ok 57 - actual App withholds publication until the exact Factory context is verified, despite a ready snapshot
+  ---
+  duration_ms: 30.2016
+  type: 'test'
+  ...
+# Subtest: actual App requests the exact verified result and then shows durable waiting, including a stale running mission snapshot
+ok 58 - actual App requests the exact verified result and then shows durable waiting, including a stale running mission snapshot
+  ---
+  duration_ms: 34.5709
+  type: 'test'
+  ...
+# Subtest: actual App disconnect leaves an explicit request in flight without retry or late refresh
+ok 59 - actual App disconnect leaves an explicit request in flight without retry or late refresh
+  ---
+  duration_ms: 7.5959
+  type: 'test'
+  ...
+# Subtest: actual App keeps a historical pin and does not offer another run for publication
+ok 60 - actual App keeps a historical pin and does not offer another run for publication
+  ---
+  duration_ms: 4.5267
+  type: 'test'
+  ...
+# Subtest: actual App origin-unavailable branch offers manual Refresh work context with no PR CTA
+ok 61 - actual App origin-unavailable branch offers manual Refresh work context with no PR CTA
+  ---
+  duration_ms: 5.8349
+  type: 'test'
+  ...
+# Subtest: actual App first-hop retry exposes the authorized result without moving pinned evidence
+ok 62 - actual App first-hop retry exposes the authorized result without moving pinned evidence
+  ---
+  duration_ms: 17.4999
+  type: 'test'
+  ...
+# Subtest: actual App fallback reports unavailable review details for an unresolved run or request
+ok 63 - actual App fallback reports unavailable review details for an unresolved run or request
+  ---
+  duration_ms: 11.1783
+  type: 'test'
+  ...
+# Subtest: actual work pickers retain a deep-linked historical mission outside the recent eight
+ok 64 - actual work pickers retain a deep-linked historical mission outside the recent eight
+  ---
+  duration_ms: 61.8641
+  type: 'test'
+  ...
+# Subtest: actual work pickers do not duplicate a recent selection or invent an absent mission
+ok 65 - actual work pickers do not duplicate a recent selection or invent an absent mission
+  ---
+  duration_ms: 49.223
+  type: 'test'
+  ...
+1..65
+# tests 65
+# suites 0
+# pass 65
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1996.0366
