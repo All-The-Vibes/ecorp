@@ -16,8 +16,14 @@ pub use planning_cost::{
     MAX_GRAPH_BUDGET_COST_MICROUSD, MAX_TASK_BUDGET_COST_MICROUSD, strategy_cost_budgets,
     validate_factory_cost_policy,
 };
+mod preserved_deliverable;
 mod retained_provider_receipt;
 mod source_verification;
+pub use preserved_deliverable::{
+    MAX_PRESERVED_DELIVERABLE_PATHS, MAX_PRESERVED_PROVIDER_ARTIFACTS,
+    PRESERVED_DELIVERABLE_CAPABILITY, PreservedDeliverableCheckpoint, PreservedProviderArtifact,
+    deliverable_selects_path,
+};
 pub use retained_provider_receipt::{
     MAX_RETAINED_PROVIDER_RECEIPT_BYTES, RETAINED_COPILOT_RECEIPT_FILE,
     RETAINED_COPILOT_RECEIPT_KIND, RetainedProviderReceiptGrant,

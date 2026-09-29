@@ -8,11 +8,12 @@ use crony_domain::{
     FactoryController, FactoryVerificationRecovery, FactoryVerificationRecoveryMode,
     FactoryWorkItem, FactoryWorkItemState, ManualVerificationGate, Mission, MissionBudgetRevision,
     MissionContractRevision, MissionContractRevisionAction, MissionStatus, NewEvent,
-    PullRequestPublication, PullRequestPublicationAttempt, PullRequestPublicationState,
-    QueuedMessage, Room, RoomMessage, Run, RunFailureKind, RunStatus, SourceDeliverable, Task,
-    TaskContract, TaskGraphPlan, TaskSecretReference, TaskStatus, VerificationEvidence,
-    VerificationPolicy, VerificationRequest, VerifierCheck, factory_workspace_connection_id,
-    repository_relative_path_is_valid, write_scope_allows_path, write_scope_is_valid,
+    PreservedDeliverableCheckpoint, PreservedProviderArtifact, PullRequestPublication,
+    PullRequestPublicationAttempt, PullRequestPublicationState, QueuedMessage, Room, RoomMessage,
+    Run, RunFailureKind, RunStatus, SourceDeliverable, Task, TaskContract, TaskGraphPlan,
+    TaskSecretReference, TaskStatus, VerificationEvidence, VerificationPolicy, VerificationRequest,
+    VerifierCheck, factory_workspace_connection_id, repository_relative_path_is_valid,
+    write_scope_allows_path, write_scope_is_valid,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -30,6 +31,7 @@ pub mod base_audit;
 mod base_audit_tests;
 pub mod base_observations;
 mod budget_checkpoint;
+mod preserved_deliverable;
 pub use agent_pinning::{SetAgentPinInput, SetAgentPinOutcome};
 mod budget_revision;
 mod checkpoint_cancellation;
@@ -535,6 +537,8 @@ pub struct SchedulableTask {
 
 #[derive(Debug, Clone)]
 pub struct ResumeLaunchRecord {
+    pub preserved_deliverable: Option<Box<PreservedDeliverableCheckpoint>>,
+    pub preserved_provider_artifacts: Vec<PreservedProviderArtifact>,
     pub corp_id: Uuid,
     pub room_id: Uuid,
     pub mission_id: Uuid,
@@ -4155,6 +4159,7 @@ impl PgStore {
             r#"
             SELECT mission.room_id, mission.status AS mission_status,
                    task.id AS task_id, task.status AS task_status,
+                   task.contract AS task_contract,
                    task.verification_status AS task_verification_status,
                    run.runner_id, run.agent_id, run.assignment_token,
                    run.workspace_run_id, run.workspace_path,
@@ -4223,19 +4228,32 @@ impl PgStore {
             ));
         }
         let workspace_fingerprint = checkpoint.fingerprint.clone();
+        let contract: TaskContract = serde_json::from_value(row.get("task_contract"))
+            .context("decode preserved workspace task contract")?;
         if workspace_fingerprint.is_some() {
             checkpoint.ensure_preserved()?;
-            tx.commit().await?;
-            return Ok(FactoryWorkspaceCheckpointOutcome {
-                work_item,
-                claim_token: Some(input.claim_token),
-                source_run_id: input.source_run_id,
-                runner_id: row.get("runner_id"),
-                command_id: None,
-                workspace_fingerprint,
-                event: None,
-                replayed: true,
-            });
+            if contract.deliverable.is_none()
+                || preserved_deliverable::checkpoint_tx(
+                    &mut tx,
+                    input.corp_id,
+                    input.source_run_id,
+                    &contract,
+                )
+                .await?
+                .is_some()
+            {
+                tx.commit().await?;
+                return Ok(FactoryWorkspaceCheckpointOutcome {
+                    work_item,
+                    claim_token: Some(input.claim_token),
+                    source_run_id: input.source_run_id,
+                    runner_id: row.get("runner_id"),
+                    command_id: None,
+                    workspace_fingerprint,
+                    event: None,
+                    replayed: true,
+                });
+            }
         }
         let active_run: bool = sqlx::query_scalar(
             r#"
@@ -4258,8 +4276,23 @@ impl PgStore {
         let workspace_base_commit: String =
             row.get::<Option<String>, _>("workspace_base_commit")
                 .context("factory workspace checkpoint source run has no workspace base commit")?;
+        // Freeze new proof authority only after replay handling. An old durable
+        // command must never acquire today's artifact exclusions or export spec.
+        let preserved_provider_artifacts = if contract.deliverable.is_some() {
+            preserved_deliverable::provider_artifacts_tx(
+                &mut tx,
+                input.corp_id,
+                input.source_run_id,
+            )
+            .await?
+        } else {
+            Vec::new()
+        };
         let command_id = Uuid::new_v4();
         let command_payload = json!({
+            "deliverable": contract.deliverable,
+            "preserved_provider_artifacts": preserved_provider_artifacts,
+            "expected_workspace_fingerprint": workspace_fingerprint,
             "corp_id": input.corp_id,
             "room_id": row.get::<Uuid, _>("room_id"),
             "mission_id": mission_id,
@@ -4317,10 +4350,17 @@ impl PgStore {
                     "factory.workspace_checkpoint_requested",
                     "factory_work_item",
                     work_item.id,
-                    format!(
-                        "factory:{}:workspace-checkpoint:{}",
-                        work_item.id, input.source_run_id
-                    ),
+                    if workspace_fingerprint.is_some() {
+                        format!(
+                            "factory:{}:workspace-checkpoint-proof:{command_id}",
+                            work_item.id
+                        )
+                    } else {
+                        format!(
+                            "factory:{}:workspace-checkpoint:{}",
+                            work_item.id, input.source_run_id
+                        )
+                    },
                     json!({
                         "state": work_item.state.as_str(),
                         "source_run_id": input.source_run_id,
@@ -5242,6 +5282,36 @@ impl PgStore {
         }
         ensure_factory_recovery_policy(&work_item, &contract, &replacement_verification_policy)?;
 
+        let preserved_deliverable = if input.mode
+            == FactoryVerificationRecoveryMode::SourceCorrection
+            && contract.deliverable.is_some()
+        {
+            let proof = preserved_deliverable::checkpoint_tx(
+                &mut tx,
+                input.corp_id,
+                input.source_run_id,
+                &contract,
+            )
+            .await?;
+            if let Some(proof) = &proof
+                && (proof.workspace_fingerprint != input.expected_workspace_fingerprint
+                    || Some(proof.head_commit.as_str()) != input.expected_head_commit.as_deref())
+            {
+                return Err(native_policy!(
+                    "preserved deliverable checkpoint differs from the authorized source; refresh the retained checkpoint before recovery"
+                ));
+            }
+            proof.map(Box::new)
+        } else {
+            None
+        };
+        let preserved_provider_artifacts = preserved_deliverable::provider_artifacts_tx(
+            &mut tx,
+            input.corp_id,
+            input.source_run_id,
+        )
+        .await?;
+
         let workspace_base_commit: String =
             row.get::<Option<String>, _>("workspace_base_commit")
                 .context("factory verification recovery source run has no workspace base commit")?;
@@ -5548,6 +5618,8 @@ impl PgStore {
             Vec::new()
         };
         let mut command_payload = json!({
+            "preserved_deliverable": preserved_deliverable,
+            "preserved_provider_artifacts": preserved_provider_artifacts,
             "mode": input.mode,
             "corp_id": input.corp_id,
             "room_id": room_id,
@@ -5724,6 +5796,8 @@ impl PgStore {
             provider_artifact_sha256,
             provider_artifact_bytes,
             provider_artifact_media_type,
+            preserved_deliverable,
+            preserved_provider_artifacts,
         )?;
         tx.commit().await?;
         Ok(FactoryVerificationRecoveryOutcome {
@@ -6782,6 +6856,16 @@ impl PgStore {
             ));
         }
 
+        let preserved_deliverable = if contract.deliverable.is_some() {
+            preserved_deliverable::checkpoint_tx(&mut tx, corp_id, source_run_id, &contract)
+                .await?
+                .map(Box::new)
+        } else {
+            None
+        };
+        let preserved_provider_artifacts =
+            preserved_deliverable::provider_artifacts_tx(&mut tx, corp_id, source_run_id).await?;
+
         let (mission_tokens_used, mission_cost_used) =
             budget_revision::mission_usage_tx(&mut tx, corp_id, mission_id).await?;
         let mission_budget_tokens: i64 = row.get("mission_budget_tokens");
@@ -6920,6 +7004,8 @@ impl PgStore {
         tx.commit().await?;
         Ok((
             ResumeLaunchRecord {
+                preserved_deliverable,
+                preserved_provider_artifacts,
                 corp_id,
                 room_id,
                 mission_id,
@@ -13054,6 +13140,17 @@ async fn source_workspace_checkpoint_with_lock_tx(
             _ => checkpoint_head_commit(head, row.get("authorized_head"))?,
         };
         Some(fingerprint)
+    } else if execution_mode == "provider" {
+        let preserved_head = preserved_deliverable::provider_head_tx(tx, corp_id, run_id).await?;
+        if let (Some(exported), Some(preserved)) = (&head, &preserved_head)
+            && exported != preserved
+        {
+            return Err(anyhow!(
+                "provider source head conflicts with its preserved checkpoint"
+            ));
+        }
+        head = head.or(preserved_head);
+        None
     } else {
         None
     };
@@ -13191,10 +13288,14 @@ fn factory_verification_recovery_launch_from_parts(
     provider_artifact_sha256: Option<String>,
     provider_artifact_bytes: Option<usize>,
     provider_artifact_media_type: Option<String>,
+    preserved_deliverable: Option<Box<PreservedDeliverableCheckpoint>>,
+    preserved_provider_artifacts: Vec<PreservedProviderArtifact>,
 ) -> Result<FactoryVerificationRecoveryLaunch> {
     Ok(match mode {
         FactoryVerificationRecoveryMode::SourceCorrection => {
             FactoryVerificationRecoveryLaunch::SourceCorrection(ResumeLaunchRecord {
+                preserved_deliverable,
+                preserved_provider_artifacts,
                 corp_id,
                 room_id,
                 mission_id,
@@ -13226,6 +13327,7 @@ fn factory_verification_recovery_launch_from_parts(
         FactoryVerificationRecoveryMode::VerifierOnly
         | FactoryVerificationRecoveryMode::CheckpointVerification => {
             FactoryVerificationRecoveryLaunch::VerifierOnly(VerifyLaunchRecord {
+                preserved_provider_artifacts,
                 corp_id,
                 room_id,
                 mission_id,
@@ -13280,7 +13382,8 @@ async fn factory_verification_recovery_launch_tx(
                source.artifact_media_type, artifact.bytes AS artifact_bytes,
                artifact.file_name AS artifact_file_name,
                artifact.metadata->>'workspace_relative_path' AS artifact_relative_path,
-               authorized.request->>'expected_head_commit' AS checkpoint_head_commit
+               authorized.request->>'expected_head_commit' AS checkpoint_head_commit,
+               command.payload AS recovery_command
         FROM runs run
         JOIN tasks task ON task.id = run.task_id
         JOIN missions mission ON mission.id = task.mission_id
@@ -13291,6 +13394,10 @@ async fn factory_verification_recovery_launch_tx(
         JOIN factory_verification_recoveries authorized
           ON authorized.id = $4 AND authorized.corp_id = run.corp_id
          AND authorized.replacement_run_id = run.id AND authorized.source_run_id = source.id
+        JOIN runner_commands command
+          ON command.corp_id=run.corp_id AND command.run_id=run.id
+         AND command.runner_id=run.runner_id AND command.command_kind='factory_verification_recovery'
+         AND command.idempotency_key='factory-verification-recovery:' || authorized.id::text
         LEFT JOIN LATERAL (
             WITH RECURSIVE lineage AS (
                 SELECT ancestor.id, ancestor.resumed_from_run_id,
@@ -13356,6 +13463,23 @@ async fn factory_verification_recovery_launch_tx(
         .get::<Option<String>, _>("artifact_relative_path")
         .or_else(|| row.get("artifact_path"))
         .or_else(|| row.get("artifact_file_name"));
+    // Replay the exact evidence inventory admitted into the durable command.
+    // Later artifact registration must not silently alter the authorized run.
+    let frozen: Value = row.get("recovery_command");
+    let preserved_deliverable = serde_json::from_value(
+        frozen
+            .get("preserved_deliverable")
+            .cloned()
+            .unwrap_or(Value::Null),
+    )
+    .context("decode frozen preserved deliverable checkpoint")?;
+    let preserved_provider_artifacts = serde_json::from_value(
+        frozen
+            .get("preserved_provider_artifacts")
+            .cloned()
+            .unwrap_or_else(|| json!([])),
+    )
+    .context("decode frozen preserved provider artifact inventory")?;
     factory_verification_recovery_launch_from_parts(
         recovery.mode,
         recovery.corp_id,
@@ -13391,6 +13515,8 @@ async fn factory_verification_recovery_launch_tx(
         row.get("artifact_sha256"),
         provider_artifact_bytes,
         row.get("artifact_media_type"),
+        preserved_deliverable,
+        preserved_provider_artifacts,
     )
 }
 
@@ -13861,6 +13987,7 @@ async fn ensure_factory_mission_verified_tx(
 
 #[derive(Debug, Clone)]
 pub struct VerifyLaunchRecord {
+    pub preserved_provider_artifacts: Vec<PreservedProviderArtifact>,
     pub corp_id: Uuid,
     pub room_id: Uuid,
     pub mission_id: Uuid,

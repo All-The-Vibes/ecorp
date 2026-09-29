@@ -4,6 +4,7 @@ mod deliverable;
 mod dependency_files;
 #[cfg(test)]
 mod issue297_native_fixtures;
+mod retained_deliverable;
 mod retained_provider_receipt;
 #[cfg(test)]
 mod retained_provider_receipt_tests;
@@ -28,7 +29,8 @@ use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use chrono::{DateTime, Utc};
 use clap::Parser;
 use crony_domain::{
-    DeliverableSpec, RetainedProviderReceiptGrant, RunFailureKind, VerificationPolicy,
+    DeliverableSpec, PreservedDeliverableCheckpoint, PreservedProviderArtifact,
+    RetainedProviderReceiptGrant, RunFailureKind, VerificationPolicy,
 };
 use crony_protocol::{
     ActiveRunClaim, MAX_VERIFICATION_ARTIFACT_BYTES, ResolvedSecret, RunnerCapability, RunnerModel,
@@ -204,6 +206,8 @@ struct Assignment {
     secrets: Vec<ResolvedSecret>,
     expected_workspace_fingerprint: Option<String>,
     expected_head_commit: Option<String>,
+    preserved_deliverable: Option<Box<PreservedDeliverableCheckpoint>>,
+    preserved_provider_artifacts: Vec<PreservedProviderArtifact>,
     provider_artifact: Option<VerificationArtifactReference>,
     verification_command_id: Option<Uuid>,
     retained_provider_receipt: Option<RetainedProviderReceiptGrant>,
@@ -822,6 +826,18 @@ async fn run_connection(
     });
     capabilities.push(RunnerCapability {
         workspace_connection_id: None,
+        name: crony_domain::PRESERVED_DELIVERABLE_CAPABILITY.to_owned(),
+        available: true,
+        detail: Some(
+            "Complete native retained delta and export preflight before provider resume".to_owned(),
+        ),
+        models: Vec::new(),
+        source_repository: None,
+        source_base_ref: None,
+        source_base_commit: None,
+    });
+    capabilities.push(RunnerCapability {
+        workspace_connection_id: None,
         name: "retained-provider-receipt-v1".to_owned(),
         available: true,
         detail: Some(
@@ -1140,6 +1156,8 @@ async fn run_connection(
                     verification_command_id: None,
                     retained_provider_receipt: None,
                     checkpoint_verification: false,
+                    preserved_deliverable: None,
+                    preserved_provider_artifacts: Vec::new(),
                     hard_boundary_checkpoint: Arc::default(),
                 };
                 if assignment.workspace_connection_id.is_none()
@@ -1232,6 +1250,8 @@ async fn run_connection(
                 });
             }
             ServerToRunner::ResumeRun {
+                preserved_deliverable,
+                preserved_provider_artifacts,
                 dependency_files,
                 workspace_connection_id,
                 command_id,
@@ -1300,6 +1320,8 @@ async fn run_connection(
                     verification_command_id: None,
                     retained_provider_receipt: None,
                     checkpoint_verification: false,
+                    preserved_deliverable,
+                    preserved_provider_artifacts,
                     hard_boundary_checkpoint: Arc::default(),
                 };
                 if assignment.workspace_connection_id.is_none()
@@ -1438,6 +1460,7 @@ async fn run_connection(
                 );
             }
             ServerToRunner::VerifyRun {
+                preserved_provider_artifacts,
                 workspace_connection_id,
                 command_id,
                 corp_id,
@@ -1502,6 +1525,8 @@ async fn run_connection(
                     verification_command_id: Some(command_id),
                     retained_provider_receipt: retained_provider_receipt.map(|grant| *grant),
                     checkpoint_verification,
+                    preserved_deliverable: None,
+                    preserved_provider_artifacts,
                     hard_boundary_checkpoint: Arc::default(),
                 };
                 if let Err(error) = retained_provider_receipt::validate_assignment(&assignment) {
@@ -1607,6 +1632,9 @@ async fn run_connection(
                 );
             }
             ServerToRunner::CheckpointWorkspace {
+                expected_workspace_fingerprint,
+                deliverable,
+                preserved_provider_artifacts,
                 workspace_connection_id,
                 command_id,
                 corp_id,
@@ -1659,14 +1687,16 @@ async fn run_connection(
                         manual_gate: None,
                     },
                     write_scope: Vec::new(),
-                    deliverable: None,
+                    deliverable,
                     secrets: Vec::new(),
-                    expected_workspace_fingerprint: None,
+                    expected_workspace_fingerprint,
                     expected_head_commit: Some(expected_head_commit),
                     provider_artifact: None,
                     verification_command_id: None,
                     retained_provider_receipt: None,
                     checkpoint_verification: false,
+                    preserved_deliverable: None,
+                    preserved_provider_artifacts,
                     hard_boundary_checkpoint: Arc::default(),
                 };
                 match checkpoint_connected_workspace(
@@ -1970,10 +2000,17 @@ impl AdapterEventSink for RunnerEventSink {
                     "text": text,
                 }),
             ),
-            AdapterEvent::Artifact(_) if self.assignment.hard_boundary_requested() => {
+            AdapterEvent::Artifact(artifact) if self.assignment.hard_boundary_requested() => {
                 // Native adapters may finish their local transcript on interruption.
                 // Keep those bytes in the retained worktree, but do not turn a known
                 // hard stop into a rejected upload and premature run.failed event.
+                // Bounded metadata can still prove an exact export exclusion after
+                // native teardown; it never becomes new verifier evidence.
+                if let Ok(mut artifacts) = self.artifacts.lock()
+                    && artifacts.len() < crony_domain::MAX_PRESERVED_PROVIDER_ARTIFACTS
+                {
+                    artifacts.push(artifact);
+                }
                 return;
             }
             AdapterEvent::Artifact(artifact) => match std::fs::read(&artifact.path) {
@@ -2293,6 +2330,33 @@ async fn execute_assignment(
         );
         return Ok(());
     }
+    if assignment.resume_workspace_base_commit.is_some()
+        && let Err(error) =
+            retained_deliverable::preflight(&assignment, &workspace, &workspaces).await
+    {
+        send_run_event(
+            &outbound,
+            &runner_id,
+            &assignment,
+            "run.failed",
+            json!({
+                "failure_kind": RunFailureKind::DeliverableExport,
+                "error": format!("Preserved deliverable rejected before provider startup: {error:#}"),
+            }),
+        );
+        // No provider was started. Do not invent a termination event or mint a
+        // fresh source proof for this assignment after rejecting its contract.
+        send_teardown_workspace_preserved(
+            &outbound,
+            &runner_id,
+            &assignment,
+            &workspace,
+            retained_deliverable::RECOVERY,
+            None,
+            false,
+        );
+        return Ok(());
+    }
     let request = AdapterRunRequest {
         trusted_assignment: if assignment.adapter == "delegated-resource" {
             Some(outbound.delegated_assignment(&assignment, &runner_id)?)
@@ -2331,6 +2395,10 @@ async fn execute_assignment(
     } else {
         adapter.execute(request, controls, sink).await
     };
+    let preservation_artifacts = artifacts
+        .lock()
+        .map(|value| value.clone())
+        .unwrap_or_default();
     let mut preserve_workspace =
         execution.is_err() || assignment.resume_workspace_base_commit.is_some();
     let mut workspace_quarantined = false;
@@ -2375,6 +2443,7 @@ async fn execute_assignment(
                 &assignment,
                 &workspace,
                 &workspaces,
+                &preservation_artifacts,
                 !teardown_uncertain.load(Ordering::Acquire),
                 false,
             )
@@ -2455,6 +2524,7 @@ async fn execute_assignment(
             &assignment,
             &workspace,
             &workspaces,
+            &preservation_artifacts,
             execution.is_ok()
                 && !teardown_uncertain.load(Ordering::Acquire)
                 && !verification_started,
@@ -2469,18 +2539,58 @@ async fn execute_assignment(
         return Ok(());
     }
     if teardown_uncertain.load(Ordering::Acquire) || preserve_workspace {
-        let fingerprint = workspaces.fingerprint(&workspace).await.ok();
-        send_teardown_workspace_preserved(
-            &outbound,
-            &runner_id,
-            &assignment,
-            &workspace,
-            "provider recovery, failure, or teardown requires the exact worktree to be retained",
-            fingerprint.as_deref(),
-            workspace_quarantined,
-        );
+        let detail =
+            "provider recovery, failure, or teardown requires the exact worktree to be retained";
+        if execution.is_ok()
+            && !teardown_uncertain.load(Ordering::Acquire)
+            && !workspace_quarantined
+        {
+            retained_deliverable::report(
+                &outbound,
+                &runner_id,
+                &assignment,
+                &workspace,
+                &workspaces,
+                &preservation_artifacts,
+                &WorkspaceCleanup {
+                    disposition: WorkspaceDisposition::Preserved,
+                    detail: detail.to_owned(),
+                    dirty: None,
+                    commits_ahead: None,
+                    branch_deleted: false,
+                },
+            )
+            .await;
+        } else {
+            let fingerprint = workspaces.fingerprint(&workspace).await.ok();
+            send_teardown_workspace_preserved(
+                &outbound,
+                &runner_id,
+                &assignment,
+                &workspace,
+                detail,
+                fingerprint.as_deref(),
+                workspace_quarantined,
+            );
+        }
     } else {
         let cleanup = workspaces.finalize(&workspace).await;
+        if let Ok(cleanup) = &cleanup
+            && cleanup.disposition == WorkspaceDisposition::Preserved
+        {
+            retained_deliverable::report(
+                &outbound,
+                &runner_id,
+                &assignment,
+                &workspace,
+                &workspaces,
+                &preservation_artifacts,
+                cleanup,
+            )
+            .await;
+            execution?;
+            return Ok(());
+        }
         let fingerprint = match &cleanup {
             Ok(cleanup) if cleanup.disposition == WorkspaceDisposition::Preserved => {
                 workspaces.fingerprint(&workspace).await.ok()
@@ -2506,13 +2616,18 @@ async fn verify_prepared_recovery_workspace(
     workspace: &WorkspaceLease,
     assignment: &Assignment,
 ) -> Result<()> {
-    verify_preserved_workspace_checkpoint(
-        workspaces,
-        workspace,
-        assignment.expected_workspace_fingerprint.as_deref(),
-        assignment.expected_head_commit.as_deref(),
-    )
+    tokio::time::timeout(workspace::CHECKPOINT_CAPTURE_TIMEOUT, async {
+        verify_preserved_workspace_checkpoint(
+            workspaces,
+            workspace,
+            assignment.expected_workspace_fingerprint.as_deref(),
+            assignment.expected_head_commit.as_deref(),
+        )
+        .await?;
+        retained_deliverable::verify_checkpoint(assignment, workspace).await
+    })
     .await
+    .context("preserved recovery checkpoint validation exceeded its deadline")?
 }
 
 async fn verify_preserved_workspace_checkpoint(
@@ -2521,8 +2636,13 @@ async fn verify_preserved_workspace_checkpoint(
     expected_fingerprint: Option<&str>,
     expected_head: Option<&str>,
 ) -> Result<()> {
+    let checkpoint = if expected_fingerprint.is_some() {
+        Some(workspaces.checkpoint(workspace).await?)
+    } else {
+        None
+    };
     if let Some(expected) = expected_fingerprint {
-        let actual = workspaces.fingerprint(workspace).await?;
+        let actual = &checkpoint.as_ref().expect("fingerprint requested").1;
         if actual != expected {
             return Err(anyhow!(
                 "recovery workspace fingerprint mismatch: expected {expected}, found {actual}"
@@ -2530,7 +2650,11 @@ async fn verify_preserved_workspace_checkpoint(
         }
     }
     if let Some(expected) = expected_head {
-        let actual = workspaces.head_commit(workspace).await?;
+        let actual = if let Some((head, _)) = checkpoint {
+            head
+        } else {
+            workspaces.head_commit(workspace).await?
+        };
         if actual != expected {
             return Err(anyhow!(
                 "recovery workspace head mismatch: expected {expected}, found {actual}"
@@ -2865,21 +2989,36 @@ async fn checkpoint_preserved_workspace(
         )
         .await
         .context("prepare preserved workspace checkpoint")?;
-    let checkpoint = async {
+    let checkpoint = tokio::time::timeout(workspace::CHECKPOINT_CAPTURE_TIMEOUT, async {
         let expected_head = assignment
             .expected_head_commit
             .as_deref()
             .context("workspace checkpoint omitted expected head commit")?;
-        let actual_head = workspaces.head_commit(&workspace).await?;
+        // Old commands retain their fingerprint-only meaning. Only a newly
+        // frozen deliverable policy requests the complete native delta proof.
+        let (actual_head, fingerprint, deliverable_checkpoint) = if assignment.deliverable.is_some() {
+            let proof = retained_deliverable::capture(&assignment, &workspace, &workspaces, &[]).await?;
+            (proof.head_commit.clone(), proof.workspace_fingerprint.clone(), Some(proof))
+        } else {
+            let (head, fingerprint) = workspaces.checkpoint(&workspace).await?;
+            (head, fingerprint, None)
+        };
         if actual_head != expected_head {
             return Err(anyhow!(
                 "workspace checkpoint head mismatch: expected {expected_head}, found {actual_head}"
             ));
         }
-        Ok((workspaces.fingerprint(&workspace).await?, actual_head))
-    }
-    .await;
-    let (fingerprint, actual_head) = match checkpoint {
+        if assignment.expected_workspace_fingerprint.as_deref()
+            .is_some_and(|expected| expected != fingerprint)
+        {
+            return Err(anyhow!("workspace checkpoint fingerprint changed; the accepted source cannot be re-attested"));
+        }
+        Ok((fingerprint, actual_head, deliverable_checkpoint))
+    })
+    .await
+    .context("preserved workspace checkpoint capture exceeded its deadline")
+    .and_then(|result| result);
+    let (fingerprint, actual_head, deliverable_checkpoint) = match checkpoint {
         Ok(checkpoint) => checkpoint,
         Err(error) => {
             send_run_event(
@@ -2918,6 +3057,7 @@ async fn checkpoint_preserved_workspace(
             "workspace_fingerprint": fingerprint,
             "workspace_quarantined": false,
             "head_commit": actual_head,
+            "deliverable_checkpoint": deliverable_checkpoint,
         }),
     );
     Ok(())
@@ -3286,14 +3426,22 @@ async fn send_verification_events(
         .map(|artifacts| artifacts.clone())
         .unwrap_or_default();
     let mut prepared = if let Some(spec) = &assignment.deliverable {
-        match deliverable::prepare(
-            assignment.run_id,
-            spec,
-            workspace,
-            source_artifacts.unwrap_or(&artifacts),
-            &assignment.write_scope,
-            preserve_head_commit,
-        )
+        match async {
+            // Historical metadata only excludes matching native source files.
+            // It is never appended to the fresh provider/verifier evidence.
+            let mut export_artifacts = source_artifacts.unwrap_or(&artifacts).to_vec();
+            export_artifacts
+                .extend(retained_deliverable::historical_artifacts(assignment, workspace).await?);
+            deliverable::prepare(
+                assignment.run_id,
+                spec,
+                workspace,
+                &export_artifacts,
+                &assignment.write_scope,
+                preserve_head_commit,
+            )
+            .await
+        }
         .await
         {
             Ok(prepared) => Some(prepared),
@@ -4120,6 +4268,8 @@ mod tests {
             verification_command_id: None,
             retained_provider_receipt: None,
             checkpoint_verification: false,
+            preserved_deliverable: None,
+            preserved_provider_artifacts: Vec::new(),
             hard_boundary_checkpoint: Arc::default(),
         }
     }
@@ -5678,6 +5828,8 @@ mod tests {
             verification_command_id: None,
             retained_provider_receipt: None,
             checkpoint_verification: false,
+            preserved_deliverable: None,
+            preserved_provider_artifacts: Vec::new(),
             hard_boundary_checkpoint: Arc::default(),
         };
         let workspace = WorkspaceLease {
@@ -5801,6 +5953,8 @@ mod tests {
             verification_command_id: None,
             retained_provider_receipt: None,
             checkpoint_verification: false,
+            preserved_deliverable: None,
+            preserved_provider_artifacts: Vec::new(),
             hard_boundary_checkpoint: Arc::default(),
         };
         let uncertain = Arc::new(Notify::new());

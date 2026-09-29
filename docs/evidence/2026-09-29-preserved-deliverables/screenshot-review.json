@@ -1,0 +1,69 @@
+{
+  "issue": 89,
+  "status": "inspected",
+  "recorded_at_utc": "2026-09-29T07:21:29.269611+00:00",
+  "acceptance_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue89-browser-r13.json",
+  "acceptance_sha256": "b19f2870d3a389371ce064a301d37bbd65f89f22b702d5f7970bd2f0992ebf48",
+  "browser_report": "<USERPROFILE>\\code\\qa\\ecorp-issue89-browser-r13\\evidence\\browser\\browser-preserved-deliverable-report.json",
+  "browser_report_sha256": "e097ad84b4300bf8d79d514005c9a7a007a1c1394f6d7db57385adb345f98d57",
+  "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "source_binding_sha256": "bf54d50a610aeb75e18a504c6e31733b03beca819ea33e5bbcb0ea61b73935e4",
+  "screenshots": [
+    {
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue89-browser-r13\\evidence\\browser\\01-complete-application-preserved-after-verifier-failure.png",
+      "sha256": "2ed3a3babf16628e0a74e789e42f0a7d8518b0d2c6dbce282c43528588470493",
+      "width": 1440,
+      "height": 2974,
+      "inspection": "Viewed in this continuation using view_image and emitted at original detail.",
+      "observations": "Mission and selected original run are failed with 4/5 checks passed. The worktree is preserved and the explicit Resume agent session control is visible."
+    },
+    {
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue89-browser-r13\\evidence\\browser\\02-narrowing-rejected-with-precise-recovery-action.png",
+      "sha256": "aba909451372a31aff9c294099e0e680aa639607b0e824bf44701666ee188de1",
+      "width": 1440,
+      "height": 5503,
+      "inspection": "Viewed in this continuation using view_image and emitted at original detail.",
+      "observations": "The operations notice names retained path base.txt and explains recovery in the preserved worktree with full write authority. The editor contains the rejected narrowed write_scope, while Specification v1 and Contract v1 remain visible."
+    },
+    {
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue89-browser-r13\\evidence\\browser\\03-full-scope-revision-saved-without-implicit-resume.png",
+      "sha256": "c0078707e26e859a8c8e6553b9fb46bbbeb9b55a381ed00a4e86dda0e55bcf96",
+      "width": 1440,
+      "height": 5392,
+      "inspection": "Viewed in this continuation using view_image and emitted at original detail.",
+      "observations": "Specification v2, Contract v2, one recorded revision, and the full write scope are visible. The mission remains failed with one run and an explicit Resume agent session control. The capture has black padding below the rendered page; the relevant state and controls are readable above it."
+    },
+    {
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue89-browser-r13\\evidence\\browser\\04-complete-source-accepted-and-exported.png",
+      "sha256": "41c33a3222ce75313a8f87bfe248f30a2c4b77fdfe22cb3b74efa910809e9f09",
+      "width": 1440,
+      "height": 4364,
+      "inspection": "Viewed in this continuation using view_image and emitted at original detail.",
+      "observations": "The correction run and mission are completed, with two runs and 5/5 checks passed. A 39,832-byte Commit Branch source deliverable, download control, and Ready For Review integration record are visible. The active worktree path matches the original preserved worktree displayed in the earlier screenshots."
+    },
+    {
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue89-browser-r13\\evidence\\browser\\05-exported-application-create-filter-resolve.png",
+      "sha256": "77a78acedc1a6a9ef2ef2d1631e743b6862873323311d7f7abd738adc4009c89",
+      "width": 1440,
+      "height": 1050,
+      "inspection": "Viewed in this continuation using view_image and emitted at original detail.",
+      "observations": "The independently imported Incident desk application shows the created critical incident under the Resolved filter with a Reopen control. Desktop form, search, and status controls are readable."
+    },
+    {
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue89-browser-r13\\evidence\\browser\\06-exported-application-reopened-mobile.png",
+      "sha256": "753f7955dc89cdbcbdaa7dfc6b9bfef9de4b5d2f020cff67ad6355ffea88200b",
+      "width": 390,
+      "height": 1044,
+      "inspection": "Viewed in this continuation using view_image and emitted at original detail.",
+      "observations": "At 390px width the imported application shows the reopened critical incident under the Open filter with a Resolve control. The stacked form and visible content are readable without visible horizontal clipping."
+    }
+  ],
+  "new_blocking_visual_findings": [],
+  "limitations": [
+    "Screenshots support the visible states. Contract immutability, provider-call counts, native-session identity, signed downloads, complete bundle contents, and source equality are established by the native/browser report, not screenshots alone.",
+    "Screenshot 03 contains black padding below the rendered page. This artifact is retained unchanged and is not used as evidence of the page's document height or full-page layout correctness.",
+    "The existing focused Skip to workspace control is visible in the left gutter in screenshots 02-04. This inspection is not a general accessibility audit.",
+    "The local ECorp fixture uses development authentication and a deterministic provider. No live vendor inference, production OIDC, original issue88 recovery, human acceptance, real GitHub effect, or deployment is claimed.",
+    "Mobile visual acceptance covers the independently imported deterministic application, not all ECorp routes. Large-workspace checkpoint performance remains unverified."
+  ]
+}

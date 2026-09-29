@@ -10,7 +10,10 @@ use std::{
 
 use anyhow::{Context, Result, anyhow};
 use sha2::{Digest, Sha256};
-use tokio::{process::Command, sync::Mutex};
+use tokio::{
+    process::Command,
+    sync::{Mutex, oneshot},
+};
 use tracing::warn;
 use url::Url;
 use uuid::Uuid;
@@ -18,7 +21,21 @@ use uuid::Uuid;
 const GIT_TIMEOUT: Duration = Duration::from_secs(30);
 const VERIFICATION_SNAPSHOT_CLEANUP_TIMEOUT: Duration = Duration::from_secs(10);
 const CHECKPOINT_MAX_BYTES: u64 = 4 * 1024 * 1024 * 1024;
-const CHECKPOINT_READ_TIMEOUT: Duration = Duration::from_secs(10);
+// A complete retained proof brackets the native delta with two physical scans.
+// Bound each read as well as the entire capture, without dropping source bytes.
+const CHECKPOINT_READ_TIMEOUT: Duration = Duration::from_secs(60);
+pub(super) const CHECKPOINT_CAPTURE_TIMEOUT: Duration = Duration::from_secs(120);
+
+#[derive(Debug)]
+pub(super) struct CheckpointReadDeadline;
+
+impl std::fmt::Display for CheckpointReadDeadline {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("workspace checkpoint exceeded its read deadline")
+    }
+}
+
+impl std::error::Error for CheckpointReadDeadline {}
 
 #[derive(Clone)]
 pub struct WorkspaceManager {
@@ -713,11 +730,25 @@ pub(super) async fn fingerprint_checkpoint_path(
 ) -> Result<String> {
     let root = root.to_owned();
     let deadline = std::time::Instant::now() + timeout;
-    tokio::task::spawn_blocking(move || {
-        fingerprint_workspace_with_limits(&root, Some(max_bytes), Some(deadline))
-    })
+    // Dropping the caller closes this native channel. A started blocking task
+    // cannot be aborted, so it checks cancellation between filesystem reads.
+    let (cancelled, cancel_on_drop) = oneshot::channel::<()>();
+    let fingerprint = tokio::time::timeout(
+        timeout,
+        tokio::task::spawn_blocking(move || {
+            fingerprint_workspace_with_limits(
+                &root,
+                Some(max_bytes),
+                Some(deadline),
+                Some(&cancelled),
+            )
+        }),
+    )
     .await
-    .context("join bounded workspace checkpoint task")?
+    .context(CheckpointReadDeadline)?
+    .context("join bounded workspace checkpoint task")?;
+    drop(cancel_on_drop);
+    fingerprint
 }
 
 pub async fn find_file_by_digest(
@@ -1189,21 +1220,23 @@ fn find_workspace_file_by_digest(
 }
 
 fn fingerprint_workspace(root: &Path) -> Result<String> {
-    fingerprint_workspace_with_limits(root, None, None)
+    fingerprint_workspace_with_limits(root, None, None, None)
 }
 
 fn fingerprint_workspace_with_limits(
     root: &Path,
     max_bytes: Option<u64>,
     deadline: Option<std::time::Instant>,
+    cancelled: Option<&oneshot::Sender<()>>,
 ) -> Result<String> {
+    ensure_checkpoint_active(deadline, cancelled)?;
     let root = fs::canonicalize(root).context("resolve workspace fingerprint root")?;
     let mut digest = Sha256::new();
     let mut declared_bytes = 0_u64;
     let mut read_bytes = 0_u64;
     // Root permissions intentionally differ for private snapshots. Bind every copied entry.
-    for (relative, path) in fingerprint_entries(&root)? {
-        ensure_checkpoint_deadline(deadline)?;
+    for (relative, path) in fingerprint_entries_with_limits(&root, deadline, cancelled)? {
+        ensure_checkpoint_active(deadline, cancelled)?;
         let metadata = fs::symlink_metadata(&path)
             .with_context(|| format!("inspect workspace fingerprint path {}", path.display()))?;
         if snapshot_entry_is_link(&metadata) {
@@ -1234,7 +1267,7 @@ fn fingerprint_workspace_with_limits(
                 .with_context(|| format!("open workspace fingerprint path {}", path.display()))?;
             let mut buffer = [0_u8; 64 * 1024];
             loop {
-                ensure_checkpoint_deadline(deadline)?;
+                ensure_checkpoint_active(deadline, cancelled)?;
                 let read = file.read(&mut buffer).with_context(|| {
                     format!("read workspace fingerprint path {}", path.display())
                 })?;
@@ -1257,12 +1290,19 @@ fn fingerprint_workspace_with_limits(
             ));
         }
     }
+    ensure_checkpoint_active(deadline, cancelled)?;
     Ok(hex::encode(digest.finalize()))
 }
 
-fn ensure_checkpoint_deadline(deadline: Option<std::time::Instant>) -> Result<()> {
+fn ensure_checkpoint_active(
+    deadline: Option<std::time::Instant>,
+    cancelled: Option<&oneshot::Sender<()>>,
+) -> Result<()> {
+    if cancelled.is_some_and(oneshot::Sender::is_closed) {
+        return Err(anyhow!("workspace checkpoint caller cancelled its read"));
+    }
     if deadline.is_some_and(|deadline| std::time::Instant::now() >= deadline) {
-        return Err(anyhow!("workspace checkpoint exceeded its read deadline"));
+        return Err(anyhow!(CheckpointReadDeadline));
     }
     Ok(())
 }
@@ -1285,14 +1325,26 @@ fn fingerprint_mode(metadata: &fs::Metadata) -> u32 {
 }
 
 fn fingerprint_entries(root: &Path) -> Result<Vec<(String, PathBuf)>> {
+    fingerprint_entries_with_limits(root, None, None)
+}
+
+fn fingerprint_entries_with_limits(
+    root: &Path,
+    deadline: Option<std::time::Instant>,
+    cancelled: Option<&oneshot::Sender<()>>,
+) -> Result<Vec<(String, PathBuf)>> {
     const MAX_ENTRIES: usize = 100_000;
     let mut paths = Vec::new();
-    collect_fingerprint_entries(root, root, &mut paths, MAX_ENTRIES)?;
+    collect_fingerprint_entries(root, root, &mut paths, MAX_ENTRIES, deadline, cancelled)?;
     let mut entries = paths
         .into_iter()
-        .map(|path| Ok((portable_relative(root, &path)?, path)))
+        .map(|path| {
+            ensure_checkpoint_active(deadline, cancelled)?;
+            Ok((portable_relative(root, &path)?, path))
+        })
         .collect::<Result<Vec<_>>>()?;
     entries.sort_by(|left, right| left.0.cmp(&right.0));
+    ensure_checkpoint_active(deadline, cancelled)?;
     Ok(entries)
 }
 
@@ -1301,13 +1353,17 @@ fn collect_fingerprint_entries(
     directory: &Path,
     entries: &mut Vec<PathBuf>,
     max_entries: usize,
+    deadline: Option<std::time::Instant>,
+    cancelled: Option<&oneshot::Sender<()>>,
 ) -> Result<()> {
+    ensure_checkpoint_active(deadline, cancelled)?;
     for entry in fs::read_dir(directory).with_context(|| {
         format!(
             "read workspace fingerprint directory {}",
             directory.display()
         )
     })? {
+        ensure_checkpoint_active(deadline, cancelled)?;
         let entry = entry?;
         let path = entry.path();
         if is_git_control_path(root, &path) {
@@ -1322,7 +1378,7 @@ fn collect_fingerprint_entries(
         let metadata = fs::symlink_metadata(&path)?;
         // A Windows junction may look like a directory. Never enumerate through any reparse point.
         if metadata.is_dir() && !snapshot_entry_is_link(&metadata) {
-            collect_fingerprint_entries(root, &path, entries, max_entries)?;
+            collect_fingerprint_entries(root, &path, entries, max_entries, deadline, cancelled)?;
         }
     }
     Ok(())
@@ -1950,12 +2006,57 @@ mod tests {
     }
 
     #[test]
+    fn checkpoint_deadline_applies_to_directory_enumeration() {
+        let (root, source) = physical_fixture();
+        fs::create_dir(source.join("nested")).unwrap();
+        fs::write(source.join("nested/evidence.txt"), "retained evidence").unwrap();
+        let expected = fingerprint_workspace(&source).unwrap();
+        let mut entries = Vec::new();
+        let error = collect_fingerprint_entries(
+            &source,
+            &source,
+            &mut entries,
+            100_000,
+            Some(std::time::Instant::now()),
+            None,
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("deadline"));
+        assert!(entries.is_empty());
+        assert_eq!(fingerprint_workspace(&source).unwrap(), expected);
+        cleanup_physical_fixture(&root);
+    }
+
+    #[test]
+    fn checkpoint_caller_cancellation_stops_enumeration_and_fingerprinting() {
+        let (root, source) = physical_fixture();
+        fs::create_dir(source.join("evidence")).unwrap();
+        fs::write(source.join("evidence/proof.json"), "retained proof").unwrap();
+        fs::write(source.join(".gitignore"), "evidence/\n").unwrap();
+        let expected = fingerprint_workspace(&source).unwrap();
+        let (cancelled, caller) = oneshot::channel::<()>();
+        assert_eq!(
+            fingerprint_workspace_with_limits(&source, Some(4096), None, Some(&cancelled)).unwrap(),
+            expected,
+        );
+        drop(caller);
+        let enumeration = fingerprint_entries_with_limits(&source, None, Some(&cancelled));
+        assert!(enumeration.unwrap_err().to_string().contains("cancelled"));
+        let scan = fingerprint_workspace_with_limits(&source, Some(4096), None, Some(&cancelled));
+        assert!(scan.unwrap_err().to_string().contains("cancelled"));
+        assert_eq!(fingerprint_workspace(&source).unwrap(), expected);
+        fs::write(source.join("evidence/proof.json"), "different proof").unwrap();
+        assert_ne!(fingerprint_workspace(&source).unwrap(), expected);
+        cleanup_physical_fixture(&root);
+    }
+
+    #[test]
     fn fingerprint_entry_and_snapshot_byte_limits_fail_without_source_mutation() {
         let (root, source) = physical_fixture();
         fs::write(source.join("a.txt"), "1234").unwrap();
         fs::write(source.join("b.txt"), "5678").unwrap();
         let expected = fingerprint_workspace(&source).unwrap();
-        let error = collect_fingerprint_entries(&source, &source, &mut Vec::new(), 1)
+        let error = collect_fingerprint_entries(&source, &source, &mut Vec::new(), 1, None, None)
             .expect_err("entry bound");
         assert!(error.to_string().contains("exceeds 1 entries"));
         let destination = root.join("limited");

@@ -1,0 +1,285 @@
+   Compiling crony-server v0.1.0 (<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp\crates\crony-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 22.63s
+     Running unittests src\base_worker.rs (target\debug\deps\crony_base_worker-d8fb29a0c2093fc6.exe)
+
+running 7 tests
+test tests::base_worker_http_gateway_restart_and_finality ... ignored, requires owned PostgreSQL and separate owned Anvil at loopback18556
+test tests::base_worker_nonce_race_independent_receipt_missing ... ignored, requires owned PostgreSQL; synthetic HTTP providers on fresh loopback ports
+test tests::base_worker_nonce_race_known_inclusion ... ignored, requires owned PostgreSQL; synthetic HTTP providers on fresh loopback ports
+test tests::base_worker_nonce_race_unknown_consumption ... ignored, requires owned PostgreSQL; synthetic HTTP providers on fresh loopback ports
+test tests::base_worker_observation_paging_http_restart_and_finalized_boundary ... ignored, requires owned PostgreSQL; HTTP fixture binds fresh loopback ports, no Anvil
+test tests::base_worker_terminal_fee_reverted_after_restart ... ignored, requires owned PostgreSQL; synthetic HTTP providers on fresh loopback ports
+test tests::base_worker_terminal_fee_success_after_restart ... ignored, requires owned PostgreSQL; synthetic HTTP providers on fresh loopback ports
+
+test result: ok. 0 passed; 0 failed; 7 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\main.rs (target\debug\deps\crony_server-09b678318e84e874.exe)
+
+running 265 tests
+test agent_pinning_tests::issue48_handler_authorizes_and_publishes_only_first_operation ... ignored, requires an explicitly owned PostgreSQL maintenance database
+test agent_pinning_tests::issue48_handler_oidc_mapping_rejects_spoofed_actor_and_replay ... ignored, requires an explicitly owned PostgreSQL maintenance database
+test agent_pinning_tests::issue48_wire_requires_typed_version_and_operation_without_extra_effects ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_cannot_enter_ordinary_or_missing_grant_path ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_checks_native_content_not_only_its_declared_digest ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_rejects_foreign_new_run_task_or_corp ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_rejects_relabelled_provenance_and_false_completion ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_signature_binds_historical_and_current_identity ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_signs_current_collection_and_preserves_exact_bytes ... ok
+test artifacts::tests::artifact_file_names_reject_content_disposition_injection ... ok
+test artifacts::tests::bounded_artifact_stream_rejects_size_or_range_mismatch_before_polling ... ok
+test artifacts::tests::bounded_artifact_stream_rejects_understated_body_without_draining ... ok
+test artifacts::tests::bounded_artifact_stream_requires_exact_length_and_eof ... ok
+test artifacts::tests::bounded_verified_read_preserves_signature_retention_digest_and_media_checks ... ok
+test artifacts::tests::bounded_verified_read_rejects_oversized_object_with_small_signed_metadata ... ok
+test artifacts::tests::bounded_verified_read_round_trips_small_artifact_without_limiting_downloads ... ok
+test artifacts::tests::canonical_upload_requires_head_in_the_verified_object_format ... ok
+test artifacts::tests::hmac_sha256_keeps_the_rfc4231_signature_bytes ... ok
+test artifacts::tests::issue297_native_adversarial_fixture ... ignored, requires the independently owned nonce-qualified PostgreSQL fixture capability
+test artifacts::tests::issue297_native_catalog_and_guard_are_fail_closed_offline ... ok
+test artifacts::tests::issue297_native_database_guard_rejects_unowned_targets_offline ... ok
+test artifacts::tests::issue82_source_envelope_must_match_signed_upload_identity ... ok
+test artifacts::tests::local_store_round_trips_verified_content_and_provenance ... ok
+test artifacts::tests::media_validation_rejects_mismatches ... ok
+test artifacts::tests::production_requires_private_s3_storage ... ok
+test artifacts::tests::source_deliverable_role_and_exact_linkage_are_signed ... ok
+test artifacts::tests::staged_objects_finalize_idempotently_and_cleanup_safely ... ok
+test auth::tests::base_v2_spending_has_dedicated_owner_admin_permission ... ok
+test auth::tests::development_does_not_require_discovery ... ok
+test auth::tests::discovery_drops_query_and_fragment_from_metadata_request ... ok
+test auth::tests::discovery_preserves_entra_v2_issuer_path ... ok
+test auth::tests::discovery_preserves_nested_issuer_path ... ok
+test auth::tests::discovery_preserves_percent_encoded_issuer_path ... ok
+test auth::tests::discovery_still_rejects_mismatched_issuer ... ok
+test auth::tests::discovery_supports_root_issuer_with_or_without_trailing_slash ... ok
+test auth::tests::production_still_requires_https_without_test_override ... ok
+test auth::tests::role_matrix_is_fail_closed ... ok
+test base_audit::tests::base_v2_api_bounds_pages_and_versions_and_ids ... ok
+test base_audit::tests::base_v2_api_connection_failure_is_distinct_from_disabled_and_redacted ... ok
+test base_audit::tests::base_v2_api_has_no_arbitrary_signer_or_transaction_parameters ... ok
+test base_audit::tests::base_v2_api_http_disconnected_preserves_v1_and_authorization ... ignored, requires an isolated BASE_AUDIT_TEST_DATABASE_URL; creates demo application data
+test base_audit::tests::base_v2_api_never_accepts_caller_supplied_validation_evidence ... ok
+test base_audit::tests::base_v2_api_rejects_invalid_envelopes_before_authorization_or_connections ... ok
+test base_audit::tests::base_v2_api_spending_and_administration_are_distinct_from_reads ... ok
+test base_worker::tests::base_worker_http_gateway_restart_and_finality ... ignored, requires owned PostgreSQL and separate owned Anvil at loopback18556
+test base_worker::tests::base_worker_nonce_race_independent_receipt_missing ... ignored, requires owned PostgreSQL; synthetic HTTP providers on fresh loopback ports
+test base_worker::tests::base_worker_nonce_race_known_inclusion ... ignored, requires owned PostgreSQL; synthetic HTTP providers on fresh loopback ports
+test base_worker::tests::base_worker_nonce_race_unknown_consumption ... ignored, requires owned PostgreSQL; synthetic HTTP providers on fresh loopback ports
+test base_worker::tests::base_worker_observation_paging_http_restart_and_finalized_boundary ... ignored, requires owned PostgreSQL; HTTP fixture binds fresh loopback ports, no Anvil
+test base_worker::tests::base_worker_terminal_fee_reverted_after_restart ... ignored, requires owned PostgreSQL; synthetic HTTP providers on fresh loopback ports
+test base_worker::tests::base_worker_terminal_fee_success_after_restart ... ignored, requires owned PostgreSQL; synthetic HTTP providers on fresh loopback ports
+test cache_admission_lifecycle_tests::issue140_capable_resume_reaches_dependency_canary ... ignored, requires explicitly owned SQLx maintenance database
+test cache_admission_lifecycle_tests::issue140_capable_resume_reaches_secret_canary ... ignored, requires explicitly owned SQLx maintenance database
+test cache_admission_lifecycle_tests::issue140_future_policy_does_not_starve_healthy_sibling ... ignored, requires an owned PostgreSQL fixture
+test cache_admission_lifecycle_tests::issue140_grant_expiry_rolls_back_with_failed_transition ... ignored, requires explicitly owned SQLx maintenance database
+test cache_admission_lifecycle_tests::issue140_late_loss_keeps_shared_attempt_and_expires_grants ... ignored, requires explicitly owned SQLx maintenance database
+test cache_admission_lifecycle_tests::issue140_legacy_resume_handler_fails_before_preparation ... ignored, requires explicitly owned SQLx maintenance database
+test cache_admission_lifecycle_tests::issue140_legacy_source_recovery_fails_before_secret_preparation ... ignored, requires explicitly owned SQLx maintenance database
+test cache_admission_lifecycle_tests::issue140_legacy_verifier_recovery_fails_before_artifact_hydration ... ignored, requires explicitly owned SQLx maintenance database
+test cache_admission_lifecycle_tests::issue140_malformed_policy_does_not_starve_healthy_sibling ... ignored, requires an owned PostgreSQL fixture
+test cache_admission_lifecycle_tests::issue140_rejected_failure_guard_preserves_grants ... ignored, requires explicitly owned SQLx maintenance database
+test cache_admission_lifecycle_tests::issue140_source_recovery_expires_only_its_grants ... ignored, requires explicitly owned SQLx maintenance database
+test cache_admission_lifecycle_tests::issue140_verifier_recovery_expires_only_its_grants ... ignored, requires explicitly owned SQLx maintenance database
+test cache_admission_tests::issue140_explicit_controls_gate_every_assignment_at_send ... ok
+test cache_admission_tests::issue140_legacy_readiness_diagnostic_remains_retryable ... ok
+test cache_admission_tests::issue140_matching_requires_available_global_support_on_selected_runner ... ok
+test cache_admission_tests::issue82_canonical_matching_requires_global_support_on_the_selected_runner ... ok
+test cache_admission_tests::issue82_canonical_source_support_gates_every_assignment_and_current_epoch ... ok
+test cache_admission_tests::issue89_fresh_deliverable_start_keeps_canonical_only_admission ... ok
+test cache_admission_tests::issue89_retained_deliverable_rechecks_epoch_and_readiness ... ok
+test cache_admission_tests::issue89_retained_deliverable_requires_current_runner_global_support ... ok
+test delegated::authority_tests::delegated_callback_consumed_before_effect_and_concurrent_replay_denied ... ignored, requires explicitly owned SQLx maintenance database
+test delegated::authority_tests::delegated_cancel_only_reports_a_persisted_cancellation ... ignored, requires explicitly owned SQLx maintenance database
+test delegated::authority_tests::delegated_cancel_rechecks_release_after_waiting_for_the_row ... ignored, requires explicitly owned SQLx maintenance database
+test delegated::authority_tests::delegated_cancel_waits_for_authorized_effect_and_scrubs_token ... ignored, requires explicitly owned SQLx maintenance database
+test delegated::authority_tests::delegated_failed_redemption_cannot_replay_or_fail_a_new_attempt ... ignored, requires explicitly owned SQLx maintenance database
+test delegated::authority_tests::delegated_independent_expiry_is_bounded_and_erases_abandoned_pkce ... ignored, requires explicitly owned SQLx maintenance database
+test delegated::authority_tests::delegated_job_concurrent_retry_and_disconnected_recovery ... ignored, requires explicitly owned SQLx maintenance database
+test delegated::authority_tests::delegated_job_retry_rechecks_identity_room_and_role ... ignored, requires explicitly owned SQLx maintenance database
+test delegated::authority_tests::delegated_operation_foreign_keys_enforce_corp_and_exact_lineage ... ignored, requires explicitly owned SQLx maintenance database
+test delegated::authority_tests::delegated_original_assignment_survives_reconnect_and_refuses_rebinding ... ignored, requires explicitly owned SQLx maintenance database
+test delegated::authority_tests::delegated_release_serializes_with_credential_revocation ... ignored, requires explicitly owned SQLx maintenance database
+test delegated::authority_tests::delegated_revoked_authority_denies_all_new_effects ... ignored, requires explicitly owned SQLx maintenance database
+test delegated::authority_tests::delegated_separate_login_and_provider_identity_complete_real_handlers ... ignored, requires explicitly owned SQLx maintenance database
+test delegated::tests::delegated_browser_cookie_is_exact_not_prefix ... ok
+test delegated::tests::delegated_job_room_rejection_rolls_back_all_admission ... ignored, requires explicitly owned SQLx maintenance database
+test delegated::tests::delegated_receipt_never_contains_protected_value ... ok
+test delegated::tests::delegated_scope_denies_before_auth_and_after_cancel_or_expiry ... ok
+test delegated::tests::delegated_urls_require_https_in_production_including_oauth_redirect ... ok
+test delegated_provider::tests::authorization_request_is_pkce_state_nonce_bound_without_credentials ... ok
+test delegated_provider::tests::configuration_denies_untrusted_authorities_and_refresh_scope ... ok
+test delegated_provider::tests::discovery_endpoint_roles_cannot_be_swapped ... ok
+test delegated_provider::tests::discovery_validates_issuer_and_endpoint_authority ... ok
+test delegated_provider::tests::downstream_validation_rejects_wrong_audience_tenant_actor_and_app_only ... ok
+test delegated_provider::tests::entra_real_functions_send_distinct_code_and_obo_contracts ... ok
+test delegated_provider::tests::entra_v1_resource_token_still_requires_exact_tenant_audience_and_appid ... ok
+test delegated_provider::tests::environment_selection_is_explicit_and_never_falls_back ... ok
+test delegated_provider::tests::expected_human_is_not_replaced_by_first_successful_login ... ok
+test delegated_provider::tests::expiry_and_provider_instance_binding_prevent_reuse ... ok
+test delegated_provider::tests::initial_identity_and_assertion_validation_fail_closed ... ok
+test delegated_provider::tests::keycloak_is_explicit_rfc8693_and_checks_preserved_subject ... ok
+test delegated_provider::tests::loopback_credentials_bypass_environment_proxy_but_remote_requests_use_it ... ok
+test delegated_provider::tests::malformed_signature_unknown_key_and_duplicate_key_are_rejected ... ok
+test delegated_provider::tests::missing_required_claims_and_not_yet_valid_tokens_fail_closed ... ok
+test delegated_provider::tests::nonce_from_another_transaction_is_rejected ... ok
+test delegated_provider::tests::provider_errors_are_redacted_and_never_retried_as_another_grant ... ok
+test delegated_provider::tests::requested_delegated_permissions_must_be_present_in_signed_scope ... ok
+test delegated_provider::tests::success_status_with_oauth_error_is_not_a_success ... ok
+test delegated_provider::tests::token_redirects_are_not_followed_and_transport_failures_are_sanitized ... ok
+test delegated_provider::tests::token_response_and_exchange_type_are_not_trusted ... ok
+test delegated_provider::tests::unconfigured_provider_is_disabled ... ok
+test delegated_provider::tests::unsupported_algorithm_and_nonsigning_jwks_are_rejected ... ok
+test dependency_source::tests::an_invalid_later_file_never_returns_a_partial_handoff ... ok
+test dependency_source::tests::base64_rejects_noncanonical_padding_bits_alphabets_and_whitespace ... ok
+test dependency_source::tests::canonical_source_extension_preserves_exact_legacy_handoff_content ... ok
+test dependency_source::tests::canonical_source_extension_rejects_duplicate_fields_at_both_levels ... ok
+test dependency_source::tests::canonical_source_extension_rejects_partial_null_and_mismatched_identities ... ok
+test dependency_source::tests::changed_paths_are_an_additional_exact_unordered_constraint ... ok
+test dependency_source::tests::deleted_renamed_unmerged_and_nonregular_changes_are_rejected ... ok
+test dependency_source::tests::duplicate_fields_are_rejected_including_equal_values_and_nulls ... ok
+test dependency_source::tests::empty_files_bom_and_whitespace_are_not_omitted_or_normalized ... ok
+test dependency_source::tests::envelope_and_file_count_caps_precede_unbounded_parsing ... ok
+test dependency_source::tests::every_export_field_is_required_even_nullable_metadata ... ok
+test dependency_source::tests::expectations_require_immutable_ids_and_a_nonempty_exact_set ... ok
+test dependency_source::tests::extra_missing_duplicate_and_case_aliased_files_fail ... ok
+test dependency_source::tests::file_hash_and_actual_decoded_byte_count_are_verified ... ok
+test dependency_source::tests::full_sha256_git_object_ids_are_supported ... ok
+test dependency_source::tests::invalid_utf8_and_utf8_binary_controls_fail_with_correct_hashes ... ok
+test dependency_source::tests::mime_must_match_a_supported_text_extension_and_content ... ok
+test dependency_source::tests::multiple_handoffs_are_complete_lossless_and_sorted ... ok
+test dependency_source::tests::optional_source_record_binds_identity_mime_and_exact_envelope ... ok
+test dependency_source::tests::patch_integrity_and_typed_set_metadata_are_fail_closed ... ok
+test dependency_source::tests::per_file_encoded_decoded_and_declared_sizes_are_bounded ... ok
+test dependency_source::tests::planner_preflight_rejects_the_same_path_dialect_before_provider_work ... ok
+test dependency_source::tests::redundant_patch_has_independent_encoded_and_decoded_caps ... ok
+test dependency_source::tests::regular_modes_and_non_deleted_export_statuses_are_supported ... ok
+test dependency_source::tests::schema_form_base_and_verifier_are_exact ... ok
+test dependency_source::tests::total_prompt_cap_includes_paths_hashes_framing_and_utf8_bytes ... ok
+test dependency_source::tests::traversal_git_internal_secret_and_nonportable_paths_are_rejected ... ok
+test dependency_source::tests::unknown_fields_positional_arrays_trailing_data_and_wrong_types_fail ... ok
+test factory_connection_tests::claim_authority::issue161_authority_handler_is_uncached_and_rejects_foreign_scope ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::claim_authority::issue161_bad_pin_rejects_claim_before_events_or_materialization ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::claim_authority::issue161_concurrent_controllers_keep_one_claim_and_one_held_mission ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::claim_authority::issue161_production_controller_registration_requires_pin_before_persistence ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue204_handler_bound_only_preflight_and_materialization ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue204_handler_post_claim_readiness_conflict_releases_exact_claim ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue204_handler_post_claim_source_conflict_releases_exact_claim ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue204_handler_stale_claim_conflicts_do_not_release_current_claim ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue48_planner_reuses_pins_in_the_saved_connection_room ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue56_dispatcher_retires_fenced_approval_and_control_once ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue56_dispatcher_sends_healthy_progress_only_to_current_epoch ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue79_claim_handler_and_preflight_reject_cost_without_durable_effects ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::readiness::issue256_matching_preflight_preserves_concurrent_claims_and_dispatch_recheck ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::readiness::issue256_offline_plan_and_required_readiness_preserve_full_ledger ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::readiness::issue256_readiness_uses_exact_native_scope_and_reconciliation ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::readiness::issue256_saved_connection_model_and_room_authority_still_fail_closed ... ignored, requires explicitly owned SQLx maintenance database
+test factory_source_audit_tests::issue283_b05_covered_source_upgrade_conflict_and_replay ... ignored, requires explicitly owned disposable PostgreSQL
+test factory_source_audit_tests::issue283_b05_uncovered_source_upgrade_conflict ... ignored, requires explicitly owned disposable PostgreSQL
+test planning::tests::deterministic_verification_strategy_drops_provider_model_settings ... ok
+test planning::tests::issue224_attempt_override_rejects_out_of_bounds_values ... ok
+test planning::tests::issue224_attempt_override_sets_every_task_without_changing_other_plan_fields ... ok
+test planning::tests::issue224_fixture_strategies_preserve_default_one_attempt ... ok
+test planning::tests::issue224_ordinary_strategies_preserve_default_two_attempts ... ok
+test planning::tests::issue297_research_handoffs_preserve_issue79_cost_admission ... ok
+test planning::tests::issue297_research_paths_fail_closed_and_legacy_plans_remain_unchanged ... ok
+test planning::tests::issue297_research_roots_declare_exact_verified_notes_and_probes ... ok
+test planning::tests::issue79_every_registered_strategy_uses_shared_cost_allocation ... ok
+test planning::tests::ordered_candidates_exclude_retired_agents ... ok
+test planning::tests::parallel_strategy_scopes_model_settings_to_matching_adapters ... ok
+test planning::tests::rejects_cycles_depth_budget_and_retry_violations ... ok
+test planning::tests::single_strategy_enforces_requested_adapter ... ok
+test planning::tests::single_strategy_preserves_typed_deliverable_and_rejects_unsafe_scope ... ok
+test planning::tests::strategies_are_replaceable_and_deterministic ... ok
+test planning::tests::studio_handoffs_prioritize_decisions_and_delegate_mechanical_checks ... ok
+test planning::tests::studio_swarm_pins_model_and_reasoning_on_every_task ... ok
+test planning::tests::studio_swarm_prefers_staffing_roles_and_reserves_them_before_fallback ... ok
+test planning::tests::studio_swarm_preserves_graph_and_budget_bounds ... ok
+test planning::tests::studio_swarm_rejects_duplicate_manager_retired_or_offline_workers ... ok
+test planning::tests::studio_swarm_rejects_insufficient_or_mixed_provider_workers ... ok
+test planning::tests::studio_swarm_rejects_non_copilot_adapter_requests ... ok
+test planning::tests::studio_swarm_rejects_unsafe_handoff_roots ... ok
+test planning::tests::studio_swarm_scopes_role_handoffs_and_preserves_final_deliverable ... ok
+test planning::tests::studio_swarm_splits_budgets_and_bounds_attempts ... ok
+test planning::tests::studio_swarm_uses_three_distinct_copilot_roots_and_gameplay_join ... ok
+test planning::tests::verifier_policies_reject_unsafe_paths_commands_and_gates ... ok
+test publication_checkpoint_permission_tests::owned_failure_reporting_does_not_grant_effect_permission ... ok
+test secrets::tests::ciphertext_is_bound_to_corp_secret_and_name ... ok
+test secrets::tests::development_keeps_default_and_explicit_fixture_key_compatibility ... ok
+test secrets::tests::nonces_are_not_constrained_to_uuid_v4_fixed_bits ... ok
+test secrets::tests::production_keeps_other_valid_keys_and_normalization ... ok
+test secrets::tests::production_rejects_public_development_key_variants_without_disclosure ... ok
+test secrets::tests::production_still_requires_a_well_formed_32_byte_key ... ok
+test secrets::tests::repeated_plaintext_uses_fresh_authenticated_nonces ... ok
+test staffing::tests::empty_corp_gets_only_the_required_roles ... ok
+test staffing::tests::only_idle_pinned_same_corp_role_is_reused ... ok
+test staffing::tests::studio_never_falls_back_to_another_provider ... ok
+test startup::tests::production_deployment_key_advances_to_the_next_preparation_stage ... ok
+test startup::tests::production_development_key_diagnostic_keeps_the_safe_rejection_reason ... ok
+test startup::tests::production_missing_and_malformed_key_diagnostics_are_bounded_and_secret_safe ... ok
+test state_audit::retained_pin_tests::b02_descendant_replay_bootstrap_and_database_fence ... ignored, requires explicitly owned disposable PostgreSQL
+test state_audit::retained_pin_tests::b02_destination_pin_cannot_authorize_another_destination ... ignored, requires explicitly owned disposable PostgreSQL
+test state_audit::retained_pin_tests::b02_publication_checks_pin_on_its_initial_head_and_rejects_later_rewrite ... ignored, requires explicitly owned disposable PostgreSQL
+test state_audit::retained_pin_tests::b02_remote_witness_configuration_requires_exact_destination ... ok
+test state_audit::retained_pin_tests::b02_retained_remote_pin_fences_null_and_old_database_commit ... ignored, requires explicitly owned disposable PostgreSQL
+test state_audit::retained_pin_tests::checkpoint_cursor_passes_sixteen_persistently_invalid_ledgers ... ignored, requires explicitly owned disposable PostgreSQL
+test state_audit::retained_pin_tests::f02_transport_constructor_failure_is_durable_and_recovers ... ignored, requires explicitly owned disposable PostgreSQL
+test state_audit::retained_pin_tests::retained_witnesses_use_the_transport_commit_grammar ... ok
+test state_audit::retained_pin_tests::slow_destination_does_not_block_another_corp_or_local_checkpoint ... ignored, requires explicitly owned disposable PostgreSQL
+test state_audit::retained_pin_tests::unavailable_witness_recovers_without_an_integrity_incident ... ignored, requires explicitly owned disposable PostgreSQL
+test state_audit::tests::issue281_api_rejects_injected_key_token_or_destination_fields ... ok
+test state_audit::tests::issue281_publisher_missing_witness_is_durably_disabled ... ignored, requires explicitly owned disposable PostgreSQL
+test state_audit::tests::issue281_publisher_other_corp_witness_is_not_authority ... ignored, requires explicitly owned disposable PostgreSQL
+test tests::artifact_content_disposition_encodes_untrusted_file_names ... ok
+test tests::checkpoint_command_rejects_cross_corp_and_cross_run_payloads ... ok
+test tests::checkpoint_denial_retires_only_the_command_and_store_errors_remain_retryable ... ok
+test tests::checkpoint_verification_requires_explicit_runner_support ... ok
+test tests::durable_verifier_references_reject_embedded_data_bad_digests_and_oversized_transfers ... ok
+test tests::factory_materialization_failure_detail_is_bounded_single_line_text ... ok
+test tests::factory_review_is_required_for_the_outcome_not_each_internal_handoff ... ok
+test tests::factory_review_preserves_explicit_internal_policy_and_reviews_provider_ancestry ... ok
+test tests::issue171_epoch_loss_during_commands_cannot_wake_scheduling ... ok
+test tests::issue171_failed_command_handling_cannot_wake_scheduling ... ok
+test tests::issue171_failed_or_superseded_finalization_cannot_wake_scheduling ... ok
+test tests::issue171_reconnect_wakeup_waits_for_finalization_then_commands ... ok
+test tests::issue171_tick_bounds_and_rotates_unique_current_ready_corps ... ok
+test tests::issue171_tick_continues_other_corps_after_a_scheduling_failure ... ok
+test tests::issue171_tick_skips_unready_and_rechecks_corp_epoch_snapshots ... ok
+test tests::issue171_ticks_retry_failed_commands_or_scheduling_without_new_events ... ok
+test tests::issue171_unready_or_stale_epoch_never_polls_commands_or_scheduler ... ok
+test tests::issue172_all_failing_peers_remain_bounded_and_each_get_a_turn ... ok
+test tests::issue172_corp_batching_does_not_alias_runner_rotation ... ok
+test tests::issue172_epoch_replacement_during_commands_cannot_schedule_or_pin_the_corp ... ok
+test tests::issue172_removed_representative_does_not_reset_other_corps_or_accumulate_state ... ok
+test tests::issue172_repeated_failure_cannot_starve_same_corp_healthy_runner ... ok
+test tests::issue172_snapshot_fencing_skips_a_peer_moved_to_another_corp ... ok
+test tests::issue172_unvisited_singleton_churn_preserves_runner_rotation ... ok
+test tests::issue210_transient_authorization_reads_do_not_terminalize_recovery ... ok
+test tests::issue211_retained_dispatch_binds_exact_provider_free_command ... ok
+test tests::issue211_retained_dispatch_does_not_send_private_upload_binding ... ok
+test tests::issue211_retained_dispatch_requires_its_own_available_capability ... ok
+test tests::issue211_retained_receipt_ack_uses_exact_role_and_digest ... ok
+test tests::issue211_retained_receipt_db_error_is_retryable_but_authority_denial_is_not ... ok
+test tests::issue224_attempt_request_must_match_the_pre_execution_factory_policy ... ok
+test tests::issue224_factory_operation_snapshots_keep_legacy_omission ... ok
+test tests::issue224_planning_input_keeps_the_exact_requested_attempt_allowance ... ok
+test tests::issue256_start_dispatch_rechecks_capabilities_after_selection ... ok
+test tests::issue297_dependency_delivery_requires_capability_and_current_epoch ... ok
+test tests::mission_description_is_normalized_and_delivered_to_each_task ... ok
+test tests::mission_preview_and_create_mapping_leave_defaults_to_the_shared_planner ... ok
+test tests::mission_preview_and_create_mapping_preserve_every_request_field ... ok
+test tests::mission_preview_projects_the_actual_plan_without_identity_or_contract_data ... ok
+test tests::mission_source_is_pinned_to_every_planned_task ... ok
+test tests::mission_verification_applies_to_every_terminal_output_even_at_different_depths ... ok
+test tests::model_less_adapter_reports_the_invalid_model_requirement ... ok
+test tests::provider_backed_factory_tasks_require_independent_verification ... ok
+test tests::reconnect_closed_socket_does_not_report_command_delivery ... ok
+test tests::reconnect_dispatch_and_matching_wait_for_successful_finalization ... ok
+test tests::reconnect_failed_or_superseded_finalization_keeps_dispatch_closed ... ok
+test tests::reconnect_preserves_offline_recovery_after_command_ack ... ok
+test tests::reconnect_preserves_pending_recoveries_beyond_one_dispatch_page ... ok
+test tests::reconnect_stale_epoch_cannot_enable_or_deliver_to_replacement_socket ... ok
+test tests::resumed_prompt_enforces_final_utf8_byte_limit ... ok
+test tests::resumed_prompt_preserves_instruction_dependencies_and_notes_in_order ... ok
+test tests::runner_matching_enforces_model_and_reasoning_support ... ok
+test tests::runner_matching_enforces_repository_and_base_ref ... ok
+
+test result: ok. 200 passed; 0 failed; 65 ignored; 0 measured; 0 filtered out; finished in 13.51s

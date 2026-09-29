@@ -1,0 +1,81 @@
+$ node tools/run_checks.mjs --group full
+Running migrations
+{
+  "schema_version": 1,
+  "migration_count": 56,
+  "latest_version": 56,
+  "immutable_checksums": true
+}
+Running state-audit-compatibility
+V1 canonical bytes, independent Ed25519 signature, and Ethereum static ABI compatibility passed (no chain transaction).
+Running state-audit-evm
+
+running 1 test
+test v1_checkpoint_executes_against_local_anchor_contract ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.46s
+     Running tests\ethereum_local_chain.rs (target\debug\deps\ethereum_local_chain-690b62ff5cd3dc75.exe)
+Running docs
+Running repository-docs
+{
+  "ok": true,
+  "scope": "Marked repository validation commands and current Copilot SDK/CLI versions only",
+  "validationDocuments": 5,
+  "runtimeDocuments": 2,
+  "validationCommands": 1,
+  "copilotVersions": {
+    "sdk": "1.0.11",
+    "cli": "1.0.79"
+  },
+  "errors": []
+}
+Running node-tests
+# tests 3112
+# pass 3047
+# fail 0
+# cancelled 0
+# skipped 65
+# todo 0
+# duration_ms 2242150.3672
+Running format
+Running clippy
+    Checking crony-domain v0.1.0 (<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp\crates\crony-domain)
+    Checking crony-protocol v0.1.0 (<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp\crates\crony-protocol)
+    Checking crony-store v0.1.0 (<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp\crates\crony-store)
+    Checking crony-gateways v0.1.0 (<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp\crates\crony-gateways)
+    Checking crony-runner v0.1.0 (<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp\crates\crony-runner)
+    Checking crony-base-gateway v0.1.0 (<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp\crates\crony-base-gateway)
+error: this `if` statement can be collapsed
+   --> crates\crony-runner\src\retained_deliverable.rs:246:5
+    |
+246 | /     if let Some(proof) = &assignment.preserved_deliverable {
+247 | |         if !proof.is_valid()
+248 | |             || proof.workspace_run_id != assignment.workspace_run_id
+249 | |             || proof.workspace_base_commit != workspace.base_commit
+...   |
+264 | |     }
+    | |_____^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#collapsible_if
+    = note: `-D clippy::collapsible-if` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::collapsible_if)]`
+help: collapse nested if block
+    |
+246 ~     if let Some(proof) = &assignment.preserved_deliverable
+247 ~         && (!proof.is_valid()
+248 |             || proof.workspace_run_id != assignment.workspace_run_id
+...
+257 |                 .len()
+258 ~                 != proof.provider_artifacts.len())
+259 |         {
+...
+262 |             ));
+263 ~         }
+    |
+
+error: could not compile `crony-runner` (bin "crony-runner" test) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+Validation report: <USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp\output\readiness\2026-09-29T04-09-40-237Z-d6142ed0-3170-4e6b-9956-36d6095fd590-full.json
+[ELIFECYCLE] Command failed with exit code 1.

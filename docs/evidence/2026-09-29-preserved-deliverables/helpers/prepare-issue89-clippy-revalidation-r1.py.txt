@@ -1,0 +1,105 @@
+"""Retain failed validation and prepare a new source-bound pass after the Clippy repair."""
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+
+EV = Path(__file__).resolve().parent
+WT = Path(r"<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp")
+
+
+def sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def load(name):
+    return json.loads((EV / name).read_text(encoding="utf-8-sig"))
+
+
+def replace(text, old, new, count=1):
+    assert text.count(old) == count, (old, text.count(old), count)
+    return text.replace(old, new)
+
+
+def save(name, text):
+    with (EV / name).open("x", encoding="utf-8", newline="\n") as stream:
+        stream.write(text)
+
+
+prior = load("issue89-canonical-bound-r2.json")
+failed = load("issue89-canonical-r2.json")
+assert prior["status"] == failed["status"] == "failed" and prior["source_unchanged"]
+assert prior["source_before"] == prior["source_after"]
+names = sorted(set(subprocess.check_output(["git", "-C", str(WT), "ls-files", "-z", "--cached", "--others", "--exclude-standard"]).decode().split("\0")) - {""})
+old = {entry["path"]: entry["sha256"] for entry in prior["source_before"]["files"]}
+current = {name: sha(WT / name) for name in names}
+assert len(current) == len(old) == 7151 and set(current) == set(old)
+changed = [name for name in names if current[name] != old[name]]
+assert changed == ["crates/crony-runner/src/retained_deliverable.rs"]
+assert not subprocess.check_output(["git", "-C", str(WT), "diff", "--cached", "--name-only"]).strip()
+gate = failed["canonical_report"]
+assert gate["checks"][-1]["name"] == "clippy" and not gate["checks"][-1]["passed"]
+record = {"issue": 89, "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+          "prior_receipt": "issue89-canonical-r2.json", "prior_receipt_sha256": sha(EV / "issue89-canonical-r2.json"),
+          "prior_source_binding_sha256": sha(EV / "issue89-canonical-bound-r2.json"),
+          "failure": "clippy::collapsible_if at retained_deliverable.rs:246; -D warnings retained",
+          "repair": "Collapse the nested proof admission conditional into an equivalent let chain; no warning allowance and no changed condition.",
+          "changed_files": [{"path": name, "before_sha256": old[name], "after_sha256": current[name]} for name in changed],
+          "prior_checks": [{key: item[key] for key in ["name", "passed", "exitCode", "counts"]} for item in gate["checks"]],
+          "prior_not_run": gate["notRun"], "source_file_count": len(current),
+          "completion_claim": False, "validation_pending": "Fresh canonical r3 and subsequent acceptance on the repaired source."}
+save("issue89-clippy-repair-r1.json", json.dumps(record, indent=2) + "\n")
+
+text = (EV / "run-issue89-canonical-bound-r2.ps1").read_text(encoding="utf-8-sig")
+text = replace(text, "issue89-canonical-bound-r2", "issue89-canonical-bound-r3")
+text = replace(text, "issue89-canonical-r2", "issue89-canonical-r3", 2)
+text = replace(text, "-Revision r2", "-Revision r3")
+text = replace(text, "'crates/crony-runner/src/deliverable.rs','docs/ARCHITECTURE.md'", "'crates/crony-runner/src/deliverable.rs','crates/crony-runner/src/retained_deliverable.rs','docs/ARCHITECTURE.md'")
+text = replace(text, "after the checker artifact-guard parity repair and explicit native parity regression", "after the checker artifact-guard parity repair and the retained-checkpoint Clippy correction")
+text = replace(text, "if ($name -match '^GIT_')", "if ($name -match '^(GIT_|CRONY_|ECORP_|GH_|GITHUB_|AZURE_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN'))")
+marker = "    & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'run-canonical-r4.ps1')"
+preflight = """    $record.repair_receipt = Join-Path $PSScriptRoot 'issue89-clippy-repair-r1.json'
+    $record.repair_receipt_sha256 = (Get-FileHash -LiteralPath $record.repair_receipt).Hash.ToLowerInvariant()
+    $preflightLog = Join-Path $PSScriptRoot 'issue89-canonical-r3-preflight-clippy.log'
+    if (Test-Path -LiteralPath $preflightLog) { throw 'Preserve existing preflight evidence.' }
+    $env:CARGO_BUILD_JOBS = '2'
+    $env:CARGO_NET_OFFLINE = 'true'
+    Push-Location -LiteralPath $repo
+    try {
+        & cargo clippy --workspace --all-targets --locked -- -D warnings *> $preflightLog
+        $preflightCode = $LASTEXITCODE
+    } finally { Pop-Location }
+    $record.preflight_clippy = [ordered]@{exit_code=$preflightCode;log=$preflightLog;sha256=(Get-FileHash -LiteralPath $preflightLog).Hash.ToLowerInvariant()}
+    Save
+    if ($preflightCode) { throw 'Clippy preflight failed; preserve failure before full validation.' }
+"""
+text = replace(text, marker, preflight + marker)
+save("run-issue89-canonical-bound-r3.ps1", text)
+
+text = (EV / "run-issue89-native-parity-r1.ps1").read_text(encoding="utf-8-sig")
+save("run-issue89-native-parity-r2.ps1", replace(text, "issue89-native-parity-r1", "issue89-native-parity-r2"))
+text = (EV / "reconcile-issue89-native-parity-r1.py").read_text(encoding="utf-8-sig")
+text = replace(text, "issue89-native-parity-r1", "issue89-native-parity-r2", 2)
+text = replace(text, "issue89-native-parity-counts-r1", "issue89-native-parity-counts-r2")
+save("reconcile-issue89-native-parity-r2.py", text)
+
+text = (EV / "queue-issue89-acceptance-r1.ps1").read_text(encoding="utf-8-sig")
+text = replace(text, "#requires -Version 7.5\n", "#requires -Version 7.5\nparam([Parameter(Mandatory)][int]$CanonicalSession)\n")
+text = replace(text, "issue89-acceptance-queue-r1", "issue89-acceptance-queue-r2")
+text = replace(text, "issue89-canonical-bound-r2", "issue89-canonical-bound-r3")
+text = replace(text, "canonical_session=85795", "canonical_session=$CanonicalSession")
+text = replace(text, "canonical r2", "canonical r3", 2)
+phase_marker = "    Invoke-Phase 'acceptance-build-r4'"
+parity = """    Invoke-Phase 'checker-green-r2' { & $python -B (Join-Path $PSScriptRoot 'run-issue89-parity-regression-r2.py') green-r2 } (Join-Path $PSScriptRoot 'issue89-parity-green-r2.json')
+    Invoke-Phase 'native-parity-r2' {
+        & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'run-issue89-native-parity-r2.ps1')
+        if ($LASTEXITCODE -ne 0) { return }
+        & $python -B (Join-Path $PSScriptRoot 'reconcile-issue89-native-parity-r2.py')
+    } (Join-Path $PSScriptRoot 'issue89-native-parity-counts-r2.json')
+"""
+text = replace(text, phase_marker, parity + phase_marker)
+text = replace(text, "    $record.status='passed'", "    Invoke-Phase 'focused-r4' { & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'run-issue89-store-regressions-r1.ps1') -Revision focused-r4 -Expected 12 } (Join-Path $PSScriptRoot 'issue89-store-focused-r4.json')\n    $record.status='passed'")
+save("queue-issue89-acceptance-r2.ps1", text)
+print(json.dumps({"status": "prepared", "source_file_count": len(current), "changed_files": changed,
+                  "preserved_failed_canonical": "r2", "next_canonical": "r3", "next_queue": "r2"}))

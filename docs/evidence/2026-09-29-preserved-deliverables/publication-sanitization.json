@@ -1,0 +1,27 @@
+{
+  "issue": 89,
+  "status": "publication-sanitization-corrected-validation-required",
+  "recorded_at_utc": "2026-09-29T07:42:33.083025+00:00",
+  "failed_validation_receipt_sha256": "463217184ea76fed053be885770cb1f5e1b8dbbcfc8727ae4f72ba4684e6a425",
+  "reason": "Two PostgreSQL initdb guidance lines contain caret-escaped local-profile roots missed by initial sanitization.",
+  "originals": "Original logs and the complete pre-repair publication packet remain unchanged in durable private run evidence.",
+  "implementation_source_unchanged": true,
+  "tested_tree": "e0fa27adaadb19cc373dcca2dfd104ae68047189",
+  "changes": [
+    {
+      "file": "issue89-store-focused-r4-initdb.log",
+      "before_sha256": "e3481cc8a84fa924f90c80902712c52e3bdb67dcab627faa7fd6f756603a8239",
+      "after_sha256": "3862cf8269adcdb226085a7d35d7c04bcdaaf334e979c76401a583429f3defcf",
+      "profile_root_replacements": 2,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from the publication copy only; caret-escaped local profile roots replaced with <USERPROFILE> in the publication copy only"
+    },
+    {
+      "file": "issue89-store-legacy-r2-initdb.log",
+      "before_sha256": "525be0e5fa5ddcb66433c4fbd43985ced6cb7dd135a2842b6807a1e2c15b14d3",
+      "after_sha256": "3b2079d5d37b8c02cdf2b46b590768158e1ab70d9ac84ade62ae22e3d8052952",
+      "profile_root_replacements": 2,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing ASCII spaces/tabs and redundant final blank lines removed from the publication copy only; caret-escaped local profile roots replaced with <USERPROFILE> in the publication copy only"
+    }
+  ],
+  "scope": "Four profile-root substitutions in two publication logs. Commands, outcomes, test counts and exact code patch bytes are unchanged."
+}

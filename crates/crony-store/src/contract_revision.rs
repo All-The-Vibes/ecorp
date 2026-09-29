@@ -221,6 +221,14 @@ impl PgStore {
                     &replacement_contract,
                     &required_adapter,
                 )?;
+                preserved_deliverable::ensure_narrowing_tx(
+                    &mut tx,
+                    input.corp_id,
+                    source_run_id,
+                    &current_contract,
+                    &replacement_contract,
+                )
+                .await?;
                 let factory_linked: bool = sqlx::query_scalar(
                     "SELECT EXISTS(
                         SELECT 1 FROM factory_work_items
@@ -597,7 +605,7 @@ fn ensure_resume_contract_is_narrow(
         !current
             .write_scope
             .iter()
-            .any(|authorized| write_scope_allows_path(authorized, candidate))
+            .any(|authorized| crony_domain::write_scope_is_subset(candidate, authorized))
     }) {
         return Err(native_policy!(
             "resume contract revisions cannot widen the task write scope"

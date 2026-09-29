@@ -33,7 +33,10 @@ files remain available for inspection. No OS temporary directory is used.
   Use `--path=-source.txt` for a value beginning with a dash.
 - Repeat `--provider-artifact` for the same artifact paths passed to export.
   Relative artifact paths resolve from the worktree root; absolute paths work.
-  Existing in-worktree artifacts are reset to the base in the disposable index.
+  Existing in-worktree artifacts are reset to the base in the disposable index
+  only if the real index has no change at that path, or has one stage-0 regular
+  file whose raw blob bytes match the physical artifact. A staged deletion,
+  conflict, non-file mode or different blob prevents the exclusion.
   Outside-worktree and missing artifacts do not select or exclude source.
   Other filesystem errors fail closed. Do not substitute arbitrary source
   exclusions for the exporter-owned artifact list.
@@ -44,8 +47,10 @@ files remain available for inspection. No OS temporary directory is used.
 - `--timeout-ms` bounds the entire sequence of Git commands (default 30000,
   maximum 120000). Each child receives the remaining deadline, has no interactive
   stdin and has bounded output (8 MiB). There may be at most 256 selected paths
-  and 256 provider artifacts. Oversized or malformed inputs fail rather than
-  silently selecting fewer files.
+  and 256 provider artifacts. Comparing a staged artifact also requires its
+  matching physical bytes and blob to fit within 8 MiB. This checker fails closed
+  above that bound even though the native exporter allows up to 16 MiB.
+  Oversized or malformed inputs fail rather than silently selecting fewer files.
 
 The command writes JSON containing `passed`, `baseCommit`, `candidateTree`,
 `changes` (status and literal path), and Git's `diagnostics`. Exit codes:
@@ -109,13 +114,21 @@ The helper mirrors `crates/crony-runner/src/deliverable.rs`:
    preserved-head selection described above).
 2. Run platform-matched `git -c core.filemode=… add -A -- <literal paths>`, with
    `GIT_INDEX_FILE` and `GIT_LITERAL_PATHSPECS=1`.
-3. Reset existing in-worktree provider artifacts to the base.
+3. Inspect provider artifact paths in the real index without modifying it. Reset
+   each existing in-worktree artifact to the base only when no staged change is
+   present or its single regular-file blob matches the artifact's raw bytes.
 4. Inspect the cached candidate against that same base with `git diff --check`.
+
+This mirrors the export selection mode. Resume preflight alone permits selected
+paths that do not exist yet; inventory alone bypasses export scope and unsafe-path
+admission. Those internal modes do not relax this checker or authorize export.
 
 Both the checker and every native exporter Git child remove inherited `GIT_*`
 variables case-insensitively, then set their owned index, literal-path and
 noninteractive controls. Ambient configuration overrides cannot change the
-candidate's line-ending conversion. Git replacement objects are disabled.
+candidate's line-ending conversion. Real-index artifact inspection omits the owned
+`GIT_INDEX_FILE` after sanitization, so an inherited alternate index cannot change
+the exclusion decision. Git replacement objects are disabled.
 This also covers export's final real-index reset: a trace destination inside
 the worktree must not create an additional input before, during, or after
 selection. No trace path is ignored or silently dropped from an existing candidate.
@@ -133,7 +146,13 @@ runner-internal files. No new blanket ignore list is introduced: ignored files
 already tracked by the **seeded revision** remain selected, and non-ignored files
 are not silently dropped. A force-added ignored file tracked only in the real
 index or a later commit is still absent when the base-seeded exporter ignores it.
-Provider artifacts are a separate explicit reset, including tracked artifacts. Export's
+Provider artifacts are a separate guarded reset, including tracked artifacts. Raw
+artifact bytes are compared before Git line-ending conversion: a staged LF blob
+does not match a physical CRLF artifact. The native guard compares the staged blob
+with authenticated artifact metadata; this standalone command receives paths and
+reads their current bytes. Its caller must supply the same authorized artifacts
+with unchanged bytes. It does not authenticate artifact identity or promote old
+metadata to new verification evidence. Export's
 existing write-scope, secret/internal-path, link/reparse-point, size, verification
 and authorization checks remain mandatory; this helper is **only** a patch check,
 not a replacement for those safety checks. An internal path rejected by export
@@ -156,7 +175,7 @@ Run the focused, real-Git regression suite without a server, database or provide
 
 ```powershell
 node --test --test-concurrency=1 tools/check_deliverable_diff.test.mjs
-cargo test --locked -p crony-runner --bin crony-runner deliverable::tests::native_export_matches_checker_under_inherited_tracing -- --exact --nocapture --test-threads=1
+cargo test --locked -p crony-runner --bin crony-runner deliverable::tests::native_export_matches_checker -- --nocapture --test-threads=1
 ```
 
 The Rust regression runs the actual checker and native commit/branch exporter
@@ -167,6 +186,13 @@ directory, including any trace created by a failing exporter. Lowercase and
 mixed-case variable names exercise Windows' case-insensitive environment too.
 An inherited `GIT_CONFIG_COUNT` override attempts to change CRLF normalization;
 the checker and exporter must retain the same tree and physical source bytes.
+
+The staged-artifact regression invokes the actual checker and native archive
+exporter for matching text and binary artifacts, different staged bytes, staged
+deletion, non-file modes, unmerged stages and raw line-ending differences. It
+compares complete tree IDs and preserves the real index, HEAD, refs and physical
+source. Its fixture verification report is synthetic selection evidence, not
+persisted-verifier or product acceptance.
 
 The suite reproduces the old false pass, then checks red and green untracked
 source with the CLI; compares complete candidate-tree IDs with an independent
@@ -184,8 +210,11 @@ characters and oversized unknown text must not reach error receipts.
 Set `ECORP_DIFF_TEST_ROOT` to an explicitly owned external evidence directory to
 retain all fixtures, CLI output and before/after preservation snapshots instead
 of removing fixtures after the run.
-A source-recipe hash intentionally fails when the native selection implementation
-changes, requiring an explicit parity review rather than an unnoticed stale copy.
+Source-recipe hashes intentionally fail when native selection or its staged
+artifact guard changes, requiring an explicit parity review rather than an
+unnoticed stale copy. The #89 cases cover differing staged bytes, staged deletion,
+unmerged and non-file entries, matching text/binary artifacts, literal Unicode
+paths, raw line endings, inherited indexes/tracing and the checker's byte bound.
 This is selection/command evidence, not a live runner or browser acceptance claim.
 
 For a persisted command verifier, use the existing command mechanism with these

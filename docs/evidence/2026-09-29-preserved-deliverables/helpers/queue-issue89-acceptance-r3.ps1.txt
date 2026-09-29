@@ -1,0 +1,73 @@
+#requires -Version 7.5
+param([Parameter(Mandatory)][int]$CanonicalSession)
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$receiptPath = Join-Path $PSScriptRoot 'issue89-acceptance-queue-r3.json'
+$canonicalPath = Join-Path $PSScriptRoot 'issue89-canonical-bound-r4.json'
+$product = '<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp'
+$python = '<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe'
+if (Test-Path -LiteralPath $receiptPath) { throw 'Preserve and reconcile the existing acceptance queue.' }
+$record = [ordered]@{
+    issue=89; status='waiting-for-existing-canonical'; started_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+    canonical=$canonicalPath; canonical_session=$CanonicalSession; queue_pid=$PID; checks=@()
+    purpose='Resume fresh sequential acceptance only after the existing source-bound canonical r4 succeeds; never rerun canonical or overlap target operations.'
+}
+function Save { [IO.File]::WriteAllText($receiptPath,($record | ConvertTo-Json -Depth 12)+"`n") }
+function Read-Json([string]$Path) { Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json -DateKind String }
+function Invoke-Phase([string]$Name,[scriptblock]$Action,[string]$ResultPath) {
+    if (Test-Path -LiteralPath $ResultPath) { throw "Preserve existing $Name evidence and reconcile it before continuing." }
+    $record.status = $Name; Save
+    $started = [DateTimeOffset]::UtcNow.ToString('o')
+    & $Action
+    $code = $LASTEXITCODE
+    $result = if (Test-Path -LiteralPath $ResultPath) { Read-Json $ResultPath } else { $null }
+    $record.checks += [ordered]@{
+        name=$Name; started_at_utc=$started; finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+        exit_code=$code; receipt=$ResultPath; status=$result.status
+        receipt_sha256=if ($result) {(Get-FileHash -LiteralPath $ResultPath).Hash.ToLowerInvariant()} else {$null}
+    }
+    Save
+    if ($code -ne 0 -or $result.status -cne 'passed') { throw "$Name failed; retain its actual result and stop dependent work." }
+}
+Save
+try {
+    $deadline = [DateTimeOffset]::UtcNow.AddHours(4)
+    while ($true) {
+        if ([DateTimeOffset]::UtcNow -gt $deadline) { throw 'Existing canonical wait deadline reached; preserve validation and reconcile its state.' }
+        try { $canonical = Read-Json $canonicalPath } catch { Start-Sleep -Seconds 2; continue }
+        if ($canonical.status -ceq 'failed') { throw 'Existing canonical r4 failed; do not start acceptance against an unqualified source.' }
+        if ($canonical.status -ceq 'passed') { break }
+        Start-Sleep -Seconds 5
+    }
+    if (!$canonical.source_unchanged -or $canonical.canonical_exit_code -ne 0 -or $canonical.source_file_count -ne 7151) { throw 'Canonical source binding is incomplete.' }
+    $record.canonical_receipt_sha256 = (Get-FileHash -LiteralPath $canonicalPath).Hash.ToLowerInvariant()
+    $key = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes((Join-Path $product 'target').ToLowerInvariant())))
+    $targetMutex = [Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$key")
+    $acquired=$false
+    try {
+        try { $acquired=$targetMutex.WaitOne(30000) } catch [Threading.AbandonedMutexException] { $acquired=$true }
+        if (!$acquired) { throw 'Another Cargo operation still owns the target; nothing overlapped.' }
+    } finally {
+        if ($acquired) { $targetMutex.ReleaseMutex() }
+        $targetMutex.Dispose()
+    }
+    Invoke-Phase 'checker-green-r2' { & $python -B (Join-Path $PSScriptRoot 'run-issue89-parity-regression-r2.py') green-r2 } (Join-Path $PSScriptRoot 'issue89-parity-green-r2.json')
+    Invoke-Phase 'native-parity-r2' {
+        & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'run-issue89-native-parity-r2.ps1')
+        if ($LASTEXITCODE -ne 0) { return }
+        & $python -B (Join-Path $PSScriptRoot 'reconcile-issue89-native-parity-r2.py')
+    } (Join-Path $PSScriptRoot 'issue89-native-parity-counts-r2.json')
+    Invoke-Phase 'acceptance-build-r4' { & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'build-issue89-acceptance-r4.ps1') } (Join-Path $PSScriptRoot 'issue89-acceptance-build-r4.json')
+    Invoke-Phase 'browser-r13' { & $python -B (Join-Path $PSScriptRoot 'run-issue89-browser-r13.py') } (Join-Path $PSScriptRoot 'issue89-browser-r13.json')
+    Invoke-Phase 'legacy-r2' { & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'run-issue89-legacy-regressions-r1.ps1') -Revision legacy-r2 } (Join-Path $PSScriptRoot 'issue89-store-legacy-r2.json')
+    Invoke-Phase 'focused-r4' { & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'run-issue89-store-regressions-r1.ps1') -Revision focused-r4 -Expected 12 } (Join-Path $PSScriptRoot 'issue89-store-focused-r4.json')
+    $record.status='passed'
+} catch {
+    $record.status='failed'
+    $record.failure=$_.Exception.Message
+} finally {
+    $record.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+    Save
+}
+[pscustomobject]$record | Select-Object issue,status,failure | ConvertTo-Json
+if ($record.status -cne 'passed') { exit 1 }

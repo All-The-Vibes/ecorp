@@ -224,6 +224,9 @@ function nativeCandidate(f, { paths = [], providerArtifacts = [], preserveHead }
     GIT_NO_REPLACE_OBJECTS: '1', GIT_TERMINAL_PROMPT: '0',
   })
   const git = (args) => f.git(args, { env })
+  const sourceEnv = { ...env }
+  delete sourceEnv.GIT_INDEX_FILE
+  const sourceGit = (args, options = {}) => f.git(args, { env: sourceEnv, ...options })
   const changes = () => git(['diff', '--cached', '--name-status', '-z', '--no-renames', f.base, '--'])
   try {
     git(['read-tree', process.platform === 'win32' && preserveHead ? preserveHead : f.base])
@@ -244,7 +247,17 @@ function nativeCandidate(f, { paths = [], providerArtifacts = [], preserveHead }
       if (!existsSync(absolute)) continue
       const relative = path.relative(realpathSync(f.repo), realpathSync(absolute))
       if (path.isAbsolute(relative) || relative === '..' || relative.startsWith(`..${path.sep}`)) continue
-      git(['reset', '-q', f.base, '--', relative.split(path.sep).join('/')])
+      const portable = relative.split(path.sep).join('/')
+      if (sourceGit(['diff', '--cached', '--name-only', '-z', '--no-renames', f.base, '--', portable])) {
+        const entries = sourceGit(['ls-files', '--stage', '-z', '--', portable]).split('\0').filter(Boolean)
+        if (entries.length !== 1) continue
+        const entry = /^(100644|100755) ([0-9a-f]{40}|[0-9a-f]{64}) 0\t(.+)$/u.exec(entries[0])
+        if (!entry || entry[3] !== portable) continue
+        const bytes = readFileSync(absolute)
+        const staged = sourceGit(['cat-file', 'blob', entry[2]], { encoding: null })
+        if (bytes.length !== staged.length || hash(bytes) !== hash(staged)) continue
+      }
+      git(['reset', '-q', f.base, '--', portable])
     }
     const tree = git(['write-tree']).trim()
     const patch = git(['diff', '--binary', '--full-index', '--no-ext-diff', '--no-textconv',
@@ -259,10 +272,16 @@ test('native source-selection recipe is pinned; drift requires an explicit parit
   const start = nativeSource.indexOf('    for path in &spec.paths {')
   const end = nativeSource.indexOf('    let changes = changed_paths(', start)
   assert.ok(start >= 0 && end > start)
-  // #82 extracts the unchanged selection sequence into select_index and freezes
-  // its tree before checking. cfg!(windows) preserves the same platform-specific
-  // index bases while keeping preserve_head_commit referenced on Linux.
-  assert.equal(hash(nativeSource.slice(start, end)), '22a8887f0f2c84779ac0ae875683da62643eb1358c066a3e4777015050988e10')
+  // Mirror Export selection, including #89's real-index artifact guard.
+  // Resume alone tolerates selected future paths; Inventory alone omits export
+  // scope/unsafe-path admission. Neither exception belongs to this checker.
+  assert.equal(hash(nativeSource.slice(start, end)), '3f7f297546e3b088253551482501528e1ca97534b1dc51daf0eb88b28d963a3c')
+  const preserved = readFileSync(path.join(checkout, 'crates', 'crony-runner', 'src', 'preserved_deliverable.rs'), 'utf8')
+    .replaceAll('\r\n', '\n')
+  const guardStart = preserved.indexOf('pub(crate) async fn staged_artifact_matches(')
+  const guardEnd = preserved.indexOf('pub(crate) async fn capture_delta(', guardStart)
+  assert.ok(guardStart >= 0 && guardEnd > guardStart)
+  assert.equal(hash(preserved.slice(guardStart, guardEnd)), 'c5d3a5fc8683d7002938df794110773c80aa698fb1d314332b67b09563675fe5')
   const output = nativeSource.slice(nativeSource.indexOf('async fn git_output('))
   assert.match(output, /verification::clear_git_environment\(&mut command\)/)
   assert.match(output, /\.env\(\s*"GIT_INDEX_FILE",\s*crate::workspace::normalize_path\(index\.to_path_buf\(\)\),\s*\)/)
@@ -400,6 +419,84 @@ test('ignored evidence and runner-internal files are absent; provider artifacts 
   assert.equal(result.candidateTree, native.tree)
   assert.doesNotMatch(native.patch, /evidence|runner internal/)
   assert.equal(f.check().passed, false, 'unlisted, nonignored evidence is not silently excluded')
+})
+
+for (const staged of ['different bytes', 'deletion', 'non-file mode', 'unmerged']) {
+  test(`#89 provider artifact cannot conceal staged ${staged}`, (t) => {
+    const f = fixture(t)
+    const providerArtifacts = ['provider.md']
+    if (staged === 'deletion') {
+      f.git(['rm', '--cached', 'provider.md'])
+    } else {
+      f.write('provider.md', 'staged source\n')
+      f.git(['add', 'provider.md'])
+      const oid = f.git(['rev-parse', ':provider.md']).trim()
+      if (staged === 'non-file mode') f.git(['update-index', '--cacheinfo', `120000,${oid},provider.md`])
+      if (staged === 'unmerged') {
+        f.git(['update-index', '--index-info'], {
+          input: `0 ${'0'.repeat(oid.length)}\tprovider.md\n100644 ${oid} 1\tprovider.md\n100644 ${oid} 2\tprovider.md\n`,
+        })
+      }
+    }
+    f.write('provider.md', 'physical evidence \n')
+    const result = f.check({ providerArtifacts })
+    assert.equal(result.passed, false, 'different staged source prevents the artifact reset')
+    assert.deepEqual(result.changes, [{ status: 'M', path: 'provider.md' }])
+    assert.equal(result.candidateTree, nativeCandidate(f, { providerArtifacts }).tree)
+  })
+}
+
+for (const content of ['matching artifact \n', Buffer.from([0, 255, 128, 32, 10])]) {
+  test(`#89 matching staged ${Buffer.isBuffer(content) ? 'binary' : 'text'} artifact is still excluded`, (t) => {
+    const f = fixture(t)
+    const artifact = 'provider [1] résumé.md'
+    f.write(artifact, content)
+    f.git(['add', '--', artifact])
+    f.write('provider 1 résumé.md', 'selected neighbor\n')
+    const providerArtifacts = [artifact]
+    const result = f.check({ providerArtifacts })
+    assert.equal(result.passed, true)
+    assert.deepEqual(result.changes, [{ status: 'A', path: 'provider 1 résumé.md' }])
+    assert.equal(result.candidateTree, nativeCandidate(f, { providerArtifacts }).tree)
+  })
+}
+
+test('#89 matching staged artifact above the checker byte bound fails closed', (t) => {
+  const f = fixture(t)
+  f.write('provider.md', Buffer.alloc(8 * 1024 * 1024 + 1, 120))
+  f.git(['add', '--', 'provider.md'])
+  const report = failureReport(f.cli(['--provider-artifact', 'provider.md']), f)
+  assert.equal(report.original.category, 'output-limit')
+  assert.deepEqual(report.cleanup, [])
+})
+
+test('#89 artifact comparison uses raw staged bytes before line-ending conversion', (t) => {
+  const f = fixture(t)
+  f.write('.gitattributes', '*.md text eol=lf\n')
+  f.write('provider.md', 'evidence \r\n')
+  f.git(['add', '.gitattributes', 'provider.md'])
+  const providerArtifacts = ['provider.md']
+  const result = f.check({ providerArtifacts })
+  assert.equal(result.passed, false, 'normalized staged bytes are not the raw artifact bytes')
+  assert.equal(result.candidateTree, nativeCandidate(f, { providerArtifacts }).tree)
+  assert.ok(result.changes.some(change => change.path === 'provider.md'))
+})
+
+test('#89 artifact inspection ignores inherited alternate indexes and tracing', (t) => {
+  const f = fixture(t)
+  const alternate = path.join(f.owned, 'foreign.index')
+  writeFileSync(alternate, 'preserve foreign index')
+  f.write('provider.md', 'staged source\n')
+  f.git(['add', 'provider.md'])
+  f.write('provider.md', 'physical evidence \n')
+  const before = f.snapshot()
+  withEnv('GIT_INDEX_FILE', alternate, () => withEnv('GIT_TRACE', path.join(f.repo, 'must-not-exist.log'), () => {
+    assert.equal(checkDeliverableDiff({ ...f.options, providerArtifacts: ['provider.md'] }).passed, false)
+  }))
+  assert.deepEqual(f.snapshot(), before)
+  assert.equal(readFileSync(alternate, 'utf8'), 'preserve foreign index')
+  assert.equal(existsSync(path.join(f.repo, 'must-not-exist.log')), false)
+  assert.deepEqual(readdirSync(f.scratchRoot), [])
 })
 
 test('ignored files tracked by the seeded base remain selected; later ignored additions do not', (t) => {

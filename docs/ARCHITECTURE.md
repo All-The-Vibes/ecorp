@@ -84,6 +84,37 @@ separately authorized full-scope mission, not source deletion or an attempt rese
 This marker grants no recovery, source, connection or publication authority.
 Older untyped execution failures keep their existing retry policy.
 
+Preserved deliverable checkpoints bind the run, workspace lineage, original base,
+HEAD, physical workspace fingerprint, native index digest, deliverable policy and
+complete committed, staged and nonignored untracked source delta. The runner
+captures that inventory through native Git and brackets it with identical physical
+scans and an unchanged index. It preserves the real worktree, HEAD and index.
+Provider artifacts qualify for exact-path source exclusions only while their
+contained bytes and any staged blob match authenticated artifact metadata. Prior
+artifact metadata never counts as a fresh verifier result.
+
+Under the authoritative run lock, contract revisions and finish-scope budget
+proposals and decisions check the latest complete preservation event after confirmed
+provider termination. A narrower scope must still authorize every selected source
+path. Missing, stale, foreign or malformed inventory cannot authorize narrowing;
+unchanged authority retains its existing recovery path. The server never inspects
+the runner filesystem. Recovery and re-attestation commands freeze their source
+proof and artifact metadata so an idempotent replay cannot adopt later evidence.
+
+Deliverable recovery requires the runner's preserved-deliverable capability. Before
+resuming the native provider session, the runner checks the frozen physical source
+and index, then invokes the existing native exporter against the actual retained
+delta and current contract. An invalid export keeps the source and returns a precise
+recovery action without launching the provider or inventing a termination event.
+Copilot session resume, Codex thread resume and their permission handlers remain
+native adapter operations; the checkpoint supplies ECorp admission evidence only.
+
+Each physical checkpoint read has a 60-second deadline; complete capture has a
+120-second deadline, with the existing 4 GiB byte and 100,000-entry limits. Deadline
+and caller-cancellation checks bound enumeration and file reads. An unavailable
+checkpoint preserves source and refuses narrowing; these limits are not a general
+large-workspace performance guarantee.
+
 ## Artifact storage and provenance
 
 The runner reads the adapter artifact from its isolated worktree and sends a bounded base64 upload

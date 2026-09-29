@@ -1,0 +1,29 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$repo = '<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp'
+foreach ($key in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($key -match '^(GIT_|CRONY_|ECORP_|GH_|GITHUB_|AZURE_)' -or $key -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN')) {
+        [Environment]::SetEnvironmentVariable($key,$null,'Process')
+    }
+}
+$env:PATH = '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64;' + $env:PATH
+$env:CARGO_BUILD_JOBS = '2'
+$env:CARGO_NET_OFFLINE = 'true'
+$env:RUST_TEST_THREADS = '1'
+$env:GIT_OPTIONAL_LOCKS = '0'
+$env:GIT_TERMINAL_PROMPT = '0'
+$key = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes((Join-Path $repo 'target').ToLowerInvariant())))
+$mutex = [Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$key")
+$locked = $false
+$code = 1
+try {
+    try { $locked = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $locked = $true }
+    if (!$locked) { throw 'Preserve existing validation; Cargo target is already owned.' }
+    & '<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' (Join-Path $PSScriptRoot 'run-issue89-focused-r1.py') issue89-native-parity-r2 cargo test --locked --offline -p crony-runner --bin crony-runner deliverable::tests::native_export_matches_checker -- --nocapture --test-threads=1
+    $code = $LASTEXITCODE
+} finally {
+    if ($locked) { $mutex.ReleaseMutex() }
+    $mutex.Dispose()
+}
+exit $code
