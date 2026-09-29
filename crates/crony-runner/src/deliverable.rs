@@ -1165,15 +1165,10 @@ async fn git_output_with_index(
     command
         .args(args)
         .current_dir(workspace)
-        .env("GIT_LITERAL_PATHSPECS", "1")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .kill_on_drop(true);
-    let output = tokio::time::timeout(GIT_TIMEOUT, command.output())
+        .env("GIT_LITERAL_PATHSPECS", "1");
+    let output = verification::run_private_git(&mut command, &[], GIT_TIMEOUT)
         .await
-        .context("Git deliverable command timed out")?
-        .context("start Git deliverable command")?;
+        .context("run Git deliverable command")?;
     if !output.status.success() {
         return Err(git_error(&output));
     }

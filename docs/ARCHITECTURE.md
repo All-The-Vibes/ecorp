@@ -110,10 +110,14 @@ Copilot session resume, Codex thread resume and their permission handlers remain
 native adapter operations; the checkpoint supplies ECorp admission evidence only.
 
 Each physical checkpoint read has a 60-second deadline; complete capture has a
-120-second deadline, with the existing 4 GiB byte and 100,000-entry limits. Deadline
-and caller-cancellation checks bound enumeration and file reads. An unavailable
-checkpoint preserves source and refuses narrowing; these limits are not a general
-large-workspace performance guarantee.
+120-second deadline. Physical scans retain the existing 4 GiB byte and
+100,000-entry limits; a complete changed-source checkpoint permits at most 10,000
+paths. Buffered native Git inventory and diff commands reuse the private-Git
+adapter's 16 MiB stdout limit, 64 KiB stderr limit, 30-second timeout and awaited
+process cleanup. These byte bounds also cover staged-only entries and deletions
+absent from the physical scan. Deadline and caller-cancellation checks bound
+enumeration and file reads. An unavailable checkpoint preserves source and refuses
+narrowing; these limits are not a general large-workspace performance guarantee.
 
 ## Artifact storage and provenance
 

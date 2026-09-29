@@ -133,7 +133,11 @@ That contribution did not implement pre-acceptance or pre-provider guards. The
 preserved-deliverable extension adds a complete, checkpoint-bound source inventory
 and authenticated prior artifact exclusions. Domain and native Git tests cover
 literal selection semantics, each changed-source category, staged-only changes,
-exact exclusions and unchanged real source/index/HEAD. The opt-in
+exact exclusions and unchanged real source/index/HEAD. Oversized native index and
+cached-deletion regressions exceed the buffered Git-output bound while staying
+below the changed-path count limit and adding no physical files. They require
+rejection before path validation and preserve the real source, index and HEAD.
+The opt-in
 `budget_checkpoint_tests::preserved_deliverables` SQLx family exercises contract and
 finish-scope admission, unchanged-state rejection, complete-scope acceptance,
 termination/freshness checks, foreign or malformed proofs, legacy re-attestation,

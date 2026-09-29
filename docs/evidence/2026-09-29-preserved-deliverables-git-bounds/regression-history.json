@@ -1,0 +1,64 @@
+{
+  "runs": [
+    {
+      "receipt": "issue89-bounded-git-red-r2.json",
+      "original_sha256": "f258a78b5435474ab8dc97335baab6bd97efb4636fe65b3138a8ca2cf109043a",
+      "log_sha256": "7a8bf4d30b18b33f4371297260371772b86191c2afcd4d50711d1971ceb82a3d",
+      "exit_code": 101,
+      "counts": {
+        "passed": 2,
+        "failed": 2,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 291,
+        "summaries": 1
+      },
+      "current_source_acceptance": false,
+      "scope": "Retrospective red/green regression before final expect_err test-only correction; canonical r6 re-executes the current tests."
+    },
+    {
+      "receipt": "issue89-bounded-git-green-r2.json",
+      "original_sha256": "7366990717e8c1e102213c29b9864e404f75267e885e46585e11f63653cae281",
+      "log_sha256": "08d8893bc8f7ea89d0b3f8db6be5520994a431faed218fc513c7255c3b98e120",
+      "exit_code": 0,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 291,
+        "summaries": 1
+      },
+      "current_source_acceptance": false,
+      "scope": "Retrospective red/green regression before final expect_err test-only correction; canonical r6 re-executes the current tests."
+    },
+    {
+      "receipt": "issue89-bounded-git-deliverable-r2.json",
+      "original_sha256": "c9dbb9919817031b988248f5a9a5f81df4516bd6562f0377e46b19d9181f17e7",
+      "log_sha256": "c040e452ad11cb4e9f96edce0132d57dc72fded8d7a2469c53f66f686ca0d38f",
+      "exit_code": 0,
+      "counts": {
+        "passed": 43,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 252,
+        "summaries": 1
+      },
+      "current_source_acceptance": false,
+      "scope": "Retrospective red/green regression before final expect_err test-only correction; canonical r6 re-executes the current tests."
+    }
+  ],
+  "prior_regression_source_delta": [
+    {
+      "path": "crates/crony-runner/src/preserved_deliverable.rs",
+      "prior_sha256": "5101a2e9fa45ee5d7d1184fec7e566e374471653547e1b7f3ec0acfac95da674",
+      "current_sha256": "654e578e977f769038d4dd06d92855e1c330868884a51965c24d40d0b5e8cee4"
+    }
+  ],
+  "prior_regression_scope": "Earlier focused and 43-test deliverable results precede the test-only expect_err correction. They are retained as history. The full current canonical gate re-executes all current tests; prior results do not validate this changed source.",
+  "failed_clippy_r5": "Clippy preflight rejected err().expect() on a Debug success type; no canonical gate ran. The test assertion alone was corrected before r6.",
+  "unchanged_historical_packet": "docs/evidence/2026-09-29-preserved-deliverables",
+  "earlier_sqlx_and_parity": "12 focused plus 229 legacy SQLx cases, 62 JS and 2 native parity cases belong to the earlier original PR candidate. They are not executions of this repair.",
+  "chronology": "This is new retrospective evidence; it does not recreate the September 3 issue88 observation or claim a human or independent review."
+}

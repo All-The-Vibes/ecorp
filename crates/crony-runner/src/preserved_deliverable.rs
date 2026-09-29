@@ -160,6 +160,115 @@ mod tests {
     use super::super::tests::{fixture, git};
     use super::*;
 
+    async fn stage_oversized_index(root: &Path) {
+        let object = git(root, &["rev-parse", "HEAD:tracked.txt"]);
+        let prefix = std::iter::repeat_n("x".repeat(190), 10)
+            .collect::<Vec<_>>()
+            .join("/");
+        let mut input = Vec::new();
+        let mut path_bytes = 0;
+        let mut path_count = 0;
+        // Fewer than the checkpoint path limit, and no additional physical files:
+        // both the index listing and cached diff still exceed the byte bound.
+        // Native names must be bounded before ECorp validates their path length.
+        for number in 0..9_000 {
+            let path = format!("retained/{prefix}/{number:04}.txt");
+            path_bytes += path.len() + 1;
+            path_count += 1;
+            input.extend_from_slice(format!("100644 {object}\t{path}\0").as_bytes());
+        }
+        assert!(path_count < MAX_PRESERVED_DELIVERABLE_PATHS);
+        assert!(path_bytes > MAX_DELIVERABLE_BYTES);
+        let mut command = Command::new("git");
+        command
+            .current_dir(root)
+            .args(["update-index", "-z", "--index-info"]);
+        let output = verification::run_private_git(&mut command, &input, GIT_TIMEOUT)
+            .await
+            .unwrap();
+        assert!(output.status.success(), "{}", git_error(&output));
+        assert!(!root.join("retained").exists());
+    }
+
+    fn native_index_digest(root: &Path) -> String {
+        hex::encode(Sha256::digest(
+            std::fs::read(root.join(".git/index")).unwrap(),
+        ))
+    }
+
+    fn assert_oversized_capture_preserves_source(root: &Path, index: &str, head: &str) {
+        assert_eq!(native_index_digest(root), index);
+        assert_eq!(git(root, &["rev-parse", "HEAD"]), head);
+        assert_eq!(
+            std::fs::read(root.join("tracked.txt")).unwrap(),
+            b"before\n"
+        );
+        assert_eq!(
+            std::fs::read(root.join("other.txt")).unwrap(),
+            b"other before\n"
+        );
+        assert!(!root.join("retained").exists());
+        assert!(!root.join(".git/index.lock").exists());
+    }
+
+    #[tokio::test]
+    async fn oversized_staged_only_index_is_rejected_without_mutation() {
+        let (root, _, _) = fixture();
+        stage_oversized_index(&root).await;
+        let index = native_index_digest(&root);
+        let head = git(&root, &["rev-parse", "HEAD"]);
+        let result = index_sha256(&root).await;
+        assert_oversized_capture_preserves_source(&root, &index, &head);
+        std::fs::remove_dir_all(root).unwrap();
+        let error = result.expect_err("oversized native index output must be bounded");
+        assert!(
+            format!("{error:#}").contains("output exceeds its bound"),
+            "{error:#}"
+        );
+    }
+
+    #[tokio::test]
+    async fn oversized_cached_deletions_are_rejected_without_mutation() {
+        let (root, mut workspace, _) = fixture();
+        stage_oversized_index(&root).await;
+        git(&root, &["commit", "-m", "staged-only base"]);
+        // A small current index does not bound deletion paths from a large base.
+        git(&root, &["read-tree", &workspace.base_commit]);
+        workspace.base_commit = git(&root, &["rev-parse", "HEAD"]);
+        let index = native_index_digest(&root);
+        index_sha256(&root).await.unwrap();
+        let native_output = git_output_with_index(
+            &root,
+            None,
+            &[
+                "diff".into(),
+                "--cached".into(),
+                "--name-status".into(),
+                "-z".into(),
+                "--no-renames".into(),
+                workspace.base_commit.clone().into(),
+                "--".into(),
+            ],
+        )
+        .await;
+        let result = capture_delta(Uuid::new_v4(), &workspace).await;
+        assert_oversized_capture_preserves_source(&root, &index, &workspace.base_commit);
+        std::fs::remove_dir_all(root).unwrap();
+        let error = native_output
+            .expect_err("oversized cached deletion output must be bounded before path validation");
+        assert!(
+            format!("{error:#}").contains("output exceeds its bound"),
+            "{error:#}"
+        );
+        let error = result
+            .err()
+            .expect("oversized cached deletion output must be bounded");
+        assert!(
+            format!("{error:#}").contains("output exceeds its bound"),
+            "{error:#}"
+        );
+    }
+
     #[tokio::test]
     async fn inventory_covers_committed_physical_staged_only_and_untracked_without_mutation() {
         let (root, workspace, _) = fixture();

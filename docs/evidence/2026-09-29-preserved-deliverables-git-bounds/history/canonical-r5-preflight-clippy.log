@@ -1,0 +1,14 @@
+    Checking crony-runner v0.1.0 (<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp\crates\crony-runner)
+error: called `.err().expect()` on a `Result` value
+   --> crates\crony-runner\src\preserved_deliverable.rs:258:14
+    |
+258 |               .err()
+    |  ______________^
+259 | |             .expect("oversized cached deletion output must be bounded before path validation");
+    | |___________________^ help: try: `expect_err`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#err_expect
+    = note: `-D clippy::err-expect` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::err_expect)]`
+
+error: could not compile `crony-runner` (bin "crony-runner" test) due to 1 previous error

@@ -1,0 +1,119 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$repo = '<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp'
+$expected = '361632cf5d70850f28695bd42c2ba178669cd09c'
+$receiptPath = Join-Path $PSScriptRoot 'issue89-canonical-bound-r6.json'
+$greenPath = Join-Path $PSScriptRoot 'issue89-bounded-git-green-r2.json'
+$greenHash = '7366990717e8c1e102213c29b9864e404f75267e885e46585e11f63653cae281'
+$widePath = Join-Path $PSScriptRoot 'issue89-bounded-git-deliverable-r2.json'
+$canonicalPath = Join-Path $PSScriptRoot 'issue89-canonical-r6.json'
+foreach ($path in @($receiptPath,$canonicalPath)) {
+    if (Test-Path -LiteralPath $path) { throw 'Preserve existing canonical evidence.' }
+}
+foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($name -match '^(GIT_|CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN')) {
+        [Environment]::SetEnvironmentVariable($name,$null,'Process')
+    }
+}
+$env:GIT_OPTIONAL_LOCKS = '0'
+$env:GIT_TERMINAL_PROMPT = '0'
+$record = [ordered]@{
+    issue=89;pr=381;repository=$repo;head=$expected;status='preparing'
+    started_at_utc=[DateTime]::UtcNow.ToString('o');source_unchanged=$false
+    purpose='Validate the shared bounded native-Git adapter repair for ECORP-381-001 against every current physical source file and the complete canonical contributor plan.'
+    limitations=@('Native Windows Rust tests use RUST_TEST_THREADS=1; issue 213 remains unresolved.', 'Local validation does not replace required hosted CI, CodeQL, security or quality gates.', 'Fresh rebuilt browser/native acceptance is recorded separately.')
+}
+function Save { [IO.File]::WriteAllText($receiptPath,($record | ConvertTo-Json -Depth 18)+[Environment]::NewLine) }
+function SourceBinding {
+    if ((& git -C $repo rev-parse HEAD).Trim() -cne $expected -or (& git -C $repo branch --show-current).Trim() -cne 'codex/issue89-preserved-deliverables') { throw 'Candidate branch or head changed.' }
+    $paths = @(& git -C $repo ls-files --cached --others --exclude-standard | Sort-Object -Unique)
+    if ($LASTEXITCODE) { throw 'Cannot read complete physical source inventory.' }
+    $files = @($paths | ForEach-Object { [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $repo $_)).Hash.ToLowerInvariant()} })
+    $status = @(& git -C $repo status --porcelain=v1 --untracked-files=all)
+    if ($LASTEXITCODE) { throw 'Cannot read worktree state.' }
+    [ordered]@{head=$expected;files=$files;status=$status}
+}
+function ComparePriorFocusedSource($source,$focused) {
+    if ($focused.exit_code -ne 0 -or !$focused.source_unchanged -or $focused.source_before.head -cne $expected) { throw 'Focused validation did not pass on this head.' }
+    $map = $focused.source_before.sha256
+    if (@(Compare-Object @($source.files.path) @($map.psobject.Properties.Name)).Count) { throw 'Focused source inventory differs.' }
+    $changed = @()
+    foreach ($file in $source.files) {
+        if ($map.($file.path) -cne $file.sha256) {
+            if ($file.path -cne 'crates/crony-runner/src/preserved_deliverable.rs' -or $file.sha256 -cne '654e578e977f769038d4dd06d92855e1c330868884a51965c24d40d0b5e8cee4') { throw "Unexpected source change after prior regression evidence: $($file.path)" }
+            $changed += [ordered]@{path=$file.path;prior_sha256=$map.($file.path);current_sha256=$file.sha256}
+        }
+    }
+    if ($changed.Count -ne 1) { throw 'Expected exactly the reviewed Clippy assertion correction.' }
+    $record.prior_regression_source_delta = $changed
+    $record.prior_regression_scope = 'Earlier focused and 43-test deliverable results precede the test-only expect_err correction. They are retained as history. The full current canonical gate re-executes all current tests; prior results do not validate this changed source.'
+    if (($source.status -join "`n") -cne $focused.source_before.status.TrimEnd("`r","`n")) { throw 'Focused source status differs.' }
+}
+$key = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes((Join-Path $repo 'target').ToLowerInvariant())))
+$mutex = [Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$key")
+$locked = $false
+try {
+    if ((Get-FileHash -LiteralPath $greenPath).Hash.ToLowerInvariant() -cne $greenHash) { throw 'Focused regression evidence changed.' }
+    $green = Get-Content -Raw -LiteralPath $greenPath | ConvertFrom-Json
+    $wide = Get-Content -Raw -LiteralPath $widePath | ConvertFrom-Json
+    try { $locked = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $locked=$true }
+    if (!$locked) { throw 'An active validation owns this target; preserve it.' }
+    $record.source_before = SourceBinding
+    $record.source_file_count = $record.source_before.files.Count
+    if ($record.source_file_count -ne 7265) { throw 'Reconcile an unexpected physical inventory change.' }
+    $expectedStatus = @(' M crates/crony-runner/src/deliverable.rs',' M crates/crony-runner/src/preserved_deliverable.rs',' M docs/ARCHITECTURE.md',' M docs/EVALS.md')
+    if (@(Compare-Object @($record.source_before.status) $expectedStatus).Count) { throw 'Reconcile unexpected candidate changes.' }
+    ComparePriorFocusedSource $record.source_before $green
+    ComparePriorFocusedSource $record.source_before $wide
+    $record.focused_receipt = $greenPath
+    $record.focused_receipt_sha256 = $greenHash
+    $record.deliverable_receipt = $widePath
+    $record.deliverable_receipt_sha256 = (Get-FileHash -LiteralPath $widePath).Hash.ToLowerInvariant()
+    $record.canonical_helper_sha256 = (Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'run-canonical-r4.ps1')).Hash.ToLowerInvariant()
+    $record.target_mutex = "Local\ECorpCompletionCargo$key"
+    $record.status = 'running-clippy-preflight'
+    Save
+    $preflightLog = Join-Path $PSScriptRoot 'issue89-canonical-r6-preflight-clippy.log'
+    if (Test-Path -LiteralPath $preflightLog) { throw 'Preserve existing preflight evidence.' }
+    $env:CARGO_BUILD_JOBS = '2'
+    $env:CARGO_NET_OFFLINE = 'true'
+    Push-Location -LiteralPath $repo
+    try {
+        & cargo clippy --workspace --all-targets --locked -- -D warnings *> $preflightLog
+        $preflightCode = $LASTEXITCODE
+    } finally { Pop-Location }
+    $record.preflight_clippy = [ordered]@{exit_code=$preflightCode;log=$preflightLog;sha256=(Get-FileHash -LiteralPath $preflightLog).Hash.ToLowerInvariant()}
+    Save
+    if ($preflightCode) { throw 'Strict Clippy preflight failed.' }
+    $record.status = 'running-canonical'
+    Save
+    & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'run-canonical-r4.ps1') -RepositoryPath $repo -Issue 89 -Revision r6
+    $record.canonical_exit_code = $LASTEXITCODE
+    if (!(Test-Path -LiteralPath $canonicalPath)) { throw 'Canonical execution did not produce its receipt.' }
+    $canonical = Get-Content -Raw -LiteralPath $canonicalPath | ConvertFrom-Json
+    $record.canonical_receipt = $canonicalPath
+    $record.canonical_receipt_sha256 = (Get-FileHash -LiteralPath $canonicalPath).Hash.ToLowerInvariant()
+    if ($record.canonical_exit_code -or $canonical.status -cne 'passed') { throw 'Canonical validation failed; preserve observed results.' }
+    $record.status = 'passed'
+} catch {
+    $record.status = 'failed'
+    $record.failure = $_.Exception.Message
+} finally {
+    if ($locked -and $record.Contains('source_before')) {
+        try {
+            $record.source_after = SourceBinding
+            $record.source_unchanged = ($record.source_before | ConvertTo-Json -Depth 12 -Compress) -ceq ($record.source_after | ConvertTo-Json -Depth 12 -Compress)
+            if (!$record.source_unchanged) { throw 'Complete source changed during validation.' }
+        } catch {
+            $record.status = 'failed'
+            $record.source_binding_failure = $_.Exception.Message
+        }
+    }
+    $record.finished_at_utc = [DateTime]::UtcNow.ToString('o')
+    Save
+    if ($locked) { $mutex.ReleaseMutex() }
+    $mutex.Dispose()
+}
+[pscustomobject]$record | Select-Object issue,pr,status,head,source_file_count,canonical_exit_code,source_unchanged,failure,source_binding_failure | ConvertTo-Json
+if ($record.status -cne 'passed') { exit 1 }

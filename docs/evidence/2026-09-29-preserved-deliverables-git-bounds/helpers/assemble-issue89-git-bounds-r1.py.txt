@@ -1,0 +1,320 @@
+"""Assemble observed PR 381 repair evidence after canonical and native acceptance finish."""
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import tempfile
+
+EV = Path(__file__).resolve().parent
+ROOT = Path(r"<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp")
+PACKET = ROOT / "docs/evidence/2026-09-29-preserved-deliverables-git-bounds"
+SOURCE = EV / "issue89-git-bounds-source-r1.json"
+RECEIPT = EV / "issue89-git-bounds-packet-r1.json"
+MAIN = "878a1774774b0630c904cbaf4b05e1b346777817"
+PARENT = "361632cf5d70850f28695bd42c2ba178669cd09c"
+BRANCH = "codex/issue89-preserved-deliverables"
+EXPECTED = {"crates/crony-runner/src/deliverable.rs", "crates/crony-runner/src/preserved_deliverable.rs",
+            "docs/ARCHITECTURE.md", "docs/EVALS.md"}
+NAMES = ["migrations", "state-audit-compatibility", "state-audit-evm", "docs", "repository-docs",
+         "node-tests", "format", "clippy", "rust-tests", "web-build", "web-lint"]
+ENV = {key: value for key, value in os.environ.items()
+       if not re.match(r"^(GIT_|CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_)", key, re.I)
+       and key.upper() not in {"DATABASE_URL", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "COPILOT_GITHUB_TOKEN", "NODE_OPTIONS"}}
+ENV.update(GIT_TERMINAL_PROMPT="0", GIT_OPTIONAL_LOCKS="0", GCM_INTERACTIVE="Never")
+
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def load(path):
+    return json.loads(Path(path).read_text(encoding="utf-8-sig"))
+
+
+def write_json(path, value):
+    with Path(path).open("x", encoding="utf-8", newline="\n") as stream:
+        stream.write(json.dumps(value, indent=2, ensure_ascii=False) + "\n")
+
+
+def git(*args, env=ENV, data=None):
+    return subprocess.run(["git", "-C", str(ROOT), *args], env=env, input=data, capture_output=True,
+                          check=True, timeout=240, creationflags=subprocess.CREATE_NO_WINDOW).stdout
+
+
+def file_map(entries):
+    result = {entry["path"]: entry["sha256"] for entry in entries}
+    assert len(result) == len(entries), "Duplicate source paths"
+    return result
+
+
+def count_rust(path):
+    rows = re.findall(r"test result: (?:ok|FAILED)\. (\d+) passed; (\d+) failed; (\d+) ignored; (\d+) measured; (\d+) filtered out;",
+                      Path(path).read_text(encoding="utf-8-sig"))
+    assert rows, "No Rust result summaries in " + Path(path).name
+    result = dict(zip(["passed", "failed", "ignored", "measured", "filtered_out"],
+                      (sum(int(row[index]) for row in rows) for index in range(5))))
+    result["summaries"] = len(rows)
+    return result
+
+
+assert not PACKET.exists() and not SOURCE.exists() and not RECEIPT.exists(), "Preserve existing evidence"
+canonical_path = EV / "issue89-canonical-r6.json"
+bound_path = EV / "issue89-canonical-bound-r6.json"
+build_path = EV / "issue89-acceptance-build-r5.json"
+browser_path = EV / "issue89-browser-r14.json"
+visual_path = EV / "issue89-screenshot-review-r14.json"
+canonical, bound, build, browser, visual = map(load, [canonical_path, bound_path, build_path, browser_path, visual_path])
+assert canonical["status"] == bound["status"] == build["status"] == browser["status"] == "passed"
+assert bound["source_unchanged"] and bound["canonical_exit_code"] == 0
+assert bound["source_before"] == bound["source_after"]
+assert bound["preflight_clippy"]["exit_code"] == 0
+assert sha(Path(bound["preflight_clippy"]["log"]).read_bytes()) == bound["preflight_clippy"]["sha256"]
+assert bound["canonical_receipt_sha256"] == sha(canonical_path.read_bytes())
+physical_map = file_map(bound["source_before"]["files"])
+assert len(physical_map) == bound["source_file_count"] == 7265
+assert canonical["head"] == bound["head"] == PARENT
+assert git("rev-parse", "HEAD").decode().strip() == PARENT
+assert git("branch", "--show-current").decode().strip() == BRANCH
+assert not git("diff", "--cached", "--name-only").strip() and not git("ls-files", "--unmerged").strip()
+assert git("status", "--porcelain=v1", "--untracked-files=all").decode().splitlines() == bound["source_before"]["status"]
+current = set(git("ls-files", "-z", "--cached", "--others", "--exclude-standard").decode().split("\0")) - {""}
+assert current == set(physical_map)
+assert all(sha((ROOT / name).read_bytes()) == digest for name, digest in physical_map.items())
+physical = sorted(physical_map.items())
+physical_hash = sha(json.dumps(physical, separators=(",", ":"), ensure_ascii=False).encode())
+gate = canonical["canonical_report"]
+assert gate["status"] == "passed" and not gate["sourceChangedDuringValidation"] and not gate["notRun"]
+assert [check["name"] for check in gate["checks"]] == NAMES
+assert all(check["passed"] and check["exitCode"] == 0 for check in gate["checks"])
+assert all(check["exit_code"] == 0 and sha(Path(check["log"]).read_bytes()) == check["sha256"] for check in canonical["checks"])
+assert sha(Path(gate["path"]).read_bytes()) == gate["sha256"]
+checks = [{key: check[key] for key in ["name", "argv", "exitCode", "passed", "counts"]} for check in gate["checks"]]
+node = next(check["counts"]["node"] for check in checks if check["name"] == "node-tests")
+rust = next(check["counts"]["rust"] for check in checks if check["name"] == "rust-tests")
+assert node["failed"] == node["cancelled"] == rust["failed"] == 0
+assert build["source_unchanged"] and build["source"]["head"] == PARENT
+assert file_map(build["source"]["files"]) == physical_map
+assert build["source"]["status"] == bound["source_before"]["status"]
+assert all(check["exit_code"] == 0 and sha(Path(check["log"]).read_bytes()) == check["sha256"] for check in build["checks"])
+assert browser["exit_code"] == 0 and browser["source_and_binaries_unchanged"]
+assert browser["head"] == PARENT and browser["source_files_count"] == len(physical)
+assert browser["source_binding_sha256"] == sha(build_path.read_bytes())
+assert Path(browser["source_binding"]).resolve() == build_path.resolve()
+assert browser["candidate_status"] == bound["source_before"]["status"]
+assert browser["real_provider_calls"] == browser["real_github_mutations"] == 0
+assert browser["binaries"] == build["binaries"]
+assert all(sha(Path(item["path"]).read_bytes()) == item["sha256"] for item in build["binaries"])
+fixture_path = Path(browser["fixture"]) / "evidence/fixture-report.json"
+fixture = load(fixture_path)
+assert fixture == browser["fixture_report"] and fixture["status"] == "passed"
+assert sha(fixture_path.read_bytes()) == browser["fixture_report_sha256"]
+assert fixture["cleanup"] and all(item["stopped"] for item in fixture["cleanup"])
+ui_path = Path(fixture["browser_report"])
+ui = load(ui_path)
+assert sha(ui_path.read_bytes()) == fixture["browser_report_sha256"]
+assert ui["status"] == "passed" and not ui["blocked_requests"] and not ui["page_errors"]
+assert len(ui["screenshots"]) == 6 and ui["acceptance"] == fixture["acceptance"]
+for key in ["complete_application_preserved", "narrowing_rejected_without_effects", "full_scope_evidence_only_correction",
+            "same_native_session_and_worktree", "fresh_verification_and_complete_bundle",
+            "exported_application_exercised", "source_checkout_unchanged"]:
+    assert ui["acceptance"][key] is True, key
+assert ui["acceptance"]["provider_runs"] == 2
+assert ui["rejection"]["http_status"] == 400 and ui["rejection"]["unchanged_contract_version"] == 1
+assert ui["rejection"]["run_count"] == 1 and "base.txt" in ui["rejection"]["body"]["error"]
+assert ui["full_scope_revision_observed"]["http_status"] == 200 and ui["full_scope_revision_observed"]["saved_contract_version"] == 2
+assert ui["export"]["original_application_bytes_identical"] and ui["export"]["downloaded_headers_verified"]
+assert ui["export"]["independently_executed_application_tests"] == 4
+assert visual["status"] == "inspected" and visual["browser_report_sha256"] == sha(ui_path.read_bytes())
+assert [item["sha256"] for item in visual["screenshots"]] == [item["sha256"] for item in ui["screenshots"]]
+assert all(sha(Path(item["path"]).read_bytes()) == item["sha256"] for item in ui["screenshots"])
+
+# Earlier red/green evidence is retrospective and predates the final test assertion correction.
+history = []
+historical_inputs = []
+for suffix, expected_exit, expected_counts in [
+        ("red-r2", 101, (2, 2, 0, 291)), ("green-r2", 0, (4, 0, 0, 291)),
+        ("deliverable-r2", 0, (43, 0, 0, 252))]:
+    path = EV / ("issue89-bounded-git-" + suffix + ".json")
+    value = load(path)
+    log = path.with_suffix(".log")
+    assert value["exit_code"] == expected_exit and value["source_unchanged"]
+    assert value["source_before"] == value["source_after"]
+    assert sha(log.read_bytes()) == value["log_sha256"]
+    counts = count_rust(log)
+    assert tuple(counts[key] for key in ["passed", "failed", "ignored", "filtered_out"]) == expected_counts
+    assert value["source_before"]["head"] == PARENT
+    historical_inputs.extend([(path, "history/" + path.name), (log, "history/" + log.name)])
+    history.append({"receipt": path.name, "original_sha256": sha(path.read_bytes()), "log_sha256": sha(log.read_bytes()),
+                    "exit_code": value["exit_code"], "counts": counts, "current_source_acceptance": False,
+                    "scope": "Retrospective red/green regression before final expect_err test-only correction; canonical r6 re-executes the current tests."})
+failed_path = EV / "issue89-canonical-bound-r5.json"
+failed = load(failed_path)
+assert failed["status"] == "failed" and failed["preflight_clippy"]["exit_code"] != 0
+assert failed["source_unchanged"] and failed["source_before"] == failed["source_after"]
+assert sha(Path(failed["preflight_clippy"]["log"]).read_bytes()) == failed["preflight_clippy"]["sha256"]
+
+# Force-add physical files to an owned temporary index, never the real source index.
+descriptor, temporary_name = tempfile.mkstemp(prefix="issue89-git-bounds-tested-index-", dir=EV)
+os.close(descriptor)
+index = Path(temporary_name).resolve()
+assert index.parent == EV.resolve() and index.name.startswith("issue89-git-bounds-tested-index-")
+index.unlink()
+try:
+    temporary = dict(ENV, GIT_INDEX_FILE=str(index), GIT_LITERAL_PATHSPECS="1")
+    git("read-tree", PARENT, env=temporary)
+    git("add", "--force", "--all", "--pathspec-from-file=-", "--pathspec-file-nul", env=temporary,
+        data=("\0".join(sorted(current)) + "\0").encode())
+    tested_tree = git("write-tree", env=temporary).decode().strip()
+    code_paths = git("diff", "--name-only", PARENT, tested_tree).decode().splitlines()
+    assert set(code_paths) == EXPECTED
+    assert not git("diff", "--name-only", PARENT, tested_tree, "--", "db/migrations", "docs/evidence").strip()
+    patch = git("diff", "--full-index", "--binary", "--no-ext-diff", "--no-textconv", PARENT, tested_tree)
+finally:
+    if index.exists():
+        index.unlink()
+parent_tree = git("rev-parse", "HEAD^{tree}").decode().strip()
+assert parent_tree == build["source"]["parent_tree"] == browser["head_tree"]
+source = {"issue": 89, "pr": 381, "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+          "main": MAIN, "parent": PARENT, "branch": BRANCH, "parent_tree": parent_tree, "tested_tree": tested_tree,
+          "physical_files": physical, "physical_files_sha256": physical_hash, "source_file_count": len(physical),
+          "code_paths": code_paths, "candidate_patch_sha256": sha(patch), "patch_full_index": True,
+          "publication_directory": PACKET.relative_to(ROOT).as_posix(), "original_status": bound["source_before"]["status"],
+          "canonical_receipt": str(canonical_path), "canonical_receipt_sha256": sha(canonical_path.read_bytes()),
+          "canonical_report_sha256": gate["sha256"], "canonical_binding_sha256": sha(bound_path.read_bytes()),
+          "acceptance_build_sha256": sha(build_path.read_bytes()), "browser_receipt_sha256": sha(browser_path.read_bytes()),
+          "current_lanes_same_complete_physical_source": True,
+          "current_lanes": ["canonical-r6", "acceptance-build-r5", "browser-r14"],
+          "scope": "Exact whole-source equality for current canonical, rebuilt native/browser acceptance. Earlier focused and SQLx/parity evidence is historical, not rerun on this repair."}
+write_json(SOURCE, source)
+PACKET.mkdir(parents=True)
+artifacts = []
+personal = re.compile(r"(?:[a-z]:)?[/\\]+Users[/\\]+[^/\\\s\"'<>]+", re.I)
+
+
+def redact(text):
+    return personal.sub("<USERPROFILE>", text).replace("\r\n", "\n")
+
+
+def sanitized(value):
+    if isinstance(value, str):
+        return redact(value)
+    if isinstance(value, list):
+        return [sanitized(item) for item in value]
+    if isinstance(value, dict):
+        result = {redact(key): sanitized(item) for key, item in value.items()}
+        assert len(result) == len(value), "Redaction must not merge JSON keys"
+        return result
+    return value
+
+
+def put(raw, name, original_name, binary=False):
+    if binary:
+        published = raw
+        transformation = "none"
+    elif name.endswith(".json"):
+        published = (json.dumps(sanitized(json.loads(raw.decode("utf-8-sig"))), indent=2, ensure_ascii=False) + "\n").encode()
+        transformation = "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately"
+    else:
+        published = redact(raw.decode("utf-8-sig")).encode()
+        transformation = "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    target = PACKET / name
+    assert target.resolve().is_relative_to(PACKET.resolve())
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open("xb") as stream:
+        stream.write(published)
+    artifacts.append({"file": name, "source_name": original_name, "original_sha256": sha(raw),
+                      "published_sha256": sha(published), "bytes": len(published), "transform": transformation})
+
+
+def copy(path, name=None, expected=None, binary=False):
+    path = Path(path)
+    assert path.is_file() and not path.is_symlink()
+    assert not any(word in path.name.lower() for word in ["credential", "password", "pgpass"])
+    raw = path.read_bytes()
+    if expected is not None:
+        assert sha(raw) == expected, path.name
+    put(raw, name or path.name, path.name, binary)
+
+
+copy(SOURCE, "source-equivalence.json")
+put((json.dumps({"encoding": "utf-8", "parent": PARENT, "tested_tree": tested_tree,
+                 "decoded_sha256": sha(patch), "patch": patch.decode("utf-8")}) + "\n").encode(),
+    "reviewed-code.patch.json", "Full-index four-file repair diff against the existing PR head")
+for path, name in [(canonical_path, "canonical-driver.json"), (bound_path, "canonical-source-binding.json"),
+                   (build_path, "acceptance-build.json"), (browser_path, "controlled-browser-driver.json"),
+                   (visual_path, "screenshot-review.json")]:
+    copy(path, name)
+copy(gate["path"], "canonical-report.json", gate["sha256"])
+copy(bound["preflight_clippy"]["log"], "canonical-preflight-clippy.log", bound["preflight_clippy"]["sha256"])
+for check in canonical["checks"]:
+    copy(check["log"], "canonical-" + check["name"] + ".log", check["sha256"])
+for check in build["checks"]:
+    copy(check["log"], "acceptance-build-" + check["name"] + ".log", check["sha256"])
+copy(EV / "issue89-browser-r14.log", "controlled-browser-driver.log", browser["log_sha256"])
+copy(fixture_path, "controlled-native-report.json", browser["fixture_report_sha256"])
+copy(ui_path, "controlled-browser-report.json", fixture["browser_report_sha256"])
+for shot in ui["screenshots"]:
+    copy(shot["path"], Path(shot["path"]).name, shot["sha256"], True)
+for path, name in historical_inputs:
+    copy(path, name)
+copy(failed_path, "history/canonical-bound-r5-failed.json")
+copy(failed["preflight_clippy"]["log"], "history/canonical-r5-preflight-clippy.log", failed["preflight_clippy"]["sha256"])
+put((json.dumps({"runs": history, "prior_regression_source_delta": bound["prior_regression_source_delta"],
+                 "prior_regression_scope": bound["prior_regression_scope"],
+                 "failed_clippy_r5": "Clippy preflight rejected err().expect() on a Debug success type; no canonical gate ran. The test assertion alone was corrected before r6.",
+                 "unchanged_historical_packet": "docs/evidence/2026-09-29-preserved-deliverables",
+                 "earlier_sqlx_and_parity": "12 focused plus 229 legacy SQLx cases, 62 JS and 2 native parity cases belong to the earlier original PR candidate. They are not executions of this repair.",
+                 "chronology": "This is new retrospective evidence; it does not recreate the September 3 issue88 observation or claim a human or independent review."}) + "\n").encode(),
+    "regression-history.json", "Observed prior regression and Clippy receipts")
+for helper in ["run-issue89-canonical-bound-r6.ps1", "run-canonical-r4.ps1", "build-issue89-acceptance-r5.ps1",
+               "run-issue89-browser-r14.py", "issue89-browser-driver-r12.ps1", "issue89-browser-native-r12.mjs",
+               "issue89_process_probe.py", "assemble-issue89-git-bounds-r1.py"]:
+    expected = (browser["driver_sha256"] if helper == "issue89-browser-driver-r12.ps1" else
+                browser["browser_driver_sha256"] if helper == "issue89-browser-native-r12.mjs" else None)
+    copy(EV / helper, "helpers/" + helper + ".txt", expected)
+limitations = [
+    "Required hosted CI, CodeQL, code quality, security and review gates remain mandatory; local success does not authorize a merge without them.",
+    "Controlled acceptance uses development authentication, real native server/runner/exporter, Edge and a deterministic native Codex protocol fixture; zero vendor inference calls or GitHub mutations. This does not establish production OIDC or original issue88 lineage.",
+    "The historical full-ECorp target exceeded its 60-second checkpoint read deadline. This small scenario does not establish large-workspace performance; the safety bounds remain in force.",
+    "Canonical Windows Rust tests used RUST_TEST_THREADS=1. Issue213 remains open and its original parallel-failure cause remains inconclusive.",
+    "Canonical ignored/skipped cases remain reported. Earlier SQLx and parity receipts are preserved as older-source evidence, not claimed as current repair executions.",
+    "Historical Cargo advisory debt remains 12 advisories (2 high, 1 moderate, 9 low); this packet does not claim a clean dependency audit.",
+]
+readme = f"""# PR381 bounded native Git output repair
+
+The private deliverable Git adapter now reuses the existing bounded native-Git implementation. Index inventory and cached deletions cannot allocate unbounded output before checkpoint path validation. The existing 16 MiB stdout limit, 64 KiB stderr limit, 30-second timeout, Windows Job Object ownership and awaited cleanup apply; streaming pack limits are unchanged.
+
+This packet records the repair for ECORP-381-001 on parent `{PARENT}`, intended main `{MAIN}`, and tested tree `{tested_tree}`. All {len(physical)} physical source files were identical across canonical r6, rebuilt acceptance r5 and browser r14. The four-file repair and this separately checked evidence are added after the original PR381 publication; the original evidence packet is unchanged.
+
+## Observed current-source validation
+
+All eleven `pnpm check` gates passed with locked dependencies, including state-audit compatibility, the EVM gate and complete Node discovery. Node: {node['tests']} total, {node['passed']} passed, {node['skipped']} skipped, {node['failed']} failed, {node['cancelled']} cancelled, {node['todo']} todo. Rust: {rust['passed']} passed, {rust['ignored']} ignored, {rust['failed']} failed, {rust['summaries']} result summaries. Full name/argv and output receipts are retained.
+
+Fresh controlled browser-to-server-to-runner acceptance rejected narrowing before effects, retained the native session/worktree, accepted a complete-scope evidence correction, required fresh verification, exported the complete bundle and independently passed all four application tests. Six screenshots were inspected. Source, binaries and owned process cleanup were verified.
+
+## Retrospective regression history
+
+Two real-Git cases stage 9,000 long paths beyond the byte bound without creating physical files. Against the old adapter they failed (2 passed, 2 failed). The repaired adapter subsequently passed 4 focused and 43 deliverable cases. Those runs preceded the final Clippy-only test assertion correction; canonical r6 re-executed the current tests. Failed preflight r5 and the original red receipts remain visible. Earlier SQLx and parity results belong to the original PR candidate and are not reported as reruns of this repair.
+
+## Limits and publication status
+
+""" + "\n".join("- " + item for item in limitations) + "\n\nNo independent approval, merge or issue closure is established by this packet. Profile roots are redacted in parsed JSON strings and text; manifests keep original and published hashes separately. Helper snapshots use `.txt` so they do not change Node test discovery.\n"
+put(readme.encode(), "README.md", "Generated from observed repair receipts")
+summary = {"issue": 89, "pr": 381, "finding": "ECORP-381-001", "status": "local-repair-accepted",
+           "issue_completed": False, "merged": False, "main": MAIN, "parent": PARENT, "tested_tree": tested_tree,
+           "source_file_count": len(physical), "physical_files_sha256": physical_hash,
+           "current_lanes_same_complete_physical_source": True, "canonical_original_sha256": gate["sha256"],
+           "checks": checks, "node": node, "rust": rust, "acceptance": ui["acceptance"],
+           "screenshots": len(ui["screenshots"]), "historical_regressions": history,
+           "limitations": limitations, "artifacts": artifacts}
+write_json(PACKET / "summary.json", sanitized(summary))
+write_json(RECEIPT, {"issue": 89, "pr": 381, "status": "assembled", "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+                     "main": MAIN, "parent": PARENT, "tested_tree": tested_tree, "packet": str(PACKET),
+                     "source_receipt_sha256": sha(SOURCE.read_bytes()), "summary_sha256": sha((PACKET / "summary.json").read_bytes()),
+                     "publication_files": sorted(file.relative_to(PACKET).as_posix() for file in PACKET.rglob("*") if file.is_file()),
+                     "issue_completed": False})
+print(json.dumps({"status": "assembled", "parent": PARENT, "tested_tree": tested_tree,
+                  "source_files": len(physical), "artifacts": len(artifacts), "node": node, "rust": rust}))

@@ -1,0 +1,818 @@
+{
+  "issue": 89,
+  "pr": 381,
+  "finding": "ECORP-381-001",
+  "status": "local-repair-accepted",
+  "issue_completed": false,
+  "merged": false,
+  "main": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parent": "361632cf5d70850f28695bd42c2ba178669cd09c",
+  "tested_tree": "d52c0acf06eda38cb2cadf43fa592373500305fd",
+  "source_file_count": 7265,
+  "physical_files_sha256": "fe59cdea057b7a43f410f91932aea1d2e443863701194488e6cedbef4de4115e",
+  "current_lanes_same_complete_physical_source": true,
+  "canonical_original_sha256": "7c33d0af0a4f6ffa1719b2513f752d2410408438eee385ca5cfd32a7dfeb213a",
+  "checks": [
+    {
+      "name": "migrations",
+      "argv": [
+        "node",
+        "tools/check_migrations.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-compatibility",
+      "argv": [
+        "node",
+        "tools/check_state_audit_compatibility.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-evm",
+      "argv": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "crony-audit",
+        "--test",
+        "ethereum_local_chain"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "docs",
+      "argv": [
+        "node",
+        "tools/check_docs.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "repository-docs",
+      "argv": [
+        "node",
+        "tools/check_documentation.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "node-tests",
+      "argv": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-timeout=180000",
+        "--test-reporter=tap",
+        ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+        ".github/skills/code-review/tests/executor-state.test.mjs",
+        ".github/skills/code-review/tests/package.test.mjs",
+        "apps/web/src/AgentPinControl.test.mjs",
+        "apps/web/src/DelegatedPanel.test.mjs",
+        "apps/web/src/VerificationPolicyEditor.test.mjs",
+        "apps/web/src/agentPinOperation.test.mjs",
+        "apps/web/src/evidenceNavigation.test.mjs",
+        "apps/web/src/evidenceSelection.test.mjs",
+        "apps/web/src/factoryAuthority.test.mjs",
+        "apps/web/src/factoryAuthorityConnection.test.mjs",
+        "apps/web/src/factoryCheckpointRecovery.test.mjs",
+        "apps/web/src/factoryControllerSelection.test.mjs",
+        "apps/web/src/factoryPolling.test.mjs",
+        "apps/web/src/formText.test.mjs",
+        "apps/web/src/missionCollaboration.test.mjs",
+        "apps/web/src/missionComposer.test.mjs",
+        "apps/web/src/missionOriginContext.test.mjs",
+        "apps/web/src/missionPreview.test.mjs",
+        "apps/web/src/missionProjection.test.mjs",
+        "apps/web/src/missionResultContext.test.mjs",
+        "apps/web/src/missionReviewSummary.test.mjs",
+        "apps/web/src/missionRuntime.test.mjs",
+        "apps/web/src/office/characterAssets.test.mjs",
+        "apps/web/src/office/officeModel.test.mjs",
+        "apps/web/src/runActivity.test.mjs",
+        "apps/web/src/snapshotRefresh.test.mjs",
+        "apps/web/src/verificationPolicy.test.mjs",
+        "apps/web/src/workResultCard.test.mjs",
+        "apps/web/src/workflowContext.test.mjs",
+        "apps/web/src/workspaceConnections.test.mjs",
+        "scenarios/repo-steward/actions.test.mjs",
+        "scenarios/repo-steward/feedback-cli.test.mjs",
+        "scenarios/repo-steward/feedback.test.mjs",
+        "scenarios/repo-steward/maintenance.test.mjs",
+        "scenarios/repo-steward/recurring-audit.test.mjs",
+        "scenarios/repo-steward/steward.test.mjs",
+        "scenarios/repo-steward/teams-host.test.mjs",
+        "tests/readiness/cli.test.js",
+        "tools/budget_fixture.test.mjs",
+        "tools/check_deliverable_diff.test.mjs",
+        "tools/check_documentation.test.mjs",
+        "tools/check_evidence_launch.test.mjs",
+        "tools/check_evidence_native_build.test.mjs",
+        "tools/check_evidence_personal_paths.test.mjs",
+        "tools/check_migrations.test.mjs",
+        "tools/check_replay_source.test.mjs",
+        "tools/checkpoint_application_fixture.test.mjs",
+        "tools/ci_external_adapters_windows.test.mjs",
+        "tools/ci_factory_repository.test.mjs",
+        "tools/ci_maintenance.test.mjs",
+        "tools/ci_owned_test_server.test.mjs",
+        "tools/ci_runner_tests.test.mjs",
+        "tools/consume_operation_receipt.test.mjs",
+        "tools/controlled_runner_fixture.test.mjs",
+        "tools/copilot_fs_wire_observer.test.mjs",
+        "tools/copilot_fs_wire_process.test.mjs",
+        "tools/copilot_probe_boundaries.test.mjs",
+        "tools/copilot_probe_environment.test.mjs",
+        "tools/copilot_probe_native_read.test.mjs",
+        "tools/copilot_probe_process.test.mjs",
+        "tools/coverage_web_models.test.mjs",
+        "tools/delegated_lifecycle.test.mjs",
+        "tools/delegated_qa_root.test.mjs",
+        "tools/e2e_agent_pinning.test.mjs",
+        "tools/e2e_checkpoint_verification.test.mjs",
+        "tools/e2e_evidence_selection.test.mjs",
+        "tools/e2e_external_adapters.test.mjs",
+        "tools/e2e_external_adapters_http.test.mjs",
+        "tools/e2e_factory_budget_recovery.test.mjs",
+        "tools/e2e_late_termination.test.mjs",
+        "tools/e2e_predispatch_failure.test.mjs",
+        "tools/e2e_stopped_source_checkpoint.test.mjs",
+        "tools/e2e_verifier_browser_retention.test.mjs",
+        "tools/e2e_verifier_browser_scope.test.mjs",
+        "tools/factory_budget_fixture_config.test.mjs",
+        "tools/factory_budget_git.test.mjs",
+        "tools/factory_budget_process.test.mjs",
+        "tools/factory_budget_provenance.test.mjs",
+        "tools/factory_budget_start.test.mjs",
+        "tools/fake_codex_budget_stream.test.mjs",
+        "tools/fake_github_quota.test.mjs",
+        "tools/fixture_source_identity.test.mjs",
+        "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+        "tools/identity_fixture.test.mjs",
+        "tools/import_operation_behavior.test.mjs",
+        "tools/issue161/qa-api-provenance.test.mjs",
+        "tools/issue161/qa-plan.test.mjs",
+        "tools/local_source_commit.test.mjs",
+        "tools/local_stack_lifecycle.test.mjs",
+        "tools/local_stack_operation.test.mjs",
+        "tools/native_qualification_attempt.test.mjs",
+        "tools/native_qualification_finality.test.mjs",
+        "tools/native_qualification_trust.test.mjs",
+        "tools/office_model.test.mjs",
+        "tools/operation_feedback.test.mjs",
+        "tools/operation_receipt.test.mjs",
+        "tools/owned_test_stack.test.mjs",
+        "tools/probe_mcp.test.mjs",
+        "tools/qa_multiplayer_object_sources.test.mjs",
+        "tools/readiness_contract.test.mjs",
+        "tools/readiness_replay_contract.test.mjs",
+        "tools/redact_evidence_capabilities.test.mjs",
+        "tools/research_handoff_adversarial.test.mjs",
+        "tools/research_handoff_browser.test.mjs",
+        "tools/research_handoff_native.test.mjs",
+        "tools/runner_ack_fault_relay.test.mjs",
+        "tools/secret_scan.test.mjs",
+        "tools/secret_scan_native.test.mjs",
+        "tools/security_fixtures.test.mjs",
+        "tools/startup_validation_harness.test.mjs",
+        "tools/task_graph_fixture.test.mjs",
+        "tools/verifier_browser.test.mjs",
+        "tools/verify_toolchain.test.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3112,
+          "passed": 3047,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      }
+    },
+    {
+      "name": "format",
+      "argv": [
+        "cargo",
+        "fmt",
+        "--check"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "clippy",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "rust-tests",
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 892,
+          "failed": 0,
+          "ignored": 576,
+          "summaries": 41
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "web-build",
+      "argv": [
+        "pnpm",
+        "build:web"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "web-lint",
+      "argv": [
+        "pnpm",
+        "lint:web"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    }
+  ],
+  "node": {
+    "tests": 3112,
+    "passed": 3047,
+    "failed": 0,
+    "skipped": 65,
+    "todo": 0,
+    "cancelled": 0
+  },
+  "rust": {
+    "passed": 892,
+    "failed": 0,
+    "ignored": 576,
+    "summaries": 41
+  },
+  "acceptance": {
+    "complete_application_preserved": true,
+    "narrowing_rejected_without_effects": true,
+    "full_scope_evidence_only_correction": true,
+    "same_native_session_and_worktree": true,
+    "fresh_verification_and_complete_bundle": true,
+    "exported_application_exercised": true,
+    "source_checkout_unchanged": true,
+    "provider_runs": 2
+  },
+  "screenshots": 6,
+  "historical_regressions": [
+    {
+      "receipt": "issue89-bounded-git-red-r2.json",
+      "original_sha256": "f258a78b5435474ab8dc97335baab6bd97efb4636fe65b3138a8ca2cf109043a",
+      "log_sha256": "7a8bf4d30b18b33f4371297260371772b86191c2afcd4d50711d1971ceb82a3d",
+      "exit_code": 101,
+      "counts": {
+        "passed": 2,
+        "failed": 2,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 291,
+        "summaries": 1
+      },
+      "current_source_acceptance": false,
+      "scope": "Retrospective red/green regression before final expect_err test-only correction; canonical r6 re-executes the current tests."
+    },
+    {
+      "receipt": "issue89-bounded-git-green-r2.json",
+      "original_sha256": "7366990717e8c1e102213c29b9864e404f75267e885e46585e11f63653cae281",
+      "log_sha256": "08d8893bc8f7ea89d0b3f8db6be5520994a431faed218fc513c7255c3b98e120",
+      "exit_code": 0,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 291,
+        "summaries": 1
+      },
+      "current_source_acceptance": false,
+      "scope": "Retrospective red/green regression before final expect_err test-only correction; canonical r6 re-executes the current tests."
+    },
+    {
+      "receipt": "issue89-bounded-git-deliverable-r2.json",
+      "original_sha256": "c9dbb9919817031b988248f5a9a5f81df4516bd6562f0377e46b19d9181f17e7",
+      "log_sha256": "c040e452ad11cb4e9f96edce0132d57dc72fded8d7a2469c53f66f686ca0d38f",
+      "exit_code": 0,
+      "counts": {
+        "passed": 43,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 252,
+        "summaries": 1
+      },
+      "current_source_acceptance": false,
+      "scope": "Retrospective red/green regression before final expect_err test-only correction; canonical r6 re-executes the current tests."
+    }
+  ],
+  "limitations": [
+    "Required hosted CI, CodeQL, code quality, security and review gates remain mandatory; local success does not authorize a merge without them.",
+    "Controlled acceptance uses development authentication, real native server/runner/exporter, Edge and a deterministic native Codex protocol fixture; zero vendor inference calls or GitHub mutations. This does not establish production OIDC or original issue88 lineage.",
+    "The historical full-ECorp target exceeded its 60-second checkpoint read deadline. This small scenario does not establish large-workspace performance; the safety bounds remain in force.",
+    "Canonical Windows Rust tests used RUST_TEST_THREADS=1. Issue213 remains open and its original parallel-failure cause remains inconclusive.",
+    "Canonical ignored/skipped cases remain reported. Earlier SQLx and parity receipts are preserved as older-source evidence, not claimed as current repair executions.",
+    "Historical Cargo advisory debt remains 12 advisories (2 high, 1 moderate, 9 low); this packet does not claim a clean dependency audit."
+  ],
+  "artifacts": [
+    {
+      "file": "source-equivalence.json",
+      "source_name": "issue89-git-bounds-source-r1.json",
+      "original_sha256": "6ef86ca94823a4ce8ae6ad4a738f4c89a33edc02c60fde0610132c9c3e5e51e1",
+      "published_sha256": "3db4825bec27c51fa802f45aa8fab4e5920dbe8eda8f9aa31c3ae4331d0726aa",
+      "bytes": 1205063,
+      "transform": "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately"
+    },
+    {
+      "file": "reviewed-code.patch.json",
+      "source_name": "Full-index four-file repair diff against the existing PR head",
+      "original_sha256": "2628496f1ca391515426f9ffb07a5698761cbc544917a7b49430bae56b6a46ce",
+      "published_sha256": "781aee080ad0aa1e22a36e02592ad66fbfa87c021995ce6277d14791e124b4b2",
+      "bytes": 9303,
+      "transform": "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately"
+    },
+    {
+      "file": "canonical-driver.json",
+      "source_name": "issue89-canonical-r6.json",
+      "original_sha256": "d8551ca9f026ed49e5d372a1860d67df06f3819ca2e26d21c6ad66ed08c2acb7",
+      "published_sha256": "12844ae9cba664cbcf7919625284b02ef2370c31a4b3456561db5894aad114f9",
+      "bytes": 606385,
+      "transform": "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately"
+    },
+    {
+      "file": "canonical-source-binding.json",
+      "source_name": "issue89-canonical-bound-r6.json",
+      "original_sha256": "6b5b6cdd1f3e0cc356f06b5dad8a7b7ef35646432d933ade26e4d313663dafdd",
+      "published_sha256": "144ae00009d38f2eae1790e67500a74cbe5389b898f62e7f6f432b9b42cea9ee",
+      "bytes": 2786973,
+      "transform": "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately"
+    },
+    {
+      "file": "acceptance-build.json",
+      "source_name": "issue89-acceptance-build-r5.json",
+      "original_sha256": "8a0960f55ac66e6e4fdee94250672715f378595da3c11cd9b1727a85be3fc7bd",
+      "published_sha256": "75bdd942f3a4dc329f11ca478a9657791709edfe9ebfbbcc27127a775bb7d1f4",
+      "bytes": 1394844,
+      "transform": "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately"
+    },
+    {
+      "file": "controlled-browser-driver.json",
+      "source_name": "issue89-browser-r14.json",
+      "original_sha256": "df4149ab787ef2346a205fdee70c739c3f26cc6c43fb8e677a030c309a07006d",
+      "published_sha256": "9792815d9113472cf0dd4ba4249896dd70c6494fe352d648520e58798c9920c2",
+      "bytes": 5429,
+      "transform": "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately"
+    },
+    {
+      "file": "screenshot-review.json",
+      "source_name": "issue89-screenshot-review-r14.json",
+      "original_sha256": "72479ace5db9f7ae495ccb63d791b6ad82a32b283c7cb8ea4d7ed7a03eff9576",
+      "published_sha256": "805b0b081a6cdabc3e71b01806051fc0590f60a0a6ce5511411f6f9d4b171554",
+      "bytes": 3493,
+      "transform": "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately"
+    },
+    {
+      "file": "canonical-report.json",
+      "source_name": "2026-09-29T08-43-39-431Z-b195e1ce-2dc6-4410-9f3c-caa0cdf51ce9-full.json",
+      "original_sha256": "7c33d0af0a4f6ffa1719b2513f752d2410408438eee385ca5cfd32a7dfeb213a",
+      "published_sha256": "7c33d0af0a4f6ffa1719b2513f752d2410408438eee385ca5cfd32a7dfeb213a",
+      "bytes": 588480,
+      "transform": "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately"
+    },
+    {
+      "file": "canonical-preflight-clippy.log",
+      "source_name": "issue89-canonical-r6-preflight-clippy.log",
+      "original_sha256": "42aba358cb7da326cf05c3948a595ec37a07c34f88c4a799531abbeb4c847af2",
+      "published_sha256": "d181e6059a098e30120efa19a2d1a1a2563c2408d88b0121d2d3b871207652ab",
+      "bytes": 178,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "canonical-install-root.log",
+      "source_name": "issue89-canonical-r6-install-root.log",
+      "original_sha256": "3a7fa94bb017c068154eb957471c092804dc58ca3eea6de1388d44a042660b1b",
+      "published_sha256": "0a7b44ab6def7136804323d28cbfb9fa94f722f405c8044d063bde46158c0526",
+      "bytes": 85,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "canonical-install-web.log",
+      "source_name": "issue89-canonical-r6-install-web.log",
+      "original_sha256": "73b14a95e23cb390492f305b6d2a99f075f5983877146ea15b4b6dbd87eff090",
+      "published_sha256": "59331e390a4ba67a629d90d9229a731955cd1f9a152d1c8f9d30f66ea62ee5c5",
+      "bytes": 85,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "canonical-install-steward.log",
+      "source_name": "issue89-canonical-r6-install-steward.log",
+      "original_sha256": "0631057522dd2a47bf224ae79634d66bbb2340efb894d76fb2cdae0b9d951d5f",
+      "published_sha256": "3aba7c560ce81439b4dc4cfe591c3374a4a0fb474b303823e5cffffdb5cc661b",
+      "bytes": 26,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "canonical-pnpm-check.log",
+      "source_name": "issue89-canonical-r6-pnpm-check.log",
+      "original_sha256": "fa32fde0e766b9ae9e9afe3a51f1f3d0f7586ceffd7b8147c58da5aff5f27a11",
+      "published_sha256": "e2955d6c9380ea0f377a5619ac850e4ed4b0f5573ccf17d68e06acabeebec818",
+      "bytes": 9362,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "acceptance-build-install-root.log",
+      "source_name": "issue89-acceptance-build-r5-install-root.log",
+      "original_sha256": "5ad1dc5d1152081fca940458c0fad36160917122abf13805b9989d0c08c2f087",
+      "published_sha256": "ff4d66b48db65dfe04cd80e202244189e0429f1d6267dcc45dff2ed887f9210d",
+      "bytes": 85,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "acceptance-build-install-web.log",
+      "source_name": "issue89-acceptance-build-r5-install-web.log",
+      "original_sha256": "2e7459ec28e0ae522659dfc75da6b09cf73e91d244033ab524029193cb676124",
+      "published_sha256": "fb2380b63277caa9588920903d12bb28d224fe7eb7c276e012a8a11b34fa7c14",
+      "bytes": 85,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "acceptance-build-native.log",
+      "source_name": "issue89-acceptance-build-r5-native.log",
+      "original_sha256": "eb2488eac513a58e9c1eeb0cb3c03002341347cfdcf18ee3208a617de50c83aa",
+      "published_sha256": "574a2d9824725acc06f936a02cb7ab4491eaaa056d4fed5e1a9c6ff6279a4757",
+      "bytes": 179,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "acceptance-build-web.log",
+      "source_name": "issue89-acceptance-build-r5-web.log",
+      "original_sha256": "cb1c7c154b9875585b725d4a5b61ab9539df034f5d7db66e51dc4a24711b585b",
+      "published_sha256": "d1d5c95d8bcfa97e07930631b682539d79db636009c2d1bfe94f38e495b10c47",
+      "bytes": 561,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "controlled-browser-driver.log",
+      "source_name": "issue89-browser-r14.log",
+      "original_sha256": "f3099d75c2bec61d6275cabac6e132b729907942f139abd0cf2d7a3a109bb536",
+      "published_sha256": "a7330bdf19af9b324c84a8e72fed845ba7f68627762b4f0458b97b891acbd058",
+      "bytes": 2634,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "controlled-native-report.json",
+      "source_name": "fixture-report.json",
+      "original_sha256": "2ad7c799f9f34680e4e6dc7aec4f3a4256daef4da9dc70ba3842432bb7c11dc2",
+      "published_sha256": "a7330bdf19af9b324c84a8e72fed845ba7f68627762b4f0458b97b891acbd058",
+      "bytes": 2634,
+      "transform": "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately"
+    },
+    {
+      "file": "controlled-browser-report.json",
+      "source_name": "browser-preserved-deliverable-report.json",
+      "original_sha256": "d85cd4c68f0780677e727f5d2583a30e2080ea452410b13cff0f5d247aee33b8",
+      "published_sha256": "bb76ac0f2de11fa011baf41e26db780681d9d92a839b6211c77d035ce84cac19",
+      "bytes": 16333,
+      "transform": "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately"
+    },
+    {
+      "file": "01-complete-application-preserved-after-verifier-failure.png",
+      "source_name": "01-complete-application-preserved-after-verifier-failure.png",
+      "original_sha256": "7da3eb5a4e4994e04b168f742332db1dffb1cac2ccc5431186f7f4a3528a5f46",
+      "published_sha256": "7da3eb5a4e4994e04b168f742332db1dffb1cac2ccc5431186f7f4a3528a5f46",
+      "bytes": 236878,
+      "transform": "none"
+    },
+    {
+      "file": "02-narrowing-rejected-with-precise-recovery-action.png",
+      "source_name": "02-narrowing-rejected-with-precise-recovery-action.png",
+      "original_sha256": "325f41cea7f0d91de72cd2b84496ef79758d5f682c9e3b6adfa0636db5e6ed94",
+      "published_sha256": "325f41cea7f0d91de72cd2b84496ef79758d5f682c9e3b6adfa0636db5e6ed94",
+      "bytes": 446022,
+      "transform": "none"
+    },
+    {
+      "file": "03-full-scope-revision-saved-without-implicit-resume.png",
+      "source_name": "03-full-scope-revision-saved-without-implicit-resume.png",
+      "original_sha256": "8b834df91c03cb4edcf08dd0b2740ae53153e10fb96b09561b1b274c0adbb453",
+      "published_sha256": "8b834df91c03cb4edcf08dd0b2740ae53153e10fb96b09561b1b274c0adbb453",
+      "bytes": 357543,
+      "transform": "none"
+    },
+    {
+      "file": "04-complete-source-accepted-and-exported.png",
+      "source_name": "04-complete-source-accepted-and-exported.png",
+      "original_sha256": "66704093437e10a9e9366ebec4122ab1320d6e871ae5f74b6ebef08b0493d232",
+      "published_sha256": "66704093437e10a9e9366ebec4122ab1320d6e871ae5f74b6ebef08b0493d232",
+      "bytes": 372751,
+      "transform": "none"
+    },
+    {
+      "file": "05-exported-application-create-filter-resolve.png",
+      "source_name": "05-exported-application-create-filter-resolve.png",
+      "original_sha256": "77a78acedc1a6a9ef2ef2d1631e743b6862873323311d7f7abd738adc4009c89",
+      "published_sha256": "77a78acedc1a6a9ef2ef2d1631e743b6862873323311d7f7abd738adc4009c89",
+      "bytes": 46206,
+      "transform": "none"
+    },
+    {
+      "file": "06-exported-application-reopened-mobile.png",
+      "source_name": "06-exported-application-reopened-mobile.png",
+      "original_sha256": "753f7955dc89cdbcbdaa7dfc6b9bfef9de4b5d2f020cff67ad6355ffea88200b",
+      "published_sha256": "753f7955dc89cdbcbdaa7dfc6b9bfef9de4b5d2f020cff67ad6355ffea88200b",
+      "bytes": 40102,
+      "transform": "none"
+    },
+    {
+      "file": "history/issue89-bounded-git-red-r2.json",
+      "source_name": "issue89-bounded-git-red-r2.json",
+      "original_sha256": "f258a78b5435474ab8dc97335baab6bd97efb4636fe65b3138a8ca2cf109043a",
+      "published_sha256": "51b86b5bf1e5341a7f500d323d0f12a549ac3ae636bcba47a73023cd036ba2b6",
+      "bytes": 2784755,
+      "transform": "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately; source_before.sha256 and source_after.sha256 path-keyed maps losslessly represented as files arrays of {path, sha256}; original receipts unchanged"
+    },
+    {
+      "file": "history/issue89-bounded-git-red-r2.log",
+      "source_name": "issue89-bounded-git-red-r2.log",
+      "original_sha256": "7a8bf4d30b18b33f4371297260371772b86191c2afcd4d50711d1971ceb82a3d",
+      "published_sha256": "c900d3498e54ad885a99c7e88afe13444d4807bb2fd924b0522972fb7d32a939",
+      "bytes": 1718,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing horizontal whitespace and extra terminal blank lines removed for publication; original log remains unchanged"
+    },
+    {
+      "file": "history/issue89-bounded-git-green-r2.json",
+      "source_name": "issue89-bounded-git-green-r2.json",
+      "original_sha256": "7366990717e8c1e102213c29b9864e404f75267e885e46585e11f63653cae281",
+      "published_sha256": "36363f0dba5bf5949c282ae41d9857514f04f0b9c833748b0315e1ddbb5def48",
+      "bytes": 2784925,
+      "transform": "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately; source_before.sha256 and source_after.sha256 path-keyed maps losslessly represented as files arrays of {path, sha256}; original receipts unchanged"
+    },
+    {
+      "file": "history/issue89-bounded-git-green-r2.log",
+      "source_name": "issue89-bounded-git-green-r2.log",
+      "original_sha256": "08d8893bc8f7ea89d0b3f8db6be5520994a431faed218fc513c7255c3b98e120",
+      "published_sha256": "7759e45c6fa5818d4a33e03ef71c4a7418a8c2f2429ca6cb6a9b293db6489ccf",
+      "bytes": 817,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing horizontal whitespace and extra terminal blank lines removed for publication; original log remains unchanged"
+    },
+    {
+      "file": "history/issue89-bounded-git-deliverable-r2.json",
+      "source_name": "issue89-bounded-git-deliverable-r2.json",
+      "original_sha256": "c9dbb9919817031b988248f5a9a5f81df4516bd6562f0377e46b19d9181f17e7",
+      "published_sha256": "ad3f10ada76152cf8dd19d7435cd4bb6b4fa7fd721ad5b25ac5b319aefbb9d70",
+      "bytes": 2784907,
+      "transform": "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately; source_before.sha256 and source_after.sha256 path-keyed maps losslessly represented as files arrays of {path, sha256}; original receipts unchanged"
+    },
+    {
+      "file": "history/issue89-bounded-git-deliverable-r2.log",
+      "source_name": "issue89-bounded-git-deliverable-r2.log",
+      "original_sha256": "c040e452ad11cb4e9f96edce0132d57dc72fded8d7a2469c53f66f686ca0d38f",
+      "published_sha256": "c595919cc17123ba2766d22e73ee40e3f008154b137e92900ddecbe0f7fbfbe0",
+      "bytes": 24093,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; trailing horizontal whitespace and extra terminal blank lines removed for publication; original log remains unchanged"
+    },
+    {
+      "file": "history/canonical-bound-r5-failed.json",
+      "source_name": "issue89-canonical-bound-r5.json",
+      "original_sha256": "d0a28c5ff2ea132daeab781e55c99a1554a280b19bb8e24957c5719b06b24c26",
+      "published_sha256": "3afc6cd5c417f0a8d3b2be472ad9e8df21560e390b00bee352b65d41867e42eb",
+      "bytes": 2786204,
+      "transform": "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately"
+    },
+    {
+      "file": "history/canonical-r5-preflight-clippy.log",
+      "source_name": "issue89-canonical-r5-preflight-clippy.log",
+      "original_sha256": "0b1f3a94c190f5ee7c6db5d337fe34b31c100782b43bbb39e0634e9404481ad8",
+      "published_sha256": "9071deb045db80ed6288df72bd808dc743a3d05d0406eae61f8ba14a944dfe43",
+      "bytes": 780,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "regression-history.json",
+      "source_name": "Observed prior regression and Clippy receipts",
+      "original_sha256": "1061c0f5b2f65a65639105c37f3becf5397a48612bb72a2fb2b8e1a268b4d01b",
+      "published_sha256": "52b3803de90330de264aea60769287f74aa9e42d3752b3622cf3199669ef06a2",
+      "bytes": 3043,
+      "transform": "JSON parsed, profile roots redacted in string keys/values, reserialized as UTF-8/LF; original hash retained separately"
+    },
+    {
+      "file": "helpers/run-issue89-canonical-bound-r6.ps1.txt",
+      "source_name": "run-issue89-canonical-bound-r6.ps1",
+      "original_sha256": "b824470f974776c943442046baa502feac1bcedbb600a36539e605d93ca32a08",
+      "published_sha256": "24b9dc3311287f650b89c556a730ac5e375f7c35a3a877dce558f225384f5199",
+      "bytes": 8333,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "helpers/run-canonical-r4.ps1.txt",
+      "source_name": "run-canonical-r4.ps1",
+      "original_sha256": "24710f508cbc4e23575f457b21fb3a929e4a3928f28b72b8ee10c2b129329b1b",
+      "published_sha256": "f91f754934aefab74d44db1dbe19559a371d8581aa6f352a810828902cfd9f13",
+      "bytes": 4645,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "helpers/build-issue89-acceptance-r5.ps1.txt",
+      "source_name": "build-issue89-acceptance-r5.ps1",
+      "original_sha256": "9ba694f5fbd87add35c9fc749756f41c849ca5a21029082eb4bca493b0afe21c",
+      "published_sha256": "c93ef792a1d99c86986aa6bfb80d41cbb0c31ee2f1d66ae9c4149d66fe47bff3",
+      "bytes": 4598,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "helpers/run-issue89-browser-r14.py.txt",
+      "source_name": "run-issue89-browser-r14.py",
+      "original_sha256": "4cc1369b32319d8460232ed8375a9cab6d07b9996703f0595124cda3ab9fa010",
+      "published_sha256": "a2934bfa54e542b36453b8e58743b007a4e9181e41ff308033f5d81e4f1e8e32",
+      "bytes": 6093,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "helpers/issue89-browser-driver-r12.ps1.txt",
+      "source_name": "issue89-browser-driver-r12.ps1",
+      "original_sha256": "86ac14f06b742f8fbb0bf0779f54212886b6d8680782a60188c7c22435501520",
+      "published_sha256": "adecb763f4b7b3db273c0e51b4339e94c1d26272b7a86cf6563f728c0ed16336",
+      "bytes": 26625,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "helpers/issue89-browser-native-r12.mjs.txt",
+      "source_name": "issue89-browser-native-r12.mjs",
+      "original_sha256": "12b3373e620f6356cc9663eb9a535af2807d604d1eedc8c13742fc448387c6ae",
+      "published_sha256": "12b3373e620f6356cc9663eb9a535af2807d604d1eedc8c13742fc448387c6ae",
+      "bytes": 32051,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "helpers/issue89_process_probe.py.txt",
+      "source_name": "issue89_process_probe.py",
+      "original_sha256": "a38f5790cd9b944d650cd451d54b0993b46b4c30624e1798cf540552449db4c9",
+      "published_sha256": "a38f5790cd9b944d650cd451d54b0993b46b4c30624e1798cf540552449db4c9",
+      "bytes": 4215,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "helpers/assemble-issue89-git-bounds-r1.py.txt",
+      "source_name": "assemble-issue89-git-bounds-r1.py",
+      "original_sha256": "7356a6cdf39de23b33b38367f0fcb189429444df1c03ddd923af300404b653ec",
+      "published_sha256": "4a941da1afe71f5223ff7499b2ebc197b5fd5a7b991b10d793942f45a2c4379f",
+      "bytes": 22568,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "README.md",
+      "source_name": "Generated from observed repair receipts",
+      "original_sha256": "a72ca7ad254ed537ca3618ae82c3b26703af521e4bc8da38ee6c2b65497ffbf2",
+      "published_sha256": "95455c9dad843e6c436c53036d11ee9248e71829004ba9c0f6375eedbdcf1395",
+      "bytes": 4292,
+      "transform": "UTF-8 without BOM, LF newlines, local profile roots replaced with <USERPROFILE>; appended publication whitespace-transformation disclosure; appended lossless digest-manifest-format and native triage disclosure"
+    },
+    {
+      "file": "publication-secret-triage.json",
+      "source_name": "issue89-git-bounds-secret-triage-r1.json",
+      "original_sha256": "b8dc88a8518ffe8d62487e923c85ea14dddaf135375d1490ed86efbcec4f5823",
+      "published_sha256": "b8dc88a8518ffe8d62487e923c85ea14dddaf135375d1490ed86efbcec4f5823",
+      "bytes": 110238,
+      "transform": "none; metadata-only triage verifies each alert is an unchanged source file digest"
+    }
+  ],
+  "publication_normalization": {
+    "reason": "First publication diff check rejected raw historical-log whitespace.",
+    "failed_validation_original_sha256": "e18ce298b40ec3635c510de23e44c7e7acafcdb776ff16ec6b418eb18fb56e0b",
+    "files": [
+      {
+        "file": "history/issue89-bounded-git-red-r2.log",
+        "prior_published_sha256": "2d3cdcfdfaaf04b594e0928bffcefd48d5cc2d9404786c5246a5931d9037a0aa",
+        "published_sha256": "c900d3498e54ad885a99c7e88afe13444d4807bb2fd924b0522972fb7d32a939",
+        "original_sha256": "7a8bf4d30b18b33f4371297260371772b86191c2afcd4d50711d1971ceb82a3d"
+      },
+      {
+        "file": "history/issue89-bounded-git-green-r2.log",
+        "prior_published_sha256": "d5acee90ead0282dec0a9f0d66efb9d56bbb81fa7e080f990919d4a2e5213bd6",
+        "published_sha256": "7759e45c6fa5818d4a33e03ef71c4a7418a8c2f2429ca6cb6a9b293db6489ccf",
+        "original_sha256": "08d8893bc8f7ea89d0b3f8db6be5520994a431faed218fc513c7255c3b98e120"
+      },
+      {
+        "file": "history/issue89-bounded-git-deliverable-r2.log",
+        "prior_published_sha256": "96a4637ca707d51541c4b50de314c7ee92fddf891d9f57db10ca3de414fe25d9",
+        "published_sha256": "c595919cc17123ba2766d22e73ee40e3f008154b137e92900ddecbe0f7fbfbe0",
+        "original_sha256": "c040e452ad11cb4e9f96edce0132d57dc72fded8d7a2469c53f66f686ca0d38f"
+      }
+    ],
+    "original_execution_logs_unchanged": true,
+    "tested_source_unchanged": true
+  },
+  "publication_manifest_format": {
+    "reason": "Generic API key alerts were verified file digests whose JSON keys contained source path names.",
+    "failed_validation_original_sha256": "430d6df68fe1f2f680329b891cab07d45ac01f61576c6b6e8585dd6f61d7e4ed",
+    "triage_original_sha256": "b8dc88a8518ffe8d62487e923c85ea14dddaf135375d1490ed86efbcec4f5823",
+    "verified_digest_alerts": 300,
+    "files": [
+      {
+        "file": "history/issue89-bounded-git-red-r2.json",
+        "prior_published_sha256": "8dea4e6d7c8d2ef22faea07ebd0dd5f3d852920ad44cab7a6ad9294e7e7ae41e",
+        "published_sha256": "51b86b5bf1e5341a7f500d323d0f12a549ac3ae636bcba47a73023cd036ba2b6",
+        "original_sha256": "f258a78b5435474ab8dc97335baab6bd97efb4636fe65b3138a8ca2cf109043a",
+        "before_file_count": 7265,
+        "after_file_count": 7265,
+        "all_manifest_paths_and_hashes_preserved": true
+      },
+      {
+        "file": "history/issue89-bounded-git-green-r2.json",
+        "prior_published_sha256": "2b0e37e8c9b35b0068512934314fdf6cd2e2d55b16a0a3304ae37a5e73ab233f",
+        "published_sha256": "36363f0dba5bf5949c282ae41d9857514f04f0b9c833748b0315e1ddbb5def48",
+        "original_sha256": "7366990717e8c1e102213c29b9864e404f75267e885e46585e11f63653cae281",
+        "before_file_count": 7265,
+        "after_file_count": 7265,
+        "all_manifest_paths_and_hashes_preserved": true
+      },
+      {
+        "file": "history/issue89-bounded-git-deliverable-r2.json",
+        "prior_published_sha256": "461e27ec9b6e72728fb5beccd1d8e8be9187d04a441e785b985df11a6b43fbbe",
+        "published_sha256": "ad3f10ada76152cf8dd19d7435cd4bb6b4fa7fd721ad5b25ac5b319aefbb9d70",
+        "original_sha256": "c9dbb9919817031b988248f5a9a5f81df4516bd6562f0377e46b19d9181f17e7",
+        "before_file_count": 7265,
+        "after_file_count": 7265,
+        "all_manifest_paths_and_hashes_preserved": true
+      }
+    ],
+    "original_execution_receipts_unchanged": true,
+    "all_manifest_paths_and_hashes_preserved": true,
+    "tested_source_unchanged": true,
+    "scanner_policy_unchanged": true
+  }
+}

@@ -1,0 +1,388 @@
+{
+  "issue": 89,
+  "suite": "issue89-preserved-deliverable-browser-v1",
+  "status": "passed",
+  "started_at_utc": "2026-09-29T09:52:48.055Z",
+  "stage": "independently imported application browser flow",
+  "real_provider_calls": 0,
+  "real_github_mutations": 0,
+  "environment": "Fresh private PostgreSQL, native server/runner, actual Edge, deterministic native Codex protocol fixture; fresh owned dedicated scenario repository, distinct from the product source.",
+  "limitations": [
+    "Development authentication; no production OIDC claim.",
+    "Deterministic provider protocol, not vendor inference.",
+    "Application fixture reused from the documented issue195 lane; original issue88 production lineage is never touched.",
+    "The full ECorp target r6 exceeded the bounded checkpoint read deadline. This scenario fixture does not resolve or validate large-workspace timing."
+  ],
+  "fixture_base_commit": "a47fbe620427f4ee3ee53dd7d41abcb72363d1df",
+  "screenshots": [
+    {
+      "label": "01-complete-application-preserved-after-verifier-failure",
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue89-browser-r14\\evidence\\browser\\01-complete-application-preserved-after-verifier-failure.png",
+      "sha256": "7da3eb5a4e4994e04b168f742332db1dffb1cac2ccc5431186f7f4a3528a5f46",
+      "viewport": {
+        "width": 1440,
+        "height": 1050
+      }
+    },
+    {
+      "label": "02-narrowing-rejected-with-precise-recovery-action",
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue89-browser-r14\\evidence\\browser\\02-narrowing-rejected-with-precise-recovery-action.png",
+      "sha256": "325f41cea7f0d91de72cd2b84496ef79758d5f682c9e3b6adfa0636db5e6ed94",
+      "viewport": {
+        "width": 1440,
+        "height": 1050
+      }
+    },
+    {
+      "label": "03-full-scope-revision-saved-without-implicit-resume",
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue89-browser-r14\\evidence\\browser\\03-full-scope-revision-saved-without-implicit-resume.png",
+      "sha256": "8b834df91c03cb4edcf08dd0b2740ae53153e10fb96b09561b1b274c0adbb453",
+      "viewport": {
+        "width": 1440,
+        "height": 1050
+      }
+    },
+    {
+      "label": "04-complete-source-accepted-and-exported",
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue89-browser-r14\\evidence\\browser\\04-complete-source-accepted-and-exported.png",
+      "sha256": "66704093437e10a9e9366ebec4122ab1320d6e871ae5f74b6ebef08b0493d232",
+      "viewport": {
+        "width": 1440,
+        "height": 1050
+      }
+    },
+    {
+      "label": "05-exported-application-create-filter-resolve",
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue89-browser-r14\\evidence\\browser\\05-exported-application-create-filter-resolve.png",
+      "sha256": "77a78acedc1a6a9ef2ef2d1631e743b6862873323311d7f7abd738adc4009c89",
+      "viewport": {
+        "width": 1440,
+        "height": 1050
+      }
+    },
+    {
+      "label": "06-exported-application-reopened-mobile",
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue89-browser-r14\\evidence\\browser\\06-exported-application-reopened-mobile.png",
+      "sha256": "753f7955dc89cdbcbdaa7dfc6b9bfef9de4b5d2f020cff67ad6355ffea88200b",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    }
+  ],
+  "browser_mutations": [
+    {
+      "method": "POST",
+      "path": "/api/demo/bootstrap"
+    },
+    {
+      "method": "POST",
+      "path": "/api/corps/00000000-0000-4000-8000-000000000001/missions/c79e3121-5e13-4332-893d-09cf9b91f910/contract-revisions"
+    },
+    {
+      "method": "POST",
+      "path": "/api/corps/00000000-0000-4000-8000-000000000001/missions/c79e3121-5e13-4332-893d-09cf9b91f910/contract-revisions"
+    },
+    {
+      "method": "POST",
+      "path": "/api/corps/00000000-0000-4000-8000-000000000001/runs/87c7e64e-5ea7-44e3-80b4-5bd94803d483/resume"
+    }
+  ],
+  "blocked_requests": [],
+  "page_errors": [],
+  "corp_id": "00000000-0000-4000-8000-000000000001",
+  "mission_id": "c79e3121-5e13-4332-893d-09cf9b91f910",
+  "task_id": "fde74e1d-6865-446b-8b36-5918418f12b9",
+  "initial_git_status": "M base.txt\n?? qa/issue195/app.mjs\n?? qa/issue195/app.test.mjs\n?? qa/issue195/index.html",
+  "initial": {
+    "run_id": "87c7e64e-5ea7-44e3-80b4-5bd94803d483",
+    "provider_session_id": "eb47171c-37d6-491f-85dd-3178b81c6650",
+    "workspace_run_id": "87c7e64e-5ea7-44e3-80b4-5bd94803d483",
+    "workspace": "<USERPROFILE>\\code\\qa\\ecorp-issue89-browser-r14\\runner-workspaces\\worktrees\\fde74e1d6865446b8b365918418f12b9\\87c7e64e5ea744e380b45bd94803d483",
+    "preservation_event_id": "4aba29d7-b0f7-4c62-9629-516a293ab07e",
+    "complete_delta": [
+      "base.txt",
+      "qa/issue195/app.mjs",
+      "qa/issue195/app.test.mjs",
+      "qa/issue195/index.html"
+    ],
+    "index_sha256": "4ac689a13b6f4f605a5b09b6050e8a3bcc509abd1eabc733e782afb6b78882b0",
+    "application": [
+      {
+        "path": "qa/issue195/app.mjs",
+        "bytes": 1281,
+        "sha256": "3a1e9e42b61b1a84910330f3ec8b06ced67a5ff316409d33bb66bd2c5b37594d"
+      },
+      {
+        "path": "qa/issue195/app.test.mjs",
+        "bytes": 1700,
+        "sha256": "267cd4a5a0339a6154901852f98bdd3e2a3b30325dbed401086e77f88cb2ac94"
+      },
+      {
+        "path": "qa/issue195/index.html",
+        "bytes": 5759,
+        "sha256": "33c4eb318b7a55ad8930512fe87770faa801b2d3a816cafbe1db6d80d0b65b24"
+      },
+      {
+        "path": "base.txt",
+        "bytes": 5,
+        "sha256": "f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"
+      }
+    ]
+  },
+  "browser_version": "154.0.4258.37",
+  "contract_editor": {
+    "unique_fields": 3,
+    "initial_description_matches": true,
+    "initial_contract_matches": true
+  },
+  "contract_revision_denial_observed": {
+    "http_status": 400,
+    "body": {
+      "error": "write scope excludes preserved deliverable path base.txt. Keep the preserved worktree and retain write authority for its complete selected source delta. Use the current runner to checkpoint or resume under the unchanged full scope; otherwise create an explicitly authorized full-scope mission. Do not retry this correction in a fresh worktree."
+    }
+  },
+  "rejection": {
+    "http_status": 400,
+    "body": {
+      "error": "write scope excludes preserved deliverable path base.txt. Keep the preserved worktree and retain write authority for its complete selected source delta. Use the current runner to checkpoint or resume under the unchanged full scope; otherwise create an explicitly authorized full-scope mission. Do not retry this correction in a fresh worktree."
+    },
+    "unchanged_contract_version": 1,
+    "run_count": 1
+  },
+  "full_scope_revision_observed": {
+    "http_status": 200,
+    "response": {
+      "revision": {
+        "id": "8da9b957-b854-4bae-abe6-14a32a71a68a",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "mission_id": "c79e3121-5e13-4332-893d-09cf9b91f910",
+        "task_id": "fde74e1d-6865-446b-8b36-5918418f12b9",
+        "version": 2,
+        "revised_by": "00000000-0000-4000-8000-000000000011",
+        "next_action": "resume",
+        "source_run_id": "87c7e64e-5ea7-44e3-80b4-5bd94803d483",
+        "reason": "Exercise issue89: evidence-only correction must not discard the existing application from deliverable authority.",
+        "previous_description": "[checkpoint-app] Create the complete incident desk application. A later preserved-session correction supplies the missing resume evidence.",
+        "replacement_description": "Supply only the missing correction evidence in resumed.txt and resume-prompt.txt. Preserve every existing application byte; export the complete retained application under its unchanged full write scope.",
+        "previous_contract": {
+          "objective": "[checkpoint-app] Create the complete incident desk application. A later preserved-session correction supplies the missing resume evidence.\n\nTASK-SPECIFIC OBJECTIVE:\n[checkpoint-app] Create the complete incident desk application. A later preserved-session correction supplies the missing resume evidence.",
+          "expected_output": "The complete nonempty incident application plus correction evidence, exported as a verified commit and branch.",
+          "source_repository": "All-The-Vibes/ecorp",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "a47fbe620427f4ee3ee53dd7d41abcb72363d1df",
+          "acceptance_tests": [
+            "the declared artifact exists",
+            "the task reports concrete verification evidence",
+            "All persisted native verifier checks pass and the full application remains in the final deliverable."
+          ],
+          "allowed_tools": [
+            "filesystem",
+            "shell"
+          ],
+          "prohibited_actions": [
+            "modify files outside the assigned worktree",
+            "use undeclared long-lived credentials",
+            "publish external changes"
+          ],
+          "references": [],
+          "write_scope": [
+            "base.txt",
+            "resumed.txt",
+            "resume-prompt.txt",
+            "qa/issue195/**"
+          ],
+          "budget_tokens": 100000,
+          "budget_cost_microusd": 1000000,
+          "deadline_at": null,
+          "escalation": "ask the current human controller or mission owner",
+          "secret_refs": [],
+          "model": null,
+          "reasoning_effort": null,
+          "deliverable": {
+            "form": "commit_branch",
+            "commit_after_verification": true,
+            "paths": []
+          }
+        },
+        "replacement_contract": {
+          "objective": "Supply only the missing correction evidence in resumed.txt and resume-prompt.txt. Preserve every existing application byte; export the complete retained application under its unchanged full write scope.\n\nTASK-SPECIFIC OBJECTIVE:\nSupply only the missing correction evidence in resumed.txt and resume-prompt.txt. Preserve every existing application byte; export the complete retained application under its unchanged full write scope.",
+          "expected_output": "The original complete incident application plus the missing correction evidence, verified and exported as a commit and branch.",
+          "source_repository": "All-The-Vibes/ecorp",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "a47fbe620427f4ee3ee53dd7d41abcb72363d1df",
+          "acceptance_tests": [
+            "All unchanged persisted checks pass and the original application bytes remain intact."
+          ],
+          "allowed_tools": [
+            "filesystem",
+            "shell"
+          ],
+          "prohibited_actions": [
+            "modify files outside the assigned worktree",
+            "use undeclared long-lived credentials",
+            "publish external changes"
+          ],
+          "references": [],
+          "write_scope": [
+            "base.txt",
+            "resumed.txt",
+            "resume-prompt.txt",
+            "qa/issue195/**"
+          ],
+          "budget_tokens": 100000,
+          "budget_cost_microusd": 1000000,
+          "deadline_at": null,
+          "escalation": "ask the current human controller or mission owner",
+          "secret_refs": [],
+          "model": null,
+          "reasoning_effort": null,
+          "deliverable": {
+            "form": "commit_branch",
+            "commit_after_verification": true,
+            "paths": []
+          }
+        },
+        "previous_verification_policy": {
+          "checks": [
+            {
+              "type": "file",
+              "path": "base.txt",
+              "min_bytes": 5
+            },
+            {
+              "type": "artifact",
+              "min_bytes": 1
+            },
+            {
+              "type": "file",
+              "path": "qa/issue195/index.html",
+              "min_bytes": 100
+            },
+            {
+              "type": "test",
+              "program": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+              "args": [
+                "--test",
+                "qa/issue195/app.test.mjs"
+              ],
+              "timeout_ms": 10000
+            },
+            {
+              "type": "file",
+              "path": "resumed.txt",
+              "min_bytes": 7
+            }
+          ],
+          "manual_gate": null
+        },
+        "replacement_verification_policy": {
+          "checks": [
+            {
+              "type": "file",
+              "path": "base.txt",
+              "min_bytes": 5
+            },
+            {
+              "type": "artifact",
+              "min_bytes": 1
+            },
+            {
+              "type": "file",
+              "path": "qa/issue195/index.html",
+              "min_bytes": 100
+            },
+            {
+              "type": "test",
+              "program": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+              "args": [
+                "--test",
+                "qa/issue195/app.test.mjs"
+              ],
+              "timeout_ms": 10000
+            },
+            {
+              "type": "file",
+              "path": "resumed.txt",
+              "min_bytes": 7
+            }
+          ],
+          "manual_gate": null
+        },
+        "created_at": "2026-09-29T09:53:13.934653Z"
+      },
+      "replayed": false
+    },
+    "saved_contract": {
+      "objective": "Supply only the missing correction evidence in resumed.txt and resume-prompt.txt. Preserve every existing application byte; export the complete retained application under its unchanged full write scope.\n\nTASK-SPECIFIC OBJECTIVE:\nSupply only the missing correction evidence in resumed.txt and resume-prompt.txt. Preserve every existing application byte; export the complete retained application under its unchanged full write scope.",
+      "expected_output": "The original complete incident application plus the missing correction evidence, verified and exported as a commit and branch.",
+      "source_repository": "All-The-Vibes/ecorp",
+      "source_base_ref": "HEAD",
+      "source_base_commit": "a47fbe620427f4ee3ee53dd7d41abcb72363d1df",
+      "acceptance_tests": [
+        "All unchanged persisted checks pass and the original application bytes remain intact."
+      ],
+      "allowed_tools": [
+        "filesystem",
+        "shell"
+      ],
+      "prohibited_actions": [
+        "modify files outside the assigned worktree",
+        "use undeclared long-lived credentials",
+        "publish external changes"
+      ],
+      "references": [],
+      "write_scope": [
+        "base.txt",
+        "resumed.txt",
+        "resume-prompt.txt",
+        "qa/issue195/**"
+      ],
+      "budget_tokens": 100000,
+      "budget_cost_microusd": 1000000,
+      "deadline_at": null,
+      "escalation": "ask the current human controller or mission owner",
+      "secret_refs": [],
+      "model": null,
+      "reasoning_effort": null,
+      "deliverable": {
+        "form": "commit_branch",
+        "commit_after_verification": true,
+        "paths": []
+      }
+    },
+    "saved_contract_version": 2
+  },
+  "export": {
+    "artifact_id": "0b4193b1-a829-4233-b0d2-e5d6d5639981",
+    "sha256": "24932a9358f234982395e599958102a6efcefbea9085c200aa3b6ec848dece4c",
+    "bytes": 39832,
+    "head": "43561d62aa47a42c24257eb0a6279aed5da2f4ce",
+    "verified_tree": "a5f1de3b89bba92fdafa4d6528e70deb88fd6efe",
+    "git_bundle_sha256": "c72ec3e6ac457b436953ed7246ff2f9c1ecb74e9ddbe6946724f46486d09fd3c",
+    "imported": "<USERPROFILE>\\code\\qa\\ecorp-issue89-browser-r14\\imported-deliverable",
+    "changed_paths": [
+      "base.txt",
+      "qa/issue195/app.mjs",
+      "qa/issue195/app.test.mjs",
+      "qa/issue195/index.html",
+      "resume-prompt.txt",
+      "resumed.txt"
+    ],
+    "original_application_bytes_identical": true,
+    "downloaded_headers_verified": true,
+    "independently_executed_application_tests": 4
+  },
+  "corrected_run_id": "34ceaedd-3de5-44d6-97e5-3705ba039b7d",
+  "acceptance": {
+    "complete_application_preserved": true,
+    "narrowing_rejected_without_effects": true,
+    "full_scope_evidence_only_correction": true,
+    "same_native_session_and_worktree": true,
+    "fresh_verification_and_complete_bundle": true,
+    "exported_application_exercised": true,
+    "source_checkout_unchanged": true,
+    "provider_runs": 2
+  },
+  "finished_at_utc": "2026-09-29T09:53:53.878Z"
+}
