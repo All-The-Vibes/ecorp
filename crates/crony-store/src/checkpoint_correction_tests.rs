@@ -282,6 +282,82 @@ async fn ready_correction(pool: PgPool) -> (PgStore, CreateFactoryVerificationRe
     ready_correction_with_profile(pool, correction_profile()).await
 }
 
+async fn retire_recovery_identity(store: &PgStore) {
+    // Model delivery acknowledgments for the store-only runner fixture. Keep
+    // every command and its audit trail instead of deleting pending obligations.
+    for command in store.pending_runner_commands(RUNNER).await.unwrap() {
+        store
+            .acknowledge_runner_command(command.id, RUNNER)
+            .await
+            .unwrap();
+    }
+    let outcome = store
+        .retire_agents(RetireAgentsInput {
+            corp_id: CORP,
+            actor_id: OWNER,
+            mode: crony_domain::AgentRetirementMode::Retire,
+            targets: vec![crony_domain::AgentRetirementTarget {
+                agent_id: AGENT,
+                expected_pin_version: 0,
+            }],
+            idempotency_key: Uuid::new_v4(),
+        })
+        .await
+        .unwrap();
+    assert_eq!(
+        outcome.results[0].status,
+        crony_domain::AgentRetirementStatus::Retired,
+        "{outcome:?}"
+    );
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires an explicitly owned PostgreSQL maintenance database"]
+async fn issue48_factory_correction_without_manual_retirement_remains_resumable(pool: PgPool) {
+    // Positive control uses the identical measured suspension and native failed
+    // checkpoint as the retirement-denial regression below.
+    let (store, input) = ready_correction(pool).await;
+    let outcome = store
+        .create_factory_verification_recovery(input)
+        .await
+        .unwrap();
+    assert!(matches!(
+        outcome.launch,
+        FactoryVerificationRecoveryLaunch::SourceCorrection(_)
+    ));
+    assert!(!outcome.replayed);
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires an explicitly owned PostgreSQL maintenance database"]
+async fn issue48_manual_retirement_blocks_factory_source_correction(pool: PgPool) {
+    let (store, input) = ready_correction(pool).await;
+    retire_recovery_identity(&store).await;
+    let before = correction_state(&store).await;
+    let error = store
+        .create_factory_verification_recovery(input)
+        .await
+        .unwrap_err();
+    assert!(error.to_string().contains("manually retired"), "{error:#}");
+    assert_eq!(correction_state(&store).await, before);
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires an explicitly owned PostgreSQL maintenance database"]
+async fn issue48_manual_retirement_blocks_factory_checkpoint_verification(pool: PgPool) {
+    // This is the same eligible checkpoint fixture admitted by failed_checkpoint
+    // in the positive control; no provider or workspace metadata is removed.
+    let store = fixture_with_profile(pool, true, false, None, false, correction_profile()).await;
+    retire_recovery_identity(&store).await;
+    let before = correction_state(&store).await;
+    let error = store
+        .create_factory_verification_recovery(request())
+        .await
+        .unwrap_err();
+    assert!(error.to_string().contains("manually retired"), "{error:#}");
+    assert_eq!(correction_state(&store).await, before);
+}
+
 async fn reject_correction_without_changes(
     store: &PgStore,
     input: CreateFactoryVerificationRecoveryInput,

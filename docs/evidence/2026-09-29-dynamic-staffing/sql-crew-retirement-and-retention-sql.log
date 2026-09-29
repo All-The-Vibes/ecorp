@@ -1,0 +1,62 @@
+   Compiling crony-store v0.1.0 (<USERPROFILE>\.codex\worktrees\issue48-retirement\ecorp\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 49.26s
+     Running unittests src\base_worker.rs (target\debug\deps\crony_base_worker-d8fb29a0c2093fc6.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running unittests src\main.rs (target\debug\deps\crony_server-09b678318e84e874.exe)
+
+running 5 tests
+test agent_pinning_tests::issue48_handler_authorizes_and_publishes_only_first_operation ... ok
+test agent_pinning_tests::issue48_handler_oidc_mapping_rejects_spoofed_actor_and_replay ... ok
+test agent_retirement::tests::issue48_clear_handler_rechecks_oidc_actor_and_authority_on_replay ... ok
+test agent_retirement::tests::issue48_retirement_handler_authorizes_and_broadcasts_only_new_outcomes ... ok
+test factory_connection_tests::issue48_planner_reuses_pins_in_the_saved_connection_room ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 266 filtered out; finished in 10.49s
+
+     Running unittests src\lib.rs (target\debug\deps\crony_store-d3b9328fbedcd14c.exe)
+
+running 38 tests
+test agent_pinning::tests::issue48_active_work_and_every_obligation_are_byte_preserved ... ok
+test agent_pinning::tests::issue48_concurrent_different_operators_use_expected_version ... ok
+test agent_pinning::tests::issue48_concurrent_exact_requests_commit_once ... ok
+test agent_pinning::tests::issue48_current_authority_required_on_new_operations_and_replay ... ok
+test agent_pinning::tests::issue48_event_failure_rolls_back_flag_and_version ... ok
+test agent_pinning::tests::issue48_exact_replay_does_not_undo_newer_unpin_or_retirement ... ok
+test agent_pinning::tests::issue48_foreign_missing_and_invalid_requests_do_not_mutate ... ok
+test agent_pinning::tests::issue48_journal_and_snapshot_obey_room_visibility ... ok
+test agent_pinning::tests::issue48_pin_serializes_with_automatic_retirement ... ok
+test agent_pinning::tests::issue48_pinned_reuse_then_unpin_preserves_saved_plan ... ok
+test agent_pinning::tests::issue48_replay_rejects_key_substitution_and_stale_aba ... ok
+test agent_pinning::tests::issue48_role_demotion_serializes_before_replay ... ok
+test agent_pinning::tests::issue48_roles_match_operate_and_require_human ... ok
+test agent_pinning::tests::issue48_room_revocation_serializes_before_new_pin ... ok
+test agent_pinning::tests::issue48_unpin_keeps_native_recovered_activation_contract ... ok
+test agent_pinning::tests::issue48_unpin_waits_for_each_terminal_obligation ... ok
+test agent_retirement::tests::issue48_clear_reports_every_identity_and_never_includes_new_workers ... ok
+test agent_retirement::tests::issue48_clear_unauthorized_target_rolls_back_the_entire_request ... ok
+test agent_retirement::tests::issue48_manual_retirement_blocks_otherwise_valid_generic_resume ... ok
+test agent_retirement::tests::issue48_overlapping_clear_requests_lock_in_stable_order_and_preserve_history ... ok
+test agent_retirement::tests::issue48_retirement_checks_every_saved_or_running_assignment ... ok
+test agent_retirement::tests::issue48_retirement_checks_preserve_automatic_recovery_provenance ... ok
+test agent_retirement::tests::issue48_retirement_concurrent_duplicates_commit_once ... ok
+test agent_retirement::tests::issue48_retirement_detects_pin_unpin_aba ... ok
+test agent_retirement::tests::issue48_retirement_journal_failure_rolls_back_identity ... ok
+test agent_retirement::tests::issue48_retirement_preserves_history_and_uses_room_scoped_audit ... ok
+test agent_retirement::tests::issue48_retirement_rechecks_current_role_room_and_corp_on_replay ... ok
+test agent_retirement::tests::issue48_retirement_replay_binds_actor_mode_targets_and_versions ... ok
+test agent_retirement::tests::issue48_retirement_reports_each_obligation_without_discarding_it ... ok
+test agent_retirement::tests::issue48_retirement_sees_grants_committed_while_waiting_for_agent ... ok
+test agent_retirement::tests::issue48_retirement_serializes_with_native_authority_grants ... ok
+test agent_retirement::tests::issue48_role_demotion_serializes_before_new_retirement ... ok
+test agent_retirement::tests::issue48_role_demotion_serializes_before_retirement_replay ... ok
+test agent_retirement::tests::issue48_room_revocation_serializes_before_new_retirement ... ok
+test agent_retirement::tests::issue48_room_revocation_serializes_before_retirement_replay ... ok
+test budget_checkpoint_tests::source_correction::issue48_factory_correction_without_manual_retirement_remains_resumable ... ok
+test budget_checkpoint_tests::source_correction::issue48_manual_retirement_blocks_factory_checkpoint_verification ... ok
+test budget_checkpoint_tests::source_correction::issue48_manual_retirement_blocks_factory_source_correction ... ok
+
+test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 536 filtered out; finished in 82.00s

@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
 
+mod agent_retirement;
+pub use agent_retirement::*;
 mod workspace_connections;
 pub use workspace_connections::*;
 mod factory_connection;

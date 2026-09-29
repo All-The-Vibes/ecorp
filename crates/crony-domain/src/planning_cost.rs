@@ -21,6 +21,7 @@ pub fn strategy_cost_budgets(strategy: &str, total: i64) -> Result<Vec<i64>, Str
             let specialist = (total * 2 / 7).max(1);
             vec![specialist, specialist, (total - specialist * 2).max(1)]
         }
+        "test-review" => vec![total / 2, total - total / 2],
         "studio-swarm" => {
             if total < 4 {
                 return Err(
@@ -80,6 +81,9 @@ mod tests {
             ("single", 1, vec![1]),
             ("single", 10_000_000, vec![10_000_000]),
             ("parallel-specialists", 3, vec![1, 1, 1]),
+            ("test-review", 2, vec![1, 1]),
+            ("test-review", 2_000_001, vec![1_000_000, 1_000_001]),
+            ("test-review", 20_000_000, vec![10_000_000, 10_000_000]),
             (
                 "parallel-specialists",
                 3_000_000,
@@ -122,6 +126,7 @@ mod tests {
                 vec![1, 2, 3, 18_181_817, 20_000_000, i64::MAX],
             ),
             ("unknown", vec![1]),
+            ("test-review", vec![0, 1, 20_000_001, i64::MAX]),
         ] {
             for cost in costs {
                 assert!(

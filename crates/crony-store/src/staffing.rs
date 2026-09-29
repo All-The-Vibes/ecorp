@@ -140,6 +140,7 @@ const REACTIVATABLE_MISSION_AGENTS: &str = r#"
     JOIN LATERAL (
         SELECT e.* FROM events e
         WHERE e.corp_id = a.corp_id AND e.aggregate_id = a.id
+          AND e.type <> 'agent.retirement_checked'
         ORDER BY e.seq DESC LIMIT 1
     ) retirement ON TRUE
     WHERE a.retired_at IS NOT NULL AND NOT a.pinned

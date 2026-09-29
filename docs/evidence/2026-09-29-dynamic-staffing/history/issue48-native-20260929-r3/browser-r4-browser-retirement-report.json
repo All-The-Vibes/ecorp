@@ -1,0 +1,389 @@
+{
+  "issue": 48,
+  "status": "failed",
+  "stage": "Browser-launched native work and explicit pinned retirement",
+  "started_at_utc": "2026-09-29T13:41:47.569Z",
+  "product_head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "source_binding_sha256": "be57ba0ac75ac46923e73de010484c5c293d896e0431194cd1883a072d0c00ff",
+  "binaries": [
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-cli.exe",
+      "sha256": "290f7e03a6de7a22a9b07862aed668534fb71b0adf6fd4b58ed61028383544b7"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-server.exe",
+      "sha256": "4156c82a14f94d2ba65388c8b124e48c9de18a83272c12696ef40e1157b7bf07"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+      "sha256": "da0354b6529b51b25cb264debee38cb54432580aeaba0e218dc2075d323f28f3"
+    }
+  ],
+  "source": {
+    "base_commit": "ec1a79488d821e95c16100390ef9051a61717bb5",
+    "repository": "ecorp-fixture/issue48-retirement",
+    "base_ref": "HEAD",
+    "path": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r3\\source"
+  },
+  "assertions": [
+    {
+      "name": "Fresh Corp has no static workers; empty crew and unauthorized controls are explicit",
+      "at": "2026-09-29T13:41:52.507Z"
+    },
+    {
+      "name": "Browser Clear and Retire explain blockers and preserve exact active run/task/mission/lease/approval/message/review/command rows",
+      "at": "2026-09-29T13:41:58.314Z",
+      "detail": {
+        "digest": "26690d337e91f34d0551135a47e8a848b015b4abc7f7fbd1ea782d7ede356f77",
+        "clear": {
+          "results": [
+            {
+              "agent_id": "ae4091a2-df57-46ea-b25e-d7bc4b222561",
+              "status": "blocked",
+              "blockers": [
+                "pinned",
+                "current_run",
+                "active_status",
+                "assigned_work",
+                "active_run",
+                "control_lease",
+                "queued_message",
+                "pending_approval"
+              ],
+              "retired_at": null,
+              "pinned": true,
+              "pin_version": 1
+            }
+          ],
+          "replayed": false
+        },
+        "retire": {
+          "results": [
+            {
+              "agent_id": "ae4091a2-df57-46ea-b25e-d7bc4b222561",
+              "status": "blocked",
+              "blockers": [
+                "current_run",
+                "active_status",
+                "assigned_work",
+                "active_run",
+                "control_lease",
+                "queued_message",
+                "pending_approval"
+              ],
+              "retired_at": null,
+              "pinned": true,
+              "pin_version": 1
+            }
+          ],
+          "replayed": false
+        }
+      }
+    },
+    {
+      "name": "Existing native multiplayer Pin/Unpin, exact replay, verifier completion, pinned reuse and automatic retirement driver passed",
+      "at": "2026-09-29T13:42:18.023Z",
+      "detail": {
+        "assertions": [
+          "empty Corp provisions one held mission-owned identity",
+          "Alice browser Pin persisted version one and actor-attributed audit",
+          "guest foreign-Corp and extra-effect requests denied",
+          "Bob browser Unpin preserves exact native run task mission lease approval message command rows",
+          "native CLI Pin and duplicate replay commit exactly once",
+          "native accepted terminal mission retains pinned identity with provider terminated",
+          "pinned identity reused in same room; Unpin preserves second held plan and does not retire early",
+          "both native missions complete once; unpinned identity retires only after obligations settle",
+          "retired Pin rejected and old successful replay cannot resurrect history",
+          "durable audit history, both viewers, tenant/room visibility and original source preserved"
+        ],
+        "counts": {
+          "runs": 2,
+          "tasks": 2,
+          "agents": 1,
+          "missions": 2,
+          "pin_events": 4,
+          "retirements": 1,
+          "factory_items": 0,
+          "completed_runs": 2,
+          "pending_commands": 0,
+          "delivered_messages": 1
+        }
+      }
+    }
+  ],
+  "operations": [
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/ae4091a2-df57-46ea-b25e-d7bc4b222561/pin",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "pinned": true,
+        "expected_version": 0,
+        "idempotency_key": "<OP_007>"
+      },
+      "status": 200,
+      "result": {
+        "agent_id": "ae4091a2-df57-46ea-b25e-d7bc4b222561",
+        "pinned": true,
+        "pin_version": 1,
+        "replayed": false
+      },
+      "at": "2026-09-29T13:41:53.518Z"
+    },
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/clear",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "idempotency_key": "<OP_014>",
+        "targets": [
+          {
+            "agent_id": "ae4091a2-df57-46ea-b25e-d7bc4b222561",
+            "expected_pin_version": 1
+          }
+        ]
+      },
+      "status": 200,
+      "result": {
+        "results": [
+          {
+            "agent_id": "ae4091a2-df57-46ea-b25e-d7bc4b222561",
+            "status": "blocked",
+            "blockers": [
+              "pinned",
+              "current_run",
+              "active_status",
+              "assigned_work",
+              "active_run",
+              "control_lease",
+              "queued_message",
+              "pending_approval"
+            ],
+            "retired_at": null,
+            "pinned": true,
+            "pin_version": 1
+          }
+        ],
+        "replayed": false
+      },
+      "at": "2026-09-29T13:41:57.613Z"
+    },
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/ae4091a2-df57-46ea-b25e-d7bc4b222561/retire",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "idempotency_key": "<OP_023>",
+        "expected_pin_version": 1
+      },
+      "status": 200,
+      "result": {
+        "results": [
+          {
+            "agent_id": "ae4091a2-df57-46ea-b25e-d7bc4b222561",
+            "status": "blocked",
+            "blockers": [
+              "current_run",
+              "active_status",
+              "assigned_work",
+              "active_run",
+              "control_lease",
+              "queued_message",
+              "pending_approval"
+            ],
+            "retired_at": null,
+            "pinned": true,
+            "pin_version": 1
+          }
+        ],
+        "replayed": false
+      },
+      "at": "2026-09-29T13:41:57.829Z"
+    },
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/ae4091a2-df57-46ea-b25e-d7bc4b222561/pin",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "pinned": false,
+        "expected_version": 1,
+        "idempotency_key": "<OP_015>"
+      },
+      "status": 200,
+      "result": {
+        "agent_id": "ae4091a2-df57-46ea-b25e-d7bc4b222561",
+        "pinned": false,
+        "pin_version": 2,
+        "replayed": false
+      },
+      "at": "2026-09-29T13:41:58.611Z"
+    },
+    {
+      "kind": "fixture-api",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "body": {
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "[slow] Issue48 explicit retirement after native completion",
+        "preferred_adapter": "fake-process",
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/issue48-retirement",
+          "base_ref": "HEAD",
+          "base_commit": "ec1a79488d821e95c16100390ef9051a61717bb5"
+        },
+        "budget_tokens": 80000,
+        "budget_cost_microusd": 1000000,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 1
+            },
+            {
+              "type": "file",
+              "path": "result.md",
+              "min_bytes": 1
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "at": "2026-09-29T13:42:18.400Z"
+    },
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/857a9b14-9f41-4cea-ad74-909a77e38d5a/pin",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "pinned": true,
+        "expected_version": 0,
+        "idempotency_key": "<OP_016>"
+      },
+      "status": 200,
+      "result": {
+        "agent_id": "857a9b14-9f41-4cea-ad74-909a77e38d5a",
+        "pinned": true,
+        "pin_version": 1,
+        "replayed": false
+      },
+      "at": "2026-09-29T13:42:19.039Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "label": "01-empty-crew",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r3\\evidence\\browser-r4\\01-empty-crew.png",
+      "sha256": "3d23382c90558754d937f1858bb63d4d9668fd0dacc868b4976a1ac9bc118549",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    },
+    {
+      "label": "02-pinned-off-shift",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r3\\evidence\\browser-r4\\02-pinned-off-shift.png",
+      "sha256": "6f65e7a481e77795a3ec433d6547b2d6d56a1b8d03165e37da5673e5c6eae001",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    },
+    {
+      "label": "03-active-removal-blocked",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r3\\evidence\\browser-r4\\03-active-removal-blocked.png",
+      "sha256": "160d691c8fc99bd083e2199a44e7fa38a5c20f2a98026cab841f5d13b840d973",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    },
+    {
+      "label": "04-automatic-retirement-history",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r3\\evidence\\browser-r4\\04-automatic-retirement-history.png",
+      "sha256": "86171a9040f5d9795fbcdda772278750e891f7773a77b307ba5dbb3dacf29020",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    },
+    {
+      "label": "failure-observation",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r3\\evidence\\browser-r4\\failure-observation.png",
+      "sha256": "ac4ad4fbbc8135fdaf7735e2ead8367e819f157e3a7d0090d10c045e6b030017",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    }
+  ],
+  "page_errors": [],
+  "blocked_requests": [],
+  "lifecycle_observations": [],
+  "physical_provider_observations": [
+    {
+      "observed_at_utc": "2026-09-29T13:41:57.1324086+00:00",
+      "runner": {
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r3",
+        "pid": 19992,
+        "started_utc": "2026-09-29T13:41:37.2648614Z",
+        "role": "runner",
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r3\\logs\\runner-20260929T134137257-cbcc7d01489947a386f6ca1d97157160.stdout.log",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r3\\logs\\runner-20260929T134137257-cbcc7d01489947a386f6ca1d97157160.stderr.log"
+      },
+      "run_ids": [
+        "b60c804a-c401-4c5d-94ed-90f661559934"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [
+        {
+          "identity": {
+            "started_utc": "2026-09-29T13:41:54.9742184Z",
+            "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+            "pid": 31760
+          },
+          "run_id": "b60c804a-c401-4c5d-94ed-90f661559934",
+          "owned_workspace_argument": true,
+          "parent_pid": 19992,
+          "owned_runner_parent": true
+        }
+      ],
+      "prior_processes": [],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    },
+    {
+      "observed_at_utc": "2026-09-29T13:42:17.8888078+00:00",
+      "runner": {
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r3",
+        "pid": 19992,
+        "started_utc": "2026-09-29T13:41:37.2648614Z",
+        "role": "runner",
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r3\\logs\\runner-20260929T134137257-cbcc7d01489947a386f6ca1d97157160.stdout.log",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r3\\logs\\runner-20260929T134137257-cbcc7d01489947a386f6ca1d97157160.stderr.log"
+      },
+      "run_ids": [
+        "b60c804a-c401-4c5d-94ed-90f661559934",
+        "53895ac2-f6b7-4c94-aad4-39702c3989c3"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [],
+      "prior_processes": [
+        {
+          "current": null,
+          "pid": 31760
+        }
+      ],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    }
+  ],
+  "limitations": [
+    "Development principals, not production identity-provider acceptance.",
+    "Native deterministic fake-process; no vendor inference or external GitHub effects.",
+    "This lane establishes the retention slice; tester/reviewer staffing remains separately qualified."
+  ],
+  "manual_worker": "857a9b14-9f41-4cea-ad74-909a77e38d5a",
+  "manual_mission": "6e7613a9-aa19-45bd-8dbb-fd6760b3324f",
+  "failure": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.crew-management .crew-roster').filter({ has: locator('summary').filter({ hasText: /^Current identities/ }) }).getByRole('button', { name: 'View mission for Delivery engineer', exact: true })\u001b[22m\n",
+  "finished_at_utc": "2026-09-29T13:42:50.055Z"
+}

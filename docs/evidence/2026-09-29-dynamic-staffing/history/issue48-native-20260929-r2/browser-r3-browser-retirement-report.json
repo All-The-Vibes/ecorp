@@ -1,0 +1,66 @@
+{
+  "issue": 48,
+  "status": "failed",
+  "stage": "Native pin and active-obligation preservation",
+  "started_at_utc": "2026-09-29T13:39:52.943Z",
+  "product_head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "source_binding_sha256": "be57ba0ac75ac46923e73de010484c5c293d896e0431194cd1883a072d0c00ff",
+  "binaries": [
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-cli.exe",
+      "sha256": "290f7e03a6de7a22a9b07862aed668534fb71b0adf6fd4b58ed61028383544b7"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-server.exe",
+      "sha256": "4156c82a14f94d2ba65388c8b124e48c9de18a83272c12696ef40e1157b7bf07"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+      "sha256": "da0354b6529b51b25cb264debee38cb54432580aeaba0e218dc2075d323f28f3"
+    }
+  ],
+  "source": {
+    "base_commit": "00d002bfafdf353f937a7c172c018d6e2aa5b131",
+    "base_ref": "HEAD",
+    "path": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r2\\source",
+    "repository": "ecorp-fixture/issue48-retirement"
+  },
+  "assertions": [
+    {
+      "name": "Fresh Corp has no static workers; empty crew and unauthorized controls are explicit",
+      "at": "2026-09-29T13:39:57.773Z"
+    }
+  ],
+  "operations": [],
+  "screenshots": [
+    {
+      "label": "01-empty-crew",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r2\\evidence\\browser-r3\\01-empty-crew.png",
+      "sha256": "3d23382c90558754d937f1858bb63d4d9668fd0dacc868b4976a1ac9bc118549",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    },
+    {
+      "label": "failure-observation",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r2\\evidence\\browser-r3\\failure-observation.png",
+      "sha256": "7554af5ea9d2e238c0b8c4c49c3813d94dfe58718535fbc1f3d6ac4553abad57",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    }
+  ],
+  "page_errors": [],
+  "blocked_requests": [],
+  "lifecycle_observations": [],
+  "physical_provider_observations": [],
+  "limitations": [
+    "Development principals, not production identity-provider acceptance.",
+    "Native deterministic fake-process; no vendor inference or external GitHub effects.",
+    "This lane establishes the retention slice; tester/reviewer staffing remains separately qualified."
+  ],
+  "failure": "AssertionError [ERR_ASSERTION]: Exactly one floor worker opens this inspector\n\n0 !== 1\n",
+  "finished_at_utc": "2026-09-29T13:39:59.128Z"
+}

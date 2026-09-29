@@ -1,0 +1,3102 @@
+{
+  "issue": 48,
+  "status": "passed",
+  "stage": "complete",
+  "started_at_utc": "2026-09-29T13:52:37.170Z",
+  "source": {
+    "repository": "ecorp-fixture/issue48-retirement",
+    "base_ref": "HEAD",
+    "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf"
+  },
+  "product_head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "source_binding_sha256": "be57ba0ac75ac46923e73de010484c5c293d896e0431194cd1883a072d0c00ff",
+  "binaries": [
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-cli.exe",
+      "sha256": "290f7e03a6de7a22a9b07862aed668534fb71b0adf6fd4b58ed61028383544b7"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-server.exe",
+      "sha256": "4156c82a14f94d2ba65388c8b124e48c9de18a83272c12696ef40e1157b7bf07"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+      "sha256": "da0354b6529b51b25cb264debee38cb54432580aeaba0e218dc2075d323f28f3"
+    }
+  ],
+  "operations": [
+    {
+      "kind": "public-api",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "request": {
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "[slow] Issue48 validation request",
+        "strategy": "test-review",
+        "budget_tokens": 240000,
+        "budget_cost_microusd": 2000000,
+        "preferred_adapter": "fake-process"
+      },
+      "checkpoint_at": "2026-09-29T13:52:39.925Z",
+      "status": 400,
+      "response": {
+        "error": "test-review requires an explicitly selected repository, ref and immutable commit"
+      },
+      "finished_at": "2026-09-29T13:52:39.929Z"
+    },
+    {
+      "kind": "public-api",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "request": {
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "[slow] Issue48 validation request",
+        "strategy": "test-review",
+        "source": {
+          "repository": "ecorp-fixture/issue48-retirement",
+          "base_ref": "HEAD",
+          "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf"
+        },
+        "budget_tokens": 240000,
+        "budget_cost_microusd": 2000000,
+        "preferred_adapter": "codex"
+      },
+      "checkpoint_at": "2026-09-29T13:52:40.001Z",
+      "status": 400,
+      "response": {
+        "error": "no connected runner can staff the selected mission runtime, model, and source"
+      },
+      "finished_at": "2026-09-29T13:52:40.010Z"
+    },
+    {
+      "kind": "public-api",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "request": {
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "[slow] Issue48 validation request",
+        "strategy": "test-review",
+        "source": {
+          "repository": "ecorp-fixture/issue48-retirement",
+          "base_ref": "HEAD",
+          "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf"
+        },
+        "budget_tokens": 240000,
+        "budget_cost_microusd": 2000000,
+        "preferred_adapter": "fake-process",
+        "preferred_model": "nonexistent-issue48-model"
+      },
+      "checkpoint_at": "2026-09-29T13:52:40.173Z",
+      "status": 400,
+      "response": {
+        "error": "model nonexistent-issue48-model is not available from a connected fake-process runner"
+      },
+      "finished_at": "2026-09-29T13:52:40.177Z"
+    },
+    {
+      "kind": "browser-build",
+      "strategy": "test-review",
+      "source": {
+        "repository": "ecorp-fixture/issue48-retirement",
+        "base_ref": "HEAD",
+        "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf"
+      },
+      "adapter": "fake-process",
+      "title": "[slow] Issue48 tester-reviewer",
+      "checkpoint_at": "2026-09-29T13:52:51.170Z",
+      "request": {
+        "title": "[slow] Issue48 tester-reviewer",
+        "description": "",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "preferred_model": null,
+        "reasoning_effort": null,
+        "strategy": "test-review",
+        "source": {
+          "repository": "ecorp-fixture/issue48-retirement",
+          "base_ref": "HEAD",
+          "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf"
+        },
+        "budget_tokens": 1000000,
+        "deliverable": {
+          "form": "archive",
+          "commit_after_verification": false,
+          "paths": []
+        },
+        "contract": null,
+        "verification_policy": null
+      },
+      "created": {
+        "mission_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+        "task_id": "b060ba47-fe27-4bc7-9d4e-50ee695467ad",
+        "task_ids": [
+          "b060ba47-fe27-4bc7-9d4e-50ee695467ad",
+          "848d5c54-6127-449e-896f-68c2a6ee4aef"
+        ],
+        "strategy": "test-review"
+      },
+      "creation_status": 200,
+      "launch": {
+        "run_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a",
+        "runner_id": "runner-issue48-42269426",
+        "run_ids": [
+          "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a"
+        ],
+        "runner_ids": [
+          "runner-issue48-42269426"
+        ],
+        "replayed": false
+      },
+      "launch_status": 200,
+      "finished_at": "2026-09-29T13:52:51.662Z"
+    },
+    {
+      "kind": "browser-build",
+      "strategy": "parallel-specialists",
+      "source": {
+        "repository": "ecorp-fixture/issue48-retirement",
+        "base_ref": "HEAD",
+        "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf"
+      },
+      "adapter": "fake-process",
+      "title": "[slow] Issue48 specialists-synthesis",
+      "checkpoint_at": "2026-09-29T13:53:52.986Z",
+      "request": {
+        "title": "[slow] Issue48 specialists-synthesis",
+        "description": "",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "preferred_model": null,
+        "reasoning_effort": null,
+        "strategy": "parallel-specialists",
+        "source": {
+          "repository": "ecorp-fixture/issue48-retirement",
+          "base_ref": "HEAD",
+          "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf"
+        },
+        "budget_tokens": 1000000,
+        "deliverable": {
+          "form": "archive",
+          "commit_after_verification": false,
+          "paths": []
+        },
+        "contract": null,
+        "verification_policy": null
+      },
+      "created": {
+        "mission_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+        "task_id": "aeffa6de-2721-4004-86a2-00b55f6737f7",
+        "task_ids": [
+          "aeffa6de-2721-4004-86a2-00b55f6737f7",
+          "4f7ddedf-df5f-4c66-9a20-edc740584739",
+          "71280561-7423-4f46-ab77-a1deca8639e8"
+        ],
+        "strategy": "parallel-specialists"
+      },
+      "creation_status": 200,
+      "launch": {
+        "run_id": "2bfa0760-d4cf-4376-8ee7-87024044b789",
+        "runner_id": "runner-issue48-42269426",
+        "run_ids": [
+          "2bfa0760-d4cf-4376-8ee7-87024044b789",
+          "6ab043ac-0379-48b3-82e9-d9735b6cf160"
+        ],
+        "runner_ids": [
+          "runner-issue48-42269426",
+          "runner-issue48-42269426"
+        ],
+        "replayed": false
+      },
+      "launch_status": 200,
+      "finished_at": "2026-09-29T13:53:53.389Z"
+    },
+    {
+      "kind": "public-api",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/runners/enroll",
+      "request": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "runner_id": "issue48-incompatible-2ab1da33-d051-45c2-95a9-6d9493d0eb59",
+        "expires_in_seconds": 300
+      },
+      "checkpoint_at": "2026-09-29T13:54:46.945Z",
+      "status": 200,
+      "response": {
+        "runner_id": "issue48-incompatible-2ab1da33-d051-45c2-95a9-6d9493d0eb59",
+        "enrollment_token": "<REDACTED>",
+        "expires_at": "2026-09-29T13:59:46.960555600+00:00"
+      },
+      "finished_at": "2026-09-29T13:54:46.966Z"
+    },
+    {
+      "kind": "public-api",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "request": {
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "[slow] Issue48 validation request",
+        "strategy": "test-review",
+        "source": {
+          "repository": "ecorp-fixture/issue48-retirement",
+          "base_ref": "HEAD",
+          "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf"
+        },
+        "budget_tokens": 240000,
+        "budget_cost_microusd": 2000000,
+        "preferred_adapter": "github-copilot"
+      },
+      "checkpoint_at": "2026-09-29T13:54:47.058Z",
+      "status": 400,
+      "response": {
+        "error": "no connected runner can staff the selected mission runtime, model, and source"
+      },
+      "finished_at": "2026-09-29T13:54:47.067Z"
+    },
+    {
+      "kind": "public-api",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "request": {
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "[slow] Issue48 automatic native fallback",
+        "strategy": "test-review",
+        "source": {
+          "repository": "ecorp-fixture/issue48-retirement",
+          "base_ref": "HEAD",
+          "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf"
+        },
+        "budget_tokens": 240000,
+        "budget_cost_microusd": 2000000
+      },
+      "checkpoint_at": "2026-09-29T13:54:47.144Z",
+      "status": 200,
+      "response": {
+        "mission_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+        "task_id": "329a40b5-59d9-44cc-8982-fb2cba2d4839",
+        "task_ids": [
+          "329a40b5-59d9-44cc-8982-fb2cba2d4839",
+          "59051e5b-2d08-4f27-ae2f-603cab13d1f5"
+        ],
+        "strategy": "test-review"
+      },
+      "finished_at": "2026-09-29T13:54:47.172Z"
+    },
+    {
+      "kind": "public-api",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions/d54a7957-0180-48cf-94f4-3b76bb1dcdb5/launch",
+      "request": {
+        "requested_by": "00000000-0000-4000-8000-000000000011"
+      },
+      "checkpoint_at": "2026-09-29T13:54:47.205Z",
+      "status": 200,
+      "response": {
+        "run_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc",
+        "runner_id": "runner-issue48-42269426",
+        "run_ids": [
+          "f82fae7c-7c40-4363-8fc6-f857795afdcc"
+        ],
+        "runner_ids": [
+          "runner-issue48-42269426"
+        ],
+        "replayed": false
+      },
+      "finished_at": "2026-09-29T13:54:47.233Z"
+    }
+  ],
+  "assertions": [
+    {
+      "name": "Native isolated runner and fresh zero-worker Corp are ready",
+      "at": "2026-09-29T13:52:39.901Z",
+      "detail": {
+        "runner": {
+          "runnerId": "runner-issue48-42269426",
+          "readinessSource": {
+            "repository": "ecorp-fixture/issue48-retirement",
+            "base_ref": "HEAD",
+            "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf"
+          }
+        },
+        "initial_counts": {
+          "agents": 0,
+          "missions": 0,
+          "tasks": 0,
+          "runs": 0
+        }
+      }
+    },
+    {
+      "name": "Tester/reviewer requires an explicit immutable source",
+      "at": "2026-09-29T13:52:39.977Z",
+      "detail": {
+        "response": {
+          "error": "test-review requires an explicitly selected repository, ref and immutable commit"
+        },
+        "state_sha256": "f7ea6dd3962d957bddff82d1107adbd7fd75ea3a056159d17851f1548a4a8a5d"
+      }
+    },
+    {
+      "name": "Unavailable adapter rejects before staffing",
+      "at": "2026-09-29T13:52:40.151Z",
+      "detail": {
+        "response": {
+          "error": "no connected runner can staff the selected mission runtime, model, and source"
+        },
+        "state_sha256": "f7ea6dd3962d957bddff82d1107adbd7fd75ea3a056159d17851f1548a4a8a5d"
+      }
+    },
+    {
+      "name": "Unavailable model rejects before staffing",
+      "at": "2026-09-29T13:52:40.287Z",
+      "detail": {
+        "response": {
+          "error": "model nonexistent-issue48-model is not available from a connected fake-process runner"
+        },
+        "state_sha256": "f7ea6dd3962d957bddff82d1107adbd7fd75ea3a056159d17851f1548a4a8a5d"
+      }
+    },
+    {
+      "name": "tester-reviewer: exact roles, native isolation, verified file handoffs, dependency order, retained history and physical provider teardown",
+      "at": "2026-09-29T13:53:44.572Z",
+      "detail": {
+        "workers": 2,
+        "runs": 2,
+        "completed_runs": 2,
+        "retired_workers": 2,
+        "persisted_verifier_rows": 5
+      }
+    },
+    {
+      "name": "specialists-synthesis: exact roles, native isolation, verified file handoffs, dependency order, retained history and physical provider teardown",
+      "at": "2026-09-29T13:54:46.910Z",
+      "detail": {
+        "workers": 3,
+        "runs": 3,
+        "completed_runs": 3,
+        "retired_workers": 3,
+        "persisted_verifier_rows": 9
+      }
+    },
+    {
+      "name": "Explicit higher-priority adapter without dependency-file capability rejects before staffing",
+      "at": "2026-09-29T13:54:47.110Z",
+      "detail": {
+        "response": {
+          "error": "no connected runner can staff the selected mission runtime, model, and source"
+        },
+        "state_sha256": "9f25de5e301ac73a25c257c0ea45a52c15c8dc5860b4f75664fc47eb61fd404e"
+      }
+    },
+    {
+      "name": "automatic-fallback: exact roles, native isolation, verified file handoffs, dependency order, retained history and physical provider teardown",
+      "at": "2026-09-29T13:55:32.287Z",
+      "detail": {
+        "workers": 2,
+        "runs": 2,
+        "completed_runs": 2,
+        "retired_workers": 2,
+        "persisted_verifier_rows": 5
+      }
+    },
+    {
+      "name": "All seven dynamically staffed identities retain history after verified native completion; incompatible runner receives no work",
+      "at": "2026-09-29T13:55:33.301Z",
+      "detail": {
+        "agents": 7,
+        "retired": 7,
+        "missions": 3,
+        "tasks": 7,
+        "runs": 7,
+        "completed_runs": 7,
+        "verifier_rows": 19
+      }
+    }
+  ],
+  "missions": [
+    {
+      "label": "tester-reviewer",
+      "strategy": "test-review",
+      "mission_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+      "entry": "browser-create-and-launch",
+      "baseline_agent_ids": [],
+      "native": [
+        {
+          "task_id": "b060ba47-fe27-4bc7-9d4e-50ee695467ad",
+          "run_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a",
+          "evidence": [
+            {
+              "id": "5454b05d-831c-441f-8aaf-8ba92b1ee43f",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "b060ba47-fe27-4bc7-9d4e-50ee695467ad",
+              "run_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a",
+              "check_index": 0,
+              "kind": "artifact",
+              "status": "passed",
+              "summary": "durable artifact 475ad15e-6df3-486f-bc40-37e4bb3203e1 has 2424 verified bytes",
+              "payload": {
+                "artifact_id": "475ad15e-6df3-486f-bc40-37e4bb3203e1",
+                "bytes": 2424,
+                "media_type": "text/markdown",
+                "producer_agent_id": "b4bc10ad-a6f2-4d0c-87e5-17e76a37723a",
+                "producer_runner_id": "runner-issue48-42269426",
+                "provenance_signature": "a213263414da3d5bf5fcea5db2f0a7b4605b062d94b5e060f320e0a477629ca7",
+                "retention_until": "2026-10-29T13:53:06.150370Z",
+                "sha256": "b9b980193dd1c03cf9260b883fb0d24dc34ad12d07e4c3c0839b1eb24497dedd",
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "6366211d13b5e4dc6d5ea3c251a088906edbd51a",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "9389bc4478fc18e81c95b396c02b4b1bed144b76"
+                },
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/475ad15e-6df3-486f-bc40-37e4bb3203e1",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "created_at": "2026-09-29T13:53:15.326309Z"
+            },
+            {
+              "id": "9307a5f9-2cc1-4ed1-898a-92f1a0e2b3a6",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "b060ba47-fe27-4bc7-9d4e-50ee695467ad",
+              "run_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a",
+              "check_index": 1,
+              "kind": "file",
+              "status": "passed",
+              "summary": "handoffs/tester.md exists with 122 bytes",
+              "payload": {
+                "bytes": 122,
+                "path": "handoffs/tester.md",
+                "sha256": "4790094b74d6bd8bb41a3b254976d06ae99e7f070c0aa2c7717f4dc5b57effeb",
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "6366211d13b5e4dc6d5ea3c251a088906edbd51a",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "9389bc4478fc18e81c95b396c02b4b1bed144b76"
+                }
+              },
+              "created_at": "2026-09-29T13:53:15.365067Z"
+            },
+            {
+              "id": "385881a2-fc42-47b1-a831-df4231fc936f",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "b060ba47-fe27-4bc7-9d4e-50ee695467ad",
+              "run_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a",
+              "check_index": 2,
+              "kind": "file",
+              "status": "passed",
+              "summary": "handoffs/tester-probe.json exists with 147 bytes",
+              "payload": {
+                "bytes": 147,
+                "path": "handoffs/tester-probe.json",
+                "sha256": "40bd4d1f4fd9a601fe0951efa529b8c9d8c69cda844b27bcaaf00a7d8a802920",
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "6366211d13b5e4dc6d5ea3c251a088906edbd51a",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "9389bc4478fc18e81c95b396c02b4b1bed144b76"
+                }
+              },
+              "created_at": "2026-09-29T13:53:15.388337Z"
+            },
+            {
+              "id": "34ea5a20-20d6-46a2-8f8f-a880e566b260",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "b060ba47-fe27-4bc7-9d4e-50ee695467ad",
+              "run_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a",
+              "check_index": 3,
+              "kind": "command",
+              "status": "passed",
+              "summary": "\"node\" exited successfully",
+              "payload": {
+                "args": [
+                  "-e",
+                  "const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}",
+                  "handoffs/tester.md",
+                  "handoffs/tester-probe.json"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": null,
+                  "requested_argument_prefix": [],
+                  "requested_environment": {},
+                  "scope": "verifier_child",
+                  "source": "none",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "6366211d13b5e4dc6d5ea3c251a088906edbd51a",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "9389bc4478fc18e81c95b396c02b4b1bed144b76"
+                },
+                "stderr": "",
+                "stdout": ""
+              },
+              "created_at": "2026-09-29T13:53:15.410881Z"
+            }
+          ],
+          "requested": {
+            "seq": 12,
+            "id": "7c886568-5786-47de-88a2-2a0fee058dd0",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a",
+            "aggregate_version": 1,
+            "correlation_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+            "causation_id": null,
+            "idempotency_key": "run:a5e33a6a-6b5d-40f2-bd4f-993453b7a60a:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "b4bc10ad-a6f2-4d0c-87e5-17e76a37723a",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "runner-issue48-42269426",
+              "status": "starting",
+              "task_id": "b060ba47-fe27-4bc7-9d4e-50ee695467ad"
+            },
+            "created_at": "2026-09-29T13:52:51.452036Z"
+          },
+          "started": {
+            "seq": 13,
+            "id": "78faa3a7-66ce-4fda-8958-cac655828deb",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a",
+            "aggregate_version": 1,
+            "correlation_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:78faa3a7-66ce-4fda-8958-cac655828deb",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "b060ba47-fe27-4bc7-9d4e-50ee695467ad",
+              "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\runner\\worktrees\\b060ba47fe274bc79d4e50ee695467ad\\a5e33a6a6b5d40f2bd4f993453b7a60a",
+              "workspace_base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-b060ba47fe274bc79d4e50ee695467ad/run-a5e33a6a6b5d40f2bd4f993453b7a60a"
+            },
+            "created_at": "2026-09-29T13:52:52.023903Z"
+          },
+          "verified": {
+            "seq": 26,
+            "id": "64163df8-95be-4be8-a3d7-117c96b2514d",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a",
+            "aggregate_version": 1,
+            "correlation_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:64163df8-95be-4be8-a3d7-117c96b2514d",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "08e9ecb0a7547e6e37d215ccb22b800d3224b1153fde461ce161a5e3817f4796",
+              "source_verification": {
+                "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                "candidate_commit": "6366211d13b5e4dc6d5ea3c251a088906edbd51a",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "9389bc4478fc18e81c95b396c02b4b1bed144b76"
+              },
+              "summary": "all 4 verifier checks passed",
+              "verification_sha256": "a0b787dca9bdff9ca53b5b070f1da57ac24d60a2ca7de2d877d0fec7f3971e59",
+              "verified_tree": "9389bc4478fc18e81c95b396c02b4b1bed144b76"
+            },
+            "created_at": "2026-09-29T13:53:15.898874Z"
+          },
+          "completed": {
+            "seq": 27,
+            "id": "3f6621bc-44b0-44b9-b646-5be2c10acd7e",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a",
+            "aggregate_version": 1,
+            "correlation_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:3f6621bc-44b0-44b9-b646-5be2c10acd7e",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Created runner evidence outside the task worktree."
+            },
+            "created_at": "2026-09-29T13:53:15.924447Z"
+          },
+          "terminated": {
+            "seq": 19,
+            "id": "f34c8c03-116a-4d62-a199-9a48b8093374",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a",
+            "aggregate_version": 1,
+            "correlation_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:f34c8c03-116a-4d62-a199-9a48b8093374",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-29T13:53:06.658808Z"
+          },
+          "staffed": {
+            "seq": 7,
+            "id": "936c3b47-4c45-4413-9d01-5bf0d98dbf5b",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "agent.staffed",
+            "aggregate_type": "agent",
+            "aggregate_id": "b4bc10ad-a6f2-4d0c-87e5-17e76a37723a",
+            "aggregate_version": 1,
+            "correlation_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+            "causation_id": null,
+            "idempotency_key": "agent:b4bc10ad-a6f2-4d0c-87e5-17e76a37723a:staffed",
+            "visibility": "corp",
+            "payload": {
+              "actor_id": "9012f792-7e32-4eaa-93cd-62b829c96ad3",
+              "adapter": "fake-process",
+              "mission_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+              "name": "Test engineer",
+              "pinned": false,
+              "role": "tester"
+            },
+            "created_at": "2026-09-29T13:52:51.302870Z"
+          },
+          "retired": {
+            "seq": 44,
+            "id": "11cbbc8d-2034-40c6-a8dc-9d84df4c1c12",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "agent.retired",
+            "aggregate_type": "agent",
+            "aggregate_id": "b4bc10ad-a6f2-4d0c-87e5-17e76a37723a",
+            "aggregate_version": 1,
+            "correlation_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+            "causation_id": null,
+            "idempotency_key": "agent:b4bc10ad-a6f2-4d0c-87e5-17e76a37723a:retired:5161614a-5094-41c3-ba75-236097b965b0",
+            "visibility": "corp",
+            "payload": {
+              "mission_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+              "reason": "terminal mission, no live authority"
+            },
+            "created_at": "2026-09-29T13:53:40.249907Z"
+          }
+        },
+        {
+          "task_id": "848d5c54-6127-449e-896f-68c2a6ee4aef",
+          "run_id": "6648d739-3186-48ec-bc79-5f7d8abf1715",
+          "evidence": [
+            {
+              "id": "2efbe847-0d65-4ac7-bf4e-bf43dd3af478",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "848d5c54-6127-449e-896f-68c2a6ee4aef",
+              "run_id": "6648d739-3186-48ec-bc79-5f7d8abf1715",
+              "check_index": 0,
+              "kind": "artifact",
+              "status": "passed",
+              "summary": "durable artifact 8264af22-03c8-47b2-8d83-34fc15d20b0b has 3724 verified bytes",
+              "payload": {
+                "artifact_id": "8264af22-03c8-47b2-8d83-34fc15d20b0b",
+                "bytes": 3724,
+                "media_type": "text/markdown",
+                "producer_agent_id": "ed1c4770-59c4-400d-98da-f7ad64d34d40",
+                "producer_runner_id": "runner-issue48-42269426",
+                "provenance_signature": "fc8dc02abe01275fffc238d47f0e98cd8dadc61f4c2b41c5b113a899d9a88757",
+                "retention_until": "2026-10-29T13:53:30.930507Z",
+                "sha256": "8d68b06b32c0b003e4cb324ecbf0dda928a3399f08312d7a0c290fc6d66f36e8",
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "2e90819287abad0dd37e1c9979e46ea99faf2a57",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "9389bc4478fc18e81c95b396c02b4b1bed144b76"
+                },
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/8264af22-03c8-47b2-8d83-34fc15d20b0b",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "created_at": "2026-09-29T13:53:37.986181Z"
+            }
+          ],
+          "requested": {
+            "seq": 28,
+            "id": "5c9c9326-c7f7-4e13-a919-3dd9e20bce92",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "6648d739-3186-48ec-bc79-5f7d8abf1715",
+            "aggregate_version": 1,
+            "correlation_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+            "causation_id": null,
+            "idempotency_key": "run:6648d739-3186-48ec-bc79-5f7d8abf1715:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "ed1c4770-59c4-400d-98da-f7ad64d34d40",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": false,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "runner-issue48-42269426",
+              "status": "starting",
+              "task_id": "848d5c54-6127-449e-896f-68c2a6ee4aef"
+            },
+            "created_at": "2026-09-29T13:53:15.968057Z"
+          },
+          "started": {
+            "seq": 31,
+            "id": "2901b605-270d-4210-8fdd-e9df212c6065",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "6648d739-3186-48ec-bc79-5f7d8abf1715",
+            "aggregate_version": 1,
+            "correlation_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:2901b605-270d-4210-8fdd-e9df212c6065",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "848d5c54-6127-449e-896f-68c2a6ee4aef",
+              "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\runner\\worktrees\\848d5c546127449e896f68c2a6ee4aef\\6648d739318648ecbc795f7d8abf1715",
+              "workspace_base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-848d5c546127449e896f68c2a6ee4aef/run-6648d739318648ecbc795f7d8abf1715"
+            },
+            "created_at": "2026-09-29T13:53:16.789990Z"
+          },
+          "verified": {
+            "seq": 41,
+            "id": "0e6591b7-8350-4a87-98ec-575627f67716",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "6648d739-3186-48ec-bc79-5f7d8abf1715",
+            "aggregate_version": 1,
+            "correlation_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:0e6591b7-8350-4a87-98ec-575627f67716",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "1ced8f58b3dc06f3454b824c95417fcda5c9712bdee9873a2dcca05398403c93",
+              "source_verification": {
+                "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                "candidate_commit": "2e90819287abad0dd37e1c9979e46ea99faf2a57",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "9389bc4478fc18e81c95b396c02b4b1bed144b76"
+              },
+              "summary": "all 1 verifier checks passed",
+              "verification_sha256": "929482ba01be896f7abe0425601c9b8d41241373715b6c5baecd63aae71123dc",
+              "verified_tree": "9389bc4478fc18e81c95b396c02b4b1bed144b76"
+            },
+            "created_at": "2026-09-29T13:53:38.514472Z"
+          },
+          "completed": {
+            "seq": 42,
+            "id": "4293daa7-7555-457c-afcd-e931f8afb0ec",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "6648d739-3186-48ec-bc79-5f7d8abf1715",
+            "aggregate_version": 1,
+            "correlation_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:4293daa7-7555-457c-afcd-e931f8afb0ec",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Created and verified result.md through the runner-owned child process."
+            },
+            "created_at": "2026-09-29T13:53:38.538911Z"
+          },
+          "terminated": {
+            "seq": 37,
+            "id": "bc083e84-2bf3-4923-ac0c-9b40cfb30b20",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "6648d739-3186-48ec-bc79-5f7d8abf1715",
+            "aggregate_version": 1,
+            "correlation_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:bc083e84-2bf3-4923-ac0c-9b40cfb30b20",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-29T13:53:31.434519Z"
+          },
+          "staffed": {
+            "seq": 8,
+            "id": "80dd38ae-ac46-418c-ae8f-7fa99d076e88",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "agent.staffed",
+            "aggregate_type": "agent",
+            "aggregate_id": "ed1c4770-59c4-400d-98da-f7ad64d34d40",
+            "aggregate_version": 1,
+            "correlation_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+            "causation_id": null,
+            "idempotency_key": "agent:ed1c4770-59c4-400d-98da-f7ad64d34d40:staffed",
+            "visibility": "corp",
+            "payload": {
+              "actor_id": "4ef986b8-b658-4c2f-a909-77daa5ef4ba8",
+              "adapter": "fake-process",
+              "mission_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+              "name": "Source reviewer",
+              "pinned": false,
+              "role": "reviewer"
+            },
+            "created_at": "2026-09-29T13:52:51.302870Z"
+          },
+          "retired": {
+            "seq": 45,
+            "id": "babee57c-f8e1-4ba6-9623-8debe1539595",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "agent.retired",
+            "aggregate_type": "agent",
+            "aggregate_id": "ed1c4770-59c4-400d-98da-f7ad64d34d40",
+            "aggregate_version": 1,
+            "correlation_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+            "causation_id": null,
+            "idempotency_key": "agent:ed1c4770-59c4-400d-98da-f7ad64d34d40:retired:bed12b91-262e-4881-8357-f0b6d3f11812",
+            "visibility": "corp",
+            "payload": {
+              "mission_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+              "reason": "terminal mission, no live authority"
+            },
+            "created_at": "2026-09-29T13:53:40.249907Z"
+          }
+        }
+      ],
+      "handoffs": [
+        {
+          "task_id": "b060ba47-fe27-4bc7-9d4e-50ee695467ad",
+          "run_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a",
+          "source": {
+            "id": "f0c2ce6f-e0e3-4b92-b207-a6aa60fb34a3",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "b060ba47-fe27-4bc7-9d4e-50ee695467ad",
+            "run_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a",
+            "artifact_id": "f0c2ce6f-e0e3-4b92-b207-a6aa60fb34a3",
+            "form": "typed_artifact_set",
+            "file_name": "ecorp-artifact-set.json",
+            "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/f0c2ce6f-e0e3-4b92-b207-a6aa60fb34a3",
+            "sha256": "08e9ecb0a7547e6e37d215ccb22b800d3224b1153fde461ce161a5e3817f4796",
+            "media_type": "application/vnd.ecorp.deliverable+json",
+            "bytes": 2824,
+            "provenance_signature": "26e974ebe63f5defe515a4510c057f9a27fa4c7f4396c857e9989eca760262ed",
+            "verification_sha256": "a0b787dca9bdff9ca53b5b070f1da57ac24d60a2ca7de2d877d0fec7f3971e59",
+            "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+            "head_commit": null,
+            "branch": "crony/task-b060ba47fe274bc79d4e50ee695467ad/run-a5e33a6a6b5d40f2bd4f993453b7a60a",
+            "integration_state": "ready_for_review",
+            "retention_until": "2026-10-29T13:53:15.830368Z",
+            "created_at": "2026-09-29T13:53:15.869691Z"
+          },
+          "files": [
+            {
+              "path": "handoffs/tester-probe.json",
+              "sha256": "40bd4d1f4fd9a601fe0951efa529b8c9d8c69cda844b27bcaaf00a7d8a802920",
+              "bytes": 147,
+              "text": "{\"observed\":true,\"run_id\":\"a5e33a6a-6b5d-40f2-bd4f-993453b7a60a\",\"note_sha256\":\"4790094b74d6bd8bb41a3b254976d06ae99e7f070c0aa2c7717f4dc5b57effeb\"}\n"
+            },
+            {
+              "path": "handoffs/tester.md",
+              "sha256": "4790094b74d6bd8bb41a3b254976d06ae99e7f070c0aa2c7717f4dc5b57effeb",
+              "bytes": 122,
+              "text": "# Research handoff\n\nRun: a5e33a6a-6b5d-40f2-bd4f-993453b7a60a\nNonce: 19148a0a-4b5d-4669-9388-28e70f932b4b\nExact bytes: λ\n"
+            }
+          ],
+          "nonce": "19148a0a-4b5d-4669-9388-28e70f932b4b"
+        }
+      ],
+      "child": {
+        "run_id": "6648d739-3186-48ec-bc79-5f7d8abf1715",
+        "dependency_event": {
+          "seq": 29,
+          "id": "5588f7fb-41c5-4267-bcac-e3de491b9b44",
+          "schema_version": 1,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "actor_id": null,
+          "type": "run.dependency_context",
+          "aggregate_type": "run",
+          "aggregate_id": "6648d739-3186-48ec-bc79-5f7d8abf1715",
+          "aggregate_version": 1,
+          "correlation_id": "2210634b-cad6-4013-a56f-1481b6836ac9",
+          "causation_id": null,
+          "idempotency_key": "run:6648d739-3186-48ec-bc79-5f7d8abf1715:dependency-context",
+          "visibility": "corp",
+          "payload": {
+            "context_sha256": "13bef353054e2476fd5c3eb5ab30fc1596c5393d2ee6037379d315868edf1c10",
+            "handoffs": [
+              {
+                "artifact_id": "f0c2ce6f-e0e3-4b92-b207-a6aa60fb34a3",
+                "artifact_role": "source_deliverable",
+                "files": [
+                  {
+                    "bytes": 147,
+                    "path": "handoffs/tester-probe.json",
+                    "sha256": "40bd4d1f4fd9a601fe0951efa529b8c9d8c69cda844b27bcaaf00a7d8a802920"
+                  },
+                  {
+                    "bytes": 122,
+                    "path": "handoffs/tester.md",
+                    "sha256": "4790094b74d6bd8bb41a3b254976d06ae99e7f070c0aa2c7717f4dc5b57effeb"
+                  }
+                ],
+                "run_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a",
+                "sha256": "08e9ecb0a7547e6e37d215ccb22b800d3224b1153fde461ce161a5e3817f4796",
+                "task_id": "b060ba47-fe27-4bc7-9d4e-50ee695467ad",
+                "verification_run_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a"
+              }
+            ]
+          },
+          "created_at": "2026-09-29T13:53:15.998754Z"
+        },
+        "readback": [
+          {
+            "path": "handoffs/tester-probe.json",
+            "sha256": "40bd4d1f4fd9a601fe0951efa529b8c9d8c69cda844b27bcaaf00a7d8a802920",
+            "bytes": 147
+          },
+          {
+            "path": "handoffs/tester.md",
+            "sha256": "4790094b74d6bd8bb41a3b254976d06ae99e7f070c0aa2c7717f4dc5b57effeb",
+            "bytes": 122
+          }
+        ],
+        "provider_artifact_sha256": "8d68b06b32c0b003e4cb324ecbf0dda928a3399f08312d7a0c290fc6d66f36e8"
+      },
+      "counts": {
+        "workers": 2,
+        "runs": 2,
+        "completed_runs": 2,
+        "retired_workers": 2,
+        "persisted_verifier_rows": 5
+      }
+    },
+    {
+      "label": "specialists-synthesis",
+      "strategy": "parallel-specialists",
+      "mission_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+      "entry": "browser-create-and-launch",
+      "baseline_agent_ids": [
+        "ed1c4770-59c4-400d-98da-f7ad64d34d40",
+        "b4bc10ad-a6f2-4d0c-87e5-17e76a37723a"
+      ],
+      "native": [
+        {
+          "task_id": "4f7ddedf-df5f-4c66-9a20-edc740584739",
+          "run_id": "2bfa0760-d4cf-4376-8ee7-87024044b789",
+          "evidence": [
+            {
+              "id": "055c51a2-d907-448f-862f-97d3c7caaef9",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "4f7ddedf-df5f-4c66-9a20-edc740584739",
+              "run_id": "2bfa0760-d4cf-4376-8ee7-87024044b789",
+              "check_index": 0,
+              "kind": "artifact",
+              "status": "passed",
+              "summary": "durable artifact 670ffc65-f815-4b9d-8808-9a2dd9e996f2 has 2263 verified bytes",
+              "payload": {
+                "artifact_id": "670ffc65-f815-4b9d-8808-9a2dd9e996f2",
+                "bytes": 2263,
+                "media_type": "text/markdown",
+                "producer_agent_id": "a95543fa-9c09-41d4-8686-2f0554f41e13",
+                "producer_runner_id": "runner-issue48-42269426",
+                "provenance_signature": "efe42553ccdf1a49bffa46a56bc701f84d9e9381707552217c04cca27f619c04",
+                "retention_until": "2026-10-29T13:54:07.862008Z",
+                "sha256": "cb3b0b0a0fd269c181ca977b057c599cbaf9689cf3383e0d7f3a22f52acd26ed",
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "75d77e0d99dc35855e9e42dda0a38cc8c10f7040",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "289a7c8d8d16b026ebb4187f0f6a657bbb2a8821"
+                },
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/670ffc65-f815-4b9d-8808-9a2dd9e996f2",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "created_at": "2026-09-29T13:54:17.092479Z"
+            },
+            {
+              "id": "3f664025-cefb-406c-813c-e667db18ce0d",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "4f7ddedf-df5f-4c66-9a20-edc740584739",
+              "run_id": "2bfa0760-d4cf-4376-8ee7-87024044b789",
+              "check_index": 1,
+              "kind": "file",
+              "status": "passed",
+              "summary": "handoffs/specialist-b.md exists with 122 bytes",
+              "payload": {
+                "bytes": 122,
+                "path": "handoffs/specialist-b.md",
+                "sha256": "c8f2230e9b50999d0238a32d43040f62cbfc3e0a13f265eb95f2a329e53eebce",
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "75d77e0d99dc35855e9e42dda0a38cc8c10f7040",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "289a7c8d8d16b026ebb4187f0f6a657bbb2a8821"
+                }
+              },
+              "created_at": "2026-09-29T13:54:17.098995Z"
+            },
+            {
+              "id": "b295f3c1-f9e3-4137-a9c4-d32c25dfb45a",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "4f7ddedf-df5f-4c66-9a20-edc740584739",
+              "run_id": "2bfa0760-d4cf-4376-8ee7-87024044b789",
+              "check_index": 2,
+              "kind": "file",
+              "status": "passed",
+              "summary": "handoffs/specialist-b-probe.json exists with 147 bytes",
+              "payload": {
+                "bytes": 147,
+                "path": "handoffs/specialist-b-probe.json",
+                "sha256": "c96df1a96213776cd62114e4489dd45fa2d7599937250f1f3aab4c3e964436ac",
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "75d77e0d99dc35855e9e42dda0a38cc8c10f7040",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "289a7c8d8d16b026ebb4187f0f6a657bbb2a8821"
+                }
+              },
+              "created_at": "2026-09-29T13:54:17.103652Z"
+            },
+            {
+              "id": "401b4b17-6cea-4830-8666-df23fd9797b1",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "4f7ddedf-df5f-4c66-9a20-edc740584739",
+              "run_id": "2bfa0760-d4cf-4376-8ee7-87024044b789",
+              "check_index": 3,
+              "kind": "command",
+              "status": "passed",
+              "summary": "\"node\" exited successfully",
+              "payload": {
+                "args": [
+                  "-e",
+                  "const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}",
+                  "handoffs/specialist-b.md",
+                  "handoffs/specialist-b-probe.json"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": null,
+                  "requested_argument_prefix": [],
+                  "requested_environment": {},
+                  "scope": "verifier_child",
+                  "source": "none",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "75d77e0d99dc35855e9e42dda0a38cc8c10f7040",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "289a7c8d8d16b026ebb4187f0f6a657bbb2a8821"
+                },
+                "stderr": "",
+                "stdout": ""
+              },
+              "created_at": "2026-09-29T13:54:17.107734Z"
+            }
+          ],
+          "requested": {
+            "seq": 54,
+            "id": "86253f40-7bef-41ef-88c2-d29f1565f920",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "2bfa0760-d4cf-4376-8ee7-87024044b789",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "run:2bfa0760-d4cf-4376-8ee7-87024044b789:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "a95543fa-9c09-41d4-8686-2f0554f41e13",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "runner-issue48-42269426",
+              "status": "starting",
+              "task_id": "4f7ddedf-df5f-4c66-9a20-edc740584739"
+            },
+            "created_at": "2026-09-29T13:53:53.213376Z"
+          },
+          "started": {
+            "seq": 56,
+            "id": "3597288b-5b32-4c29-8e22-54843b1be794",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "2bfa0760-d4cf-4376-8ee7-87024044b789",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:3597288b-5b32-4c29-8e22-54843b1be794",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "4f7ddedf-df5f-4c66-9a20-edc740584739",
+              "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\runner\\worktrees\\4f7ddedfdf5f4c669a20edc740584739\\2bfa0760d4cf43768ee787024044b789",
+              "workspace_base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-4f7ddedfdf5f4c669a20edc740584739/run-2bfa0760d4cf43768ee787024044b789"
+            },
+            "created_at": "2026-09-29T13:53:53.747350Z"
+          },
+          "verified": {
+            "seq": 81,
+            "id": "86dfbca5-1f36-4a2b-87ff-c853e832b1a8",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "2bfa0760-d4cf-4376-8ee7-87024044b789",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:86dfbca5-1f36-4a2b-87ff-c853e832b1a8",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "b0d39bbd5acc4fa673ebe000c3dbf4f3290c92b27fe5c07a29f13a6ece33ea29",
+              "source_verification": {
+                "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                "candidate_commit": "75d77e0d99dc35855e9e42dda0a38cc8c10f7040",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "289a7c8d8d16b026ebb4187f0f6a657bbb2a8821"
+              },
+              "summary": "all 4 verifier checks passed",
+              "verification_sha256": "572d362ccf3b74b36c2d32ae5bb00caa2e0924328c49857fd1001d1ac1bab289",
+              "verified_tree": "289a7c8d8d16b026ebb4187f0f6a657bbb2a8821"
+            },
+            "created_at": "2026-09-29T13:54:17.652025Z"
+          },
+          "completed": {
+            "seq": 82,
+            "id": "ff8b28f1-c505-47c5-bbd5-ca7673cbb8b0",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "2bfa0760-d4cf-4376-8ee7-87024044b789",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:ff8b28f1-c505-47c5-bbd5-ca7673cbb8b0",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Created runner evidence outside the task worktree."
+            },
+            "created_at": "2026-09-29T13:54:17.659912Z"
+          },
+          "terminated": {
+            "seq": 68,
+            "id": "68dbe079-4784-475c-acdf-3bab4b997862",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "2bfa0760-d4cf-4376-8ee7-87024044b789",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:68dbe079-4784-475c-acdf-3bab4b997862",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-29T13:54:08.375960Z"
+          },
+          "staffed": {
+            "seq": 47,
+            "id": "cf25fd2e-7946-4f25-8369-fe888a2c4e7f",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "agent.staffed",
+            "aggregate_type": "agent",
+            "aggregate_id": "a95543fa-9c09-41d4-8686-2f0554f41e13",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "agent:a95543fa-9c09-41d4-8686-2f0554f41e13:staffed",
+            "visibility": "corp",
+            "payload": {
+              "actor_id": "058d5692-f1e9-4772-9b54-c4d9f3cf5cb3",
+              "adapter": "fake-process",
+              "mission_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+              "name": "Research specialist",
+              "pinned": false,
+              "role": "specialist-a"
+            },
+            "created_at": "2026-09-29T13:53:53.086207Z"
+          },
+          "retired": {
+            "seq": 104,
+            "id": "c2438f32-768d-4796-adfc-278c06a75b54",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "agent.retired",
+            "aggregate_type": "agent",
+            "aggregate_id": "a95543fa-9c09-41d4-8686-2f0554f41e13",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "agent:a95543fa-9c09-41d4-8686-2f0554f41e13:retired:5db5c266-caad-4834-bc7d-d23886269d67",
+            "visibility": "corp",
+            "payload": {
+              "mission_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+              "reason": "terminal mission, no live authority"
+            },
+            "created_at": "2026-09-29T13:54:43.264196Z"
+          }
+        },
+        {
+          "task_id": "aeffa6de-2721-4004-86a2-00b55f6737f7",
+          "run_id": "6ab043ac-0379-48b3-82e9-d9735b6cf160",
+          "evidence": [
+            {
+              "id": "edbe787e-6d01-4797-8224-33ed29bc617e",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "aeffa6de-2721-4004-86a2-00b55f6737f7",
+              "run_id": "6ab043ac-0379-48b3-82e9-d9735b6cf160",
+              "check_index": 0,
+              "kind": "artifact",
+              "status": "passed",
+              "summary": "durable artifact a6369d42-b227-4951-81e5-4027895a1525 has 2271 verified bytes",
+              "payload": {
+                "artifact_id": "a6369d42-b227-4951-81e5-4027895a1525",
+                "bytes": 2271,
+                "media_type": "text/markdown",
+                "producer_agent_id": "b5881edf-4029-471a-ab75-8e5c5898403a",
+                "producer_runner_id": "runner-issue48-42269426",
+                "provenance_signature": "d8c44f84ea03346d9bb832fac13e5fa77881fbe3b2d3973a74468f5c18ecd9ba",
+                "retention_until": "2026-10-29T13:54:08.339191Z",
+                "sha256": "a62511a102b7df571b7a783867c0f1be9891d6bf6b5c69aea0298aa0542d5bc5",
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "8d9589d527f570d568fad3dbbdc350559a8c2bfe",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "0253de45c05a9cd3a7036353e842623eb1a2b505"
+                },
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/a6369d42-b227-4951-81e5-4027895a1525",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "created_at": "2026-09-29T13:54:17.509418Z"
+            },
+            {
+              "id": "eefbafaf-3226-4f31-9b16-3b8baec1419d",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "aeffa6de-2721-4004-86a2-00b55f6737f7",
+              "run_id": "6ab043ac-0379-48b3-82e9-d9735b6cf160",
+              "check_index": 1,
+              "kind": "file",
+              "status": "passed",
+              "summary": "handoffs/specialist-a.md exists with 122 bytes",
+              "payload": {
+                "bytes": 122,
+                "path": "handoffs/specialist-a.md",
+                "sha256": "ed843280c1b83c82d3add4f998807f82ab6db6be43ee9d09537fffd93252ae04",
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "8d9589d527f570d568fad3dbbdc350559a8c2bfe",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "0253de45c05a9cd3a7036353e842623eb1a2b505"
+                }
+              },
+              "created_at": "2026-09-29T13:54:17.525185Z"
+            },
+            {
+              "id": "365c6995-84de-4e3d-a9da-2eacfc8d8dd1",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "aeffa6de-2721-4004-86a2-00b55f6737f7",
+              "run_id": "6ab043ac-0379-48b3-82e9-d9735b6cf160",
+              "check_index": 2,
+              "kind": "file",
+              "status": "passed",
+              "summary": "handoffs/specialist-a-probe.json exists with 147 bytes",
+              "payload": {
+                "bytes": 147,
+                "path": "handoffs/specialist-a-probe.json",
+                "sha256": "86d830ac41872e29dd4c22c799f445abcb70f526f22690dcecaad32c5dafa576",
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "8d9589d527f570d568fad3dbbdc350559a8c2bfe",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "0253de45c05a9cd3a7036353e842623eb1a2b505"
+                }
+              },
+              "created_at": "2026-09-29T13:54:17.529183Z"
+            },
+            {
+              "id": "c9e78a7f-44a8-437d-975a-75d075ca0016",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "aeffa6de-2721-4004-86a2-00b55f6737f7",
+              "run_id": "6ab043ac-0379-48b3-82e9-d9735b6cf160",
+              "check_index": 3,
+              "kind": "command",
+              "status": "passed",
+              "summary": "\"node\" exited successfully",
+              "payload": {
+                "args": [
+                  "-e",
+                  "const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}",
+                  "handoffs/specialist-a.md",
+                  "handoffs/specialist-a-probe.json"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": null,
+                  "requested_argument_prefix": [],
+                  "requested_environment": {},
+                  "scope": "verifier_child",
+                  "source": "none",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "8d9589d527f570d568fad3dbbdc350559a8c2bfe",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "0253de45c05a9cd3a7036353e842623eb1a2b505"
+                },
+                "stderr": "",
+                "stdout": ""
+              },
+              "created_at": "2026-09-29T13:54:17.533318Z"
+            }
+          ],
+          "requested": {
+            "seq": 55,
+            "id": "b0f2d755-a4ff-4eea-93aa-932a8d247b5b",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "6ab043ac-0379-48b3-82e9-d9735b6cf160",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "run:6ab043ac-0379-48b3-82e9-d9735b6cf160:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "b5881edf-4029-471a-ab75-8e5c5898403a",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": false,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "runner-issue48-42269426",
+              "status": "starting",
+              "task_id": "aeffa6de-2721-4004-86a2-00b55f6737f7"
+            },
+            "created_at": "2026-09-29T13:53:53.251310Z"
+          },
+          "started": {
+            "seq": 58,
+            "id": "519afd81-c338-4187-9fc7-e9e3028c4768",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "6ab043ac-0379-48b3-82e9-d9735b6cf160",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:519afd81-c338-4187-9fc7-e9e3028c4768",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "aeffa6de-2721-4004-86a2-00b55f6737f7",
+              "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\runner\\worktrees\\aeffa6de2721400486a200b55f6737f7\\6ab043ac037948b382e9d9735b6cf160",
+              "workspace_base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-aeffa6de2721400486a200b55f6737f7/run-6ab043ac037948b382e9d9735b6cf160"
+            },
+            "created_at": "2026-09-29T13:53:54.217231Z"
+          },
+          "verified": {
+            "seq": 85,
+            "id": "65a41dd3-9b09-4b53-9a83-e09d6660790e",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "6ab043ac-0379-48b3-82e9-d9735b6cf160",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:65a41dd3-9b09-4b53-9a83-e09d6660790e",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "89fb80c08ecb5c1c044a14163ccf08d2d8442fd60a04f0f86f2ff02591c045e0",
+              "source_verification": {
+                "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                "candidate_commit": "8d9589d527f570d568fad3dbbdc350559a8c2bfe",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "0253de45c05a9cd3a7036353e842623eb1a2b505"
+              },
+              "summary": "all 4 verifier checks passed",
+              "verification_sha256": "f516ac90fb3503bea67b9e61b55325f15b57dfd7d4b18db6920dcda30b56a8d4",
+              "verified_tree": "0253de45c05a9cd3a7036353e842623eb1a2b505"
+            },
+            "created_at": "2026-09-29T13:54:18.118949Z"
+          },
+          "completed": {
+            "seq": 86,
+            "id": "617427e1-1c4e-426f-8858-032d7ceb8047",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "6ab043ac-0379-48b3-82e9-d9735b6cf160",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:617427e1-1c4e-426f-8858-032d7ceb8047",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Created runner evidence outside the task worktree."
+            },
+            "created_at": "2026-09-29T13:54:18.125970Z"
+          },
+          "terminated": {
+            "seq": 70,
+            "id": "e0935db5-b308-4cde-941e-c76987966c8e",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "6ab043ac-0379-48b3-82e9-d9735b6cf160",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:e0935db5-b308-4cde-941e-c76987966c8e",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-29T13:54:08.848892Z"
+          },
+          "staffed": {
+            "seq": 48,
+            "id": "5c631bb1-8976-4f28-864f-c8147d31b178",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "agent.staffed",
+            "aggregate_type": "agent",
+            "aggregate_id": "b5881edf-4029-471a-ab75-8e5c5898403a",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "agent:b5881edf-4029-471a-ab75-8e5c5898403a:staffed",
+            "visibility": "corp",
+            "payload": {
+              "actor_id": "ddd529cb-4c77-4fbf-a7b9-9aa872fe0340",
+              "adapter": "fake-process",
+              "mission_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+              "name": "Implementation specialist",
+              "pinned": false,
+              "role": "specialist-b"
+            },
+            "created_at": "2026-09-29T13:53:53.086207Z"
+          },
+          "retired": {
+            "seq": 105,
+            "id": "a162395d-35f3-4d07-9765-bc53921d730f",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "agent.retired",
+            "aggregate_type": "agent",
+            "aggregate_id": "b5881edf-4029-471a-ab75-8e5c5898403a",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "agent:b5881edf-4029-471a-ab75-8e5c5898403a:retired:48f1479a-73cc-4a0d-8320-0051ecc49bff",
+            "visibility": "corp",
+            "payload": {
+              "mission_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+              "reason": "terminal mission, no live authority"
+            },
+            "created_at": "2026-09-29T13:54:43.264196Z"
+          }
+        },
+        {
+          "task_id": "71280561-7423-4f46-ab77-a1deca8639e8",
+          "run_id": "072ac12d-219d-4be2-bde3-90d2b1588f35",
+          "evidence": [
+            {
+              "id": "129e18ea-5bf4-4798-b8fc-01e1c6fe4c23",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "71280561-7423-4f46-ab77-a1deca8639e8",
+              "run_id": "072ac12d-219d-4be2-bde3-90d2b1588f35",
+              "check_index": 0,
+              "kind": "artifact",
+              "status": "passed",
+              "summary": "durable artifact daab0471-9e6e-4b0d-b042-49ae84a1ef90 has 4765 verified bytes",
+              "payload": {
+                "artifact_id": "daab0471-9e6e-4b0d-b042-49ae84a1ef90",
+                "bytes": 4765,
+                "media_type": "text/markdown",
+                "producer_agent_id": "11480d9d-03ea-4013-8ffe-2d1f363fd46e",
+                "producer_runner_id": "runner-issue48-42269426",
+                "provenance_signature": "41b435490c8895599d4d8b2a20ac71907cf21ad8e76b812f51de94e96d16e679",
+                "retention_until": "2026-10-29T13:54:33.138210Z",
+                "sha256": "a5e3691a00a1f3a0c49552d00e47fb988e32157d79de79c84c040b9b1575efc4",
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "34d21a6d1de33f46002552e192e465721bc536db",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "0948cbf2fdfd8ed8d8559da7707eba53ed361434"
+                },
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/daab0471-9e6e-4b0d-b042-49ae84a1ef90",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "created_at": "2026-09-29T13:54:40.235067Z"
+            }
+          ],
+          "requested": {
+            "seq": 87,
+            "id": "f19d1181-301d-4e06-be3f-6730f36986f0",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "072ac12d-219d-4be2-bde3-90d2b1588f35",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "run:072ac12d-219d-4be2-bde3-90d2b1588f35:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "11480d9d-03ea-4013-8ffe-2d1f363fd46e",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": false,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "runner-issue48-42269426",
+              "status": "starting",
+              "task_id": "71280561-7423-4f46-ab77-a1deca8639e8"
+            },
+            "created_at": "2026-09-29T13:54:18.142830Z"
+          },
+          "started": {
+            "seq": 90,
+            "id": "244e41b7-b103-4895-87bf-99f42fe2c602",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "072ac12d-219d-4be2-bde3-90d2b1588f35",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:244e41b7-b103-4895-87bf-99f42fe2c602",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "71280561-7423-4f46-ab77-a1deca8639e8",
+              "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\runner\\worktrees\\7128056174234f46ab77a1deca8639e8\\072ac12d219d4be2bde390d2b1588f35",
+              "workspace_base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-7128056174234f46ab77a1deca8639e8/run-072ac12d219d4be2bde390d2b1588f35"
+            },
+            "created_at": "2026-09-29T13:54:19.022532Z"
+          },
+          "verified": {
+            "seq": 100,
+            "id": "25120755-46ef-4421-9649-db01fe25fb87",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "072ac12d-219d-4be2-bde3-90d2b1588f35",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:25120755-46ef-4421-9649-db01fe25fb87",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "0f073cf5152adc2d2cbbe91f3badcb2891dd08913e2698c4c021fe834bb5cc51",
+              "source_verification": {
+                "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                "candidate_commit": "34d21a6d1de33f46002552e192e465721bc536db",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "0948cbf2fdfd8ed8d8559da7707eba53ed361434"
+              },
+              "summary": "all 1 verifier checks passed",
+              "verification_sha256": "c28ce881d3de714de038a230d58394e708e370879698c96dba9125891f475760",
+              "verified_tree": "0948cbf2fdfd8ed8d8559da7707eba53ed361434"
+            },
+            "created_at": "2026-09-29T13:54:41.083548Z"
+          },
+          "completed": {
+            "seq": 101,
+            "id": "cce5e224-ac4a-41ea-9f2a-48d11f603d35",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "072ac12d-219d-4be2-bde3-90d2b1588f35",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:cce5e224-ac4a-41ea-9f2a-48d11f603d35",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Created and verified result.md through the runner-owned child process."
+            },
+            "created_at": "2026-09-29T13:54:41.115266Z"
+          },
+          "terminated": {
+            "seq": 96,
+            "id": "dac395a7-d10a-4e7b-b442-3497963ad4ee",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "072ac12d-219d-4be2-bde3-90d2b1588f35",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:dac395a7-d10a-4e7b-b442-3497963ad4ee",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-29T13:54:33.637016Z"
+          },
+          "staffed": {
+            "seq": 49,
+            "id": "2117ffd9-faf7-44d9-96bb-dde758f8fbdb",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "agent.staffed",
+            "aggregate_type": "agent",
+            "aggregate_id": "11480d9d-03ea-4013-8ffe-2d1f363fd46e",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "agent:11480d9d-03ea-4013-8ffe-2d1f363fd46e:staffed",
+            "visibility": "corp",
+            "payload": {
+              "actor_id": "4a431598-aa06-4568-955b-71ffcee14640",
+              "adapter": "fake-process",
+              "mission_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+              "name": "Integration lead",
+              "pinned": false,
+              "role": "manager"
+            },
+            "created_at": "2026-09-29T13:53:53.086207Z"
+          },
+          "retired": {
+            "seq": 103,
+            "id": "6980a9e6-99e9-4a63-8620-c6476d04d0bc",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "agent.retired",
+            "aggregate_type": "agent",
+            "aggregate_id": "11480d9d-03ea-4013-8ffe-2d1f363fd46e",
+            "aggregate_version": 1,
+            "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+            "causation_id": null,
+            "idempotency_key": "agent:11480d9d-03ea-4013-8ffe-2d1f363fd46e:retired:01ed6233-12b1-4f3d-99b5-3bb1b51daa9b",
+            "visibility": "corp",
+            "payload": {
+              "mission_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+              "reason": "terminal mission, no live authority"
+            },
+            "created_at": "2026-09-29T13:54:43.264196Z"
+          }
+        }
+      ],
+      "handoffs": [
+        {
+          "task_id": "4f7ddedf-df5f-4c66-9a20-edc740584739",
+          "run_id": "2bfa0760-d4cf-4376-8ee7-87024044b789",
+          "source": {
+            "id": "347e6705-ea48-4539-87a4-935b7515da48",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "4f7ddedf-df5f-4c66-9a20-edc740584739",
+            "run_id": "2bfa0760-d4cf-4376-8ee7-87024044b789",
+            "artifact_id": "347e6705-ea48-4539-87a4-935b7515da48",
+            "form": "typed_artifact_set",
+            "file_name": "ecorp-artifact-set.json",
+            "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/347e6705-ea48-4539-87a4-935b7515da48",
+            "sha256": "b0d39bbd5acc4fa673ebe000c3dbf4f3290c92b27fe5c07a29f13a6ece33ea29",
+            "media_type": "application/vnd.ecorp.deliverable+json",
+            "bytes": 2884,
+            "provenance_signature": "399cfe63d922f43a669c64e73d755a4305cddcd8565a74ea34cce6da477a3642",
+            "verification_sha256": "572d362ccf3b74b36c2d32ae5bb00caa2e0924328c49857fd1001d1ac1bab289",
+            "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+            "head_commit": null,
+            "branch": "crony/task-4f7ddedfdf5f4c669a20edc740584739/run-2bfa0760d4cf43768ee787024044b789",
+            "integration_state": "ready_for_review",
+            "retention_until": "2026-10-29T13:54:17.597796Z",
+            "created_at": "2026-09-29T13:54:17.640227Z"
+          },
+          "files": [
+            {
+              "path": "handoffs/specialist-b-probe.json",
+              "sha256": "c96df1a96213776cd62114e4489dd45fa2d7599937250f1f3aab4c3e964436ac",
+              "bytes": 147,
+              "text": "{\"observed\":true,\"run_id\":\"2bfa0760-d4cf-4376-8ee7-87024044b789\",\"note_sha256\":\"c8f2230e9b50999d0238a32d43040f62cbfc3e0a13f265eb95f2a329e53eebce\"}\n"
+            },
+            {
+              "path": "handoffs/specialist-b.md",
+              "sha256": "c8f2230e9b50999d0238a32d43040f62cbfc3e0a13f265eb95f2a329e53eebce",
+              "bytes": 122,
+              "text": "# Research handoff\n\nRun: 2bfa0760-d4cf-4376-8ee7-87024044b789\nNonce: a99fd762-ba89-4cbc-9823-803de4420a49\nExact bytes: λ\n"
+            }
+          ],
+          "nonce": "a99fd762-ba89-4cbc-9823-803de4420a49"
+        },
+        {
+          "task_id": "aeffa6de-2721-4004-86a2-00b55f6737f7",
+          "run_id": "6ab043ac-0379-48b3-82e9-d9735b6cf160",
+          "source": {
+            "id": "546078b5-79d8-4d93-b284-718034c44e53",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "aeffa6de-2721-4004-86a2-00b55f6737f7",
+            "run_id": "6ab043ac-0379-48b3-82e9-d9735b6cf160",
+            "artifact_id": "546078b5-79d8-4d93-b284-718034c44e53",
+            "form": "typed_artifact_set",
+            "file_name": "ecorp-artifact-set.json",
+            "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/546078b5-79d8-4d93-b284-718034c44e53",
+            "sha256": "89fb80c08ecb5c1c044a14163ccf08d2d8442fd60a04f0f86f2ff02591c045e0",
+            "media_type": "application/vnd.ecorp.deliverable+json",
+            "bytes": 2884,
+            "provenance_signature": "590ed6e813a7ba211e7db42bf3ccb864739fe2e909af53a372c6befc0b9ff16c",
+            "verification_sha256": "f516ac90fb3503bea67b9e61b55325f15b57dfd7d4b18db6920dcda30b56a8d4",
+            "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+            "head_commit": null,
+            "branch": "crony/task-aeffa6de2721400486a200b55f6737f7/run-6ab043ac037948b382e9d9735b6cf160",
+            "integration_state": "ready_for_review",
+            "retention_until": "2026-10-29T13:54:18.062735Z",
+            "created_at": "2026-09-29T13:54:18.102511Z"
+          },
+          "files": [
+            {
+              "path": "handoffs/specialist-a-probe.json",
+              "sha256": "86d830ac41872e29dd4c22c799f445abcb70f526f22690dcecaad32c5dafa576",
+              "bytes": 147,
+              "text": "{\"observed\":true,\"run_id\":\"6ab043ac-0379-48b3-82e9-d9735b6cf160\",\"note_sha256\":\"ed843280c1b83c82d3add4f998807f82ab6db6be43ee9d09537fffd93252ae04\"}\n"
+            },
+            {
+              "path": "handoffs/specialist-a.md",
+              "sha256": "ed843280c1b83c82d3add4f998807f82ab6db6be43ee9d09537fffd93252ae04",
+              "bytes": 122,
+              "text": "# Research handoff\n\nRun: 6ab043ac-0379-48b3-82e9-d9735b6cf160\nNonce: d69a85b4-f53e-4248-9c8b-b7dea8b8fa9f\nExact bytes: λ\n"
+            }
+          ],
+          "nonce": "d69a85b4-f53e-4248-9c8b-b7dea8b8fa9f"
+        }
+      ],
+      "child": {
+        "run_id": "072ac12d-219d-4be2-bde3-90d2b1588f35",
+        "dependency_event": {
+          "seq": 88,
+          "id": "27881bd5-05df-475c-bcb6-c389408beb02",
+          "schema_version": 1,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "actor_id": null,
+          "type": "run.dependency_context",
+          "aggregate_type": "run",
+          "aggregate_id": "072ac12d-219d-4be2-bde3-90d2b1588f35",
+          "aggregate_version": 1,
+          "correlation_id": "4aa3e5b6-85f9-4a2c-8bd4-42fde2adbb20",
+          "causation_id": null,
+          "idempotency_key": "run:072ac12d-219d-4be2-bde3-90d2b1588f35:dependency-context",
+          "visibility": "corp",
+          "payload": {
+            "context_sha256": "12ac850451beb057bae79276e6386f28bf846af9169ac1bb2131cc337188a1cb",
+            "handoffs": [
+              {
+                "artifact_id": "546078b5-79d8-4d93-b284-718034c44e53",
+                "artifact_role": "source_deliverable",
+                "files": [
+                  {
+                    "bytes": 147,
+                    "path": "handoffs/specialist-a-probe.json",
+                    "sha256": "86d830ac41872e29dd4c22c799f445abcb70f526f22690dcecaad32c5dafa576"
+                  },
+                  {
+                    "bytes": 122,
+                    "path": "handoffs/specialist-a.md",
+                    "sha256": "ed843280c1b83c82d3add4f998807f82ab6db6be43ee9d09537fffd93252ae04"
+                  }
+                ],
+                "run_id": "6ab043ac-0379-48b3-82e9-d9735b6cf160",
+                "sha256": "89fb80c08ecb5c1c044a14163ccf08d2d8442fd60a04f0f86f2ff02591c045e0",
+                "task_id": "aeffa6de-2721-4004-86a2-00b55f6737f7",
+                "verification_run_id": "6ab043ac-0379-48b3-82e9-d9735b6cf160"
+              },
+              {
+                "artifact_id": "347e6705-ea48-4539-87a4-935b7515da48",
+                "artifact_role": "source_deliverable",
+                "files": [
+                  {
+                    "bytes": 147,
+                    "path": "handoffs/specialist-b-probe.json",
+                    "sha256": "c96df1a96213776cd62114e4489dd45fa2d7599937250f1f3aab4c3e964436ac"
+                  },
+                  {
+                    "bytes": 122,
+                    "path": "handoffs/specialist-b.md",
+                    "sha256": "c8f2230e9b50999d0238a32d43040f62cbfc3e0a13f265eb95f2a329e53eebce"
+                  }
+                ],
+                "run_id": "2bfa0760-d4cf-4376-8ee7-87024044b789",
+                "sha256": "b0d39bbd5acc4fa673ebe000c3dbf4f3290c92b27fe5c07a29f13a6ece33ea29",
+                "task_id": "4f7ddedf-df5f-4c66-9a20-edc740584739",
+                "verification_run_id": "2bfa0760-d4cf-4376-8ee7-87024044b789"
+              }
+            ]
+          },
+          "created_at": "2026-09-29T13:54:18.171535Z"
+        },
+        "readback": [
+          {
+            "path": "handoffs/specialist-a-probe.json",
+            "sha256": "86d830ac41872e29dd4c22c799f445abcb70f526f22690dcecaad32c5dafa576",
+            "bytes": 147
+          },
+          {
+            "path": "handoffs/specialist-a.md",
+            "sha256": "ed843280c1b83c82d3add4f998807f82ab6db6be43ee9d09537fffd93252ae04",
+            "bytes": 122
+          },
+          {
+            "path": "handoffs/specialist-b-probe.json",
+            "sha256": "c96df1a96213776cd62114e4489dd45fa2d7599937250f1f3aab4c3e964436ac",
+            "bytes": 147
+          },
+          {
+            "path": "handoffs/specialist-b.md",
+            "sha256": "c8f2230e9b50999d0238a32d43040f62cbfc3e0a13f265eb95f2a329e53eebce",
+            "bytes": 122
+          }
+        ],
+        "provider_artifact_sha256": "a5e3691a00a1f3a0c49552d00e47fb988e32157d79de79c84c040b9b1575efc4"
+      },
+      "counts": {
+        "workers": 3,
+        "runs": 3,
+        "completed_runs": 3,
+        "retired_workers": 3,
+        "persisted_verifier_rows": 9
+      }
+    },
+    {
+      "label": "automatic-fallback",
+      "strategy": "test-review",
+      "mission_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+      "entry": "public-api-automatic-adapter",
+      "baseline_agent_ids": [
+        "11480d9d-03ea-4013-8ffe-2d1f363fd46e",
+        "ed1c4770-59c4-400d-98da-f7ad64d34d40",
+        "a95543fa-9c09-41d4-8686-2f0554f41e13",
+        "b5881edf-4029-471a-ab75-8e5c5898403a",
+        "b4bc10ad-a6f2-4d0c-87e5-17e76a37723a"
+      ],
+      "native": [
+        {
+          "task_id": "59051e5b-2d08-4f27-ae2f-603cab13d1f5",
+          "run_id": "426a0859-1fa7-4397-bb6e-55a52154ba90",
+          "evidence": [
+            {
+              "id": "6e4ce823-4b1d-4b32-bb5e-1ee5e1266677",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "59051e5b-2d08-4f27-ae2f-603cab13d1f5",
+              "run_id": "426a0859-1fa7-4397-bb6e-55a52154ba90",
+              "check_index": 0,
+              "kind": "artifact",
+              "status": "passed",
+              "summary": "durable artifact ab057f37-c1e7-4928-b5f9-6f34710c0b80 has 3741 verified bytes",
+              "payload": {
+                "artifact_id": "ab057f37-c1e7-4928-b5f9-6f34710c0b80",
+                "bytes": 3741,
+                "media_type": "text/markdown",
+                "producer_agent_id": "5bb9bb4e-e374-4277-b409-4d84ae588cd1",
+                "producer_runner_id": "runner-issue48-42269426",
+                "provenance_signature": "d910c4b416c8457862c55a1b9a6911a587da8cb845c4281731cbc687c7cbbfde",
+                "retention_until": "2026-10-29T13:55:26.583671Z",
+                "sha256": "5a0761045ec32157f8b41b34f3011aedc1c634e2f30e7da6d335be40673d4ecb",
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/ab057f37-c1e7-4928-b5f9-6f34710c0b80",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "created_at": "2026-09-29T13:55:27.120827Z"
+            }
+          ],
+          "requested": {
+            "seq": 130,
+            "id": "0ad7c385-2fbe-437b-853f-d8a5e428d674",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "426a0859-1fa7-4397-bb6e-55a52154ba90",
+            "aggregate_version": 1,
+            "correlation_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+            "causation_id": null,
+            "idempotency_key": "run:426a0859-1fa7-4397-bb6e-55a52154ba90:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "5bb9bb4e-e374-4277-b409-4d84ae588cd1",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": false,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "runner-issue48-42269426",
+              "status": "starting",
+              "task_id": "59051e5b-2d08-4f27-ae2f-603cab13d1f5"
+            },
+            "created_at": "2026-09-29T13:55:11.587949Z"
+          },
+          "started": {
+            "seq": 133,
+            "id": "d4b1637d-d4b9-4ade-b480-43b25955e198",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "426a0859-1fa7-4397-bb6e-55a52154ba90",
+            "aggregate_version": 1,
+            "correlation_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:d4b1637d-d4b9-4ade-b480-43b25955e198",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "59051e5b-2d08-4f27-ae2f-603cab13d1f5",
+              "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\runner\\worktrees\\59051e5b2d084f27ae2f603cab13d1f5\\426a08591fa74397bb6e55a52154ba90",
+              "workspace_base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-59051e5b2d084f27ae2f603cab13d1f5/run-426a08591fa74397bb6e55a52154ba90"
+            },
+            "created_at": "2026-09-29T13:55:12.468450Z"
+          },
+          "verified": {
+            "seq": 142,
+            "id": "3f8d916a-8262-4425-a22c-a929896f8450",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "426a0859-1fa7-4397-bb6e-55a52154ba90",
+            "aggregate_version": 1,
+            "correlation_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:3f8d916a-8262-4425-a22c-a929896f8450",
+            "visibility": "corp",
+            "payload": {
+              "summary": "all 1 verifier checks passed"
+            },
+            "created_at": "2026-09-29T13:55:27.146603Z"
+          },
+          "completed": {
+            "seq": 143,
+            "id": "6cfc5287-978c-4554-9c97-32a0d5681f62",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "426a0859-1fa7-4397-bb6e-55a52154ba90",
+            "aggregate_version": 1,
+            "correlation_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:6cfc5287-978c-4554-9c97-32a0d5681f62",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Created and verified result.md through the runner-owned child process."
+            },
+            "created_at": "2026-09-29T13:55:27.172565Z"
+          },
+          "terminated": {
+            "seq": 139,
+            "id": "b1279f39-98ea-49b4-956d-a68812b29b63",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "426a0859-1fa7-4397-bb6e-55a52154ba90",
+            "aggregate_version": 1,
+            "correlation_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:b1279f39-98ea-49b4-956d-a68812b29b63",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-29T13:55:27.091245Z"
+          },
+          "staffed": {
+            "seq": 110,
+            "id": "e126a2d6-c630-456d-a75c-de83a2ee746a",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "agent.staffed",
+            "aggregate_type": "agent",
+            "aggregate_id": "5bb9bb4e-e374-4277-b409-4d84ae588cd1",
+            "aggregate_version": 1,
+            "correlation_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+            "causation_id": null,
+            "idempotency_key": "agent:5bb9bb4e-e374-4277-b409-4d84ae588cd1:staffed",
+            "visibility": "corp",
+            "payload": {
+              "actor_id": "bfed6c9e-53de-4403-b211-cad8f48f2ac7",
+              "adapter": "fake-process",
+              "mission_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+              "name": "Source reviewer",
+              "pinned": false,
+              "role": "reviewer"
+            },
+            "created_at": "2026-09-29T13:54:47.154630Z"
+          },
+          "retired": {
+            "seq": 146,
+            "id": "597eec63-1086-47cf-9bc0-376cdaeb7e22",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "agent.retired",
+            "aggregate_type": "agent",
+            "aggregate_id": "5bb9bb4e-e374-4277-b409-4d84ae588cd1",
+            "aggregate_version": 1,
+            "correlation_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+            "causation_id": null,
+            "idempotency_key": "agent:5bb9bb4e-e374-4277-b409-4d84ae588cd1:retired:2a76ab67-9644-4506-96ed-8723d81bf9cb",
+            "visibility": "corp",
+            "payload": {
+              "mission_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+              "reason": "terminal mission, no live authority"
+            },
+            "created_at": "2026-09-29T13:55:28.257691Z"
+          }
+        },
+        {
+          "task_id": "329a40b5-59d9-44cc-8982-fb2cba2d4839",
+          "run_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc",
+          "evidence": [
+            {
+              "id": "f70143bf-e170-4af4-a738-d7e0ce9714d9",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "329a40b5-59d9-44cc-8982-fb2cba2d4839",
+              "run_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc",
+              "check_index": 0,
+              "kind": "artifact",
+              "status": "passed",
+              "summary": "durable artifact de3b203b-5945-46f2-bc6f-fd8f6e40729f has 2444 verified bytes",
+              "payload": {
+                "artifact_id": "de3b203b-5945-46f2-bc6f-fd8f6e40729f",
+                "bytes": 2444,
+                "media_type": "text/markdown",
+                "producer_agent_id": "039a0a57-6da9-45ec-b21d-d0681e5cd8b2",
+                "producer_runner_id": "runner-issue48-42269426",
+                "provenance_signature": "8f61a57f24a42f78f4cc58e2a31df853b67fa3a53c19e0dc09e6a5f1c97725e0",
+                "retention_until": "2026-10-29T13:55:01.845512Z",
+                "sha256": "1c25c77ba73c76e332d48db2e00264b6d41daa77649f595f9ee6c0b6d300a453",
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "eddfc5bd08bb725197413a8bd861261be16b0075",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "76ad5e94c4bf9c6db7603e50836ee0b66cf07148"
+                },
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/de3b203b-5945-46f2-bc6f-fd8f6e40729f",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "created_at": "2026-09-29T13:55:11.037165Z"
+            },
+            {
+              "id": "f982579f-373e-45a9-971e-090bdb057d91",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "329a40b5-59d9-44cc-8982-fb2cba2d4839",
+              "run_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc",
+              "check_index": 1,
+              "kind": "file",
+              "status": "passed",
+              "summary": "handoffs/tester.md exists with 122 bytes",
+              "payload": {
+                "bytes": 122,
+                "path": "handoffs/tester.md",
+                "sha256": "bfdd4bc37e843e6a2ad00d8e309b9324b9d940c114227bcc0962478958f0dcfc",
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "eddfc5bd08bb725197413a8bd861261be16b0075",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "76ad5e94c4bf9c6db7603e50836ee0b66cf07148"
+                }
+              },
+              "created_at": "2026-09-29T13:55:11.042379Z"
+            },
+            {
+              "id": "4c0e1140-de72-4965-a377-03386ed24e6f",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "329a40b5-59d9-44cc-8982-fb2cba2d4839",
+              "run_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc",
+              "check_index": 2,
+              "kind": "file",
+              "status": "passed",
+              "summary": "handoffs/tester-probe.json exists with 147 bytes",
+              "payload": {
+                "bytes": 147,
+                "path": "handoffs/tester-probe.json",
+                "sha256": "50f09d465b06265908c7a414e561d030008dbf1e9f1d8466aced24527d6a1554",
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "eddfc5bd08bb725197413a8bd861261be16b0075",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "76ad5e94c4bf9c6db7603e50836ee0b66cf07148"
+                }
+              },
+              "created_at": "2026-09-29T13:55:11.046121Z"
+            },
+            {
+              "id": "47e6e072-9d62-4962-bf61-1e9c628f253e",
+              "corp_id": "00000000-0000-4000-8000-000000000001",
+              "task_id": "329a40b5-59d9-44cc-8982-fb2cba2d4839",
+              "run_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc",
+              "check_index": 3,
+              "kind": "command",
+              "status": "passed",
+              "summary": "\"node\" exited successfully",
+              "payload": {
+                "args": [
+                  "-e",
+                  "const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}",
+                  "handoffs/tester.md",
+                  "handoffs/tester-probe.json"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": null,
+                  "requested_argument_prefix": [],
+                  "requested_environment": {},
+                  "scope": "verifier_child",
+                  "source": "none",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "source": {
+                  "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                  "candidate_commit": "eddfc5bd08bb725197413a8bd861261be16b0075",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "76ad5e94c4bf9c6db7603e50836ee0b66cf07148"
+                },
+                "stderr": "",
+                "stdout": ""
+              },
+              "created_at": "2026-09-29T13:55:11.049661Z"
+            }
+          ],
+          "requested": {
+            "seq": 114,
+            "id": "eee808f7-49dc-4f8f-892f-1248949f9fb8",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc",
+            "aggregate_version": 1,
+            "correlation_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+            "causation_id": null,
+            "idempotency_key": "run:f82fae7c-7c40-4363-8fc6-f857795afdcc:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "039a0a57-6da9-45ec-b21d-d0681e5cd8b2",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "runner-issue48-42269426",
+              "status": "starting",
+              "task_id": "329a40b5-59d9-44cc-8982-fb2cba2d4839"
+            },
+            "created_at": "2026-09-29T13:54:47.214025Z"
+          },
+          "started": {
+            "seq": 115,
+            "id": "66b21ebf-d9ac-4a80-a3f8-ddd1d92e4af2",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc",
+            "aggregate_version": 1,
+            "correlation_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:66b21ebf-d9ac-4a80-a3f8-ddd1d92e4af2",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "329a40b5-59d9-44cc-8982-fb2cba2d4839",
+              "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\runner\\worktrees\\329a40b559d944cc8982fb2cba2d4839\\f82fae7c7c4043638fc6f857795afdcc",
+              "workspace_base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-329a40b559d944cc8982fb2cba2d4839/run-f82fae7c7c4043638fc6f857795afdcc"
+            },
+            "created_at": "2026-09-29T13:54:47.726282Z"
+          },
+          "verified": {
+            "seq": 128,
+            "id": "341e6386-be56-402b-800c-aa0a8f2a1de7",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc",
+            "aggregate_version": 1,
+            "correlation_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:341e6386-be56-402b-800c-aa0a8f2a1de7",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "e69ba89bb8676579e440f4b56af3d50d87bfffeddad1d5d6d7258784ff84af78",
+              "source_verification": {
+                "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+                "candidate_commit": "eddfc5bd08bb725197413a8bd861261be16b0075",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "76ad5e94c4bf9c6db7603e50836ee0b66cf07148"
+              },
+              "summary": "all 4 verifier checks passed",
+              "verification_sha256": "bfe0387a26f097cff038635162066705bdb76a39044f917fb10723f0cc5b69e9",
+              "verified_tree": "76ad5e94c4bf9c6db7603e50836ee0b66cf07148"
+            },
+            "created_at": "2026-09-29T13:55:11.565617Z"
+          },
+          "completed": {
+            "seq": 129,
+            "id": "a811c88f-6403-43c4-abd4-2fcd14554856",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc",
+            "aggregate_version": 1,
+            "correlation_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:a811c88f-6403-43c4-abd4-2fcd14554856",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Created runner evidence outside the task worktree."
+            },
+            "created_at": "2026-09-29T13:55:11.572375Z"
+          },
+          "terminated": {
+            "seq": 121,
+            "id": "31f6066f-3582-48e2-8058-cd3d9a9d9083",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc",
+            "aggregate_version": 1,
+            "correlation_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue48-42269426:event:31f6066f-3582-48e2-8058-cd3d9a9d9083",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-29T13:55:02.354706Z"
+          },
+          "staffed": {
+            "seq": 109,
+            "id": "98c312f1-511b-4502-8fa5-d9e7723b5709",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "agent.staffed",
+            "aggregate_type": "agent",
+            "aggregate_id": "039a0a57-6da9-45ec-b21d-d0681e5cd8b2",
+            "aggregate_version": 1,
+            "correlation_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+            "causation_id": null,
+            "idempotency_key": "agent:039a0a57-6da9-45ec-b21d-d0681e5cd8b2:staffed",
+            "visibility": "corp",
+            "payload": {
+              "actor_id": "fb6ccd08-d9a9-4b7a-a14c-73a8e91b5361",
+              "adapter": "fake-process",
+              "mission_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+              "name": "Test engineer",
+              "pinned": false,
+              "role": "tester"
+            },
+            "created_at": "2026-09-29T13:54:47.154630Z"
+          },
+          "retired": {
+            "seq": 145,
+            "id": "3dcbbfd6-12a1-4eb8-9437-f67eb24b8c2e",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "agent.retired",
+            "aggregate_type": "agent",
+            "aggregate_id": "039a0a57-6da9-45ec-b21d-d0681e5cd8b2",
+            "aggregate_version": 1,
+            "correlation_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+            "causation_id": null,
+            "idempotency_key": "agent:039a0a57-6da9-45ec-b21d-d0681e5cd8b2:retired:2df2294a-31b8-49a7-b51e-bcf2ffa455b1",
+            "visibility": "corp",
+            "payload": {
+              "mission_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+              "reason": "terminal mission, no live authority"
+            },
+            "created_at": "2026-09-29T13:55:28.257691Z"
+          }
+        }
+      ],
+      "handoffs": [
+        {
+          "task_id": "329a40b5-59d9-44cc-8982-fb2cba2d4839",
+          "run_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc",
+          "source": {
+            "id": "a4ad2e54-073c-488a-8fdb-fe2c389b91be",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "329a40b5-59d9-44cc-8982-fb2cba2d4839",
+            "run_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc",
+            "artifact_id": "a4ad2e54-073c-488a-8fdb-fe2c389b91be",
+            "form": "typed_artifact_set",
+            "file_name": "ecorp-artifact-set.json",
+            "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/a4ad2e54-073c-488a-8fdb-fe2c389b91be",
+            "sha256": "e69ba89bb8676579e440f4b56af3d50d87bfffeddad1d5d6d7258784ff84af78",
+            "media_type": "application/vnd.ecorp.deliverable+json",
+            "bytes": 2824,
+            "provenance_signature": "6708815d337ca809997bd8e9f8721411e5a2b43793e7251e3788eb926a1634f4",
+            "verification_sha256": "bfe0387a26f097cff038635162066705bdb76a39044f917fb10723f0cc5b69e9",
+            "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf",
+            "head_commit": null,
+            "branch": "crony/task-329a40b559d944cc8982fb2cba2d4839/run-f82fae7c7c4043638fc6f857795afdcc",
+            "integration_state": "ready_for_review",
+            "retention_until": "2026-10-29T13:55:11.527362Z",
+            "created_at": "2026-09-29T13:55:11.547475Z"
+          },
+          "files": [
+            {
+              "path": "handoffs/tester-probe.json",
+              "sha256": "50f09d465b06265908c7a414e561d030008dbf1e9f1d8466aced24527d6a1554",
+              "bytes": 147,
+              "text": "{\"observed\":true,\"run_id\":\"f82fae7c-7c40-4363-8fc6-f857795afdcc\",\"note_sha256\":\"bfdd4bc37e843e6a2ad00d8e309b9324b9d940c114227bcc0962478958f0dcfc\"}\n"
+            },
+            {
+              "path": "handoffs/tester.md",
+              "sha256": "bfdd4bc37e843e6a2ad00d8e309b9324b9d940c114227bcc0962478958f0dcfc",
+              "bytes": 122,
+              "text": "# Research handoff\n\nRun: f82fae7c-7c40-4363-8fc6-f857795afdcc\nNonce: 9b9899d3-9bb0-4ad0-87d4-a51a021c6be8\nExact bytes: λ\n"
+            }
+          ],
+          "nonce": "9b9899d3-9bb0-4ad0-87d4-a51a021c6be8"
+        }
+      ],
+      "child": {
+        "run_id": "426a0859-1fa7-4397-bb6e-55a52154ba90",
+        "dependency_event": {
+          "seq": 131,
+          "id": "b187edb8-4c80-4243-9964-7f3352a00f61",
+          "schema_version": 1,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "actor_id": null,
+          "type": "run.dependency_context",
+          "aggregate_type": "run",
+          "aggregate_id": "426a0859-1fa7-4397-bb6e-55a52154ba90",
+          "aggregate_version": 1,
+          "correlation_id": "d54a7957-0180-48cf-94f4-3b76bb1dcdb5",
+          "causation_id": null,
+          "idempotency_key": "run:426a0859-1fa7-4397-bb6e-55a52154ba90:dependency-context",
+          "visibility": "corp",
+          "payload": {
+            "context_sha256": "f2febe60c86a6fea5cff77d376051fa3a470c45891410f063ecd181b2035eea1",
+            "handoffs": [
+              {
+                "artifact_id": "a4ad2e54-073c-488a-8fdb-fe2c389b91be",
+                "artifact_role": "source_deliverable",
+                "files": [
+                  {
+                    "bytes": 147,
+                    "path": "handoffs/tester-probe.json",
+                    "sha256": "50f09d465b06265908c7a414e561d030008dbf1e9f1d8466aced24527d6a1554"
+                  },
+                  {
+                    "bytes": 122,
+                    "path": "handoffs/tester.md",
+                    "sha256": "bfdd4bc37e843e6a2ad00d8e309b9324b9d940c114227bcc0962478958f0dcfc"
+                  }
+                ],
+                "run_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc",
+                "sha256": "e69ba89bb8676579e440f4b56af3d50d87bfffeddad1d5d6d7258784ff84af78",
+                "task_id": "329a40b5-59d9-44cc-8982-fb2cba2d4839",
+                "verification_run_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc"
+              }
+            ]
+          },
+          "created_at": "2026-09-29T13:55:11.605479Z"
+        },
+        "readback": [
+          {
+            "path": "handoffs/tester-probe.json",
+            "sha256": "50f09d465b06265908c7a414e561d030008dbf1e9f1d8466aced24527d6a1554",
+            "bytes": 147
+          },
+          {
+            "path": "handoffs/tester.md",
+            "sha256": "bfdd4bc37e843e6a2ad00d8e309b9324b9d940c114227bcc0962478958f0dcfc",
+            "bytes": 122
+          }
+        ],
+        "provider_artifact_sha256": "5a0761045ec32157f8b41b34f3011aedc1c634e2f30e7da6d335be40673d4ecb"
+      },
+      "counts": {
+        "workers": 2,
+        "runs": 2,
+        "completed_runs": 2,
+        "retired_workers": 2,
+        "persisted_verifier_rows": 5
+      }
+    }
+  ],
+  "screenshots": [
+    {
+      "label": "tester-reviewer-review",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\evidence\\staffing-r2\\tester-reviewer-review.png",
+      "sha256": "5a1db06729cbc11ed0fcd79ac161a1fcfc08d79b5fd56a9a84d596b0682c419d",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "label": "tester-reviewer-complete",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\evidence\\staffing-r2\\tester-reviewer-complete.png",
+      "sha256": "72f31229915c35c0b370d471bcfcb8f76984d6d03ffd7da7268098baf0d21e8a",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "label": "specialists-synthesis-review",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\evidence\\staffing-r2\\specialists-synthesis-review.png",
+      "sha256": "d033227264d5c1ce7c72bfd599834468a5d9d74ed96630fbd8e87a16ffdb80ea",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "label": "specialists-synthesis-complete",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\evidence\\staffing-r2\\specialists-synthesis-complete.png",
+      "sha256": "6fc303d8b245447305c72535a8fc07500bdb439ed57ce956ac63397baeca6bc4",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "label": "automatic-fallback-complete",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\evidence\\staffing-r2\\automatic-fallback-complete.png",
+      "sha256": "639ee77b4cf05b47ebb0cd654284000d557376bcf1fa3270acf81a7a4e815897",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "label": "all-seven-retired-history",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\evidence\\staffing-r2\\all-seven-retired-history.png",
+      "sha256": "3834ed86be11695b5f397087872cf970995cfb225d1c6f6c608103eeb0aa81a5",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    }
+  ],
+  "page_errors": [],
+  "blocked_requests": [],
+  "physical_provider_observations": [
+    {
+      "observed_at_utc": "2026-09-29T13:52:53.0302646+00:00",
+      "runner": {
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+        "started_utc": "2026-09-29T13:52:22.6199219Z",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stderr.log",
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "role": "runner",
+        "pid": 3380,
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stdout.log"
+      },
+      "run_ids": [
+        "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [
+        {
+          "owned_workspace_argument": true,
+          "owned_runner_parent": true,
+          "identity": {
+            "started_utc": "2026-09-29T13:52:52.0105014Z",
+            "pid": 17028,
+            "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe"
+          },
+          "parent_pid": 3380,
+          "run_id": "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a"
+        }
+      ],
+      "prior_processes": [],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    },
+    {
+      "observed_at_utc": "2026-09-29T13:53:17.8116045+00:00",
+      "runner": {
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+        "started_utc": "2026-09-29T13:52:22.6199219Z",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stderr.log",
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "role": "runner",
+        "pid": 3380,
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stdout.log"
+      },
+      "run_ids": [
+        "6648d739-3186-48ec-bc79-5f7d8abf1715"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [
+        {
+          "owned_runner_parent": true,
+          "run_id": "6648d739-3186-48ec-bc79-5f7d8abf1715",
+          "identity": {
+            "pid": 21216,
+            "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+            "started_utc": "2026-09-29T13:53:16.7768296Z"
+          },
+          "parent_pid": 3380,
+          "owned_workspace_argument": true
+        }
+      ],
+      "prior_processes": [],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    },
+    {
+      "observed_at_utc": "2026-09-29T13:53:41.4460291+00:00",
+      "runner": {
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+        "started_utc": "2026-09-29T13:52:22.6199219Z",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stderr.log",
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "role": "runner",
+        "pid": 3380,
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stdout.log"
+      },
+      "run_ids": [
+        "6648d739-3186-48ec-bc79-5f7d8abf1715",
+        "a5e33a6a-6b5d-40f2-bd4f-993453b7a60a"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [],
+      "prior_processes": [
+        {
+          "pid": 17028,
+          "current": null
+        },
+        {
+          "pid": 21216,
+          "current": null
+        }
+      ],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    },
+    {
+      "observed_at_utc": "2026-09-29T13:53:54.7960794+00:00",
+      "runner": {
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+        "started_utc": "2026-09-29T13:52:22.6199219Z",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stderr.log",
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "role": "runner",
+        "pid": 3380,
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stdout.log"
+      },
+      "run_ids": [
+        "2bfa0760-d4cf-4376-8ee7-87024044b789"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [
+        {
+          "run_id": "2bfa0760-d4cf-4376-8ee7-87024044b789",
+          "owned_workspace_argument": true,
+          "identity": {
+            "pid": 10668,
+            "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+            "started_utc": "2026-09-29T13:53:53.7350480Z"
+          },
+          "owned_runner_parent": true,
+          "parent_pid": 3380
+        }
+      ],
+      "prior_processes": [],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    },
+    {
+      "observed_at_utc": "2026-09-29T13:53:55.9841820+00:00",
+      "runner": {
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+        "started_utc": "2026-09-29T13:52:22.6199219Z",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stderr.log",
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "role": "runner",
+        "pid": 3380,
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stdout.log"
+      },
+      "run_ids": [
+        "6ab043ac-0379-48b3-82e9-d9735b6cf160"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [
+        {
+          "run_id": "6ab043ac-0379-48b3-82e9-d9735b6cf160",
+          "parent_pid": 3380,
+          "identity": {
+            "started_utc": "2026-09-29T13:53:54.2041491Z",
+            "pid": 9480,
+            "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe"
+          },
+          "owned_workspace_argument": true,
+          "owned_runner_parent": true
+        }
+      ],
+      "prior_processes": [],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    },
+    {
+      "observed_at_utc": "2026-09-29T13:54:20.1533149+00:00",
+      "runner": {
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+        "started_utc": "2026-09-29T13:52:22.6199219Z",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stderr.log",
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "role": "runner",
+        "pid": 3380,
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stdout.log"
+      },
+      "run_ids": [
+        "072ac12d-219d-4be2-bde3-90d2b1588f35"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [
+        {
+          "owned_workspace_argument": true,
+          "identity": {
+            "started_utc": "2026-09-29T13:54:19.0048321Z",
+            "pid": 32352,
+            "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe"
+          },
+          "owned_runner_parent": true,
+          "parent_pid": 3380,
+          "run_id": "072ac12d-219d-4be2-bde3-90d2b1588f35"
+        }
+      ],
+      "prior_processes": [],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    },
+    {
+      "observed_at_utc": "2026-09-29T13:54:44.2359408+00:00",
+      "runner": {
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+        "started_utc": "2026-09-29T13:52:22.6199219Z",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stderr.log",
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "role": "runner",
+        "pid": 3380,
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stdout.log"
+      },
+      "run_ids": [
+        "072ac12d-219d-4be2-bde3-90d2b1588f35",
+        "6ab043ac-0379-48b3-82e9-d9735b6cf160",
+        "2bfa0760-d4cf-4376-8ee7-87024044b789"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [],
+      "prior_processes": [
+        {
+          "pid": 10668,
+          "current": null
+        },
+        {
+          "pid": 9480,
+          "current": null
+        },
+        {
+          "pid": 32352,
+          "current": null
+        }
+      ],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    },
+    {
+      "observed_at_utc": "2026-09-29T13:54:48.6021063+00:00",
+      "runner": {
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+        "started_utc": "2026-09-29T13:52:22.6199219Z",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stderr.log",
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "role": "runner",
+        "pid": 3380,
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stdout.log"
+      },
+      "run_ids": [
+        "f82fae7c-7c40-4363-8fc6-f857795afdcc"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [
+        {
+          "run_id": "f82fae7c-7c40-4363-8fc6-f857795afdcc",
+          "identity": {
+            "pid": 24692,
+            "started_utc": "2026-09-29T13:54:47.7135088Z",
+            "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe"
+          },
+          "parent_pid": 3380,
+          "owned_workspace_argument": true,
+          "owned_runner_parent": true
+        }
+      ],
+      "prior_processes": [],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    },
+    {
+      "observed_at_utc": "2026-09-29T13:55:13.4199895+00:00",
+      "runner": {
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+        "started_utc": "2026-09-29T13:52:22.6199219Z",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stderr.log",
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "role": "runner",
+        "pid": 3380,
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stdout.log"
+      },
+      "run_ids": [
+        "426a0859-1fa7-4397-bb6e-55a52154ba90"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [
+        {
+          "run_id": "426a0859-1fa7-4397-bb6e-55a52154ba90",
+          "parent_pid": 3380,
+          "owned_workspace_argument": true,
+          "identity": {
+            "started_utc": "2026-09-29T13:55:12.4552825Z",
+            "pid": 24380,
+            "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe"
+          },
+          "owned_runner_parent": true
+        }
+      ],
+      "prior_processes": [],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    },
+    {
+      "observed_at_utc": "2026-09-29T13:55:29.2037781+00:00",
+      "runner": {
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+        "started_utc": "2026-09-29T13:52:22.6199219Z",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stderr.log",
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "role": "runner",
+        "pid": 3380,
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stdout.log"
+      },
+      "run_ids": [
+        "426a0859-1fa7-4397-bb6e-55a52154ba90",
+        "f82fae7c-7c40-4363-8fc6-f857795afdcc"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [],
+      "prior_processes": [
+        {
+          "current": null,
+          "pid": 24692
+        },
+        {
+          "current": null,
+          "pid": 24380
+        }
+      ],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    }
+  ],
+  "synthetic_messages": [
+    {
+      "type": "registered",
+      "at": "2026-09-29T13:54:46.988Z",
+      "run_id": null
+    }
+  ],
+  "limitations": [
+    "Development principals and native deterministic fake-process; no production identity-provider or vendor inference claim.",
+    "The incompatible higher-priority runtime is an enrolled synthetic capability advertisement, not a vendor provider.",
+    "Agent tester/reviewer output is product evidence, not a human decision or authorization to merge."
+  ],
+  "synthetic_runner": {
+    "runner_id": "issue48-incompatible-2ab1da33-d051-45c2-95a9-6d9493d0eb59",
+    "connection_epoch": "6f4765a3-0fde-41a9-8af5-317475103a94",
+    "capabilities": [
+      {
+        "name": "github-copilot",
+        "available": true,
+        "detail": "Synthetic Issue48 capability-selection fixture; no provider execution",
+        "models": []
+      },
+      {
+        "name": "canonical-source-verification-v1",
+        "available": true,
+        "detail": "Synthetic Issue48 capability-selection fixture; no provider execution",
+        "models": []
+      },
+      {
+        "name": "workspace-isolation",
+        "available": true,
+        "detail": "Synthetic Issue48 capability-selection fixture; no provider execution",
+        "models": [],
+        "source_repository": "ecorp-fixture/issue48-retirement",
+        "source_base_ref": "HEAD",
+        "source_base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf"
+      }
+    ],
+    "omitted": "verified-dependency-files-v1",
+    "provider_execution": false
+  },
+  "final_counts": {
+    "agents": 7,
+    "retired": 7,
+    "missions": 3,
+    "tasks": 7,
+    "runs": 7,
+    "completed_runs": 7,
+    "verifier_rows": 19
+  },
+  "finished_at_utc": "2026-09-29T13:55:33.604Z"
+}

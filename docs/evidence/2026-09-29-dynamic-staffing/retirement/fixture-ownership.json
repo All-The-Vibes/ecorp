@@ -1,0 +1,118 @@
+{
+  "plan": {
+    "phase": "Start",
+    "product": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp",
+    "expected_head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "qa_root": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4",
+    "server": "http://127.0.0.1:59031",
+    "web": "http://127.0.0.1:59032",
+    "database": {
+      "port": 59030,
+      "name": "issue48_app_r1",
+      "fresh": true,
+      "host": "127.0.0.1",
+      "user": "issue48"
+    },
+    "runner_id": "runner-issue48-42269426",
+    "provider_mode": "fake-and-copilot",
+    "provider": "Native deterministic fake-process and Copilot fixture; no vendor inference",
+    "source": "Fresh independent synthetic Git repository with committed seed.txt",
+    "factory_watcher": false,
+    "github_effects": false,
+    "existing_state_touched": false,
+    "validation_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue48-canonical-bound-r2.json"
+  },
+  "binaries": [
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-cli.exe",
+      "sha256": "290f7e03a6de7a22a9b07862aed668534fb71b0adf6fd4b58ed61028383544b7"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-server.exe",
+      "sha256": "4156c82a14f94d2ba65388c8b124e48c9de18a83272c12696ef40e1157b7bf07"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+      "sha256": "da0354b6529b51b25cb264debee38cb54432580aeaba0e218dc2075d323f28f3"
+    }
+  ],
+  "database_authentication": {
+    "credentials_outside_source_and_runner_workspaces": true,
+    "method": "scram-sha-256",
+    "authenticated_creation": true,
+    "runner_and_web_environment_secrets_removed": true,
+    "credential_delivery": "Private PGPASSFILE for fixture SQL. Server environment-only delivery is reduced assurance.",
+    "wrong_password_rejected": true
+  },
+  "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4",
+  "purpose": "issue48-native-acceptance",
+  "ready_at": "2026-09-29T13:44:37.4151072Z",
+  "source_file_count": 7157,
+  "created_at": "2026-09-29T13:44:32.6893643Z",
+  "canonical_receipt_sha256": "be57ba0ac75ac46923e73de010484c5c293d896e0431194cd1883a072d0c00ff",
+  "helper_sha256": "a8415581543ea6c1d041a1d2fea2123dff44014da6e91d0c60329e1887ae68b8",
+  "demo": {
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "room_id": "00000000-0000-4000-8000-000000000041",
+    "alice_actor_id": "00000000-0000-4000-8000-000000000011",
+    "bob_actor_id": "00000000-0000-4000-8000-000000000012",
+    "eve_actor_id": "00000000-0000-4000-8000-000000000013",
+    "manager_agent_id": "00000000-0000-4000-8000-000000000031",
+    "worker_agent_id": "00000000-0000-4000-8000-000000000032",
+    "codex_agent_id": "00000000-0000-4000-8000-000000000033"
+  },
+  "processes": {
+    "postgres": {
+      "started_utc": "2026-09-29T13:44:32.8253226Z",
+      "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\postgres-20260929T134432772-397393284a9b465887022e7818078fce.stdout.log",
+      "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4",
+      "role": "postgres",
+      "pid": 25540,
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe",
+      "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\postgres-20260929T134432772-397393284a9b465887022e7818078fce.stderr.log"
+    },
+    "runner": {
+      "started_utc": "2026-09-29T13:44:35.8710315Z",
+      "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\runner-20260929T134435863-d425b0af961a40af9ef066399563ed13.stdout.log",
+      "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4",
+      "role": "runner",
+      "pid": 3572,
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+      "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\runner-20260929T134435863-d425b0af961a40af9ef066399563ed13.stderr.log"
+    },
+    "server": {
+      "started_utc": "2026-09-29T13:44:34.147849Z",
+      "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\server-20260929T134434138-5229797a108d4754ad854e91c45612ee.stdout.log",
+      "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4",
+      "role": "server",
+      "pid": 15400,
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-server.exe",
+      "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\server-20260929T134434138-5229797a108d4754ad854e91c45612ee.stderr.log"
+    },
+    "web": {
+      "started_utc": "2026-09-29T13:44:35.9008253Z",
+      "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\web-20260929T134435890-5fe15500f97f4c0db182aebd46be15dd.stdout.log",
+      "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4",
+      "role": "web",
+      "pid": 26068,
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+      "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\web-20260929T134435890-5fe15500f97f4c0db182aebd46be15dd.stderr.log"
+    }
+  },
+  "test_owned": true,
+  "schema_version": 2,
+  "updated_at": "2026-09-29T13:47:11.0852376Z",
+  "source": {
+    "base_ref": "HEAD",
+    "repository": "ecorp-fixture/issue48-retirement",
+    "base_commit": "06c3580bd90682a24b700c0fef6bae97e5c65d80",
+    "path": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\source"
+  },
+  "stopped_at": "2026-09-29T13:47:11.0511242Z",
+  "stopped_roles": [
+    "web",
+    "runner",
+    "server",
+    "postgres"
+  ]
+}

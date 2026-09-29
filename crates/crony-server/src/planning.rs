@@ -12,6 +12,8 @@ use crony_domain::{
     repository_relative_path_is_valid, strategy_cost_budgets, write_scope_is_valid,
 };
 
+mod test_review;
+
 pub const MAX_GRAPH_NODES: usize = 8;
 pub const MAX_GRAPH_DEPTH: i32 = 4;
 pub const MAX_TASK_BUDGET_TOKENS: i64 = 2_000_000;
@@ -53,6 +55,7 @@ impl StrategyRegistry {
         let strategies: Vec<Arc<dyn ManagerStrategy>> = vec![
             Arc::new(SingleTaskStrategy),
             Arc::new(ParallelSpecialistsStrategy),
+            Arc::new(test_review::TestReviewStrategy),
             Arc::new(StudioSwarmStrategy),
             Arc::new(VerificationMatrixStrategy),
             Arc::new(VerificationFailureStrategy),
@@ -314,7 +317,7 @@ fn declare_research_handoff(task: &mut PlannedTask, root: &str) -> Result<()> {
          must be at most 6144 bytes. The note must state concrete findings, interfaces and \
          constraints. The probe report must distinguish actual observations from proposed checks. \
          Do not claim an unexecuted probe passed. Change only these two files; do not commit. \
-         Synthesis receives their exact verified bytes in its own isolated workspace, not access \
+         The dependent task receives their exact verified bytes in its own isolated workspace, not access \
          to your private directory.",
         paths[0], paths[1],
     ));
@@ -1275,6 +1278,16 @@ mod tests {
             .collect()
     }
 
+    fn all_strategy_agents() -> Vec<Agent> {
+        let mut roster = agents();
+        roster.extend(copilot_workers());
+        roster.extend([
+            agent("Test worker", "tester", "fake-process"),
+            agent("Review worker", "reviewer", "fake-process"),
+        ]);
+        roster
+    }
+
     fn studio_request<'a>() -> PlanningRequest<'a> {
         PlanningRequest {
             mission_title: "deliver the bounded repository outcome",
@@ -1357,8 +1370,7 @@ mod tests {
     #[test]
     fn issue79_every_registered_strategy_uses_shared_cost_allocation() {
         let registry = StrategyRegistry::new();
-        let mut roster = agents();
-        roster.extend(copilot_workers());
+        let roster = all_strategy_agents();
         for strategy in registry.ids() {
             for total in [
                 1,
@@ -1449,11 +1461,11 @@ mod tests {
     #[test]
     fn issue224_ordinary_strategies_preserve_default_two_attempts() {
         let registry = StrategyRegistry::new();
-        let mut roster = agents();
-        roster.extend(copilot_workers());
+        let roster = all_strategy_agents();
         for (strategy, task_count) in [
             ("single", 1),
             ("parallel-specialists", 3),
+            ("test-review", 2),
             ("studio-swarm", 4),
         ] {
             let plan = registry
@@ -1474,8 +1486,7 @@ mod tests {
     #[test]
     fn issue224_attempt_override_sets_every_task_without_changing_other_plan_fields() {
         let registry = StrategyRegistry::new();
-        let mut roster = agents();
-        roster.extend(copilot_workers());
+        let roster = all_strategy_agents();
         for strategy in registry.ids() {
             let default = registry
                 .plan(&strategy, &studio_request(), &roster)
@@ -1522,8 +1533,7 @@ mod tests {
     #[test]
     fn issue224_attempt_override_rejects_out_of_bounds_values() {
         let registry = StrategyRegistry::new();
-        let mut roster = agents();
-        roster.extend(copilot_workers());
+        let roster = all_strategy_agents();
         for strategy in registry.ids() {
             for max_attempts in [0, -1, 4] {
                 let request = PlanningRequest {
@@ -2058,6 +2068,7 @@ mod tests {
                 "parallel-specialists".to_owned(),
                 "single".to_owned(),
                 "studio-swarm".to_owned(),
+                "test-review".to_owned(),
                 "verification-failure".to_owned(),
                 "verification-matrix".to_owned(),
             ]

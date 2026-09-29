@@ -1,0 +1,1058 @@
+{
+  "issue": 48,
+  "status": "local-implementation-accepted",
+  "issue_completed": false,
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "tested_tree": "47be931d1eee3169c25da7f2d339ac59856f5f51",
+  "source_file_count": 7157,
+  "physical_files_sha256": "38937419bf530a87e6d21440af6ca736dd90ae28aa7dd682f9fe0743e68e6269",
+  "all_lanes_same_complete_physical_source": true,
+  "evidence_added_after_code_execution": true,
+  "canonical_original_sha256": "e307e23b4c483637ea56e53fc61000368be7b69abbc2e11c96ff5bb046c5f93d",
+  "checks": [
+    {
+      "name": "migrations",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-compatibility",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-evm",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "repository-docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "node-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3123,
+          "passed": 3058,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      }
+    },
+    {
+      "name": "format",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "clippy",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "rust-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 886,
+          "failed": 0,
+          "ignored": 588,
+          "summaries": 41
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "web-build",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "web-lint",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    }
+  ],
+  "native_counts": {
+    "retirement": {
+      "agents": 8,
+      "retired": 8,
+      "missions": 3,
+      "tasks": 3,
+      "runs": 3,
+      "completed_runs": 3,
+      "verifier_rows": 6
+    },
+    "staffing": {
+      "agents": 7,
+      "retired": 7,
+      "missions": 3,
+      "tasks": 7,
+      "runs": 7,
+      "completed_runs": 7,
+      "verifier_rows": 19
+    }
+  },
+  "redactions": [
+    {
+      "file": "staffing/native-report.json",
+      "json_path": "$.operations[5].response.enrollment_token",
+      "treatment": "credential-bearing field redacted"
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "source-equivalence.json",
+      "source_name": "issue48-publication-source-r1.json",
+      "original_sha256": "4410be90e424d8351510170a8e086e47da10fcb75354d761c20a8047bd6ecfec",
+      "published_sha256": "f654432a92c01465943e083f641812eeafbebef2fcefef332ade4e4bd557dbcd",
+      "bytes": 1187313,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "canonical-driver.json",
+      "source_name": "issue48-canonical-r2.json",
+      "original_sha256": "cdc121b727af7d54f0d0f3e3a76b12e6e61049b3c441d726338e1de0be7a9ee9",
+      "published_sha256": "d99d7a3d9c98163ce02c47ce5dfa10f5715809d3370c68eb8df42d9c58adc020",
+      "bytes": 597561,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "canonical-source-binding.json",
+      "source_name": "issue48-canonical-bound-r2.json",
+      "original_sha256": "be57ba0ac75ac46923e73de010484c5c293d896e0431194cd1883a072d0c00ff",
+      "published_sha256": "1fc484ee0d079ec02d769c8c2e942674a6dcbee2808287f8cdb720f54b07c457",
+      "bytes": 2744399,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "focused.json",
+      "source_name": "issue48-focused-r2.json",
+      "original_sha256": "6efc206e206d4c05d38d1c7e1d65f00215d5a5e0584532f3bf1ab54be6f4e8bb",
+      "published_sha256": "e73f64577acdcfc7cd59c4989478bc5a9f39e0afef1022de68578930c734e537",
+      "bytes": 1315069,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "native-sql.json",
+      "source_name": "issue48-sql-retirement-r3.json",
+      "original_sha256": "cfffd96f19bd93fd4ad7b227c65f379a5cc1dd08d6f224ba846ba22677378588",
+      "published_sha256": "29d9f2a2639c5d63b98b3083a131463024b8213fb0f8f4a7dc78dd85013dc63e",
+      "bytes": 2627462,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "screenshot-review.json",
+      "source_name": "issue48-screenshot-review-r1.json",
+      "original_sha256": "0d84d4d3837906fe20ca780e70534d3a5165c809230ce5f3eaa13dac228e013b",
+      "published_sha256": "6430df22ffcba1816ef75cb6f89b0278d1de6e33600761f057f68ad778c6e611",
+      "bytes": 10173,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "implementation-self-review.json",
+      "source_name": "issue48-review-after-native-r1.json",
+      "original_sha256": "4ec8ad37bb54cea80af9556b70ddf3001a2878758da70ce051d75f11e41c1229",
+      "published_sha256": "4ec8ad37bb54cea80af9556b70ddf3001a2878758da70ce051d75f11e41c1229",
+      "bytes": 9788,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "canonical-report.json",
+      "source_name": "2026-09-29T12-33-55-205Z-767ef52d-d6d5-4fcb-bcdf-21c40d757d39-full.json",
+      "original_sha256": "e307e23b4c483637ea56e53fc61000368be7b69abbc2e11c96ff5bb046c5f93d",
+      "published_sha256": "e307e23b4c483637ea56e53fc61000368be7b69abbc2e11c96ff5bb046c5f93d",
+      "bytes": 579748,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "native-build.log",
+      "source_name": "issue48-canonical-bound-r2-native-build.log",
+      "original_sha256": "3cdec5450f95f3411b34a7857c6d8a17a680f7f58c695b7bf5a166bda7ed6074",
+      "published_sha256": "b0ee630dee9859ca9a5fca1d7553165842b96937878665b5dc7b7d85e48eb286",
+      "bytes": 1279,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted"
+    },
+    {
+      "file": "canonical-install-root.log",
+      "source_name": "issue48-canonical-r2-install-root.log",
+      "original_sha256": "2666b1225aaa1b2056996ad32747b60b5388d94107edcd0d38f67abea9f94968",
+      "published_sha256": "3643487ee9944523db50db91ccc2b545904a5f473aa9658d51f993d1eef452a5",
+      "bytes": 85,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted"
+    },
+    {
+      "file": "canonical-install-web.log",
+      "source_name": "issue48-canonical-r2-install-web.log",
+      "original_sha256": "9c05bb59950f2028a8f2dcf305a5c4940ccf91f7060f52bf3c96570882d0bb27",
+      "published_sha256": "abe294dd108548dc3b762155cac2a67c7dafd78c9f8042ec505ae1bf17406389",
+      "bytes": 85,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted"
+    },
+    {
+      "file": "canonical-install-steward.log",
+      "source_name": "issue48-canonical-r2-install-steward.log",
+      "original_sha256": "731fccdffdae6f9a256697d9912e6532e6efdf35b3456d2402db2d054341740b",
+      "published_sha256": "61fb5649faeddc87babff00e0a36d5f0213bdcbe8021a366ed1e8babe0b931d3",
+      "bytes": 26,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted"
+    },
+    {
+      "file": "canonical-pnpm-check.log",
+      "source_name": "issue48-canonical-r2-pnpm-check.log",
+      "original_sha256": "fe1fc2c877cd4931b0457eda15e7739c29b4fd797c41532331454de61ec062eb",
+      "published_sha256": "96578a96652cc17ffd565ba293dbc30539b749fd61438b02c23c96f3ab9359cf",
+      "bytes": 11308,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted; trailing whitespace and terminal empty lines normalized for publication; original log hash retained"
+    },
+    {
+      "file": "focused-planning.log",
+      "source_name": "issue48-focused-r2-planning.log",
+      "original_sha256": "2d9fdec8ae33230bda07e50da834535c33cfaff199aab500db419e3a7edd6f5e",
+      "published_sha256": "654e1078b2aba0553c237ebddec2de94e16152077c9523b3d9cefadbe6f7c660",
+      "bytes": 3934,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted; trailing whitespace and terminal empty lines normalized for publication; original log hash retained"
+    },
+    {
+      "file": "focused-staffing.log",
+      "source_name": "issue48-focused-r2-staffing.log",
+      "original_sha256": "7e6e4da6e2f033597046298fd186de3b2b1432b2bae0aee121a3fcf26c6163fb",
+      "published_sha256": "7d3fce130f351ed4facec6f9da7623946437e7f69d7e06437d5bbf221f03f72a",
+      "bytes": 703,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted; trailing whitespace and terminal empty lines normalized for publication; original log hash retained"
+    },
+    {
+      "file": "focused-planning-cost.log",
+      "source_name": "issue48-focused-r2-planning-cost.log",
+      "original_sha256": "8ead492988f03baa95265ea14c4410d79d8660f9cc1366a26684cc34d23fdb9e",
+      "published_sha256": "6d18a877a993dc3f36ca5fa4d85d716a027f48349b37856892e680920221bc9b",
+      "bytes": 862,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted; trailing whitespace and terminal empty lines normalized for publication; original log hash retained"
+    },
+    {
+      "file": "focused-crew-recovery.log",
+      "source_name": "issue48-focused-r2-crew-recovery.log",
+      "original_sha256": "5cf08ad1d4ac8ace67de79ade2de9925741c005ceb78b461be99f4525d046fa4",
+      "published_sha256": "6ba0377c706cbc9ee4a83376be164c9665be228d89860c06090b0315a8887b96",
+      "bytes": 2224,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted"
+    },
+    {
+      "file": "focused-web-build.log",
+      "source_name": "issue48-focused-r2-web-build.log",
+      "original_sha256": "16de56d9b171429752e0b288a7aa86a73d708c30d67c7edb5e77cff436a18635",
+      "published_sha256": "6de9051ba5507a31f41507b6ab04572b4f37cc6908f4a473874123208d49119a",
+      "bytes": 920,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted; trailing whitespace and terminal empty lines normalized for publication; original log hash retained"
+    },
+    {
+      "file": "focused-web-lint.log",
+      "source_name": "issue48-focused-r2-web-lint.log",
+      "original_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928",
+      "bytes": 36,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted"
+    },
+    {
+      "file": "sql-owned-postgresql-initialization.log",
+      "source_name": "issue48-sql-retirement-r3-initdb.log",
+      "original_sha256": "4208f723bcd70a83e1a91dbf092c515db0c877d68df11fb4a4d85513692620d2",
+      "published_sha256": "a5bfeade7aa8c50e624b85f5f482a625dab617a76d83043cef8e17f65d274571",
+      "bytes": 1019,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted; trailing whitespace and terminal empty lines normalized for publication; original log hash retained; caret-escaped personal roots redacted"
+    },
+    {
+      "file": "sql-crew-retirement-and-retention-sql.log",
+      "source_name": "issue48-sql-retirement-r3-tests.log",
+      "original_sha256": "3f09ed4d441b492685459bbb8e31b26dc2f21052b406dc923d9f837ff27b3842",
+      "published_sha256": "58b3abc02340b7dec956fbdaba35ff023e305cbdafdddbcdfd90592c1b790cd9",
+      "bytes": 4926,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted; trailing whitespace and terminal empty lines normalized for publication; original log hash retained"
+    },
+    {
+      "file": "retirement/native-report.json",
+      "source_name": "browser-retirement-report.json",
+      "original_sha256": "ae20f0f0c5b22adc5a09997d4fe5ef36e1dd5f98398aa13b6b557c28087a127c",
+      "published_sha256": "fdcf917fb44eb4664715b8919ce42712e0017b74dc5228c216e23105abe91761",
+      "bytes": 44569,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted; opaque replay UUIDs replaced with consistent OP labels across the packet; original hashes retained"
+    },
+    {
+      "file": "retirement/fixture-ownership.json",
+      "source_name": "ownership.json",
+      "original_sha256": "f4d5ccc1ea115918c165be0d22871b759b48a5cde0af086143ec1241ade4e4d9",
+      "published_sha256": "e3248f10a196f1ece39b058ce01c1459e75b68ee60804f6ff70584b57b1c7b2a",
+      "bytes": 5790,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "retirement/01-empty-crew.png",
+      "source_name": "01-empty-crew.png",
+      "original_sha256": "3d23382c90558754d937f1858bb63d4d9668fd0dacc868b4976a1ac9bc118549",
+      "published_sha256": "3d23382c90558754d937f1858bb63d4d9668fd0dacc868b4976a1ac9bc118549",
+      "bytes": 740768,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "retirement/02-pinned-off-shift.png",
+      "source_name": "02-pinned-off-shift.png",
+      "original_sha256": "bdeb4057f30e2f80ad04ac59283492679bdcd74b155c89cef4b25c0fb1a03139",
+      "published_sha256": "bdeb4057f30e2f80ad04ac59283492679bdcd74b155c89cef4b25c0fb1a03139",
+      "bytes": 799054,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "retirement/03-active-removal-blocked.png",
+      "source_name": "03-active-removal-blocked.png",
+      "original_sha256": "5d53cb48475add1fbdb01acc13fa155db52fa0fcc866036cdc15daf7e0eb5655",
+      "published_sha256": "5d53cb48475add1fbdb01acc13fa155db52fa0fcc866036cdc15daf7e0eb5655",
+      "bytes": 814601,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "retirement/04-automatic-retirement-history.png",
+      "source_name": "04-automatic-retirement-history.png",
+      "original_sha256": "682fef18df49b5c2ee6ad76ca88358f28043224ebad2631b97f6ef18462febce",
+      "published_sha256": "682fef18df49b5c2ee6ad76ca88358f28043224ebad2631b97f6ef18462febce",
+      "bytes": 767245,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "retirement/native-live-crew.png",
+      "source_name": "native-live-crew.png",
+      "original_sha256": "88e06e211a093c1bde2caba536219c29a5df6a674de07e314d6b446a0b8c4d0b",
+      "published_sha256": "88e06e211a093c1bde2caba536219c29a5df6a674de07e314d6b446a0b8c4d0b",
+      "bytes": 796702,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "retirement/native-403-unrelated-clear.png",
+      "source_name": "native-403-unrelated-clear.png",
+      "original_sha256": "0861deb28ddded31b8358b32136406601ccb0ad1b529fa12a2b09c0618540c64",
+      "published_sha256": "0861deb28ddded31b8358b32136406601ccb0ad1b529fa12a2b09c0618540c64",
+      "bytes": 764277,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "retirement/native-403-restored-authority-reload.png",
+      "source_name": "native-403-restored-authority-reload.png",
+      "original_sha256": "0861deb28ddded31b8358b32136406601ccb0ad1b529fa12a2b09c0618540c64",
+      "published_sha256": "0861deb28ddded31b8358b32136406601ccb0ad1b529fa12a2b09c0618540c64",
+      "bytes": 764277,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "retirement/05-retired-response-lost.png",
+      "source_name": "05-retired-response-lost.png",
+      "original_sha256": "903181d31db5d416c42b68aa4011792989bf52833e1c764386a10452b00e9781",
+      "published_sha256": "903181d31db5d416c42b68aa4011792989bf52833e1c764386a10452b00e9781",
+      "bytes": 781945,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "retirement/06-manual-retirement-recovered.png",
+      "source_name": "06-manual-retirement-recovered.png",
+      "original_sha256": "0f43045ffe2751b68ea765e8860dbd942f304c9ae7fd63cd98c7f6a9c430be09",
+      "published_sha256": "0f43045ffe2751b68ea765e8860dbd942f304c9ae7fd63cd98c7f6a9c430be09",
+      "bytes": 740374,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "retirement/07-narrow-retired-history.png",
+      "source_name": "07-narrow-retired-history.png",
+      "original_sha256": "a0c64baa35471fdd57ad69f1a0d7469dc73aa6aba0e60abedee4468bd4aa98f5",
+      "published_sha256": "a0c64baa35471fdd57ad69f1a0d7469dc73aa6aba0e60abedee4468bd4aa98f5",
+      "bytes": 194512,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "retirement/08-clear-crew-complete.png",
+      "source_name": "08-clear-crew-complete.png",
+      "original_sha256": "0226b7258b361936a9ab2de92bd22f6a92e7ef6ff159ac49bba677a3ba07a092",
+      "published_sha256": "0226b7258b361936a9ab2de92bd22f6a92e7ef6ff159ac49bba677a3ba07a092",
+      "bytes": 744252,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "staffing/native-report.json",
+      "source_name": "native-staffing-report.json",
+      "original_sha256": "56ec94e7b701a0c9b65deec943d4d372843c4a04101e07571970da079025b263",
+      "published_sha256": "b337b34ee28f744b4e916e04471cfc3ff3e8e875cd26706fba6f2e9f04303482",
+      "bytes": 142141,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "staffing/fixture-ownership.json",
+      "source_name": "ownership.json",
+      "original_sha256": "c9d66c4c152f73d9b3da8f46f488bda5a16aff4adeb34e29d44ae77e525db0eb",
+      "published_sha256": "3ba919bd2663184356de520268b5dfe5fa6db7c5dd635269fcb943a916144284",
+      "bytes": 5788,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "staffing/tester-reviewer-review.png",
+      "source_name": "tester-reviewer-review.png",
+      "original_sha256": "5a1db06729cbc11ed0fcd79ac161a1fcfc08d79b5fd56a9a84d596b0682c419d",
+      "published_sha256": "5a1db06729cbc11ed0fcd79ac161a1fcfc08d79b5fd56a9a84d596b0682c419d",
+      "bytes": 194976,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "staffing/tester-reviewer-complete.png",
+      "source_name": "tester-reviewer-complete.png",
+      "original_sha256": "72f31229915c35c0b370d471bcfcb8f76984d6d03ffd7da7268098baf0d21e8a",
+      "published_sha256": "72f31229915c35c0b370d471bcfcb8f76984d6d03ffd7da7268098baf0d21e8a",
+      "bytes": 299291,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "staffing/specialists-synthesis-review.png",
+      "source_name": "specialists-synthesis-review.png",
+      "original_sha256": "d033227264d5c1ce7c72bfd599834468a5d9d74ed96630fbd8e87a16ffdb80ea",
+      "published_sha256": "d033227264d5c1ce7c72bfd599834468a5d9d74ed96630fbd8e87a16ffdb80ea",
+      "bytes": 194622,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "staffing/specialists-synthesis-complete.png",
+      "source_name": "specialists-synthesis-complete.png",
+      "original_sha256": "6fc303d8b245447305c72535a8fc07500bdb439ed57ce956ac63397baeca6bc4",
+      "published_sha256": "6fc303d8b245447305c72535a8fc07500bdb439ed57ce956ac63397baeca6bc4",
+      "bytes": 325049,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "staffing/automatic-fallback-complete.png",
+      "source_name": "automatic-fallback-complete.png",
+      "original_sha256": "639ee77b4cf05b47ebb0cd654284000d557376bcf1fa3270acf81a7a4e815897",
+      "published_sha256": "639ee77b4cf05b47ebb0cd654284000d557376bcf1fa3270acf81a7a4e815897",
+      "bytes": 326706,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "staffing/all-seven-retired-history.png",
+      "source_name": "all-seven-retired-history.png",
+      "original_sha256": "3834ed86be11695b5f397087872cf970995cfb225d1c6f6c608103eeb0aa81a5",
+      "published_sha256": "3834ed86be11695b5f397087872cf970995cfb225d1c6f6c608103eeb0aa81a5",
+      "bytes": 869975,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "retirement/native-pin-unpin.json",
+      "source_name": "native-agent-pinning.json",
+      "original_sha256": "c57c44ddadeb14b6867706049559424b0fbdcdc964dc4c325076702ca007dfde",
+      "published_sha256": "cfebf7724b87e4a353d3f30d340b97b3fdd131dac8741ec274c53ed19c09b9ca",
+      "bytes": 13338,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted; opaque replay UUIDs replaced with consistent OP labels across the packet; original hashes retained"
+    },
+    {
+      "file": "history/canonical-r1-failed.json",
+      "source_name": "issue48-canonical-r1.json",
+      "original_sha256": "f3b51bbc728c76562afff7f4afb405ec521df6e9b3776273bbf728bb8ccb6b36",
+      "published_sha256": "12b1ae7f82b9fa70c55a1090dd94fde206d427d70ec4b4b2cf8f340ed2d64ab7",
+      "bytes": 597142,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "history/canonical-r1-pnpm-check.log",
+      "source_name": "issue48-canonical-r1-pnpm-check.log",
+      "original_sha256": "764150e9064ce5901c0842ac872b8ba0adf1c6ab80a5e705d231245fb01412f4",
+      "published_sha256": "5df5abf93fa1c7103ef4ad527c5aa5946d5dc19f62acb99d0fd0fbb7e8ef6121",
+      "bytes": 34355,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted"
+    },
+    {
+      "file": "history/staffing-driver-repair.json",
+      "source_name": "issue48-staffing-driver-revision-r2.json",
+      "original_sha256": "f37360c57635770acb1c64202e022b28ba3f2538d4216d3b8f11e38ff6765a1c",
+      "published_sha256": "0495de4e2bb113fc5ba574f8955e13e706fd1cce423c87914a35847dd68adbb7",
+      "bytes": 2232,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "history/issue48-native-20260929-r1/browser-r2-browser-retirement-report.json",
+      "source_name": "browser-retirement-report.json",
+      "original_sha256": "022dd8fc0216a640b310481587895eab2fd4dfeed8b5b24684bba55486447987",
+      "published_sha256": "780952531d796dc65da3b3f0813fa4b6ab6552cba88cca7c0fe2a25cdec731d6",
+      "bytes": 3380,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "history/issue48-native-20260929-r2/browser-r3-browser-retirement-report.json",
+      "source_name": "browser-retirement-report.json",
+      "original_sha256": "3888e31e4711ec64cac1a485500e62062bec150e422db4834351a4772bafbb88",
+      "published_sha256": "4055ba9e18208a3add0417c04ad309f6aec351d372174ac1ef9f393d3d2f7039",
+      "bytes": 2597,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "history/issue48-native-20260929-r3/browser-r4-browser-retirement-report.json",
+      "source_name": "browser-retirement-report.json",
+      "original_sha256": "cf8687a3ed86c6ec06ea01af919282ba0e905b464e59cb09a0d2fcd76f9385f3",
+      "published_sha256": "ceb64ea7a6e6f4537a81b7f7e8a232db8959fd68afab27c0d77bc1ebe37ec502",
+      "bytes": 14171,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted; opaque replay UUIDs replaced with consistent OP labels across the packet; original hashes retained"
+    },
+    {
+      "file": "history/issue48-native-20260929-r5/staffing-r1-native-staffing-report.json",
+      "source_name": "native-staffing-report.json",
+      "original_sha256": "ba6a82a628aefb3539c44d8e367ea60c8650b85e5b6b098e4e9cb3193d98f969",
+      "published_sha256": "16d486b5808e3e72b1cdd759f85df3ed801af88ad11fde669c399de2f139ad62",
+      "bytes": 6308,
+      "transform": "JSON reserialized as UTF-8/LF; personal roots replaced; credential-bearing fields and repeated credential values redacted"
+    },
+    {
+      "file": "drivers/issue48-browser-native-r5.mjs",
+      "source_name": "issue48-browser-native-r5.mjs",
+      "original_sha256": "c240dd87d5fc6ce7649ee6b942d481569376d9afd8bc16a1383c2d9bb981eb6a",
+      "published_sha256": "954d7b25acb356d2609139cb2ef76cca2589e1ad91901fcffb5f84d62eab9cac",
+      "bytes": 34206,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted"
+    },
+    {
+      "file": "drivers/run-issue48-browser-r5.ps1",
+      "source_name": "run-issue48-browser-r5.ps1",
+      "original_sha256": "9ae162c4479e083bcc9561e9f138e4e8d3ca6e83479bd7298b8138fbafc13aef",
+      "published_sha256": "8136d088253c524a2640f696ff63704f00c51e2dbe5a14cccf9b1a08a8e5b42c",
+      "bytes": 2708,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted"
+    },
+    {
+      "file": "drivers/issue48-staffing-native-r2.mjs",
+      "source_name": "issue48-staffing-native-r2.mjs",
+      "original_sha256": "80e00bd73c73a2ef3cd1386d4823b71eda660b00caee009d1a8816232aecb123",
+      "published_sha256": "062527f5e29dffbd8a8f0f64411c78cbdd91b7cf26313291e97e7229d1dde599",
+      "bytes": 33385,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted"
+    },
+    {
+      "file": "drivers/run-issue48-staffing-native-r2.ps1",
+      "source_name": "run-issue48-staffing-native-r2.ps1",
+      "original_sha256": "388711772ac31c1c689be7599916f7e164652b5cce63e18b753b276f2a5cb692",
+      "published_sha256": "93e33f5ba857de2dbd7b8d060ace16b5c75a14dda0be680a9ca2cd328c08364e",
+      "bytes": 2484,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted"
+    },
+    {
+      "file": "drivers/issue48-native-supervisor-r1.ps1",
+      "source_name": "issue48-native-supervisor-r1.ps1",
+      "original_sha256": "a8415581543ea6c1d041a1d2fea2123dff44014da6e91d0c60329e1887ae68b8",
+      "published_sha256": "d22654e9d9e435d18254a4ad22fb774a8bf950ebab3de8ad69f6e0d03b78ca99",
+      "bytes": 14449,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted"
+    },
+    {
+      "file": "drivers/run-issue48-canonical-bound-r2.ps1",
+      "source_name": "run-issue48-canonical-bound-r2.ps1",
+      "original_sha256": "091f7aef2479eee331deabb16d2b6cedbf3763e21ec8123a8b2a46a7f9ddf03a",
+      "published_sha256": "92123e781187c91a074749eb532076ec8bdb26204636c81b76b24619fcb623a4",
+      "bytes": 7308,
+      "transform": "UTF-8/LF; personal roots and discovered credential values redacted"
+    },
+    {
+      "file": "reviewed-code.patch.json",
+      "source_name": "exact zero-context candidate diff",
+      "original_sha256": "506f804b61c4137f275eafc30e6dd6792705503efcdc65f58427e5f75908657b",
+      "published_sha256": "05ad00b79f2575a093dc66596c5683446546ee3b272bdb3da2541f92aa7a6b76",
+      "bytes": 170360,
+      "transform": "Exact UTF-8 patch bytes encoded inside JSON; decoded_sha256 binds original content"
+    }
+  ],
+  "qualifications": [
+    "Development authentication and deterministic fake-process acceptance; no live vendor inference claimed.",
+    "Tester/reviewer instructions are not OS isolation; an agent review is not a human approval.",
+    "Server database environment-only credentials remain reduced assurance; SQL clients use private PGPASSFILE.",
+    "Dynamic worker event privacy is scoped; legacy room-null events are not private-room evidence.",
+    "RUST_TEST_THREADS=1 was used on Windows; issue #213 parallel qualification remains separate.",
+    "588 ignored Rust and 65 skipped Node cases are not passes. Focused lanes overlap full discovery.",
+    "Existing web bundle-size warning; historical Cargo advisory debt is 12 advisories, including 2 high. No clean audit.",
+    "Current main does not contain docs/PROJECT_MEMORY.md.",
+    "Required hosted CI, CodeQL, security and quality remain mandatory and unavailable while Actions is disabled.",
+    "No GitHub approval, merge or issue completion is asserted by this local review."
+  ],
+  "publication_formatting": {
+    "recorded_at_utc": "2026-09-29T14:21:54.165576+00:00",
+    "prior_assembly_sha256": "a1756cc876d7a9c8ece3d13ff8e7ab4e959a18c1c1cc737860c208f47add6482",
+    "failed_evidence_validation_sha256": "22d52b07a7f6d994e27aba60476a2996931ccde6a7721a5d1a214f981098cc26",
+    "source_changed": false,
+    "changes": [
+      {
+        "file": "canonical-pnpm-check.log",
+        "before_sha256": "8b4067022f71766842eadb67c8f43f62ea7be31ef82db0b03de0f0cbe911cd23",
+        "after_sha256": "96578a96652cc17ffd565ba293dbc30539b749fd61438b02c23c96f3ab9359cf",
+        "original_log_sha256": "fe1fc2c877cd4931b0457eda15e7739c29b4fd797c41532331454de61ec062eb",
+        "transformation": "Remove trailing spaces/tabs and terminal empty lines from the published log only; retain one final newline."
+      },
+      {
+        "file": "focused-planning.log",
+        "before_sha256": "38ff944e9d88baf2305436d86691af0206f1d25049eb8fe79af82783d47ae108",
+        "after_sha256": "654e1078b2aba0553c237ebddec2de94e16152077c9523b3d9cefadbe6f7c660",
+        "original_log_sha256": "2d9fdec8ae33230bda07e50da834535c33cfaff199aab500db419e3a7edd6f5e",
+        "transformation": "Remove trailing spaces/tabs and terminal empty lines from the published log only; retain one final newline."
+      },
+      {
+        "file": "focused-staffing.log",
+        "before_sha256": "0fbdd49b72b0138979289dd84e507ddc23340d9932d7707cad5d4c1dabcb939d",
+        "after_sha256": "7d3fce130f351ed4facec6f9da7623946437e7f69d7e06437d5bbf221f03f72a",
+        "original_log_sha256": "7e6e4da6e2f033597046298fd186de3b2b1432b2bae0aee121a3fcf26c6163fb",
+        "transformation": "Remove trailing spaces/tabs and terminal empty lines from the published log only; retain one final newline."
+      },
+      {
+        "file": "focused-planning-cost.log",
+        "before_sha256": "f86b41cf2ecb4f0773d1c62a767b3db7fb5ea64c0e01a2bb93c1a94b86774924",
+        "after_sha256": "6d18a877a993dc3f36ca5fa4d85d716a027f48349b37856892e680920221bc9b",
+        "original_log_sha256": "8ead492988f03baa95265ea14c4410d79d8660f9cc1366a26684cc34d23fdb9e",
+        "transformation": "Remove trailing spaces/tabs and terminal empty lines from the published log only; retain one final newline."
+      },
+      {
+        "file": "focused-web-build.log",
+        "before_sha256": "0529947f317f7246a47181f696e789a4291fac35d207bc236c2ef42ff00d32b6",
+        "after_sha256": "6de9051ba5507a31f41507b6ab04572b4f37cc6908f4a473874123208d49119a",
+        "original_log_sha256": "16de56d9b171429752e0b288a7aa86a73d708c30d67c7edb5e77cff436a18635",
+        "transformation": "Remove trailing spaces/tabs and terminal empty lines from the published log only; retain one final newline."
+      },
+      {
+        "file": "sql-owned-postgresql-initialization.log",
+        "before_sha256": "3af9953f8b890380360d5e5e99b2cc4ca4be306aba868d63974afd010d26cc68",
+        "after_sha256": "16122c537cde410387e2aba86580b3d8b6144c23fb2da74563bb4bbfa44cf620",
+        "original_log_sha256": "4208f723bcd70a83e1a91dbf092c515db0c877d68df11fb4a4d85513692620d2",
+        "transformation": "Remove trailing spaces/tabs and terminal empty lines from the published log only; retain one final newline."
+      },
+      {
+        "file": "sql-crew-retirement-and-retention-sql.log",
+        "before_sha256": "0b6f494fe7f70f928ec0d8b273e0abc1c06aa4ee9b46e9af82a3707c02cab7cd",
+        "after_sha256": "58b3abc02340b7dec956fbdaba35ff023e305cbdafdddbcdfd90592c1b790cd9",
+        "original_log_sha256": "3f09ed4d441b492685459bbb8e31b26dc2f21052b406dc923d9f837ff27b3842",
+        "transformation": "Remove trailing spaces/tabs and terminal empty lines from the published log only; retain one final newline."
+      }
+    ]
+  },
+  "publication_path_redaction": {
+    "recorded_at_utc": "2026-09-29T14:25:37.059152+00:00",
+    "prior_assembly_sha256": "8b77b842d0944ca5607b8f26345ad2cd28d02bb049eb8770e17815d76d39bd30",
+    "failed_evidence_validation_sha256": "2b2ebe97b4400d803977ec9e7176412b18107b95281a8229f0fb42c063d42688",
+    "source_changed": false,
+    "changes": [
+      {
+        "file": "sql-owned-postgresql-initialization.log",
+        "before_sha256": "16122c537cde410387e2aba86580b3d8b6144c23fb2da74563bb4bbfa44cf620",
+        "after_sha256": "a5bfeade7aa8c50e624b85f5f482a625dab617a76d83043cef8e17f65d274571",
+        "original_log_sha256": "4208f723bcd70a83e1a91dbf092c515db0c877d68df11fb4a4d85513692620d2",
+        "replacements": 2,
+        "transformation": "Replace two caret-escaped personal roots in copied PostgreSQL output; retain all original execution results and the original log hash."
+      }
+    ]
+  },
+  "publication_identifier_normalization": {
+    "recorded_at_utc": "2026-09-29T14:28:42.859828+00:00",
+    "prior_assembly_sha256": "d095ba7502b21aaee30c4dbbb1e696f9124267a380a5dce495c0a017368f7a12",
+    "failed_evidence_validation_sha256": "81f30e7d90591e9bcf887058cfd9cb72221f913a5d5290a9d21bb68c96fc72bb",
+    "source_changed": false,
+    "scan_policy_changed": false,
+    "finding_count": 32,
+    "distinct_identifiers": 23,
+    "classification": "Native generic-api-key matches in three test reports identify noncredential request/decision UUIDs. Existing authenticated actor/Corp/room checks remain independently required, including on replay.",
+    "source_references": [
+      "crates/crony-server/src/agent_retirement.rs:49",
+      "crates/crony-store/src/agent_retirement.rs:26"
+    ],
+    "transformation": "Use stable OP labels for all occurrences of each matched UUID across copied evidence, preserving equality and replay relationships. No scan-policy changes, suppressed findings or changes to original evidence or tested implementation.",
+    "triage": [
+      {
+        "file": "history/issue48-native-20260929-r3/browser-r4-browser-retirement-report.json",
+        "line": 122,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "f0e752b0ee8b47fbc97dfcaaf68f50fee7349fabf09656313a5e980d2ca0b9a9",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "history/issue48-native-20260929-r3/browser-r4-browser-retirement-report.json",
+        "line": 138,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "d6c0cb5c06a4ffcd349fb8e3f975fc078267c03d2666d099bbd33d3d5ec8e8a9",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "history/issue48-native-20260929-r3/browser-r4-browser-retirement-report.json",
+        "line": 176,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "025dc30f2defb5282dbd6ef89fb792c2d97a70b4e22284e1ddd9af3387b93247",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "history/issue48-native-20260929-r3/browser-r4-browser-retirement-report.json",
+        "line": 210,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "19997eef70c480c3eaf98f24a0dcb7a6376dd752c9b5680e12826a27482a8fd6",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "history/issue48-native-20260929-r3/browser-r4-browser-retirement-report.json",
+        "line": 260,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "343be8337436b200070caf49d16ec7ad79a7a9eb26d2246542e7d3a531689399",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-pin-unpin.json",
+        "line": 51,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "768f97545f5e4de29bd11ed6c0d2eb4f6a0727cdfe1f751ee761eaac152710ec",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-pin-unpin.json",
+        "line": 61,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "9aecc6fd2377230ee3eb3ef152420b10c6f07ff278b656dcbefcdcc388967e5d",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-pin-unpin.json",
+        "line": 71,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "564ec0ecf76ae732cfa8d5f834e68c69309926a73050a3e4a85d96ce58068c30",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-pin-unpin.json",
+        "line": 95,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "5e62149fee08186dd1f6752044d77331f10f2d10f74df36256fd4f963b985825",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-pin-unpin.json",
+        "line": 111,
+        "property": "decision_key",
+        "original_identifier_sha256": "1dead82ece6afb7b93df1c9410c18f1cacc8205e249f9df7a667061d9d5c30ea",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-pin-unpin.json",
+        "line": 150,
+        "property": "key",
+        "original_identifier_sha256": "57a717a620aba614a378e589fcb3fdfa19699e407c321e6ffcb8e5f005f170a7",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-pin-unpin.json",
+        "line": 158,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "39370ae19ae6ef46055558499e82c3bdd144fe9c15ab13d8ba6e9a708083d537",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-pin-unpin.json",
+        "line": 175,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "6657f114fbe24217022743d245b1838700e0fa6b7201b333074683b3c41f669b",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-pin-unpin.json",
+        "line": 185,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "39370ae19ae6ef46055558499e82c3bdd144fe9c15ab13d8ba6e9a708083d537",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 169,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "ad5a9eb62400adf3046fcd6b6de2379b91f1c537b53518baa893d45273e56f21",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 175,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "f5c3b612bd08fc2b80292ecf4551ad2de7e53c8b9942a5c87c4d6f97bef43421",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 267,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "ad5a9eb62400adf3046fcd6b6de2379b91f1c537b53518baa893d45273e56f21",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 289,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "ad5a9eb62400adf3046fcd6b6de2379b91f1c537b53518baa893d45273e56f21",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 299,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "455741306e70e80fb5caea19665bb1f3ce5ee3ea07d7410c6b034d52c3c6f4b1",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 337,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "ad5a9eb62400adf3046fcd6b6de2379b91f1c537b53518baa893d45273e56f21",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 383,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "39370ae19ae6ef46055558499e82c3bdd144fe9c15ab13d8ba6e9a708083d537",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 399,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "79fa5dcf98a6856c089487aaa19970332d8597f39576fd5ddb97b7a048fd79e4",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 437,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "c8dd6817f9bafccb701cd367bc65a2b4b53a390ef90fcbad2bee15190f8cf440",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 471,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "7e1580f47dbabe75957e7230869d796538763cc801ae7fdfe9ddd9509dd7015d",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 521,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "66f43fc1c2b2e412acf1857fcfa2771662edecb182d7640ce8cd3458f8f3f546",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 557,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "08c8bfbf14c14fd10a69e064eace77c4aa81f883edec4e2f8ce9baf188f75972",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 594,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "ad5a9eb62400adf3046fcd6b6de2379b91f1c537b53518baa893d45273e56f21",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 608,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "f5c3b612bd08fc2b80292ecf4551ad2de7e53c8b9942a5c87c4d6f97bef43421",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 697,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "455741306e70e80fb5caea19665bb1f3ce5ee3ea07d7410c6b034d52c3c6f4b1",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 721,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "ad5a9eb62400adf3046fcd6b6de2379b91f1c537b53518baa893d45273e56f21",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 745,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "df7b241d6262f6cd8577a947434d56da0be2a5a74034cbecce554de20a69204e",
+        "classification": "noncredential UUID used for durable operation replay"
+      },
+      {
+        "file": "retirement/native-report.json",
+        "line": 760,
+        "property": "idempotency_key",
+        "original_identifier_sha256": "80397e4b58b29508422b9425a76fb30dbea7cf402213ee21a9c1abe2114d9566",
+        "classification": "noncredential UUID used for durable operation replay"
+      }
+    ],
+    "identifier_fingerprints": [
+      {
+        "label": "<OP_001>",
+        "original_identifier_sha256": "1dead82ece6afb7b93df1c9410c18f1cacc8205e249f9df7a667061d9d5c30ea"
+      },
+      {
+        "label": "<OP_002>",
+        "original_identifier_sha256": "564ec0ecf76ae732cfa8d5f834e68c69309926a73050a3e4a85d96ce58068c30"
+      },
+      {
+        "label": "<OP_003>",
+        "original_identifier_sha256": "79fa5dcf98a6856c089487aaa19970332d8597f39576fd5ddb97b7a048fd79e4"
+      },
+      {
+        "label": "<OP_004>",
+        "original_identifier_sha256": "455741306e70e80fb5caea19665bb1f3ce5ee3ea07d7410c6b034d52c3c6f4b1"
+      },
+      {
+        "label": "<OP_005>",
+        "original_identifier_sha256": "768f97545f5e4de29bd11ed6c0d2eb4f6a0727cdfe1f751ee761eaac152710ec"
+      },
+      {
+        "label": "<OP_006>",
+        "original_identifier_sha256": "5e62149fee08186dd1f6752044d77331f10f2d10f74df36256fd4f963b985825"
+      },
+      {
+        "label": "<OP_007>",
+        "original_identifier_sha256": "f0e752b0ee8b47fbc97dfcaaf68f50fee7349fabf09656313a5e980d2ca0b9a9"
+      },
+      {
+        "label": "<OP_008>",
+        "original_identifier_sha256": "80397e4b58b29508422b9425a76fb30dbea7cf402213ee21a9c1abe2114d9566"
+      },
+      {
+        "label": "<OP_009>",
+        "original_identifier_sha256": "57a717a620aba614a378e589fcb3fdfa19699e407c321e6ffcb8e5f005f170a7"
+      },
+      {
+        "label": "<OP_010>",
+        "original_identifier_sha256": "c8dd6817f9bafccb701cd367bc65a2b4b53a390ef90fcbad2bee15190f8cf440"
+      },
+      {
+        "label": "<OP_011>",
+        "original_identifier_sha256": "9aecc6fd2377230ee3eb3ef152420b10c6f07ff278b656dcbefcdcc388967e5d"
+      },
+      {
+        "label": "<OP_012>",
+        "original_identifier_sha256": "39370ae19ae6ef46055558499e82c3bdd144fe9c15ab13d8ba6e9a708083d537"
+      },
+      {
+        "label": "<OP_013>",
+        "original_identifier_sha256": "7e1580f47dbabe75957e7230869d796538763cc801ae7fdfe9ddd9509dd7015d"
+      },
+      {
+        "label": "<OP_014>",
+        "original_identifier_sha256": "d6c0cb5c06a4ffcd349fb8e3f975fc078267c03d2666d099bbd33d3d5ec8e8a9"
+      },
+      {
+        "label": "<OP_015>",
+        "original_identifier_sha256": "19997eef70c480c3eaf98f24a0dcb7a6376dd752c9b5680e12826a27482a8fd6"
+      },
+      {
+        "label": "<OP_016>",
+        "original_identifier_sha256": "343be8337436b200070caf49d16ec7ad79a7a9eb26d2246542e7d3a531689399"
+      },
+      {
+        "label": "<OP_017>",
+        "original_identifier_sha256": "08c8bfbf14c14fd10a69e064eace77c4aa81f883edec4e2f8ce9baf188f75972"
+      },
+      {
+        "label": "<OP_018>",
+        "original_identifier_sha256": "6657f114fbe24217022743d245b1838700e0fa6b7201b333074683b3c41f669b"
+      },
+      {
+        "label": "<OP_019>",
+        "original_identifier_sha256": "f5c3b612bd08fc2b80292ecf4551ad2de7e53c8b9942a5c87c4d6f97bef43421"
+      },
+      {
+        "label": "<OP_020>",
+        "original_identifier_sha256": "df7b241d6262f6cd8577a947434d56da0be2a5a74034cbecce554de20a69204e"
+      },
+      {
+        "label": "<OP_021>",
+        "original_identifier_sha256": "ad5a9eb62400adf3046fcd6b6de2379b91f1c537b53518baa893d45273e56f21"
+      },
+      {
+        "label": "<OP_022>",
+        "original_identifier_sha256": "66f43fc1c2b2e412acf1857fcfa2771662edecb182d7640ce8cd3458f8f3f546"
+      },
+      {
+        "label": "<OP_023>",
+        "original_identifier_sha256": "025dc30f2defb5282dbd6ef89fb792c2d97a70b4e22284e1ddd9af3387b93247"
+      }
+    ],
+    "changes": [
+      {
+        "file": "retirement/native-report.json",
+        "before_sha256": "49997555cfcfb7b340a5bdfecd74376c2c7c4daa887ecedf9853f170d43a9f0d",
+        "after_sha256": "fdcf917fb44eb4664715b8919ce42712e0017b74dc5228c216e23105abe91761",
+        "original_log_sha256": "ae20f0f0c5b22adc5a09997d4fe5ef36e1dd5f98398aa13b6b557c28087a127c",
+        "occurrences": 24
+      },
+      {
+        "file": "retirement/native-pin-unpin.json",
+        "before_sha256": "5386f97eff0fd857ab2d46bd1148c339ee3f2f593a01442c2e05b091a32676cf",
+        "after_sha256": "cfebf7724b87e4a353d3f30d340b97b3fdd131dac8741ec274c53ed19c09b9ca",
+        "original_log_sha256": "c57c44ddadeb14b6867706049559424b0fbdcdc964dc4c325076702ca007dfde",
+        "occurrences": 11
+      },
+      {
+        "file": "history/issue48-native-20260929-r3/browser-r4-browser-retirement-report.json",
+        "before_sha256": "e8aa25fbda0deac5c9af2a67468ff1917a57149c09cf5398482bf51866e54df9",
+        "after_sha256": "ceb64ea7a6e6f4537a81b7f7e8a232db8959fd68afab27c0d77bc1ebe37ec502",
+        "original_log_sha256": "cf8687a3ed86c6ec06ea01af919282ba0e905b464e59cb09a0d2fcd76f9385f3",
+        "occurrences": 5
+      }
+    ]
+  }
+}

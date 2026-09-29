@@ -58,6 +58,8 @@ import type { VerificationPolicy } from './verificationPolicy'
 import { VerificationPolicyEditor, VerificationPolicyPreview } from './VerificationPolicyEditor'
 import { MissionCollaborationPanel } from './MissionCollaborationPanel'
 import { AgentPinControl } from './AgentPinControl'
+import { CrewManagement } from './CrewManagement'
+import { retirementRequest, retirementScopeKey } from './crewRetirement'
 import { collaborationSnapshotIsCurrent, createDiscussionDraftStore, selectCollaborationMission } from './missionCollaboration'
 import type { CollaborationInput, DiscussionDraft } from './missionCollaboration'
 
@@ -6262,6 +6264,24 @@ function App() {
               onChange={(event) => setShowRegisteredCrew(event.target.checked)} />
             Show offline and test identities
           </label>
+          <CrewManagement
+            key={retirementScopeKey({ server: API_URL, corpId: bootstrap.corp_id, actorId: selectedActor.id })}
+            scope={{ server: API_URL, corpId: bootstrap.corp_id, actorId: selectedActor.id }}
+            agents={data.snapshot.agents}
+            runs={data.snapshot.runs}
+            canOperate={selectedActor.kind === 'human' && canOperate(selectedActor.role)}
+            snapshotCurrent={snapshotCurrent}
+            onRequest={(operation) => {
+              const request = retirementRequest(operation)
+              return api(request.path, { method: 'POST', body: request.body })
+            }}
+            onRefresh={async () => { await refresh(bootstrap.corp_id, selectedActor.id) }}
+            onMission={(missionId) => {
+              setSelectedMissionId(missionId)
+              setMissionComposerCollapsed(true)
+              activateWorkspaceView('missions')
+            }}
+          />
           <div className="floor-plan">
             {activeWorkspaceView === 'floor' ? <OfficeFloor
               agents={floorAgents}
@@ -6285,8 +6305,8 @@ function App() {
               }}
               onFactory={() => activateWorkspaceView('factory')}
             /> : null}
-            {floorInspectorOpen && selectedAgent && activeWorkspaceView === 'floor' ? (
-              <OfficeInspector agentName={selectedAgent.name} onClose={() => setFloorInspectorOpen(false)}>
+            {floorInspectorOpen && selectedAgent && selectedAgent.id === selectedAgentId && activeWorkspaceView === 'floor' ? (
+              <OfficeInspector agentName={selectedAgent.name} returnFocusId="crew-management-heading" onClose={() => setFloorInspectorOpen(false)}>
                   <AgentDesk
                     key={selectedAgent.id}
                     agent={selectedAgent}
@@ -6593,6 +6613,7 @@ function App() {
                       >
                         <option value="single">Solo run</option>
                         <option value="parallel-specialists">Two specialists and synthesis</option>
+                        <option value="test-review">Tester and reviewer</option>
                         <option value={STUDIO_STRATEGY}>{STUDIO_STRATEGY_LABEL}</option>
                         {developerMode ? (
                           <optgroup label="Test fixtures">
@@ -6608,6 +6629,8 @@ function App() {
                           ? 'Three Copilot agents work in parallel, then one integrates their verified handoffs.'
                           : missionStrategy === 'parallel-specialists'
                           ? 'Two agents work in parallel, then a final task combines their results.'
+                          : missionStrategy === 'test-review'
+                            ? 'A tester checks the selected source, then a separate reviewer reads its verified evidence and the same source.'
                           : missionStrategy === 'single'
                             ? 'One agent handles the work.'
                             : 'A deterministic product-behavior fixture.'}

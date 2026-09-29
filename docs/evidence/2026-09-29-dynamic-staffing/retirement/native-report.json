@@ -1,0 +1,1264 @@
+{
+  "issue": 48,
+  "status": "passed",
+  "stage": "complete",
+  "started_at_utc": "2026-09-29T13:44:49.684Z",
+  "product_head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "source_binding_sha256": "be57ba0ac75ac46923e73de010484c5c293d896e0431194cd1883a072d0c00ff",
+  "binaries": [
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-cli.exe",
+      "sha256": "290f7e03a6de7a22a9b07862aed668534fb71b0adf6fd4b58ed61028383544b7"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-server.exe",
+      "sha256": "4156c82a14f94d2ba65388c8b124e48c9de18a83272c12696ef40e1157b7bf07"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+      "sha256": "da0354b6529b51b25cb264debee38cb54432580aeaba0e218dc2075d323f28f3"
+    }
+  ],
+  "source": {
+    "base_ref": "HEAD",
+    "repository": "ecorp-fixture/issue48-retirement",
+    "base_commit": "06c3580bd90682a24b700c0fef6bae97e5c65d80",
+    "path": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\source"
+  },
+  "assertions": [
+    {
+      "name": "Fresh Corp has no static workers; empty crew and unauthorized controls are explicit",
+      "at": "2026-09-29T13:44:55.200Z"
+    },
+    {
+      "name": "Browser Clear and Retire explain blockers and preserve exact active run/task/mission/lease/approval/message/review/command rows",
+      "at": "2026-09-29T13:45:01.056Z",
+      "detail": {
+        "digest": "fbee491d51c9f1d2aa7704779022de6941f308c8ee6a60069ee2caf229695b93",
+        "clear": {
+          "results": [
+            {
+              "agent_id": "5f3219a8-2bfe-4479-847b-1e36419c149c",
+              "status": "blocked",
+              "blockers": [
+                "pinned",
+                "current_run",
+                "active_status",
+                "assigned_work",
+                "active_run",
+                "control_lease",
+                "queued_message",
+                "pending_approval"
+              ],
+              "retired_at": null,
+              "pinned": true,
+              "pin_version": 1
+            }
+          ],
+          "replayed": false
+        },
+        "retire": {
+          "results": [
+            {
+              "agent_id": "5f3219a8-2bfe-4479-847b-1e36419c149c",
+              "status": "blocked",
+              "blockers": [
+                "current_run",
+                "active_status",
+                "assigned_work",
+                "active_run",
+                "control_lease",
+                "queued_message",
+                "pending_approval"
+              ],
+              "retired_at": null,
+              "pinned": true,
+              "pin_version": 1
+            }
+          ],
+          "replayed": false
+        }
+      }
+    },
+    {
+      "name": "Existing native multiplayer Pin/Unpin, exact replay, verifier completion, pinned reuse and automatic retirement driver passed",
+      "at": "2026-09-29T13:45:19.848Z",
+      "detail": {
+        "assertions": [
+          "empty Corp provisions one held mission-owned identity",
+          "Alice browser Pin persisted version one and actor-attributed audit",
+          "guest foreign-Corp and extra-effect requests denied",
+          "Bob browser Unpin preserves exact native run task mission lease approval message command rows",
+          "native CLI Pin and duplicate replay commit exactly once",
+          "native accepted terminal mission retains pinned identity with provider terminated",
+          "pinned identity reused in same room; Unpin preserves second held plan and does not retire early",
+          "both native missions complete once; unpinned identity retires only after obligations settle",
+          "retired Pin rejected and old successful replay cannot resurrect history",
+          "durable audit history, both viewers, tenant/room visibility and original source preserved"
+        ],
+        "counts": {
+          "runs": 2,
+          "tasks": 2,
+          "agents": 1,
+          "missions": 2,
+          "pin_events": 4,
+          "retirements": 1,
+          "factory_items": 0,
+          "completed_runs": 2,
+          "pending_commands": 0,
+          "delivered_messages": 1
+        }
+      }
+    },
+    {
+      "name": "Actual browser Start mission reaches native isolated runner, persisted verifier evidence and provider teardown",
+      "at": "2026-09-29T13:45:38.384Z",
+      "detail": {
+        "run_id": "ef1340c6-2580-41f0-8c2d-1169010c1654",
+        "termination_event_id": "8a39155e-61b9-4b87-8286-9269c5a1c5dc",
+        "evidence": [
+          {
+            "id": "05f593cd-7a49-4563-89ba-210cbbf0a7aa",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "a348a817-9c8f-4a26-8fa5-7a8f89c4066f",
+            "run_id": "ef1340c6-2580-41f0-8c2d-1169010c1654",
+            "check_index": 0,
+            "kind": "artifact",
+            "status": "passed",
+            "summary": "durable artifact b0eb736d-4cf4-4cb0-9456-0bb78a5b4e03 has 1399 verified bytes",
+            "payload": {
+              "artifact_id": "b0eb736d-4cf4-4cb0-9456-0bb78a5b4e03",
+              "bytes": 1399,
+              "media_type": "text/markdown",
+              "producer_agent_id": "616e487e-164b-44bf-b3c3-2345c0720c78",
+              "producer_runner_id": "runner-issue48-42269426",
+              "provenance_signature": "5d70cd5fed081d3334430cc17e8285d767c5c679393968c12e6ce3919ac3be31",
+              "retention_until": "2026-10-29T13:45:36.216042Z",
+              "sha256": "208e372893573516de2a38f339d29e044794ab0dea0a8e479b5bfc5142f463ad",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b0eb736d-4cf4-4cb0-9456-0bb78a5b4e03",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-29T13:45:36.728396Z"
+          },
+          {
+            "id": "33039881-8aa2-4ee0-9cae-6848adaecc09",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "a348a817-9c8f-4a26-8fa5-7a8f89c4066f",
+            "run_id": "ef1340c6-2580-41f0-8c2d-1169010c1654",
+            "check_index": 1,
+            "kind": "file",
+            "status": "passed",
+            "summary": "result.md exists with 1399 bytes",
+            "payload": {
+              "bytes": 1399,
+              "path": "result.md",
+              "sha256": "208e372893573516de2a38f339d29e044794ab0dea0a8e479b5bfc5142f463ad"
+            },
+            "created_at": "2026-09-29T13:45:36.734637Z"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Real server 403 and authorized snapshot retain exact denied Retire while Clear retires all six unrelated visible identities",
+      "at": "2026-09-29T13:45:40.421Z",
+      "detail": {
+        "denied_status": 403,
+        "denied_request": {
+          "actor_id": "00000000-0000-4000-8000-000000000012",
+          "idempotency_key": "<OP_021>",
+          "expected_pin_version": 1
+        },
+        "clear": {
+          "body": {
+            "actor_id": "00000000-0000-4000-8000-000000000012",
+            "idempotency_key": "<OP_019>",
+            "targets": [
+              {
+                "agent_id": "00000000-0000-4000-8000-000000000034",
+                "expected_pin_version": 0
+              },
+              {
+                "agent_id": "00000000-0000-4000-8000-000000000033",
+                "expected_pin_version": 0
+              },
+              {
+                "agent_id": "00000000-0000-4000-8000-000000000035",
+                "expected_pin_version": 0
+              },
+              {
+                "agent_id": "00000000-0000-4000-8000-000000000036",
+                "expected_pin_version": 0
+              },
+              {
+                "agent_id": "00000000-0000-4000-8000-000000000032",
+                "expected_pin_version": 0
+              },
+              {
+                "agent_id": "00000000-0000-4000-8000-000000000031",
+                "expected_pin_version": 0
+              }
+            ]
+          },
+          "result": {
+            "results": [
+              {
+                "agent_id": "00000000-0000-4000-8000-000000000031",
+                "status": "retired",
+                "blockers": [],
+                "retired_at": "2026-09-29T13:45:39.721295Z",
+                "pinned": false,
+                "pin_version": 0
+              },
+              {
+                "agent_id": "00000000-0000-4000-8000-000000000032",
+                "status": "retired",
+                "blockers": [],
+                "retired_at": "2026-09-29T13:45:39.721295Z",
+                "pinned": false,
+                "pin_version": 0
+              },
+              {
+                "agent_id": "00000000-0000-4000-8000-000000000033",
+                "status": "retired",
+                "blockers": [],
+                "retired_at": "2026-09-29T13:45:39.721295Z",
+                "pinned": false,
+                "pin_version": 0
+              },
+              {
+                "agent_id": "00000000-0000-4000-8000-000000000034",
+                "status": "retired",
+                "blockers": [],
+                "retired_at": "2026-09-29T13:45:39.721295Z",
+                "pinned": false,
+                "pin_version": 0
+              },
+              {
+                "agent_id": "00000000-0000-4000-8000-000000000035",
+                "status": "retired",
+                "blockers": [],
+                "retired_at": "2026-09-29T13:45:39.721295Z",
+                "pinned": false,
+                "pin_version": 0
+              },
+              {
+                "agent_id": "00000000-0000-4000-8000-000000000036",
+                "status": "retired",
+                "blockers": [],
+                "retired_at": "2026-09-29T13:45:39.721295Z",
+                "pinned": false,
+                "pin_version": 0
+              }
+            ],
+            "replayed": false
+          }
+        },
+        "history_digest": "029a15fed0e4b5ef3d325debcc4675217c708a707206349b150d5a6899621537",
+        "qualification": "Only one owned fixture room_memberships row was removed through SQL; the denial, snapshot refresh and mutations ran through the product HTTP routes. Reload waits until exact membership restoration because demo bootstrap recreates demo memberships."
+      }
+    },
+    {
+      "name": "Reload after exact authority restoration preserves the unresolved request and fences overlapping Clear",
+      "at": "2026-09-29T13:45:41.189Z",
+      "detail": {
+        "denied_request": {
+          "actor_id": "00000000-0000-4000-8000-000000000012",
+          "idempotency_key": "<OP_021>",
+          "expected_pin_version": 1
+        },
+        "restored_membership": {
+          "role": "member",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "actor_id": "00000000-0000-4000-8000-000000000012",
+          "joined_at": "2026-09-29T08:44:35.825738-05:00"
+        },
+        "saved_operation": {
+          "scope": {
+            "server": "http://127.0.0.1:59031",
+            "corpId": "00000000-0000-4000-8000-000000000001",
+            "actorId": "00000000-0000-4000-8000-000000000012"
+          },
+          "mode": "retire",
+          "targets": [
+            {
+              "agent_id": "616e487e-164b-44bf-b3c3-2345c0720c78",
+              "expected_pin_version": 1
+            }
+          ],
+          "idempotency_key": "<OP_021>"
+        }
+      }
+    },
+    {
+      "name": "Explicit pinned Retire preserves history; lost response survives reload and retries identical bytes once; other client closes retired inspector with usable focus",
+      "at": "2026-09-29T13:45:45.989Z",
+      "detail": {
+        "original_request": {
+          "actor_id": "00000000-0000-4000-8000-000000000011",
+          "idempotency_key": "<OP_004>",
+          "expected_pin_version": 1
+        },
+        "original_response": {
+          "results": [
+            {
+              "agent_id": "616e487e-164b-44bf-b3c3-2345c0720c78",
+              "status": "retired",
+              "blockers": [],
+              "retired_at": "2026-09-29T13:45:44.406057Z",
+              "pinned": true,
+              "pin_version": 1
+            }
+          ],
+          "replayed": false
+        },
+        "replay": {
+          "results": [
+            {
+              "agent_id": "616e487e-164b-44bf-b3c3-2345c0720c78",
+              "status": "retired",
+              "blockers": [],
+              "retired_at": "2026-09-29T13:45:44.406057Z",
+              "pinned": true,
+              "pin_version": 1
+            }
+          ],
+          "replayed": true
+        },
+        "history_digest": "029a15fed0e4b5ef3d325debcc4675217c708a707206349b150d5a6899621537"
+      }
+    },
+    {
+      "name": "After exact authority restoration, Bob retries the original denied request and reconciles Alice's retirement without a duplicate retirement event",
+      "at": "2026-09-29T13:45:46.318Z",
+      "detail": {
+        "body": {
+          "actor_id": "00000000-0000-4000-8000-000000000012",
+          "idempotency_key": "<OP_021>",
+          "expected_pin_version": 1
+        },
+        "result": {
+          "results": [
+            {
+              "agent_id": "616e487e-164b-44bf-b3c3-2345c0720c78",
+              "status": "already_retired",
+              "blockers": [],
+              "retired_at": "2026-09-29T13:45:44.406057Z",
+              "pinned": true,
+              "pin_version": 1
+            }
+          ],
+          "replayed": false
+        }
+      }
+    },
+    {
+      "name": "Crew management and its controls fit 390 CSS pixels",
+      "at": "2026-09-29T13:45:46.839Z",
+      "detail": {
+        "viewport": 390,
+        "document_width": 390,
+        "width": 352,
+        "scroll_width": 350,
+        "overflowing_controls": []
+      }
+    },
+    {
+      "name": "Cleared identities remain historically resolvable and dynamic worker events remain private-room scoped",
+      "at": "2026-09-29T13:45:47.050Z",
+      "detail": {
+        "requested": 6,
+        "retired": 6
+      }
+    }
+  ],
+  "operations": [
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/5f3219a8-2bfe-4479-847b-1e36419c149c/pin",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "pinned": true,
+        "expected_version": 0,
+        "idempotency_key": "<OP_012>"
+      },
+      "status": 200,
+      "result": {
+        "agent_id": "5f3219a8-2bfe-4479-847b-1e36419c149c",
+        "pinned": true,
+        "pin_version": 1,
+        "replayed": false
+      },
+      "at": "2026-09-29T13:44:56.270Z"
+    },
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/clear",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "idempotency_key": "<OP_003>",
+        "targets": [
+          {
+            "agent_id": "5f3219a8-2bfe-4479-847b-1e36419c149c",
+            "expected_pin_version": 1
+          }
+        ]
+      },
+      "status": 200,
+      "result": {
+        "results": [
+          {
+            "agent_id": "5f3219a8-2bfe-4479-847b-1e36419c149c",
+            "status": "blocked",
+            "blockers": [
+              "pinned",
+              "current_run",
+              "active_status",
+              "assigned_work",
+              "active_run",
+              "control_lease",
+              "queued_message",
+              "pending_approval"
+            ],
+            "retired_at": null,
+            "pinned": true,
+            "pin_version": 1
+          }
+        ],
+        "replayed": false
+      },
+      "at": "2026-09-29T13:45:00.338Z"
+    },
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/5f3219a8-2bfe-4479-847b-1e36419c149c/retire",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "idempotency_key": "<OP_010>",
+        "expected_pin_version": 1
+      },
+      "status": 200,
+      "result": {
+        "results": [
+          {
+            "agent_id": "5f3219a8-2bfe-4479-847b-1e36419c149c",
+            "status": "blocked",
+            "blockers": [
+              "current_run",
+              "active_status",
+              "assigned_work",
+              "active_run",
+              "control_lease",
+              "queued_message",
+              "pending_approval"
+            ],
+            "retired_at": null,
+            "pinned": true,
+            "pin_version": 1
+          }
+        ],
+        "replayed": false
+      },
+      "at": "2026-09-29T13:45:00.548Z"
+    },
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/5f3219a8-2bfe-4479-847b-1e36419c149c/pin",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "pinned": false,
+        "expected_version": 1,
+        "idempotency_key": "<OP_013>"
+      },
+      "status": 200,
+      "result": {
+        "agent_id": "5f3219a8-2bfe-4479-847b-1e36419c149c",
+        "pinned": false,
+        "pin_version": 2,
+        "replayed": false
+      },
+      "at": "2026-09-29T13:45:01.393Z"
+    },
+    {
+      "kind": "fixture-api",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "body": {
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "[slow] Issue48 explicit retirement after native completion",
+        "preferred_adapter": "fake-process",
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/issue48-retirement",
+          "base_ref": "HEAD",
+          "base_commit": "06c3580bd90682a24b700c0fef6bae97e5c65d80"
+        },
+        "budget_tokens": 80000,
+        "budget_cost_microusd": 1000000,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 1
+            },
+            {
+              "type": "file",
+              "path": "result.md",
+              "min_bytes": 1
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "at": "2026-09-29T13:45:20.205Z"
+    },
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/616e487e-164b-44bf-b3c3-2345c0720c78/pin",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "pinned": true,
+        "expected_version": 0,
+        "idempotency_key": "<OP_022>"
+      },
+      "status": 200,
+      "result": {
+        "agent_id": "616e487e-164b-44bf-b3c3-2345c0720c78",
+        "pinned": true,
+        "pin_version": 1,
+        "replayed": false
+      },
+      "at": "2026-09-29T13:45:20.906Z"
+    },
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions/d09c9122-241a-4d5b-9dfd-7040bb99de2b/launch",
+      "body": {
+        "requested_by": "00000000-0000-4000-8000-000000000011"
+      },
+      "status": 200,
+      "result": {
+        "run_id": "ef1340c6-2580-41f0-8c2d-1169010c1654",
+        "runner_id": "runner-issue48-42269426",
+        "run_ids": [
+          "ef1340c6-2580-41f0-8c2d-1169010c1654"
+        ],
+        "runner_ids": [
+          "runner-issue48-42269426"
+        ],
+        "replayed": false
+      },
+      "at": "2026-09-29T13:45:21.564Z"
+    },
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/clear",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "idempotency_key": "<OP_017>",
+        "targets": [
+          {
+            "agent_id": "616e487e-164b-44bf-b3c3-2345c0720c78",
+            "expected_pin_version": 1
+          }
+        ]
+      },
+      "status": 200,
+      "result": {
+        "results": [
+          {
+            "agent_id": "616e487e-164b-44bf-b3c3-2345c0720c78",
+            "status": "blocked",
+            "blockers": [
+              "pinned"
+            ],
+            "retired_at": null,
+            "pinned": true,
+            "pin_version": 1
+          }
+        ],
+        "replayed": false
+      },
+      "at": "2026-09-29T13:45:38.573Z"
+    },
+    {
+      "kind": "fixture-api",
+      "route": "/api/demo/bootstrap?seed_crew=true",
+      "body": {},
+      "at": "2026-09-29T13:45:38.588Z"
+    },
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/616e487e-164b-44bf-b3c3-2345c0720c78/retire",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "idempotency_key": "<OP_021>",
+        "expected_pin_version": 1
+      },
+      "status": 403,
+      "result": {
+        "error": "forbidden: actor is not a member of this room"
+      },
+      "at": "2026-09-29T13:45:39.340Z"
+    },
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/clear",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "idempotency_key": "<OP_019>",
+        "targets": [
+          {
+            "agent_id": "00000000-0000-4000-8000-000000000034",
+            "expected_pin_version": 0
+          },
+          {
+            "agent_id": "00000000-0000-4000-8000-000000000033",
+            "expected_pin_version": 0
+          },
+          {
+            "agent_id": "00000000-0000-4000-8000-000000000035",
+            "expected_pin_version": 0
+          },
+          {
+            "agent_id": "00000000-0000-4000-8000-000000000036",
+            "expected_pin_version": 0
+          },
+          {
+            "agent_id": "00000000-0000-4000-8000-000000000032",
+            "expected_pin_version": 0
+          },
+          {
+            "agent_id": "00000000-0000-4000-8000-000000000031",
+            "expected_pin_version": 0
+          }
+        ]
+      },
+      "status": 200,
+      "result": {
+        "results": [
+          {
+            "agent_id": "00000000-0000-4000-8000-000000000031",
+            "status": "retired",
+            "blockers": [],
+            "retired_at": "2026-09-29T13:45:39.721295Z",
+            "pinned": false,
+            "pin_version": 0
+          },
+          {
+            "agent_id": "00000000-0000-4000-8000-000000000032",
+            "status": "retired",
+            "blockers": [],
+            "retired_at": "2026-09-29T13:45:39.721295Z",
+            "pinned": false,
+            "pin_version": 0
+          },
+          {
+            "agent_id": "00000000-0000-4000-8000-000000000033",
+            "status": "retired",
+            "blockers": [],
+            "retired_at": "2026-09-29T13:45:39.721295Z",
+            "pinned": false,
+            "pin_version": 0
+          },
+          {
+            "agent_id": "00000000-0000-4000-8000-000000000034",
+            "status": "retired",
+            "blockers": [],
+            "retired_at": "2026-09-29T13:45:39.721295Z",
+            "pinned": false,
+            "pin_version": 0
+          },
+          {
+            "agent_id": "00000000-0000-4000-8000-000000000035",
+            "status": "retired",
+            "blockers": [],
+            "retired_at": "2026-09-29T13:45:39.721295Z",
+            "pinned": false,
+            "pin_version": 0
+          },
+          {
+            "agent_id": "00000000-0000-4000-8000-000000000036",
+            "status": "retired",
+            "blockers": [],
+            "retired_at": "2026-09-29T13:45:39.721295Z",
+            "pinned": false,
+            "pin_version": 0
+          }
+        ],
+        "replayed": false
+      },
+      "at": "2026-09-29T13:45:39.836Z"
+    },
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/616e487e-164b-44bf-b3c3-2345c0720c78/retire",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "idempotency_key": "<OP_004>",
+        "expected_pin_version": 1
+      },
+      "status": 200,
+      "result": {
+        "results": [
+          {
+            "agent_id": "616e487e-164b-44bf-b3c3-2345c0720c78",
+            "status": "retired",
+            "blockers": [],
+            "retired_at": "2026-09-29T13:45:44.406057Z",
+            "pinned": true,
+            "pin_version": 1
+          }
+        ],
+        "replayed": true
+      },
+      "at": "2026-09-29T13:45:45.778Z"
+    },
+    {
+      "kind": "browser",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/616e487e-164b-44bf-b3c3-2345c0720c78/retire",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "idempotency_key": "<OP_021>",
+        "expected_pin_version": 1
+      },
+      "status": 200,
+      "result": {
+        "results": [
+          {
+            "agent_id": "616e487e-164b-44bf-b3c3-2345c0720c78",
+            "status": "already_retired",
+            "blockers": [],
+            "retired_at": "2026-09-29T13:45:44.406057Z",
+            "pinned": true,
+            "pin_version": 1
+          }
+        ],
+        "replayed": false
+      },
+      "at": "2026-09-29T13:45:46.106Z"
+    },
+    {
+      "kind": "fixture-api",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/clear",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000013",
+        "idempotency_key": "<OP_020>",
+        "targets": [
+          {
+            "agent_id": "616e487e-164b-44bf-b3c3-2345c0720c78",
+            "expected_pin_version": 1
+          }
+        ]
+      },
+      "at": "2026-09-29T13:45:47.011Z"
+    },
+    {
+      "kind": "fixture-api",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/616e487e-164b-44bf-b3c3-2345c0720c78/retire",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000013",
+        "idempotency_key": "<OP_008>",
+        "expected_pin_version": 1
+      },
+      "at": "2026-09-29T13:45:47.015Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "label": "01-empty-crew",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\evidence\\browser-r5\\01-empty-crew.png",
+      "sha256": "3d23382c90558754d937f1858bb63d4d9668fd0dacc868b4976a1ac9bc118549",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    },
+    {
+      "label": "02-pinned-off-shift",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\evidence\\browser-r5\\02-pinned-off-shift.png",
+      "sha256": "bdeb4057f30e2f80ad04ac59283492679bdcd74b155c89cef4b25c0fb1a03139",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    },
+    {
+      "label": "03-active-removal-blocked",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\evidence\\browser-r5\\03-active-removal-blocked.png",
+      "sha256": "5d53cb48475add1fbdb01acc13fa155db52fa0fcc866036cdc15daf7e0eb5655",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    },
+    {
+      "label": "04-automatic-retirement-history",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\evidence\\browser-r5\\04-automatic-retirement-history.png",
+      "sha256": "682fef18df49b5c2ee6ad76ca88358f28043224ebad2631b97f6ef18462febce",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    },
+    {
+      "label": "native-live-crew",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\evidence\\browser-r5\\native-live-crew.png",
+      "sha256": "88e06e211a093c1bde2caba536219c29a5df6a674de07e314d6b446a0b8c4d0b",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    },
+    {
+      "label": "native-403-unrelated-clear",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\evidence\\browser-r5\\native-403-unrelated-clear.png",
+      "sha256": "0861deb28ddded31b8358b32136406601ccb0ad1b529fa12a2b09c0618540c64",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    },
+    {
+      "label": "native-403-restored-authority-reload",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\evidence\\browser-r5\\native-403-restored-authority-reload.png",
+      "sha256": "0861deb28ddded31b8358b32136406601ccb0ad1b529fa12a2b09c0618540c64",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    },
+    {
+      "label": "05-retired-response-lost",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\evidence\\browser-r5\\05-retired-response-lost.png",
+      "sha256": "903181d31db5d416c42b68aa4011792989bf52833e1c764386a10452b00e9781",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    },
+    {
+      "label": "06-manual-retirement-recovered",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\evidence\\browser-r5\\06-manual-retirement-recovered.png",
+      "sha256": "0f43045ffe2751b68ea765e8860dbd942f304c9ae7fd63cd98c7f6a9c430be09",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    },
+    {
+      "label": "07-narrow-retired-history",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\evidence\\browser-r5\\07-narrow-retired-history.png",
+      "sha256": "a0c64baa35471fdd57ad69f1a0d7469dc73aa6aba0e60abedee4468bd4aa98f5",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "label": "08-clear-crew-complete",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\evidence\\browser-r5\\08-clear-crew-complete.png",
+      "sha256": "0226b7258b361936a9ab2de92bd22f6a92e7ef6ff159ac49bba677a3ba07a092",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    }
+  ],
+  "page_errors": [],
+  "blocked_requests": [],
+  "lifecycle_observations": [
+    {
+      "at": "2026-09-29T13:45:23.863Z",
+      "agent_status": "working",
+      "run_status": "running"
+    },
+    {
+      "at": "2026-09-29T13:45:36.414Z",
+      "agent_status": "reviewing",
+      "run_status": "verifying"
+    },
+    {
+      "at": "2026-09-29T13:45:36.870Z",
+      "agent_status": "idle",
+      "run_status": "completed"
+    }
+  ],
+  "physical_provider_observations": [
+    {
+      "observed_at_utc": "2026-09-29T13:44:59.8639191+00:00",
+      "runner": {
+        "started_utc": "2026-09-29T13:44:35.8710315Z",
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\runner-20260929T134435863-d425b0af961a40af9ef066399563ed13.stdout.log",
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4",
+        "role": "runner",
+        "pid": 3572,
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\runner-20260929T134435863-d425b0af961a40af9ef066399563ed13.stderr.log"
+      },
+      "run_ids": [
+        "13e5ad43-1d3f-4f76-91c7-c77c9cf2a801"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [
+        {
+          "owned_runner_parent": true,
+          "parent_pid": 3572,
+          "identity": {
+            "started_utc": "2026-09-29T13:44:57.6775149Z",
+            "pid": 10876,
+            "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe"
+          },
+          "owned_workspace_argument": true,
+          "run_id": "13e5ad43-1d3f-4f76-91c7-c77c9cf2a801"
+        }
+      ],
+      "prior_processes": [],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    },
+    {
+      "observed_at_utc": "2026-09-29T13:45:19.7291437+00:00",
+      "runner": {
+        "started_utc": "2026-09-29T13:44:35.8710315Z",
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\runner-20260929T134435863-d425b0af961a40af9ef066399563ed13.stdout.log",
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4",
+        "role": "runner",
+        "pid": 3572,
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\runner-20260929T134435863-d425b0af961a40af9ef066399563ed13.stderr.log"
+      },
+      "run_ids": [
+        "13e5ad43-1d3f-4f76-91c7-c77c9cf2a801",
+        "077e2426-f28a-4e8e-85be-f565305f4a14"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [],
+      "prior_processes": [
+        {
+          "current": null,
+          "pid": 10876
+        }
+      ],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    },
+    {
+      "observed_at_utc": "2026-09-29T13:45:23.2024563+00:00",
+      "runner": {
+        "started_utc": "2026-09-29T13:44:35.8710315Z",
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\runner-20260929T134435863-d425b0af961a40af9ef066399563ed13.stdout.log",
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4",
+        "role": "runner",
+        "pid": 3572,
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\runner-20260929T134435863-d425b0af961a40af9ef066399563ed13.stderr.log"
+      },
+      "run_ids": [
+        "ef1340c6-2580-41f0-8c2d-1169010c1654"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [
+        {
+          "owned_runner_parent": true,
+          "parent_pid": 3572,
+          "owned_workspace_argument": true,
+          "identity": {
+            "pid": 36168,
+            "started_utc": "2026-09-29T13:45:22.0756466Z",
+            "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe"
+          },
+          "run_id": "ef1340c6-2580-41f0-8c2d-1169010c1654"
+        }
+      ],
+      "prior_processes": [],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    },
+    {
+      "observed_at_utc": "2026-09-29T13:45:38.2598047+00:00",
+      "runner": {
+        "started_utc": "2026-09-29T13:44:35.8710315Z",
+        "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\runner-20260929T134435863-d425b0af961a40af9ef066399563ed13.stdout.log",
+        "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4",
+        "role": "runner",
+        "pid": 3572,
+        "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+        "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r4\\logs\\runner-20260929T134435863-d425b0af961a40af9ef066399563ed13.stderr.log"
+      },
+      "run_ids": [
+        "ef1340c6-2580-41f0-8c2d-1169010c1654"
+      ],
+      "provider_script": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\scripts\\fake-agent.mjs",
+      "matches": [],
+      "prior_processes": [
+        {
+          "pid": 36168,
+          "current": null
+        }
+      ],
+      "scope": "Read-only native Windows process observation for the specified deterministic fixture runs."
+    }
+  ],
+  "limitations": [
+    "Development principals, not production identity-provider acceptance.",
+    "Native deterministic fake-process; no vendor inference or external GitHub effects.",
+    "This lane establishes the retention slice; tester/reviewer staffing remains separately qualified."
+  ],
+  "manual_worker": "616e487e-164b-44bf-b3c3-2345c0720c78",
+  "manual_mission": "d09c9122-241a-4d5b-9dfd-7040bb99de2b",
+  "manual_run": "ef1340c6-2580-41f0-8c2d-1169010c1654",
+  "lifecycle_render_observations": [
+    {
+      "at": "2026-09-29T13:45:21.250Z",
+      "labels": [
+        "engineer · Off shift · Pinned",
+        "engineer · Retired"
+      ]
+    },
+    {
+      "at": "2026-09-29T13:45:21.909Z",
+      "labels": [
+        "engineer · Provisioning · Pinned",
+        "engineer · Retired"
+      ]
+    },
+    {
+      "at": "2026-09-29T13:45:22.445Z",
+      "labels": [
+        "engineer · Live · Pinned",
+        "engineer · Retired"
+      ]
+    },
+    {
+      "at": "2026-09-29T13:45:36.580Z",
+      "labels": [
+        "engineer · Off shift · Pinned",
+        "engineer · Retired"
+      ]
+    }
+  ],
+  "legacy_event_visibility": {
+    "legacy_agent_ids": [
+      "00000000-0000-4000-8000-000000000034",
+      "00000000-0000-4000-8000-000000000033",
+      "00000000-0000-4000-8000-000000000035",
+      "00000000-0000-4000-8000-000000000036",
+      "00000000-0000-4000-8000-000000000032",
+      "00000000-0000-4000-8000-000000000031"
+    ],
+    "visible_to_eve": [
+      {
+        "seq": 78,
+        "id": "4a69fbfe-20b9-425f-b89b-0bc598f9481c",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": null,
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "type": "agent.retired",
+        "aggregate_type": "agent",
+        "aggregate_id": "00000000-0000-4000-8000-000000000031",
+        "aggregate_version": 1,
+        "correlation_id": null,
+        "causation_id": null,
+        "idempotency_key": "agent-retirement:<OP_019>:00000000-0000-4000-8000-000000000031",
+        "visibility": "corp",
+        "payload": {
+          "mission_id": null,
+          "mode": "clear",
+          "request_digest": "5e4ad9612257abf96c4e81e7b5b65fccd7b73fc4c8837509f6cdd67e8e4016fa",
+          "result": {
+            "agent_id": "00000000-0000-4000-8000-000000000031",
+            "blockers": [],
+            "pin_version": 0,
+            "pinned": false,
+            "retired_at": "2026-09-29T13:45:39.721295Z",
+            "status": "retired"
+          },
+          "target": {
+            "agent_id": "00000000-0000-4000-8000-000000000031",
+            "expected_pin_version": 0
+          }
+        },
+        "created_at": "2026-09-29T13:45:39.721295Z"
+      },
+      {
+        "seq": 79,
+        "id": "b42408a7-2676-48fa-b8d3-c2f7d01b21a3",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": null,
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "type": "agent.retired",
+        "aggregate_type": "agent",
+        "aggregate_id": "00000000-0000-4000-8000-000000000032",
+        "aggregate_version": 1,
+        "correlation_id": null,
+        "causation_id": null,
+        "idempotency_key": "agent-retirement:<OP_019>:00000000-0000-4000-8000-000000000032",
+        "visibility": "corp",
+        "payload": {
+          "mission_id": null,
+          "mode": "clear",
+          "request_digest": "5e4ad9612257abf96c4e81e7b5b65fccd7b73fc4c8837509f6cdd67e8e4016fa",
+          "result": {
+            "agent_id": "00000000-0000-4000-8000-000000000032",
+            "blockers": [],
+            "pin_version": 0,
+            "pinned": false,
+            "retired_at": "2026-09-29T13:45:39.721295Z",
+            "status": "retired"
+          },
+          "target": {
+            "agent_id": "00000000-0000-4000-8000-000000000032",
+            "expected_pin_version": 0
+          }
+        },
+        "created_at": "2026-09-29T13:45:39.721295Z"
+      },
+      {
+        "seq": 80,
+        "id": "14f0db31-69ac-433f-8357-3b49da09ab14",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": null,
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "type": "agent.retired",
+        "aggregate_type": "agent",
+        "aggregate_id": "00000000-0000-4000-8000-000000000033",
+        "aggregate_version": 1,
+        "correlation_id": null,
+        "causation_id": null,
+        "idempotency_key": "agent-retirement:<OP_019>:00000000-0000-4000-8000-000000000033",
+        "visibility": "corp",
+        "payload": {
+          "mission_id": null,
+          "mode": "clear",
+          "request_digest": "5e4ad9612257abf96c4e81e7b5b65fccd7b73fc4c8837509f6cdd67e8e4016fa",
+          "result": {
+            "agent_id": "00000000-0000-4000-8000-000000000033",
+            "blockers": [],
+            "pin_version": 0,
+            "pinned": false,
+            "retired_at": "2026-09-29T13:45:39.721295Z",
+            "status": "retired"
+          },
+          "target": {
+            "agent_id": "00000000-0000-4000-8000-000000000033",
+            "expected_pin_version": 0
+          }
+        },
+        "created_at": "2026-09-29T13:45:39.721295Z"
+      },
+      {
+        "seq": 81,
+        "id": "cef88705-83f8-4945-b728-db847a226bc3",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": null,
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "type": "agent.retired",
+        "aggregate_type": "agent",
+        "aggregate_id": "00000000-0000-4000-8000-000000000034",
+        "aggregate_version": 1,
+        "correlation_id": null,
+        "causation_id": null,
+        "idempotency_key": "agent-retirement:<OP_019>:00000000-0000-4000-8000-000000000034",
+        "visibility": "corp",
+        "payload": {
+          "mission_id": null,
+          "mode": "clear",
+          "request_digest": "5e4ad9612257abf96c4e81e7b5b65fccd7b73fc4c8837509f6cdd67e8e4016fa",
+          "result": {
+            "agent_id": "00000000-0000-4000-8000-000000000034",
+            "blockers": [],
+            "pin_version": 0,
+            "pinned": false,
+            "retired_at": "2026-09-29T13:45:39.721295Z",
+            "status": "retired"
+          },
+          "target": {
+            "agent_id": "00000000-0000-4000-8000-000000000034",
+            "expected_pin_version": 0
+          }
+        },
+        "created_at": "2026-09-29T13:45:39.721295Z"
+      },
+      {
+        "seq": 82,
+        "id": "50ee72ed-8ef7-4ec7-8085-45b30b4dc5c0",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": null,
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "type": "agent.retired",
+        "aggregate_type": "agent",
+        "aggregate_id": "00000000-0000-4000-8000-000000000035",
+        "aggregate_version": 1,
+        "correlation_id": null,
+        "causation_id": null,
+        "idempotency_key": "agent-retirement:<OP_019>:00000000-0000-4000-8000-000000000035",
+        "visibility": "corp",
+        "payload": {
+          "mission_id": null,
+          "mode": "clear",
+          "request_digest": "5e4ad9612257abf96c4e81e7b5b65fccd7b73fc4c8837509f6cdd67e8e4016fa",
+          "result": {
+            "agent_id": "00000000-0000-4000-8000-000000000035",
+            "blockers": [],
+            "pin_version": 0,
+            "pinned": false,
+            "retired_at": "2026-09-29T13:45:39.721295Z",
+            "status": "retired"
+          },
+          "target": {
+            "agent_id": "00000000-0000-4000-8000-000000000035",
+            "expected_pin_version": 0
+          }
+        },
+        "created_at": "2026-09-29T13:45:39.721295Z"
+      },
+      {
+        "seq": 83,
+        "id": "3e833b6e-aed2-45ba-b42c-24beec1e244d",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": null,
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "type": "agent.retired",
+        "aggregate_type": "agent",
+        "aggregate_id": "00000000-0000-4000-8000-000000000036",
+        "aggregate_version": 1,
+        "correlation_id": null,
+        "causation_id": null,
+        "idempotency_key": "agent-retirement:<OP_019>:00000000-0000-4000-8000-000000000036",
+        "visibility": "corp",
+        "payload": {
+          "mission_id": null,
+          "mode": "clear",
+          "request_digest": "5e4ad9612257abf96c4e81e7b5b65fccd7b73fc4c8837509f6cdd67e8e4016fa",
+          "result": {
+            "agent_id": "00000000-0000-4000-8000-000000000036",
+            "blockers": [],
+            "pin_version": 0,
+            "pinned": false,
+            "retired_at": "2026-09-29T13:45:39.721295Z",
+            "status": "retired"
+          },
+          "target": {
+            "agent_id": "00000000-0000-4000-8000-000000000036",
+            "expected_pin_version": 0
+          }
+        },
+        "created_at": "2026-09-29T13:45:39.721295Z"
+      }
+    ],
+    "qualification": "Legacy identities have no mission room; their Corp-scoped event visibility is not private-room evidence."
+  },
+  "final_counts": {
+    "agents": 8,
+    "retired": 8,
+    "missions": 3,
+    "tasks": 3,
+    "runs": 3,
+    "completed_runs": 3,
+    "verifier_rows": 6
+  },
+  "finished_at_utc": "2026-09-29T13:45:47.915Z"
+}

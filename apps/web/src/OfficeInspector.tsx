@@ -2,11 +2,12 @@ import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 
 export function OfficeInspector({
-  agentName, onClose, children,
+  agentName, onClose, children, returnFocusId,
 }: {
   agentName: string
   onClose: () => void
   children: ReactNode
+  returnFocusId?: string
 }) {
   const close = useRef<HTMLButtonElement>(null)
   useEffect(() => {
@@ -17,8 +18,9 @@ export function OfficeInspector({
     return () => {
       document.body.style.overflow = overflow
       if (previous instanceof HTMLElement && previous.isConnected) previous.focus({ preventScroll: true })
+      else if (returnFocusId) document.getElementById(returnFocusId)?.focus({ preventScroll: true })
     }
-  }, [])
+  }, [returnFocusId])
 
   return (
     <div className="world-inspector-layer">

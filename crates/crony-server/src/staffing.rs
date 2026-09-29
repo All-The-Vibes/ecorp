@@ -19,6 +19,10 @@ pub fn candidates(
             ("specialist-b", "Implementation specialist", "mint"),
             ("manager", "Integration lead", "marigold"),
         ],
+        "test-review" => &[
+            ("tester", "Test engineer", "mint"),
+            ("reviewer", "Source reviewer", "violet"),
+        ],
         "studio-swarm" if adapter == "github-copilot" => &[
             ("visual-direction", "Visual designer", "violet"),
             ("gameplay-systems", "Gameplay engineer", "cobalt"),
@@ -95,6 +99,7 @@ mod tests {
         for (strategy, count) in [
             ("single", 1),
             ("parallel-specialists", 3),
+            ("test-review", 2),
             ("studio-swarm", 3),
         ] {
             let (agents, proposed) = candidates(corp, strategy, "github-copilot", &[]).unwrap();

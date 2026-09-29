@@ -1,0 +1,66 @@
+{
+  "issue": 48,
+  "status": "failed",
+  "stage": "Native pin and active-obligation preservation",
+  "started_at_utc": "2026-09-29T13:36:19.370Z",
+  "product_head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "source_binding_sha256": "be57ba0ac75ac46923e73de010484c5c293d896e0431194cd1883a072d0c00ff",
+  "binaries": [
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-cli.exe",
+      "sha256": "290f7e03a6de7a22a9b07862aed668534fb71b0adf6fd4b58ed61028383544b7"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-server.exe",
+      "sha256": "4156c82a14f94d2ba65388c8b124e48c9de18a83272c12696ef40e1157b7bf07"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+      "sha256": "da0354b6529b51b25cb264debee38cb54432580aeaba0e218dc2075d323f28f3"
+    }
+  ],
+  "source": {
+    "base_commit": "45437f878853d1160905d3016a53c1459199acd6",
+    "path": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r1\\source",
+    "repository": "ecorp-fixture/issue48-retirement",
+    "base_ref": "HEAD"
+  },
+  "assertions": [
+    {
+      "name": "Fresh Corp has no static workers; empty crew and unauthorized controls are explicit",
+      "at": "2026-09-29T13:36:25.366Z"
+    }
+  ],
+  "operations": [],
+  "screenshots": [
+    {
+      "label": "01-empty-crew",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r1\\evidence\\browser-r2\\01-empty-crew.png",
+      "sha256": "3d23382c90558754d937f1858bb63d4d9668fd0dacc868b4976a1ac9bc118549",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    },
+    {
+      "label": "failure-observation",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r1\\evidence\\browser-r2\\failure-observation.png",
+      "sha256": "2aab2f50074b3bdc3d1d0e9962d9381227667ca9198a9a49bab8869e43e1f84d",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      }
+    }
+  ],
+  "page_errors": [],
+  "blocked_requests": [],
+  "lifecycle_observations": [],
+  "physical_provider_observations": [],
+  "limitations": [
+    "Development principals, not production identity-provider acceptance.",
+    "Native deterministic fake-process; no vendor inference or external GitHub effects.",
+    "This lane establishes the retention slice; tester/reviewer staffing remains separately qualified."
+  ],
+  "failure": "Error: locator.click: Error: strict mode violation: getByRole('button', { name: /^Inspect Delivery engineer,/ }) resolved to 2 elements:\n    1) <button type=\"button\" data-state=\"idle\" aria-pressed=\"true\" data-testid=\"agent-Delivery engineer\" aria-label=\"Inspect Delivery engineer, Idle\" class=\"pixel-office-agent pixel-office-state-idle\" title=\"Delivery engineer — Idle. The agent reports no active work.\">…</button> aka getByTestId('agent-Delivery engineer')\n    2) <button type=\"button\" data-state=\"idle\" aria-pressed=\"true\" class=\"pixel-office-crew pixel-office-state-idle\" aria-label=\"Inspect Delivery engineer, Idle, Test harness\">…</button> aka getByRole('button', { name: 'Inspect Delivery engineer, Idle, Test harness' })\n\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /^Inspect Delivery engineer,/ })\u001b[22m\n",
+  "finished_at_utc": "2026-09-29T13:36:26.784Z"
+}
