@@ -1,0 +1,98 @@
+{
+  "demo": {
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "room_id": "00000000-0000-4000-8000-000000000041",
+    "alice_actor_id": "00000000-0000-4000-8000-000000000011",
+    "bob_actor_id": "00000000-0000-4000-8000-000000000012",
+    "eve_actor_id": "00000000-0000-4000-8000-000000000013",
+    "manager_agent_id": "00000000-0000-4000-8000-000000000031",
+    "worker_agent_id": "00000000-0000-4000-8000-000000000032",
+    "codex_agent_id": "00000000-0000-4000-8000-000000000033"
+  },
+  "test_owned": true,
+  "updated_at": "2026-09-30T13:09:02.1187106Z",
+  "ready_at": "2026-09-30T13:07:48.8683065Z",
+  "schema_version": 2,
+  "source": {
+    "base_commit": "dba2495292a75a9f268e3b9e207458c8dd3d5dfb",
+    "base_ref": "HEAD",
+    "repository": "ecorp-fixture/pr265-run-activity"
+  },
+  "plan": {
+    "phase": "Start",
+    "product": "<USERPROFILE>\\.codex\\worktrees\\issue262-recovery\\ecorp",
+    "product_commit": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "qa_root": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9",
+    "server": "http://127.0.0.1:18865",
+    "web": "http://127.0.0.1:15865",
+    "database": {
+      "port": 15465,
+      "host": "127.0.0.1",
+      "fresh": true,
+      "name": "pr265_activity"
+    },
+    "runner_id": "pr265-activity-qa",
+    "provider": "Native Codex adapter with the existing deterministic fake-codex-app-server.mjs. Synthetic protocol and usage counters, no real inference.",
+    "source": "new independent synthetic Git repository, never the product checkout",
+    "factory_watcher": false,
+    "github_effects": false,
+    "existing_state_touched": false,
+    "build_required": false
+  },
+  "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9",
+  "purpose": "pr265-run-activity",
+  "processes": {
+    "server": {
+      "started_utc": "2026-09-30T13:07:45.6087781Z",
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue262-recovery\\ecorp\\target\\debug\\crony-server.exe",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9\\logs\\server-20260930T130745598-12ce5167856c4538899ddc8c445e1f63.stdout.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9\\logs\\server-20260930T130745598-12ce5167856c4538899ddc8c445e1f63.stderr.log",
+      "pid": 8716,
+      "role": "server"
+    },
+    "runner": {
+      "started_utc": "2026-09-30T13:07:49.1371214Z",
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue262-recovery\\ecorp\\target\\debug\\crony-runner.exe",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9\\logs\\runner-codex-20260930T130749130-881a56a9033a4738bfb01f80284ede40.stdout.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9\\logs\\runner-codex-20260930T130749130-881a56a9033a4738bfb01f80284ede40.stderr.log",
+      "pid": 3268,
+      "role": "runner-codex"
+    },
+    "postgres": {
+      "started_utc": "2026-09-30T13:07:44.3361753Z",
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9\\logs\\postgres-20260930T130744281-afe81c0a3b624924868fac9f5678867b.stdout.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9\\logs\\postgres-20260930T130744281-afe81c0a3b624924868fac9f5678867b.stderr.log",
+      "pid": 26820,
+      "role": "postgres"
+    },
+    "web": {
+      "started_utc": "2026-09-30T13:07:47.3594636Z",
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9\\logs\\web-20260930T130747350-0bcafc4675f042bb8337f744fc5b754e.stdout.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9\\logs\\web-20260930T130747350-0bcafc4675f042bb8337f744fc5b754e.stderr.log",
+      "pid": 38848,
+      "role": "web"
+    }
+  },
+  "issue262_codex_fixture": {
+    "script_sha256": "78376e3c496a4bb65053293539b7e59883fbb8d41b20b9d92f8644b9404f7b08",
+    "replacement_started_at_utc": "2026-09-30T08:07:49.1030399-05:00",
+    "node": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+    "script": "<USERPROFILE>\\.codex\\worktrees\\issue262-recovery\\ecorp\\scripts\\fake-codex-app-server.mjs",
+    "previous_runner": {
+      "started_utc": "2026-09-30T13:07:47.3316239Z",
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue262-recovery\\ecorp\\target\\debug\\crony-runner.exe",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9\\logs\\runner-20260930T130747310-e7f7d974229d42a38269c4568a93e204.stdout.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-20260930-r9\\logs\\runner-20260930T130747310-e7f7d974229d42a38269c4568a93e204.stderr.log",
+      "pid": 23044,
+      "role": "runner"
+    }
+  },
+  "stopped_at": "2026-09-30T13:09:02.1139706Z"
+}

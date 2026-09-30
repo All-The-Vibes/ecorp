@@ -1,0 +1,559 @@
+TAP version 13
+# Subtest: all current native contract fields and verifier variants roundtrip without normalization or mutation
+ok 1 - all current native contract fields and verifier variants roundtrip without normalization or mutation
+  ---
+  duration_ms: 128.3384
+  type: 'test'
+  ...
+# Subtest: native optional fields, deliverable defaults and every deliverable form retain exact JSON shape
+ok 2 - native optional fields, deliverable defaults and every deliverable form retain exact JSON shape
+  ---
+  duration_ms: 2.7886
+  type: 'test'
+  ...
+# Subtest: manual gates and omitted, null and explicit cache controls retain their authority exactly
+ok 3 - manual gates and omitted, null and explicit cache controls retain their authority exactly
+  ---
+  duration_ms: 1.5268
+  type: 'test'
+  ...
+# Subtest: malformed exact JSON and unsupported native field types fail without coercion
+ok 4 - malformed exact JSON and unsupported native field types fail without coercion
+  ---
+  duration_ms: 0.5163
+  type: 'test'
+  ...
+# Subtest: unknown fields that native decoding would discard cannot silently become saved authority
+ok 5 - unknown fields that native decoding would discard cannot silently become saved authority
+  ---
+  duration_ms: 0.9357
+  type: 'test'
+  ...
+# Subtest: resume rejects changes to each immutable authority field but retains native default equivalence
+ok 6 - resume rejects changes to each immutable authority field but retains native default equivalence
+  ---
+  duration_ms: 135.9613
+  type: 'test'
+  ...
+# Subtest: resume preserves prohibitions and uses component-aware path and tool narrowing
+ok 7 - resume preserves prohibitions and uses component-aware path and tool narrowing
+  ---
+  duration_ms: 26.6003
+  type: 'test'
+  ...
+# Subtest: Factory correction retains ordered verifier kinds and the complete manual gate
+ok 8 - Factory correction retains ordered verifier kinds and the complete manual gate
+  ---
+  duration_ms: 21.8388
+  type: 'test'
+  ...
+# Subtest: native-valid ref punctuation and Unicode paths remain usable while control paths are rejected
+ok 9 - native-valid ref punctuation and Unicode paths remain usable while control paths are rejected
+  ---
+  duration_ms: 0.7364
+  type: 'test'
+  ...
+# Subtest: byte bounds, malformed source tuples, verifier limits and scoped references show field errors
+ok 10 - byte bounds, malformed source tuples, verifier limits and scoped references show field errors
+  ---
+  duration_ms: 18.1286
+  type: 'test'
+  ...
+# Subtest: restoring a draft rejects inconsistent action, source and Factory scope or a result without a request
+ok 11 - restoring a draft rejects inconsistent action, source and Factory scope or a result without a request
+  ---
+  duration_ms: 23.761
+  type: 'test'
+  ...
+# Subtest: restoring a saved receipt preserves absent, empty and textual refresh warnings
+ok 12 - restoring a saved receipt preserves absent, empty and textual refresh warnings
+  ---
+  duration_ms: 24.8032
+  type: 'test'
+  ...
+# Subtest: restoring a saved receipt rejects every non-string refresh warning
+not ok 13 - restoring a saved receipt rejects every non-string refresh warning
+  ---
+  duration_ms: 29.6513
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue262-recovery\\ecorp\\apps\\web\\src\\contractRevision.test.mjs:222:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    null
+    + actual - expected
+
+    + {
+    +   before: {
+    +     contract: {
+    +       acceptance_tests: [
+    +         'Existing checks pass'
+    +       ],
+    +       allowed_tools: [
+    +         'read'
+    +       ],
+    +       budget_cost_microusd: 1000,
+    +       budget_tokens: 1000,
+    +       deadline_at: null,
+    +       deliverable: null,
+    +       escalation: 'Ask the operator',
+    +       expected_output: 'Reviewed change',
+    +       model: null,
+    +       objective: 'Retain the original scope',
+    +       prohibited_actions: [
+    +         'Do not publish'
+    +       ],
+    +       reasoning_effort: null,
+    +       references: [],
+    +       secret_refs: [],
+    +       source_base_commit: null,
+    +       source_base_ref: null,
+    +       source_repository: null,
+    +       write_scope: [
+    +         'src/**'
+    +       ]
+    +     },
+    +     description: 'Original specification',
+    +     policy: {
+    +       checks: [
+    +         {
+    +           min_bytes: 1,
+    +           type: 'artifact'
+    +         }
+    +       ],
+    +       manual_gate: null
+    +     }
+    +   },
+    +   contractJson: '{\n' +
+    +     '  "objective": "Retain the original scope",\n' +
+    +     '  "expected_output": "Reviewed change",\n' +
+    +     '  "source_repository": null,\n' +
+    +     '  "source_base_ref": null,\n' +
+    +     '  "source_base_commit": null,\n' +
+    +     '  "acceptance_tests": [\n' +
+    +     '    "Existing checks pass"\n' +
+    +     '  ],\n' +
+    +     '  "allowed_tools": [\n' +
+    +     '    "read"\n' +
+    +     '  ],\n' +
+    +     '  "prohibited_actions": [\n' +
+    +     '    "Do not publish"\n' +
+    +     '  ],\n' +
+    +     '  "references": [],\n' +
+    +     '  "write_scope": [\n' +
+    +     '    "src/**"\n' +
+    +     '  ],\n' +
+    +     '  "budget_tokens": 1000,\n' +
+    +     '  "budget_cost_microusd": 1000,\n' +
+    +     '  "deadline_at": null,\n' +
+    +     '  "escalation": "Ask the operator",\n' +
+    +     '  "secret_refs": [],\n' +
+    +     '  "model": null,\n' +
+    +     '  "reasoning_effort": null,\n' +
+    +     '  "deliverable": null\n' +
+    +     '}',
+    +   description: 'Original specification',
+    +   idempotencyKey: '00000000-0000-4000-8000-000000000080',
+    +   pending: {
+    +     contract: {
+    +       acceptance_tests: [
+    +         'Existing checks pass'
+    +       ],
+    +       allowed_tools: [
+    +         'read'
+    +       ],
+    +       budget_cost_microusd: 1000,
+    +       budget_tokens: 1000,
+    +       deadline_at: null,
+    +       deliverable: null,
+    +       escalation: 'Ask the operator',
+    +       expected_output: 'Reviewed change',
+    +       model: null,
+    +       objective: 'Retain the original scope',
+    +       prohibited_actions: [
+    +         'Do not publish'
+    +       ],
+    +       reasoning_effort: null,
+    +       references: [],
+    +       secret_refs: [],
+    +       source_base_commit: null,
+    +       source_base_ref: null,
+    +       source_repository: null,
+    +       write_scope: [
+    +         'src/**'
+    +       ]
+    +     },
+    +     description: 'Original specification',
+    +     expected_contract_version: 2,
+    +     idempotency_key: '00000000-0000-4000-8000-000000000080',
+    +     next_action: 'redispatch',
+    +     reason: 'Clarify existing scope',
+    +     source_run_id: null,
+    +     task_id: '00000000-0000-4000-8000-000000000005',
+    +     verification_policy: {
+    +       checks: [
+    +         {
+    +           min_bytes: 1,
+    +           type: 'artifact'
+    +         }
+    +       ],
+    +       manual_gate: null
+    +     }
+    +   },
+    +   policyJson: '{\n' +
+    +     '  "checks": [\n' +
+    +     '    {\n' +
+    +     '      "type": "artifact",\n' +
+    +     '      "min_bytes": 1\n' +
+    +     '    }\n' +
+    +     '  ],\n' +
+    +     '  "manual_gate": null\n' +
+    +     '}',
+    +   reason: 'Clarify existing scope',
+    +   result: {
+    +     id: '00000000-0000-4000-8000-000000000090',
+    +     refreshWarning: null,
+    +     replayed: false,
+    +     status: 'saved',
+    +     version: 3
+    +   },
+    +   schema: 1,
+    +   target: {
+    +     actorId: '00000000-0000-4000-8000-000000000004',
+    +     corpId: '00000000-0000-4000-8000-000000000001',
+    +     missionId: '00000000-0000-4000-8000-000000000002',
+    +     missionVersion: 2,
+    +     nextAction: 'redispatch',
+    +     recoveryKey: null,
+    +     roomId: '00000000-0000-4000-8000-000000000003',
+    +     scopeKey: '["http://owned.invalid","00000000-0000-4000-8000-000000000001","00000000-0000-4000-8000-000000000004","00000000-0000-4000-8000-000000000003","00000000-0000-4000-8000-000000000002","00000000-0000-4000-8000-000000000005"]',
+    +     sourceRunId: null,
+    +     taskId: '00000000-0000-4000-8000-000000000005',
+    +     version: 2
+    +   }
+    + }
+    - null
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual:
+    schema: 1
+    target:
+      scopeKey: '["http://owned.invalid","00000000-0000-4000-8000-000000000001","00000000-0000-4000-8000-000000000004","00000000-0000-4000-8000-000000000003","00000000-0000-4000-8000-000000000002","00000000-0000-4000-8000-000000000005"]'
+      corpId: '00000000-0000-4000-8000-000000000001'
+      actorId: '00000000-0000-4000-8000-000000000004'
+      roomId: '00000000-0000-4000-8000-000000000003'
+      missionId: '00000000-0000-4000-8000-000000000002'
+      taskId: '00000000-0000-4000-8000-000000000005'
+      version: 2
+      missionVersion: 2
+      sourceRunId: ~
+      nextAction: 'redispatch'
+      recoveryKey: ~
+    before:
+      description: 'Original specification'
+      contract:
+        objective: 'Retain the original scope'
+        expected_output: 'Reviewed change'
+        source_repository: ~
+        source_base_ref: ~
+        source_base_commit: ~
+        acceptance_tests:
+          0: 'Existing checks pass'
+        allowed_tools:
+          0: 'read'
+        prohibited_actions:
+          0: 'Do not publish'
+        references:
+        write_scope:
+          0: 'src/**'
+        budget_tokens: 1000
+        budget_cost_microusd: 1000
+        deadline_at: ~
+        escalation: 'Ask the operator'
+        secret_refs:
+        model: ~
+        reasoning_effort: ~
+        deliverable: ~
+      policy:
+        checks:
+          0:
+            type: 'artifact'
+            min_bytes: 1
+        manual_gate: ~
+    description: 'Original specification'
+    reason: 'Clarify existing scope'
+    contractJson: |-
+      {
+        "objective": "Retain the original scope",
+        "expected_output": "Reviewed change",
+        "source_repository": null,
+        "source_base_ref": null,
+        "source_base_commit": null,
+        "acceptance_tests": [
+          "Existing checks pass"
+        ],
+        "allowed_tools": [
+          "read"
+        ],
+        "prohibited_actions": [
+          "Do not publish"
+        ],
+        "references": [],
+        "write_scope": [
+          "src/**"
+        ],
+        "budget_tokens": 1000,
+        "budget_cost_microusd": 1000,
+        "deadline_at": null,
+        "escalation": "Ask the operator",
+        "secret_refs": [],
+        "model": null,
+        "reasoning_effort": null,
+        "deliverable": null
+      }
+    policyJson: |-
+      {
+        "checks": [
+          {
+            "type": "artifact",
+            "min_bytes": 1
+          }
+        ],
+        "manual_gate": null
+      }
+    idempotencyKey: '00000000-0000-4000-8000-000000000080'
+    pending:
+      task_id: '00000000-0000-4000-8000-000000000005'
+      expected_contract_version: 2
+      next_action: 'redispatch'
+      source_run_id: ~
+      reason: 'Clarify existing scope'
+      idempotency_key: '00000000-0000-4000-8000-000000000080'
+      description: 'Original specification'
+      contract:
+        objective: 'Retain the original scope'
+        expected_output: 'Reviewed change'
+        source_repository: ~
+        source_base_ref: ~
+        source_base_commit: ~
+        acceptance_tests:
+          0: 'Existing checks pass'
+        allowed_tools:
+          0: 'read'
+        prohibited_actions:
+          0: 'Do not publish'
+        references:
+        write_scope:
+          0: 'src/**'
+        budget_tokens: 1000
+        budget_cost_microusd: 1000
+        deadline_at: ~
+        escalation: 'Ask the operator'
+        secret_refs:
+        model: ~
+        reasoning_effort: ~
+        deliverable: ~
+      verification_policy:
+        checks:
+          0:
+            type: 'artifact'
+            min_bytes: 1
+        manual_gate: ~
+    result:
+      status: 'saved'
+      id: '00000000-0000-4000-8000-000000000090'
+      version: 3
+      replayed: false
+      refreshWarning: ~
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue262-recovery/ecorp/apps/web/src/contractRevision.test.mjs:228:12)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: ordinary recovery chooses a provable latest lineage independently of snapshot order
+ok 14 - ordinary recovery chooses a provable latest lineage independently of snapshot order
+  ---
+  duration_ms: 0.5658
+  type: 'test'
+  ...
+# Subtest: recovery rejects active, completed, stopped, quarantined, disconnected and cyclic lineage
+ok 15 - recovery rejects active, completed, stopped, quarantined, disconnected and cyclic lineage
+  ---
+  duration_ms: 0.4011
+  type: 'test'
+  ...
+# Subtest: only an exact pre-dispatch failure is skipped and only verifier-only ancestry inherits a provider session
+ok 16 - only an exact pre-dispatch failure is skipped and only verifier-only ancestry inherits a provider session
+  ---
+  duration_ms: 0.2902
+  type: 'test'
+  ...
+# Subtest: guided editing preserves every unedited authority field, list entry and verifier including whitespace
+ok 17 - guided editing preserves every unedited authority field, list entry and verifier including whitespace
+  ---
+  duration_ms: 57.0782
+  type: 'test'
+  ...
+# Subtest: exact and guided views share one draft and omitted optional fields stay omitted
+ok 18 - exact and guided views share one draft and omitted optional fields stay omitted
+  ---
+  duration_ms: 61.2514
+  type: 'test'
+  ...
+# Subtest: authority errors and malformed exact JSON are visible outside closed disclosures and associated with inputs
+ok 19 - authority errors and malformed exact JSON are visible outside closed disclosures and associated with inputs
+  ---
+  duration_ms: 37.1427
+  type: 'test'
+  ...
+# Subtest: issue262 an open draft cannot silently adopt a refreshed contract version
+ok 20 - issue262 an open draft cannot silently adopt a refreshed contract version
+  ---
+  duration_ms: 123.9872
+  type: 'test'
+  ...
+# Subtest: issue262 a lost-response retry preserves the exact request across reconnect and refreshed state
+ok 21 - issue262 a lost-response retry preserves the exact request across reconnect and refreshed state
+  ---
+  duration_ms: 86.043
+  type: 'test'
+  ...
+# Subtest: issue262 actual save handler retains server success and assigned version when refresh fails
+ok 22 - issue262 actual save handler retains server success and assigned version when refresh fails
+  ---
+  duration_ms: 14.122
+  type: 'test'
+  ...
+# Subtest: issue262 remount refuses malformed saved warnings without sending or overwriting a request
+not ok 23 - issue262 remount refuses malformed saved warnings without sending or overwriting a request
+  ---
+  duration_ms: 57.8482
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue262-recovery\\ecorp\\apps\\web\\src\\contractRevisionLifecycle.test.mjs:64:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /Stored save result cannot be verified/. Input:
+
+    'Review a contract revisionEditing and saving never dispatch or resume work.Keep draft and closeTask / source run00000000-0000-4000-8000-000000000005 / Pre-execution; no runFrozen baselineContract v2; mission specification v2Current eligibilityA revision can be proposed. The server rechecks all authority when saving.Saved revision v9Receipt 00000000-0000-4000-8000-000000000090. No work was started. Next, explicitly dispatch the mission.Saved successfully; refresh is unavailable: Start another revisionReason and specificationRevision reasonMission description / specification'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: 'Review a contract revisionEditing and saving never dispatch or resume work.Keep draft and closeTask / source run00000000-0000-4000-8000-000000000005 / Pre-execution; no runFrozen baselineContract v2; mission specification v2Current eligibilityA revision can be proposed. The server rechecks all authority when saving.Saved revision v9Receipt 00000000-0000-4000-8000-000000000090. No work was started. Next, explicitly dispatch the mission.Saved successfully; refresh is unavailable: Start another revisionReason and specificationRevision reasonMission description / specification'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue262-recovery/ecorp/apps/web/src/contractRevisionLifecycle.test.mjs:75:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: issue262 explicit stale reconciliation keeps edits but captures the new baseline and a new key
+ok 24 - issue262 explicit stale reconciliation keeps edits but captures the new baseline and a new key
+  ---
+  duration_ms: 30.4073
+  type: 'test'
+  ...
+# Subtest: issue262 hiding and remounting retains raw incomplete JSON and the exact unsent draft
+ok 25 - issue262 hiding and remounting retains raw incomplete JSON and the exact unsent draft
+  ---
+  duration_ms: 44.662
+  type: 'test'
+  ...
+# Subtest: issue262 a definitive initial refusal permits correction with a fresh key
+ok 26 - issue262 a definitive initial refusal permits correction with a fresh key
+  ---
+  duration_ms: 24.481
+  type: 'test'
+  ...
+# Subtest: issue262 refusal of a previously uncertain replay never releases the original request for editing
+ok 27 - issue262 refusal of a previously uncertain replay never releases the original request for editing
+  ---
+  duration_ms: 35.2415
+  type: 'test'
+  ...
+# Subtest: issue262 replay can confirm a save after execution starts; its receipt fences further revisions
+ok 28 - issue262 replay can confirm a save after execution starts; its receipt fences further revisions
+  ---
+  duration_ms: 47.337
+  type: 'test'
+  ...
+# Subtest: issue262 successful receipt uses the assigned version and awaits a refreshed baseline
+ok 29 - issue262 successful receipt uses the assigned version and awaits a refreshed baseline
+  ---
+  duration_ms: 33.6955
+  type: 'test'
+  ...
+# Subtest: issue262 duplicate same-tick submissions produce one mutation and one retained body
+ok 30 - issue262 duplicate same-tick submissions produce one mutation and one retained body
+  ---
+  duration_ms: 22.7354
+  type: 'test'
+  ...
+# Subtest: issue262 unavailable or unreadable storage prevents sending and never deletes stored data
+ok 31 - issue262 unavailable or unreadable storage prevents sending and never deletes stored data
+  ---
+  duration_ms: 53.8001
+  type: 'test'
+  ...
+# Subtest: issue262 storage write failure or changed readback never sends an unpreserved mutation
+ok 32 - issue262 storage write failure or changed readback never sends an unpreserved mutation
+  ---
+  duration_ms: 38.0352
+  type: 'test'
+  ...
+# Subtest: issue262 an old response cannot overwrite a newer remounted draft
+ok 33 - issue262 an old response cannot overwrite a newer remounted draft
+  ---
+  duration_ms: 42.1605
+  type: 'test'
+  ...
+# Subtest: issue262 actor, Corp, room, mission, task and server scope changes cannot expose or submit a prior draft
+ok 34 - issue262 actor, Corp, room, mission, task and server scope changes cannot expose or submit a prior draft
+  ---
+  duration_ms: 321.7975
+  type: 'test'
+  ...
+# Subtest: issue262 selected source changes keep the old target frozen until explicitly reconciled
+ok 35 - issue262 selected source changes keep the old target frozen until explicitly reconciled
+  ---
+  duration_ms: 18.3813
+  type: 'test'
+  ...
+# Subtest: issue262 completed, active, stopped and quarantined projections cannot authorize a new revision
+ok 36 - issue262 completed, active, stopped and quarantined projections cannot authorize a new revision
+  ---
+  duration_ms: 125.3166
+  type: 'test'
+  ...
+# Subtest: issue262 save handler sends only the captured Corp/actor/mission and refuses mismatched requests
+ok 37 - issue262 save handler sends only the captured Corp/actor/mission and refuses mismatched requests
+  ---
+  duration_ms: 9.4717
+  type: 'test'
+  ...
+# Subtest: issue262 save receipts are verified and a late success cannot refresh or announce into another viewer
+ok 38 - issue262 save receipts are verified and a late success cannot refresh or announce into another viewer
+  ---
+  duration_ms: 46.9029
+  type: 'test'
+  ...
+# Subtest: issue262 save failures distinguish definite refusal from rate limits, timeouts and unknown transport outcomes
+ok 39 - issue262 save failures distinguish definite refusal from rate limits, timeouts and unknown transport outcomes
+  ---
+  duration_ms: 83.9892
+  type: 'test'
+  ...
+1..39
+# tests 39
+# suites 0
+# pass 37
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2372.0249

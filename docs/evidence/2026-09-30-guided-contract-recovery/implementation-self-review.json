@@ -1,0 +1,134 @@
+{
+  "issue": 262,
+  "recorded_at_utc": "2026-09-30T14:23:19.048784+00:00",
+  "reviewer": "Codex assistant; implementation self-review, not independent or human approval",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parents": [
+    "878a1774774b0630c904cbaf4b05e1b346777817"
+  ],
+  "tested_tree": "a66f3fd6c857f30543627b9e895f446904bf8f79",
+  "physical_files_sha256": "18f38ededd67727fba62b364f62a4277f0776dbf1ff80495db01c869b59d6914",
+  "reviewed_paths": [
+    "apps/web/src/App.tsx",
+    "apps/web/src/ContractRevision.css",
+    "apps/web/src/ContractRevisionEditor.tsx",
+    "apps/web/src/contractRevision.test.mjs",
+    "apps/web/src/contractRevision.ts",
+    "apps/web/src/contractRevisionHarness.mjs",
+    "apps/web/src/contractRevisionLifecycle.test.mjs",
+    "apps/web/src/factoryCheckpointRecovery.test.mjs",
+    "crates/crony-store/src/contract_revision.rs",
+    "tools/coverage_web_models.mjs"
+  ],
+  "acceptance_mapping": [
+    {
+      "criterion": "Labeled fields, inline validation, before/after summary and exact advanced JSON parity",
+      "implementation": [
+        "apps/web/src/ContractRevisionEditor.tsx",
+        "apps/web/src/contractRevision.ts"
+      ],
+      "evidence": [
+        "native/browser-report.json: browser_exact_all_supported_fields_roundtrip_draft_only",
+        "native/browser-report.json: guided_fields_errors_focus_lists_and_existing_verifier_editor"
+      ],
+      "result": "All 19 supported contract fields roundtrip; schema/type/unknown-field errors stay visible and verifier policy uses its existing editor."
+    },
+    {
+      "criterion": "Separate revision editing/saving from dispatch and resume, with exact target and eligibility",
+      "implementation": [
+        "apps/web/src/App.tsx:904",
+        "apps/web/src/App.tsx:1004",
+        "apps/web/src/App.tsx:3946"
+      ],
+      "evidence": [
+        "native/browser-report.json: native_resume_revision_saved_without_execution",
+        "native/browser-report.json: browser_explicit_launch_native_contract_v4_verified"
+      ],
+      "result": "Saved revision alone creates no run. Target task/run/version, reason and explicit permitted next action remain visible."
+    },
+    {
+      "criterion": "Plain-language recovery guidance preserves stop, quarantine, budget and controller restrictions",
+      "implementation": [
+        "apps/web/src/contractRevision.ts:345",
+        "apps/web/src/ContractRevisionEditor.tsx"
+      ],
+      "evidence": [
+        "native/browser-report.json: native_no_budget_guidance_save_preserves_restriction",
+        "native/browser-report.json: synthetic_browser_recovery_restrictions_and_controller_handoff"
+      ],
+      "result": "Native no-budget restriction persists; seven explicitly synthetic browser cases confirm stop/quarantine and Factory handoff/error/missing/stale guidance without mutations."
+    },
+    {
+      "criterion": "Do not widen execution authority or duplicate budget semantics",
+      "implementation": [
+        "apps/web/src/contractRevision.ts",
+        "crates/crony-store/src/contract_revision.rs:569"
+      ],
+      "evidence": [
+        "native/browser-report.json: native_and_guided_resume_authority_denials",
+        "history/connection-red.log",
+        "history/connection-green.log"
+      ],
+      "result": "Native resume rejects tool/scope/prohibition/source/connection/budget changes; adding, removing or swapping a workspace connection is now rejected by the store."
+    },
+    {
+      "criterion": "Preserve drafts and exact idempotency through failures and show explicit stale reconciliation",
+      "implementation": [
+        "apps/web/src/contractRevision.ts:272",
+        "apps/web/src/contractRevision.ts:326",
+        "apps/web/src/App.tsx:1004",
+        "apps/web/src/App.tsx:5174"
+      ],
+      "evidence": [
+        "native/browser-report.json: native_response_loss_reload_exact_replay_single_revision_no_execution",
+        "native/browser-report.json: native_stale_version_denial_and_explicit_reconciliation",
+        "apps/web/src/contractRevisionLifecycle.test.mjs"
+      ],
+      "result": "Two requests after committed response loss yield one revision and zero runs. Immutable retry and storage readback protect unknown outcomes; a refused replay remains uncertain."
+    },
+    {
+      "criterion": "Authority, API parity, accessibility and exact native recovery",
+      "implementation": [
+        "apps/web/src/App.tsx:3505",
+        "apps/web/src/ContractRevision.css"
+      ],
+      "evidence": [
+        "native/browser-report.json: mobile_390_keyboard_close_reopen_preserves_draft",
+        "native/browser-report.json: native_member_outsider_and_corp_denials_preserve_actor_draft",
+        "native/browser-report.json: browser_native_codex_resume_preserved_session_workspace_and_verifier"
+      ],
+      "result": "Actor/Corp/room/mission/task/server scope fences drafts. Desktop/390px keyboard and reduced-motion fixture preserve edits; native server denials and file/test verification retain existing authority."
+    }
+  ],
+  "issue_context_sha256": "2a5f3eda43e814bb74804117da94b935af07bcfa0574b6e11a54d74bb608101c",
+  "existing_issue_comments_at_review": 0,
+  "invariants": [
+    "UI remains a projection of scoped server state; no server shell execution or new control plane.",
+    "Drafts bind server, Corp, actor, room, mission and task. Saving requires preserved request bytes and readback before mutation.",
+    "Unknown outcomes keep exact request/key; successful receipts fence duplicate writes and are separate from refresh errors.",
+    "Resume ancestry is bounded and fail-closed; exact selected source, persisted verifier policy, native session/workspace, monotonic stop/quarantine and budget authority remain enforced.",
+    "Applied migrations, pinned dependencies, secret delivery, shared task state and durable command mechanisms are unchanged."
+  ],
+  "harness": "No execution, session or permission mechanism added. Recovery uses existing pinned native adapters and the repository's owned deterministic acceptance fixture.",
+  "confirmed_findings_resolved": [
+    {
+      "path": "crates/crony-store/src/contract_revision.rs",
+      "line": 569,
+      "finding": "Resume narrowness omitted workspace_connection_id and allowed a preserved workspace to change connection authority.",
+      "resolution": "Compare connection identity alongside existing source/secret/model/deliverable authority; test add/remove/swap rejection and narrower allowed work."
+    }
+  ],
+  "unresolved_confirmed_defects_in_scope": [],
+  "qualifications": [
+    "Evidence is retrospective observed validation. This is agent implementation self-review, not independent approval or a human decision.",
+    "The owned PostgreSQL/server/browser path uses deterministic fake-process execution and a synthetic Codex native protocol. No real vendor inference, production OIDC, production grant or deployment is claimed.",
+    "The 13 top-level browser groups include seven explicitly synthetic recovery cases in one group. They are not 13 wholly native tests. Zero actual human reviews were performed.",
+    "Seventeen original PNG captures are retained. Prior scaled spot inspection covered desktop, 390px keyboard and no-budget views; this is not exhaustive pixel or accessibility certification.",
+    "Final canonical, native r9 and coverage r1 used identical 7152-file physical source. The final commit did not exist during execution; this evidence-only addition is validated separately for original bytes, check argv and full Node discovery.",
+    "Skipped Node and ignored Rust cases are not passes. Canonical, focused, coverage and native counts overlap and must not be added. Dedicated live and immutable historical replay lanes remain separate.",
+    "Original locked-install receipts are unchanged. The pnpm receipt included an uppercase hexadecimal log digest. The Steward receipt lacked an installation-time log digest; its retained log bytes were first bound retrospectively during publication preparation, not during installation.",
+    "The first publication packet failed native secret scanning on twelve UUID fixture idempotency keys. That packet and failed validation are preserved privately. Published keys now use stable aliases that retain replay equality; implementation bytes, native receipts and secret-scan policy are unchanged.",
+    "Native r8 failed because the fixture correctly stopped at 6000 used against 5000 allowed. r9 raises only the fixture allowance to 6000 and asserts suspend. The failed attempt remains recorded.",
+    "GitHub Actions remains disabled; required hosted CI, CodeQL, code-quality and security checks remain mandatory. No merge or issue completion is claimed. Historical Cargo advisory debt is not a clean audit."
+  ]
+}
