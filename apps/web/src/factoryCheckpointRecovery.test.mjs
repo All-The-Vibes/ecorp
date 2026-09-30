@@ -5,6 +5,7 @@ import * as jsxRuntime from 'react/jsx-runtime'
 import { renderToStaticMarkup } from 'react-dom/server'
 import vm from 'node:vm'
 import ts from 'typescript'
+import { panelHarness, contract as revisionContract, policy as revisionPolicy, run as revisionRun, elements, text } from './contractRevisionHarness.mjs'
 import {
   factoryContractRevisionSource, factoryRecoveryBlocksProviderResume, factoryRecoveryConnection,
   factoryRecoveryModes, needsFactoryRecoveryContext,
@@ -673,37 +674,34 @@ function revisionHarness({
   value = correctionContext(), status = 'ready', selectedScope = scope,
   role = 'owner', actorId = scope.actorId, missionStatus = 'failed', runs,
 } = {}) {
-  const requests = []
-  const globals = {
-    factoryContractRevisionSource,
-    recoveryScope: selectedScope,
+  const h = panelHarness({ props: {
+    corpId: scope.corpId, recoveryScope: selectedScope,
     recoveryLoad: status === null ? null : {
       scopeKey: JSON.stringify([scope.corpId, scope.actorId, scope.missionId, scope.itemId, scope.version, scope.reload, scope.budgetRevision]),
       status, data: status === 'ready' ? value : null, error: status === 'error' ? 'lookup failed' : null,
     },
-    mission: { id: scope.missionId, requested_by: scope.actorId, status: missionStatus },
-    task: { id: id(40), mission_id: scope.missionId, status: 'verification_failed', contract_version: 2 },
-    // The wrong-first provider is visible; the authoritative verifier has no session.
+    mission: { id: scope.missionId, room_id: id(21), requested_by: scope.actorId, status: missionStatus,
+      description: 'Reviewed correction', specification_version: 2 },
+    task: { id: id(40), mission_id: scope.missionId, status: 'verification_failed', contract_version: 2,
+      contract: revisionContract(), verification_policy: revisionPolicy(), required_adapter: 'fake-process' },
+    // The first visible provider is deliberately different from the authoritative verifier.
     runs: runs ?? [
-      { id: id(49), task_id: id(40), status: 'cancelled', provider_session_id: id(70),
-        workspace_disposition: 'preserved', breaker_stage: 'suspend' },
-      { id: id(50), task_id: id(40), status: 'failed', provider_session_id: null,
-        workspace_disposition: 'preserved', breaker_stage: null },
+      revisionRun({ id: id(49), workspace_run_id: id(49), task_id: id(40), status: 'cancelled', breaker_stage: 'suspend' }),
+      revisionRun({ id: id(50), workspace_run_id: id(50), task_id: id(40), status: 'failed', provider_session_id: null }),
     ],
-    actorId, actorRole: role, busy: false,
-    terminalRun: (state) => ['completed', 'failed', 'cancelled', 'lost'].includes(state),
-    parsedContract: { objective: 'Finish the retained app' }, parsedPolicy: { checks: [] },
-    reason: 'Fix the retained source without changing its evidence requirements.',
-    parseError: null, description: 'Reviewed correction', idempotencyKey: id(80),
-    onRevise: async (...args) => { requests.push(args); return false },
+    actorId, actorRole: role,
+  } })
+  const button = h.button('Revise contract')
+  if (button && !button.props.disabled) {
+    button.props.onClick()
+    h.edit('Revision reason', 'Fix the retained source without changing its evidence requirements.')
   }
-  evaluate(`${functionNode('factoryRecoveryScopeKey').getText(app)}
-    ${functionNode('currentFactoryRecoveryLoad').getText(app)}`, globals)
-  for (const name of ['canRevise', 'activeRun', 'redispatchEligible', 'scopedRecoveryLoad',
-    'recoveryContext', 'sourceRunId', 'nextAction', 'recoverySourceNotice', 'submit']) {
-    evaluate(`globalThis.${name} = ${initializer(name, revisionPanel)};`, globals)
-  }
-  return { globals, requests }
+  return { requests: h.requests, globals: {
+    get sourceRunId() { return elements(h.render()).find(node => node.props['data-testid'] === 'contract-revision-' + id(40))?.props['data-source-run-id'] ?? null },
+    get nextAction() { return h.draft()?.target.nextAction ?? null },
+    get recoverySourceNotice() { return text(h.render()) },
+    submit: () => h.submit(),
+  } }
 }
 
 test('issue210 actual contract submission uses the scoped verifier, not its provider ancestor', async () => {
@@ -713,7 +711,7 @@ test('issue210 actual contract submission uses the scoped verifier, not its prov
   await globals.submit({ preventDefault() {} })
   await globals.submit({ preventDefault() {} })
   assert.equal(requests.length, 2)
-  for (const [, , request] of requests) {
+  for (const [, request] of requests) {
     assert.equal(request.source_run_id, id(50))
     assert.equal(request.task_id, id(40))
     assert.equal(request.expected_contract_version, 2)
@@ -759,11 +757,11 @@ test('issue210 ordinary contract resume, redispatch and requester/role boundarie
   const ordinary = revisionHarness({ selectedScope: null })
   assert.equal(ordinary.globals.sourceRunId, id(49))
   await ordinary.globals.submit({ preventDefault() {} })
-  assert.equal(ordinary.requests[0][2].source_run_id, id(49))
+  assert.equal(ordinary.requests[0][1].source_run_id, id(49))
   const ready = revisionHarness({ selectedScope: null, missionStatus: 'ready', runs: [] })
   assert.equal(ready.globals.nextAction, 'redispatch')
   await ready.globals.submit({ preventDefault() {} })
-  assert.equal(ready.requests[0][2].source_run_id, null)
+  assert.equal(ready.requests[0][1].source_run_id, null)
   const requester = revisionHarness({ selectedScope: null, role: 'member' })
   await requester.globals.submit({ preventDefault() {} })
   assert.equal(requester.requests.length, 1)
@@ -788,7 +786,7 @@ test('issue210 actual source-only context copies correction and revises the exac
   assert.ok(writes[0].includes(`--workspace-connection-id '${id(198)}'`))
   const revision = revisionHarness({ value: current })
   await revision.globals.submit({ preventDefault() {} })
-  assert.equal(revision.requests[0][2].source_run_id, current.source_run_id)
+  assert.equal(revision.requests[0][1].source_run_id, current.source_run_id)
   for (const checkpoint_source_correction of [false, undefined]) {
     const denied = { ...current, checkpoint_source_correction }
     const command = commandHarness(denied)
@@ -1068,8 +1066,8 @@ test('issue221 actual copy/revision actions use only source correction for the l
   assert.equal(revision.globals.sourceRunId, id(51), 'no fallback to visible provider/verifier ancestors')
   await revision.globals.submit({ preventDefault() {} })
   assert.equal(revision.requests.length, 1)
-  assert.equal(revision.requests[0][2].source_run_id, id(51))
-  assert.equal(revision.requests[0][2].next_action, 'resume')
+  assert.equal(revision.requests[0][1].source_run_id, id(51))
+  assert.equal(revision.requests[0][1].next_action, 'resume')
   for (const role of ['member', 'guest', 'spectator']) {
     const denied = commandHarness(current, role)
     await denied.globals.copyRecoveryCommand('source-correction')

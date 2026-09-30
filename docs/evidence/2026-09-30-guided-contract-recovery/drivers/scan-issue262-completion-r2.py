@@ -1,0 +1,88 @@
+"""Scan every changed committed blob and all introduced history before push."""
+from issue262_publication_lib_r2 import *
+
+RECEIPT = EV/"issue262-completion-secret-scan-r2.json"
+assert not RECEIPT.exists(), "Preserve previous scans"
+commit_path, source_path = EV/"issue262-completion-commit-r2.json", EV/"issue262-completion-source-r2.json"
+commit, source = load(commit_path), load(source_path)
+assert commit["status"] == "committed-and-verified" and commit["ordinary_single_parent_commit"]
+head = commit["head"]
+assert git("rev-parse", "HEAD").decode().strip() == head
+assert git("rev-parse", "HEAD^{tree}").decode().strip() == commit["publication_tree"]
+assert git("show", "-s", "--format=%P", head).decode().split() == [MAIN]
+assert git("branch", "--show-current").decode().strip() == BRANCH
+assert not git("status", "--porcelain=v1", "--untracked-files=all").strip()
+assert sha(GITLEAKS.read_bytes()) == GITLEAKS_SHA
+assert subprocess.check_output([str(GITLEAKS), "version"], env=ENV).decode().strip() == "8.30.1"
+git("merge-base", "--is-ancestor", MAIN, head)
+policy = {n: sha((ROOT/n).read_bytes()) if (ROOT/n).is_file() else None for n in [".gitleaksignore", ".gitleaks.toml"]}
+assert not git("diff", "--name-only", MAIN, head, "--", *policy).strip()
+paths = git("diff", "--name-only", "-z", "--no-renames", MAIN, head).decode().split("\0")[:-1]
+published = {f["path"] for f in load(EV/"issue262-completion-evidence-validation-r2.json")["files"]}
+assert set(paths) == set(source["code_paths"]) | published
+assert len(source["code_paths"]) == 10
+record = {"issue": 262, "status": "running", "started_at_utc": now(), "head": head, "base": MAIN,
+          "parents": [MAIN], "tree": commit["publication_tree"], "native_version": "8.30.1",
+          "native_sha256": GITLEAKS_SHA, "policy_sha256": policy, "commit_receipt_sha256": sha(commit_path.read_bytes()),
+          "scans": [], "scope": "Every changed final blob and every introduced commit since main, with native defaults and repository policy unchanged."}
+
+def save():
+    RECEIPT.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+
+def scan(lane, args, report_path):
+    flags = ["--redact=100", "--no-banner", "--no-color", "--ignore-gitleaks-allow", "--gitleaks-ignore-path", str(ROOT/".gitleaksignore"),
+             "--exit-code=42", "--timeout=300", "--report-format=json", "--report-path", str(report_path)]
+    if policy[".gitleaks.toml"] is not None:
+        flags += ["--config", str(ROOT/".gitleaks.toml")]
+    result = subprocess.run([str(GITLEAKS), *args, *flags], cwd=ROOT, env=ENV, capture_output=True, timeout=360, creationflags=subprocess.CREATE_NO_WINDOW)
+    findings = load(report_path) if report_path.exists() else None
+    log = EV/f"issue262-completion-secret-scan-r2-{lane}.log"
+    with log.open("xb") as stream:
+        stream.write(result.stdout+result.stderr)
+    item = {"lane": lane, "exit_code": result.returncode, "finding_count": len(findings) if isinstance(findings, list) else None,
+            "log": str(log), "redacted_log_sha256": sha(log.read_bytes())}
+    if findings:
+        item["finding_metadata"] = [{"rule": f.get("RuleID"), "file": f.get("File"), "start_line": f.get("StartLine")} for f in findings]
+    record["scans"].append(item)
+    save()
+    assert result.returncode == 0 and isinstance(findings, list) and not findings, "Triage secret findings before push"
+
+save()
+try:
+    with tempfile.TemporaryDirectory(prefix="issue262-completion-commit-scan-", dir=EV) as owned:
+        owned_path = Path(owned).resolve()
+        assert owned_path.parent == EV.resolve() and owned_path.name.startswith("issue262-completion-commit-scan-")
+        materialized = owned_path/"committed"
+        materialized.mkdir()
+        blobs = []
+        for name in paths:
+            entry = git("ls-tree", "-z", head, "--", name).split(b"\0")
+            assert len(entry) == 2 and not entry[1]
+            meta, observed = entry[0].split(b"\t", 1)
+            mode, kind, oid = meta.decode().split()
+            assert observed.decode() == name and kind == "blob" and mode in {"100644", "100755"}
+            raw = git("cat-file", "blob", oid)
+            target = (materialized/name).resolve()
+            assert target.is_relative_to(materialized.resolve()) and not target.exists()
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(raw)
+            blobs.append({"path": name, "git_blob": oid, "bytes": len(raw), "sha256": sha(raw)})
+        record.update(committed_blobs=blobs, committed_blob_count=len(blobs), code_blob_count=10, merge_diff_explicitly_enabled=True)
+        save()
+        scan("final-blobs", ["dir", str(materialized)], owned_path/"final-blobs.json")
+        log_opts = "-m "+MAIN+".."+head
+        proof = git("log", "-m", "--format=%H", "--name-only", MAIN+".."+head)
+        assert head.encode() in proof and all(p.encode() in proof for p in source["code_paths"])
+        record.update(history_log_options=log_opts, introduced_history_paths_sha256=sha(proof))
+        save()
+        scan("introduced-history", ["git", str(ROOT), "--log-opts="+log_opts], owned_path/"introduced-history.json")
+    assert git("rev-parse", "HEAD").decode().strip() == head and not git("status", "--porcelain=v1", "--untracked-files=all").strip()
+    assert policy == {n: sha((ROOT/n).read_bytes()) if (ROOT/n).is_file() else None for n in policy}
+    record.update(status="passed", finding_count=0, exit_code=0, worktree_unchanged=True)
+except Exception as error:
+    record.update(status="failed", failure=str(error))
+    raise
+finally:
+    record["finished_at_utc"] = now()
+    save()
+    print(json.dumps({k: record.get(k) for k in ["status", "head", "base", "finding_count", "exit_code", "failure"]}))

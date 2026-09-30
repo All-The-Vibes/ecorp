@@ -1,0 +1,47 @@
+.contract-revision-panel,
+.contract-revision-editor,
+.contract-revision-panel fieldset {
+  min-width: 0;
+}
+
+.contract-revision-panel fieldset {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.contract-revision-panel legend { padding: 0 6px; font-weight: 700; }
+.contract-revision-editor { display: grid; gap: 16px; }
+.contract-revision-target, .contract-change-summary dl, .contract-authority-details dl {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+.contract-revision-panel dt { font-weight: 700; }
+.contract-revision-panel dd { margin: 4px 0 0; overflow-wrap: anywhere; }
+.contract-revision-panel pre {
+  margin: 4px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+}
+.contract-revision-entry { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 8px; }
+.contract-revision-entry textarea { min-height: 48px; }
+.contract-change-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.contract-change-pair > div { padding: 8px; border: 1px solid var(--line); border-radius: 6px; }
+.contract-revision-panel summary { cursor: pointer; font-weight: 700; padding: 8px 0; }
+.contract-revision-result { padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.contract-revision-panel :disabled { cursor: not-allowed; }
+.contract-revision-panel [aria-invalid="true"] { border-color: #a32c20; }
+.contract-revision-panel .contract-error { overflow-wrap: anywhere; }
+.contract-revision-panel .contract-section-heading { flex-wrap: wrap; gap: 8px; }
+.contract-revision-panel .contract-section-heading > div { min-width: 0; }
+
+@media (max-width: 600px) {
+  .contract-change-pair, .contract-revision-entry { grid-template-columns: minmax(0, 1fr); }
+  .contract-revision-panel fieldset { padding: 8px; }
+  .contract-revision-panel .button { white-space: normal; overflow-wrap: anywhere; }
+}

@@ -566,13 +566,14 @@ fn ensure_resume_contract_is_narrow(
         || replacement.source_repository != current.source_repository
         || replacement.source_base_ref != current.source_base_ref
         || replacement.source_base_commit != current.source_base_commit
+        || replacement.workspace_connection_id != current.workspace_connection_id
         || replacement.secret_refs != current.secret_refs
         || replacement.model != current.model
         || replacement.reasoning_effort != current.reasoning_effort
         || replacement.deliverable != current.deliverable
     {
         return Err(native_policy!(
-            "resume contract revisions cannot change budget, source, secrets, model, reasoning, or deliverable authority"
+            "resume contract revisions cannot change budget, source, workspace connection, secrets, model, reasoning, or deliverable authority"
         ));
     }
     if replacement
@@ -911,7 +912,54 @@ pub(super) fn validate_mission_verification_policy(
 
 #[cfg(test)]
 mod tests {
-    use super::compose_revised_task_objective;
+    use super::{TaskContract, compose_revised_task_objective, ensure_resume_contract_is_narrow};
+    use serde_json::json;
+    use uuid::Uuid;
+
+    fn resume_contract(connection: Option<Uuid>) -> TaskContract {
+        serde_json::from_value(json!({
+            "objective": "Clarify the retained task", "expected_output": "Reviewed change",
+            "workspace_connection_id": connection,
+            "acceptance_tests": ["Existing checks pass"], "allowed_tools": ["read", "edit"],
+            "prohibited_actions": ["Do not publish"], "references": [], "write_scope": ["src/**"],
+            "budget_tokens": 1000, "escalation": "Ask the operator"
+        }))
+        .unwrap()
+    }
+
+    #[test]
+    fn resume_revision_preserves_workspace_connection_authority() {
+        let first = Uuid::from_u128(1);
+        let second = Uuid::from_u128(2);
+        for (before, after) in [
+            (None, Some(first)),
+            (Some(first), None),
+            (Some(first), Some(second)),
+        ] {
+            let error = ensure_resume_contract_is_narrow(
+                &resume_contract(before),
+                &resume_contract(after),
+                "codex-app-server",
+            )
+            .expect_err("a saved workspace cannot acquire, discard or switch connection authority");
+            assert!(error.to_string().contains("authority"));
+        }
+    }
+
+    #[test]
+    fn resume_revision_retains_connection_and_allows_narrower_work() {
+        for connection in [None, Some(Uuid::from_u128(1))] {
+            let current = resume_contract(connection);
+            let mut revised = current.clone();
+            revised.objective = "Correct only the retained parser".to_owned();
+            revised.allowed_tools = vec!["read".to_owned()];
+            revised.write_scope = vec!["src/parser.rs".to_owned()];
+            revised
+                .prohibited_actions
+                .push("Do not change the public API".to_owned());
+            ensure_resume_contract_is_narrow(&current, &revised, "codex-app-server").unwrap();
+        }
+    }
 
     #[test]
     fn revised_descriptions_replace_the_prior_generated_prefix() {

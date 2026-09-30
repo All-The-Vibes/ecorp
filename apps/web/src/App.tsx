@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { FormEvent, ReactNode } from 'react'
+import { ContractRevisionEditor } from './ContractRevisionEditor'
+import { readRevisionDraft, writeRevisionDraft, parseContractRevision, contractRevisionErrors,
+  revisionRequest, sameRevisionValue, ordinaryContractRevisionSource } from './contractRevision'
+import type { TaskContract, MissionContractRevisionInput, ContractRevisionTarget,
+  ContractRevisionSaveResult, ContractRevisionDraft } from './contractRevision'
 import './App.css'
+import './ContractRevision.css'
 import './Arcade.css'
 import './Cabinet.css'
 import './World.css'
@@ -91,35 +97,6 @@ type Mission = {
   created_at: string
 }
 
-type TaskContract = {
-  objective: string
-  expected_output: string
-  source_repository: string | null
-  source_base_ref: string | null
-  source_base_commit: string | null
-  acceptance_tests: string[]
-  allowed_tools: string[]
-  prohibited_actions: string[]
-  references: string[]
-  write_scope: string[]
-  budget_tokens: number
-  budget_cost_microusd: number
-  deadline_at: string | null
-  escalation: string
-  secret_refs: {
-    secret_id: string
-    env_name: string
-    tool: string
-    resource: string
-  }[]
-  model: string | null
-  reasoning_effort: string | null
-  deliverable: {
-    form: 'commit_branch' | 'patch' | 'archive' | 'typed_artifact_set' | 'review_only_report'
-    commit_after_verification: boolean
-    paths: string[]
-  } | null
-}
 
 type Task = {
   id: string
@@ -169,17 +146,6 @@ type MissionContractInput = Pick<
   | 'write_scope'
 >
 
-type MissionContractRevisionInput = {
-  task_id: string
-  expected_contract_version: number
-  next_action: 'redispatch' | 'resume'
-  source_run_id: string | null
-  reason: string
-  idempotency_key: string
-  description: string
-  contract: TaskContract
-  verification_policy: VerificationPolicy
-}
 
 type Run = {
   id: string
@@ -936,16 +902,10 @@ function StatusMark({ status }: { status: Agent['status'] }) {
 }
 
 function ContractRevisionPanel({
-  mission,
-  task,
-  runs,
-  recoveryScope,
-  recoveryLoad,
-  actorId,
-  actorRole,
-  busy,
-  onRevise,
+  corpId, mission, task, runs, recoveryScope, recoveryLoad, actorId, actorRole,
+  selectedRunId, budgetBlocked = false, busy, onRevise,
 }: {
+  corpId: string
   mission: Mission
   task: Task
   runs: Run[]
@@ -953,41 +913,31 @@ function ContractRevisionPanel({
   recoveryLoad: FactoryRecoveryContextLoad | null
   actorId: string
   actorRole: string
+  selectedRunId?: string | null
+  budgetBlocked?: boolean
   busy: boolean
-  onRevise: (
-    mission: Mission,
-    task: Task,
-    input: MissionContractRevisionInput,
-  ) => Promise<boolean>
+  onRevise: (target: ContractRevisionTarget, input: MissionContractRevisionInput) => Promise<ContractRevisionSaveResult>
 }) {
-  const [open, setOpen] = useState(false)
-  const [description, setDescription] = useState(mission.description)
-  const [reason, setReason] = useState('')
-  const [contractJson, setContractJson] = useState(() =>
-    JSON.stringify(task.contract, null, 2),
-  )
-  const [policyJson, setPolicyJson] = useState(() =>
-    JSON.stringify(task.verification_policy, null, 2),
-  )
-  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID())
-  const canRevise =
-    actorId === mission.requested_by || ['owner', 'admin', 'manager'].includes(actorRole)
-  const activeRun = runs.some((run) => !terminalRun(run.status))
+  const scopeKey = JSON.stringify([API_URL, corpId, actorId, mission.room_id, mission.id, task.id])
+  const [draftState, setDraftState] = useState(() => readRevisionDraft(() => window.sessionStorage, scopeKey))
+  const draft = draftState.draft?.target.scopeKey === scopeKey ? draftState.draft : null
+  const [open, setOpen] = useState(() => Boolean(draft))
+  const draftRef = useRef(draft)
+  const storedDraft = useRef(draftState.serialized)
+  const inFlight = useRef(false)
+  const reasonInput = useRef<HTMLTextAreaElement>(null)
+  const openButton = useRef<HTMLButtonElement>(null)
+  const canRevise = actorId === mission.requested_by || ['owner', 'admin', 'manager'].includes(actorRole)
+  const activeRun = runs.some(run => !terminalRun(run.status))
   const redispatchEligible = mission.status === 'ready' && runs.length === 0
   const scopedRecoveryLoad = currentFactoryRecoveryLoad(recoveryScope, recoveryLoad)
   const recoveryContext = scopedRecoveryLoad?.status === 'ready' ? scopedRecoveryLoad.data : null
   const sourceRunId = recoveryScope
     ? factoryContractRevisionSource(recoveryContext, recoveryScope, task.id)
-    : runs.find(
-      (run) =>
-        run.task_id === task.id &&
-        terminalRun(run.status) &&
-        run.provider_session_id &&
-        run.workspace_disposition === 'preserved' &&
-        run.breaker_stage !== 'stop',
-    )?.id ?? null
+    : ordinaryContractRevisionSource(runs, task.id, selectedRunId)
   const nextAction: MissionContractRevisionInput['next_action'] | null =
-    !recoveryScope && !activeRun && redispatchEligible ? 'redispatch' : !activeRun && sourceRunId ? 'resume' : null
+    activeRun || task.status === 'completed' || mission.status === 'completed' ? null
+      : !recoveryScope && redispatchEligible ? 'redispatch' : sourceRunId ? 'resume' : null
   const recoverySourceNotice = recoveryScope && !activeRun && task.status !== 'completed'
     ? scopedRecoveryLoad?.status === 'error'
       ? 'Recovery source unavailable. Refresh recovery context below before revising.'
@@ -997,155 +947,169 @@ function ContractRevisionPanel({
           ? 'Source correction is not available in the current recovery context.'
           : null
     : null
-  const resetDraft = () => {
-    setDescription(mission.description)
-    setReason('')
-    setContractJson(JSON.stringify(task.contract, null, 2))
-    setPolicyJson(JSON.stringify(task.verification_policy, null, 2))
-    setIdempotencyKey(crypto.randomUUID())
+  const recoveryKey = recoveryScope ? factoryRecoveryScopeKey(recoveryScope) : null
+  const currentTarget: ContractRevisionTarget | null = nextAction ? {
+    scopeKey, corpId, actorId, roomId: mission.room_id, missionId: mission.id, taskId: task.id,
+    version: task.contract_version, missionVersion: mission.specification_version,
+    sourceRunId: nextAction === 'resume' ? sourceRunId : null, nextAction, recoveryKey,
+  } : null
+  const pending = Boolean(draft?.pending && draft.result?.status !== 'rejected' && draft.result?.status !== 'saved')
+  const saved = draft?.result?.status === 'saved' ? draft.result : null
+  const stale = Boolean(draft && (!currentTarget || !sameRevisionValue(draft.target, currentTarget)))
+  const parsed = draft ? parseContractRevision(draft.contractJson, draft.policyJson) : null
+  const errors = {
+    ...parsed?.errors,
+    ...(parsed?.contract && parsed.policy && draft
+      ? contractRevisionErrors(parsed.contract, parsed.policy, draft.before, draft.target.nextAction,
+        draft.target.recoveryKey !== null, task.required_adapter) : {}),
+  }
+  if (draft && (!draft.reason.trim() || new TextEncoder().encode(draft.reason).length > 4000)) {
+    errors.reason = 'Enter a reason from 1 to 4,000 bytes.'
+  }
+  if (draft && new TextEncoder().encode(draft.description).length > 100000) {
+    errors.description = 'Keep the mission description within 100,000 bytes.'
+  }
+  const persist = (next: ContractRevisionDraft) => {
+    const error = writeRevisionDraft(() => window.sessionStorage, next, storedDraft.current)
+    if (!error) storedDraft.current = JSON.stringify(next)
+    draftRef.current = next
+    setDraftState({ draft: next, error, serialized: storedDraft.current })
+    return error === null
+  }
+  const edit = (patch: Partial<Pick<ContractRevisionDraft, 'description' | 'reason' | 'contractJson' | 'policyJson'>>) => {
+    const current = draftRef.current
+    if (!current || current.target.scopeKey !== scopeKey || busy || inFlight.current ||
+      (current.pending && current.result?.status !== 'rejected')) return
+    persist({ ...current, ...patch, pending: null, result: null,
+      idempotencyKey: current.result?.status === 'rejected' ? crypto.randomUUID() : current.idempotencyKey })
+  }
+  const begin = (keepEdits = false) => {
+    if (!canRevise || busy || inFlight.current || pending || !currentTarget ||
+      (saved && task.contract_version < saved.version)) return
+    const current = draftRef.current
+    persist({
+      schema: 1, target: currentTarget,
+      before: { description: mission.description, contract: task.contract, policy: task.verification_policy },
+      description: keepEdits && current ? current.description : mission.description,
+      reason: keepEdits && current ? current.reason : '',
+      contractJson: keepEdits && current ? current.contractJson : JSON.stringify(task.contract, null, 2),
+      policyJson: keepEdits && current ? current.policyJson : JSON.stringify(task.verification_policy, null, 2),
+      idempotencyKey: crypto.randomUUID(), pending: null, result: null,
+    })
+    setOpen(true)
   }
   useEffect(() => {
-    if (!open) resetDraft()
-    // Reset only after a committed version arrives or the selected mission changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mission.id, mission.specification_version, task.id, task.contract_version])
-
-  let parsedContract: TaskContract | null = null
-  let parsedPolicy: VerificationPolicy | null = null
-  let parseError: string | null = null
-  try {
-    parsedContract = JSON.parse(contractJson) as TaskContract
-    parsedPolicy = JSON.parse(policyJson) as VerificationPolicy
-    const policyError = verificationPolicyErrors(parsedPolicy)[0]
-    if (policyError) parseError = policyError
-  } catch (caught) {
-    parseError = caught instanceof Error ? caught.message : String(caught)
-  }
-
+    if (open) reasonInput.current?.focus()
+  }, [open])
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (!canRevise || busy || !nextAction || !parsedContract || !parsedPolicy || !reason.trim() || parseError) return
-    const saved = await onRevise(mission, task, {
-      task_id: task.id,
-      expected_contract_version: task.contract_version,
-      next_action: nextAction,
-      source_run_id: nextAction === 'resume' ? sourceRunId : null,
-      reason,
-      idempotency_key: idempotencyKey,
-      description,
-      contract: parsedContract,
-      verification_policy: parsedPolicy,
-    })
-    if (saved) {
-      setOpen(false)
-      setIdempotencyKey(crypto.randomUUID())
+    const current = draftRef.current
+    if (!canRevise || busy || inFlight.current || !current || current.target.scopeKey !== scopeKey ||
+      current.result?.status === 'saved') return
+    const retry = current.pending && current.result?.status !== 'rejected' ? current.pending : null
+    if (!retry && (stale || !currentTarget || !parsed?.contract || !parsed.policy || Object.keys(errors).length)) return
+    const attempt = { ...current, idempotencyKey: current.result?.status === 'rejected' ? crypto.randomUUID() : current.idempotencyKey }
+    const request = retry ?? revisionRequest(attempt, parsed!.contract!, parsed!.policy!)
+    const sending: ContractRevisionDraft = { ...attempt, pending: request, result: null }
+    // Read back the exact body and key before invoking the existing mutation.
+    if (!persist(sending)) return
+    inFlight.current = true
+    try {
+      let result = await onRevise(sending.target, request)
+      // A refusal of a replay cannot prove an earlier, lost-response attempt did not commit.
+      if (retry && result.status === 'rejected') result = {
+        status: 'unknown', message: 'The earlier save is still unconfirmed. Replay was refused: ' + result.message,
+      }
+      persist({ ...sending, result })
+    } catch (caught) {
+      persist({ ...sending, result: { status: 'unknown', message: caught instanceof Error ? caught.message : String(caught) } })
+    } finally {
+      inFlight.current = false
     }
   }
 
   if (!canRevise) return null
-  if (!nextAction) return recoverySourceNotice ? (
-    <p className="factory-recovery-role-note"
-      data-testid={`contract-revision-source-${task.id}`}
-      role={scopedRecoveryLoad?.status === 'error' ? 'alert' : 'status'}>
-      {recoverySourceNotice}
-    </p>
+  if (!draft && !nextAction) return recoverySourceNotice ? (
+    <p className="factory-recovery-role-note" data-testid={`contract-revision-source-${task.id}`}
+      role={scopedRecoveryLoad?.status === 'error' ? 'alert' : 'status'}>{recoverySourceNotice}</p>
   ) : null
+  const target = draft?.target ?? currentTarget
+  const idPrefix = 'revision-' + task.id
+  const actionLabel = target?.nextAction === 'redispatch' ? 'dispatch the mission'
+    : budgetBlocked ? 'resolve the budget restriction in the existing budget recovery controls'
+      : target?.recoveryKey ? 'use the source-correction handoff in Recovery details below'
+        : 'resume the selected preserved run using the separate Resume control'
   return (
     <div className="contract-revision-panel" data-testid={`contract-revision-${task.id}`}
-      data-source-run-id={sourceRunId}>
-      {open ? (
-        <form onSubmit={submit}>
-          <div className="contract-section-heading">
-            <div>
-              <strong>
-                Revise for {nextAction === 'resume'
-                  ? recoveryScope ? 'source correction' : 'preserved-session resume' : 'redispatch'}
-              </strong>
-              <span>
-                Revision {task.contract_version + 1} is durable and never starts work automatically.
-              </span>
-            </div>
-            <button
-              className="button button-quiet"
-              type="button"
-              onClick={() => {
-                setOpen(false)
-                resetDraft()
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-          <label>
-            Revision reason
-            <textarea
-              rows={2}
-              maxLength={4_000}
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              placeholder="What changed, and why is this revision required?"
-            />
+      data-source-run-id={target?.sourceRunId}>
+      {open && draft ? <form onSubmit={submit} aria-labelledby={idPrefix + '-heading'}>
+        <div className="contract-section-heading">
+          <div><strong id={idPrefix + '-heading'}>Review a contract revision</strong>
+            <span>Editing and saving never dispatch or resume work.</span></div>
+          <button className="button button-quiet" type="button" onClick={() => {
+            setOpen(false)
+            window.requestAnimationFrame(() => openButton.current?.focus())
+          }}>Keep draft and close</button>
+        </div>
+        <dl className="contract-revision-target">
+          <div><dt>Task / source run</dt><dd>{draft.target.taskId} / {draft.target.sourceRunId ?? 'Pre-execution; no run'}</dd></div>
+          <div><dt>Frozen baseline</dt><dd>Contract v{draft.target.version}; mission specification v{draft.target.missionVersion}</dd></div>
+          <div><dt>Current eligibility</dt><dd>{activeRun ? 'Work is active; a new revision cannot be saved.'
+            : recoverySourceNotice ?? (!nextAction ? 'No permitted revision for the current task or selected source.'
+              : budgetBlocked && nextAction === 'resume' ? 'Budget is exhausted. Saving a revision cannot restore execution authority.'
+                : 'A revision can be proposed. The server rechecks all authority when saving.')}</dd></div>
+        </dl>
+        {draftState.error ? <p role="alert" className="contract-error">{draftState.error}</p> : null}
+        {saved ? <div role="status" className="contract-revision-result">
+          <strong>Saved revision v{saved.version}{saved.replayed ? ' (confirmed by exact replay)' : ''}</strong>
+          <p>Receipt {saved.id}. No work was started. Next, explicitly {actionLabel}.</p>
+          {saved.refreshWarning ? <p>Saved successfully; refresh is unavailable: {saved.refreshWarning}</p> : null}
+          <button className="button button-secondary" type="button"
+            disabled={busy || !currentTarget || task.contract_version < saved.version}
+            onClick={() => begin()}>Start another revision</button>
+        </div> : null}
+        {!saved && stale ? <div role="alert" className="contract-error">
+          <p>This draft is stale: the version, selected source or eligibility changed. Your edits and original baseline are preserved.</p>
+          {!pending ? <button className="button button-secondary" type="button" disabled={busy || !currentTarget}
+            onClick={() => begin(true)}>Use current baseline, keep edits</button> : null}
+        </div> : null}
+        {pending ? <p role="status">Save outcome unconfirmed. Editing is locked; retry the exact saved request to confirm its receipt.
+          Current versions do not replace this request.</p> : null}
+        {draft.result && draft.result.status !== 'saved'
+          ? <p role="alert" className="contract-error">{draft.result.message}</p> : null}
+        <fieldset disabled={busy || pending || Boolean(saved)}>
+          <legend>Reason and specification</legend>
+          <label>Revision reason
+            <textarea ref={reasonInput} rows={2} value={draft.reason}
+              aria-invalid={Boolean(errors.reason)} aria-describedby={errors.reason ? idPrefix + '-reason-error' : undefined}
+              onChange={event => edit({ reason: event.target.value })} />
+            {errors.reason ? <small id={idPrefix + '-reason-error'} className="contract-error">{errors.reason}</small> : null}
           </label>
-          <label>
-            Mission description / specification
-            <textarea
-              rows={6}
-              maxLength={100_000}
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-            />
+          <label>Mission description / specification
+            <textarea rows={6} value={draft.description}
+              aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? idPrefix + '-description-error' : undefined}
+              onChange={event => edit({ description: event.target.value })} />
+            {errors.description ? <small id={idPrefix + '-description-error'} className="contract-error">{errors.description}</small> : null}
           </label>
-          <label>
-            Typed task contract · JSON
-            <textarea
-              className="contract-json-editor"
-              rows={18}
-              value={contractJson}
-              onChange={(event) => setContractJson(event.target.value)}
-              spellCheck={false}
-            />
-          </label>
-          <label>
-            Typed verifier policy · JSON
-            <textarea
-              className="contract-json-editor"
-              rows={12}
-              value={policyJson}
-              onChange={(event) => setPolicyJson(event.target.value)}
-              spellCheck={false}
-            />
-          </label>
-          {nextAction === 'resume' ? (
-            <small>
-              Resume revisions cannot widen tools or write scope, remove prohibitions, or change
-              source, model, secrets, budget, reasoning, or deliverable authority.
-            </small>
-          ) : null}
-          <div className="contract-revision-footer">
-            <span className={parseError ? 'contract-error' : ''}>
-              {parseError ??
-                `Save revision ${task.contract_version + 1}; then explicitly ${nextAction === 'resume'
-                  ? recoveryScope ? 'request source correction' : 'resume the preserved run' : 'dispatch the mission'}.`}
-            </span>
-            <button
-              className="button button-primary"
-              type="submit"
-              disabled={busy || Boolean(parseError) || !reason.trim()}
-            >
-              Save revision
-            </button>
-          </div>
-        </form>
-      ) : (
-        <button
-          className="button button-secondary contract-revision-open"
-          type="button"
-          disabled={busy}
-          onClick={() => setOpen(true)}
-        >
-          Revise contract for {nextAction === 'resume' && recoveryScope ? 'source correction' : nextAction}
-        </button>
-      )}
+        </fieldset>
+        <ContractRevisionEditor draft={draft} contract={parsed?.contract ?? null} policy={parsed?.policy ?? null}
+          errors={errors} disabled={busy || pending || Boolean(saved)} idPrefix={idPrefix} onChange={edit} />
+        {draft.target.nextAction === 'resume' ? <small>Resume revisions retain source, connection, secrets, model, reasoning,
+          budgets and deliverable authority; tools and write scope can only narrow, and existing prohibitions remain.</small> : null}
+        {!saved ? <div className="contract-revision-footer">
+          <span>{pending ? 'Retry confirms the original save; it never starts work.' : Object.keys(errors).length
+            ? 'Correct the marked fields before saving.' : 'After saving, explicitly ' + actionLabel + '.'}</span>
+          <button className="button button-primary" type="submit"
+            disabled={busy || (!pending && (stale || !currentTarget || Object.keys(errors).length > 0))}>
+            {pending ? 'Retry exact request' : 'Save revision'}</button>
+        </div> : null}
+      </form> : <button ref={openButton} className="button button-secondary contract-revision-open" type="button"
+        disabled={busy || (!draft && (!currentTarget || Boolean(draftState.error)))}
+        onClick={() => draft ? setOpen(true) : begin()}>
+        {draft ? saved ? 'View saved revision' : 'Continue revision draft' : 'Revise contract for ' +
+          (nextAction === 'resume' && recoveryScope ? 'source correction' : nextAction)}
+      </button>}
+      {!open && draftState.error ? <p role="alert" className="contract-error">{draftState.error}</p> : null}
     </div>
   )
 }
@@ -3039,10 +3003,9 @@ function MissionCard({
     decisionKey: string,
   ) => Promise<void>
   onContractRevision: (
-    mission: Mission,
-    task: Task,
+    target: ContractRevisionTarget,
     input: MissionContractRevisionInput,
-  ) => Promise<boolean>
+  ) => Promise<ContractRevisionSaveResult>
   onVerificationDecision: (run: Run, approved: boolean) => Promise<void>
   onActionApprovalDecision: (approval: ActionApproval, approved: boolean) => Promise<void>
   onDiscuss: (mission: Mission) => void
@@ -3539,6 +3502,10 @@ function MissionCard({
                   heading="Exact completion plan"
                 />
                 <ContractRevisionPanel
+                  key={JSON.stringify([API_URL, corpId, actorId, mission.room_id, mission.id, task.id])}
+                  corpId={corpId}
+                  selectedRunId={selectedEvidenceRunId}
+                  budgetBlocked={resumeBudgetBlocked}
                   mission={mission}
                   task={task}
                   runs={runs}
@@ -5205,37 +5172,43 @@ function App() {
   }
 
   const createContractRevision = async (
-    mission: Mission,
-    task: Task,
+    target: ContractRevisionTarget,
     input: MissionContractRevisionInput,
-  ): Promise<boolean> => {
-    if (!bootstrap || !selectedActor) return false
+  ): Promise<ContractRevisionSaveResult> => {
+    const sameViewer = () => currentViewer.current?.corpId === target.corpId &&
+      currentViewer.current?.actorId === target.actorId
+    if (!bootstrap || !selectedActor || !sameViewer() || input.task_id !== target.taskId ||
+      input.expected_contract_version !== target.version || input.next_action !== target.nextAction ||
+      input.source_run_id !== target.sourceRunId) {
+      return { status: 'rejected', message: 'The selected scope changed. No request was sent.' }
+    }
     setBusy(true)
     setError(null)
     try {
-      await api(
-        `/api/corps/${bootstrap.corp_id}/missions/${mission.id}/contract-revisions`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            actor_id: selectedActor.id,
-            ...input,
-          }),
-        },
+      const response = await api<{ revision: MissionContractRevision; replayed: boolean }>(
+        `/api/corps/${target.corpId}/missions/${target.missionId}/contract-revisions`,
+        { method: 'POST', body: JSON.stringify({ actor_id: target.actorId, ...input }) },
       )
-      await refresh(bootstrap.corp_id, selectedActor.id)
-      setAnnouncement(
-        `Contract revision ${task.contract_version + 1} recorded. Explicitly ${
-          input.next_action === 'resume' ? 'resume the preserved run' : 'dispatch the mission'
-        } when ready.`,
-      )
-      return true
+      const revision = response?.revision
+      if (!revision || revision.mission_id !== target.missionId || revision.task_id !== target.taskId ||
+        typeof revision.id !== 'string' || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/iu.test(revision.id) || !Number.isSafeInteger(revision.version) ||
+        revision.version <= target.version || typeof response.replayed !== 'boolean') {
+        throw new Error('The save response could not be verified. Retry the exact request.')
+      }
+      let refreshWarning: string | undefined
+      if (sameViewer()) {
+        try { await refresh(target.corpId, target.actorId) }
+        catch (caught) { refreshWarning = caught instanceof Error ? caught.message : String(caught) }
+      }
+      if (sameViewer()) setAnnouncement(`Contract revision ${revision.version} recorded. No work was started.`)
+      return { status: 'saved', id: revision.id, version: revision.version, replayed: response.replayed, refreshWarning }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught))
-      return false
-    } finally {
-      setBusy(false)
-    }
+      const message = caught instanceof Error ? caught.message : String(caught)
+      if (sameViewer()) setError(message)
+      const rejected = caught instanceof ApiRequestError && caught.status >= 400 && caught.status < 500 &&
+        ![408, 425, 429].includes(caught.status)
+      return { status: rejected ? 'rejected' : 'unknown', message }
+    } finally { setBusy(false) }
   }
 
   const proposeBudgetRevision = async (
