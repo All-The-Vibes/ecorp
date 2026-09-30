@@ -37,6 +37,8 @@ import type { DiscussionScope } from './missionProjection'
 import { createSnapshotRefresher } from './snapshotRefresh'
 import { evidenceSelectionKey, readEvidenceSelection, rememberEvidenceSelection } from './evidenceSelection'
 import { HistoryPanel } from './HistoryPanel'
+import { EvidenceInspector } from './EvidenceInspector'
+import { evidenceSource, exactRunDeliverable } from './sourceEvidence'
 import type { HistoryKind } from './history'
 import { missionWorkSelection, workSelectionForLink } from './workSelection'
 import type { WorkSelection } from './workSelection'
@@ -893,6 +895,16 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     )
   }
   return body as T
+}
+
+// The inspector supplies only the validated, scoped native artifact route.
+// Read the current credential per request; never store it in evidence state.
+function artifactEvidenceRequest(path: string, signal: AbortSignal): Promise<Response> {
+  const token = storedAccessToken()
+  return fetch(`${API_URL}${path}`, {
+    method: 'GET', signal, redirect: 'error', cache: 'no-store',
+    headers: token ? { authorization: `Bearer ${token}` } : {},
+  })
 }
 
 function shortId(value: string | null | undefined): string {
@@ -3195,9 +3207,20 @@ function MissionCard({
   const reviewDecisionSummary = compactReviewNote.length > 240
     ? `${compactReviewNote.slice(0, 237).trimEnd()}…`
     : compactReviewNote
-  const runDeliverable = evidenceRun
-    ? deliverables.find((deliverable) => deliverable.run_id === evidenceRun.id)
-    : undefined
+  const runDeliverable = exactRunDeliverable(evidenceRun, deliverables)
+  const providerEvidenceSource = evidenceRun ? evidenceSource(evidenceRun) : null
+  const sourceDeliverableEvidence = evidenceRun && runDeliverable
+    ? evidenceSource(evidenceRun, runDeliverable) : null
+  const hasSourceDeliverable = Boolean(evidenceRun && (evidenceRun.deliverable_sha256 ||
+    deliverables.some((deliverable) => deliverable.run_id === evidenceRun.id)))
+  const inspectionViewer = {
+    server: API_URL, corpId, actorId, actorRole, roomId: mission.room_id, missionId: mission.id,
+  }
+  const inspectionAvailable = Boolean(collaborationInput && collaborationSnapshotIsCurrent(collaborationInput) &&
+    collaborationInput.corpId === corpId && collaborationInput.actor.id === actorId &&
+    collaborationInput.actor.role === actorRole && collaborationInput.mission.id === mission.id &&
+    collaborationInput.mission.room_id === mission.room_id && evidenceRun &&
+    taskById.get(evidenceRun.task_id)?.mission_id === mission.id)
   const originRead = useMissionOriginContext({
     corpId, actorId, actorRole, missionId: mission.id, roomId: mission.room_id, api,
   })
@@ -3710,10 +3733,15 @@ function MissionCard({
               ? 'Download verified artifact'
               : 'Download submitted artifact'}
           </button>
+          <EvidenceInspector viewer={inspectionViewer} source={providerEvidenceSource}
+            available={inspectionAvailable} request={artifactEvidenceRequest} />
         </div>
       ) : null}
-      {runDeliverable ? (
-        <div className="evidence-box evidence-source" data-testid="source-deliverable">
+      {hasSourceDeliverable ? (
+        <div className="evidence-box evidence-source" data-testid="source-deliverable"
+          data-run-id={evidenceRun?.id} data-verification-sha256={evidenceRun?.verification_sha256}
+          data-source-state={runDeliverable ? 'matched' : 'unavailable'}>
+          {runDeliverable ? <>
           <strong>Source deliverable · {statusLabel(runDeliverable.form)}</strong>
           <span>{runDeliverable.file_name} · {runDeliverable.bytes.toLocaleString()} bytes</span>
           <small>
@@ -3726,6 +3754,14 @@ function MissionCard({
           >
             Download source deliverable
           </button>
+          <EvidenceInspector viewer={inspectionViewer} source={sourceDeliverableEvidence}
+            available={inspectionAvailable} request={artifactEvidenceRequest} />
+          </> : <>
+            <strong>Source deliverable unavailable</strong>
+            <p>The current records do not identify one source deliverable matching this selected run,
+              task, base commit and verification hash. Refresh the view or ask an operator to inspect
+              the recorded evidence.</p>
+          </>}
         </div>
       ) : null}
       {evidenceRun &&
@@ -3735,6 +3771,9 @@ function MissionCard({
           className={`verification-box operations-verification verification-${automated.status}`}
           data-testid="verification-evidence"
           data-check-total={automated.total ?? 'unknown'}
+          data-run-id={evidenceRun.id}
+          data-verification-sha256={evidenceRun.verification_sha256}
+          data-source-sha256={runDeliverable?.sha256}
         >
           <summary>
             <span className="operations-verification-copy">
@@ -3751,6 +3790,9 @@ function MissionCard({
             </span>
             <span className="operations-disclosure-mark" aria-hidden="true">+</span>
           </summary>
+          <p>Selected run {shortId(evidenceRun.id)} · verification {shortId(evidenceRun.verification_sha256)}
+            {runDeliverable ? <> · <a href={`#inspect-source-${runDeliverable.artifact_id}`}>Inspect this source deliverable</a></> : null}
+          </p>
           {runEvidence.length ? (
             <ol className="evidence-checks">
               {runEvidence.map((item) => (
@@ -3770,6 +3812,9 @@ function MissionCard({
           role="alert"
           aria-labelledby={`review-decision-${mission.id}`}
           data-testid="review-decision"
+          data-run-id={evidenceRun?.id}
+          data-verification-sha256={evidenceRun?.verification_sha256}
+          data-source-sha256={runDeliverable?.sha256}
         >
           <span className="operations-review-label">{reviewDecisionLabel}</span>
           <strong id={`review-decision-${mission.id}`}>Changes requested</strong>
@@ -3780,6 +3825,9 @@ function MissionCard({
                 ? `Reviewer ${shortId(runVerificationRequest.decided_by)} (name unavailable)`
                 : 'Reviewer not recorded'}
           </small>
+          {runDeliverable ? <a href={`#inspect-source-${runDeliverable.artifact_id}`}>
+            Inspect the source for this reviewed run
+          </a> : null}
           <p>{reviewDecisionSummary}</p>
           {reviewDecisionSummary !== reviewDecisionNote ? (
             <details className="operations-review-details" key={runVerificationRequest?.run_id}>

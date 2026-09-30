@@ -1,0 +1,57 @@
+{
+  "issue": 260,
+  "recorded_at_utc": "2026-09-30T02:40:46.0475343+00:00",
+  "status": "inspected",
+  "reviewer": "Codex visual inspection; not a human outcome review",
+  "physical_source_sha256": "88a0fd91e78bd161654d120c71ac0ee3662ce9f06ea2153807d930b28d9c7dba",
+  "source_receipt": "issue260-review-source-before-native-r4.json",
+  "native": {
+    "sha256": "b84213fbfb86599f930ab936a25ef5016575d25bfc865161bbb997920aac8c6a",
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue260-review-native-r4.json"
+  },
+  "browser": {
+    "sha256": "813a0701e9dabb3243562c74874515a06b47aa2a3d7c2a96536f3520318377b9",
+    "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4\\evidence\\issue260-native-browser.json"
+  },
+  "screenshots": [
+    {
+      "file": "native-root-provider-desktop-8e2721bc.png",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4\\evidence\\native-root-provider-desktop-8e2721bc.png",
+      "sha256": "93c8acc90a7be114fa547498df4b8dd8aabd28a895d1815f45e0554bdb026e1f",
+      "kind": "native",
+      "observed": "Provider output is shown as text for the selected specialist root. Exact run/task/artifact identity and persisted automated artifact check remain separate from outcome review. The requester cannot accept its own output; another eligible reviewer is required. No source deliverable is substituted for this provider-only root."
+    },
+    {
+      "file": "native-synthesis-source-desktop-32688a75.png",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4\\evidence\\native-synthesis-source-desktop-32688a75.png",
+      "sha256": "6e5b7b291c49273d8665e66018b05187c73dd9f4f06087c0964ac14653c22af5",
+      "kind": "native",
+      "observed": "Completed synthesis exposes its own two-file source manifest, selected README diff, artifact/verification digests and recorded base. Missing committed head and absence of a published PR are explicit. Provider output, source deliverable, automated verification, preserved worktree and publication state remain distinct."
+    },
+    {
+      "file": "native-source-390px-keyboard-4a1c7fd9.png",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4\\evidence\\native-source-390px-keyboard-4a1c7fd9.png",
+      "sha256": "355de347fe79edc7d78a95f7d556027f60142fa5129f28213a7f99892df14999",
+      "kind": "native",
+      "observed": "390px keyboard/reduced-motion capture reviewed at original image detail. Identity fields and controls wrap within the inspector. The selected README is readable as inert text; exact-source download, manifest search and review context remain reachable. The keyboard-focused skip link is visible. Browser geometry assertions independently found no clipped inspector controls."
+    },
+    {
+      "file": "browser-only-manifest-desktop-be9b60cd.png",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4\\evidence\\browser-only-manifest-desktop-be9b60cd.png",
+      "sha256": "62b9ddc71c6814a42f53473fd3f55158e3390000e3e3e5240cd5ec2548e4f6c8",
+      "kind": "synthetic browser response",
+      "observed": "The 249-file synthetic manifest is searchable and paginated. The selected inert.html diff displays script markup as plain text; it does not become authenticated console markup. Native identity and decision assertions were checked separately."
+    },
+    {
+      "file": "browser-only-manifest-390px-0f7f311f.png",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4\\evidence\\browser-only-manifest-390px-0f7f311f.png",
+      "sha256": "64fe238e071587d816c8c82f331c0f184baf530d34f442c7175229b1ae5e613d",
+      "kind": "synthetic browser response",
+      "observed": "390px synthetic manifest capture reviewed at original detail. Search, pagination, focus outline and inert HTML source preview fit within the panel. This screenshot proves display behavior only; no native record is attributed to the synthetic bytes."
+    }
+  ],
+  "confirmed_visual_defects": [],
+  "result": "No blocking visual defect observed in the five inspected captures.",
+  "failure_history": "r1 assumed root source exports; r2 assumed root source-export verification digests; r3 reused a same-URL fragment navigation without confirming a fresh synthetic descriptor. r4 forces a distinct document per synthetic case and asserts its descriptor digest and snapshot response. All 12 synthetic cases and 10 top-level checkpoints now pass on unchanged product source. Earlier attempts and owned fixture data remain retained.",
+  "limitations": "The native fixture uses fake-process, signed artifacts and two scripted development Bob decisions. These are not provider inference, a human review, a production grant or a GitHub effect. Synthetic browser responses are separately labeled and leave native run/decision/source records unchanged. Full pnpm check remains in progress at the time of this visual review."
+}

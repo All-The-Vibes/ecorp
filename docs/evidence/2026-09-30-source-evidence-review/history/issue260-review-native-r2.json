@@ -1,0 +1,189 @@
+{
+  "issue": 260,
+  "status": "failed",
+  "qa_root": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r2",
+  "worktree": "<USERPROFILE>\\.codex\\worktrees\\issue260-evidence\\ecorp",
+  "started_at_utc": "2026-09-30T02:25:21.1665912+00:00",
+  "steps": [
+    {
+      "sha256": "dab90761b892f2ce2ab5ec3fecec3c3237e26f2c348443aca5780a7a8a08e031",
+      "name": "source-before",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-X",
+        "utf8",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\capture-issue260-review-source-r1.py",
+        "--phase",
+        "before-native-r2",
+        "--equals",
+        "after-web-r1"
+      ],
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue260-review-native-r2-source-before.log",
+      "started_at_utc": "2026-09-30T02:25:21.2652935+00:00",
+      "finished_at_utc": "2026-09-30T02:25:36.1905465+00:00",
+      "exit_code": 0
+    },
+    {
+      "sha256": "7c3a77d9f1950a2d93bf1293eecc65d7cace28dcf8b30f4766b2de732b7c7ec0",
+      "name": "build",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "crony-server",
+        "-p",
+        "crony-runner",
+        "--bins"
+      ],
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue260-review-native-r2-build.log",
+      "started_at_utc": "2026-09-30T02:25:36.2214520+00:00",
+      "finished_at_utc": "2026-09-30T02:25:43.1387742+00:00",
+      "exit_code": 0
+    },
+    {
+      "sha256": "aeac6130fe6e52a64c1fc5ae9057aec53ae89fdc3945413d781f00d0b1a34fd6",
+      "name": "dry-run",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue260-evidence\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "DryRun",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r2",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue260-review-native-r2-dry-run.log",
+      "started_at_utc": "2026-09-30T02:25:43.5365153+00:00",
+      "finished_at_utc": "2026-09-30T02:25:46.3468874+00:00",
+      "exit_code": 0
+    },
+    {
+      "sha256": "ad6e3764a6aaacdd3aa351d9603817ca146b7932cd21dea8c5d8d55d9ed99c2b",
+      "name": "start",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue260-evidence\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Start",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r2",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue260-review-native-r2-start.log",
+      "started_at_utc": "2026-09-30T02:25:46.3686460+00:00",
+      "finished_at_utc": "2026-09-30T02:26:04.3499939+00:00",
+      "exit_code": 0
+    },
+    {
+      "sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+      "name": "status",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue260-evidence\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Status",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r2",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue260-review-native-r2-status.log",
+      "started_at_utc": "2026-09-30T02:26:04.3677956+00:00",
+      "finished_at_utc": "2026-09-30T02:26:07.9232960+00:00",
+      "exit_code": 0
+    },
+    {
+      "sha256": "2c27abd690f0155dfdb33c365d155e1d7962947e59fd4c665b1fc14a687288fa",
+      "name": "prepare",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-X",
+        "utf8",
+        "tools/e2e_factory_run_activity.py",
+        "--qa-root",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r2",
+        "--postgres-bin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin",
+        "--phase",
+        "prepare"
+      ],
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue260-review-native-r2-prepare.log",
+      "started_at_utc": "2026-09-30T02:26:07.9404467+00:00",
+      "finished_at_utc": "2026-09-30T02:26:15.3712553+00:00",
+      "exit_code": 0
+    },
+    {
+      "sha256": "37085b9e1712c85bd590d633f9262dbd15b7450dc9e71d02cf1a19c2c17da5f5",
+      "name": "browser",
+      "command": [
+        "node",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue260-native-browser-r2.mjs",
+        "--qa-root",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r2",
+        "--postgres-bin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin",
+        "--source-receipt",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue260-review-source-before-native-r2.json"
+      ],
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue260-review-native-r2-browser.log",
+      "started_at_utc": "2026-09-30T02:26:15.4044180+00:00",
+      "finished_at_utc": "2026-09-30T02:26:44.6656116+00:00",
+      "exit_code": 1
+    },
+    {
+      "sha256": "5a709944057399832a514d285bfc5a95b9d80f8db1296597ece2bc846e4865df",
+      "name": "source-after",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-X",
+        "utf8",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\capture-issue260-review-source-r1.py",
+        "--phase",
+        "after-native-r2",
+        "--equals",
+        "before-native-r2"
+      ],
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue260-review-native-r2-source-after.log",
+      "started_at_utc": "2026-09-30T02:26:44.7009188+00:00",
+      "finished_at_utc": "2026-09-30T02:27:00.0790096+00:00",
+      "exit_code": 0
+    },
+    {
+      "sha256": "65abe6fe9cb60eacc967eff94e7f98a3a958644944f9ce7caffa07021c10ae9e",
+      "name": "stop",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue260-evidence\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Stop",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r2",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue260-review-native-r2-stop.log",
+      "started_at_utc": "2026-09-30T02:27:00.1108472+00:00",
+      "finished_at_utc": "2026-09-30T02:27:02.4673665+00:00",
+      "exit_code": 0
+    }
+  ],
+  "stopped": true,
+  "reason": "Fresh owned browser/server/PostgreSQL/native-runner acceptance for issue260 on the integrated PR385 corrections. Real signed provider and source artifacts, manifest/text/diff reads, exact identities, authorization denial, reviewer eligibility, historical selection, mobile keyboard, reconnect and original downloads. Two scripted development Bob decisions are not human reviews. Separate synthetic browser states are explicitly identified and must leave native records unchanged. No provider inference, production identity or real GitHub effects.",
+  "drivers": {
+    "issue260-browser-variants-r2.mjs": "c2998fd79fe6101dfe4cd12aab549862b328c1764983edf948113429cb01cf0e",
+    "capture-issue260-review-source-r1.py": "d60024f73d7c06bf9017eedce2cb651cbfc672fc75c3d500da0f19e29593be9b",
+    "issue260-native-browser-r2.mjs": "edb49c0d1c995e007796a8c052c8accfe0ef6c49e248a443743279e9319e5a02"
+  },
+  "binaries": {
+    "crony-runner.exe": {
+      "sha256": "0fb5aa146252266884b39dbd03e6682eb11b15924a2178bfd44c9978020b9f2a",
+      "length": 132572672
+    },
+    "crony-server.exe": {
+      "sha256": "502557458dde667c55f6f6deb3530d24c6e30bd9f95e98c0900ac25c976a98fd",
+      "length": 45195264
+    }
+  },
+  "error": "Native acceptance step browser failed with exit 1; inspect retained evidence.",
+  "physical_source_unchanged": true,
+  "finished_at_utc": "2026-09-30T02:27:02.4875600+00:00"
+}

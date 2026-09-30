@@ -1,0 +1,24 @@
+.evidence-inspector { flex-basis: 100%; min-width: 0; width: 100%; margin-top: .5rem; }
+.evidence-inspector-actions, .evidence-manifest-heading { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.evidence-inspector p { overflow-wrap: anywhere; }
+.evidence-identity { margin-block: .75rem; }
+.evidence-identity summary { cursor: pointer; }
+.evidence-identity dl { display: grid; gap: .5rem; margin-block: .75rem; }
+.evidence-identity dl > div { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(0, 3fr); gap: .5rem; }
+.evidence-identity dd { margin: 0; overflow-wrap: anywhere; font-family: var(--font-mono, monospace); }
+.evidence-manifest-search { display: grid; gap: .4rem; margin-top: .75rem; }
+.evidence-manifest-search input { min-width: 0; width: 100%; box-sizing: border-box; }
+.evidence-manifest { list-style: none; padding: 0; margin-block: .5rem; max-height: 24rem; overflow: auto; }
+.evidence-file { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; gap: .5rem; align-items: start; text-align: left; width: 100%; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: .35rem; padding: .6rem; margin-block: .15rem; cursor: pointer; }
+.evidence-file[aria-pressed="true"] { outline: 2px solid currentColor; outline-offset: -3px; font-weight: 600; }
+.evidence-file-path, .evidence-file-hash, .evidence-file-preview h4 { overflow-wrap: anywhere; min-width: 0; }
+.evidence-file-bytes { font-size: .85em; white-space: nowrap; }
+.evidence-file-hash { font-family: var(--font-mono, monospace); font-size: .85em; }
+.evidence-text-preview { max-height: 28rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; padding: .75rem; border: 1px solid currentColor; border-radius: .35rem; font-family: var(--font-mono, monospace); tab-size: 4; }
+.evidence-preview-notice { font-size: .9em; }
+.evidence-inspector :is(button, input, summary, pre):focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
+@media (max-width: 600px) {
+  .evidence-identity dl > div { grid-template-columns: minmax(0, 1fr); gap: .2rem; }
+  .evidence-file { grid-template-columns: 2.5rem minmax(0, 1fr); }
+  .evidence-file-bytes { grid-column: 2; }
+}
