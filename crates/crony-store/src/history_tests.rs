@@ -880,3 +880,149 @@ async fn issue258_sequence_reserved_before_search_but_committed_after_cursor_req
     assert!(refreshed.entries.iter().any(|e| e.id == late));
     Ok(())
 }
+
+fn event_scan_work(plan: &Value) -> f64 {
+    let own = if plan["Relation Name"] == "events" {
+        (plan["Actual Rows"].as_f64().unwrap_or_default()
+            + plan["Rows Removed by Filter"].as_f64().unwrap_or_default()
+            + plan["Rows Removed by Index Recheck"]
+                .as_f64()
+                .unwrap_or_default())
+            * plan["Actual Loops"].as_f64().unwrap_or_default()
+    } else {
+        0.0
+    };
+    own + plan["Plans"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(event_scan_work)
+        .sum::<f64>()
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires an explicitly owned PostgreSQL maintenance database"]
+async fn issue258_event_pagination_does_not_scan_the_entire_journal(pool: PgPool) -> Result<()> {
+    let f = fixture(pool).await?;
+    let source = seed(&f, f.ids.room_id, 1).await?;
+    // Synthetic journal records exercise the real query plan, not runtime acceptance.
+    // Every page has visible matches and an authorized cause outside that page.
+    sqlx::query(
+        "INSERT INTO events(id,corp_id,room_id,actor_id,type,aggregate_type,aggregate_id,
+         idempotency_key,causation_id,created_at)
+         SELECT gen_random_uuid(),$1,$2,$3,'run.failed','run',$4,
+                'history-plan-' || n,$5,now() - interval '1 hour'
+         FROM generate_series(1,20000) n",
+    )
+    .bind(f.ids.corp_id)
+    .bind(f.ids.room_id)
+    .bind(f.agent_actor)
+    .bind(source[0].run)
+    .bind(source[0].event)
+    .execute(&f.store.pool)
+    .await?;
+    sqlx::query("ANALYZE events").execute(&f.store.pool).await?;
+    let upper: i64 = sqlx::query_scalar("SELECT max(seq) FROM events WHERE corp_id=$1")
+        .bind(f.ids.corp_id)
+        .fetch_one(&f.store.pool)
+        .await?;
+    let first = page(&f, HistoryFilters::default(), 25, None).await?;
+    assert_eq!(first.entries.len(), 25);
+    assert!(
+        first
+            .entries
+            .iter()
+            .all(|e| e.cause_id == Some(source[0].event))
+    );
+    let next = page(
+        &f,
+        HistoryFilters::default(),
+        25,
+        first.next_cursor.as_deref(),
+    )
+    .await?;
+    assert!(
+        next.entries
+            .iter()
+            .all(|e| e.cause_id == Some(source[0].event))
+    );
+    assert!(
+        !next
+            .entries
+            .iter()
+            .any(|e| first.entries.iter().any(|p| p.id == e.id))
+    );
+
+    let mut tx = f.store.pool.begin().await?;
+    // SQLx reuses prepared statements. EXPLAINing a parameterized SELECT alone
+    // does not demonstrate the generic plan a reused prepared SELECT may use.
+    sqlx::raw_sql(&format!(
+        "PREPARE history_page_plan(uuid,uuid,text,uuid,uuid,uuid,uuid,text,text,
+         timestamptz,bigint,bigint,timestamptz,uuid,bigint,text[],text[]) AS {}",
+        include_str!("history.sql")
+    ))
+    .execute(&mut *tx)
+    .await?;
+    for mode in ["force_custom_plan", "force_generic_plan"] {
+        sqlx::query(&format!("SET LOCAL plan_cache_mode = {mode}"))
+            .execute(&mut *tx)
+            .await?;
+        for (scenario, after, exact, scoped) in [
+            ("first", None, None, false),
+            ("deep-cursor", Some(upper - 5000), None, false),
+            ("scoped", None, None, true),
+            ("exact-old-record", None, Some(source[0].event), false),
+        ] {
+            // PostgreSQL quotes the typed synthetic fixture arguments. No external
+            // values are interpolated into EXECUTE or the production query.
+            let explain: String = sqlx::query_scalar(
+                "SELECT format('EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
+             EXECUTE history_page_plan(%L,%L,%L,%L,%L,%L,%L,%L,%L,%L,%L,%L,%L,%L,%L,%L,%L)',
+             $1::uuid,$2::uuid,$3::text,$4::uuid,$5::uuid,$6::uuid,$7::uuid,
+             $8::text,$9::text,$10::timestamptz,$11::bigint,$12::bigint,
+             $13::timestamptz,$14::uuid,$15::bigint,$16::text[],$17::text[])",
+            )
+            .bind(f.ids.corp_id)
+            .bind(f.ids.alice_actor_id)
+            .bind("event")
+            .bind(scoped.then_some(f.ids.room_id))
+            .bind(scoped.then_some(source[0].mission))
+            .bind(scoped.then_some(f.agent_actor))
+            .bind(exact)
+            .bind(scoped.then_some("run.failed"))
+            .bind("")
+            .bind(Utc::now())
+            .bind(upper)
+            .bind(after)
+            .bind(None::<chrono::DateTime<Utc>>)
+            .bind(None::<Uuid>)
+            .bind(26_i64)
+            .bind(crony_domain::HISTORY_EVENT_TYPES)
+            .bind(HistoryKind::Event.known_statuses())
+            .fetch_one(&mut *tx)
+            .await?;
+            let plan: Value = sqlx::query_scalar(&explain).fetch_one(&mut *tx).await?;
+            let scanned = event_scan_work(&plan[0]["Plan"]);
+            eprintln!(
+                "history-plan mode={mode} scenario={scenario} journal_rows=20000 returned={} event_rows_examined={scanned} execution_ms={}",
+                plan[0]["Plan"]["Actual Rows"], plan[0]["Execution Time"]
+            );
+            assert!(
+                scanned <= 260.0,
+                "bounded page scanned {scanned} journal rows: {plan}"
+            );
+        }
+    }
+    let (generic, custom): (i64, i64) = sqlx::query_as(
+        "SELECT generic_plans, custom_plans FROM pg_prepared_statements
+         WHERE name='history_page_plan'",
+    )
+    .fetch_one(&mut *tx)
+    .await?;
+    assert_eq!((generic, custom), (4, 4));
+    sqlx::query("DEALLOCATE history_page_plan")
+        .execute(&mut *tx)
+        .await?;
+    tx.commit().await?;
+    Ok(())
+}
