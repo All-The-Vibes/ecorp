@@ -1,0 +1,115 @@
+{
+  "issues": [
+    263,
+    264
+  ],
+  "recorded_at": "2026-09-30T09:24:34.032039+00:00",
+  "reviewer": "Codex assistant; not an independent human approval",
+  "source_before": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue264-review-source-before-native-r14.json",
+    "sha256": "f2dc398883c7ddb6c62ab3c7e41d24cd5e4e01aa77a9d4e0b9ac85ea5f496b3c"
+  },
+  "source_after": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue264-review-source-before-check-r3.json",
+    "sha256": "a7199833a72f2a1c3c0677d022e63f362ad9cf84d84401f7912cc3d20cf8dfb3"
+  },
+  "changed_files": [
+    {
+      "path": "apps/web/src/missionComposer.test.mjs",
+      "before_sha256": "c9eb3e76b1b70853dbd586a805b689b5d8d7245b0f5c95b667a27923353c71d3",
+      "after_sha256": "14f70cd7c2a63dc60c0ac4272fd51e5143f9cd88e553fb02ef1eda112479bd66"
+    },
+    {
+      "path": "apps/web/src/missionPreview.test.mjs",
+      "before_sha256": "3ab9973e2c6b60aa8be7471ad0d1dd4b769bfc511745d7241afa528fd19167f2",
+      "after_sha256": "4774651da222612b9f394ba5fbd351a87ebea3896225ec6c6fea7f8f58ab30c6"
+    },
+    {
+      "path": "tools/coverage_web_models.mjs",
+      "before_sha256": "0214eb41aa313f90cb31db908234066a235cc219fe8758c5b78a13e69a9fd0f2",
+      "after_sha256": "19170b5e5bd6e3750cb28b00eca1177788f1c9b2a4e98587996d391151c1f70f"
+    }
+  ],
+  "unchanged_physical_files": 7524,
+  "resolution": {
+    "coverage_admission": "Explicitly register executiveOverview.ts as a pure production model and presentationPreferences.ts as a React hook. Exact denominator and 99/95/97 thresholds are unchanged.",
+    "canonical_assertions": "The existing mission composer and preview source-contract assertions now verify that the submission captures currentMissionRequest and sends the captured body. Native held-plan/launch conditions and preview separation remain checked; browser regressions independently exercise real behavior."
+  },
+  "prior_canonical": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue264-review-check-r2.json",
+    "sha256": "e07b38bd037d9ce2fd4741d0275974a72b0af16175a5641d8073da6d1fb71aee"
+  },
+  "prior_counts": {
+    "tests": 3468,
+    "passed": 3401,
+    "failed": 2,
+    "skipped": 65,
+    "todo": 0,
+    "cancelled": 0
+  },
+  "prior_not_run": [
+    "format",
+    "clippy",
+    "rust-tests",
+    "web-build",
+    "web-lint"
+  ],
+  "coverage": {
+    "summary": {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue264-modes\\ecorp\\output\\coverage\\issue264-review-r1\\summary.json",
+      "sha256": "c991d71bfd8b0545ab82fc373192ac7651dd1563d28b1f32ad6f8d52a81919f2"
+    },
+    "run": {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue264-modes\\ecorp\\output\\coverage\\issue264-review-r1\\run.json",
+      "sha256": "a6eb0936b6d32b5766b3914b76d268474aaa20cbe20621ad053427050fba7ba2"
+    },
+    "lcov": {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue264-modes\\ecorp\\output\\coverage\\issue264-review-r1\\lcov.info",
+      "sha256": "9dab845bff294028c1354d97fee969acbc548634ae60e28803ea993299fba682"
+    },
+    "tests_log": {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue264-modes\\ecorp\\output\\coverage\\issue264-review-r1\\tests.log",
+      "sha256": "880512a83f7b158eba62b4f01554d176735fa8c40f5664aa9406de8b127485a7"
+    },
+    "counts": {
+      "tests": 804,
+      "passed": 804,
+      "failed": 0,
+      "skipped": 0
+    },
+    "metrics": {
+      "lines": {
+        "found": 3917,
+        "hit": 3909,
+        "percent": 99.8
+      },
+      "functions": {
+        "found": 431,
+        "hit": 423,
+        "percent": 98.14
+      },
+      "branches": {
+        "found": 2219,
+        "hit": 2188,
+        "percent": 98.6
+      }
+    },
+    "thresholds": {
+      "lines": 99,
+      "functions": 95,
+      "branches": 97
+    }
+  },
+  "native_applicability": {
+    "receipt": {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue264-review-native-r14.json",
+      "sha256": "8ba006266b19c4a1bc2a69b271f4017a43deecc812a4c98b7e853d366d938239"
+    },
+    "browser_report": {
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue264-20260930-r14\\evidence\\issue264-native-browser.json",
+      "sha256": "9207a259c1d46070106598f25ceaeebc062d9a748abf0563c6e44db88669b383"
+    },
+    "conclusion": "Every physical source file except the two source-contract tests and coverage admission tool is byte-identical to the accepted native r14 source. The application, styles, native binaries' source, dependencies, migrations, and native fixture tools have not changed. r14 remains applicable to these runtime inputs.",
+    "limits": "The native run occurred before these test/coverage changes. This is a retrospective input comparison, not a claim that r14 executed at the later source identity. The complete canonical r3 run is still in progress; no hosted CI, merge readiness, or issue completion is claimed."
+  }
+}

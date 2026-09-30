@@ -60,17 +60,23 @@ async fn read_page(
             query.cursor.as_deref(),
         )
         .await
-        .map_err(|error| match error.downcast_ref::<HistoryReadError>() {
-            Some(HistoryReadError::Unavailable) => {
-                ApiError::not_found(HistoryReadError::Unavailable)
-            }
-            Some(kind) => ApiError::bad_request(kind),
-            // Database diagnostics can include user input. Never return/log them.
-            None => ApiError {
+        .map_err(store_error)
+}
+
+fn store_error(error: anyhow::Error) -> ApiError {
+    match error.downcast_ref::<HistoryReadError>() {
+        Some(HistoryReadError::Unavailable) => ApiError::not_found(HistoryReadError::Unavailable),
+        Some(kind) => ApiError::bad_request(kind),
+        None => {
+            // Database diagnostics can include user input or secrets. Retain
+            // only the static failure category, never the error or query.
+            error!("history query unavailable");
+            ApiError {
                 status: StatusCode::SERVICE_UNAVAILABLE,
                 message: "History is temporarily unavailable. Retry the search.".to_owned(),
-            },
-        })
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -80,6 +86,54 @@ mod tests {
     use crony_store::DemoIds;
     use serde_json::Value;
     use sqlx::{ConnectOptions, PgPool};
+
+    #[test]
+    fn history_store_failures_log_only_a_static_category() {
+        #[derive(Clone)]
+        struct LogWriter(Arc<std::sync::Mutex<Vec<u8>>>);
+
+        impl std::io::Write for LogWriter {
+            fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+                self.0.lock().unwrap().extend_from_slice(bytes);
+                Ok(bytes.len())
+            }
+
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+
+        let logs = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let writer = LogWriter(logs.clone());
+        let subscriber = tracing_subscriber::fmt()
+            .without_time()
+            .with_ansi(false)
+            .with_target(false)
+            .with_max_level(tracing::Level::ERROR)
+            .with_writer(move || writer.clone())
+            .finish();
+        tracing::subscriber::with_default(subscriber, || {
+            for kind in [
+                HistoryReadError::InvalidQuery,
+                HistoryReadError::InvalidCursor,
+                HistoryReadError::Unavailable,
+            ] {
+                assert!(store_error(kind.into()).status.is_client_error());
+            }
+            assert!(logs.lock().unwrap().is_empty());
+
+            let failure = store_error(anyhow::anyhow!(
+                "database diagnostic includes private-canary query and credential"
+            ));
+            assert_eq!(failure.status, StatusCode::SERVICE_UNAVAILABLE);
+            assert_eq!(
+                failure.message,
+                "History is temporarily unavailable. Retry the search."
+            );
+        });
+        let output = String::from_utf8(logs.lock().unwrap().clone()).unwrap();
+        assert_eq!(output.trim(), "ERROR history query unavailable");
+    }
 
     async fn fixture(pool: &PgPool) -> Result<(AppState, DemoIds)> {
         let store = PgStore::connect(pool.connect_options().to_url_lossy().as_str()).await?;

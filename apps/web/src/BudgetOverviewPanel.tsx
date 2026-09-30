@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useLayoutEffect, useState } from 'react'
 import {
   BUDGET_SNAPSHOT_FRESH_MS, budgetAuthority, budgetDestinationAvailable, buildBudgetOverview,
   formatBudgetMoney, formatBudgetTokens,
@@ -23,15 +23,16 @@ function AuthorityValues({ label, value, costLabel }: {
 
 export function BudgetOverviewPanel({ snapshot, viewer, stamp, onRefresh, onOpen }: Props) {
   const [now, updateClock] = useState(Date.now)
-  useEffect(() => {
+  useLayoutEffect(() => {
     const current = Date.now()
-    // Sample the external clock on receipt and expiry; never poll or read it
-    // during render. Navigation independently rechecks the clock at activation.
-    const sync = window.setTimeout(() => updateClock(Date.now()), 0)
+    // Sample before paint so a new receipt is not compared with the prior
+    // receipt's clock. Future timestamps still fail against the actual clock.
+    // oxlint-disable-next-line react/set-state-in-effect
+    updateClock(current)
     const delay = Date.parse(stamp.receivedAt ?? '') + BUDGET_SNAPSHOT_FRESH_MS - current
     const expiry = Number.isFinite(delay) && delay > 0
       ? window.setTimeout(() => updateClock(Date.now()), delay + 1) : undefined
-    return () => { window.clearTimeout(sync); window.clearTimeout(expiry) }
+    return () => { window.clearTimeout(expiry) }
   }, [stamp.receivedAt])
   const overview = buildBudgetOverview(snapshot, viewer, stamp, now)
   const totals = overview.totals

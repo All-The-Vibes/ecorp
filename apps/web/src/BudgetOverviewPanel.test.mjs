@@ -170,6 +170,7 @@ test('a fresh receipt cancels prior expiration and access loss hides data before
   c.render(); c.due()
   c.now += 30_000
   c.replace({ ...c.props, stamp: { ...c.props.stamp, receivedAt: new Date(c.now).toISOString() } })
+  assert.equal(hasTotals(c.hooks.flushLayout()), true, 'Fresh totals are present before passive effects or timers')
   c.hooks.flush(); c.due()
   assert.equal(hasTotals(c.hooks.value), true)
   c.now += 30_002
@@ -179,6 +180,15 @@ test('a fresh receipt cancels prior expiration and access loss hides data before
   c.hooks.flush()
   const otherViewer = c.replace({ ...c.props, viewer: { corpId: 'corp-a', actorId: 'bob' } })
   assert.equal(hasTotals(otherViewer), false)
+})
+
+test('receipt synchronization does not make a genuinely future receipt current', (t) => {
+  const c = clockFixture(t)
+  c.render()
+  c.now += 30_000
+  c.replace({ ...c.props, stamp: { ...c.props.stamp, receivedAt: new Date(c.now + 120_000).toISOString() } })
+  assert.equal(hasTotals(c.hooks.flushLayout()), false)
+  assert.equal(hasTotals(c.due()), false)
 })
 
 test('StrictMode effect replay owns one receipt sample and expiry with no leaked timer', (t) => {

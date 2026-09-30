@@ -1,0 +1,78 @@
+{
+  "issues": [
+    263,
+    264
+  ],
+  "status": "passed",
+  "started_at_utc": "2026-09-30T09:22:51.6188552+00:00",
+  "worktree": "<USERPROFILE>\\.codex\\worktrees\\issue264-modes\\ecorp",
+  "steps": [
+    {
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue264-review-dependencies-r3-source-before.log",
+      "sha256": "80e7e506ab994b0a4c5aa0513cd46c98e38faa72a13c9b36fde97b10cb4bce89",
+      "exit_code": 0,
+      "completed_at_utc": "2026-09-30T09:23:04.8455176+00:00",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-X",
+        "utf8",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\capture-issue264-review-source-r2.py",
+        "--phase",
+        "before-dependencies-r3"
+      ],
+      "started_at_utc": "2026-09-30T09:22:51.6782612+00:00",
+      "name": "source-before"
+    },
+    {
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue264-review-dependencies-r3-install.log",
+      "sha256": "09091c4bbed08d261015bb9831071587474ef709bb562c360c3415e2fadbcc1a",
+      "exit_code": 0,
+      "completed_at_utc": "2026-09-30T09:23:05.5275426+00:00",
+      "command": [
+        "pnpm",
+        "install",
+        "--frozen-lockfile"
+      ],
+      "started_at_utc": "2026-09-30T09:23:04.8810131+00:00",
+      "name": "install"
+    },
+    {
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue264-review-dependencies-r3-scenario-install.log",
+      "sha256": "731fccdffdae6f9a256697d9912e6532e6efdf35b3456d2402db2d054341740b",
+      "exit_code": 0,
+      "completed_at_utc": "2026-09-30T09:23:13.9276080+00:00",
+      "command": [
+        "npm",
+        "ci",
+        "--prefix",
+        "scenarios/repo-steward",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "started_at_utc": "2026-09-30T09:23:05.5444231+00:00",
+      "name": "scenario-install"
+    },
+    {
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue264-review-dependencies-r3-source-after.log",
+      "sha256": "1035c83c0954161a30af2231ebb744b208a1c0df3e8fceef1e05346d403a03f8",
+      "exit_code": 0,
+      "completed_at_utc": "2026-09-30T09:23:27.5344757+00:00",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-X",
+        "utf8",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\capture-issue264-review-source-r2.py",
+        "--phase",
+        "after-dependencies-r3",
+        "--equals",
+        "before-dependencies-r3"
+      ],
+      "started_at_utc": "2026-09-30T09:23:13.9450781+00:00",
+      "name": "source-after"
+    }
+  ],
+  "scope": "Frozen workspace and repo-steward dependencies for the pending integration; no tests, native acceptance or hosted CI are implied.",
+  "physical_source_unchanged": true,
+  "completed_at_utc": "2026-09-30T09:23:27.5492205+00:00"
+}

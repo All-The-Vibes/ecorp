@@ -103,7 +103,7 @@ function size(value: unknown): value is number {
 function media(value: unknown): string | null {
   if (typeof value !== 'string') return null
   const type = value.split(';')[0].trim().toLowerCase()
-  return /^[a-z0-9.+-]+\/[a-z0-9.+-]+$/.test(type) ? type : null
+  return /^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/.test(type) ? type : null
 }
 function signature(value: unknown): boolean {
   // The server verifies the HMAC; a browser never receives its signing key.
@@ -150,7 +150,7 @@ export function evidenceSource(run: EvidenceRun, deliverable?: EvidenceDeliverab
   return Object.freeze({
     kind: 'provider', runId: run.id, taskId: run.task_id, artifactId: run.artifact_id,
     sha256: run.artifact_sha256, mediaType: media(run.artifact_media_type)!, bytes: null,
-    baseCommit: run.source_base_commit, verificationSha256: run.verification_sha256,
+    baseCommit: run.source_base_commit ?? run.workspace_base_commit, verificationSha256: run.verification_sha256,
     retentionUntil: null, form: null, headCommit: null, branch: null,
   })
 }
@@ -263,7 +263,7 @@ export function redactEvidenceText(text: string): Extract<TextPreview, { state: 
 
 export function textEvidencePreview(bytes: Uint8Array, mediaType: string): TextPreview {
   if (bytes.byteLength > MAX_TEXT_PREVIEW_BYTES) return { state: 'oversize' }
-  if (!/^(?:text\/|application\/(?:json|xml|javascript|[a-z0-9.+-]+\+json)$|image\/svg\+xml$)/.test(mediaType)) {
+  if (!/^(?:text\/|application\/(?:json|xml|javascript|[a-z0-9!#$&^_.+-]+\+json)$|image\/svg\+xml$)/.test(mediaType)) {
     return { state: mediaType.startsWith('image/') || ['application/pdf', 'application/octet-stream'].includes(mediaType) ? 'binary' : 'unsupported' }
   }
   let text: string
@@ -344,8 +344,8 @@ export async function inspectManifestPatch(patch: { content: string; sha256: str
 }
 
 export function manifestPage(files: readonly ManifestFile[], query: string, requestedPage: number) {
-  const search = query.slice(0, 256).trim().toLocaleLowerCase()
-  const matches = files.filter((file) => file.path.toLocaleLowerCase().includes(search))
+  const search = query.slice(0, 256).trim().toLowerCase()
+  const matches = files.filter((file) => file.path.toLowerCase().includes(search))
   const pages = Math.max(1, Math.ceil(matches.length / MANIFEST_PAGE_SIZE))
   const page = Number.isSafeInteger(requestedPage) ? Math.max(0, Math.min(pages - 1, requestedPage)) : 0
   return { files: matches.slice(page * MANIFEST_PAGE_SIZE, (page + 1) * MANIFEST_PAGE_SIZE), page, pages, matches: matches.length }

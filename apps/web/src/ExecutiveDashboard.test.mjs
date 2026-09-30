@@ -171,12 +171,19 @@ test('fresh receipts replace their timer and permission loss hides data before e
   const c = clockFixture(t); c.render(); c.due()
   c.now += 30_000
   c.replace({ ...c.props, stamp: { ...c.props.stamp, receivedAt: new Date(c.now).toISOString() } })
+  assert.equal(missionCards(c.hooks.flushLayout()), 1, 'Fresh mission cards are present before passive effects or timers')
   c.hooks.flush(); c.due(); c.now += 30_002
   assert.equal(missionCards(c.due()), 1)
   const denied = c.replace({ ...c.props, stamp: { ...c.props.stamp, refreshFailed: true } })
   assert.equal(missionCards(denied), 0)
   c.hooks.flush()
   assert.equal(missionCards(c.replace({ ...c.props, viewer: { ...c.props.viewer, actorId: 'bob' } })), 0)
+})
+test('receipt synchronization retains rejection of a genuinely future receipt', (t) => {
+  const c = clockFixture(t); c.render(); c.now += 30_000
+  c.replace({ ...c.props, stamp: { ...c.props.stamp, receivedAt: new Date(c.now + 120_000).toISOString() } })
+  assert.equal(missionCards(c.hooks.flushLayout()), 0)
+  assert.equal(missionCards(c.due()), 0)
 })
 test('StrictMode repeated cleanup/setup leaves one expiry and no timer after unmount', (t) => {
   const c = clockFixture(t); c.render(); c.hooks.replayEffects(); c.hooks.replayEffects(); c.due()

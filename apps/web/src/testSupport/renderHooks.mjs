@@ -43,23 +43,24 @@ export function renderHooks() {
     render = next; cursor = 0; dirty = false; value = render()
     return value
   }
-  const commit = () => {
-    for (const phase of ['layout', 'passive']) for (const slot of slots) {
+  const commit = (phases = ['layout', 'passive']) => {
+    for (const phase of phases) for (const slot of slots) {
       if (slot.phase === phase && slot.pending) {
         slot.cleanup?.(); slot.pending = false; slot.cleanup = slot.create()
       }
     }
   }
-  const flush = () => {
+  const flush = (phases = ['layout', 'passive']) => {
     for (let attempt = 0; attempt < 30; attempt++) {
       if (dirty) begin()
-      commit()
+      commit(phases)
       if (!dirty) return value
     }
     assert.fail('Production hook did not settle within 30 render/commit cycles')
   }
   return {
     react, begin, commit, flush,
+    flushLayout() { return flush(['layout']) },
     render(next) { begin(next); return flush() },
     replayEffects() {
       // Development StrictMode repeats cleanup/setup without resetting state.

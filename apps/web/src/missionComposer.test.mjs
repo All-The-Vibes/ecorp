@@ -70,7 +70,7 @@ test('native creation and explicit held-plan behavior remain unchanged', () => {
   assert.match(create, /!selectedMissionSource/)
   assert.match(create, /!missionSourceConfirmed/)
   assert.match(create, /missionVerifierErrors\.length > 0/)
-  assert.match(create, /body: currentMissionRequest\.body/)
+  assert.match(create, /const request = currentMissionRequest[\s\S]*body: request\.body/)
   assert.match(create, /if \(!pauseAfterPlanning\)/)
   assert.match(create, /missions\/\$\{created\.mission_id\}\/launch/)
   assert.match(create, /setSelectedMissionId\(created\.mission_id\)/)

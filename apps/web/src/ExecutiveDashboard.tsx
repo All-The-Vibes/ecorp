@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useLayoutEffect, useState } from 'react'
 import { BUDGET_SNAPSHOT_FRESH_MS } from './budgetOverview'
 import type { BudgetSnapshotStamp, BudgetViewer } from './budgetOverview'
 import { buildExecutiveOverview, executiveDestinationAvailable, executiveStatus } from './executiveOverview'
@@ -45,18 +45,22 @@ function ExecutiveResult({ row, viewer, api, onOpen }: {
 /** Presentation only: the existing scoped readers and Operations controls own authority. */
 export function ExecutiveDashboard({ snapshot, viewer, stamp, runners, api, onRefresh, onOpen, onWorkspace }: Props) {
   const [now, updateClock] = useState(Date.now)
-  useEffect(() => {
-    const sync = window.setTimeout(() => updateClock(Date.now()), 0)
-    const delay = Date.parse(stamp.receivedAt ?? '') + BUDGET_SNAPSHOT_FRESH_MS - Date.now()
+  useLayoutEffect(() => {
+    const current = Date.now()
+    // Synchronize receipt freshness before paint without trusting its timestamp
+    // as the clock. Navigation independently checks time at activation.
+    // oxlint-disable-next-line react/set-state-in-effect
+    updateClock(current)
+    const delay = Date.parse(stamp.receivedAt ?? '') + BUDGET_SNAPSHOT_FRESH_MS - current
     const expiry = Number.isFinite(delay) && delay > 0
       ? window.setTimeout(() => updateClock(Date.now()), delay + 1) : undefined
-    return () => { window.clearTimeout(sync); window.clearTimeout(expiry) }
+    return () => { window.clearTimeout(expiry) }
   }, [stamp.receivedAt])
   const overview = buildExecutiveOverview(snapshot, viewer, stamp, runners, now)
-  const open = (target: ExecutiveDestination) => {
+  const open = useCallback((target: ExecutiveDestination) => {
     if (executiveDestinationAvailable(buildExecutiveOverview(snapshot, viewer, stamp, runners, Date.now()), target)) onOpen(target)
     else onRefresh()
-  }
+  }, [snapshot, viewer, stamp, runners, onOpen, onRefresh])
   return <section id="executive" tabIndex={-1} className="executive-dashboard" aria-labelledby="executive-title">
     <header className="executive-heading">
       <div><span className="section-code">Executive view</span><h2 id="executive-title">Outcomes &amp; decisions</h2></div>

@@ -111,6 +111,32 @@ test('provider output remains a separate descriptor and never follows a supplied
   }
 })
 
+test('provider evidence preserves a recorded workspace base when the source base is absent', () => {
+  const { run } = fixture()
+  assert.equal(evidenceSource({ ...run, source_base_commit: null }).baseCommit, base)
+  assert.equal(evidenceSource({ ...run, workspace_base_commit: null }).baseCommit, base)
+  assert.equal(evidenceSource({ ...run, source_base_commit: null, workspace_base_commit: null }).baseCommit, null)
+})
+
+test('readable evidence accepts the established MIME token class, including underscores', async () => {
+  for (const type of ['text/x_test', 'application/vnd.test_name+json', 'application/x!#$&^_.+-+json']) {
+    const source = evidenceSource({ ...fixture().run, artifact_media_type: type })
+    assert.ok(source, type)
+    const bytes = await readEvidenceBytes(source, 'corp-a', 'actor-a',
+      async () => new Response(content, { headers: { 'content-type': type } }), new AbortController().signal, now)
+    assert.equal(inspectEvidenceDocument(source, bytes).preview.state, 'text', type)
+  }
+})
+
+test('manifest path filtering stays consistent with a Turkish browser locale', (t) => {
+  const localeLowerCase = String.prototype.toLocaleLowerCase
+  t.mock.method(String.prototype, 'toLocaleLowerCase', function () { return localeLowerCase.call(this, 'tr') })
+  assert.equal('LICENSE'.toLocaleLowerCase(), 'lıcense', 'The fixture simulates Turkish default casing')
+  const files = [{ path: 'LICENSE' }, { path: 'src/MAIN.ts' }]
+  assert.deepEqual(manifestPage(files, 'license', 0).files, [files[0]])
+  assert.deepEqual(manifestPage(files, 'MAIN', 0).files, [files[1]])
+})
+
 test('streaming read checks trusted length, media and SHA-256 before returning any content', async () => {
   const { source, bytes } = fixture()
   const controller = new AbortController(), calls = []

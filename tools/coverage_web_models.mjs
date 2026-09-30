@@ -7,13 +7,13 @@ import { fileURLToPath } from 'node:url'
 const repository = fileURLToPath(new URL('../', import.meta.url))
 export const MODEL_FILES = [
   'budgetOverview.ts',
-  'evidenceSelection.ts', 'factoryAuthority.ts', 'factoryCheckpointRecovery.ts', 'factoryControllerSelection.ts',
+  'evidenceSelection.ts', 'executiveOverview.ts', 'factoryAuthority.ts', 'factoryCheckpointRecovery.ts', 'factoryControllerSelection.ts',
   'factoryPolling.ts', 'formText.ts', 'history.ts', 'missionCollaboration.ts', 'missionOriginContext.ts', 'missionPreview.ts',
   'missionProjection.ts', 'missionResultContext.ts', 'missionRuntime.ts',
   'office/characterAssets.ts', 'office/officeModel.ts', 'runActivity.ts', 'snapshotRefresh.ts', 'sourceEvidence.ts',
   'verificationPolicy.ts', 'workflowContext.ts', 'workspaceConnections.ts', 'workSelection.ts',
 ].map((file) => `apps/web/src/${file}`).sort()
-const frameworkFiles = ['apps/web/src/useEvidenceInspection.ts', 'apps/web/src/useMissionOriginContext.ts', 'apps/web/src/useMissionResultContext.ts', 'apps/web/src/useWorkSelection.ts']
+const frameworkFiles = ['apps/web/src/presentationPreferences.ts', 'apps/web/src/useEvidenceInspection.ts', 'apps/web/src/useMissionOriginContext.ts', 'apps/web/src/useMissionResultContext.ts', 'apps/web/src/useWorkSelection.ts']
 const testPatterns = ['apps/web/src/**/*.test.mjs', 'tools/office_model.test.mjs']
 const thresholds = { lines: 99, functions: 95, branches: 97 }
 const scope = `All ${MODEL_FILES.length} framework-independent web TypeScript models; excludes the ${frameworkFiles.length} React hooks, TSX rendering, Rust, and other tools`

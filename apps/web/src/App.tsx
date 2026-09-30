@@ -4575,6 +4575,14 @@ function App() {
   const [missionStrategy, setMissionStrategy] = useState('single')
   const [missionSourceKey, setMissionSourceKey] = useState('')
   const [missionSourceConfirmed, setMissionSourceConfirmed] = useState(false)
+  const [missionCreationReceipts, setMissionCreationReceipts] = useState<Record<string, {
+    requestKey: string; missionId: string; title: string
+    dispatch: 'saved' | 'dispatched' | 'unconfirmed'
+  }>>({})
+  const missionSubmissionActive = useRef(false)
+  const currentMissionDraft = useRef<{
+    key: string; collapsed: boolean; workspace: WorkspaceView
+  } | null>(null)
   const [connectionsOpen, setConnectionsOpen] = useState(false)
   const [savedConnectionLoad, setSavedConnectionLoad] = useState<{
     scope: string; data: WorkspaceConnections
@@ -5244,9 +5252,24 @@ function App() {
   const missionActorId = selectedActor?.id
   const currentMissionRequest = missionCorpId && missionActorId && missionRequestBody
     ? missionRequestScope(missionCorpId, missionActorId, missionRequestBody) : null
+  const missionReceiptScope = JSON.stringify([missionCorpId, missionActorId])
+  const savedMission = missionCreationReceipts[missionReceiptScope]
+  const consumedMissionRequest = Boolean(currentMissionRequest && savedMission?.requestKey === currentMissionRequest.key)
+  // Compare the editable draft as well as its normalized request. Whitespace,
+  // inactive verifier settings and the dispatch choice are still the user's edits.
+  const missionDraftKey = JSON.stringify([
+    missionRequestBody, missionTitle, missionDescription, missionObjective, missionExpectedOutput,
+    missionAcceptanceTests, missionAllowedTools, missionProhibitedActions, missionReferences,
+    missionWriteScope, missionSourceKey, missionSourceConfirmed, customVerification,
+    missionVerificationPolicy, pauseAfterPlanning,
+  ])
+  useLayoutEffect(() => {
+    currentMissionDraft.current = { key: missionDraftKey, collapsed: missionComposerCollapsed, workspace: activeWorkspaceView }
+    return () => { currentMissionDraft.current = null }
+  }, [missionDraftKey, missionComposerCollapsed, activeWorkspaceView])
   const missionPreviewEnabled = !missionComposerCollapsed && activeWorkspaceView === 'missions' &&
     Boolean(currentMissionRequest && selectedMissionSource && selectedActor && canOperate(selectedActor.role)) &&
-    Boolean(missionTitle.trim()) && missionSourceConfirmed && !busy &&
+    Boolean(missionTitle.trim()) && missionSourceConfirmed && !busy && !consumedMissionRequest &&
     !runtimeError && missionVerifierErrors.length === 0
 
   const selectActor = (actor: Actor) => {
@@ -5284,72 +5307,104 @@ function App() {
     if (
       !bootstrap ||
       !selectedActor ||
+      !canOperate(selectedActor.role) ||
       !currentMissionRequest ||
       !missionTitle.trim() ||
       !selectedMissionSource ||
       !missionSourceConfirmed ||
       busy ||
+      missionSubmissionActive.current ||
+      consumedMissionRequest ||
       runtimeError ||
       missionVerifierErrors.length > 0
     ) {
       return
     }
+    const viewer = currentViewer.current
+    if (viewer?.corpId !== currentMissionRequest.corpId || viewer.actorId !== currentMissionRequest.actorId) return
+    const isCurrentViewer = () => currentViewer.current === viewer
+    const request = currentMissionRequest
+    let createdMissionId: string | null = null
+    let dispatchNotice: string | null = null
+    missionSubmissionActive.current = true
     setBusy(true)
     setError(null)
     try {
       const created = await api<CreateMissionResponse>(`/api/corps/${bootstrap.corp_id}/missions`, {
         method: 'POST',
-        body: currentMissionRequest.body,
+        body: request.body,
       })
+      createdMissionId = created.mission_id
+      // The create response commits this draft independently of dispatch,
+      // snapshot refresh and browser selection storage. Retain a scoped receipt
+      // even if the viewer changed while the request was pending.
+      setMissionCreationReceipts((previous) => ({ ...previous, [missionReceiptScope]: {
+        requestKey: request.key, missionId: created.mission_id, title: missionTitle, dispatch: 'saved',
+      } }))
+      if (!isCurrentViewer()) return
+      const consumedDraft = currentMissionDraft.current?.key === missionDraftKey
+      if (consumedDraft) {
+        setMissionTitle('')
+        setMissionDescription('')
+        setMissionObjective('')
+        setMissionExpectedOutput('')
+        setMissionAcceptanceTests('')
+        setMissionAllowedTools('')
+        setMissionProhibitedActions('')
+        setMissionReferences('')
+        setMissionWriteScope('')
+        if (!selectedMissionSource.workspaceConnectionId) setMissionSourceKey('')
+        setMissionSourceConfirmed(Boolean(selectedMissionSource.workspaceConnectionId && !isEcorpRepository(selectedMissionSource)))
+        setCustomVerification(false)
+        setMissionVerificationPolicy({ checks: [defaultVerifierCheck('artifact')], manual_gate: null })
+        setMissionComposerStep('brief')
+        setMissionContractTab('outcome')
+        setMissionComposerCollapsed(true)
+        setActiveWorkspaceView('missions')
+        window.history.replaceState(null, '', '#missions')
+      }
+      setAnnouncement(`Mission ${created.mission_id} saved on the server.`)
       let launched: LaunchMissionResponse | null = null
       if (!pauseAfterPlanning) {
-        launched = await api<LaunchMissionResponse>(
-          `/api/corps/${bootstrap.corp_id}/missions/${created.mission_id}/launch`,
-          {
-            method: 'POST',
-            body: JSON.stringify({ requested_by: selectedActor.id }),
-          },
-        )
+        try {
+          launched = await api<LaunchMissionResponse>(
+            `/api/corps/${request.corpId}/missions/${created.mission_id}/launch`,
+            { method: 'POST', body: JSON.stringify({ requested_by: request.actorId }) },
+          )
+        } catch {
+          dispatchNotice = 'Dispatch could not be confirmed. Open the saved mission to check its run before dispatching again.'
+        }
+        const dispatch = launched ? 'dispatched' : 'unconfirmed'
+        setMissionCreationReceipts((previous) => ({ ...previous, [missionReceiptScope]: {
+          ...previous[missionReceiptScope], dispatch,
+        } }))
       }
-      const refreshed = await refresh(bootstrap.corp_id, selectedActor.id)
-      if (!setSelectedMissionId(created.mission_id)) return
-      setMissionTitle('')
-      setMissionDescription('')
-      setMissionObjective('')
-      setMissionExpectedOutput('')
-      setMissionAcceptanceTests('')
-      setMissionAllowedTools('')
-      setMissionProhibitedActions('')
-      setMissionReferences('')
-      setMissionWriteScope('')
-      if (!selectedMissionSource.workspaceConnectionId) setMissionSourceKey('')
-      setMissionSourceConfirmed(Boolean(selectedMissionSource.workspaceConnectionId && !isEcorpRepository(selectedMissionSource)))
-      setCustomVerification(false)
-      setMissionVerificationPolicy({
-        checks: [defaultVerifierCheck('artifact')],
-        manual_gate: null,
-      })
-      setMissionComposerStep('brief')
-      setMissionContractTab('outcome')
-      setMissionComposerCollapsed(true)
-      setActiveWorkspaceView('missions')
-      window.history.replaceState(null, '', '#missions')
+      if (!isCurrentViewer()) return
+      const refreshed = await refresh(request.corpId, request.actorId)
+      if (!isCurrentViewer()) return
+      if (consumedDraft && !setSelectedMissionId(created.mission_id)) {
+        setError(`Mission ${created.mission_id} was saved, but the work selection could not be updated. Use Open saved mission or browse mission history. ${dispatchNotice ?? ''}`)
+        return
+      }
+      if (dispatchNotice) setError(`Mission ${created.mission_id} was saved. ${dispatchNotice}`)
       if (launched) {
         const launchedRun = refreshed.snapshot.runs.find(
           (run) => run.id === launched?.run_id,
         )
         const launchedAgent = currentOfficeAgents(refreshed.snapshot.agents)
           .find((agent) => agent.id === launchedRun?.agent_id)
-        if (launchedAgent) setSelectedAgentId(launchedAgent.id)
+        if (consumedDraft && launchedAgent) setSelectedAgentId(launchedAgent.id)
       }
       setAnnouncement(
-        pauseAfterPlanning
+        dispatchNotice ?? (pauseAfterPlanning
           ? 'Mission plan saved on the server. It stays held until you dispatch.'
           : launched?.replayed
             ? 'This mission was already dispatched. Showing its existing run.'
-            : 'Mission dispatched. The control floor reflects its current workers.',
+            : 'Mission dispatched. The control floor reflects its current workers.'),
       )
       window.setTimeout(() => {
+        if (!isCurrentViewer() || !consumedDraft || !currentMissionDraft.current?.collapsed ||
+            currentMissionDraft.current.workspace !== 'missions') return
         const card = document.querySelector<HTMLElement>(
           `[data-mission-id="${CSS.escape(created.mission_id)}"]`,
         )
@@ -5357,8 +5412,11 @@ function App() {
         card?.focus({ preventScroll: true })
       }, 80)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught))
+      if (isCurrentViewer()) setError(createdMissionId
+        ? `Mission ${createdMissionId} was saved, but the mission list could not refresh. Refresh the list or open the saved mission. ${dispatchNotice ?? ''}`
+        : caught instanceof Error ? caught.message : String(caught))
     } finally {
+      missionSubmissionActive.current = false
       setBusy(false)
     }
   }
@@ -6560,6 +6618,22 @@ function App() {
               </button>
             )}
           </div>
+          {savedMission && (
+            <section className="mission-submit-note" data-testid="mission-creation-receipt" aria-label="Saved mission">
+              <p role="status">
+                Mission saved: <strong>{savedMission.title}</strong>. Mission ID: <code>{savedMission.missionId}</code>.
+                {' '}{savedMission.dispatch === 'dispatched' ? 'Dispatch was confirmed; open the mission for its current state.'
+                  : savedMission.dispatch === 'unconfirmed' ? 'Dispatch could not be confirmed. Check this saved mission before dispatching again.'
+                  : 'Saved without confirmed dispatch. Open this mission when ready to start.'}
+              </p>
+              <button className="button button-secondary" type="button" disabled={busy}
+                onClick={() => {
+                  if (setSelectedMissionId(savedMission.missionId)) setMissionComposerCollapsed(true)
+                }}>Open saved mission</button>
+              <button className="button button-quiet" type="button" disabled={busy}
+                onClick={() => snapshotRefreshRef.current?.request()}>Refresh mission list</button>
+            </section>
+          )}
           {!missionComposerCollapsed && (
           <form className="mission-form arcade-mission-form" onSubmit={createMission}>
             <div className="arcade-composer-header">
@@ -7182,6 +7256,7 @@ function App() {
               ) : (
                 <p className="operations-approval-note" role="status">
                   {busy ? 'Starting your mission…'
+                    : consumedMissionRequest ? 'This draft was already saved. Open the saved mission to continue it.'
                     : !selectedActor || !canOperate(selectedActor.role) ? 'Your role cannot start missions.'
                     : !missionTitle.trim() ? 'Describe the work to start setting up your mission.'
                     : !selectedMissionSource ? 'Choose the repository you want ECorp to work in.'
@@ -7214,6 +7289,7 @@ function App() {
                   type="submit"
                   disabled={
                     busy ||
+                    consumedMissionRequest ||
                     !missionTitle.trim() ||
                     !selectedMissionSource ||
                     !missionSourceConfirmed ||

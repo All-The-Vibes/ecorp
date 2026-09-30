@@ -1,7 +1,7 @@
 -- Every relationship explicitly matches Corp. Known aggregate links must be
 -- currently visible; payload UUIDs never supply navigation or authorization.
--- Share the repeatedly used visibility relations. Forced inlining expands the
--- event/cause joins into a large planning tree even for a small result page.
+-- Share the repeatedly used entity visibility relations. Inline events so page
+-- bounds and exact causal lookups can use the journal indexes independently.
 WITH visible_rooms AS (
     SELECT r.id FROM rooms r
     JOIN room_memberships rm ON rm.room_id = r.id AND rm.actor_id = $2
@@ -26,7 +26,7 @@ WITH visible_rooms AS (
     JOIN agents agent ON agent.id = run.agent_id AND agent.corp_id = run.corp_id
     JOIN actors a ON a.id = agent.actor_id AND a.corp_id = run.corp_id
     WHERE run.corp_id = $1
-), visible_events AS (
+), visible_events AS NOT MATERIALIZED (
     SELECT e.id, e.seq, e.created_at, e.causation_id,
            CASE WHEN e.type = ANY($16::text[]) THEN e.type ELSE 'other' END AS status,
            coalesce(e.room_id, mr.room_id, tr.room_id, rr.room_id, er.id) AS room_id,
@@ -50,6 +50,41 @@ WITH visible_rooms AS (
         WHEN 'corp' THEN e.aggregate_id = $1
         ELSE true
       END
+), event_candidates AS NOT MATERIALIZED (
+    -- Keep sequence pagination and exact-ID lookup separate so cached plans can
+    -- use the appropriate existing index. Neither lane grants visibility.
+    (SELECT id, seq FROM events
+     WHERE $3 = 'event' AND $7::uuid IS NULL AND corp_id = $1
+       AND visibility IN ('corp', 'room') AND created_at <= $10
+       AND seq <= least($11::bigint, coalesce($12::bigint - 1, $11::bigint))
+     ORDER BY seq DESC)
+    UNION ALL
+    (SELECT id, seq FROM events
+     WHERE $3 = 'event' AND $7::uuid IS NOT NULL AND id = $7 AND corp_id = $1
+       AND visibility IN ('corp', 'room') AND created_at <= $10
+       AND seq <= least($11::bigint, coalesce($12::bigint - 1, $11::bigint))
+     ORDER BY seq DESC)
+), event_page AS (
+    SELECT 'event' AS kind, authorized.id, room_id, status AS title, status, created_at,
+           actor_id, actor_name, mission_id, task_id, run_id, authorized.seq, causation_id,
+           status AS safe_status, status AS safe_title
+    FROM event_candidates candidate
+    CROSS JOIN LATERAL (
+        -- Reauthorize each unique event before counting it toward the page.
+        -- This bounded lookup preserves journal order through optional filters;
+        -- sparse matches may still require examining more candidates.
+        SELECT * FROM visible_events WHERE id = candidate.id
+          AND ($4::uuid IS NULL OR room_id = $4)
+          AND ($5::uuid IS NULL OR mission_id = $5)
+          AND ($6::uuid IS NULL OR actor_id = $6)
+          AND ($8::text IS NULL OR status = $8)
+          -- Event titles are allowlisted types or 'other', never raw journal text.
+          AND ($9 = '' OR strpos(lower(status), lower($9)) > 0
+               OR strpos(id::text, lower($9)) > 0)
+        LIMIT 1
+    ) authorized
+    ORDER BY candidate.seq DESC
+    LIMIT $15
 ), records AS NOT MATERIALIZED (
     SELECT 'mission' AS kind, id, room_id, title, status, created_at, actor_id, actor_name,
            id AS mission_id, NULL::uuid AS task_id, NULL::uuid AS run_id,
@@ -63,16 +98,12 @@ WITH visible_rooms AS (
     SELECT 'run', id, room_id, title, status, created_at, actor_id, actor_name,
            mission_id, task_id, id, NULL::bigint, NULL::uuid
     FROM visible_runs
-    UNION ALL
-    SELECT 'event', id, room_id, status, status, created_at, actor_id, actor_name,
-           mission_id, task_id, run_id, seq, causation_id
-    FROM visible_events
 ), labels AS NOT MATERIALIZED (
     SELECT records.*,
-      CASE WHEN kind = 'event' OR status = ANY($17::text[]) THEN status ELSE 'unknown' END AS safe_status,
+      CASE WHEN status = ANY($17::text[]) THEN status ELSE 'unknown' END AS safe_status,
       btrim(left(regexp_replace(title, U&'[\0001-\001F\007F-\009F\202A-\202E\2066-\2069]', '', 'g'), 240)) AS safe_title
     FROM records
-), page AS (
+), filtered AS NOT MATERIALIZED (
     SELECT * FROM labels
     WHERE kind = $3
       AND ($4::uuid IS NULL OR room_id = $4)
@@ -81,18 +112,19 @@ WITH visible_rooms AS (
       AND ($7::uuid IS NULL OR id = $7)
       AND ($8::text IS NULL OR safe_status = $8)
       -- strpos gives literal substring matching: % and _ are not wildcards.
-      -- Unknown event types are already 'other'; no hidden-type/payload oracle.
       AND ($9 = '' OR strpos(lower(safe_title), lower($9)) > 0
            OR strpos(id::text, lower($9)) > 0 OR strpos(lower(safe_status), lower($9)) > 0)
       AND created_at <= $10
-      AND (seq IS NULL OR seq <= $11)
-      AND ($12::bigint IS NULL OR seq < $12)
-      AND ($13::timestamptz IS NULL OR (created_at, id) < ($13, $14::uuid))
-    ORDER BY seq DESC NULLS LAST, created_at DESC, id DESC
-    LIMIT $15
+), page AS (
+    SELECT * FROM event_page
+    UNION ALL
+    (SELECT * FROM filtered
+     WHERE $13::timestamptz IS NULL OR (created_at, id) < ($13, $14::uuid)
+     ORDER BY created_at DESC, id DESC
+     LIMIT $15)
 )
 SELECT page.id, page.room_id, page.safe_title AS title, page.safe_status AS status, page.created_at,
        page.actor_id, page.actor_name, page.mission_id, page.task_id, page.run_id, page.seq,
        cause.id AS cause_id
 FROM page LEFT JOIN visible_events cause ON cause.id = page.causation_id AND cause.seq < page.seq
-ORDER BY page.seq DESC NULLS LAST, page.created_at DESC, page.id DESC
+ORDER BY page.seq DESC, page.created_at DESC, page.id DESC

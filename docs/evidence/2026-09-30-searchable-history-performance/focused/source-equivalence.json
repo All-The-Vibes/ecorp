@@ -1,0 +1,143 @@
+{
+  "issue": 258,
+  "physical_files_sha256": "bd30f819414dbde496c148c50f43c6ed231215e560b22ac8c5958b77703751e1",
+  "source_file_count": 7282,
+  "lanes": [
+    {
+      "source_receipt": "issue258-sql-regressions-green-r4.json",
+      "original_sha256": "ddfdbff8dd4a32b12e105c6ab69c75d768fc162bc188b9042a73d3b71b1c0c98",
+      "status": "passed",
+      "source_head": "c54e25b08276d29a7c6d514fcef593fb06e57fec",
+      "source_file_count": 7282,
+      "physical_files_sha256": "bd30f819414dbde496c148c50f43c6ed231215e560b22ac8c5958b77703751e1",
+      "entire_before_and_after_inventory_matches": true,
+      "test_filter": "issue258",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-sql-regressions-green-r4-initdb.log",
+          "sha256": "26269b0335126fe07644b50b8ec0d60ae946760b3e5fc8f3fac9583549b8eda0",
+          "counts": {
+            "passed": 0,
+            "summaries": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        {
+          "name": "history-store-and-api-sql",
+          "exit_code": 0,
+          "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-sql-regressions-green-r4-tests.log",
+          "sha256": "a79025f18de250b13cd52c4774b25c06f28712000b38b1c2f3ccb17a89d5b86a",
+          "counts": {
+            "passed": 13,
+            "summaries": 3,
+            "failed": 0,
+            "ignored": 0
+          }
+        }
+      ],
+      "cleanup": "Only the exact owned PostgreSQL stopped; fixture data, credentials and logs retained.",
+      "qualification": "Owned PostgreSQL regression, separate from native acceptance; overlapping counts are not additive."
+    },
+    {
+      "source_receipt": "issue258-sql-plan-green-r4.json",
+      "original_sha256": "f1e2540bbffc9cb351982a25be84c3c6be7296a339b6c023b4d4735f66181c5c",
+      "status": "passed",
+      "source_head": "c54e25b08276d29a7c6d514fcef593fb06e57fec",
+      "source_file_count": 7282,
+      "physical_files_sha256": "bd30f819414dbde496c148c50f43c6ed231215e560b22ac8c5958b77703751e1",
+      "entire_before_and_after_inventory_matches": true,
+      "test_filter": "issue258_event_pagination_does_not_scan_the_entire_journal",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-sql-plan-green-r4-initdb.log",
+          "sha256": "aa5e1d74f2edd0098f3b6e8ce32f8b0c83cd02586423b0ca594cae740959c3de",
+          "counts": {
+            "summaries": 0,
+            "passed": 0,
+            "ignored": 0,
+            "failed": 0
+          }
+        },
+        {
+          "name": "history-store-and-api-sql",
+          "exit_code": 0,
+          "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-sql-plan-green-r4-tests.log",
+          "sha256": "3d69016647bb5ce26cd4888dc8a6504e792dec636f3951adc10987331775f4be",
+          "counts": {
+            "summaries": 3,
+            "passed": 1,
+            "ignored": 0,
+            "failed": 0
+          }
+        }
+      ],
+      "cleanup": "Only the exact owned PostgreSQL stopped; fixture data, credentials and logs retained.",
+      "qualification": "Owned PostgreSQL regression, separate from native acceptance; overlapping counts are not additive."
+    }
+  ],
+  "plan_observations": [
+    {
+      "mode": "force_custom_plan",
+      "scenario": "first",
+      "journal_rows": "20000",
+      "returned": "26",
+      "event_rows_examined": "78"
+    },
+    {
+      "mode": "force_custom_plan",
+      "scenario": "deep-cursor",
+      "journal_rows": "20000",
+      "returned": "26",
+      "event_rows_examined": "78"
+    },
+    {
+      "mode": "force_custom_plan",
+      "scenario": "scoped",
+      "journal_rows": "20000",
+      "returned": "26",
+      "event_rows_examined": "78"
+    },
+    {
+      "mode": "force_custom_plan",
+      "scenario": "exact-old-record",
+      "journal_rows": "20000",
+      "returned": "1",
+      "event_rows_examined": "2"
+    },
+    {
+      "mode": "force_generic_plan",
+      "scenario": "first",
+      "journal_rows": "20000",
+      "returned": "26",
+      "event_rows_examined": "78"
+    },
+    {
+      "mode": "force_generic_plan",
+      "scenario": "deep-cursor",
+      "journal_rows": "20000",
+      "returned": "26",
+      "event_rows_examined": "78"
+    },
+    {
+      "mode": "force_generic_plan",
+      "scenario": "scoped",
+      "journal_rows": "20000",
+      "returned": "26",
+      "event_rows_examined": "78"
+    },
+    {
+      "mode": "force_generic_plan",
+      "scenario": "exact-old-record",
+      "journal_rows": "20000",
+      "returned": "1",
+      "event_rows_examined": "2"
+    }
+  ],
+  "plan_limit": 260,
+  "sparse_filter_qualification": "Sparse matches may require more candidates; this is not a universal constant-work guarantee."
+}
