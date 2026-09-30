@@ -1,0 +1,207 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+ExpectError: expect(locator).toHaveText(expected) failed
+
+Locator:  locator('.mission-console .empty-state').locator('strong')
+Expected: "Choose a mission"
+Received: "No discussion for this mission yet"
+Timeout:  15000ms
+
+Call log:
+  - Expect "to.have.text" with timeout 15000ms
+  - waiting for locator('.mission-console .empty-state').locator('strong')
+    33 × locator resolved to <strong>No discussion for this mission yet</strong>
+       - unexpected value "No discussion for this mission yet"
+
+    at captureRawStack (<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright-core\lib\coreBundle.js:9681:17)
+    at callMatcherAsStep (<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright\lib\matchers\expect.js:13310:57)
+    at Object.toHaveText (<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright\lib\matchers\expect.js:13300:23)
+    at <USERPROFILE>\code\ecorp\output\issue-completion\20260926T112626Z\issue258-review-browser-r1.mjs:205:53 {
+  matcherResult: {
+    name: 'toHaveText',
+    expected: 'Choose a mission',
+    message: 'expect(locator).toHaveText(expected) failed\n' +
+      '\n' +
+      "Locator:  locator('.mission-console .empty-state').locator('strong')\n" +
+      'Expected: "Choose a mission"\n' +
+      'Received: "No discussion for this mission yet"\n' +
+      'Timeout:  15000ms\n' +
+      '\n' +
+      'Call log:\n' +
+      '  - Expect "to.have.text" with timeout 15000ms\n' +
+      "  - waiting for locator('.mission-console .empty-state').locator('strong')\n" +
+      '    33 × locator resolved to <strong>No discussion for this mission yet</strong>\n' +
+      '       - unexpected value "No discussion for this mission yet"\n',
+    pass: false,
+    actual: 'No discussion for this mission yet',
+    log: [
+      '  - Expect "to.have.text" with timeout 15000ms',
+      "  - waiting for locator('.mission-console .empty-state').locator('strong')",
+      '    33 × locator resolved to <strong>No discussion for this mission yet</strong>',
+      '       - unexpected value "No discussion for this mission yet"'
+    ],
+    timeout: 15000,
+    ariaSnapshot: '- main:\n' +
+      '  - link "Skip to workspace":\n' +
+      '    - /url: "#missions"\n' +
+      '  - status: Missions opened.\n' +
+      '  - heading "ECORP" [level=1]\n' +
+      '  - text: Local preview live 1 runner online Demo operator\n' +
+      '  - combobox "Demo operator":\n' +
+      '    - option "Alice · owner" [selected]\n' +
+      '    - option "Bob · member"\n' +
+      '    - option "Eve · guest"\n' +
+      '  - text: Local demo permissions—not GitHub sign-in.\n' +
+      '  - navigation "ECorp workspace sections":\n' +
+      '    - link "Control floor":\n' +
+      '      - /url: "#floor"\n' +
+      '      - strong: Control floor\n' +
+      '    - link "Factory":\n' +
+      '      - /url: "#factory"\n' +
+      '      - strong: Factory\n' +
+      '    - link "Missions":\n' +
+      '      - /url: "#missions"\n' +
+      '      - strong: Missions\n' +
+      '    - link "Comms":\n' +
+      '      - /url: "#room"\n' +
+      '      - strong: Comms\n' +
+      '    - link "Audit":\n' +
+      '      - /url: "#activity"\n' +
+      '      - strong: Audit\n' +
+      '    - button "Start guide":\n' +
+      '      - strong: Start guide\n' +
+      '  - group: Audit evidence\n' +
+      '  - complementary:\n' +
+      '    - heading "Mission queue" [level=2]\n' +
+      '    - button "New mission"\n' +
+      '    - paragraph: Recent mission shortcuts · up to eight recent missions and your selected work.\n' +
+      '    - button "Browse all missions"\n' +
+      '    - navigation "Mission records":\n' +
+      '      - button "Awaiting dispatch [slow] [portable-deliverable] PR265 Factory activity acceptance adaa09f8 · 3 tasks" [pressed]:\n' +
+      '        - text: Awaiting dispatch\n' +
+      '        - strong: "[slow] [portable-deliverable] PR265 Factory activity acceptance"\n' +
+      '        - text: adaa09f8 · 3 tasks\n' +
+      '      - button "Cancelled Issue258 literal %_ historical 023 e2ef7f1a · 1 task":\n' +
+      '        - text: Cancelled\n' +
+      '        - strong: Issue258 literal %_ historical 023\n' +
+      '        - text: e2ef7f1a · 1 task\n' +
+      '      - button "Cancelled Issue258 literal %_ historical 000 7e24d6dd · 1 task":\n' +
+      '        - text: Cancelled\n' +
+      '        - strong: Issue258 literal %_ historical 000\n' +
+      '        - text: 7e24d6dd · 1 task\n' +
+      '      - button "Cancelled Issue258 literal %_ historical 001 36beb4bf · 1 task":\n' +
+      '        - text: Cancelled\n' +
+      '        - strong: Issue258 literal %_ historical 001\n' +
+      '        - text: 36beb4bf · 1 task\n' +
+      '      - button "Cancelled Issue258 literal %_ historical 002 f447142b · 1 task":\n' +
+      '        - text: Cancelled\n' +
+      '        - strong: Issue258 literal %_ historical 002\n' +
+      '        - text: f447142b · 1 task\n' +
+      '      - button "Cancelled Issue258 literal %_ historical 003 d12ff963 · 1 task":\n' +
+      '        - text: Cancelled\n' +
+      '        - strong: Issue258 literal %_ historical 003\n' +
+      '        - text: d12ff963 · 1 task\n' +
+      '      - button "Cancelled Issue258 literal %_ historical 004 9a13cb40 · 1 task":\n' +
+      '        - text: Cancelled\n' +
+      '        - strong: Issue258 literal %_ historical 004\n' +
+      '        - text: 9a13cb40 · 1 task\n' +
+      '      - button "Cancelled Issue258 literal %_ historical 005 eef361ab · 1 task":\n' +
+      '        - text: Cancelled\n' +
+      '        - strong: Issue258 literal %_ historical 005\n' +
+      '        - text: eef361ab · 1 task\n' +
+      '    - article:\n' +
+      '      - text: "Awaiting dispatch #adaa09f8"\n' +
+      '      - heading "[slow] [portable-deliverable] PR265 Factory activity acceptance" [level=3]\n' +
+      '      - paragraph: "Selected mission: adaa09f8-d78c-42d8-8dcd-9f9640cabb03"\n' +
+      '      - region "Mission collaboration":\n' +
+      '        - text: Shared mission\n' +
+      '        - heading "One outcome. Clear responsibilities." [level=4]\n' +
+      '        - text: Receiving shared updates\n' +
+      '        - paragraph:\n' +
+      '          - text: Requested by\n' +
+      '          - strong: Alice\n' +
+      '          - text: Viewing as\n' +
+      '          - strong: Alice\n' +
+      '          - text: · owner\n' +
+      '        - paragraph: People discuss and decide. Agents execute on runners. Live control never transfers review or publication authority.\n' +
+      '        - navigation "Shared mission sections":\n' +
+      '          - button "01 · Brief & scope"\n' +
+      '          - button "02 · Tasks & contracts"\n' +
+      '          - button "03 · Evidence & decisions" [disabled]\n' +
+      '          - button "04 · Team conversation"\n' +
+      '        - heading "Who is doing what" [level=4]\n' +
+      '        - text: 3 recorded tasks\n' +
+      '        - list:\n' +
+      '          - listitem:\n' +
+      '            - strong: Claudia specialist pass\n' +
+      '            - text: ready\n' +
+      '            - paragraph:\n' +
+      '              - strong: Claudia\n' +
+      '              - text: · fake-process\n' +
+      '            - paragraph: Not assigned to a runner yet\n' +
+      '            - paragraph: Live control unavailable\n' +
+      '            - button "Inspect task contract"\n' +
+      '          - listitem:\n' +
+      '            - strong: Wally specialist pass\n' +
+      '            - text: ready\n' +
+      '            - paragraph:\n' +
+      '              - strong: Wally\n' +
+      '              - text: · fake-process\n' +
+      '            - paragraph: Not assigned to a runner yet\n' +
+      '            - paragraph: Live control unavailable\n' +
+      '            - button "Inspect task contract"\n' +
+      '          - listitem:\n' +
+      '            - strong: Synthesize the specialist results\n' +
+      '            - text: pending\n' +
+      '            - paragraph:\n' +
+      '              - strong: Margo\n' +
+      '              - text: · fake-process\n' +
+      '            - paragraph: Not assigned to a runner yet\n' +
+      '            - paragraph: Live control unavailable\n' +
+      '            - button "Inspect task contract"\n' +
+      '        - paragraph: These are recorded assignments, not a human presence roster. Runner connectivity does not tell you whether a person is online.\n' +
+      '      - region "Result and next step":\n' +
+      '        - text: Result / next step\n' +
+      '        - heading "Ready to start" [level=4]\n' +
+      '        - text: Awaiting dispatch\n' +
+      '        - paragraph: Start the planned team in its isolated workspace. Any required decision stays attached to this work.\n' +
+      '        - button "Start mission"\n' +
+      '        - button "Discuss this work"\n' +
+      '        - term: Task progress\n' +
+      '        - definition: 0/3 complete\n' +
+      '        - term: Selected run checks\n' +
+      '        - definition: 0 passed · total unknown\n' +
+      '        - term: Outcome review\n' +
+      '        - definition: Review details unavailable\n' +
+      '      - paragraph:\n' +
+      '        - strong:\n' +
+      `          - 'link "From GitHub issue #265"':\n` +
+      '            - /url: https://github.com/ecorp-fixture/pr265-run-activity/issues/265\n' +
+      '        - text: · Factory owns issue intake; this mission owns the tasks and results.\n' +
+      '      - navigation "Mission workspace":\n' +
+      '        - button "View task owners"\n' +
+      '        - button "Discuss this mission"\n' +
+      '        - button "View GitHub intake"\n' +
+      '      - group: Mission briefing Open full specification\n' +
+      '      - text: Parallel-Specialists Specification v3\n' +
+      '      - term: Tasks\n' +
+      '      - definition: 0/3 complete\n' +
+      '      - term: Runs\n' +
+      '      - definition: 0 runs\n' +
+      '      - group: Budget authority 0 of 90,000 tokens\n' +
+      '      - group: Task graph 0/3 complete\n' +
+      '      - group: Team conversation\n' +
+      '  - region "Protected resource jobs":\n' +
+      '    - heading "Protected resource jobs" [level=2]\n' +
+      '    - text: Microsoft Entra\n' +
+      '    - paragraph: Run an ECorp job using your delegated identity. Sign-in happens in your browser; credentials never appear in this panel. A private receipt stays private until you release it.\n' +
+      '    - status: "Delegated jobs are unavailable: no enabled provider is configured."\n' +
+      '    - button "Run protected resource job" [disabled]\n' +
+      '    - button "Refresh status"\n' +
+      '    - paragraph: No delegated operations for this actor.'
+  }
+}
+
+Node.js v24.21.0

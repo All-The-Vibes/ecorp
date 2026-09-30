@@ -126,6 +126,22 @@ test('draft input does not silently change applied filters; invalid IDs make no 
   } finally { f.unmount() }
 })
 
+test('unknown well-formed event filters show a form error without replacing authorized results or requesting the server', async () => {
+  const f = fixture()
+  try {
+    f.answer(0); await f.flush()
+    f.control('Event type').props.onChange({ target: { value: 'not.a.real.event' } }); f.render(); f.submit()
+    assert.equal(f.calls.length, 1)
+    assert.match(f.html, /supported status/u)
+    assert.match(f.html, /25 records on this page/u)
+    assert.doesNotMatch(f.html, /History is unavailable|Loading authorized history/u)
+    const applied = elements(f.tree, (n) => n.props?.['data-testid'] === 'history-applied')[0]
+    assert.doesNotMatch(text(applied), /not\.a\.real\.event/u)
+    f.control('Event type').props.onChange({ target: { value: 'other' } }); f.render(); f.submit()
+    assert.equal(new URL(f.calls[1].path, 'http://fixture.invalid').searchParams.get('status'), 'other')
+  } finally { f.unmount() }
+})
+
 test('causal navigation clears incompatible filters and names the exact event with no payload rendering', async () => {
   const f = fixture()
   try {

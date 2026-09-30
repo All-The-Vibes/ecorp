@@ -1,0 +1,99 @@
+{
+  "issue": 258,
+  "status": "passed",
+  "started_at_utc": "2026-09-30T00:45:48.7031135+00:00",
+  "worktree": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp",
+  "steps": [
+    {
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-web-r2-source-before.log",
+      "sha256": "cd3bb43dadec6238e212a105f1cbd8d78af203d2ade71b0338fabeb1bce649e3",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-X",
+        "utf8",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\capture-issue258-review-source-r1.py",
+        "--phase",
+        "before-web-r2"
+      ],
+      "name": "source-before",
+      "exit_code": 0,
+      "completed_at_utc": "2026-09-30T00:46:00.9011647+00:00",
+      "started_at_utc": "2026-09-30T00:45:48.7658211+00:00"
+    },
+    {
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-web-r2-install.log",
+      "sha256": "ac5192ae5ff36a485d6e70f895fd29434386541bed108bef57c5c1f9b087c5ad",
+      "command": [
+        "pnpm",
+        "install",
+        "--frozen-lockfile"
+      ],
+      "name": "install",
+      "exit_code": 0,
+      "completed_at_utc": "2026-09-30T00:46:01.6081373+00:00",
+      "started_at_utc": "2026-09-30T00:46:00.9369880+00:00"
+    },
+    {
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-web-r2-scenario-install.log",
+      "sha256": "731fccdffdae6f9a256697d9912e6532e6efdf35b3456d2402db2d054341740b",
+      "command": [
+        "npm",
+        "ci",
+        "--prefix",
+        "scenarios/repo-steward",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "name": "scenario-install",
+      "exit_code": 0,
+      "completed_at_utc": "2026-09-30T00:46:10.2315792+00:00",
+      "started_at_utc": "2026-09-30T00:46:01.6247595+00:00"
+    },
+    {
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-web-r2-build.log",
+      "sha256": "95adeccdc56e6696bb6f5ed7b251dd1b93dff21267533192017ec00ba5d5463b",
+      "command": [
+        "pnpm",
+        "build:web"
+      ],
+      "name": "build",
+      "exit_code": 0,
+      "completed_at_utc": "2026-09-30T00:46:13.7285564+00:00",
+      "started_at_utc": "2026-09-30T00:46:10.2472642+00:00"
+    },
+    {
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-web-r2-lint.log",
+      "sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "command": [
+        "pnpm",
+        "lint:web"
+      ],
+      "name": "lint",
+      "exit_code": 0,
+      "completed_at_utc": "2026-09-30T00:46:15.6747965+00:00",
+      "started_at_utc": "2026-09-30T00:46:13.7600201+00:00"
+    },
+    {
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-web-r2-source-after.log",
+      "sha256": "538d049427eb9ed2507bbeee6519a9dce420e9e19c2598e45ac0cdf3c831fa3b",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-X",
+        "utf8",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\capture-issue258-review-source-r1.py",
+        "--phase",
+        "after-web-r2",
+        "--equals",
+        "before-web-r2"
+      ],
+      "name": "source-after",
+      "exit_code": 0,
+      "completed_at_utc": "2026-09-30T00:46:28.0914429+00:00",
+      "started_at_utc": "2026-09-30T00:46:15.6821262+00:00"
+    }
+  ],
+  "scope": "Frozen dependency installation, web build and lint; not native acceptance or hosted CI.",
+  "physical_source_unchanged": true,
+  "completed_at_utc": "2026-09-30T00:46:28.1083580+00:00"
+}

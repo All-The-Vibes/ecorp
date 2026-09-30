@@ -60,7 +60,7 @@ export function HistoryPanel({
   const apply = (filters: HistoryFilters, message = '') => {
     const normalized = normalizeHistoryFilters(filters)
     if (!normalized) {
-      setFormError('Use valid IDs, a supported status and at most 160 search characters without control characters.')
+      setFormError('Use valid IDs, a supported status or event type and at most 160 search characters without control characters.')
       return
     }
     setFormError(null)

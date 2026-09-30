@@ -1,0 +1,83 @@
+{
+  "updated_at": "2026-09-30T00:57:23.6166999Z",
+  "purpose": "pr265-run-activity",
+  "ready_at": "2026-09-30T00:55:56.2422181Z",
+  "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6",
+  "test_owned": true,
+  "source": {
+    "base_commit": "612c54ea60fbd8c7529979643cac9065e93eb6d8",
+    "repository": "ecorp-fixture/pr265-run-activity",
+    "base_ref": "HEAD"
+  },
+  "demo": {
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "room_id": "00000000-0000-4000-8000-000000000041",
+    "alice_actor_id": "00000000-0000-4000-8000-000000000011",
+    "bob_actor_id": "00000000-0000-4000-8000-000000000012",
+    "eve_actor_id": "00000000-0000-4000-8000-000000000013",
+    "manager_agent_id": "00000000-0000-4000-8000-000000000031",
+    "worker_agent_id": "00000000-0000-4000-8000-000000000032",
+    "codex_agent_id": "00000000-0000-4000-8000-000000000033"
+  },
+  "processes": {
+    "server": {
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6",
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\target\\debug\\crony-server.exe",
+      "pid": 37564,
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\logs\\server-20260930T005552965-5194fb17b7594b79866c63003847e0cf.stderr.log",
+      "role": "server",
+      "started_utc": "2026-09-30T00:55:52.9770252Z",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\logs\\server-20260930T005552965-5194fb17b7594b79866c63003847e0cf.stdout.log"
+    },
+    "postgres": {
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6",
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe",
+      "pid": 26000,
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\logs\\postgres-20260930T005551569-43c900906c8c4aa2b0c7b13c04911ec9.stderr.log",
+      "role": "postgres",
+      "started_utc": "2026-09-30T00:55:51.6283855Z",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\logs\\postgres-20260930T005551569-43c900906c8c4aa2b0c7b13c04911ec9.stdout.log"
+    },
+    "runner": {
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6",
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\target\\debug\\crony-runner.exe",
+      "pid": 37636,
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\logs\\runner-20260930T005554691-7286a369e49b43048e51a7524847fc8e.stderr.log",
+      "role": "runner",
+      "started_utc": "2026-09-30T00:55:54.6988913Z",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\logs\\runner-20260930T005554691-7286a369e49b43048e51a7524847fc8e.stdout.log"
+    },
+    "web": {
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6",
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+      "pid": 31392,
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\logs\\web-20260930T005554719-e11ea6e309964c57aa0cc8ec2d6de352.stderr.log",
+      "role": "web",
+      "started_utc": "2026-09-30T00:55:54.7285981Z",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\logs\\web-20260930T005554719-e11ea6e309964c57aa0cc8ec2d6de352.stdout.log"
+    }
+  },
+  "plan": {
+    "phase": "Start",
+    "product": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp",
+    "product_commit": "03fcf6cb7a3de3f8d0dca301c109312b72925938",
+    "qa_root": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6",
+    "server": "http://127.0.0.1:18865",
+    "web": "http://127.0.0.1:15865",
+    "database": {
+      "host": "127.0.0.1",
+      "name": "pr265_activity",
+      "port": 15465,
+      "fresh": true
+    },
+    "runner_id": "pr265-activity-qa",
+    "provider": "native deterministic fake-process; no AI inference",
+    "source": "new independent synthetic Git repository, never the product checkout",
+    "factory_watcher": false,
+    "github_effects": false,
+    "existing_state_touched": false,
+    "build_required": false
+  },
+  "schema_version": 2,
+  "stopped_at": "2026-09-30T00:57:23.6081800Z"
+}

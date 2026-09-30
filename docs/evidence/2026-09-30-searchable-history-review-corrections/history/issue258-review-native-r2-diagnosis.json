@@ -1,0 +1,17 @@
+{
+  "recorded_at": "2026-09-29T23:53:49.361836+00:00",
+  "issue": 258,
+  "pr": 385,
+  "failed_attempt": "issue258-review-native-r2.json",
+  "failed_step": "browser initial selection persistence assertion",
+  "observed": "The newest authorized mission was displayed and its mission-only context was saved with null task and run IDs.",
+  "diagnosis": "The r2 driver incorrectly expected storage to stay empty. App.tsx MissionCard initialEvidencePin deliberately saves the initially displayed work context. This existing behavior is consistent with protecting exact review context. Both r1 and r2 failures are acceptance-driver errors; neither proves a product first-visit defect.",
+  "supersedes_diagnosis": "The no implicit persisted choice statement in issue258-review-native-r1-diagnosis.json is incorrect; that prior record is retained unchanged.",
+  "correction": "r3 requires the prepared newest mission to be visible and pinned exactly with no false empty message. Saved selection, unavailable selection, revocation, reconnect and invalid event filter coverage remain unchanged.",
+  "product_bytes_changed_for_retry": false,
+  "prior_fixture_preserved": true,
+  "prior_services_stopped": true,
+  "prior_driver_sha256": "ae6536cc98afa0f979f09b99723033e5877ffcca012093b5f72982c3e0665e0d",
+  "retry_driver_sha256": "2bb7d81911156e455de7f00b66c9ed30ac06a99fb21634115320b530cf43c6f6",
+  "retry_wrapper": "run-issue258-review-native-r3.ps1"
+}

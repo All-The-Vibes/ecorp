@@ -1,0 +1,360 @@
+{
+  "issue": 258,
+  "status": "passed",
+  "command": "pnpm check",
+  "worktree": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp",
+  "started_at_utc": "2026-09-29T23:44:39.5735607+00:00",
+  "exit_code": 0,
+  "rust_test_threads": 1,
+  "all_named_gates_enabled": true,
+  "dependency_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-web-r1.json",
+  "dependency_receipt_sha256": "02edcaf9bbeb8d4224520773ee0feab788fd095c8b4e820bcc62fcbfed57ccbc",
+  "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-check-r1.log",
+  "canonical_report": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\output\\readiness\\2026-09-29T23-45-34-006Z-49136cf0-5c7b-4e40-8942-e4b08e00766a-full.json",
+  "note": "Complete canonical plan with frozen dependencies. Serial Rust execution filters no tests. Bundled Python is first on process PATH. This is not native acceptance, hosted CI or issue completion.",
+  "python": {
+    "path": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "version": "Python 3.12.14",
+    "sha256": "372c2eae555b344520bf147be0096e009069aeca4e7f78d6aecea6d53158056a"
+  },
+  "versions": {
+    "pnpm": "11.19.0",
+    "cargo": "cargo 1.98.1 (797e8a9bc 2026-08-05)",
+    "node": "v24.21.0"
+  },
+  "lock_sha256": {
+    "pnpm-lock.yaml": "b324edcdd1f358e09f0d3afec92a55edebefee2c33d50394ef282c6b1c1f804a",
+    "Cargo.lock": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b",
+    "scenarios/repo-steward/package-lock.json": "bf5f1c7af71f4526079e5ec8ed6d86b1296bbfd5b3fa1bdfc24f8b045235af1d"
+  },
+  "source_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-source-before-check-r1.json",
+  "log_sha256": "e336ce77a83522a636b7678507bc184462dcf8ff9de784c1c7b8b4f323357e23",
+  "canonical_sha256": "41d8ca3cc134bf7cca6012add274ef5e57a188ee77ead3ab9da43bf73c3aa867",
+  "canonical_status": "passed",
+  "source_changed": false,
+  "checks": [
+    {
+      "name": "migrations",
+      "argv": [
+        "node",
+        "tools/check_migrations.mjs"
+      ],
+      "passed": true,
+      "exitCode": 0,
+      "durationMs": 251,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "state-audit-compatibility",
+      "argv": [
+        "node",
+        "tools/check_state_audit_compatibility.mjs"
+      ],
+      "passed": true,
+      "exitCode": 0,
+      "durationMs": 194,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "state-audit-evm",
+      "argv": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "crony-audit",
+        "--test",
+        "ethereum_local_chain"
+      ],
+      "passed": true,
+      "exitCode": 0,
+      "durationMs": 20738,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "docs",
+      "argv": [
+        "node",
+        "tools/check_docs.mjs"
+      ],
+      "passed": true,
+      "exitCode": 0,
+      "durationMs": 136,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "repository-docs",
+      "argv": [
+        "node",
+        "tools/check_documentation.mjs"
+      ],
+      "passed": true,
+      "exitCode": 0,
+      "durationMs": 135,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "node-tests",
+      "argv": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-timeout=180000",
+        "--test-reporter=tap",
+        ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+        ".github/skills/code-review/tests/executor-state.test.mjs",
+        ".github/skills/code-review/tests/package.test.mjs",
+        "apps/web/src/AgentPinControl.test.mjs",
+        "apps/web/src/DelegatedPanel.test.mjs",
+        "apps/web/src/HistoryPanel.test.mjs",
+        "apps/web/src/VerificationPolicyEditor.test.mjs",
+        "apps/web/src/agentPinOperation.test.mjs",
+        "apps/web/src/evidenceNavigation.test.mjs",
+        "apps/web/src/evidenceSelection.test.mjs",
+        "apps/web/src/factoryAuthority.test.mjs",
+        "apps/web/src/factoryAuthorityConnection.test.mjs",
+        "apps/web/src/factoryCheckpointRecovery.test.mjs",
+        "apps/web/src/factoryControllerSelection.test.mjs",
+        "apps/web/src/factoryPolling.test.mjs",
+        "apps/web/src/formText.test.mjs",
+        "apps/web/src/history.test.mjs",
+        "apps/web/src/historyEventTypes.test.mjs",
+        "apps/web/src/missionCollaboration.test.mjs",
+        "apps/web/src/missionComposer.test.mjs",
+        "apps/web/src/missionOriginContext.test.mjs",
+        "apps/web/src/missionPreview.test.mjs",
+        "apps/web/src/missionProjection.test.mjs",
+        "apps/web/src/missionResultContext.test.mjs",
+        "apps/web/src/missionReviewSummary.test.mjs",
+        "apps/web/src/missionRuntime.test.mjs",
+        "apps/web/src/missionSelectionEmptyState.test.mjs",
+        "apps/web/src/office/characterAssets.test.mjs",
+        "apps/web/src/office/officeModel.test.mjs",
+        "apps/web/src/runActivity.test.mjs",
+        "apps/web/src/snapshotRefresh.test.mjs",
+        "apps/web/src/useWorkSelection.test.mjs",
+        "apps/web/src/verificationPolicy.test.mjs",
+        "apps/web/src/workResultCard.test.mjs",
+        "apps/web/src/workSelection.test.mjs",
+        "apps/web/src/workflowContext.test.mjs",
+        "apps/web/src/workspaceConnections.test.mjs",
+        "scenarios/repo-steward/actions.test.mjs",
+        "scenarios/repo-steward/feedback-cli.test.mjs",
+        "scenarios/repo-steward/feedback.test.mjs",
+        "scenarios/repo-steward/maintenance.test.mjs",
+        "scenarios/repo-steward/recurring-audit.test.mjs",
+        "scenarios/repo-steward/steward.test.mjs",
+        "scenarios/repo-steward/teams-host.test.mjs",
+        "tests/readiness/cli.test.js",
+        "tools/budget_fixture.test.mjs",
+        "tools/check_deliverable_diff.test.mjs",
+        "tools/check_documentation.test.mjs",
+        "tools/check_evidence_launch.test.mjs",
+        "tools/check_evidence_native_build.test.mjs",
+        "tools/check_evidence_personal_paths.test.mjs",
+        "tools/check_migrations.test.mjs",
+        "tools/check_replay_source.test.mjs",
+        "tools/checkpoint_application_fixture.test.mjs",
+        "tools/ci_external_adapters_windows.test.mjs",
+        "tools/ci_factory_repository.test.mjs",
+        "tools/ci_maintenance.test.mjs",
+        "tools/ci_owned_test_server.test.mjs",
+        "tools/ci_runner_tests.test.mjs",
+        "tools/consume_operation_receipt.test.mjs",
+        "tools/controlled_runner_fixture.test.mjs",
+        "tools/copilot_fs_wire_observer.test.mjs",
+        "tools/copilot_fs_wire_process.test.mjs",
+        "tools/copilot_probe_boundaries.test.mjs",
+        "tools/copilot_probe_environment.test.mjs",
+        "tools/copilot_probe_native_read.test.mjs",
+        "tools/copilot_probe_process.test.mjs",
+        "tools/coverage_web_models.test.mjs",
+        "tools/delegated_lifecycle.test.mjs",
+        "tools/delegated_qa_root.test.mjs",
+        "tools/e2e_agent_pinning.test.mjs",
+        "tools/e2e_checkpoint_verification.test.mjs",
+        "tools/e2e_evidence_selection.test.mjs",
+        "tools/e2e_external_adapters.test.mjs",
+        "tools/e2e_external_adapters_http.test.mjs",
+        "tools/e2e_factory_budget_recovery.test.mjs",
+        "tools/e2e_late_termination.test.mjs",
+        "tools/e2e_predispatch_failure.test.mjs",
+        "tools/e2e_stopped_source_checkpoint.test.mjs",
+        "tools/e2e_verifier_browser_retention.test.mjs",
+        "tools/e2e_verifier_browser_scope.test.mjs",
+        "tools/factory_budget_fixture_config.test.mjs",
+        "tools/factory_budget_git.test.mjs",
+        "tools/factory_budget_process.test.mjs",
+        "tools/factory_budget_provenance.test.mjs",
+        "tools/factory_budget_start.test.mjs",
+        "tools/fake_codex_budget_stream.test.mjs",
+        "tools/fake_github_quota.test.mjs",
+        "tools/fixture_source_identity.test.mjs",
+        "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+        "tools/identity_fixture.test.mjs",
+        "tools/import_operation_behavior.test.mjs",
+        "tools/issue161/qa-api-provenance.test.mjs",
+        "tools/issue161/qa-plan.test.mjs",
+        "tools/local_source_commit.test.mjs",
+        "tools/local_stack_lifecycle.test.mjs",
+        "tools/local_stack_operation.test.mjs",
+        "tools/native_qualification_attempt.test.mjs",
+        "tools/native_qualification_finality.test.mjs",
+        "tools/native_qualification_trust.test.mjs",
+        "tools/office_model.test.mjs",
+        "tools/operation_feedback.test.mjs",
+        "tools/operation_receipt.test.mjs",
+        "tools/owned_test_stack.test.mjs",
+        "tools/probe_mcp.test.mjs",
+        "tools/qa_factory_run_activity.test.mjs",
+        "tools/qa_multiplayer_object_sources.test.mjs",
+        "tools/readiness_contract.test.mjs",
+        "tools/readiness_replay_contract.test.mjs",
+        "tools/redact_evidence_capabilities.test.mjs",
+        "tools/research_handoff_adversarial.test.mjs",
+        "tools/research_handoff_browser.test.mjs",
+        "tools/research_handoff_native.test.mjs",
+        "tools/runner_ack_fault_relay.test.mjs",
+        "tools/secret_scan.test.mjs",
+        "tools/secret_scan_native.test.mjs",
+        "tools/security_fixtures.test.mjs",
+        "tools/startup_validation_harness.test.mjs",
+        "tools/task_graph_fixture.test.mjs",
+        "tools/verifier_browser.test.mjs",
+        "tools/verify_toolchain.test.mjs"
+      ],
+      "passed": true,
+      "exitCode": 0,
+      "durationMs": 2391994,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3165,
+          "passed": 3100,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      },
+      "errorCode": null
+    },
+    {
+      "name": "format",
+      "argv": [
+        "cargo",
+        "fmt",
+        "--check"
+      ],
+      "passed": true,
+      "exitCode": 0,
+      "durationMs": 2948,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "clippy",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "passed": true,
+      "exitCode": 0,
+      "durationMs": 17117,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "rust-tests",
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "passed": true,
+      "exitCode": 0,
+      "durationMs": 970269,
+      "counts": {
+        "rust": {
+          "passed": 881,
+          "failed": 0,
+          "ignored": 576,
+          "summaries": 41
+        },
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "web-build",
+      "argv": [
+        "pnpm",
+        "build:web"
+      ],
+      "passed": true,
+      "exitCode": 0,
+      "durationMs": 4406,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "web-lint",
+      "argv": [
+        "pnpm",
+        "lint:web"
+      ],
+      "passed": true,
+      "exitCode": 0,
+      "durationMs": 2259,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    }
+  ],
+  "not_run": [],
+  "physical_source_unchanged": true,
+  "completed_at_utc": "2026-09-30T00:43:41.7373777+00:00"
+}

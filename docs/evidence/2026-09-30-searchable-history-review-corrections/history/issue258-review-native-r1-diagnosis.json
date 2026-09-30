@@ -1,0 +1,16 @@
+{
+  "recorded_at": "2026-09-29T23:49:45.089171+00:00",
+  "issue": 258,
+  "pr": 385,
+  "failed_attempt": "issue258-review-native-r1.json",
+  "failed_step": "browser first-visit assertion",
+  "observed": "The first visit displayed the existing newest mission, not the empty-state fallback.",
+  "diagnosis": "The r1 driver incorrectly required no selected mission. selectCollaborationMission explicitly returns missions[0] when selectedId is null; this is established behavior. The fully loaded false-empty claim was not reproduced. The fallback copy is covered separately in focused rendering regressions.",
+  "correction": "r2 checks that authorized existing work is visible without a false empty message or an implicit persisted choice. Exact explicit selection, unavailable selection, revocation and reconnect coverage remain unchanged.",
+  "product_bytes_changed_for_retry": false,
+  "prior_fixture_preserved": true,
+  "prior_services_stopped": true,
+  "prior_driver_sha256": "d09ded967c0fb1ecd2e7d5f7a90afbc0091ecdc884c8ef71532a069fc59b4ad3",
+  "retry_driver_sha256": "ae6536cc98afa0f979f09b99723033e5877ffcca012093b5f72982c3e0665e0d",
+  "retry_wrapper": "run-issue258-review-native-r2.ps1"
+}

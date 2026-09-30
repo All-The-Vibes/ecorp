@@ -1,0 +1,32 @@
+PASS first_visit_with_authorized_missions_is_not_empty
+PASS mission_desktop_layout
+PASS mission_mobile_layout
+PASS unsupported_event_filter_rejected_before_request
+PASS server_other_projection_remains_supported
+PASS all_kinds_beyond_caps_no_gaps_or_duplicates
+PASS late_event_requires_explicit_refresh
+PASS safe_summaries_attribution_cause_and_payload_search
+PASS draft_vs_applied_filters
+PASS synthetic_transport_loading_error_and_recovery
+PASS old_exact_selection_navigation_reload
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: browser-launch returned 409
+
+409 !== 200
+
+    at browserPost (file:///<USERPROFILE>/code/ecorp/output/issue-completion/20260926T112626Z/issue258-review-browser-r5.mjs:195:10)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at process.processImmediate (node:internal/timers:541:9)
+    at async file:///<USERPROFILE>/code/ecorp/output/issue-completion/20260926T112626Z/issue258-review-browser-r5.mjs:346:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 409,
+  expected: 200,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

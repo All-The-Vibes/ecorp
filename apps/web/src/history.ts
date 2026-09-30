@@ -58,6 +58,32 @@ export const HISTORY_ENTITY_STATUSES: Record<Exclude<HistoryKind, 'event'>, read
   run: ['provisioning', 'starting', 'running', 'waiting_for_input', 'waiting_for_approval', 'verifying',
     'completed', 'failed', 'cancelled', 'lost', 'unknown'],
 }
+// Keep the browser's filter and projection contract aligned with the server.
+// historyEventTypes.test.mjs verifies parity with crony-domain/src/history.rs.
+export const HISTORY_EVENT_TYPES: readonly string[] = [
+  'corp.demo_bootstrapped', 'room.message_posted', 'mission.created', 'mission.planned',
+  'mission.budget_revision_approved', 'mission.budget_revision_proposed', 'mission.budget_revision_rejected',
+  'mission.contract_revised', 'task.created', 'run.requested', 'run.started', 'run.status', 'run.output',
+  'run.tool_activity', 'run.usage', 'run.completed', 'run.failed', 'run.cancelled', 'run.lost',
+  'run.interrupt_requested', 'run.resume_requested', 'run.stop_requested', 'run.reconciled',
+  'run.artifact', 'run.deliverable', 'run.dependency_context', 'run.session', 'run.session_terminated',
+  'run.teardown_uncertain', 'run.workspace_preserved', 'run.workspace_removed', 'run.breaker_transition',
+  'run.approval_requested', 'run.approval_expired', 'run.verification_started', 'run.verification_evidence',
+  'run.verification_passed', 'run.verification_failed', 'run.verification_requested', 'run.verification_waiting',
+  'verification.approved', 'verification.rejected', 'agent.pinned', 'agent.unpinned', 'agent.retired',
+  'agent.reactivated', 'agent.staffed', 'agent.policy_changed', 'runner.enrolled', 'runner.revoked',
+  'runner.grace_started', 'runner.capabilities_updated', 'runner.command_acknowledged', 'runner.command_failed',
+  'runner.credential_rotated', 'runner.enrollment_created', 'control.lease_acquired', 'control.lease_released',
+  'control.lease_transferred', 'control.message_accepted', 'control.message_queued', 'control.message_requeued',
+  'budget.policy_updated', 'factory.work_item_claimed', 'factory.work_item_reclaimed', 'factory.claim_renewed',
+  'factory.mission_linked', 'factory.state_changed', 'factory.materialization_rejected',
+  'factory.controller_configured', 'factory.controller_status_changed', 'factory.policy_changed',
+  'factory.source_commit_pinned', 'factory.verification_recovery_authorized', 'factory.verification_recovery_started',
+  'factory.workspace_checkpoint_requested', 'factory.checkpoint_cancellation_reconciled',
+  'factory.publication_requested', 'factory.publication_attempt_started', 'factory.publication_branch_pushed',
+  'factory.publication_completed', 'factory.publication_failed', 'factory.publication_lease_renewed',
+  'factory.publication_publisher_enrolled', 'factory.publication_publisher_revoked', 'factory.pull_request_created',
+]
 const UUID = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/u
 const NIL = '00000000-0000-0000-0000-000000000000'
 // oxlint-disable-next-line no-control-regex -- Reject controls and bidi overrides in labels and search.
@@ -95,7 +121,7 @@ function sequence(value: unknown): value is string {
 }
 function status(value: unknown, kind: HistoryKind): value is string {
   return typeof value === 'string' && (kind === 'event'
-    ? /^[a-z][a-z0-9._]{0,95}$/u.test(value)
+    ? value === 'other' || HISTORY_EVENT_TYPES.includes(value)
     : HISTORY_ENTITY_STATUSES[kind].includes(value))
 }
 

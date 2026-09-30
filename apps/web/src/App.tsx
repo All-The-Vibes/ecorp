@@ -7192,10 +7192,13 @@ function App() {
                 />
               ) : (
                 <div className="empty-state">
-                  <strong>{selectedMissionId !== null ? 'Selected mission unavailable' : 'No missions yet'}</strong>
+                  <strong>{selectedMissionId !== null ? 'Selected mission unavailable'
+                    : missionChoices.length ? 'Choose a mission' : 'No missions yet'}</strong>
                   <span>{selectedMissionId !== null
                     ? 'The selected record is not in your current view. Choose another available mission; its discussion will not be substituted automatically.'
-                    : 'Start with a concrete outcome and let ECorp create the task contract.'}</span>
+                    : missionChoices.length
+                      ? 'Select a mission from the list, or browse mission history for earlier work.'
+                      : 'Start with a concrete outcome and let ECorp create the task contract.'}</span>
                 </div>
               )}
             </div>
