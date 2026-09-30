@@ -1,0 +1,44 @@
+{
+  "issue": 260,
+  "kind": "Assistant implementation self-review; not independent or human approval",
+  "recorded_at_utc": "2026-09-30T03:46:42.660570+00:00",
+  "parent": "c54e25b08276d29a7c6d514fcef593fb06e57fec",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "tested_tree": "1c97c343f6e453f6ea0146b3c5471ad05a6bce1a",
+  "physical_files_sha256": "88a0fd91e78bd161654d120c71ac0ee3662ce9f06ea2153807d930b28d9c7dba",
+  "reviewed_paths": [
+    "apps/web/src/App.tsx",
+    "apps/web/src/EvidenceInspector.css",
+    "apps/web/src/EvidenceInspector.test.mjs",
+    "apps/web/src/EvidenceInspector.tsx",
+    "apps/web/src/sourceEvidence.test.mjs",
+    "apps/web/src/sourceEvidence.ts",
+    "apps/web/src/useEvidenceInspection.test.mjs",
+    "apps/web/src/useEvidenceInspection.ts",
+    "apps/web/src/workResultCard.test.mjs",
+    "tools/coverage_web_models.mjs"
+  ],
+  "issue_acceptance_criteria": "- [ ] Extend the existing selected-run/result components with a bounded changed-file summary, searchable artifact manifest, safe text/diff inspection and checks/findings linked to exact source/run/hash.\n- [ ] Keep provider output, automated verification, human outcome review, source deliverable, published PR and deployed application visibly distinct.\n- [ ] Use existing scoped signed artifact/source-deliverable APIs; never read arbitrary runner-host paths or create another artifact store.\n- [ ] Render untrusted source as inert text; no arbitrary HTML/JavaScript execution in the authenticated console. Make unsupported/binary/oversize/expired evidence states explicit with authorized download alternatives.\n- [ ] Outcome decisions remain attached to the exact selected evidence and existing authorization; artifact count must not create individual approval prompts.\n- [ ] Verify large manifests, redaction, hash/version mismatch, historical-versus-delivered runs, reviewer eligibility, retention expiry and cross-room denial.",
+  "acceptance_mapping": [
+    "Manifest search, bounded pagination, changed-file summary, exact identity and check binding: focused model/hook/component regressions, native synthesis manifest/text/diff checkpoint and the labeled 249-file synthetic browser case.",
+    "Provider output versus source/verification/outcome review/PR/deployment: selected-run rendering and native provider-only root versus completed synthesis; no source substitution for historical roots.",
+    "Existing signed scoped APIs only: same-origin no-redirect/no-cache read path, precise artifact identity and retention checks; native authorized original-byte download and current-room/guest denial.",
+    "Inert preview and explicit unsupported/binary/redacted/oversize/expired states: focused cases plus 12 labeled synthetic browser cases, including script markup rendered as text, file/artifact hash mismatch and retention expiry.",
+    "Exact existing outcome decisions and requester eligibility: native exact review requests and scripted eligible Bob decisions; no per-artifact decision creation or human-approval claim.",
+    "Large manifests, wrong version/hash, historical selection, revoked scope and late responses: native checkpoints and separately labeled browser cases; 390px keyboard/reduced-motion geometry and captures."
+  ],
+  "invariants": "Read-only web projection and existing authorized effects reused. No migration, dependency, custom harness, ledger or permission/approval mechanism added. Exact scoped selection and persisted verifier evidence remain authoritative.",
+  "unresolved_confirmed_defects_in_scope": [],
+  "qualifications": [
+    "This branch was validated on PR385 at c54e25b08276d29a7c6d514fcef593fb06e57fec plus only this issue's code. It excludes the later history SQL/logging corrections and other UI branches; integration requires fresh combined-source validation.",
+    "Development authentication, owned PostgreSQL and deterministic fake-process native runner; no production OIDC, vendor inference, production grants, deployment or real GitHub effects.",
+    "Two development Bob decisions are scripted fixture decisions, not independent human reviews. Assistant review cannot serve as self-approval.",
+    "Synthetic browser responses or synthetic cancelled ledger rows are explicitly labeled; they do not establish corresponding provider or server behavior.",
+    "Final canonical completion is recorded separately from earlier timestamped statements that it was running. Retrospective regressions do not invent historical development chronology.",
+    "Node skips and Rust ignored cases are not passes. Focused, canonical and native counts overlap and must not be added.",
+    "Organization Actions is disabled. Hosted CI, CodeQL, code-quality and security gates remain required; no merge or issue closure is claimed. Historical Cargo advisory debt is not a clean audit.",
+    "Native attempts r1-r3 were unsuccessful fixture-driver attempts and remain retained; r4 used separate documents and verified descriptor digests for all 12 synthetic cases.",
+    "The prior visual receipt says original detail in two notes; the available image rendering was scaled. Treat those as scaled spot inspections, not full-resolution or exhaustive accessibility certification.",
+    "Limits are explicit: 16 MiB artifact, 128 KiB preview, 10,000 manifest entries and 40 pages. Large original downloads use the existing authorized endpoint."
+  ]
+}

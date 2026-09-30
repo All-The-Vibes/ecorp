@@ -1,0 +1,83 @@
+{
+  "ready_at": "2026-09-30T02:35:28.7827132Z",
+  "demo": {
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "room_id": "00000000-0000-4000-8000-000000000041",
+    "alice_actor_id": "00000000-0000-4000-8000-000000000011",
+    "bob_actor_id": "00000000-0000-4000-8000-000000000012",
+    "eve_actor_id": "00000000-0000-4000-8000-000000000013",
+    "manager_agent_id": "00000000-0000-4000-8000-000000000031",
+    "worker_agent_id": "00000000-0000-4000-8000-000000000032",
+    "codex_agent_id": "00000000-0000-4000-8000-000000000033"
+  },
+  "source": {
+    "repository": "ecorp-fixture/pr265-run-activity",
+    "base_ref": "HEAD",
+    "base_commit": "9f9e486cedd86d6d6e5addd69618b7c3fe72a47d"
+  },
+  "schema_version": 2,
+  "test_owned": true,
+  "updated_at": "2026-09-30T02:37:23.7177218Z",
+  "processes": {
+    "postgres": {
+      "pid": 34496,
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4\\logs\\postgres-20260930T023522779-c0601d483c6a4e46bb04d4f139df2645.stdout.log",
+      "started_utc": "2026-09-30T02:35:22.8429282Z",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4\\logs\\postgres-20260930T023522779-c0601d483c6a4e46bb04d4f139df2645.stderr.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4",
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe",
+      "role": "postgres"
+    },
+    "server": {
+      "pid": 10640,
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4\\logs\\server-20260930T023524396-81097f3b434a4b9cba1b0a72b79df5c7.stdout.log",
+      "started_utc": "2026-09-30T02:35:24.4126451Z",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4\\logs\\server-20260930T023524396-81097f3b434a4b9cba1b0a72b79df5c7.stderr.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4",
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue260-evidence\\ecorp\\target\\debug\\crony-server.exe",
+      "role": "server"
+    },
+    "runner": {
+      "pid": 30216,
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4\\logs\\runner-20260930T023526859-c056339214d44397a4b7fb53ef0da7a9.stdout.log",
+      "started_utc": "2026-09-30T02:35:26.8668587Z",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4\\logs\\runner-20260930T023526859-c056339214d44397a4b7fb53ef0da7a9.stderr.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4",
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue260-evidence\\ecorp\\target\\debug\\crony-runner.exe",
+      "role": "runner"
+    },
+    "web": {
+      "pid": 36040,
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4\\logs\\web-20260930T023526888-a53221bf09784c9daf67df5eaf251059.stdout.log",
+      "started_utc": "2026-09-30T02:35:26.9003272Z",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4\\logs\\web-20260930T023526888-a53221bf09784c9daf67df5eaf251059.stderr.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4",
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+      "role": "web"
+    }
+  },
+  "purpose": "pr265-run-activity",
+  "plan": {
+    "phase": "Start",
+    "product": "<USERPROFILE>\\.codex\\worktrees\\issue260-evidence\\ecorp",
+    "product_commit": "c54e25b08276d29a7c6d514fcef593fb06e57fec",
+    "qa_root": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4",
+    "server": "http://127.0.0.1:18865",
+    "web": "http://127.0.0.1:15865",
+    "database": {
+      "host": "127.0.0.1",
+      "fresh": true,
+      "name": "pr265_activity",
+      "port": 15465
+    },
+    "runner_id": "pr265-activity-qa",
+    "provider": "native deterministic fake-process; no AI inference",
+    "source": "new independent synthetic Git repository, never the product checkout",
+    "factory_watcher": false,
+    "github_effects": false,
+    "existing_state_touched": false,
+    "build_required": false
+  },
+  "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue260-20260930-r4",
+  "stopped_at": "2026-09-30T02:37:23.7076706Z"
+}
