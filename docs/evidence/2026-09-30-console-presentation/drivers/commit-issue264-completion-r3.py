@@ -1,0 +1,77 @@
+"""Complete the existing pending merge with verified source and evidence only."""
+from issue264_publication_lib_r1 import *
+
+RECEIPT = EV/"issue264-completion-commit-r3.json"
+assert not RECEIPT.exists(), "Preserve existing commit attempt"
+record = {"issues": [263, 264], "status": "preparing", "started_at_utc": now(), "base": MAIN,
+          "parents": [HEAD, INCOMING], "branch": BRANCH, "remote_merge_performed": False, "issue_completed": False}
+def save():
+    RECEIPT.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+def verify_files(source, validation):
+    original_files(source["physical_files"])
+    for f in validation["files"]:
+        assert sha((ROOT/f["path"]).read_bytes()) == f["sha256"], f["path"]
+save()
+try:
+    x = completed_inputs()
+    pending_merge()
+    source_path, validation_path = EV/"issue264-completion-source-r3.json", EV/"issue264-completion-evidence-validation-r3.json"
+    source, validation, assembly = load(source_path), load(validation_path), load(EV/"issue264-completion-packet-r3.json")
+    assert validation["status"] == "passed" and validation["original_index_unchanged"] and validation["full_plan_unchanged"]
+    assert validation["secret_scan"]["exit_code"] == 0 and validation["secret_scan"]["finding_count"] == 0
+    assert source["parents"] == validation["parents"] == [HEAD, INCOMING]
+    assert validation["source_receipt_sha256"] == assembly["source_receipt_sha256"] == sha(source_path.read_bytes())
+    assert sha((PACKET/"summary.json").read_bytes()) == assembly["summary_sha256"]
+    assert index_digest() == source["original_index_sha256"] == validation["original_index_sha256"]
+    for check in validation["checks"]:
+        assert check["exit_code"] == 0 and sha(Path(check["log"]).read_bytes()) == check["sha256"]
+    verify_files(source, validation)
+    original = set(dict(source["physical_files"]))
+    published = {f["path"] for f in validation["files"]}
+    current = set(git("ls-files", "-z", "--cached", "--others", "--exclude-standard").decode().split("\0")) - {""}
+    assert original <= current <= original|published
+    assert sorted(p.relative_to(PACKET).as_posix() for p in PACKET.rglob("*") if p.is_file()) == assembly["publication_files"]
+    with temporary_index("commit-proof", HEAD) as temporary:
+        stage_names(original, temporary)
+        tested_tree = git("write-tree", env=temporary).decode().strip()
+        assert tested_tree == source["tested_tree"] == validation["tested_tree"]
+        stage_names(published, temporary)
+        publication_tree = git("write-tree", env=temporary).decode().strip()
+        assert publication_tree == validation["publication_tree"]
+    record.update(tested_tree=tested_tree, publication_tree=publication_tree, physical_files_sha256=PHYSICAL,
+                  validation_sha256=sha(validation_path.read_bytes()), source_receipt_sha256=sha(source_path.read_bytes()),
+                  original_source_files=len(original), publication_files=len(published),
+                  explicit_ignored_publication_paths=validation["explicit_ignored_publication_paths"],
+                  all_original_bytes_unchanged=True, preserved_contributions=CONTRIBUTIONS,
+                  author_identity=git("var", "GIT_AUTHOR_IDENT").decode().strip())
+    save()
+    stage_names(original|published, dict(ENV, GIT_LITERAL_PATHSPECS="1"))
+    assert git("write-tree").decode().strip() == publication_tree
+    git("diff", "--cached", "--check", HEAD)
+    assert not git("diff", "--name-only").strip()
+    verify_files(source, validation)
+    pending_merge()
+    changed = git("diff", "--cached", "--name-only", HEAD).decode().splitlines()
+    assert set(changed) == set(source["pending_paths"]) | published
+    record.update(status="staged-and-verified", pending_changed_files=changed)
+    save()
+    result = git("commit", "-m", "Integrate console themes and Executive presentation with reviewed workflow fixes")
+    with (EV/"issue264-completion-commit-r3.log").open("xb") as stream: stream.write(result)
+    head = git("rev-parse", "HEAD").decode().strip()
+    assert git("show", "-s", "--format=%P", head).decode().split() == [HEAD, INCOMING]
+    assert git("rev-parse", "HEAD^{tree}").decode().strip() == publication_tree
+    assert not git("status", "--porcelain=v1", "--untracked-files=all").strip()
+    for commit in CONTRIBUTIONS.values(): git("merge-base", "--is-ancestor", commit, head)
+    git("merge-base", "--is-ancestor", MAIN, head)
+    assert sha(git("diff", "--binary", "--no-ext-diff", "--no-textconv", "--unified=0", MAIN, head, "--", *source["code_paths"])) == source["integration_code_patch_sha256"]
+    assert set(git("diff", "--name-only", MAIN, head).decode().splitlines()) == set(source["integration_paths"])|published
+    verify_files(source, validation)
+    record.update(status="committed-and-verified", head=head, committed_tree=publication_tree, commit_log_sha256=sha(result),
+                  worktree_clean=True, all_original_pr_heads_are_ancestors=True, ordinary_two_parent_merge=True)
+except Exception as error:
+    record.update(status="failed", failure=str(error))
+    raise
+finally:
+    record["finished_at_utc"] = now()
+    save()
+    print(json.dumps({k: record.get(k) for k in ["status", "head", "parents", "tested_tree", "publication_tree", "failure"]}))

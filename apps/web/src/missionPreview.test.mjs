@@ -315,7 +315,7 @@ test('App shares the request body, invalidates keyed preview instances and retai
   const app = await readFile(new URL('./App.tsx', import.meta.url), 'utf8')
   assert.equal((app.match(/buildMissionRequest\(/g) ?? []).length, 1)
   const create = app.slice(app.indexOf('const createMission ='), app.indexOf('const launchMission ='))
-  assert.match(create, /body: currentMissionRequest\.body/)
+  assert.match(create, /const request = currentMissionRequest[\s\S]*body: request\.body/)
   assert.doesNotMatch(create, /JSON\.stringify\(\{\s*title:/)
   assert.match(create, /if \(!pauseAfterPlanning\)/)
   assert.match(create, /missions\/\$\{created\.mission_id\}\/launch/)

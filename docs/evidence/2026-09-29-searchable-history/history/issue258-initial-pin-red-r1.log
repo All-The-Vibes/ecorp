@@ -1,0 +1,66 @@
+✖ actual controlled MissionCard initial pin survives repeated mount effects before parent rerender (15.2627ms)
+✔ actual controlled MissionCard restricts task-only selection and never substitutes an unavailable run (7.8297ms)
+✖ actual controlled MissionCard pins the first run when it arrives after a mission-only selection (3.0735ms)
+✔ actual controlled MissionCard hides default evidence if the initial selection cannot persist (1.5726ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 2
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1695.2553
+
+✖ failing tests:
+
+test at apps\web\src\workResultCard.test.mjs:958:1
+✖ actual controlled MissionCard initial pin survives repeated mount effects before parent rerender (15.2627ms)
+  AssertionError [ERR_ASSERTION]: effect replay cannot hide a successfully pinned run
+  + actual - expected
+
+  + undefined
+  - '00000000-0000-4000-8000-000000000146'
+
+      at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/apps/web/src/workResultCard.test.mjs:963:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+      at run (node:internal/test_runner/harness:398:12)
+      at test (node:internal/test_runner/harness:407:12)
+      at file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/apps/web/src/workResultCard.test.mjs:958:1 {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: '00000000-0000-4000-8000-000000000146',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\web\src\workResultCard.test.mjs:981:1
+✖ actual controlled MissionCard pins the first run when it arrives after a mission-only selection (3.0735ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    {
+      missionId: '00000000-0000-4000-8000-000000000200',
+  +   runId: null,
+  +   taskId: null
+  -   runId: '00000000-0000-4000-8000-000000000144',
+  -   taskId: '00000000-0000-4000-8000-000000000201'
+    }
+
+      at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/apps/web/src/workResultCard.test.mjs:987:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { missionId: '00000000-0000-4000-8000-000000000200', taskId: null, runId: null },
+    expected: { missionId: '00000000-0000-4000-8000-000000000200', taskId: '00000000-0000-4000-8000-000000000201', runId: '00000000-0000-4000-8000-000000000144' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

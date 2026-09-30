@@ -1,0 +1,59 @@
+{
+  "issue": 258,
+  "pr": 385,
+  "kind": "Assistant self-review, not independent or human approval",
+  "recorded_at_utc": "2026-09-30T04:50:38.005258+00:00",
+  "parent": "c54e25b08276d29a7c6d514fcef593fb06e57fec",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "tested_tree": "fa70e7e55de26784898ce7e04b8304b118659b2a",
+  "physical_files_sha256": "bd30f819414dbde496c148c50f43c6ed231215e560b22ac8c5958b77703751e1",
+  "reviewed_paths": [
+    "crates/crony-server/src/history.rs",
+    "crates/crony-store/src/history.sql",
+    "crates/crony-store/src/history_tests.rs"
+  ],
+  "review_observation_sha256": "d8e013b58f57a67ed9bbc416decee8a16d482b6e241f1c02823c058941c16e7d",
+  "resolutions": [
+    {
+      "comment": 4140097091,
+      "status": "confirmed defect corrected",
+      "resolution": "Unexpected history store errors emit only the static history query unavailable category. No query, database error, identity or credential is interpolated; client errors emit no event.",
+      "files": [
+        "crates/crony-server/src/history.rs"
+      ],
+      "evidence": "Focused static-log regression and final canonical Rust tests; unchanged public 503 response."
+    },
+    {
+      "comment": 4140097129,
+      "status": "confirmed performance defect corrected",
+      "resolution": "Inline event visibility, separate sequence and exact-ID candidate paths, authorize each candidate before the page limit, then resolve only exact causal IDs for the returned page. Shared entity authorization remains explicit.",
+      "files": [
+        "crates/crony-store/src/history.sql",
+        "crates/crony-store/src/history_tests.rs"
+      ],
+      "evidence": "Owned SQL suite: 13 passed; separately filtered prepared-plan test: 1 passed, 8 scenarios. Both custom/generic plans examine 78 rows for first/deep/scoped pages and 2 for exact old IDs. Full physical inventories match canonical/native source."
+    },
+    {
+      "comment": 4140097159,
+      "status": "publication update prepared; verify remote application in publication receipt",
+      "resolution": "Replace the stale PR headline with current source identity, canonical counts and performance/native evidence. Earlier counts remain only in immutable historical packets.",
+      "files": [
+        "docs/evidence/2026-09-30-searchable-history-performance/README.md"
+      ],
+      "evidence": "Current 7,282-file source, 3,165 Node tests (3,100 passed/65 skipped), 882 Rust passed/577 ignored, and separate native EVM 1 passed. Published head and exact body are verified after the push."
+    }
+  ],
+  "invariants": "No migration, dependency, execution, permission or approval mechanism added. Candidate and causal event visibility remain Corp/room/current-actor scoped before response; payloads and diagnostics never supply labels, navigation or authority. Cursor validation excludes underflow; stable exclusive sequence bounds and entity ordering remain intact.",
+  "unresolved_confirmed_defects_in_corrections": [],
+  "qualifications": [
+    "Development authentication, local PostgreSQL trust authentication and deterministic fake-process native runner; no production OIDC, vendor inference, GitHub effects or human review.",
+    "Two native review decisions use the scripted development Bob persona. They are fixture decisions, not independent human approvals.",
+    "Prepared SQL regressions seed 20,000 synthetic events in owned PostgreSQL and force both custom and generic plans. Sparse filters can still require examining more candidates; no universal constant-work claim is made.",
+    "The six complete source inventories agree for this performance revision. Earlier packets, failed attempts and their chronology remain immutable history and do not establish acceptance for changed bytes.",
+    "Browser delays and HTTP 503 are synthetic transport tests. Six original tall screenshots received scaled spot inspection, not exhaustive accessibility or pixel certification.",
+    "RUST_TEST_THREADS=1 is explicit; skipped Node and ignored Rust cases are not passes. Focused and canonical counts overlap and must not be added together.",
+    "Earlier 59-file and 57-file history evidence packets remain unchanged. Their copied supervisors are historical; use the current tools/qa_factory_run_activity.ps1 and the new source receipt.",
+    "Hosted CI, CodeQL, code-quality and security remain required while organization Actions is disabled. No merge, issue completion, policy override or independent approval is claimed. Historical Cargo advisory debt is not a clean audit.",
+    "The native launch uses the existing graph-completion helper; issue #245 remains open. The first-visit misleading-empty allegation was not reproduced by earlier native validation; existing JSX fallback regressions remain in full discovery."
+  ]
+}

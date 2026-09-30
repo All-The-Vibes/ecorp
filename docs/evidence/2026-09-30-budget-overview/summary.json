@@ -1,0 +1,493 @@
+{
+  "issue": 261,
+  "status": "local-implementation-validated",
+  "issue_completed": false,
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parent": "c54e25b08276d29a7c6d514fcef593fb06e57fec",
+  "tested_tree": "1cbecf1f26c73e92ec5a077cd5f3acd2827ef17a",
+  "physical_files_sha256": "673e3435253fc8d98e0321e834e3b7e2069c2c587cd2c2815a62f6cdc121a3d0",
+  "source_file_count": 7289,
+  "historical_packet_files_preserved": 6368,
+  "canonical_native_same_complete_physical_source": true,
+  "evidence_added_after_code_execution": true,
+  "canonical_original_sha256": "a4b16df11821ed3ebee3cd8dd7731a04b84a80d911978d670cdc20655d8150be",
+  "checks": [
+    {
+      "name": "migrations",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-compatibility",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-evm",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "repository-docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "node-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3257,
+          "passed": 3192,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      }
+    },
+    {
+      "name": "format",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "clippy",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "rust-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 881,
+          "failed": 0,
+          "ignored": 576,
+          "summaries": 41
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "web-build",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "web-lint",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    }
+  ],
+  "native_checks": [
+    "synthetic_ledger_matches_independent_sql_once",
+    "exact_synthetic_revision_and_terminated_suspension_drilldown",
+    "native_runner_survival_and_reconnected_ledger",
+    "native_complete_graph_and_consumption_after_scripted_reviews",
+    "native_revoked_room_and_cross_corp_scope",
+    "synthetic_transport_failure_hides_previous_budget_values",
+    "browser_freshness_expiry_hides_totals",
+    "keyboard_390px_reduced_motion_exact_revision",
+    "read_only_budget_projection_no_duplicate_effects"
+  ],
+  "focused_count": 121,
+  "acceptance_mapping": [
+    "Original/current/consumed/remaining authority and pending decisions: focused model/panel cases, independently queried synthetic SQL ledger and exact existing budget-revision drilldown.",
+    "Scoped snapshot-limited totals and once-only worker/retry/auditor consumption: 745 tokens across five synthetic runs/three agents, 845 tokens including incomplete-history work; aggregate remainder withheld.",
+    "Cost assurance: reported consumption is not promoted to measured/priced/free work; missing pricing provenance, unpriced/unavailable values and zero fake-process usage remain explicit.",
+    "Freshness/scope and existing controls: native disconnect/reconnect, real revoked-room and cross-Corp denial, browser-only read failure/freshness expiry, exact revision and terminated-suspension navigation; delegated #236 service is unavailable and labeled.",
+    "No ledger, threshold policy, automatic grant or duplicate decision added: read-only projection, immutable-revision before/after digest and native fixture source checks.",
+    "Multi-worker/retry/revision/missing-history/revocation/mobile/keyboard cases passed; BOTH presentation modes remain incomplete until #264 is integrated and accepted. This issue must stay open."
+  ],
+  "qualifications": [
+    "This branch was validated on PR385 at c54e25b08276d29a7c6d514fcef593fb06e57fec plus only this issue's code. It excludes the later history SQL/logging corrections and other UI branches; integration requires fresh combined-source validation.",
+    "Development authentication, owned PostgreSQL and deterministic fake-process native runner; no production OIDC, vendor inference, production grants, deployment or real GitHub effects.",
+    "Two development Bob decisions are scripted fixture decisions, not independent human reviews. Assistant review cannot serve as self-approval.",
+    "Synthetic browser responses or synthetic cancelled ledger rows are explicitly labeled; they do not establish corresponding provider or server behavior.",
+    "Final canonical completion is recorded separately from earlier timestamped statements that it was running. Retrospective regressions do not invent historical development chronology.",
+    "Node skips and Rust ignored cases are not passes. Focused, canonical and native counts overlap and must not be added.",
+    "Organization Actions is disabled. Hosted CI, CodeQL, code-quality and security gates remain required; no merge or issue closure is claimed. Historical Cargo advisory debt is not a clean audit.",
+    "Issue #261 is partial until #264 provides and validates both presentation modes. Do not use a closing keyword for this branch alone.",
+    "The original native report recorded [null,null] review_ids by reading id instead of run_id. The preserved supplemental read-only SQL query verified both run_id primary identities, approved fixture state and scripted actor without replaying decisions or modifying application rows.",
+    "The rich synthetic ledger is 745 tokens; 845 includes incomplete-history mission consumption. Zero native fake-process usage is not proof of free work. No actual budget grant or provider recovery is claimed.",
+    "The earlier visual receipt's original-resolution wording is qualified as scaled inspection. Its timestamped in-progress statements are preserved; final canonical completion is separately verified here."
+  ],
+  "artifacts": [
+    {
+      "file": "source-equivalence.json",
+      "source_name": "issue261-completion-source-r1.json",
+      "original_sha256": "cffe4e1b71cadb4cae4b97df3e18c21ab6c58f21b0f14182ca1be34a058efa13",
+      "published_sha256": "cffe4e1b71cadb4cae4b97df3e18c21ab6c58f21b0f14182ca1be34a058efa13",
+      "bytes": 2293205,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "canonical-driver.json",
+      "source_name": "issue261-review-check-r1.json",
+      "original_sha256": "4d15e1d4f1256b6a6209b9a45097d7d0755d9ce5f2557f8b137531db0b2be1b0",
+      "published_sha256": "3fd2288676d52677d4ab46cd0b891bc84350d81150d4344986509af39906a40a",
+      "bytes": 12185,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "canonical-report.json",
+      "source_name": "2026-09-30T02-15-20-524Z-692f4f83-04a0-4658-a6d7-c3feb7bb1acc-full.json",
+      "original_sha256": "a4b16df11821ed3ebee3cd8dd7731a04b84a80d911978d670cdc20655d8150be",
+      "published_sha256": "a4b16df11821ed3ebee3cd8dd7731a04b84a80d911978d670cdc20655d8150be",
+      "bytes": 591219,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "canonical-pnpm-check.log",
+      "source_name": "issue261-review-check-r1.log",
+      "original_sha256": "92ea522bf91036d0e118d0b0ae068d549278e6dfde41f80665a13401a7c5014d",
+      "published_sha256": "6a9393e90cfba65ad2d24f4b502fa7d9a2bd834fc634d4c737c7cd4a70b43a77",
+      "bytes": 9615,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "native-driver.json",
+      "source_name": "issue261-review-native-r1.json",
+      "original_sha256": "5b2249b26fc5a115b7a39d9756f479df89b2593ba503e70fc5bc0131dc9667d1",
+      "published_sha256": "2c46ec98f4a0bb53a58e07f2cf8f55a91a4d0ab2a3d9ebd7cb44425360e230df",
+      "bytes": 9967,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "locked-web-validation.json",
+      "source_name": "issue261-review-web-r1.json",
+      "original_sha256": "4b7864b14ef83b760192df4b0d1ca6c177d5de4f5f46da65876fff318f9fae63",
+      "published_sha256": "c39831f1bfe2e11283e404cc0034e845f5f4255f1c29398f075cf560cbcfdca1",
+      "bytes": 3855,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "screenshot-review.json",
+      "source_name": "issue261-review-screenshot-review-r1.json",
+      "original_sha256": "f305c8655935e47ec28223766bc744130722890dc54513da839d11cc8799e0a3",
+      "published_sha256": "842fcac35e8ea17e13012cf6a669a105869aacf1c00ec00859131e9bceec9b11",
+      "bytes": 1975,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "implementation-self-review.json",
+      "source_name": "issue261-completion-self-review-r1.json",
+      "original_sha256": "9a74513d198be8c5f325300a74ae3de7dffc8ecf2d3eee486af2a99bf1811659",
+      "published_sha256": "9a74513d198be8c5f325300a74ae3de7dffc8ecf2d3eee486af2a99bf1811659",
+      "bytes": 5705,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "focused-regressions.json",
+      "source_name": "issue261-review-focused-r1.json",
+      "original_sha256": "1c5ca9d5395516969e4746b00b8723914991aa0f15ef411e2504d8296e63d9ea",
+      "published_sha256": "1b70b5389967024f2bd7ed60c1a9db526cd1c1a64ce575754a291244047df41a",
+      "bytes": 1022,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "focused-regressions.log",
+      "source_name": "issue261-review-focused-r1.log",
+      "original_sha256": "35e86677495a8dd3132d9094a82dce1cc6c9dcba80bcb0e642f43a35a33a7b84",
+      "published_sha256": "8a833d4ddaae35b57f68964ec10c3b143c55de7a893cce997bd95e40c42c7945",
+      "bytes": 10282,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "fixture-ownership.json",
+      "source_name": "ownership.json",
+      "original_sha256": "2c1790f79f1b46221b74a4662f94eda8c59dd7b787953731944c96bdb6b8f58c",
+      "published_sha256": "f7b8a179fe55059a74f3de662100227bf9bc55bd008d06489e1f6e65eaad77f9",
+      "bytes": 4250,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "native/issue261-browser.json",
+      "source_name": "issue261-browser.json",
+      "original_sha256": "eba6d06cbb0e85d8f82a459c42a5ddaee769e37cb017e84d23e493a43faeacc0",
+      "published_sha256": "990dd50b719f39adf6f5b5f622ee30ddcb25a6c21b622aed37b6d11b89a542b6",
+      "bytes": 9556,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "native-source-before.log",
+      "source_name": "issue261-review-native-r1-source-before.log",
+      "original_sha256": "8c196b489ee3e3fba5a47e3d969904922b9f194131caa17383fa606094ed97f9",
+      "published_sha256": "f0c26246b50da4ad5325d7a33a57d534ca1318eb70bc83a79cec2b5dbe98cc53",
+      "bytes": 201,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "native-build.log",
+      "source_name": "issue261-review-native-r1-build.log",
+      "original_sha256": "f9ae44c58d690853c758e7feecc257f56ba41afaa4160d72c7df10c3e36eafa0",
+      "published_sha256": "e8569186117093a3ca953c90597d7a9af33cd82019d760fc5201562c66acf52d",
+      "bytes": 182,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "native-dry-run.log",
+      "source_name": "issue261-review-native-r1-dry-run.log",
+      "original_sha256": "2de23ab44373c3c6009818af4422265ffd6b640aa73ce98a8dfaef08ba6febd0",
+      "published_sha256": "68348a7c7cc3602383d9616ce5c7b5afd59e03e2d9f97379440ffe2bb4f6ee19",
+      "bytes": 728,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "native-start.log",
+      "source_name": "issue261-review-native-r1-start.log",
+      "original_sha256": "3011fed8df270ed94cbee95907d4a229b14335d380902025f57db219df453e1e",
+      "published_sha256": "38b3d63c579578703eb45cd32733b86382783ebb6efa9f40b8095eb1143aae20",
+      "bytes": 2196,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "native-status.log",
+      "source_name": "issue261-review-native-r1-status.log",
+      "original_sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+      "published_sha256": "966c9259b3b566cbe8b61427223cdc5679afcabc998acac1a04abf93a5fa164f",
+      "bytes": 66,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "native-browser.log",
+      "source_name": "issue261-review-native-r1-browser.log",
+      "original_sha256": "a8a23a00c1a472859dec7d5d1805b204b8ae0284f7ced5fe7847f56c875f4c63",
+      "published_sha256": "e1fe5eaed92bc33c117787080a0be4b064ff1df2c00734da3558a626533a56d7",
+      "bytes": 489,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "native-source-after.log",
+      "source_name": "issue261-review-native-r1-source-after.log",
+      "original_sha256": "c7a19748ba7f388c53862ddfbf3647417eab055c486d903a1eb0c291a8005462",
+      "published_sha256": "6d47907ec30100c7d9db1b1f35aeb661f7a4a7cdc1e0f3ae94411cb1e154c8a9",
+      "bytes": 200,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "native-stop.log",
+      "source_name": "issue261-review-native-r1-stop.log",
+      "original_sha256": "65abe6fe9cb60eacc967eff94e7f98a3a958644944f9ce7caffa07021c10ae9e",
+      "published_sha256": "bc62835e86fcb405eb6122ad5603e60ac28b75f0640f2e2f4df1681a1744c9e2",
+      "bytes": 151,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "web-source-before.log",
+      "source_name": "issue261-review-web-r1-source-before.log",
+      "original_sha256": "c33961ed5a892b74523b24df467c5673748036070acc290e103c78877a2d1073",
+      "published_sha256": "bc332bc42879fbd447df68e70089716c9d5917551843c377ad15f00a89801bcd",
+      "bytes": 198,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "web-install.log",
+      "source_name": "issue261-review-web-r1-install.log",
+      "original_sha256": "7f68cdfd7d3b915893964ccb3acf0ef07d86d374072422a61fecb8462640a56c",
+      "published_sha256": "5861dd71e639ce9b2c11e92f23315046748b05d251250e40af4d9c189394b358",
+      "bytes": 84,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "web-scenario-install.log",
+      "source_name": "issue261-review-web-r1-scenario-install.log",
+      "original_sha256": "fa7b6cd5f2f9e110e02db37af775157c200af917bf96eaf02f0707008a44da1a",
+      "published_sha256": "8e9e6b8c72271cb7f3143d76f8e27e003084f74526a562ba194916621e164c85",
+      "bytes": 27,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "web-build.log",
+      "source_name": "issue261-review-web-r1-build.log",
+      "original_sha256": "7a868a3d975faaeba31737ca269ed9aba99f0a21f4c4ada6a1daf0ed28423ee7",
+      "published_sha256": "03ac2f82e0376a10419a7eafc487f5b80134aebc99c3acea7f86cdf3e5d88b5a",
+      "bytes": 920,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "web-lint.log",
+      "source_name": "issue261-review-web-r1-lint.log",
+      "original_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928",
+      "bytes": 36,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "web-source-after.log",
+      "source_name": "issue261-review-web-r1-source-after.log",
+      "original_sha256": "6be0c2265b987e9569cd23547dcd6f870b0ae529431e27e3da41c5c965dc3b01",
+      "published_sha256": "50ec9033d26fc05add2c9f5dc25235a71dda4a9992aefdfe4d7cc4e156691af5",
+      "bytes": 197,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "native/budget-overview-desktop-42150bff.png",
+      "source_name": "budget-overview-desktop-42150bff.png",
+      "original_sha256": "87409cb4c87a5dac46496c318082a05464b1e5a534d4e77afb71455427f87bb1",
+      "published_sha256": "87409cb4c87a5dac46496c318082a05464b1e5a534d4e77afb71455427f87bb1",
+      "bytes": 199193,
+      "transform": "none; original capture bytes"
+    },
+    {
+      "file": "native/revoked-budget-scope-62363d0b.png",
+      "source_name": "revoked-budget-scope-62363d0b.png",
+      "original_sha256": "1790a419fac1190b1a5423bcd8dbb944e54b415b0812634f53fbef80c605e76c",
+      "published_sha256": "1790a419fac1190b1a5423bcd8dbb944e54b415b0812634f53fbef80c605e76c",
+      "bytes": 58396,
+      "transform": "none; original capture bytes"
+    },
+    {
+      "file": "native/budget-overview-390px-ce852d91.png",
+      "source_name": "budget-overview-390px-ce852d91.png",
+      "original_sha256": "5901e382f73e8a19e34779acf0a3a4624bbaa726207bb4eebbf250ba1478b1bc",
+      "published_sha256": "5901e382f73e8a19e34779acf0a3a4624bbaa726207bb4eebbf250ba1478b1bc",
+      "bytes": 226182,
+      "transform": "none; original capture bytes"
+    },
+    {
+      "file": "drivers/capture-issue261-review-source-r1.py",
+      "source_name": "capture-issue261-review-source-r1.py",
+      "original_sha256": "df2c7f7a498d3ac429af1c5122868e020f608141c880683a4c417427f1d75e8a",
+      "published_sha256": "4c2fcbea0ab673473f181a2afa558f71128b735dd6f9080cd4b6c98eab84d5ce",
+      "bytes": 3590,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "drivers/issue261-review-browser-r1.mjs",
+      "source_name": "issue261-review-browser-r1.mjs",
+      "original_sha256": "1b19ff77003583a711c7afb3e75ba6e2f9f2b60677a01e6439c8d241e93a12c4",
+      "published_sha256": "6eae555905c41e6259c83d223560023b39940b6727565b8b40500dac84b38202",
+      "bytes": 35243,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "drivers/run-issue261-review-check-r1.ps1",
+      "source_name": "run-issue261-review-check-r1.ps1",
+      "original_sha256": "b7ae06f745c4130528b00b057855d4e42030a5c08f19ccc574b7e86a77767715",
+      "published_sha256": "cc7d2a53542c9a9f816b23867c4c257ec3e9ed8a1a84c2062641a57a2d5d04b1",
+      "bytes": 5293,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "drivers/run-issue261-review-native-r1.ps1",
+      "source_name": "run-issue261-review-native-r1.ps1",
+      "original_sha256": "f4924991d7db530bb145966ad354047f400cf3b0f7f0ebc8bfc062e302bf7d61",
+      "published_sha256": "689f362c748f529dcac86a566147922f57ae9a2062440a9a57d2ad2ddf3ea85d",
+      "bytes": 8186,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "drivers/run-issue261-review-web-r1.ps1",
+      "source_name": "run-issue261-review-web-r1.ps1",
+      "original_sha256": "a216bd48720feef9788162633767cd0c1a4c050fa721d182b31f94099d6ced47",
+      "published_sha256": "ee8cdb4814c778f4b9178240f55ce1d8460f4dbd3db52349024a326b607db172",
+      "bytes": 2699,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "verification-supplement/issue261-review-verification-supplement-r1.json",
+      "source_name": "issue261-review-verification-supplement-r1.json",
+      "original_sha256": "c494c699f04500c16b651b7f4bd2c1ad6cbc0397d937cceaf4b7bf32c56bb923",
+      "published_sha256": "cc1e6fd3d025030e9f5be3b5082487199dfab0967369e166757e47fc8b9c6fbf",
+      "bytes": 4217,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "verification-supplement/issue261-review-verification-supplement-r1.sql",
+      "source_name": "issue261-review-verification-supplement-r1.sql",
+      "original_sha256": "fde44fffa03b02b3f777d7811d4481e519a822e3460ef98e66fefe012c0320a9",
+      "published_sha256": "86bccc91b719a707a55a9794337a855ce6f795920996633e731738265f2b5684",
+      "bytes": 983,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "verification-supplement/issue261-review-verification-supplement-r1-rows.json",
+      "source_name": "issue261-review-verification-supplement-r1-rows.json",
+      "original_sha256": "ab5ad4f39416cea775aa7b426eec0912c40b50516983f193e9f3272ce9a6f620",
+      "published_sha256": "4c96ef36e73339385c663e6023f52b494b2840305c19ce5424e278240f4cf222",
+      "bytes": 2013,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "verification-supplement/issue261-review-verification-supplement-r1-stop.log",
+      "source_name": "issue261-review-verification-supplement-r1-stop.log",
+      "original_sha256": "3589d2bd01f8295cc7c9ec3f5e07625fcd347ccb6f33f2d80edafe5f5217c1fb",
+      "published_sha256": "ca19178a35ab4153b75b494963b66ce8243e1b94c173107c87b44d09db23652d",
+      "bytes": 56,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "verification-supplement/capture-issue261-review-verification-supplement-r1.ps1",
+      "source_name": "capture-issue261-review-verification-supplement-r1.ps1",
+      "original_sha256": "d0f8501e622723d48a8054261726b6e3e55f5219e5cc0f414ec2b849d2a79505",
+      "published_sha256": "b567eac1d92f2a083d7beb7d7a247daded281a2f5c80170d3f0af50a95a79c9a",
+      "bytes": 11790,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths/discovered credentials redacted; JSON reserialized"
+    },
+    {
+      "file": "reviewed-code.patch.json",
+      "original_sha256": "c1a1604a01c6d9ff7378a1e6ad2d011c0b94fbc11e20ad4b374079b060523292",
+      "published_sha256": "c2400c151a4ad2950df7ce41b8d20ab7cd92b7b3a0d92abfd96d883bae8e450c",
+      "bytes": 76603,
+      "transform": "Exact UTF-8 patch encoded inside JSON"
+    }
+  ],
+  "redactions": [
+    {
+      "file": "private-fixture-discovery:credential.json",
+      "json_path": "$.credential",
+      "treatment": "credential-bearing value redacted"
+    }
+  ]
+}

@@ -11,7 +11,7 @@
 
 .operations-mission-toolbar > div { flex: 1 1 240px; min-width: 0; }
 .app-shell .operations-mission-toolbar h2 { margin: 0; font-size: 20px; line-height: 1.3; }
-.app-shell .operations-mission-toolbar p { margin: 4px 0 0; color: #526058; font-size: 14px; line-height: 1.5; }
+.app-shell .operations-mission-toolbar p { margin: 4px 0 0; color: var(--theme-muted); font-size: 14px; line-height: 1.5; }
 .operations-mission-toolbar > button { flex: 0 0 auto; min-height: 44px; }
 .app-shell #missions .mission-card > h3 { margin-block: 10px; font-size: 24px; line-height: 1.35; overflow-wrap: anywhere; }
 
@@ -20,27 +20,27 @@
   min-width: 0;
   margin-top: 8px;
   padding: 0;
-  border: 1px solid #c8cec9;
-  border-left: 3px solid #667369;
+  border: 1px solid var(--theme-border);
+  border-left: 3px solid var(--theme-muted);
   border-radius: 3px;
 }
 
-.app-shell .operations-verification.verification-passed { border-left-color: #22633e; }
-.app-shell .operations-verification.verification-failed { border-left-color: #963047; }
+.app-shell .operations-verification.verification-passed { border-left-color: var(--theme-success); }
+.app-shell .operations-verification.verification-failed { border-left-color: var(--theme-danger); }
 
 .app-shell .operations-verification > summary {
   grid-template-columns: minmax(0, 1fr) auto 18px;
   gap: 10px;
   min-height: 48px;
   padding: 10px 12px;
-  color: #202b36;
-  background: #f6f7f5;
+  color: var(--theme-text);
+  background: var(--theme-raised);
 }
 
 .operations-verification-copy { display: grid; min-width: 0; gap: 3px; }
 .operations-verification-copy strong { font-size: 14px; }
-.operations-verification-copy small { color: #526058; font-size: 12px; line-height: 1.5; }
-.operations-verification-score { color: #202b36; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.operations-verification-copy small { color: var(--theme-muted); font-size: 12px; line-height: 1.5; }
+.operations-verification-score { color: var(--theme-text); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .operations-disclosure-mark { text-align: center; font-size: 20px; }
 .operations-verification[open] .operations-disclosure-mark { transform: rotate(45deg); }
 
@@ -54,15 +54,15 @@
   gap: 3px 12px;
   padding: 10px 0;
   border: 0;
-  border-top: 1px solid #d4d9d4;
+  border-top: 1px solid var(--theme-border);
   border-radius: 0;
   box-shadow: none;
   font-size: 13px;
 }
 
-.operations-verification .evidence-check p { color: #526058; overflow-wrap: anywhere; }
-.operations-verification .evidence-check-passed > span { color: #22633e; }
-.operations-verification .evidence-check-failed > span { color: #963047; }
+.operations-verification .evidence-check p { color: var(--theme-muted); overflow-wrap: anywhere; }
+.operations-verification .evidence-check-passed > span { color: var(--theme-success); }
+.operations-verification .evidence-check-failed > span { color: var(--theme-danger); }
 
 .app-shell .operations-review-decision {
   display: grid;
@@ -70,23 +70,23 @@
   gap: 6px;
   margin-top: 10px;
   padding: 14px;
-  color: #35272a;
-  background: #fff7f4;
-  border: 1px solid #d9b8b7;
-  border-left: 4px solid #963047;
+  color: var(--theme-text);
+  background: var(--theme-danger-surface);
+  border: 1px solid var(--theme-control-border);
+  border-left: 4px solid var(--theme-danger);
   border-radius: 3px;
 }
 
-.operations-review-label { color: #7b263b; font-size: 12px; font-weight: 650; }
+.operations-review-label { color: var(--theme-accent); font-size: 12px; font-weight: 650; }
 .operations-review-decision > strong { font-size: 17px; }
-.operations-review-decision > small { color: #685357; font-size: 12px; }
+.operations-review-decision > small { color: var(--theme-muted); font-size: 12px; }
 .operations-review-decision p { margin: 0; line-height: 1.55; overflow-wrap: anywhere; }
 .operations-review-decision > p { white-space: pre-wrap; }
 
 .operations-review-decision .operations-review-next {
   margin-top: 4px;
   padding-top: 10px;
-  border-top: 1px solid #e4cdca;
+  border-top: 1px solid var(--theme-border);
   font-size: 13px;
 }
 
@@ -95,7 +95,7 @@
   display: list-item;
   min-height: 44px;
   padding: 10px 4px;
-  color: #263f52;
+  color: var(--theme-text);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -110,16 +110,16 @@
   overflow: auto;
   overscroll-behavior: contain;
   padding: 10px;
-  color: #35272a;
-  background: #ffffff;
-  border: 1px solid #e4cdca;
+  color: var(--theme-text);
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
   white-space: pre-wrap;
 }
 
 .operations-run-outcome { min-width: 0; margin-top: 8px; }
 .operations-run-outcome > p,
 .operations-run-outcome > small { display: block; margin: 0 0 8px; overflow-wrap: anywhere; line-height: 1.5; }
-.operations-run-outcome > small { color: #526058; }
+.operations-run-outcome > small { color: var(--theme-muted); }
 
 .app-shell .operations-run-metadata {
   display: flex;
@@ -127,12 +127,12 @@
   gap: 8px 18px;
   margin: 10px 0 0;
   padding: 10px 0;
-  color: #202b36;
-  border-block: 1px solid #d4d9d4;
+  color: var(--theme-text);
+  border-block: 1px solid var(--theme-border);
 }
 
 .operations-run-metadata > div { flex: 1 1 150px; min-width: 0; }
-.operations-run-metadata dt { color: #526058; font-size: 12px; font-weight: 600; }
+.operations-run-metadata dt { color: var(--theme-muted); font-size: 12px; font-weight: 600; }
 .operations-run-metadata dd { margin: 3px 0 0; font-size: 13px; overflow-wrap: anywhere; }
 
 .app-shell .operator-console .operations-identity {
@@ -145,12 +145,12 @@
 
 .app-shell .operations-identity > label { display: grid; min-width: 0; gap: 4px; }
 .app-shell .operations-identity select { min-width: 0; width: 100%; max-width: 100%; min-height: 44px; }
-.operations-identity > small { color: #526058; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.operations-identity > small { color: var(--theme-muted); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
 
 .app-shell #missions .operations-approval-note {
   display: block;
   margin: 6px 0 0;
-  color: #526058;
+  color: var(--theme-muted);
   font-size: 13px;
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -159,7 +159,7 @@
 .app-shell #missions .factory-recovery-details > summary {
   min-height: 44px;
   padding: 10px 0;
-  color: #4b3b25;
+  color: var(--theme-muted);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -169,40 +169,40 @@
 
 /* The policy editor uses the same light, readable surface as run evidence. */
 #missions .verification-policy-editor {
-  color: #202b36;
-  background: #f6f7f5;
-  border: 1px solid #c8cec9;
+  color: var(--theme-text);
+  background: var(--theme-raised);
+  border: 1px solid var(--theme-border);
   border-radius: 3px;
   box-shadow: none;
 }
 
-#missions .verification-policy-editor :is(label, legend, strong) { color: #202b36; font-size: 14px; line-height: 1.4; }
-#missions .verification-policy-editor :is(small, .contract-section-heading span) { color: #526058; font-size: 13px; line-height: 1.5; }
-#missions .verification-policy-editor fieldset { color: #202b36; background: #ffffff; border-color: #a8b3ae; }
-#missions .verification-policy-editor :is(input, select, textarea, pre) { color: #202b36; background: #ffffff; }
+#missions .verification-policy-editor :is(label, legend, strong) { color: var(--theme-text); font-size: 14px; line-height: 1.4; }
+#missions .verification-policy-editor :is(small, .contract-section-heading span) { color: var(--theme-muted); font-size: 13px; line-height: 1.5; }
+#missions .verification-policy-editor fieldset { color: var(--theme-text); background: var(--theme-surface); border-color: var(--theme-control-border); }
+#missions .verification-policy-editor :is(input, select, textarea, pre) { color: var(--theme-text); background: var(--theme-surface); }
 #missions .verification-policy-editor [aria-pressed] {
   min-height: 44px;
   min-width: 44px;
   padding: 8px 12px;
-  color: #293744;
-  background: #ffffff;
-  border: 1px solid #8c9992;
+  color: var(--theme-text);
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-control-border);
   font-family: inherit;
   font-size: 14px;
 }
 
 #missions .verification-policy-editor [aria-pressed="true"] {
-  color: #7b1430;
-  background: #fae8ec;
-  border: 2px solid #963047;
+  color: var(--theme-accent);
+  background: var(--theme-accent-surface);
+  border: 2px solid var(--theme-danger);
 }
 
 #missions .verification-policy-editor [aria-pressed] :is(span, strong, small) { color: inherit; background: transparent; font: inherit; font-weight: 600; text-transform: none; }
-#missions .verification-policy-editor [aria-pressed]:focus-visible { outline: 2px solid #7b1430; outline-offset: 3px; }
-#missions .mission-runtime-error { color: #86243a; background: #fff3f4; border-color: #d9b8b7; }
-#missions .field-warning { color: #86243a; background: #fff3f4; padding: 8px 12px; font-size: 13px; line-height: 1.5; }
-#missions .contract-error { color: #86243a; background: #fff3f4; padding: 10px 12px; font: inherit; line-height: 1.5; }
-#missions :is(.strategy-chip, .contract-version-chip, .task-contract-heading > span) { color: #354650; background: #edf1ee; border: 1px solid #c8cec9; padding: 4px 7px; font-family: inherit; font-size: 12px; font-weight: 600; line-height: 1.4; }
+#missions .verification-policy-editor [aria-pressed]:focus-visible { outline: 2px solid var(--theme-accent); outline-offset: 3px; }
+#missions .mission-runtime-error { color: var(--theme-danger); background: var(--theme-danger-surface); border-color: var(--theme-control-border); }
+#missions .field-warning { color: var(--theme-danger); background: var(--theme-danger-surface); padding: 8px 12px; font-size: 13px; line-height: 1.5; }
+#missions .contract-error { color: var(--theme-danger); background: var(--theme-danger-surface); padding: 10px 12px; font: inherit; line-height: 1.5; }
+#missions :is(.strategy-chip, .contract-version-chip, .task-contract-heading > span) { color: var(--theme-text); background: var(--theme-raised); border: 1px solid var(--theme-border); padding: 4px 7px; font-family: inherit; font-size: 12px; font-weight: 600; line-height: 1.4; }
 
 #missions .task-contract {
   min-width: 0;
@@ -227,18 +227,18 @@
   .operations-run-metadata > div { flex-basis: 100%; }
 }
 .factory-dossier-stage .factory-facts > div {
-  background: #f2f5f7;
-  border-color: #c8d0d7;
+  background: var(--theme-raised);
+  border-color: var(--theme-border);
 }
 
 .factory-dossier-stage .factory-facts dt {
-  color: #48515a;
+  color: var(--theme-muted);
   font-size: 0.875rem;
   line-height: 1.5;
 }
 
 .factory-dossier-stage .factory-facts dd {
-  color: #1c2630;
+  color: var(--theme-text);
   font-size: 0.9375rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -296,9 +296,9 @@
 .manual-work-links,
 .room-context-bar {
   padding: 14px 18px;
-  border-block-end: 1px solid #d5d9d6;
-  background: #f5f7f4;
-  color: #26352f;
+  border-block-end: 1px solid var(--theme-border);
+  background: var(--theme-raised);
+  color: var(--theme-text);
 }
 
 .mission-work-context p,
@@ -361,10 +361,10 @@
 .review-eligibility-notice {
   flex-basis: 100%;
   padding: 14px 16px;
-  border-inline-start: 4px solid #8c641f;
+  border-inline-start: 4px solid var(--theme-warning);
   border-radius: 4px;
-  background: #fff7e4;
-  color: #503913;
+  background: var(--theme-warning-surface);
+  color: var(--theme-warning);
   font-size: 0.95rem;
   line-height: 1.5;
 }
@@ -380,7 +380,7 @@
   padding: 8px 16px;
   min-block-size: 44px;
   font-size: 0.875rem;
-  color: #38473f;
+  color: var(--theme-text);
 }
 
 .mission-evidence-context {
@@ -388,9 +388,9 @@
   gap: 8px;
   min-inline-size: 0;
   padding: 14px 18px;
-  border-block: 1px solid #d5d9d6;
-  background: #f5f7f4;
-  color: #26352f;
+  border-block: 1px solid var(--theme-border);
+  background: var(--theme-raised);
+  color: var(--theme-text);
 }
 
 .mission-evidence-context label {
@@ -455,7 +455,7 @@
   color: var(--ink);
   border: 1px solid var(--line);
   border-radius: 3px;
-  background: #f6f7f5;
+  background: var(--theme-raised);
   overflow-wrap: anywhere;
 }
 
@@ -469,7 +469,7 @@
   max-width: 100%;
   width: 100%;
   color: var(--ink);
-  border: 1px solid #667369;
+  border: 1px solid var(--theme-muted);
   background: var(--paper-light);
   box-shadow: none;
 }
@@ -545,7 +545,7 @@
   border: 1px solid var(--line);
   border-left: 3px solid var(--cobalt);
   border-radius: 3px;
-  background: #f6f7f5;
+  background: var(--theme-raised);
 }
 
 #missions .mission-form .mission-plan-summary { max-inline-size: none; padding: 12px 16px; overflow-wrap: anywhere; }

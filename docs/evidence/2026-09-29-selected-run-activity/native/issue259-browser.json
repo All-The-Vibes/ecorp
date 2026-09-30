@@ -1,0 +1,364 @@
+{
+  "issue": 259,
+  "suite": "owned-native-run-activity-surfaces",
+  "status": "accepted",
+  "started_at": "2026-09-29T17:17:45.426Z",
+  "source": {
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "diff_sha256": "40203ae124c8143fe21f154699535927ce8e87edf9f9e1e5d604099851446885"
+  },
+  "scope": "Browser/server/PostgreSQL/native deterministic runner, no AI inference or real GitHub effects",
+  "prepared_graph": {
+    "mission_id": "66f4023c-8ecb-40a8-a25d-725b0db28d22",
+    "factory_work_item_id": "be59db6e-e0a0-4c6d-aa6f-c2cd45fa5d61",
+    "task_ids": [
+      "dc19238d-1516-4b46-a223-60aef18bdea1",
+      "9648439a-7f28-41aa-97b6-ddebe2d12d3d"
+    ]
+  },
+  "operations": [
+    {
+      "name": "browser-launch",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions/66f4023c-8ecb-40a8-a25d-725b0db28d22/launch",
+      "started_at": "2026-09-29T17:17:49.359Z",
+      "completed": true
+    },
+    {
+      "name": "snapshot-failure-f64ce1bf-444e-48cd-8e54-3383b5585545",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/rooms/00000000-0000-4000-8000-000000000041/messages",
+      "started_at": "2026-09-29T17:18:08.341Z",
+      "completed": true,
+      "ids": {}
+    },
+    {
+      "name": "native-runner-grace",
+      "route": "/api/demo/runners/pr265-activity-qa/disconnect",
+      "started_at": "2026-09-29T17:18:10.306Z",
+      "completed": true,
+      "ids": {}
+    },
+    {
+      "name": "accept-newer-outcome",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/runs/36a8331b-e0db-4a8a-9aec-adb5cadeebfd/verification-decision",
+      "started_at": "2026-09-29T17:18:20.300Z",
+      "completed": true
+    },
+    {
+      "name": "accept-older-outcome",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/runs/0b38b648-6d79-4ecb-b120-60d86b65eeca/verification-decision",
+      "started_at": "2026-09-29T17:18:24.193Z",
+      "completed": true
+    }
+  ],
+  "checks": {
+    "idle_no_selected_run": {
+      "mission": "66f4023c-8ecb-40a8-a25d-725b0db28d22",
+      "native_runs": 0
+    },
+    "inspector_desktop_bounds": {
+      "viewport_width": 1440,
+      "viewport_height": 1050,
+      "left": 984,
+      "right": 1424,
+      "top": 16,
+      "bottom": 1034,
+      "client_width": 438,
+      "scroll_width": 438,
+      "controls_checked": 9,
+      "clipped_controls": []
+    },
+    "browser_dispatch": {
+      "root_runs": [
+        "0b38b648-6d79-4ecb-b120-60d86b65eeca",
+        "36a8331b-e0db-4a8a-9aec-adb5cadeebfd"
+      ],
+      "mission_and_agent_current": true,
+      "provider": "native fake-process"
+    },
+    "browser_disconnect_review_replay": {
+      "same_native_runs": true,
+      "artifacts_created_while_offline": true,
+      "no_replacement_runs": true,
+      "native_socket_frames_unmodified": true
+    },
+    "snapshot_failure": {
+      "status": 503,
+      "retained_run": "36a8331b-e0db-4a8a-9aec-adb5cadeebfd",
+      "fresh_viewer_scope": true
+    },
+    "native_runner_grace": {
+      "api_and_both_surfaces": true,
+      "same_run_states_after_reconciliation": true
+    },
+    "revoked_room_empty_identity_bounds": {
+      "viewport_width": 1440,
+      "viewport_height": 1050,
+      "left": 984,
+      "right": 1424,
+      "top": 16,
+      "bottom": 928.796875,
+      "client_width": 438,
+      "scroll_width": 438,
+      "controls_checked": 6,
+      "clipped_controls": []
+    },
+    "authorized_scope": {
+      "native_room_revocation": true,
+      "private_mission_tasks_runs_events_hidden": true,
+      "no_run_navigation_artifacts_or_live_controls": true,
+      "authorized_empty_corp_identity_allowed": true,
+      "guest_no_run_leak": true,
+      "restored_membership_verified": true
+    },
+    "newer_review_accepted": {
+      "run_id": "36a8331b-e0db-4a8a-9aec-adb5cadeebfd",
+      "native_actor": "00000000-0000-4000-8000-000000000012"
+    },
+    "exact_review_navigation": {
+      "older_run": "0b38b648-6d79-4ecb-b120-60d86b65eeca",
+      "newer_completed_run": "36a8331b-e0db-4a8a-9aec-adb5cadeebfd",
+      "actual_download_sha256": "7dddd659cc6092a11d5af87e6260094ddae9513ca9f2a94df1300f544b2b9870",
+      "artifact_id": "d2a23e5a-50ad-447d-b60e-9773450d41b0",
+      "agent_to_mission_preserves_exact_run": true
+    },
+    "keyboard_mobile_reduced_motion": {
+      "width": 390,
+      "height": 844,
+      "content": 390,
+      "reduced_motion": true,
+      "desktop_inspector_bounds": {
+        "viewport_width": 1440,
+        "viewport_height": 1050,
+        "left": 984,
+        "right": 1424,
+        "top": 16,
+        "bottom": 1034,
+        "client_width": 438,
+        "scroll_width": 438,
+        "controls_checked": 7,
+        "clipped_controls": []
+      },
+      "mobile_inspector_bounds": {
+        "viewport_width": 390,
+        "viewport_height": 844,
+        "left": 8,
+        "right": 366,
+        "top": 16,
+        "bottom": 828,
+        "client_width": 356,
+        "scroll_width": 356,
+        "controls_checked": 7,
+        "clipped_controls": []
+      },
+      "both_disclosures_tab_reachable": true,
+      "enter_toggles": true,
+      "focus_visible": true,
+      "escape_restores_invoker": true,
+      "bounded_safe_timeline": true
+    },
+    "source_before_final_decision": [
+      {
+        "run_id": "36a8331b-e0db-4a8a-9aec-adb5cadeebfd",
+        "task_id": "dc19238d-1516-4b46-a223-60aef18bdea1",
+        "artifact_id": "7a31e31b-1da0-477a-96d1-35083fdcb03e",
+        "artifact_sha256": "406a96121fe5d91a5e780fd00d17f166017988e6c84afdfa394e23663b336218",
+        "status": "completed",
+        "workspace": "runner\\worktrees\\dc19238d15164b46a22360aef18bdea1\\36a8331be0db4a8a9aecadb5cadeebfd",
+        "fingerprint": "3444c0785b4e5bfbe76bb3c25b4cce006d61e4ad6e4214beba2891dd9d16f3c4",
+        "events": [
+          {
+            "id": "31d351f6-5415-44f3-8e3e-4ddb07af6186",
+            "seq": 19,
+            "type": "run.started"
+          },
+          {
+            "id": "b5184333-8670-4c89-bdcf-94677eba661f",
+            "seq": 36,
+            "type": "run.session_terminated"
+          },
+          {
+            "id": "618058d8-4882-451a-84d9-4341209a76e2",
+            "seq": 40,
+            "type": "run.verification_waiting"
+          },
+          {
+            "id": "6720450c-e1b4-4c3a-bfe3-d603104f1cc4",
+            "seq": 41,
+            "type": "run.workspace_preserved"
+          }
+        ]
+      },
+      {
+        "run_id": "0b38b648-6d79-4ecb-b120-60d86b65eeca",
+        "task_id": "9648439a-7f28-41aa-97b6-ddebe2d12d3d",
+        "artifact_id": "d2a23e5a-50ad-447d-b60e-9773450d41b0",
+        "artifact_sha256": "7dddd659cc6092a11d5af87e6260094ddae9513ca9f2a94df1300f544b2b9870",
+        "status": "waiting_for_approval",
+        "workspace": "runner\\worktrees\\9648439a7f2841aa97b6ddebe2d12d3d\\0b38b6486d794ecbb12060d86b65eeca",
+        "fingerprint": "c217004993365dc34e6f5e3b1184a5c77b19e042422e9cf1ef7193efe2763b3f",
+        "events": [
+          {
+            "id": "ca7d2bd8-5b2b-4998-944d-e03950217f26",
+            "seq": 17,
+            "type": "run.started"
+          },
+          {
+            "id": "52073b8e-465d-469f-9c68-e34cd3791e69",
+            "seq": 29,
+            "type": "run.session_terminated"
+          },
+          {
+            "id": "e25db3e9-6b30-4842-8b44-5d4a102f45e4",
+            "seq": 33,
+            "type": "run.verification_waiting"
+          },
+          {
+            "id": "d8e01016-81f3-4727-bcc2-635b0fefaba9",
+            "seq": 35,
+            "type": "run.workspace_preserved"
+          }
+        ]
+      }
+    ],
+    "final_completed": {
+      "mission_id": "66f4023c-8ecb-40a8-a25d-725b0db28d22",
+      "runs": [
+        "579ac58d-c823-4527-8346-5459d2573d4c",
+        "36a8331b-e0db-4a8a-9aec-adb5cadeebfd",
+        "0b38b648-6d79-4ecb-b120-60d86b65eeca"
+      ],
+      "attempts_per_task": 1,
+      "native_synthesis_survived_browser_disconnect": true,
+      "downloaded_deliverable_sha256": "208d0078a70376ae978c7297cc3651330300a4ab15c598daf3f20b383471e17c",
+      "downloaded_bytes": 2292
+    },
+    "source_retained_final": [
+      {
+        "run_id": "579ac58d-c823-4527-8346-5459d2573d4c",
+        "task_id": "a531028f-dc21-469f-8842-72c3e6d016f4",
+        "artifact_id": "6d964b33-4b96-4895-a042-4ae04b31cff7",
+        "artifact_sha256": "89b50f4844e7e397ee7643d3b61a024632cb32e090312d3ea26ed2be095a24df",
+        "status": "completed",
+        "workspace": "runner\\worktrees\\a531028fdc21469f884272c3e6d016f4\\579ac58dc823452783465459d2573d4c",
+        "fingerprint": "24fd1f9416b8312b3c6e1d8e48c19af859dac43e8617fb2be78c391c6abfeeae",
+        "events": [
+          {
+            "id": "a5b49601-8942-4873-8e28-f1981528a8c3",
+            "seq": 50,
+            "type": "run.started"
+          },
+          {
+            "id": "4e9fcdc7-1b6a-4e4d-a2e7-928c9699d4ac",
+            "seq": 56,
+            "type": "run.session_terminated"
+          },
+          {
+            "id": "703c0c2a-00ef-4cdd-8bdf-e7a509db5688",
+            "seq": 61,
+            "type": "run.completed"
+          },
+          {
+            "id": "9e28c435-f936-4fd4-af74-1d90f480cf23",
+            "seq": 63,
+            "type": "run.workspace_preserved"
+          }
+        ]
+      },
+      {
+        "run_id": "36a8331b-e0db-4a8a-9aec-adb5cadeebfd",
+        "task_id": "dc19238d-1516-4b46-a223-60aef18bdea1",
+        "artifact_id": "7a31e31b-1da0-477a-96d1-35083fdcb03e",
+        "artifact_sha256": "406a96121fe5d91a5e780fd00d17f166017988e6c84afdfa394e23663b336218",
+        "status": "completed",
+        "workspace": "runner\\worktrees\\dc19238d15164b46a22360aef18bdea1\\36a8331be0db4a8a9aecadb5cadeebfd",
+        "fingerprint": "3444c0785b4e5bfbe76bb3c25b4cce006d61e4ad6e4214beba2891dd9d16f3c4",
+        "events": [
+          {
+            "id": "31d351f6-5415-44f3-8e3e-4ddb07af6186",
+            "seq": 19,
+            "type": "run.started"
+          },
+          {
+            "id": "b5184333-8670-4c89-bdcf-94677eba661f",
+            "seq": 36,
+            "type": "run.session_terminated"
+          },
+          {
+            "id": "618058d8-4882-451a-84d9-4341209a76e2",
+            "seq": 40,
+            "type": "run.verification_waiting"
+          },
+          {
+            "id": "6720450c-e1b4-4c3a-bfe3-d603104f1cc4",
+            "seq": 41,
+            "type": "run.workspace_preserved"
+          }
+        ]
+      },
+      {
+        "run_id": "0b38b648-6d79-4ecb-b120-60d86b65eeca",
+        "task_id": "9648439a-7f28-41aa-97b6-ddebe2d12d3d",
+        "artifact_id": "d2a23e5a-50ad-447d-b60e-9773450d41b0",
+        "artifact_sha256": "7dddd659cc6092a11d5af87e6260094ddae9513ca9f2a94df1300f544b2b9870",
+        "status": "completed",
+        "workspace": "runner\\worktrees\\9648439a7f2841aa97b6ddebe2d12d3d\\0b38b6486d794ecbb12060d86b65eeca",
+        "fingerprint": "c217004993365dc34e6f5e3b1184a5c77b19e042422e9cf1ef7193efe2763b3f",
+        "events": [
+          {
+            "id": "ca7d2bd8-5b2b-4998-944d-e03950217f26",
+            "seq": 17,
+            "type": "run.started"
+          },
+          {
+            "id": "52073b8e-465d-469f-9c68-e34cd3791e69",
+            "seq": 29,
+            "type": "run.session_terminated"
+          },
+          {
+            "id": "e25db3e9-6b30-4842-8b44-5d4a102f45e4",
+            "seq": 33,
+            "type": "run.verification_waiting"
+          },
+          {
+            "id": "d8e01016-81f3-4727-bcc2-635b0fefaba9",
+            "seq": 35,
+            "type": "run.workspace_preserved"
+          }
+        ]
+      }
+    ]
+  },
+  "screenshots": {
+    "mission-ready-unknown-run": "mission-ready-unknown-run-563f76a6.png",
+    "mission-running-desktop": "mission-running-desktop-dc5d7b62.png",
+    "agent-running-desktop": "agent-running-desktop-e7752ace.png",
+    "agent-controls-desktop": "agent-controls-desktop-eacde181.png",
+    "agent-browser-disconnected": "agent-browser-disconnected-c4fc0217.png",
+    "mission-browser-disconnected": "mission-browser-disconnected-ff926da9.png",
+    "agent-native-review-after-replay": "agent-native-review-after-replay-2b1d21bd.png",
+    "agent-snapshot-failed": "agent-snapshot-failed-6a931a7e.png",
+    "mission-snapshot-failed": "mission-snapshot-failed-bbc986ee.png",
+    "agent-runner-grace": "agent-runner-grace-1810b0ac.png",
+    "mission-runner-grace": "mission-runner-grace-a86143f1.png",
+    "revoked-room-authorized-empty-identity": "revoked-room-authorized-empty-identity-8338d0e4.png",
+    "revoked-room-no-run-details": "revoked-room-no-run-details-e4f630ff.png",
+    "mission-exact-older-review": "mission-exact-older-review-4b68b07c.png",
+    "mission-keyboard-expanded": "mission-keyboard-expanded-6d285359.png",
+    "agent-keyboard-expanded": "agent-keyboard-expanded-143c916a.png",
+    "agent-mobile-390": "agent-mobile-390-ef0d0b8f.png",
+    "agent-controls-mobile-390": "agent-controls-mobile-390-d8251b53.png",
+    "mission-mobile-390": "mission-mobile-390-38d8a229.png",
+    "mission-completed": "mission-completed-b62b327e.png",
+    "agent-idle-recorded-completion": "agent-idle-recorded-completion-285d343f.png"
+  },
+  "failures": [],
+  "updated_at": "2026-09-29T17:18:50.036Z",
+  "older_run_id": "0b38b648-6d79-4ecb-b120-60d86b65eeca",
+  "newer_run_id": "36a8331b-e0db-4a8a-9aec-adb5cadeebfd",
+  "known_limits": {
+    "baseline_factory_intake_returned_without_room_membership": true,
+    "activity_mission_and_run_hidden": true
+  },
+  "page_errors": [],
+  "finished_at": "2026-09-29T17:18:50.036Z"
+}

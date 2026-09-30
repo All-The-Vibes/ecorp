@@ -1,0 +1,78 @@
+{
+  "issues": [
+    263,
+    264
+  ],
+  "recorded_at": "2026-09-30T07:24:33.936198+00:00",
+  "reviewer": "Codex assistant; no independent human review or GitHub approval",
+  "scope": "Synthetic viewport geometry and actual App/CSS visual inspection. No native acceptance claim from this probe.",
+  "source_receipt": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue264-review-source-before-check-r1.json",
+    "sha256": "f5705397eb2a67bd31d1ffde8d8669cc435276bb446c7d818d59a4e9c5e16cce",
+    "physical_files_sha256": "91b6e867238947e684a1696e7a28fa42d7ce2f8a52aad863b5c631a543479ab4"
+  },
+  "reviewed_files": {
+    "apps/web/src/ConsoleTheme.css": "778d028a1282211cc303fb5e2cceeef755f28cfc563d50610898fa6417e66e37",
+    "apps/web/src/index.css": "4940f56e6edc9db43d2562ce67ee02dca740125f7eb97b58168c89c01c90f186",
+    "apps/web/src/OfficeFloor.css": "f2f15a2da1125e01c0d8b84992914e8d25d9258e5583d1afabc98d2c9e987640",
+    "apps/web/src/OfficeFloor.tsx": "8e07319a103a1b248b8366b743ca56c71d3662b747208779db62b84ad747e303"
+  },
+  "probe": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue264-viewport-probe-r2\\report.json",
+    "sha256": "8cda809bc7810684f0bfb3f440dbc605ec2f96d4c1b10d63b71e2a85afc3c7c3",
+    "cases": 12,
+    "errors": [],
+    "unexpected": []
+  },
+  "screenshots_visually_inspected": [
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue264-viewport-probe-r2\\1440-light-connection-viewport.png",
+      "sha256": "67cd0a922c726ba76f549d079b0726667cd160791f55e675d39958b24def1316"
+    },
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue264-viewport-probe-r2\\1440-dark-connection-viewport.png",
+      "sha256": "dc715f32d1a627ca49a468b7d7e3545d90b8a35ef114a2e8ab670b33f1a27e54"
+    },
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue264-viewport-probe-r2\\390-light-executive-focused-viewport.png",
+      "sha256": "ec9b31a917faf74dc4290fb12a2bd8bea1a890ded382000d541ec6791738179d"
+    },
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue264-viewport-probe-r2\\390-dark-operations-unfocused-viewport.png",
+      "sha256": "9a4cec3354b2273be310cd3ed47fbfe239fce6ec3430e0fd3a0b772200936832"
+    }
+  ],
+  "findings": [
+    {
+      "id": "THEME-CANVAS",
+      "status": "confirmed; fix pending",
+      "source": [
+        "apps/web/src/ConsoleTheme.css:82",
+        "apps/web/src/index.css:23"
+      ],
+      "observation": "Both themes retain root rgb(3, 5, 11), while body follows the selected palette. At 1440px a 56px collapsed top margin exposes the wrong root color above the connection screen.",
+      "cause": "The legacy :root background has greater specificity than the theme html background rule.",
+      "required_resolution": "Apply the semantic canvas background with sufficient specificity and verify root/body colors in both themes at desktop and 390px."
+    },
+    {
+      "id": "THEME-OFFICE-CONTROLS",
+      "status": "confirmed; fix pending",
+      "source": [
+        "apps/web/src/OfficeFloor.css:120",
+        "apps/web/src/OfficeFloor.css:402",
+        "apps/web/src/OfficeFloor.css:505"
+      ],
+      "observation": "Dark mode leaves the office crew panel, legend, status line and controls in a fixed light palette. These are DOM controls, distinct from the office artwork and sprite pixels.",
+      "cause": "OfficeFloor.css defines fixed office palette and control backgrounds instead of the semantic theme tokens.",
+      "required_resolution": "Theme the office controls and text, retain artwork and canvas pixel colors, then verify contrast, focus, selected states and mobile layout."
+    },
+    {
+      "id": "SKIP-LINK-VIEWPORT",
+      "status": "resolved; no source defect",
+      "observation": "Eight width/theme/mode combinations keep the unfocused link above the actual viewport before and after scrolling. Focus shows it at y=12px and Enter focuses the exact floor or executive landmark.",
+      "conclusion": "Its position in full-page screenshot stitching is not the user viewport position. No skip-link CSS change is warranted."
+    }
+  ],
+  "active_validation": "issue264-review-check-r1.json remains running. No source changes were made for this receipt.",
+  "completion": "Not ready for publication or issue closure; confirmed findings need correction and current-source validation."
+}

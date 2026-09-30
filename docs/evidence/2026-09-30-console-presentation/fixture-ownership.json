@@ -1,0 +1,83 @@
+{
+  "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue264-20260930-r14",
+  "plan": {
+    "phase": "Start",
+    "product": "<USERPROFILE>\\.codex\\worktrees\\issue264-modes\\ecorp",
+    "product_commit": "0df25381eb294b8a7fff2daa14d44de638c49483",
+    "qa_root": "<USERPROFILE>\\qa\\pr265-run-activity-issue264-20260930-r14",
+    "server": "http://127.0.0.1:18865",
+    "web": "http://127.0.0.1:15865",
+    "database": {
+      "host": "127.0.0.1",
+      "port": 15465,
+      "name": "pr265_activity",
+      "fresh": true
+    },
+    "runner_id": "pr265-activity-qa",
+    "provider": "native deterministic fake-process; no AI inference",
+    "source": "new independent synthetic Git repository, never the product checkout",
+    "factory_watcher": false,
+    "github_effects": false,
+    "existing_state_touched": false,
+    "build_required": false
+  },
+  "test_owned": true,
+  "demo": {
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "room_id": "00000000-0000-4000-8000-000000000041",
+    "alice_actor_id": "00000000-0000-4000-8000-000000000011",
+    "bob_actor_id": "00000000-0000-4000-8000-000000000012",
+    "eve_actor_id": "00000000-0000-4000-8000-000000000013",
+    "manager_agent_id": "00000000-0000-4000-8000-000000000031",
+    "worker_agent_id": "00000000-0000-4000-8000-000000000032",
+    "codex_agent_id": "00000000-0000-4000-8000-000000000033"
+  },
+  "schema_version": 2,
+  "ready_at": "2026-09-30T09:10:48.5350261Z",
+  "processes": {
+    "server": {
+      "started_utc": "2026-09-30T09:10:45.2558202Z",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue264-20260930-r14\\logs\\server-20260930T091045244-1bdb23af74ba4757903a7ba204e92211.stderr.log",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue264-20260930-r14\\logs\\server-20260930T091045244-1bdb23af74ba4757903a7ba204e92211.stdout.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue264-20260930-r14",
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue264-modes\\ecorp\\target\\debug\\crony-server.exe",
+      "role": "server",
+      "pid": 24176
+    },
+    "postgres": {
+      "started_utc": "2026-09-30T09:10:43.9418384Z",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue264-20260930-r14\\logs\\postgres-20260930T091043888-c00480c9f6914b9e836e0a13f1f0557e.stderr.log",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue264-20260930-r14\\logs\\postgres-20260930T091043888-c00480c9f6914b9e836e0a13f1f0557e.stdout.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue264-20260930-r14",
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe",
+      "role": "postgres",
+      "pid": 22720
+    },
+    "web": {
+      "started_utc": "2026-09-30T09:10:47.0009628Z",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue264-20260930-r14\\logs\\web-20260930T091046989-079fef107d1f48e3868d48e4126f7af5.stderr.log",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue264-20260930-r14\\logs\\web-20260930T091046989-079fef107d1f48e3868d48e4126f7af5.stdout.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue264-20260930-r14",
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+      "role": "web",
+      "pid": 23612
+    },
+    "runner": {
+      "started_utc": "2026-09-30T09:10:46.9684359Z",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue264-20260930-r14\\logs\\runner-20260930T091046961-f830b6980e1a4a548642547277327738.stderr.log",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue264-20260930-r14\\logs\\runner-20260930T091046961-f830b6980e1a4a548642547277327738.stdout.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue264-20260930-r14",
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue264-modes\\ecorp\\target\\debug\\crony-runner.exe",
+      "role": "runner",
+      "pid": 33704
+    }
+  },
+  "source": {
+    "repository": "ecorp-fixture/pr265-run-activity",
+    "base_ref": "HEAD",
+    "base_commit": "f9d35d52e1a83a757a22956e916783629e46be9a"
+  },
+  "updated_at": "2026-09-30T09:15:28.1941308Z",
+  "purpose": "pr265-run-activity",
+  "stopped_at": "2026-09-30T09:15:28.1851001Z"
+}

@@ -19,6 +19,7 @@ real missions. The public tour is illustrative; it is not connected to your runn
 | Work on ECorp safely | [Contributing](../CONTRIBUTING.md) and [contributor contract](../AGENTS.md) |
 | Operate GitHub issue intake, recovery, and publication | [Dark-factory contributor guide](DARK_FACTORY_CONTRIBUTOR_GUIDE.md) |
 | Change the console or desktop shell | [Web client](../apps/web/README.md) and [desktop shell](../apps/desktop/README.md) |
+| Choose console theme and presentation | [Light, Dark, System, Executive, and Operations](CONSOLE_PRESENTATION.md) |
 | Understand what counts as proof | [Evaluation and real-world testing](EVALS.md) |
 | Review the proposed multiplayer requirements and development/runtime gates | [Replacement multiplayer acceptance v1](MULTIPLAYER_ACCEPTANCE_V1.md) |
 | Configure and independently verify governance history | [State audit feature and setup guide](STATE_AUDIT.md) |

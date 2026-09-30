@@ -1,0 +1,187 @@
+{
+  "issue": 259,
+  "status": "failed",
+  "qa_root": "<USERPROFILE>\\qa\\pr265-run-activity-issue259-20260929-r7",
+  "started_at_utc": "2026-09-29T17:09:21.5368389+00:00",
+  "steps": [
+    {
+      "name": "source-before",
+      "exit_code": 0,
+      "sha256": "3ba9b3529188be2d1a8012404d5999c796250b9d3901df9a732b6666b0a1d958",
+      "finished_at_utc": "2026-09-29T17:09:33.4073771+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-native-r7-source-before.log",
+      "started_at_utc": "2026-09-29T17:09:21.6351349+00:00",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\capture-issue259-source-r7.py",
+        "--phase",
+        "before-native"
+      ]
+    },
+    {
+      "name": "dry-run",
+      "exit_code": 0,
+      "sha256": "3503a762b7798f71efdc14bfe39bbe44fc1442b0e83fb20dd82ae70c91e10b31",
+      "finished_at_utc": "2026-09-29T17:09:35.1926752+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-native-r7-dry-run.log",
+      "started_at_utc": "2026-09-29T17:09:33.4336651+00:00",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue136-browser-docs\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "DryRun",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue259-20260929-r7",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ]
+    },
+    {
+      "name": "start",
+      "exit_code": 0,
+      "sha256": "4e8802078274ca2a352f96e2a0fd57f5397a40fe67a4cd949d788c270c60d0cb",
+      "finished_at_utc": "2026-09-29T17:09:52.2998402+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-native-r7-start.log",
+      "started_at_utc": "2026-09-29T17:09:35.2116205+00:00",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue136-browser-docs\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Start",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue259-20260929-r7",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ]
+    },
+    {
+      "name": "status",
+      "exit_code": 0,
+      "sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+      "finished_at_utc": "2026-09-29T17:09:54.4157987+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-native-r7-status.log",
+      "started_at_utc": "2026-09-29T17:09:52.3163002+00:00",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue136-browser-docs\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Status",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue259-20260929-r7",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ]
+    },
+    {
+      "name": "prepare",
+      "exit_code": 0,
+      "sha256": "05c97029c95c396df4521559838b601ac11cac42b876aac86726e52404d17c44",
+      "finished_at_utc": "2026-09-29T17:09:58.2898712+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-native-r7-prepare.log",
+      "started_at_utc": "2026-09-29T17:09:54.4299273+00:00",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "tools/e2e_factory_run_activity.py",
+        "--qa-root",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue259-20260929-r7",
+        "--postgres-bin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin",
+        "--phase",
+        "prepare"
+      ]
+    },
+    {
+      "name": "browser",
+      "exit_code": 0,
+      "sha256": "cebb1b290349b11c5f41c6b2b03e4f9876c5e5cf351b04843c661b6f270bb424",
+      "finished_at_utc": "2026-09-29T17:11:07.5057846+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-native-r7-browser.log",
+      "started_at_utc": "2026-09-29T17:09:58.3192215+00:00",
+      "command": [
+        "node",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-browser-r3.mjs",
+        "--qa-root",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue259-20260929-r7",
+        "--postgres-bin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ]
+    },
+    {
+      "name": "offline",
+      "exit_code": 0,
+      "sha256": "804a202f17c8f0afc4042c26259cf7ff9da474f28b43d8486fad8f80e19cea4f",
+      "finished_at_utc": "2026-09-29T17:12:03.5628145+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-native-r7-offline.log",
+      "started_at_utc": "2026-09-29T17:11:07.5240258+00:00",
+      "command": [
+        "node",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-native-edges-r5.mjs",
+        "--qa-root",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue259-20260929-r7",
+        "--postgres-bin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin",
+        "--case",
+        "offline"
+      ]
+    },
+    {
+      "name": "suspension",
+      "exit_code": 0,
+      "sha256": "a416276af1fbd9cf2c04037e831573ab5db6b1898ab6a440f48dba5bebe1955c",
+      "finished_at_utc": "2026-09-29T17:12:22.2434024+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-native-r7-suspension.log",
+      "started_at_utc": "2026-09-29T17:12:03.5786124+00:00",
+      "command": [
+        "node",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-native-edges-r5.mjs",
+        "--qa-root",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue259-20260929-r7",
+        "--postgres-bin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin",
+        "--case",
+        "suspension"
+      ]
+    },
+    {
+      "name": "quarantine",
+      "exit_code": 1,
+      "sha256": "dc71af91fba1fa27a63914e892c06972ce23b2721eb0ecdb474ed402f4009d5b",
+      "finished_at_utc": "2026-09-29T17:12:43.1279663+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-native-r7-quarantine.log",
+      "started_at_utc": "2026-09-29T17:12:22.2603933+00:00",
+      "command": [
+        "node",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-native-edges-r5.mjs",
+        "--qa-root",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue259-20260929-r7",
+        "--postgres-bin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin",
+        "--case",
+        "quarantine"
+      ]
+    },
+    {
+      "name": "stop",
+      "exit_code": 0,
+      "sha256": "65abe6fe9cb60eacc967eff94e7f98a3a958644944f9ce7caffa07021c10ae9e",
+      "finished_at_utc": "2026-09-29T17:12:45.0067685+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-native-r7-stop.log",
+      "started_at_utc": "2026-09-29T17:12:43.1588243+00:00",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue136-browser-docs\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Stop",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue259-20260929-r7",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ]
+    }
+  ],
+  "stopped": true,
+  "reason": "New owned fixture after restoring the native Factory controller transition immediately after browser mission launch. The existing API enforces actor, claim, version and idempotency; no database state is manufactured. All required state assertions and HTTP contracts remain. Product source and primary browser driver are unchanged; earlier attempts remain intact.",
+  "drivers": {
+    "issue259-browser-r3.mjs": "79131e59a412eefe95b338bed332675de3aa4bf91538ff8be52f3ac0ba84faa3",
+    "capture-issue259-source-r7.py": "efe496d347fdde5d39454e7db48e3528a7108ae96c2fd1ccb7cfc9a13f89d9d3",
+    "issue259-native-edges-r5.mjs": "8268cebc29c9c1ade0c23b61362b5db04d34cccf60af7b447783c412a97a0e6a"
+  },
+  "error": "Native acceptance step quarantine failed with exit 1; inspect retained evidence.",
+  "finished_at_utc": "2026-09-29T17:12:45.0136328+00:00"
+}

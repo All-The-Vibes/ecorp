@@ -1,0 +1,62 @@
+{
+  "issue": 258,
+  "status": "inspected",
+  "recorded_at_utc": "2026-09-29T20:42:27.488051+00:00",
+  "inspection_chronology": "The three actual r5 screenshots were opened and visually inspected during the preceding source-review continuation. This receipt records those observations and verifies the retained image and report hashes afterward.",
+  "kind": "assistant visual spot inspection; not a human review or accessibility certification",
+  "source_head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "diff_sha256": "91b14a74d6dd92666b3afe9f43883566b72325c686133478f8bdd4590cc397f2",
+  "physical_files_sha256": "66fd1ec4c37316bb03041440b9724b8b7978e32e35944a5ff374b707a5eff620",
+  "source_receipt_sha256": "a90ef97a1e4ecf6cd6fbddae9e4feb082ae2c921e463ba13518d2918eb27f73c",
+  "native_receipt_sha256": "6702b4b83801291c49e1fab3261fc0024c44a788f135a091c81979fc64960048",
+  "browser_report_sha256": "74f3133a5d64853d6b409ca272618a44729a0230bde3fb9e53d17f40aaf1bcf5",
+  "screenshots": [
+    {
+      "scenario": "event-history-desktop",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r5\\evidence\\event-history-desktop-d07e84a1.png",
+      "sha256": "0db0e9c3fa4e55965b624f4ef47f0a204bfb0be6d6fd5ada223fc5798f464f0e",
+      "width": 1440,
+      "height": 7874,
+      "report": "issue258-browser.json",
+      "report_sha256": "74f3133a5d64853d6b409ca272618a44729a0230bde3fb9e53d17f40aaf1bcf5",
+      "observations": [
+        "Visible history controls identify draft and applied filters, result scope and descending ordering.",
+        "Visible event rows show safe summaries, actor/time attribution and exact or causal navigation links; pagination is present.",
+        "The tall 1440-pixel-wide capture was displayed scaled to fit the image tool. This was a visual spot inspection, not pixel-exhaustive verification."
+      ]
+    },
+    {
+      "scenario": "revoked-room-history",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r5\\evidence\\revoked-room-history-48f49065.png",
+      "sha256": "8ed2b229cb5616949ca75beb56c39ea6dce2808e4110b86a7fff902c516b6ae4",
+      "width": 1440,
+      "height": 2226,
+      "report": "issue258-browser.json",
+      "report_sha256": "74f3133a5d64853d6b409ca272618a44729a0230bde3fb9e53d17f40aaf1bcf5",
+      "observations": [
+        "The Bob development persona sees four permitted Corp-level events after room membership revocation.",
+        "The selected work remains unavailable. This visible state supports the separate native HTTP denial assertions; the screenshot alone does not prove authorization."
+      ]
+    },
+    {
+      "scenario": "history-390px-keyboard-page-two",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r5\\evidence\\history-390px-keyboard-page-two-0698de3a.png",
+      "sha256": "42ec75d35fc66dc7e04a36aa01809a6cfc9b255bdd5de59a1078029a54993c8d",
+      "width": 390,
+      "height": 10009,
+      "report": "issue258-browser.json",
+      "report_sha256": "74f3133a5d64853d6b409ca272618a44729a0230bde3fb9e53d17f40aaf1bcf5",
+      "observations": [
+        "Controls stack in the narrow viewport and attribution text wraps. The page-two heading has a visible keyboard focus outline and pagination is visible.",
+        "No confirmed horizontal clipping was found in this spot inspection. The native browser receipt separately records client/scroll widths of 372 pixels, 61 checked controls and no clipped controls.",
+        "The tall 390-pixel-wide capture was scaled by the image tool. Skip-to-workspace is visible after keyboard navigation; no defect was inferred from that alone."
+      ]
+    }
+  ],
+  "confirmed_visual_defects": [],
+  "limitations": [
+    "Three selected captures were inspected; this does not establish every visual, keyboard, screen-reader or accessibility state.",
+    "The browser receipt, not a screenshot, supplies pagination, isolation, exact-selection, reduced-motion and control-boundary assertions.",
+    "The fixture uses deterministic fake-process execution and development personas, not live vendor inference or a real human reviewer."
+  ]
+}

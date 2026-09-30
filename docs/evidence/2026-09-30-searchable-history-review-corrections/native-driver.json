@@ -1,0 +1,207 @@
+{
+  "issue": 258,
+  "status": "accepted",
+  "qa_root": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6",
+  "worktree": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp",
+  "started_at_utc": "2026-09-30T00:55:24.3128275+00:00",
+  "steps": [
+    {
+      "name": "source-before",
+      "sha256": "79eca41f534320d99df1b650de692f014f36f6dc2e82ec40e3085f188d889758",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-X",
+        "utf8",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\capture-issue258-review-source-r1.py",
+        "--phase",
+        "before-native-r6"
+      ],
+      "finished_at_utc": "2026-09-30T00:55:36.9977200+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-native-r6-source-before.log",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-30T00:55:24.3947384+00:00"
+    },
+    {
+      "name": "build",
+      "sha256": "a8084cda06b70d441813aa2587eb6b64f2d322a36e9d81e701ac642efe8a83cc",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "crony-server",
+        "-p",
+        "crony-runner",
+        "--bins"
+      ],
+      "finished_at_utc": "2026-09-30T00:55:38.6025023+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-native-r6-build.log",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-30T00:55:37.0255879+00:00"
+    },
+    {
+      "name": "dry-run",
+      "sha256": "71bc12fd3884ae52b3b9c8aa263391569b299fe45bf6e06ffed7b26c4b7d2f68",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "DryRun",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "finished_at_utc": "2026-09-30T00:55:40.9358978+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-native-r6-dry-run.log",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-30T00:55:38.9231092+00:00"
+    },
+    {
+      "name": "start",
+      "sha256": "05890a6a8b93bad33ba274d7389a2de94d89e569d101e1031fceb35aba922eb1",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Start",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "finished_at_utc": "2026-09-30T00:55:56.2512491+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-native-r6-start.log",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-30T00:55:40.9547562+00:00"
+    },
+    {
+      "name": "status",
+      "sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Status",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "finished_at_utc": "2026-09-30T00:55:58.0948730+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-native-r6-status.log",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-30T00:55:56.2692504+00:00"
+    },
+    {
+      "name": "prepare",
+      "sha256": "ee7ccfc0ac88be7904e3547cef6a5f3802eb5f1ffde270c908f19bbab3c85989",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-X",
+        "utf8",
+        "tools/e2e_factory_run_activity.py",
+        "--qa-root",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6",
+        "--postgres-bin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin",
+        "--phase",
+        "prepare"
+      ],
+      "finished_at_utc": "2026-09-30T00:56:03.0622018+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-native-r6-prepare.log",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-30T00:55:58.1093492+00:00"
+    },
+    {
+      "name": "browser",
+      "sha256": "e60c43a5236d941e3d71d8edf16e7bb82d5e48ecdb3583f99c374a9d2d3fb06a",
+      "command": [
+        "node",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-browser-r6.mjs",
+        "--qa-root",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6",
+        "--postgres-bin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin",
+        "--source-receipt",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-source-before-native-r6.json"
+      ],
+      "finished_at_utc": "2026-09-30T00:57:08.8500575+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-native-r6-browser.log",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-30T00:56:03.0911371+00:00"
+    },
+    {
+      "name": "source-after",
+      "sha256": "23c14e6ba0117ae62837f02d952933cc6424074ef83be8a837264a77a4f64ac6",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-X",
+        "utf8",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\capture-issue258-review-source-r1.py",
+        "--phase",
+        "after-native-r6",
+        "--equals",
+        "before-native-r6"
+      ],
+      "finished_at_utc": "2026-09-30T00:57:21.8921705+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-native-r6-source-after.log",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-30T00:57:08.9174802+00:00"
+    },
+    {
+      "name": "stop",
+      "sha256": "65abe6fe9cb60eacc967eff94e7f98a3a958644944f9ce7caffa07021c10ae9e",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Stop",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "finished_at_utc": "2026-09-30T00:57:23.6207830+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-native-r6-stop.log",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-30T00:57:21.9100962+00:00"
+    }
+  ],
+  "stopped": true,
+  "reason": "Fresh owned browser/server/native-runner acceptance after PR385 review corrections. Includes first-visit mission selection, rejected unknown event filters preserving results, server allowlist parity and the complete previously accepted history flow. Two scripted development Bob decisions are not human reviews. Prior evidence and fixtures remain unchanged. No provider inference, production identity or real GitHub effects.",
+  "drivers": {
+    "capture-issue258-review-source-r1.py": "14619fd825070aa029110c31f2ae74c720173875a7186500ec88ffd3287aa8b1",
+    "issue258-review-browser-r6.mjs": "8877d56566c1acf4fe43b9f7371cbb19677c6feda21c2d76a6c7efb3088d908f"
+  },
+  "binaries": {
+    "crony-server.exe": {
+      "length": 45195264,
+      "sha256": "d509ddb9802961beb77c1bb22f7fa3b95b16a413bf60ec945d0dc0e052609457"
+    },
+    "crony-runner.exe": {
+      "length": 132572672,
+      "sha256": "ebbaccd43e397c27f43c7004266ea4b518a4536b6dce67ec9345b9f1830c2d73"
+    }
+  },
+  "browser_report": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\evidence\\issue258-review-browser.json",
+  "browser_report_sha256": "60180ae0d5686c05d64607c7734cd159c67a56a179c477cb03c7ecdef5f13ca2",
+  "checks": [
+    "first_visit_with_authorized_missions_is_not_empty",
+    "mission_desktop_layout",
+    "mission_mobile_layout",
+    "unsupported_event_filter_rejected_before_request",
+    "server_other_projection_remains_supported",
+    "all_kinds_beyond_caps_no_gaps_or_duplicates",
+    "late_event_requires_explicit_refresh",
+    "safe_summaries_attribution_cause_and_payload_search",
+    "draft_vs_applied_filters",
+    "synthetic_transport_loading_error_and_recovery",
+    "old_exact_selection_navigation_reload",
+    "native_runner_survives_browser_disconnect_exact_selection",
+    "task_only_link_clears_prior_run",
+    "missing_exact_run_does_not_substitute",
+    "native_current_room_corp_and_guest_denial",
+    "native_exact_reviews_artifacts_and_completed_graph",
+    "native_launch_completion_and_replay",
+    "keyboard_390px_reduced_motion"
+  ],
+  "physical_source_unchanged": true,
+  "finished_at_utc": "2026-09-30T00:57:23.6269049+00:00"
+}

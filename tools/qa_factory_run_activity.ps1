@@ -14,14 +14,26 @@ param(
     [int]$DatabasePort = 15465
 )
 $ErrorActionPreference = 'Stop'
-$product = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
-$qa = [IO.Path]::GetFullPath($QaRoot).TrimEnd('\')
-if (![IO.Path]::IsPathFullyQualified($QaRoot) -or
-    (Split-Path -Leaf $qa) -notmatch '^pr265-run-activity-[a-zA-Z0-9-]+$' -or
-    (Split-Path -Leaf (Split-Path -Parent $qa)) -ne 'qa' -or
-    $qa.StartsWith($product, [StringComparison]::OrdinalIgnoreCase)) {
-    throw 'Use a dedicated absolute qa/pr265-run-activity-* directory outside the product.'
+function Get-ActivityQaPaths([string]$RequestedQa, [string]$ProductRoot) {
+    # Keep the preflight's parameters in this function's scope so loading its
+    # existing native path checks cannot overwrite this supervisor's ports.
+    . (Join-Path $PSScriptRoot 'qa_multiplayer_preflight.ps1')
+    $qaIdentity = $null
+    $productIdentity = $null
+    $qaPath = Get-U1LocalPath $RequestedQa ([ref]$qaIdentity)
+    $productPath = Get-U1LocalPath $ProductRoot ([ref]$productIdentity)
+    Assert-U1NoReparseAncestor $productPath
+    Assert-U1NoReparseAncestor $qaPath
+    if ((Split-Path -Leaf $qaPath) -notmatch '^pr265-run-activity-[a-zA-Z0-9-]+$' -or
+        (Split-Path -Leaf (Split-Path -Parent $qaPath)) -ne 'qa' -or
+        (Test-U1PathOverlap $qaIdentity $productIdentity)) {
+        throw 'Use a dedicated absolute qa/pr265-run-activity-* directory outside the product.'
+    }
+    return @{ product = $productPath; qa = $qaPath }
 }
+$paths = Get-ActivityQaPaths $QaRoot (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
+$product = $paths.product
+$qa = $paths.qa
 $pg = (Resolve-Path -LiteralPath $PostgresBin).Path
 Import-Module (Join-Path $PSScriptRoot 'local_stack.psm1') -Force
 $recordPath = Join-Path $qa 'ownership.json'
@@ -83,6 +95,9 @@ $plan = [ordered]@{
 $plan | ConvertTo-Json -Depth 5
 if ($Phase -eq 'DryRun') { return }
 if ($plan.build_required) { throw 'Build matching-source server and runner before Start.' }
+$currentPaths = Get-ActivityQaPaths $QaRoot $product
+if ($currentPaths.qa -cne $qa -or $currentPaths.product -cne $product) { throw 'QA path identity changed; nothing started.' }
+if (Test-Path -LiteralPath $qa) { throw 'Occupied QA directory: preserve it; never reset or adopt it.' }
 New-Item -ItemType Directory -Path $qa | Out-Null
 # Private fixture credentials are never under the synthetic source or agent worktrees.
 $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value

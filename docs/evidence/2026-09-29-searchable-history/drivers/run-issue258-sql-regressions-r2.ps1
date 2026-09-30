@@ -1,0 +1,129 @@
+#requires -Version 7.5
+param(
+    [Parameter(Mandatory)][ValidatePattern('^[a-z]+-r[0-9]+$')][string]$Revision,
+    [ValidatePattern('^issue258$')][string]$Filter = 'issue258',
+    [ValidateRange(1,100)][int]$Expected = 7
+)
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$product = '<USERPROFILE>\.codex\worktrees\issue258-history\ecorp'
+$qa = "<USERPROFILE>\code\qa\issue258-history-20260929-$Revision"
+$pg = '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\postgresql-17.10\pgsql\bin'
+$port = 59158
+$user = 'issue258history'
+$prefix = "issue258-sql-$Revision"
+$receiptPath = Join-Path $PSScriptRoot "$prefix.json"
+if ((Test-Path -LiteralPath $qa) -or (Test-Path -LiteralPath $receiptPath)) { throw 'Preserve existing fixture and receipts.' }
+if (@(Get-NetTCPConnection -State Listen | Where-Object LocalPort -eq $port).Count) { throw 'Fixture port occupied; nothing stopped.' }
+foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN')) { [Environment]::SetEnvironmentVariable($name,$null,'Process') }
+}
+$env:PATH = $pg + ';<USERPROFILE>\AppData\Local\Programs\Python\Python312;<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64;' + $env:PATH
+$env:CARGO_BUILD_JOBS = '2'
+$env:CARGO_NET_OFFLINE = 'true'
+$env:RUST_TEST_THREADS = '1'
+Import-Module (Join-Path $product 'tools/local_stack.psm1') -Force -DisableNameChecking
+$expectedHead = '878a1774774b0630c904cbaf4b05e1b346777817'
+if ((& git -C $product rev-parse HEAD).Trim() -cne $expectedHead) { throw 'Reconcile unexpected source head.' }
+function SourceFiles {
+    $paths = @(& git -C $product ls-files --cached --others --exclude-standard)
+    if ($LASTEXITCODE) { throw 'Cannot inventory source.' }
+    @($paths | Sort-Object -Unique | ForEach-Object { [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $product $_)).Hash.ToLowerInvariant()} })
+}
+$before = @(SourceFiles)
+
+New-Item -ItemType Directory -Path $qa | Out-Null
+$sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+& icacls.exe $qa /inheritance:r /grant:r "*${sid}:(OI)(CI)F" '*S-1-5-18:(OI)(CI)F' *> $null
+if ($LASTEXITCODE) { throw 'Cannot protect the fixture.' }
+foreach ($dir in @('logs','credentials')) { New-Item -ItemType Directory -Path (Join-Path $qa $dir) | Out-Null }
+$receipt = [ordered]@{issue=258;purpose='Authorized history pagination, navigation and safe summary regressions using current real migrations and an owned database; full source hashes; not browser or live-provider acceptance';source_head=$expectedHead;parent_tree=(& git -C $product rev-parse 'HEAD^{tree}').Trim();source_files=$before;dirty_source=@(& git -C $product status --porcelain=v1);qa_root=$qa;started_at_utc=[DateTime]::UtcNow.ToString('o');status='running';test_filter=$Filter;expected_passed=$Expected;checks=@();cleanup='pending'}
+$state = @{schema_version=2;workspace=$qa;purpose=$prefix;test_owned=$true;processes=@{};plan=@{database=@{host='127.0.0.1';port=$port;user=$user;name='postgres'}}}
+$ownership = Join-Path $qa 'ownership.json'
+function Save { [IO.File]::WriteAllText($receiptPath,($receipt | ConvertTo-Json -Depth 20)+"`n") }
+function Check([string]$Name,[string]$Log,[int]$Code,[int]$Expected=0) {
+    $counts = @{passed=0;failed=0;ignored=0;summaries=0}
+    foreach ($m in [regex]::Matches((Get-Content -LiteralPath $Log -Raw),'test result: \w+\. (\d+) passed; (\d+) failed; (\d+) ignored;')) { $counts.passed += [int]$m.Groups[1].Value; $counts.failed += [int]$m.Groups[2].Value; $counts.ignored += [int]$m.Groups[3].Value; $counts.summaries++ }
+    $receipt.checks += [ordered]@{name=$Name;exit_code=$Code;log=$Log;sha256=(Get-FileHash -LiteralPath $Log).Hash.ToLowerInvariant();counts=$counts}
+    Save
+    Write-Output "$Name exit=$Code passed=$($counts.passed) failed=$($counts.failed) ignored=$($counts.ignored)"
+    if ($Code -or ($Expected -gt 0 -and ($counts.passed -ne $Expected -or $counts.failed -ne 0 -or $counts.ignored -ne 0))) { throw "$Name did not satisfy its native acceptance." }
+}
+Save
+$secret = $null
+$targetPath = [IO.Path]::GetFullPath((Join-Path $product 'target')).ToLowerInvariant()
+$targetHash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($targetPath)))
+$targetMutex = [Threading.Mutex]::new($false, "Local\ECorpCompletionCargo$targetHash")
+$targetAcquired = $false
+try {
+    $targetAcquired = $targetMutex.WaitOne(0)
+    if (!$targetAcquired) { throw 'Existing Cargo validation owns this target; nothing overlapped.' }
+
+    $secret = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+    $passwordPath = Join-Path $qa 'credentials/postgres-password.txt'
+    $passfile = Join-Path $qa 'credentials/pgpass.conf'
+    [IO.File]::WriteAllText($passwordPath,$secret,[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText($passfile,"127.0.0.1:${port}:*:${user}:$secret`n",[Text.UTF8Encoding]::new($false))
+    $log = Join-Path $PSScriptRoot "$prefix-initdb.log"
+    & (Join-Path $pg 'initdb.exe') -D (Join-Path $qa 'database') -U $user --auth=scram-sha-256 --encoding=UTF8 --locale=C --pwfile=$passwordPath *> $log
+    Check 'owned-postgresql-initialization' $log $LASTEXITCODE
+    $state.processes.postgres = Start-LocalOwnedProcess -Role 'postgres' -Workspace $qa -FilePath (Join-Path $pg 'postgres.exe') -ArgumentList @('-D',(Join-Path $qa 'database'),'-h','127.0.0.1','-p',"$port") -WorkingDirectory $qa -LogDirectory (Join-Path $qa 'logs') -Environment @{}
+    Save-LocalStackState -Path $ownership -State $state -Workspace $qa
+    $ready = $false
+    $deadline = [DateTime]::UtcNow.AddSeconds(30)
+    do {
+        & (Join-Path $pg 'pg_isready.exe') -h 127.0.0.1 -p $port -U $user *> $null
+        if ($LASTEXITCODE -eq 0) { $ready=$true; break }
+        Start-Sleep -Milliseconds 200
+    } while ([DateTime]::UtcNow -lt $deadline)
+    if (!$ready -or !(Test-LocalOwnedProcess -Record $state.processes.postgres -Workspace $qa)) { throw 'Owned PostgreSQL readiness failed.' }
+    $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port | Select-Object -ExpandProperty OwningProcess -Unique)
+    if ($listeners.Count -ne 1 -or $listeners[0] -ne $state.processes.postgres.pid) { throw 'Database listener owner mismatch.' }
+    $env:PGPASSFILE = Join-Path $qa 'credentials/nonexistent.pgpass'
+    $env:PGPASSWORD = 'invalid-owned-fixture-probe'
+    & (Join-Path $pg 'psql.exe') -X -w -h 127.0.0.1 -p $port -U $user -d postgres -c 'SELECT 1' *> $null
+    if ($LASTEXITCODE -eq 0) { throw 'Incorrect database password was accepted.' }
+    Remove-Item -LiteralPath Env:PGPASSWORD
+    $env:PGPASSFILE = $passfile
+    & (Join-Path $pg 'psql.exe') -X -w -h 127.0.0.1 -p $port -U $user -d postgres -c 'SELECT 1' *> $null
+    if ($LASTEXITCODE) { throw 'Owned database authentication failed.' }
+    $receipt.authentication = @{method='scram-sha-256';wrong_password_rejected=$true;authenticated_query=$true;delivery='Private PGPASSFILE for clients. SQLx environment-only delivery is reduced assurance.'}
+    Save
+    $env:DATABASE_URL = "postgres://${user}:${secret}@127.0.0.1:$port/postgres"
+    Push-Location -LiteralPath $product
+    try {
+        $log = Join-Path $PSScriptRoot "$prefix-tests.log"
+        & cargo test --locked --offline -p crony-store -p crony-server $Filter -- --ignored --test-threads=1 --nocapture 2>&1 | ForEach-Object { ([string]$_).Replace($secret,'[ephemeral database credential]') } | Set-Content -LiteralPath $log -Encoding utf8
+        Check 'history-store-and-api-sql' $log $LASTEXITCODE $Expected
+    } finally { Pop-Location }
+    if (($before | ConvertTo-Json -Compress) -cne (@(SourceFiles) | ConvertTo-Json -Compress)) { throw 'Native test source changed.' }
+    if ((& git -C $product rev-parse HEAD).Trim() -cne $expectedHead) { throw 'Source head changed during the regression.' }
+    $receipt.source_after = @(SourceFiles)
+    $receipt.source_unchanged = $true
+    $receipt.status = 'passed'
+} catch {
+    $receipt.status = 'failed'
+    $message = [regex]::Replace($_.Exception.Message,'\bpostgres(?:ql)?://\S+','[database URL withheld]')
+    if ($secret) { $message=$message.Replace($secret,'[ephemeral credential withheld]') }
+    $receipt.failure = $message
+} finally {
+    Remove-Item -LiteralPath Env:DATABASE_URL,Env:PGPASSFILE,Env:PGPASSWORD -ErrorAction SilentlyContinue
+    $secret = $null
+    if ($state.processes.postgres) {
+        try {
+            if (!(Test-LocalOwnedProcess -Record $state.processes.postgres -Workspace $qa)) { throw 'Ownership cannot be verified.' }
+            $log = Join-Path $PSScriptRoot "$prefix-stop.log"
+            & (Join-Path $pg 'pg_ctl.exe') -D (Join-Path $qa 'database') -m fast -w stop *> $log
+            if ($LASTEXITCODE) { throw 'Owned PostgreSQL stop failed.' }
+            $state.stopped_at = [DateTime]::UtcNow.ToString('o')
+            Save-LocalStackState -Path $ownership -State $state -Workspace $qa
+            $receipt.cleanup = 'Only the exact owned PostgreSQL stopped; fixture data, credentials and logs retained.'
+        } catch { $receipt.status='failed'; $receipt.cleanup='Ownership or cleanup could not be verified; preserve fixture.' }
+    } else { $receipt.cleanup='No database process created; fixture files retained.' }
+    $receipt.source_unchanged = (($before | ConvertTo-Json -Compress) -ceq (@(SourceFiles) | ConvertTo-Json -Compress))
+    if ($targetAcquired) { $targetMutex.ReleaseMutex() }; $targetMutex.Dispose()
+    $receipt.finished_at_utc = [DateTime]::UtcNow.ToString('o')
+    Save
+}
+[pscustomobject]$receipt | Select-Object issue,status,source_unchanged,cleanup,failure | ConvertTo-Json
+if ($receipt.status -ne 'passed') { exit 1 }

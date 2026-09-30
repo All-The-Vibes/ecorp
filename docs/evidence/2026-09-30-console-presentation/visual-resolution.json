@@ -1,0 +1,25 @@
+{
+  "recorded_at_utc": "2026-09-30T10:37:26.938761+00:00",
+  "tested_tree": "131ced73ddedd53caffb8c83196fa76f98310f63",
+  "history_preserved": "visual-findings-original.json retains the original pending findings and disproven skip-link allegation.",
+  "resolved": [
+    {
+      "id": "THEME-CANVAS",
+      "path": "apps/web/src/ConsoleTheme.css",
+      "line": 82,
+      "resolution": "Root canvas now uses --theme-canvas, observed in native and synthetic light/dark captures."
+    },
+    {
+      "id": "THEME-OFFICE-CONTROLS",
+      "path": "apps/web/src/OfficeFloor.css",
+      "line": 120,
+      "resolution": "Office DOM controls, status, roster, surfaces and focus use semantic theme tokens; artwork keeps original colors."
+    }
+  ],
+  "evidence": [
+    "native/browser-report.json",
+    "viewport/report.json",
+    "visual-observations.json"
+  ],
+  "limits": "Text/non-text contrast measurements cover the sampled rendered controls and report exceptions. Group opacity, artwork, gradients and native-widget pixels are outside that scanner. Six screenshot observations were scaled spot inspections; this is not exhaustive WCAG certification."
+}

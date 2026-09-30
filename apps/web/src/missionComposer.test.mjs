@@ -59,7 +59,8 @@ test('closing setup preserves the draft and returns to existing mission context'
 
 test('explicit links to existing work reveal it without erasing an open draft', () => {
   const navigation = app.slice(app.indexOf('const navigateToWorkspaceEntity ='), app.indexOf('const focus = (raw: string)'))
-  assert.match(navigation, /setSelectedMissionId\(missionId\)\s+setMissionComposerCollapsed\(true\)/)
+  assert.match(navigation, /if \(!rememberCurrentWork\(choice\)\) \{[\s\S]*?return\s+\}/)
+  assert.match(navigation, /setMissionComposerCollapsed\(true\)/)
   assert.doesNotMatch(navigation, /setMissionTitle|setMissionDescription/)
   const floor = app.slice(app.indexOf('onMissions={(agentId)'), app.indexOf('onFactory={() =>', app.indexOf('onMissions={(agentId)')))
   assert.match(floor, /setMissionComposerCollapsed\(true\)/)
@@ -69,7 +70,7 @@ test('native creation and explicit held-plan behavior remain unchanged', () => {
   assert.match(create, /!selectedMissionSource/)
   assert.match(create, /!missionSourceConfirmed/)
   assert.match(create, /missionVerifierErrors\.length > 0/)
-  assert.match(create, /body: currentMissionRequest\.body/)
+  assert.match(create, /const request = currentMissionRequest[\s\S]*body: request\.body/)
   assert.match(create, /if \(!pauseAfterPlanning\)/)
   assert.match(create, /missions\/\$\{created\.mission_id\}\/launch/)
   assert.match(create, /setSelectedMissionId\(created\.mission_id\)/)

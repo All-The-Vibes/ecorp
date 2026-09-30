@@ -90,11 +90,6 @@ function ScopedDelegatedPanel({ corpId, roomId, actorId, api, serverUrl, onRefre
   const [error, setError] = useState('')
   const [pollError, setPollError] = useState('')
   const [notice, setNotice] = useState('')
-  const [theme, setTheme] = useState(() => {
-    const param = new URLSearchParams(window.location.search).get('scoutTheme')
-    return param === 'light' || param === 'dark' ? param
-      : window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  })
 
   useLayoutEffect(() => { latest.current = { api, onRefresh } }, [api, onRefresh])
   useLayoutEffect(() => {
@@ -112,13 +107,6 @@ function ScopedDelegatedPanel({ corpId, roomId, actorId, api, serverUrl, onRefre
       windows.clear()
       cachedTickets.clear()
     }
-  }, [])
-  useEffect(() => {
-    if (['light', 'dark'].includes(new URLSearchParams(window.location.search).get('scoutTheme') ?? '')) return
-    const media = window.matchMedia('(prefers-color-scheme: dark)')
-    const update = () => setTheme(media.matches ? 'dark' : 'light')
-    media.addEventListener('change', update)
-    return () => media.removeEventListener('change', update)
   }, [])
 
   const isCurrent = useCallback((generation: number) =>
@@ -361,7 +349,7 @@ function ScopedDelegatedPanel({ corpId, roomId, actorId, api, serverUrl, onRefre
     }
   }
 
-  return <section className="delegated-panel" data-theme={theme} aria-label="Protected resource jobs">
+  return <section className="delegated-panel" aria-label="Protected resource jobs">
     <header className="delegated-heading">
       <h2>Protected resource jobs</h2>
       <span className="delegated-provider">

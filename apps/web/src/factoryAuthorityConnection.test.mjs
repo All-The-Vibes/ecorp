@@ -44,6 +44,7 @@ function setup(t, initialMode = 'unknown') {
   const context = {
     ...authority, fetch, AbortController, URLSearchParams, Error,
     API_URL: 'https://control.invalid', currentViewer: { current: null }, currentComments: { current: null },
+    currentBudgetContext: { current: null }, setSnapshotLoad: () => {},
     connectionCorpId: 'corp', connectionActorId: 'actor', connectionToken: 'fixture-token',
     storedAccessToken: () => storage.get('ecorp_access_token'),
     setServerMode: (mode) => { state.mode = mode },

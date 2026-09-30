@@ -1,0 +1,858 @@
+TAP version 13
+# Subtest: history shows loading, applied scope, safe details and explicit partial-history limits
+ok 1 - history shows loading, applied scope, safe details and explicit partial-history limits
+  ---
+  duration_ms: 59.176
+  type: 'test'
+  ...
+# Subtest: next/previous use server cursors and preserve the applied query until explicit refresh
+ok 2 - next/previous use server cursors and preserve the applied query until explicit refresh
+  ---
+  duration_ms: 44.5799
+  type: 'test'
+  ...
+# Subtest: draft input does not silently change applied filters; invalid IDs make no request
+ok 3 - draft input does not silently change applied filters; invalid IDs make no request
+  ---
+  duration_ms: 89.5764
+  type: 'test'
+  ...
+# Subtest: unknown well-formed event filters show a form error without replacing authorized results or requesting the server
+not ok 4 - unknown well-formed event filters show a form error without replacing authorized results or requesting the server
+  ---
+  duration_ms: 39.8702
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\apps\\web\\src\\HistoryPanel.test.mjs:129:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    2 !== 1
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 2
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/apps/web/src/HistoryPanel.test.mjs:134:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: causal navigation clears incompatible filters and names the exact event with no payload rendering
+ok 5 - causal navigation clears incompatible filters and names the exact event with no payload rendering
+  ---
+  duration_ms: 10.3273
+  type: 'test'
+  ...
+# Subtest: revocation, disconnect and stale responses cannot retain or substitute history rows
+ok 6 - revocation, disconnect and stale responses cannot retain or substitute history rows
+  ---
+  duration_ms: 7.1429
+  type: 'test'
+  ...
+# Subtest: browser and server use the same history event allowlist
+not ok 7 - browser and server use the same history event allowlist
+  ---
+  duration_ms: 3.1558
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\apps\\web\\src\\historyEventTypes.test.mjs:11:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+    + undefined
+    - [
+    -   'corp.demo_bootstrapped',
+    -   'room.message_posted',
+    -   'mission.created',
+    -   'mission.planned',
+    -   'mission.budget_revision_approved',
+    -   'mission.budget_revision_proposed',
+    -   'mission.budget_revision_rejected',
+    -   'mission.contract_revised',
+    -   'task.created',
+    -   'run.requested',
+    -   'run.started',
+    -   'run.status',
+    -   'run.output',
+    -   'run.tool_activity',
+    -   'run.usage',
+    -   'run.completed',
+    -   'run.failed',
+    -   'run.cancelled',
+    -   'run.lost',
+    -   'run.interrupt_requested',
+    -   'run.resume_requested',
+    -   'run.stop_requested',
+    -   'run.reconciled',
+    -   'run.artifact',
+    -   'run.deliverable',
+    -   'run.dependency_context',
+    -   'run.session',
+    -   'run.session_terminated',
+    -   'run.teardown_uncertain',
+    -   'run.workspace_preserved',
+    -   'run.workspace_removed',
+    -   'run.breaker_transition',
+    -   'run.approval_requested',
+    -   'run.approval_expired',
+    -   'run.verification_started',
+    -   'run.verification_evidence',
+    -   'run.verification_passed',
+    -   'run.verification_failed',
+    -   'run.verification_requested',
+    -   'run.verification_waiting',
+    -   'verification.approved',
+    -   'verification.rejected',
+    -   'agent.pinned',
+    -   'agent.unpinned',
+    -   'agent.retired',
+    -   'agent.reactivated',
+    -   'agent.staffed',
+    -   'agent.policy_changed',
+    -   'runner.enrolled',
+    -   'runner.revoked',
+    -   'runner.grace_started',
+    -   'runner.capabilities_updated',
+    -   'runner.command_acknowledged',
+    -   'runner.command_failed',
+    -   'runner.credential_rotated',
+    -   'runner.enrollment_created',
+    -   'control.lease_acquired',
+    -   'control.lease_released',
+    -   'control.lease_transferred',
+    -   'control.message_accepted',
+    -   'control.message_queued',
+    -   'control.message_requeued',
+    -   'budget.policy_updated',
+    -   'factory.work_item_claimed',
+    -   'factory.work_item_reclaimed',
+    -   'factory.claim_renewed',
+    -   'factory.mission_linked',
+    -   'factory.state_changed',
+    -   'factory.materialization_rejected',
+    -   'factory.controller_configured',
+    -   'factory.controller_status_changed',
+    -   'factory.policy_changed',
+    -   'factory.source_commit_pinned',
+    -   'factory.verification_recovery_authorized',
+    -   'factory.verification_recovery_started',
+    -   'factory.workspace_checkpoint_requested',
+    -   'factory.checkpoint_cancellation_reconciled',
+    -   'factory.publication_requested',
+    -   'factory.publication_attempt_started',
+    -   'factory.publication_branch_pushed',
+    -   'factory.publication_completed',
+    -   'factory.publication_failed',
+    -   'factory.publication_lease_renewed',
+    -   'factory.publication_publisher_enrolled',
+    -   'factory.publication_publisher_revoked',
+    -   'factory.pull_request_created'
+    - ]
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'corp.demo_bootstrapped'
+    1: 'room.message_posted'
+    2: 'mission.created'
+    3: 'mission.planned'
+    4: 'mission.budget_revision_approved'
+    5: 'mission.budget_revision_proposed'
+    6: 'mission.budget_revision_rejected'
+    7: 'mission.contract_revised'
+    8: 'task.created'
+    9: 'run.requested'
+    10: 'run.started'
+    11: 'run.status'
+    12: 'run.output'
+    13: 'run.tool_activity'
+    14: 'run.usage'
+    15: 'run.completed'
+    16: 'run.failed'
+    17: 'run.cancelled'
+    18: 'run.lost'
+    19: 'run.interrupt_requested'
+    20: 'run.resume_requested'
+    21: 'run.stop_requested'
+    22: 'run.reconciled'
+    23: 'run.artifact'
+    24: 'run.deliverable'
+    25: 'run.dependency_context'
+    26: 'run.session'
+    27: 'run.session_terminated'
+    28: 'run.teardown_uncertain'
+    29: 'run.workspace_preserved'
+    30: 'run.workspace_removed'
+    31: 'run.breaker_transition'
+    32: 'run.approval_requested'
+    33: 'run.approval_expired'
+    34: 'run.verification_started'
+    35: 'run.verification_evidence'
+    36: 'run.verification_passed'
+    37: 'run.verification_failed'
+    38: 'run.verification_requested'
+    39: 'run.verification_waiting'
+    40: 'verification.approved'
+    41: 'verification.rejected'
+    42: 'agent.pinned'
+    43: 'agent.unpinned'
+    44: 'agent.retired'
+    45: 'agent.reactivated'
+    46: 'agent.staffed'
+    47: 'agent.policy_changed'
+    48: 'runner.enrolled'
+    49: 'runner.revoked'
+    50: 'runner.grace_started'
+    51: 'runner.capabilities_updated'
+    52: 'runner.command_acknowledged'
+    53: 'runner.command_failed'
+    54: 'runner.credential_rotated'
+    55: 'runner.enrollment_created'
+    56: 'control.lease_acquired'
+    57: 'control.lease_released'
+    58: 'control.lease_transferred'
+    59: 'control.message_accepted'
+    60: 'control.message_queued'
+    61: 'control.message_requeued'
+    62: 'budget.policy_updated'
+    63: 'factory.work_item_claimed'
+    64: 'factory.work_item_reclaimed'
+    65: 'factory.claim_renewed'
+    66: 'factory.mission_linked'
+    67: 'factory.state_changed'
+    68: 'factory.materialization_rejected'
+    69: 'factory.controller_configured'
+    70: 'factory.controller_status_changed'
+    71: 'factory.policy_changed'
+    72: 'factory.source_commit_pinned'
+    73: 'factory.verification_recovery_authorized'
+    74: 'factory.verification_recovery_started'
+    75: 'factory.workspace_checkpoint_requested'
+    76: 'factory.checkpoint_cancellation_reconciled'
+    77: 'factory.publication_requested'
+    78: 'factory.publication_attempt_started'
+    79: 'factory.publication_branch_pushed'
+    80: 'factory.publication_completed'
+    81: 'factory.publication_failed'
+    82: 'factory.publication_lease_renewed'
+    83: 'factory.publication_publisher_enrolled'
+    84: 'factory.publication_publisher_revoked'
+    85: 'factory.pull_request_created'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/apps/web/src/historyEventTypes.test.mjs:12:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.start (node:internal/test_runner/test:1262:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+  ...
+# Subtest: unknown well-formed event names cannot become history requests
+not ok 8 - unknown well-formed event names cannot become history requests
+  ---
+  duration_ms: 0.6647
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\apps\\web\\src\\historyEventTypes.test.mjs:18:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+
+    + {
+    +   attributed_actor_id: null,
+    +   kind: 'event',
+    +   mission_id: null,
+    +   record_id: null,
+    +   room_id: null,
+    +   search: '',
+    +   status: 'not.a.real.event'
+    + }
+    - null
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual:
+    kind: 'event'
+    room_id: ~
+    mission_id: ~
+    attributed_actor_id: ~
+    record_id: ~
+    status: 'not.a.real.event'
+    search: ''
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/apps/web/src/historyEventTypes.test.mjs:20:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: first visit with authorized missions invites an explicit selection
+not ok 9 - first visit with authorized missions invites an explicit selection
+  ---
+  duration_ms: 8.3185
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\apps\\web\\src\\missionSelectionEmptyState.test.mjs:29:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /Choose a mission/u. Input:
+
+    '<div class="empty-state"><strong>No missions yet</strong><span>Start with a concrete outcome and let ECorp create the task contract.</span></div>'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '<div class="empty-state"><strong>No missions yet</strong><span>Start with a concrete outcome and let ECorp create the task contract.</span></div>'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/apps/web/src/missionSelectionEmptyState.test.mjs:31:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.start (node:internal/test_runner/test:1262:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+  ...
+# Subtest: an actually empty mission view retains the create-mission guidance
+ok 10 - an actually empty mission view retains the create-mission guidance
+  ---
+  duration_ms: 0.5709
+  type: 'test'
+  ...
+# Subtest: a remembered unavailable mission is never replaced by an available one
+ok 11 - a remembered unavailable mission is never replaced by an available one
+  ---
+  duration_ms: 0.952
+  type: 'test'
+  ...
+# Subtest: Factory activity acceptance rejects redirected QA roots before effects
+    # Subtest: admits an independent path: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\\qa\\pr265-run-activity-new
+    ok 1 - admits an independent path: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\\qa\\pr265-run-activity-new
+      ---
+      duration_ms: 1.6602
+      type: 'test'
+      ...
+    # Subtest: admits an independent path: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\\product [literal] with spaces-peer\\qa\\pr265-run-activity-new
+    not ok 2 - admits an independent path: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\\product [literal] with spaces-peer\\qa\\pr265-run-activity-new
+      ---
+      duration_ms: 1.0174
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Use a dedicated absolute qa/pr265-run-activity-* directory outside the product.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: DryRun rejects a lexical product descendant
+    ok 3 - DryRun rejects a lexical product descendant
+      ---
+      duration_ms: 0.1989
+      type: 'test'
+      ...
+    # Subtest: Start rejects a lexical product descendant
+    ok 4 - Start rejects a lexical product descendant
+      ---
+      duration_ms: 0.1387
+      type: 'test'
+      ...
+    # Subtest: Status rejects a lexical product descendant
+    ok 5 - Status rejects a lexical product descendant
+      ---
+      duration_ms: 0.1422
+      type: 'test'
+      ...
+    # Subtest: Stop rejects a lexical product descendant
+    ok 6 - Stop rejects a lexical product descendant
+      ---
+      duration_ms: 0.1166
+      type: 'test'
+      ...
+    # Subtest: DryRun rejects qa parent junction
+    not ok 7 - DryRun rejects qa parent junction
+      ---
+      duration_ms: 0.2204
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Cannot find path '<USERPROFILE>\AppData\Local\Temp\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\postgres-is-intentionally-absent' because it does not exist.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: Start rejects qa parent junction
+    not ok 8 - Start rejects qa parent junction
+      ---
+      duration_ms: 0.1958
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Cannot find path '<USERPROFILE>\AppData\Local\Temp\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\postgres-is-intentionally-absent' because it does not exist.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: Status rejects qa parent junction
+    not ok 9 - Status rejects qa parent junction
+      ---
+      duration_ms: 0.276
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Cannot find path '<USERPROFILE>\AppData\Local\Temp\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\postgres-is-intentionally-absent' because it does not exist.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: Stop rejects qa parent junction
+    not ok 10 - Stop rejects qa parent junction
+      ---
+      duration_ms: 0.3306
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Cannot find path '<USERPROFILE>\AppData\Local\Temp\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\postgres-is-intentionally-absent' because it does not exist.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: DryRun rejects higher ancestor junction with missing descendants
+    not ok 11 - DryRun rejects higher ancestor junction with missing descendants
+      ---
+      duration_ms: 0.1806
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Cannot find path '<USERPROFILE>\AppData\Local\Temp\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\postgres-is-intentionally-absent' because it does not exist.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: Start rejects higher ancestor junction with missing descendants
+    not ok 12 - Start rejects higher ancestor junction with missing descendants
+      ---
+      duration_ms: 0.1565
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Cannot find path '<USERPROFILE>\AppData\Local\Temp\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\postgres-is-intentionally-absent' because it does not exist.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: Status rejects higher ancestor junction with missing descendants
+    not ok 13 - Status rejects higher ancestor junction with missing descendants
+      ---
+      duration_ms: 0.1968
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Cannot find path '<USERPROFILE>\AppData\Local\Temp\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\postgres-is-intentionally-absent' because it does not exist.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: Stop rejects higher ancestor junction with missing descendants
+    not ok 14 - Stop rejects higher ancestor junction with missing descendants
+      ---
+      duration_ms: 0.2047
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Cannot find path '<USERPROFILE>\AppData\Local\Temp\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\postgres-is-intentionally-absent' because it does not exist.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: DryRun rejects existing QA leaf junction
+    not ok 15 - DryRun rejects existing QA leaf junction
+      ---
+      duration_ms: 0.1818
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Cannot find path '<USERPROFILE>\AppData\Local\Temp\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\postgres-is-intentionally-absent' because it does not exist.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: Start rejects existing QA leaf junction
+    not ok 16 - Start rejects existing QA leaf junction
+      ---
+      duration_ms: 0.1995
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Cannot find path '<USERPROFILE>\AppData\Local\Temp\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\postgres-is-intentionally-absent' because it does not exist.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: Status rejects existing QA leaf junction
+    not ok 17 - Status rejects existing QA leaf junction
+      ---
+      duration_ms: 0.9347
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Cannot find path '<USERPROFILE>\AppData\Local\Temp\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\postgres-is-intentionally-absent' because it does not exist.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: Stop rejects existing QA leaf junction
+    not ok 18 - Stop rejects existing QA leaf junction
+      ---
+      duration_ms: 0.1416
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Cannot find path '<USERPROFILE>\AppData\Local\Temp\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\postgres-is-intentionally-absent' because it does not exist.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: rejects noncanonical input: qa\\pr265-run-activity-relative
+    not ok 19 - rejects noncanonical input: qa\\pr265-run-activity-relative
+      ---
+      duration_ms: 0.1316
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Use a dedicated absolute qa/pr265-run-activity-* directory outside the product.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: rejects noncanonical input: \\\\invalid.example\\share\\qa\\pr265-run-activity-network
+    not ok 20 - rejects noncanonical input: \\\\invalid.example\\share\\qa\\pr265-run-activity-network
+      ---
+      duration_ms: 0.1315
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Cannot find path '<USERPROFILE>\AppData\Local\Temp\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\postgres-is-intentionally-absent' because it does not exist.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: rejects noncanonical input: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\\trailing.\\qa\\pr265-run-activity-new
+    not ok 21 - rejects noncanonical input: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\\trailing.\\qa\\pr265-run-activity-new
+      ---
+      duration_ms: 0.121
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Cannot find path '<USERPROFILE>\AppData\Local\Temp\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\postgres-is-intentionally-absent' because it does not exist.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: rejects noncanonical input: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\\qa\\pr265-run-activity-new:stream
+    not ok 22 - rejects noncanonical input: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-80a1714575674bf3893a0354f653336a\\qa\\pr265-run-activity-new:stream
+      ---
+      duration_ms: 0.186
+      type: 'test'
+      location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:22:45'
+      failureType: 'testCodeFailure'
+      error: |-
+        Unexpected entrypoint result: Use a dedicated absolute qa/pr265-run-activity-* directory outside the product.
+
+        false !== true
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:75)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:22:45)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: all admissions preserve the protected sentinel and create no fixture descendants
+    ok 23 - all admissions preserve the protected sentinel and create no fixture descendants
+      ---
+      duration_ms: 0.1331
+      type: 'test'
+      ...
+    1..23
+not ok 12 - Factory activity acceptance rejects redirected QA roots before effects
+  ---
+  duration_ms: 1129.7301
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.test.mjs:6:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    false !== true
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue258-history/ecorp/tools/qa_factory_run_activity.test.mjs:24:10)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# {"fixture":"<USERPROFILE>\\\\AppData\\\\Local\\\\Temp\\\\ecorp-activity-paths-80a1714575674bf3893a0354f653336a","fixture_removed":false,"scope":"Native admission of the exact entrypoint in a synthetic product; missing PostgreSQL prevents any launch."}
+1..12
+# tests 35
+# suites 0
+# pass 13
+# fail 22
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2123.5642

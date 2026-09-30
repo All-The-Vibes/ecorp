@@ -1,0 +1,46 @@
+{
+  "issue": 261,
+  "kind": "Assistant implementation self-review; not independent or human approval",
+  "recorded_at_utc": "2026-09-30T03:48:45.766656+00:00",
+  "parent": "c54e25b08276d29a7c6d514fcef593fb06e57fec",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "tested_tree": "1cbecf1f26c73e92ec5a077cd5f3acd2827ef17a",
+  "physical_files_sha256": "673e3435253fc8d98e0321e834e3b7e2069c2c587cd2c2815a62f6cdc121a3d0",
+  "reviewed_paths": [
+    "apps/web/src/App.tsx",
+    "apps/web/src/BudgetOverviewPanel.css",
+    "apps/web/src/BudgetOverviewPanel.test.mjs",
+    "apps/web/src/BudgetOverviewPanel.tsx",
+    "apps/web/src/budgetNavigation.test.mjs",
+    "apps/web/src/budgetOverview.test.mjs",
+    "apps/web/src/budgetOverview.ts",
+    "apps/web/src/evidenceNavigation.test.mjs",
+    "apps/web/src/factoryAuthorityConnection.test.mjs",
+    "apps/web/src/snapshotScope.test.mjs",
+    "tools/coverage_web_models.mjs"
+  ],
+  "issue_acceptance_criteria": "- [ ] Show original/current/consumed/remaining mission authority and requests requiring a decision in a concise cross-work overview with drilldown to existing budget and decision records.\n- [ ] Use server-authorized aggregate reads or explicitly label snapshot-limited totals; aggregate participating workers, retries and auditor usage exactly once according to the existing ledger.\n- [ ] Distinguish measured, estimated, unpriced and unavailable cost; a provider reporting zero cost is not evidence of free work. Do not invent forecast completion, savings, productivity or cost precision.\n- [ ] Show freshness, time/scope semantics and links to the exact relevant mission, existing #50 recovery controls and #236 audit/extension status when available.\n- [ ] No new budget ledger, threshold policy, automatic grant or duplicate approval. Preserve immutable original spend and all enclosing authority.\n- [ ] Verify multi-run/multi-worker totals, revisions, unpriced providers, missing history, revoked scope and both presentation modes.",
+  "acceptance_mapping": [
+    "Original/current/consumed/remaining authority and pending decisions: focused model/panel cases, independently queried synthetic SQL ledger and exact existing budget-revision drilldown.",
+    "Scoped snapshot-limited totals and once-only worker/retry/auditor consumption: 745 tokens across five synthetic runs/three agents, 845 tokens including incomplete-history work; aggregate remainder withheld.",
+    "Cost assurance: reported consumption is not promoted to measured/priced/free work; missing pricing provenance, unpriced/unavailable values and zero fake-process usage remain explicit.",
+    "Freshness/scope and existing controls: native disconnect/reconnect, real revoked-room and cross-Corp denial, browser-only read failure/freshness expiry, exact revision and terminated-suspension navigation; delegated #236 service is unavailable and labeled.",
+    "No ledger, threshold policy, automatic grant or duplicate decision added: read-only projection, immutable-revision before/after digest and native fixture source checks.",
+    "Multi-worker/retry/revision/missing-history/revocation/mobile/keyboard cases passed; BOTH presentation modes remain incomplete until #264 is integrated and accepted. This issue must stay open."
+  ],
+  "invariants": "Read-only web projection and existing authorized effects reused. No migration, dependency, custom harness, ledger or permission/approval mechanism added. Exact scoped selection and persisted verifier evidence remain authoritative.",
+  "unresolved_confirmed_defects_in_scope": [],
+  "qualifications": [
+    "This branch was validated on PR385 at c54e25b08276d29a7c6d514fcef593fb06e57fec plus only this issue's code. It excludes the later history SQL/logging corrections and other UI branches; integration requires fresh combined-source validation.",
+    "Development authentication, owned PostgreSQL and deterministic fake-process native runner; no production OIDC, vendor inference, production grants, deployment or real GitHub effects.",
+    "Two development Bob decisions are scripted fixture decisions, not independent human reviews. Assistant review cannot serve as self-approval.",
+    "Synthetic browser responses or synthetic cancelled ledger rows are explicitly labeled; they do not establish corresponding provider or server behavior.",
+    "Final canonical completion is recorded separately from earlier timestamped statements that it was running. Retrospective regressions do not invent historical development chronology.",
+    "Node skips and Rust ignored cases are not passes. Focused, canonical and native counts overlap and must not be added.",
+    "Organization Actions is disabled. Hosted CI, CodeQL, code-quality and security gates remain required; no merge or issue closure is claimed. Historical Cargo advisory debt is not a clean audit.",
+    "Issue #261 is partial until #264 provides and validates both presentation modes. Do not use a closing keyword for this branch alone.",
+    "The original native report recorded [null,null] review_ids by reading id instead of run_id. The preserved supplemental read-only SQL query verified both run_id primary identities, approved fixture state and scripted actor without replaying decisions or modifying application rows.",
+    "The rich synthetic ledger is 745 tokens; 845 includes incomplete-history mission consumption. Zero native fake-process usage is not proof of free work. No actual budget grant or provider recovery is claimed.",
+    "The earlier visual receipt's original-resolution wording is qualified as scaled inspection. Its timestamped in-progress statements are preserved; final canonical completion is separately verified here."
+  ]
+}

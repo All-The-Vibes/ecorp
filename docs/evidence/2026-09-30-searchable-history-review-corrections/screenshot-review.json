@@ -1,0 +1,94 @@
+{
+  "issue": 258,
+  "pr": 385,
+  "status": "inspected",
+  "recorded_at_utc": "2026-09-30T01:00:16.804981+00:00",
+  "kind": "Assistant visual spot inspection after opening all six actual r6 captures; no human review or accessibility certification.",
+  "source": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-source-before-native-r6.json",
+    "sha256": "5e81a1d2dd3ac03c5c0fbf376affe136ab775c2e44056363fb50dc4c342edceb"
+  },
+  "native": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-native-r6.json",
+    "sha256": "31fd1dddfbcc2dd1be806e7b7b778d7753a44ed9eab46fa709eed310f0376c1a"
+  },
+  "browser": {
+    "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\evidence\\issue258-review-browser.json",
+    "sha256": "60180ae0d5686c05d64607c7734cd159c67a56a179c477cb03c7ecdef5f13ca2"
+  },
+  "physical_files_sha256": "ec0a0d4e1d7a99597057eced872ac1a2e80549094f36d72a4c7a31b0bc15adcc",
+  "screenshots": [
+    {
+      "scenario": "first-visit-existing-mission",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\evidence\\first-visit-existing-mission-5b909c39.png",
+      "sha256": "c55b724fdafc32953c7818fa96152614f54580dff469224f3b079f8ca14984a7",
+      "width": 1440,
+      "height": 2532,
+      "observations": [
+        "The selected mission is visible on first visit, alongside the mission selector.",
+        "Browse all missions spans the grid above the side-by-side selector and detail columns."
+      ]
+    },
+    {
+      "scenario": "mission-layout-390px",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\evidence\\mission-layout-390px-568b941e.png",
+      "sha256": "9c112b54745cf0117686837b038708bb52adc9e70f3ac11c7e502a880edfc990",
+      "width": 390,
+      "height": 4024,
+      "observations": [
+        "The mission controls and task cards stack in the narrow viewport.",
+        "No confirmed clipping was observed in the scaled capture; native bounds assertions separately checked 27 controls."
+      ]
+    },
+    {
+      "scenario": "unsupported-event-filter-preserves-results",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\evidence\\unsupported-event-filter-preserves-results-1e575827.png",
+      "sha256": "f2d288b2454f0ce432e2155e95c90497c2e4028321836258bd03d2e070492776",
+      "width": 1440,
+      "height": 7874,
+      "observations": [
+        "The capture retains history rows below the invalid filter and validation message.",
+        "The native driver, rather than this scaled image, verifies unchanged applied filters and zero history requests for the invalid input."
+      ]
+    },
+    {
+      "scenario": "event-history-desktop",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\evidence\\event-history-desktop-ce4a550a.png",
+      "sha256": "b12e2dc15c66491a3f3251dc7ccbf84d2d5c0a1b730fefcf978f627138d8e61c",
+      "width": 1440,
+      "height": 7874,
+      "observations": [
+        "Filter controls, applied filters, event results and pagination remain visible.",
+        "This tall capture was scaled to 375 pixels wide for inspection; fine text was not exhaustively inspected."
+      ]
+    },
+    {
+      "scenario": "revoked-room-history",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\evidence\\revoked-room-history-9846fa11.png",
+      "sha256": "6863bec28f472d53248d74e568a1d9b063147fea86fb271202661d8b00e6fe3f",
+      "width": 1440,
+      "height": 2226,
+      "observations": [
+        "The development Bob persona sees four permitted Corp-level events after room access is revoked.",
+        "Visible entries contain no authorized work link; the separate native HTTP assertions establish denial."
+      ]
+    },
+    {
+      "scenario": "history-390px-keyboard-page-two",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r6\\evidence\\history-390px-keyboard-page-two-b4c7fa78.png",
+      "sha256": "1db43cfd6effa178aecae55d866045dd13d68ed639a27d648da83fe555b80bf6",
+      "width": 390,
+      "height": 10009,
+      "observations": [
+        "The second page uses a single narrow column with wrapped event entries and bottom pagination.",
+        "The 10,009-pixel-tall capture was scaled to 80 pixels wide; this is only a layout spot inspection. Native assertions establish keyboard focus, reduced motion and 61 unclipped controls."
+      ]
+    }
+  ],
+  "confirmed_visual_defects": [],
+  "limits": [
+    "Scaled tall screenshots are not pixel-exhaustive inspection.",
+    "Development personas and deterministic fake-process runner do not validate production authentication, live inference or human decisions.",
+    "r6 initial launch returned HTTP 200; no 409 replay occurred in this successful run. The retained failed r5 and existing helper unit tests qualify the driver adaptation."
+  ]
+}
