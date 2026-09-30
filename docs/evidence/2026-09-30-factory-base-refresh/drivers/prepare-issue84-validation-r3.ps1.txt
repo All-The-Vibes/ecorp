@@ -1,0 +1,70 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$taskProduct = '<USERPROFILE>\.codex\worktrees\issue84-base-refresh\ecorp'
+$taskPython = '<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe'
+$taskReceipt = Join-Path $PSScriptRoot 'issue84-validation-environment-r3.json'
+if (Test-Path -LiteralPath $taskReceipt) { throw 'Preserve existing setup evidence.' }
+$taskPrior = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'issue84-check-r1.json') -Raw | ConvertFrom-Json
+if ($taskPrior.status -cne 'failed' -or !$taskPrior.finished_at_utc -or !$taskPrior.source_unchanged) { throw 'Prior validation must have exited with preserved source.' }
+function Get-SourceIdentity {
+    @(& git -C $taskProduct ls-files --cached --others --exclude-standard | Sort-Object -Unique | ForEach-Object {
+        [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $taskProduct $_) -Algorithm SHA256).Hash.ToLowerInvariant()}
+    })
+}
+function Get-SourceMap($Files) {
+    $result = @{}
+    foreach ($file in $Files) { if ($result.ContainsKey($file.path)) { throw 'Duplicate source path' }; $result[$file.path]=$file.sha256 }
+    return $result
+}
+$taskBefore = Get-SourceIdentity
+$taskExpected = Get-SourceMap $taskPrior.source_files
+if ($taskBefore.Count -ne 7162 -or $taskBefore.Count -ne $taskExpected.Count) { throw 'Source membership changed before setup.' }
+foreach ($file in $taskBefore) { if ($taskExpected[$file.path] -cne $file.sha256) { throw "Source changed before setup: $($file.path)" } }
+$taskRecord = [ordered]@{issue=84;started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');status='running';head=(& git -C $taskProduct rev-parse HEAD);source_file_count=$taskBefore.Count;source_unchanged=$null;commands=@();python_executable=$taskPython;prior_failed_check='issue84-check-r1.json';assurance='Locked local test dependency setup; no product changes, hosted checks or audit claim.'}
+if ($taskRecord.head -cne '878a1774774b0630c904cbaf4b05e1b346777817') { throw 'Unexpected product head.' }
+$taskPriorPath = $env:PATH
+$taskExit=1
+Push-Location $taskProduct
+try {
+    $env:PATH=(Split-Path -Parent $taskPython) + [IO.Path]::PathSeparator + $taskPriorPath
+    if ((Get-Command python).Source -cne $taskPython) { throw 'Python command did not resolve to the verified local runtime.' }
+    $taskRecord.python_version=(& python --version)
+    $taskRecord.node_version=(& node --version)
+    $taskRecord.pnpm_version=(& pnpm --version)
+    $taskRecord.npm_version=(& npm --version)
+    foreach ($step in @(
+        @{command='pnpm install --frozen-lockfile';executable='pnpm';arguments=@('install','--frozen-lockfile');lock='pnpm-lock.yaml';log='issue84-dependencies-r3.log'},
+        @{command='npm ci --prefix scenarios/repo-steward --ignore-scripts --no-audit --no-fund';executable='npm';arguments=@('ci','--prefix','scenarios/repo-steward','--ignore-scripts','--no-audit','--no-fund');lock='scenarios/repo-steward/package-lock.json';log='issue84-steward-dependencies-r1.log'}
+    )) {
+        $log=Join-Path $PSScriptRoot $step.log
+        if (Test-Path -LiteralPath $log) { throw 'Preserve existing dependency logs.' }
+        $lock=Join-Path $taskProduct $step.lock
+        $item=[ordered]@{command=$step.command;started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');lock_path=$step.lock;lock_before=(Get-FileHash -LiteralPath $lock -Algorithm SHA256).Hash.ToLowerInvariant();log=$log}
+        $taskRecord.commands+=,$item
+        $taskRecord | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+        $taskCommand = $step.executable
+        $taskArguments = [string[]]$step.arguments
+        & $taskCommand @taskArguments *> $log
+        $item.exit_code=$LASTEXITCODE
+        $item.lock_after=(Get-FileHash -LiteralPath $lock -Algorithm SHA256).Hash.ToLowerInvariant()
+        $item.lock_unchanged=$item.lock_before -ceq $item.lock_after
+        $item.log_sha256=(Get-FileHash -LiteralPath $log -Algorithm SHA256).Hash.ToLowerInvariant()
+        $item.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+        if ($item.exit_code -ne 0 -or !$item.lock_unchanged) { throw 'Locked dependency setup failed; inspect the retained log.' }
+    }
+    $taskRecord.status='passed'
+    $taskExit=0
+} catch { $taskRecord.status='failed'; $taskRecord.failure=$_.Exception.Message }
+finally {
+    Pop-Location
+    $env:PATH=$taskPriorPath
+    $taskAfter=Get-SourceIdentity
+    $taskRecord.source_unchanged=$taskAfter.Count -eq $taskBefore.Count
+    foreach ($file in $taskAfter) { if ($taskExpected[$file.path] -cne $file.sha256) { $taskRecord.source_unchanged=$false } }
+    if (!$taskRecord.source_unchanged) { $taskRecord.status='failed';$taskExit=1 }
+    $taskRecord.exit_code=$taskExit
+    $taskRecord.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+    $taskRecord | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+}
+[pscustomobject]@{status=$taskRecord.status;exit_code=$taskExit;source_unchanged=$taskRecord.source_unchanged;commands=@($taskRecord.commands | ForEach-Object { [pscustomobject]@{command=$_.command;exit_code=$_.exit_code;lock_unchanged=$_.lock_unchanged;log=$_.log} });receipt=$taskReceipt} | ConvertTo-Json -Depth 5
+exit $taskExit

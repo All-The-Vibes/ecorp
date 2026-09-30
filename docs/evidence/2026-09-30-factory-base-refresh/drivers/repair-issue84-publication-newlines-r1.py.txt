@@ -1,0 +1,162 @@
+"""Preserve the failed packet and publish evidence text with explicit LF bytes."""
+from issue84_publication_lib_r2 import *
+import ast
+
+source = load(EV / "issue84-publication-source-r1.json")
+assembly_path = EV / "issue84-publication-packet-r2.json"
+assembly = load(assembly_path)
+failure_path = EV / "issue84-publication-evidence-validation-r2.json"
+failure = load(failure_path)
+receipt_path = EV / "issue84-publication-newline-correction-r1.json"
+next_assembly = EV / "issue84-publication-packet-r3.json"
+snapshot = EV / "issue84-publication-packet-before-newline-r1"
+exit_path = EV / "issue84-publication-validation-r3-session-exit.json"
+assert not any(p.exists() for p in (receipt_path, next_assembly, snapshot, exit_path))
+assert failure["status"] == "failed" and failure["checks"] == []
+assert failure["failure"] == PACKET_REL + "/summary.json"
+write(exit_path, {
+    "session_id": 50462, "exit_code": 1, "recorded_at_utc": now(),
+    "observation": "Prior write_stdin tool result reported process exit; recovered from retained tool state.",
+    "result": "failed before documentation, privacy, secret checks, commit or publication",
+    "failure": "Git clean-filter bytes differed for the evidence summary; inspect line endings",
+    "validation_receipt_sha256": sha(failure_path.read_bytes()),
+})
+pending_source()
+original_files(source["physical_files"])
+initial_index = index_digest()
+assert initial_index == source["original_index_sha256"] == assembly["original_index_sha256"]
+assert sha((PACKET / "summary.json").read_bytes()) == assembly["summary_sha256"]
+old_files = sorted(p.relative_to(PACKET).as_posix() for p in PACKET.rglob("*") if p.is_file())
+assert old_files == assembly["publication_files"]
+summary = load(PACKET / "summary.json")
+for artifact in summary["artifacts"]:
+    assert sha((PACKET / artifact["file"]).read_bytes()) == artifact["published_sha256"]
+old_hashes, newline_files = {}, []
+for name in old_files:
+    path = PACKET / name
+    canonical_single_link_file(path)
+    raw = path.read_bytes()
+    old_hashes[name] = sha(raw)
+    if path.suffix != ".png":
+        raw.decode("utf-8")
+        if b"\r\n" in raw:
+            newline_files.append(name)
+assert newline_files == ["summary.json"], newline_files
+summary_before = (PACKET / "summary.json").read_bytes()
+normalized = summary_before.replace(b"\r\n", b"\n")
+assert json.loads(normalized) == summary
+record = {
+    "issue": 84, "status": "preparing", "started_at_utc": now(),
+    "base": MAIN, "tested_tree": source["tested_tree"], "physical_files_sha256": PHYSICAL,
+    "failed_validation_sha256": sha(failure_path.read_bytes()),
+    "scope": "Evidence packaging only; preserve failed bytes and original implementation/test evidence.",
+    "diagnosis": "The alias-correction helper wrote summary.json with Windows CRLF. Git normalizes it to LF.",
+    "affected_files": newline_files, "before_sha256": sha(summary_before),
+    "lf_normalized_before_annotation_sha256": sha(normalized),
+    "json_semantics_unchanged_by_normalization": True, "snapshot": str(snapshot),
+    "policy_changed": False,
+}
+
+def save():
+    receipt_path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8", newline="\n")
+
+save()
+try:
+    snapshot.mkdir()
+    for name in old_files:
+        target = snapshot / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("xb") as stream:
+            stream.write((PACKET / name).read_bytes())
+        assert sha(target.read_bytes()) == old_hashes[name]
+    record["preserved_files"] = [{"path": n, "sha256": old_hashes[n]} for n in old_files]
+    personal = re.compile(r"(?:[a-z]:)?[/\\]+Users[/\\]+[^/\\\s\"'<>]+", re.I)
+
+    def add_artifact(name, raw, source_name):
+        target = PACKET / name
+        assert not target.exists()
+        text = raw.decode("utf-8-sig")
+        text = re.sub(r"(?i)C\^?:\^?<USERPROFILE>\\shyamsridhar", "<USERPROFILE>", text)
+        published = personal.sub("<USERPROFILE>", text).replace("\r\n", "\n").encode()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("xb") as stream:
+            stream.write(published)
+        summary["artifacts"].append({
+            "file": name, "source_name": source_name, "original_sha256": sha(raw),
+            "published_sha256": sha(published), "bytes": len(published),
+            "transform": "UTF-8/LF and personal path redaction; no outcome or count changes",
+        })
+
+    add_artifact("history/publication-validation-r2-failed.json", failure_path.read_bytes(), failure_path.name)
+    add_artifact("history/publication-validation-r2-session-exit.json", exit_path.read_bytes(), exit_path.name)
+    for name in ("validate", "commit", "scan"):
+        old = EV / f"{name}-issue84-publication-r3.py"
+        new = EV / f"{name}-issue84-publication-r4.py"
+        assert not new.exists()
+        text = old.read_text(encoding="utf-8")
+        text = text.replace("issue84-publication-evidence-validation-r2.json", "issue84-publication-evidence-validation-r3.json")
+        text = text.replace("issue84-publication-packet-r2.json", "issue84-publication-packet-r3.json")
+        if name == "validate":
+            text = text.replace("issue84-publication-validation-r2-", "issue84-publication-validation-r3-")
+        ast.parse(text)
+        with new.open("x", encoding="utf-8", newline="\n") as stream:
+            stream.write(text)
+        add_artifact("drivers/" + new.name + ".txt", new.read_bytes(), new.name)
+    publisher = EV / "publish-issue84-r4.ps1"
+    assert not publisher.exists()
+    text = (EV / "publish-issue84-r3.ps1").read_text(encoding="utf-8")
+    text = text.replace("issue84-publication-evidence-validation-r2.json", "issue84-publication-evidence-validation-r3.json")
+    with publisher.open("x", encoding="utf-8", newline="\n") as stream:
+        stream.write(text)
+    add_artifact("drivers/" + Path(__file__).name + ".txt", Path(__file__).read_bytes(), Path(__file__).name)
+    note = (
+        "The second evidence validator exited one before documentation, privacy or secret checks because "
+        "the alias-correction helper had written summary.json with Windows CRLF, which Git would normalize. "
+        "The complete failed packet and receipt were preserved locally. This packaging correction writes "
+        "explicit LF bytes and retains the failed validation and observed exit; it changes no product "
+        "source, test result or original acceptance receipt. A fresh evidence validation is required."
+    )
+    summary["qualifications"].append(note)
+    summary["publication_newline_correction"] = {
+        "failed_validator_status": "failed", "failed_before_checks": True,
+        "affected_files": newline_files, "before_sha256": sha(summary_before),
+        "lf_normalized_before_annotation_sha256": sha(normalized),
+        "json_semantics_unchanged_by_normalization": True,
+        "original_failed_packet_preserved": True, "product_source_unchanged": True,
+    }
+    readme = PACKET / "README.md"
+    readme.write_text(readme.read_text(encoding="utf-8") + "\n" + note + "\n", encoding="utf-8", newline="\n")
+    (PACKET / "summary.json").write_text(
+        json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n"
+    )
+    original_files(source["physical_files"])
+    pending_source()
+    assert index_digest() == initial_index
+    for name in old_files:
+        assert sha((snapshot / name).read_bytes()) == old_hashes[name]
+        if name not in {"README.md", "summary.json"}:
+            assert sha((PACKET / name).read_bytes()) == old_hashes[name]
+    for path in PACKET.rglob("*"):
+        if path.is_file() and path.suffix != ".png":
+            assert b"\r\n" not in path.read_bytes(), path.name
+    updated = dict(assembly)
+    updated.update(
+        recorded_at_utc=now(), supersedes_packet_receipt_sha256=sha(assembly_path.read_bytes()),
+        publication_files=sorted(p.relative_to(PACKET).as_posix() for p in PACKET.rglob("*") if p.is_file()),
+        summary_sha256=sha((PACKET / "summary.json").read_bytes()),
+        alias_correction_only=False, newline_packaging_correction=True,
+        original_failed_packet_preserved=True,
+    )
+    write(next_assembly, updated)
+    record.update(
+        status="corrected-packet-awaiting-validation", publication_files=len(updated["publication_files"]),
+        original_physical_files_unchanged=True, original_index_unchanged=True,
+        new_assembly_sha256=sha(next_assembly.read_bytes()),
+    )
+finally:
+    record["finished_at_utc"] = now()
+    save()
+print(json.dumps({k: record.get(k) for k in (
+    "status", "tested_tree", "publication_files", "affected_files",
+    "original_physical_files_unchanged", "original_index_unchanged"
+)}))

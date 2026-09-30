@@ -1,0 +1,79 @@
+"""Recheck the five suites affected by local prerequisite failures, without source edits."""
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+EV = Path(__file__).resolve().parent
+ROOT = Path(r'<USERPROFILE>\.codex\worktrees\issue84-base-refresh\ecorp')
+NODE = r'<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe'
+PYTHON = Path(sys.executable).resolve()
+EXPECTED = 'efe92db431183bd759bc833eda77c2a57b9fd2fc58cc06c3565abe80894c93c8'
+RECEIPT = EV / 'issue84-prerequisite-regressions-r1.json'
+LOG = EV / 'issue84-prerequisite-regressions-r1.log'
+assert not RECEIPT.exists() and not LOG.exists(), 'Preserve existing evidence'
+ENV = {k: v for k, v in os.environ.items()
+       if not re.match(r'^(CRONY_|ECORP_|PG|GH_|GITHUB_|GITLEAKS_|AZURE_|GIT_)', k, re.I)
+       and k.upper() not in {'DATABASE_URL', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY',
+                            'COPILOT_GITHUB_TOKEN', 'NODE_OPTIONS', 'PYTHONPATH', 'PYTHONHOME'}}
+path_key = next(k for k in ENV if k.upper() == 'PATH')
+ENV[path_key] = str(PYTHON.parent) + os.pathsep + ENV[path_key]
+
+def now():
+    return datetime.now(timezone.utc).isoformat()
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+def identity():
+    result = subprocess.run(['git', '--no-optional-locks', '-C', str(ROOT), 'ls-files', '-z',
+                             '--cached', '--others', '--exclude-standard'], capture_output=True,
+                            check=True, env=ENV, creationflags=subprocess.CREATE_NO_WINDOW)
+    pairs = [[p, sha((ROOT / p).read_bytes())]
+             for p in sorted(set(result.stdout.decode().split('\0')) - {''})]
+    assert len(pairs) == 7162
+    return sha(json.dumps(pairs, separators=(',', ':'), ensure_ascii=False).encode())
+
+setup = json.loads((EV / 'issue84-validation-environment-r3.json').read_text(encoding='utf-8-sig'))
+assert setup['status'] == 'passed' and setup['exit_code'] == 0 and setup['source_unchanged']
+before = identity()
+assert before == EXPECTED, 'Product source changed'
+argv = [NODE, '--test', '--test-concurrency=1', '--test-timeout=180000',
+        'scenarios/repo-steward/teams-host.test.mjs', 'tools/check_evidence_launch.test.mjs',
+        'tools/check_evidence_native_build.test.mjs', 'tools/check_evidence_personal_paths.test.mjs',
+        'tools/startup_validation_harness.test.mjs']
+record = dict(issue=84, status='running', started_at_utc=now(), argv=argv,
+              python_executable=str(PYTHON), source_sha256=before, source_file_count=7162,
+              source_unchanged=None, log=str(LOG),
+              assurance='Focused local prerequisite regressions, not the complete canonical plan.')
+RECEIPT.write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+code = 1
+try:
+    with LOG.open('xb') as stream:
+        proc = subprocess.run(argv, cwd=ROOT, env=ENV, stdout=stream, stderr=subprocess.STDOUT,
+                              timeout=900, creationflags=subprocess.CREATE_NO_WINDOW)
+    code = proc.returncode
+    record['exit_code'] = code
+    content = LOG.read_text(encoding='utf-8', errors='replace')
+    record['counts'] = {key: int(re.findall(r'^# ' + key + r' (\d+)\s*$', content, re.M)[-1])
+                        for key in ['tests', 'pass', 'fail', 'cancelled', 'skipped', 'todo']}
+    if record['counts']['fail'] or record['counts']['cancelled']:
+        code = 1
+    record['status'] = 'passed' if code == 0 else 'failed'
+except Exception as exc:
+    record.update(status='failed', failure_type=type(exc).__name__)
+finally:
+    record['source_unchanged'] = identity() == before
+    if not record['source_unchanged']:
+        code = 1
+        record['status'] = 'failed'
+    record['finished_at_utc'] = now()
+    record['wrapper_exit_code'] = code
+    record['log_sha256'] = sha(LOG.read_bytes()) if LOG.exists() else None
+    RECEIPT.write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+print(json.dumps(record, indent=2))
+sys.exit(code)

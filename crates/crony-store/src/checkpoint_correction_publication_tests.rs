@@ -7,6 +7,9 @@ use crony_domain::{
     RETAINED_COPILOT_RECEIPT_FILE, RetainedProviderReceiptGrant, retained_provider_receipt_metadata,
 };
 
+#[path = "factory_base_refresh_tests.rs"]
+mod base_refresh;
+
 const CONNECTION: Uuid = Uuid::from_u128(216);
 const SESSION: &str = "00000000-0000-0000-0000-000000000217";
 
@@ -976,12 +979,20 @@ async fn metadata_column(store: &PgStore, table: &str, column: &str, id: Uuid) -
     // Identifiers come only from the closed test-local case lists below.
     assert!(matches!(
         table,
-        "runs" | "events" | "factory_verification_recoveries" | "actors" | "runner_commands"
+        "runs"
+            | "events"
+            | "factory_verification_recoveries"
+            | "actors"
+            | "runner_commands"
+            | "tasks"
+            | "factory_work_items"
+            | "workspace_connections"
+            | "artifacts"
     ));
     assert!(
         column
             .bytes()
-            .all(|byte| byte.is_ascii_lowercase() || byte == b'_')
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'_')
     );
     sqlx::query_scalar(&format!(
         "SELECT to_jsonb(target)->$3::text FROM {table} target WHERE corp_id=$1 AND id=$2"
@@ -999,12 +1010,20 @@ async fn set_metadata_column(store: &PgStore, change: &MetadataMutation, value: 
     let column = change.column;
     assert!(matches!(
         table,
-        "runs" | "events" | "factory_verification_recoveries" | "actors" | "runner_commands"
+        "runs"
+            | "events"
+            | "factory_verification_recoveries"
+            | "actors"
+            | "runner_commands"
+            | "tasks"
+            | "factory_work_items"
+            | "workspace_connections"
+            | "artifacts"
     ));
     assert!(
         column
             .bytes()
-            .all(|byte| byte.is_ascii_lowercase() || byte == b'_')
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'_')
     );
     let result = sqlx::query(&format!(
         "UPDATE {table} SET {column} =

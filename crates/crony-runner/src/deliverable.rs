@@ -22,7 +22,7 @@ use crate::verifier::SourceVerification;
 use crate::{adapter::AdapterArtifact, verifier::VerificationReport, workspace::WorkspaceLease};
 
 #[path = "deliverable_verification.rs"]
-mod verification;
+pub(crate) mod verification;
 pub(crate) use verification::isolate_git_environment;
 
 #[cfg(test)]
@@ -187,6 +187,40 @@ pub async fn prepare(
     write_scope: &[String],
     preserve_head_commit: Option<&str>,
 ) -> Result<PreparedDeliverable> {
+    prepare_inner(
+        run_id,
+        spec,
+        workspace,
+        provider_artifacts,
+        write_scope,
+        preserve_head_commit,
+        None,
+    )
+    .await
+}
+
+/// A refresh selects the tree produced by native Git before any verifier runs.
+/// Do not re-stage physical bytes through attributes, filters or Windows modes.
+pub(crate) async fn prepare_tree(
+    run_id: Uuid,
+    spec: &DeliverableSpec,
+    workspace: &WorkspaceLease,
+    write_scope: &[String],
+    tree: &str,
+) -> Result<PreparedDeliverable> {
+    prepare_inner(run_id, spec, workspace, &[], write_scope, None, Some(tree)).await
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn prepare_inner(
+    run_id: Uuid,
+    spec: &DeliverableSpec,
+    workspace: &WorkspaceLease,
+    provider_artifacts: &[AdapterArtifact],
+    write_scope: &[String],
+    preserve_head_commit: Option<&str>,
+    canonical_tree: Option<&str>,
+) -> Result<PreparedDeliverable> {
     let workspace_root = tokio::fs::canonicalize(&workspace.path)
         .await
         .context("resolve deliverable worktree")?;
@@ -232,16 +266,48 @@ pub async fn prepare(
         &["rev-parse".into(), "HEAD^{commit}".into()],
     )
     .await?;
-    prepared.changes = select_index(
-        spec,
-        workspace,
-        &prepared.workspace_root,
-        provider_artifacts,
-        write_scope,
-        preserve_head_commit,
-        &prepared.index,
-    )
-    .await?;
+    prepared.changes = if let Some(tree) = canonical_tree {
+        if !matches!(tree.len(), 40 | 64) || !tree.bytes().all(|b| b.is_ascii_hexdigit()) {
+            return Err(anyhow!("invalid refresh tree identity"));
+        }
+        git_success(
+            &prepared.workspace_root,
+            &prepared.index,
+            &["read-tree".into(), tree.into()],
+        )
+        .await?;
+        let changes = changed_paths(
+            &prepared.workspace_root,
+            &prepared.index,
+            &workspace.base_commit,
+        )
+        .await?;
+        reject_out_of_scope_changes(&changes, write_scope)?;
+        reject_unsafe_changes(&prepared.workspace_root, &prepared.index, &changes).await?;
+        if changes.iter().any(|(_, path)| {
+            !spec.paths.is_empty()
+                && !spec
+                    .paths
+                    .iter()
+                    .any(|selected| path == selected || path.starts_with(&format!("{selected}/")))
+        }) {
+            return Err(anyhow!(
+                "refreshed delta exceeds the saved deliverable paths"
+            ));
+        }
+        changes
+    } else {
+        select_index(
+            spec,
+            workspace,
+            &prepared.workspace_root,
+            provider_artifacts,
+            write_scope,
+            preserve_head_commit,
+            &prepared.index,
+        )
+        .await?
+    };
     prepared.tree = git_text(
         &prepared.workspace_root,
         &prepared.index,

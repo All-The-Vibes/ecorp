@@ -7,9 +7,11 @@ pub(super) async fn exported_head_tx(
     corp_id: Uuid,
     run_id: Uuid,
 ) -> Result<Option<String>> {
-    let heads: Vec<String> = sqlx::query_scalar(
+    let exports = sqlx::query(
         r#"
-        SELECT deliverable.head_commit
+        SELECT deliverable.head_commit, item.id AS item_id,
+               item.mission_id IS DISTINCT FROM task.mission_id AS historical,
+               run.status, run.verification_status
         FROM runs run
         JOIN tasks task ON task.id=run.task_id AND task.corp_id=run.corp_id
         JOIN factory_verification_recoveries recovery
@@ -18,7 +20,6 @@ pub(super) async fn exported_head_tx(
          AND recovery.mode='checkpoint_verification'
         JOIN factory_work_items item
           ON item.id=recovery.factory_work_item_id AND item.corp_id=run.corp_id
-         AND item.mission_id=task.mission_id
         JOIN runs source
           ON source.id=recovery.source_run_id AND source.id=run.resumed_from_run_id
          AND source.corp_id=run.corp_id AND source.task_id=run.task_id
@@ -73,11 +74,28 @@ pub(super) async fn exported_head_tx(
     .bind(corp_id)
     .fetch_all(&mut **tx)
     .await?;
-    match heads.as_slice() {
+    match exports.as_slice() {
         [] => Ok(None),
-        [head] => {
-            validate_factory_base_commit(head)?;
-            Ok(Some(head.clone()))
+        [export] => {
+            // An adopted refresh retains completed exports as historical
+            // evidence. Live retention/review still requires the selected
+            // mission; this proof never authorizes historical execution.
+            if export.get::<bool, _>("historical")
+                && (export.get::<String, _>("status") != "completed"
+                    || export.get::<String, _>("verification_status") != "passed"
+                    || !factory_base_refresh::adopted_source_contains_run_tx(
+                        tx,
+                        corp_id,
+                        export.get("item_id"),
+                        run_id,
+                    )
+                    .await?)
+            {
+                return Ok(None);
+            }
+            let head: String = export.get("head_commit");
+            validate_factory_base_commit(&head)?;
+            Ok(Some(head))
         }
         _ => Err(anyhow!(
             "checkpoint export has ambiguous artifact provenance"

@@ -203,6 +203,48 @@ impl WorkspaceManager {
         assigned_base_commit: Option<&str>,
         resume_base_commit: Option<&str>,
     ) -> Result<WorkspaceLease> {
+        self.prepare_inner(
+            task_id,
+            workspace_run_id,
+            assigned_base_commit,
+            resume_base_commit,
+            false,
+        )
+        .await
+    }
+
+    /// Create a never-before-used workspace without invoking checkout filters.
+    pub(crate) async fn prepare_empty(
+        &self,
+        task_id: Uuid,
+        run_id: Uuid,
+    ) -> Result<WorkspaceLease> {
+        self.prepare_inner(task_id, run_id, Some(&self.base_commit), None, true)
+            .await
+    }
+
+    /// A private object copy inherits only the already checked repository identity.
+    /// No local config, credential, hook or alternative object store is copied.
+    pub(crate) async fn private_copy(
+        &self,
+        root: PathBuf,
+        repository: PathBuf,
+        base_commit: String,
+    ) -> Result<Self> {
+        let mut manager =
+            Self::initialize_pinned(root, repository, self.base_ref.clone(), base_commit).await?;
+        manager.repository_identity = self.repository_identity.clone();
+        Ok(manager)
+    }
+
+    async fn prepare_inner(
+        &self,
+        task_id: Uuid,
+        workspace_run_id: Uuid,
+        assigned_base_commit: Option<&str>,
+        resume_base_commit: Option<&str>,
+        no_checkout: bool,
+    ) -> Result<WorkspaceLease> {
         let _guard = self.git_lock.lock().await;
         if assigned_base_commit
             .zip(resume_base_commit)
@@ -220,6 +262,11 @@ impl WorkspaceManager {
         self.ensure_target_parent(&path).await?;
 
         if tokio::fs::try_exists(&path).await? {
+            if no_checkout {
+                return Err(anyhow!(
+                    "fresh refresh workspace already exists; preserve it for inspection"
+                ));
+            }
             return self
                 .verify_existing(path, branch, assigned_base_commit.or(resume_base_commit))
                 .await;
@@ -247,6 +294,14 @@ impl WorkspaceManager {
             )
             .await?;
         let mut args = vec![OsString::from("worktree"), OsString::from("add")];
+        if no_checkout {
+            if branch_exists {
+                return Err(anyhow!(
+                    "fresh refresh branch already exists; preserve it for inspection"
+                ));
+            }
+            args.push("--no-checkout".into());
+        }
         if branch_exists {
             args.push(path.as_os_str().to_owned());
             args.push(OsString::from(&branch));

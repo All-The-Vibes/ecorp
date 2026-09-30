@@ -29,6 +29,7 @@ use url::Url;
 use uuid::Uuid;
 
 pub(crate) mod authority;
+pub(crate) mod base_refresh;
 mod project;
 mod quota;
 
@@ -5452,7 +5453,7 @@ mod tests {
         assert_eq!(requests.await.unwrap().len(), 1);
     }
 
-    async fn factory_http_fixture_with_status(
+    pub(super) async fn factory_http_fixture_with_status(
         responses: Vec<(reqwest::StatusCode, Value)>,
     ) -> (String, tokio::task::JoinHandle<Vec<(String, Value)>>) {
         use tokio::io::{AsyncReadExt, AsyncWriteExt};

@@ -1,0 +1,69 @@
+"""Exercise real owned filesystem aliases before publishing the issue 84 packet."""
+from issue84_publication_lib_r2 import *
+import shutil
+
+RECEIPT = EV / "issue84-publication-path-guard-r1.json"
+assert not RECEIPT.exists(), "Preserve previous guard verification"
+fixture = Path(tempfile.mkdtemp(prefix="issue84-publication-path-guard-", dir=EV)).resolve()
+assert fixture.parent == EV.resolve() and fixture.name.startswith("issue84-publication-path-guard-")
+record = {"issue": 84, "status": "running", "started_at_utc": now(), "owned_fixture": str(fixture),
+          "library_sha256": sha((EV / "issue84_publication_lib_r2.py").read_bytes()), "checks": [],
+          "scope": "Real file and parent-directory aliases in this owned fixture; publication-time checks, not historical metadata claims."}
+source, hard, actual, alias = fixture / "source.txt", fixture / "hard.txt", fixture / "actual", fixture / "alias"
+
+
+def check(name, path, root, rejected):
+    did_reject = False
+    try:
+        canonical_single_link_file(path, root)
+    except AssertionError:
+        did_reject = True
+    passed = did_reject == rejected
+    record["checks"].append({"name": name, "passed": passed, "rejected": did_reject})
+    assert passed, name
+
+
+try:
+    source.write_text("owned source fixture\n", encoding="utf-8")
+    check("canonical single-link file accepted", source, fixture, False)
+    os.link(source, hard)
+    assert source.stat().st_nlink == hard.stat().st_nlink == 2
+    check("hard-linked source rejected", source, fixture, True)
+    check("hard-link alias rejected", hard, fixture, True)
+    hard.unlink()
+    check("single-link source accepted after owned alias removal", source, fixture, False)
+    actual.mkdir()
+    (actual / "child.txt").write_text("owned child fixture\n", encoding="utf-8")
+    check("ordinary child accepted", actual / "child.txt", fixture, False)
+    script = "$ErrorActionPreference='Stop'; New-Item -ItemType Junction -Path '" + str(alias).replace("'", "''") + "' -Target '" + str(actual).replace("'", "''") + "' | Out-Null"
+    result = subprocess.run([r"C:\Program Files\PowerShell\7\pwsh.exe", "-NoProfile", "-Command", script],
+                            capture_output=True, env=ENV, timeout=30, creationflags=subprocess.CREATE_NO_WINDOW)
+    assert result.returncode == 0 and alias.is_junction(), "Owned junction prerequisite unavailable"
+    assert alias.resolve() == actual.resolve()
+    check("file reached through parent junction rejected", alias / "child.txt", fixture, True)
+    check("aliased root rejected", alias / "child.txt", alias, True)
+    check("out-of-root file rejected", source, actual, True)
+    record.update(status="passed", passed=len(record["checks"]), failed=0, skipped=0)
+except Exception as error:
+    record.update(status="failed", failure=str(error), failed=1)
+    raise
+finally:
+    # Delete only individually named fixture entries; never recurse through an alias.
+    assert fixture.resolve().parent == EV.resolve()
+    if alias.is_junction():
+        assert alias.resolve() == actual.resolve() and actual.resolve().is_relative_to(fixture)
+        alias.rmdir()
+    if hard.exists():
+        assert hard.parent.resolve() == fixture
+        hard.unlink()
+    if (actual / "child.txt").exists():
+        (actual / "child.txt").unlink()
+    if actual.exists():
+        actual.rmdir()
+    if source.exists():
+        source.unlink()
+    fixture.rmdir()
+    record["owned_fixture_removed"] = not fixture.exists()
+    record["finished_at_utc"] = now()
+    write(RECEIPT, record)
+    print(json.dumps({k: record.get(k) for k in ["status", "passed", "failed", "skipped", "owned_fixture_removed", "failure"]}))

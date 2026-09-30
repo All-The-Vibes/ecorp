@@ -1,0 +1,68 @@
+{
+  "issue": 84,
+  "status": "passed",
+  "started_at_utc": "2026-09-30T20:31:28.6675202+00:00",
+  "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "source_files": [
+    {
+      "path": "tools/security_canary.mjs",
+      "sha256": "e955b8bad61592fbd73f2fc9986fd53d8b8bfd31792bc78e586131b7f9132da2"
+    },
+    {
+      "path": "tools/secret_scan.test.mjs",
+      "sha256": "d94653e993790dc658a946369156f6107d902c513e480bb005fc56213b249ec5"
+    },
+    {
+      "path": "tools/secret_scan_native.test.mjs",
+      "sha256": "69789f9c4385ca49b2fca638fe55d23858ac4bfeae81cafd367f457b856dbc2b"
+    },
+    {
+      "path": "tools/gitleaks-snapshot.toml",
+      "sha256": "dcc793b25303501724feda86a4cdd4f6dc598cf57e60bf681d25d1e46159541a"
+    },
+    {
+      "path": ".github/workflows/security-scan.yml",
+      "sha256": "9fc95a03fe6802b31303d1bbe789e4f04c98cc2a4026a54e02c41558e83b81d2"
+    },
+    {
+      "path": ".gitleaksignore",
+      "sha256": "a8d6e15fa76e0c88f4266bca6d12f909f494a0ff646ef8699e88b8d9daec0ada"
+    }
+  ],
+  "native_version": "8.30.1",
+  "native_sha256": "17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c",
+  "checks": [
+    {
+      "counts": {},
+      "exit_code": 0,
+      "name": "snapshot-canary",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-security-native-r1-snapshot-canary.log",
+      "command": "node tools/security_canary.mjs <USERPROFILE>\\code\\ecorp\\output\\pr-completion\\20260922T123548Z\\gitleaks-8.30.1\\gitleaks.exe",
+      "finished_at_utc": "2026-09-30T20:31:33.4803395+00:00",
+      "passed": true,
+      "started_at_utc": "2026-09-30T20:31:29.2459403+00:00",
+      "log_sha256": "e4fac3554c4c40740cf5843d3f6e481e53f9ff28f3ca2984eea303a3f8cf4891"
+    },
+    {
+      "counts": {
+        "tests": 76,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "pass": 76
+      },
+      "exit_code": 0,
+      "name": "native-diagnostics",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-security-native-r1-native-diagnostics.log",
+      "command": "node --test tools/secret_scan.test.mjs tools/secret_scan_native.test.mjs",
+      "finished_at_utc": "2026-09-30T20:32:02.3526708+00:00",
+      "passed": true,
+      "started_at_utc": "2026-09-30T20:31:33.4890330+00:00",
+      "log_sha256": "d2cc76c939d80fe8b42739eb1b74e960296234bcdc02bd3820882df42fd17457"
+    }
+  ],
+  "scope": "Native detector canary and workflow diagnostic regressions with synthetic markers, not a scan of product source or hosted CI.",
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-30T20:32:02.3717736+00:00"
+}

@@ -5316,19 +5316,29 @@ function App() {
 
   const decideVerification = async (run: Run, approved: boolean) => {
     if (!bootstrap || !selectedActor) return
+    const note = approved
+      ? `${selectedActor.name} accepted the recorded verification evidence.`
+      : `${selectedActor.name} rejected the recorded verification evidence.`
+    const operationStorageKey =
+      `ecorp:verification-decision:${bootstrap.corp_id}:${selectedActor.id}:` +
+      `${run.id}:${approved ? 'approve' : 'reject'}`
     setBusy(true)
     setError(null)
     try {
+      const decisionKey = browserOperationKey(
+        operationStorageKey,
+        JSON.stringify({ runId: run.id, approved, note }),
+      )
       await api(`/api/corps/${bootstrap.corp_id}/runs/${run.id}/verification-decision`, {
         method: 'POST',
         body: JSON.stringify({
           actor_id: selectedActor.id,
           approved,
-          note: approved
-            ? `${selectedActor.name} accepted the recorded verification evidence.`
-            : `${selectedActor.name} rejected the recorded verification evidence.`,
+          note,
+          decision_key: decisionKey,
         }),
       })
+      clearBrowserOperation(operationStorageKey)
       await refresh(bootstrap.corp_id, selectedActor.id)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught))

@@ -1165,6 +1165,35 @@ export recipe. This command-level evidence does not replace the real-stack expor
 or retroactively update any persisted verifier policy. See the
 [Windows red/green report](evidence/2026-09-18-deliverable-diff-check.md).
 
+## Factory base refresh
+
+`tools/e2e_factory_base_refresh.ps1` owns a fresh PostgreSQL cluster, server,
+runner, web server, minimal source repository and bare publication remote. Run it
+on Windows with `-PostgresBin`, `-QaParent`, `-OutputRoot` and
+`-PlaywrightModule` pointing to already installed tools and explicit fixture
+storage. It invokes `tools/e2e_factory_base_refresh.mjs` against those owned
+processes; that script refuses a shared endpoint or an unverified process receipt.
+
+The lane executes the real fake-process adapter, portable bundle export, native
+Git reconstruction and saved automated checks. Chrome operates the actual App's
+independent evidence decision, then the real CLI adopts and publishes the result
+through a local bare Git remote and deterministic fake GitHub boundary. Exact
+authorization, adoption and publication retries must converge. Negative cases
+cover a stale publication base, changed issue authority, replacement checks,
+publication while refresh is pending, premature adoption, requester review and a
+conflicting base. Failed reconstruction must preserve the original result and
+allow explicit, idempotent abandonment.
+
+Receipts include actual source hashes, bases and commits, check and review IDs,
+provider-free allocation, browser screenshots, publication state and source
+preservation. Alice and Bob are development fixture principals, not independent
+human signoff. This lane uses no real provider or hosted GitHub effects and does
+not replace required hosted CI, security or code-quality checks. Failed attempts
+and retained fixture workspaces remain available for diagnosis. See
+[the operator guide](FACTORY_BASE_REFRESH.md) for the production workflow.
+
+## Factory publication
+
 `tools/e2e_factory_publication.mjs` uses a real server, runner, isolated worktrees, portable Git
 bundle, bare Git remote, and deterministic fake GitHub API. It proves policy, role, Corp, budget,
 and breaker rejection; manage-only publisher enrollment; independent publisher workload

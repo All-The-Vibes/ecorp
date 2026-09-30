@@ -1035,6 +1035,12 @@ lost behind newer recovery history.
 
 ## Publish a verified result
 
+If the authorized publication branch advances after verification, use the
+[governed base-refresh flow](FACTORY_BASE_REFRESH.md). It reconstructs the saved
+delta in a new isolated workspace, reruns every saved check, and requires a new
+independent review before explicit adoption. A pending refresh blocks publication;
+the original verified result stays selected until adoption.
+
 Publication is allowed only after:
 
 - the factory item is authoritatively `verified`;

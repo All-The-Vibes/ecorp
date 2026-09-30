@@ -1017,22 +1017,34 @@ fn parse_portable_bundle_head(output: &str, expected_commit: &str) -> Result<Str
 }
 
 fn preflight_publication_target(plan: &PublicationPlan) -> Result<()> {
+    let base = preflight_publication_base(
+        &plan.target_repository,
+        &plan.base_ref,
+        &plan.verified_base_commit,
+    )?;
+    ensure_distinct_publication_branch(&plan.branch, &base)
+}
+
+/// A native, read-only remote check shared by publication and base refresh.
+pub(crate) fn preflight_publication_base(
+    target_repository: &str,
+    base_ref: &str,
+    expected_commit: &str,
+) -> Result<String> {
+    let target_repository = normalize_publication_repository(target_repository)?;
     let workspace = TemporaryPublisherWorkspace::create()?;
     source_git_output(&workspace.repository, &["init", "--bare"])?;
-    add_publication_remote(&workspace.repository, &plan.target_repository)?;
-    let resolved = resolve_remote_base(&workspace.repository, &plan.base_ref)?;
-    if !resolved
-        .commit
-        .eq_ignore_ascii_case(&plan.verified_base_commit)
-    {
+    add_publication_remote(&workspace.repository, &target_repository)?;
+    let resolved = resolve_remote_base(&workspace.repository, base_ref)?;
+    if !resolved.commit.eq_ignore_ascii_case(expected_commit) {
         bail!(
             "remote base {} resolved to {}, not verified commit {}",
             resolved.pull_request_base_ref,
             resolved.commit,
-            plan.verified_base_commit
+            expected_commit
         );
     }
-    ensure_distinct_publication_branch(&plan.branch, &resolved.pull_request_base_ref)
+    Ok(resolved.pull_request_base_ref)
 }
 
 fn add_publication_remote(repository: &Path, target_repository: &str) -> Result<()> {

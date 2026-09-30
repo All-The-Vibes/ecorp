@@ -246,6 +246,22 @@ async fn transfer_canonical_objects(
     snapshot: &Path,
     candidate_commit: &str,
 ) -> Result<()> {
+    transfer_objects(
+        &prepared.workspace_root,
+        snapshot,
+        &prepared.workspace.base_commit,
+        candidate_commit,
+    )
+    .await
+}
+
+/// Copy only immutable Git objects. Config, hooks, refs and alternates stay behind.
+pub(crate) async fn transfer_objects(
+    source: &Path,
+    snapshot: &Path,
+    base: &str,
+    head: &str,
+) -> Result<()> {
     // A named pack makes Git finalize files from the source object database. That rename
     // fails when checkout and snapshot are on different volumes. Stream to an exclusively
     // created snapshot file, await the producer, then let native index-pack install locally.
@@ -257,11 +273,8 @@ async fn transfer_canonical_objects(
         .open(&transfer_path)
         .await
         .context("create owned canonical pack transfer")?;
-    let revisions = format!(
-        "--shallow {}\n{}\n",
-        prepared.workspace.base_commit, candidate_commit
-    );
-    let mut pack = git_command(&prepared.workspace_root);
+    let revisions = format!("--shallow {base}\n{head}\n");
+    let mut pack = git_command(source);
     pack.args([
         "pack-objects",
         "--revs",
@@ -342,7 +355,7 @@ pub(crate) fn isolate_git_environment(command: &mut Command) {
         .env("GIT_TERMINAL_PROMPT", "0");
 }
 
-fn git_command(root: &Path) -> Command {
+pub(crate) fn git_command(root: &Path) -> Command {
     let mut command = Command::new("git");
     isolate_git_environment(&mut command);
     command
@@ -361,7 +374,7 @@ fn git_command(root: &Path) -> Command {
     command
 }
 
-async fn private_git(root: &Path, args: &[OsString], input: &[u8]) -> Result<Vec<u8>> {
+pub(crate) async fn private_git(root: &Path, args: &[OsString], input: &[u8]) -> Result<Vec<u8>> {
     private_git_with_index(root, args, input, None).await
 }
 
@@ -593,6 +606,22 @@ async fn tree_files(root: &Path, tree: &str) -> Result<Vec<SourceFile>> {
 }
 
 async fn materialize(root: &Path, files: &mut [SourceFile]) -> Result<Vec<(PathBuf, PathBuf)>> {
+    materialize_at(root, root, files).await
+}
+
+/// Populate a new, empty owned worktree using raw blobs, with no checkout hooks,
+/// filters or attributes. The native index separately retains all executable bits.
+pub(crate) async fn materialize_tree(source: &Path, destination: &Path, tree: &str) -> Result<()> {
+    let mut files = tree_files(source, tree).await?;
+    let links = materialize_at(source, destination, &mut files).await?;
+    materialize_links(destination, links)
+}
+
+async fn materialize_at(
+    root: &Path,
+    destination: &Path,
+    files: &mut [SourceFile],
+) -> Result<Vec<(PathBuf, PathBuf)>> {
     let mut command = git_command(root);
     command
         .args(["cat-file", "--batch"])
@@ -602,7 +631,7 @@ async fn materialize(root: &Path, files: &mut [SourceFile]) -> Result<Vec<(PathB
     let mut process = PrivateGitProcess::spawn(&mut command)
         .await
         .context("start raw Git blob reader")?;
-    let result = materialize_blobs(process.child_mut(), root, files).await;
+    let result = materialize_blobs(process.child_mut(), destination, files).await;
     process.finish(result).await
 }
 

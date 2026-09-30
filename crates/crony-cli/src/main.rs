@@ -86,6 +86,11 @@ enum Command {
         #[command(flatten)]
         args: Box<publish::FactoryPublishArgs>,
     },
+    /// Reconstruct and re-verify a verified Factory result on an advanced base.
+    FactoryBaseRefresh {
+        #[command(flatten)]
+        args: Box<factory::base_refresh::BaseRefreshArgs>,
+    },
     Mission {
         corp_id: Uuid,
         actor_id: Uuid,
@@ -197,6 +202,9 @@ enum Command {
         actor_id: Uuid,
         #[arg(long)]
         approve: bool,
+        /// Reuse this UUID and the exact decision after a lost response.
+        #[arg(long)]
+        decision_key: Option<Uuid>,
         note: String,
     },
 }
@@ -355,6 +363,9 @@ async fn main() -> Result<()> {
         }
         Command::FactoryPublish { args: publish_args } => {
             publish::run(&client, &args.server, *publish_args).await?
+        }
+        Command::FactoryBaseRefresh { args: refresh_args } => {
+            factory::base_refresh::run(&client, &args.server, *refresh_args).await?
         }
         Command::Mission {
             corp_id,
@@ -602,6 +613,7 @@ async fn main() -> Result<()> {
             run_id,
             actor_id,
             approve,
+            decision_key,
             note,
         } => {
             request(
@@ -615,7 +627,7 @@ async fn main() -> Result<()> {
                     actor_id,
                     approved: approve,
                     note,
-                    decision_key: None,
+                    decision_key,
                 })?),
             )
             .await?
@@ -672,6 +684,64 @@ async fn request(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn issue84_verification_decision_preserves_optional_durable_key_and_exact_note() {
+        let corp = Uuid::new_v4().to_string();
+        let run = Uuid::new_v4().to_string();
+        let actor = Uuid::new_v4().to_string();
+        let key = Uuid::new_v4();
+        let note = "Reviewed the refreshed source; keep $scope and **\nexactly.";
+        for approved in [false, true] {
+            for decision_key in [None, Some(key)] {
+                let mut command = vec![
+                    "crony".to_owned(),
+                    "verification-decision".to_owned(),
+                    corp.clone(),
+                    run.clone(),
+                    actor.clone(),
+                    note.to_owned(),
+                ];
+                if approved {
+                    command.push("--approve".to_owned());
+                }
+                if let Some(key) = decision_key {
+                    command.extend(["--decision-key".to_owned(), key.to_string()]);
+                }
+                let parsed = Args::try_parse_from(command).unwrap();
+                let Command::VerificationDecision {
+                    corp_id,
+                    run_id,
+                    actor_id,
+                    approve,
+                    decision_key: parsed_key,
+                    note: parsed_note,
+                } = parsed.command
+                else {
+                    panic!("expected verification decision");
+                };
+                assert_eq!(corp_id.to_string(), corp);
+                assert_eq!(run_id.to_string(), run);
+                assert_eq!(actor_id.to_string(), actor);
+                assert_eq!(approve, approved);
+                assert_eq!(parsed_key, decision_key);
+                assert_eq!(parsed_note, note);
+            }
+        }
+        assert!(
+            Args::try_parse_from([
+                "crony",
+                "verification-decision",
+                &corp,
+                &run,
+                &actor,
+                note,
+                "--decision-key",
+                "not-a-uuid",
+            ])
+            .is_err()
+        );
+    }
+
     #[test]
     fn base_v2_cli_exposes_separate_explicit_admin_operations() {
         let prefix = [

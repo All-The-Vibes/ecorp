@@ -1,0 +1,358 @@
+"""Assemble observed issue 84 evidence only after canonical validation exits."""
+from issue84_publication_lib_r1 import *
+
+SOURCE = EV / "issue84-publication-source-r1.json"
+RECEIPT = EV / "issue84-publication-packet-r1.json"
+REVIEW = EV / "issue84-publication-self-review-r1.json"
+assert not any(p.exists() for p in (PACKET, SOURCE, RECEIPT, REVIEW)), "Preserve previous assembly attempts"
+x = completed_inputs()
+pending_source()
+physical = x["physical"]
+original_files(physical)
+real_index = index_digest()
+with temporary_index("assembly", PARENT) as temporary:
+    stage_names(dict(physical), temporary)
+    tested_tree = git("write-tree", env=temporary).decode().strip()
+assert index_digest() == real_index
+entries = git("ls-tree", "-r", "-z", tested_tree).split(b"\0")[:-1]
+assert len(entries) == len(physical)
+blob_proof = []
+for entry in entries:
+    meta, filename = entry.split(b"\t", 1)
+    mode, kind, oid = meta.decode().split()
+    name = filename.decode()
+    assert mode in {"100644", "100755"} and kind == "blob" and name in dict(physical), name
+    raw = (ROOT / name).read_bytes()
+    object_id = lambda b: hashlib.sha1(b"blob " + str(len(b)).encode() + b"\0" + b).hexdigest()
+    if object_id(raw) == oid:
+        transform = "identical bytes"
+    else:
+        assert object_id(raw.replace(b"\r\n", b"\n")) == oid, "Unexpected Git content filter: " + name
+        transform = "CRLF to LF only"
+    blob_proof.append([name, mode, oid, transform])
+assert {r[0] for r in blob_proof} == set(dict(physical))
+code_paths = git("diff", "--name-only", "--no-renames", PARENT, tested_tree).decode().splitlines()
+assert len(code_paths) == 49
+scan_names = {r["path"] if isinstance(r, dict) else r for r in x["scan"]["changed_files"]}
+assert set(code_paths) == scan_names
+assert git("diff", "--name-only", PARENT, tested_tree, "--", "db/migrations").decode().splitlines() == [
+    "db/migrations/0057_factory_base_refresh.sql", "db/migrations/manifest.json"
+]
+patch = git("diff", "--binary", "--no-ext-diff", "--no-textconv", "--unified=0", PARENT, tested_tree)
+source = {
+    "issue": 84, "recorded_at_utc": now(), "base": MAIN, "parents": [PARENT], "branch": BRANCH,
+    "tested_tree": tested_tree, "physical_files": physical, "physical_files_sha256": PHYSICAL,
+    "source_file_count": len(physical), "code_paths": code_paths, "code_patch_sha256": sha(patch),
+    "original_index_sha256": real_index, "publication_directory": PACKET_REL,
+    "git_blob_binding_sha256": sha(compact(sorted(blob_proof))),
+    "git_blob_content_comparison": {
+        "identical_bytes": sum(r[3] == "identical bytes" for r in blob_proof),
+        "crlf_to_lf_only": sum(r[3] == "CRLF to LF only" for r in blob_proof),
+        "other_transformations": 0,
+    },
+    "canonical_receipt_sha256": sha(x["canonical_path"].read_bytes()),
+    "canonical_report_sha256": sha(x["gate_path"].read_bytes()),
+    "acceptance_receipt_sha256": sha(x["acceptance_path"].read_bytes()),
+    "acceptance_driver_sha256": sha(x["driver_path"].read_bytes()),
+    "canonical_and_acceptance_same_complete_physical_source": True,
+    "scope": "Canonical R2 and full-stack R10 observed the same complete physical source. The tested Git tree is reconstructed after execution and verified to differ from physical bytes only by Git CRLF-to-LF normalization where applicable. The publication commit did not exist during execution. Only this separately validated evidence directory is subsequently added.",
+}
+write(SOURCE, source)
+
+acceptance_mapping = [
+    {"criterion": "Explicit actor authorization and idempotency",
+     "implementation": ["crates/crony-store/src/factory_base_refresh.rs:290", "crates/crony-store/src/factory_base_refresh.rs:342"],
+     "evidence": ["acceptance/acceptance.json: scenarios[3]", "acceptance/acceptance.json: scenarios[7]", "focused/store-r11.log", "focused/predispatch-r1.log"],
+     "result": "Authorization, adoption and abandonment replay with the saved actor, claim, version and exact arguments; changed authorities and replacement checks fail closed."},
+    {"criterion": "Pin the new base and preserve original verified lineage",
+     "implementation": ["crates/crony-domain/src/factory_base_refresh.rs", "db/migrations/0057_factory_base_refresh.sql"],
+     "evidence": ["acceptance/acceptance.json: scenarios[7]", "focused/store-r11.log"],
+     "result": "Immutable source and replacement identities and both bases are retained. Explicit adoption changes the selected mission without rewriting the original result."},
+    {"criterion": "Reconstruct in new isolated storage without rewriting the verified commit",
+     "implementation": ["crates/crony-runner/src/base_refresh.rs:84", "crates/crony-runner/src/base_refresh_tests.rs"],
+     "evidence": ["canonical-report.json", "acceptance/acceptance.json: scenarios[4]", "acceptance/acceptance.json: scenarios[9]"],
+     "result": "Existing portable bundles, native Git merge-tree, private materialization and canonical export are reused. Conflicts retain the original source and permit explicit abandonment."},
+    {"criterion": "Rerun the complete persisted verifier policy",
+     "implementation": ["crates/crony-domain/src/factory_base_refresh.rs:68", "crates/crony-runner/src/deliverable_verification.rs"],
+     "evidence": ["acceptance/acceptance.json: scenarios[2]", "acceptance/acceptance.json: scenarios[4]", "focused/predispatch-r1.log"],
+     "result": "All saved automated checks are copied and revalidated. Artifact, file and command checks execute on the refreshed run without a provider allocation."},
+    {"criterion": "Require a fresh independent review when base or tree changes",
+     "implementation": ["crates/crony-store/src/factory_base_refresh/lifecycle.rs:311", "crates/crony-store/src/factory_base_refresh.rs:198", "apps/web/src/App.tsx"],
+     "evidence": ["acceptance/acceptance.json: scenarios[5]", "acceptance/acceptance.json: scenarios[6]", "acceptance/refresh-awaiting-review.png", "acceptance/refresh-reviewed-reload.png"],
+     "result": "Requester review and premature adoption are rejected. The actual App saves the distinct fixture reviewer's decision and retains it across reload; fixture actors are not human signoff."},
+    {"criterion": "Publish one branch and PR from the exact refreshed verified result",
+     "implementation": ["crates/crony-store/src/publication.rs", "crates/crony-cli/src/publish.rs"],
+     "evidence": ["acceptance/acceptance.json: scenarios[5]", "acceptance/acceptance.json: scenarios[8]"],
+     "result": "Pending refresh fences publication. Native publication and replay create one publication branch and one fake GitHub PR at commit 21c5153d82e75e11a30c5a73e9e616529f232912 on a local bare remote. The recorded branch count of two includes main."},
+    {"criterion": "Reject conflicts, changed authority or repository identity, and verifier weakening",
+     "implementation": ["crates/crony-cli/src/factory/base_refresh.rs", "crates/crony-store/src/factory_base_refresh.rs", "crates/crony-store/src/factory_base_refresh/lifecycle.rs"],
+     "evidence": ["acceptance/acceptance.json: scenarios[1]", "acceptance/acceptance.json: scenarios[2]", "acceptance/acceptance.json: scenarios[9]", "focused/store-r11.log", "focused/predispatch-r1.log"],
+     "result": "Observed issue/repository identity, exact base, claim, connection, saved contracts and dispatch scope are revalidated. Source conflicts fail without automatic resolution."},
+    {"criterion": "Record both bases, source, result and review in durable audit state",
+     "implementation": ["db/migrations/0057_factory_base_refresh.sql", "crates/crony-store/src/state_audit.rs", "crates/crony-audit/src/history.rs"],
+     "evidence": ["focused/store-r11.log", "acceptance/acceptance.json: scenarios[7]", "canonical-report.json"],
+     "result": "Authorization and terminal settlement retain scoped immutable lineage and the exact independent decision. The adopted archive regression includes both mission histories; applied SQL is unchanged."},
+]
+qualifications = [
+    "This is retrospective development validation and an AI implementation self-review, not an independent GitHub approval or a real human decision. No historical tests, reviews or chronology are invented.",
+    "Acceptance R10 uses real Chrome, the actual App, server, PostgreSQL, runner and native Git. Provider execution is the deterministic fake-process adapter; GitHub is a fake boundary backed by a local bare publication remote. This is not live-provider or hosted-publication acceptance.",
+    "The fixture reviewer is an automated distinct actor. Product explicit_human metadata in this fixture is not evidence of a human decision. Both original screenshots were visually inspected at reduced display resolution; this is not exhaustive visual or accessibility certification.",
+    "Acceptance R10 and canonical R2 bind all 7,162 physical files. Store R11, predispatch R1 and runtime-build R2 have matching but incomplete 276-file manifests; those alone do not prove complete-source equivalence. Runtime binary hashes are historical build identities and are not asserted unchanged after later canonical builds.",
+    "The publication commit is created after tests. Temporary-index reconstruction verifies every source blob, permitting only Git CRLF-to-LF normalization, and separately checks evidence-only additions against the original bytes, all full-plan arguments and Node discovery.",
+    "Canonical R1 failed with 3,108 Node tests: 3,030 passed, 13 failed and 65 skipped. Two failures required the locked Teams SDK dependencies; eleven required working Python rather than the Windows Store alias. Five later gates did not run. R3 setup then completed frozen pnpm installation and the locked Repo Steward npm installation, without changing source or lockfiles.",
+    "Prerequisite regressions observed native process exit zero and 32 passing tests. Their original wrapper wrongly expected TAP but received spec output, raising IndexError. The retained reconciliation parses the existing log retrospectively; it is not a new execution or a claim that the original wrapper succeeded.",
+    "Earlier failed acceptance and validation attempts are preserved. Acceptance R8/R9 and canonical R1 are included as history; successful later evidence does not rewrite them. Runner/CLI R4 predate later changes and are not used as final-source validation.",
+    "Optional legacy browser pure-test comparison R2 has the same 28 total, 18 passing and 10 failing tests on main and candidate. It is outside canonical Node discovery and is retained as a failure, not relabeled as a pass.",
+    "The actual validation runtime is Node 24.21.0, pnpm 11.19.0, Rust 1.98.1 and Python 3.12.14. The repository declares Node 24.19.0; this is not a pinned-Node execution claim. RUST_TEST_THREADS was explicitly unset for canonical R2, so Rust used native thread defaults.",
+    "Skipped Node and ignored Rust tests are not passes. Canonical, EVM, focused and full-stack counts overlap and must not be summed. Dedicated live and immutable historical replay lanes remain separate.",
+    "GitHub Actions is disabled in the latest retained inventory. Required hosted CI, CodeQL, code-quality and security gates remain mandatory and unavailable. Issue 84 is open; no merge, issue closure, self-approval, policy override or clean historical Cargo advisory audit is claimed.",
+]
+write(REVIEW, {
+    "issue": 84, "recorded_at_utc": now(), "reviewer": "Codex assistant; implementation self-review, not human or independent GitHub approval",
+    "base": MAIN, "parents": [PARENT], "tested_tree": tested_tree, "physical_files_sha256": PHYSICAL,
+    "reviewed_paths": code_paths, "prior_review": "history/precommit-review-r1.md",
+    "coverage": "Domain, migration, store transactions and dispatch, runner reconstruction and verification, CLI/protocol/server, publication and audit, budget/checkpoint/breaker integration, actual browser decision callback, regression tests and native acceptance.",
+    "harness": "Reuses native Git object transfer and merge-tree, portable deliverables, canonical verification/export, durable runner commands and the existing publisher. New cross-mission authorization, bounded immutable lineage and explicit adoption supply ECorp invariants rather than replacing native execution or permissions.",
+    "invariants": [
+        "Current actor, Corp, room, claim and version fence authorization and settlement; exact replay arguments retain idempotency.",
+        "Three lifetime attempts include abandonment. Pending refreshes fence publication, and terminal adoption requires current independent review and original budget/recovery authority.",
+        "No provider session, model or token/cost allocation is added. Server code never executes untrusted shell; the runner uses fresh private storage and retained verifier scope.",
+        "Existing applied SQL is unchanged; the sole new migration is 0057.",
+        "Full-stack fixture artifacts explicitly separate synthetic metadata and automated actors from human and production evidence.",
+    ],
+    "acceptance_mapping": acceptance_mapping, "qualifications": qualifications,
+    "unresolved_confirmed_production_defects": [], "independent_review_performed": False,
+})
+
+copies = [
+    (SOURCE, "source-equivalence.json"), (REVIEW, "implementation-self-review.json"),
+    (x["canonical_path"], "canonical-driver.json"), (x["gate_path"], "canonical-report.json"),
+    (Path(x["canonical"]["log"]), "canonical-pnpm-check.log"),
+    (EV / "issue84-check-r2-session-exit.json", "canonical-session-exit.json"),
+    (x["acceptance_path"], "acceptance/acceptance.json"), (x["driver_path"], "acceptance/driver.json"),
+    (x["setup_path"], "dependencies/setup-r3.json"),
+    (x["scan_path"], "security/physical-source-scan-r1.json"),
+    (Path(x["scan"]["log"]), "security/physical-source-scan-r1.log"),
+    (x["security_path"], "security/native-detector-r1.json"),
+    (EV / "issue84-security-native-r1-session-exit.json", "security/native-detector-session-exit.json"),
+    (EV / "issue84-review-precommit-r1.md", "history/precommit-review-r1.md"),
+    (EV / "issue84-design-progress-r1.md", "history/design-progress-r1.md"),
+    (EV / "issue84-source-binding-r1.json", "history/source-binding-r1.json"),
+    (EV / "issue84-evidence-binding-r2.json", "history/evidence-binding-r2.json"),
+    (EV / "issue84-check-r1.json", "history/canonical-r1-driver.json"),
+    (EV / "issue84-check-r1-native.json", "history/canonical-r1-report.json"),
+    (EV / "issue84-check-r1.log", "history/canonical-r1.log"),
+    (EV / "issue84-check-r1-session-exit.json", "history/canonical-r1-session-exit.json"),
+    (EV / "issue84-prerequisite-regressions-r1.json", "history/prerequisite-original-driver.json"),
+    (EV / "issue84-prerequisite-regressions-r1.log", "focused/prerequisites-r1.log"),
+    (EV / "issue84-prerequisite-regressions-r1-reconciliation.json", "focused/prerequisites-r1-reconciliation.json"),
+    (EV / "issue84-validation-environment-r2.json", "history/setup-r2-failed.json"),
+    (EV / "issue84-legacy-browser-comparison-r2.json", "history/legacy-browser-comparison-r2.json"),
+    (EV / "issue84-runtime-build-r2.json", "history/runtime-build-r2.json"),
+    (EV / "issue84-runtime-build-r2.log", "history/runtime-build-r2.log"),
+]
+for focused, name in zip(x["focused"], ("store-r11", "predispatch-r1")):
+    copies += [(focused["path"], "focused/" + name + ".json"), (Path(focused["receipt"]["log"]), "focused/" + name + ".log")]
+copies += [(Path(c["log"]), "dependencies/" + Path(c["log"]).name) for c in x["setup"]["commands"]]
+copies += [(Path(c["log"]), "security/" + c["name"] + ".log") for c in x["security"]["checks"]]
+native_dir = x["acceptance_path"].parent
+shots = sorted(native_dir.glob("*.png"))
+assert [p.name for p in shots] == ["refresh-awaiting-review.png", "refresh-reviewed-reload.png"]
+copies += [(p, "acceptance/" + p.name) for p in shots]
+copies += [(p, "acceptance/" + p.name) for p in sorted(native_dir.glob("*.log"))]
+for name in ("owned-fixture.json", "server-native-identity.json", "web-native-identity.json"):
+    copies.append((native_dir / name, "acceptance/" + name))
+for attempt in (8, 9):
+    for name in ("acceptance.json", "driver.json"):
+        copies.append((EV / f"issue84-acceptance-r{attempt}" / name, f"history/acceptance-r{attempt}/" + name))
+drivers = (
+    "run-issue84-check-r2.ps1", "prepare-issue84-validation-r3.ps1",
+    "verify-issue84-prerequisites-r1.py", "reconcile-issue84-prerequisites-r1.py",
+    "issue84_publication_lib_r1.py", "assemble-issue84-publication-r1.py",
+    "validate-issue84-publication-r1.py", "commit-issue84-publication-r1.py",
+    "scan-issue84-publication-r1.py",
+)
+copies += [(EV / name, "drivers/" + name + ".txt") for name in drivers]
+assert len({name for _, name in copies}) == len(copies)
+
+credential_key = re.compile(r"^(?:.*_)?(?:credential|credentials|password|passwd|secret|private_key|signing_key|api_key|authorization|cookie|token|access_token|refresh_token|enrollment_token|claim_token|assignment_token|lease_token|publisher_token|auth_token|session_token)$", re.I)
+identifier_keys = {"idempotency_key", "operation_key", "settlement_key"}
+personal = re.compile(r"(?:[a-z]:)?[/\\]+Users[/\\]+[^/\\\s\"'<>]+", re.I)
+secrets, redactions, aliases = set(), [], {}
+manifest_transforms = []
+
+def discover(value, location, filename):
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key in identifier_keys and isinstance(child, str) and child:
+                alias = aliases.setdefault(child, f"<operation-{len(aliases)+1:03d}>")
+                redactions.append({"file": filename, "json_path": location + "." + key,
+                                   "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality", "alias": alias})
+            elif credential_key.fullmatch(key) and isinstance(child, str) and child:
+                redactions.append({"file": filename, "json_path": location + "." + key, "treatment": "Credential-bearing string redacted"})
+                if child not in {"[REDACTED]", "<REDACTED>", "***"}:
+                    secrets.add(child)
+            else:
+                discover(child, location + "." + key, filename)
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            discover(child, f"{location}[{index}]", filename)
+
+def redact_text(value):
+    for secret in sorted(secrets, key=len, reverse=True):
+        value = value.replace(secret, "<REDACTED>")
+    for identifier, alias in aliases.items():
+        value = value.replace(identifier, alias)
+    value = re.sub(r"(?i)C\^?:\^?<USERPROFILE>\\shyamsridhar", "<USERPROFILE>", value)
+    return personal.sub("<USERPROFILE>", value).replace("\r\n", "\n")
+
+def scrub(value):
+    if isinstance(value, dict):
+        return {k: "<REDACTED>" if credential_key.fullmatch(k) and isinstance(v, str) and v else scrub(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [scrub(v) for v in value]
+    return redact_text(value) if isinstance(value, str) else value
+
+def manifest_reference(value, filename):
+    if isinstance(value, dict):
+        output = {}
+        for key, child in value.items():
+            complete_rows = key == "source_files" and isinstance(child, list) and len(child) == len(physical)
+            complete_names = key == "files" and isinstance(child, list) and len(child) == len(physical) and all(isinstance(n, str) for n in child)
+            if complete_rows and pairs(child) == physical or complete_names and set(child) == set(dict(physical)):
+                output[key] = {"reference": "source-equivalence.json#/physical_files", "count": len(physical),
+                               "projection": "paths only" if complete_names else "path and SHA-256 pairs",
+                               "physical_files_sha256": PHYSICAL, "original_array_sha256": sha(compact(child))}
+                manifest_transforms.append({"file": filename, "field": key, "treatment": "Complete manifest deduplicated by reference; original array digest retained"})
+            else:
+                output[key] = manifest_reference(child, filename)
+        return output
+    if isinstance(value, list):
+        return [manifest_reference(v, filename) for v in value]
+    return value
+
+try:
+    for path, name in copies:
+        assert path.is_file() and not path.is_symlink() and "credential" not in path.name.lower(), name
+        if path.suffix == ".json":
+            discover(load(path), "$", name)
+    qa = Path(x["acceptance"]["qa_root"])
+    for path in [*qa.glob("*.json"), *(qa / "evidence").glob("*.json")]:
+        discover(load(path), "$", "private-fixture-discovery:" + path.name)
+    PACKET.mkdir(parents=True)
+    artifacts = []
+    for path, name in copies:
+        raw = path.read_bytes()
+        if path.suffix == ".png":
+            published, transform = raw, "None; original screenshot capture bytes"
+        else:
+            if path.suffix == ".json":
+                value = json.dumps(scrub(manifest_reference(load(path), name)), indent=2, ensure_ascii=False)
+            else:
+                value = redact_text(raw.decode("utf-8-sig"))
+            value = "\n".join(line.rstrip() for line in value.splitlines()).rstrip() + "\n"
+            assert not personal.search(value.replace("^", "")), name
+            assert all(s not in value for s in secrets) and all(k not in value for k in aliases), name
+            published = value.encode()
+            transform = "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+        target = PACKET / name
+        assert target.resolve().is_relative_to(PACKET.resolve())
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("xb") as stream:
+            stream.write(published)
+        artifacts.append({"file": name, "source_name": path.name, "original_sha256": sha(raw),
+                          "published_sha256": sha(published), "bytes": len(published), "transform": transform})
+    assert not personal.search(patch.decode()) and all(s not in patch.decode() for s in secrets)
+    write(PACKET / "reviewed-code.patch.json", {"encoding": "utf-8", "context_lines": 0, "base": PARENT,
+          "tested_tree": tested_tree, "decoded_sha256": sha(patch), "patch": patch.decode()})
+    patch_path = PACKET / "reviewed-code.patch.json"
+    artifacts.append({"file": patch_path.name, "original_sha256": sha(patch), "published_sha256": sha(patch_path.read_bytes()),
+                      "bytes": patch_path.stat().st_size, "transform": "Exact implementation diff encoded as JSON"})
+    checks = [{k: c[k] for k in ("name", "argv", "exitCode", "passed", "counts")} for c in x["gate"]["checks"]]
+    summary = {
+        "issue": 84, "status": "locally-validated-awaiting-required-hosted-checks", "issue_completed": False,
+        "base": MAIN, "parents": [PARENT], "tested_tree": tested_tree, "physical_files_sha256": PHYSICAL,
+        "source_file_count": len(physical), "canonical_and_acceptance_same_complete_physical_source": True,
+        "evidence_added_after_code_execution": True, "checks": checks,
+        "focused_counts": [r["counts"] for r in x["focused"]],
+        "acceptance_scenarios": [{"name": s["name"], "passed": s["passed"]} for s in x["acceptance"]["scenarios"]],
+        "native_screenshots": len(shots), "acceptance_mapping": acceptance_mapping, "qualifications": qualifications,
+        "artifacts": artifacts, "redactions": redactions, "manifest_transforms": manifest_transforms,
+    }
+    write(PACKET / "summary.json", scrub(summary))
+    node, rust = x["node"], x["rust"]
+    text = f"""# Governed Factory base refresh
+
+Issue #84. Base: {MAIN}.
+Tested implementation tree: {tested_tree}.
+
+An already verified Factory deliverable can now be explicitly reconstructed and
+re-verified after its authorized publication base advances. Refresh pins the new
+base, retains the original result, runs the complete saved checks in fresh private
+storage, requires a new independent review, and selects the result only through
+explicit adoption. The existing publisher still requires the exact current base
+and permits one branch and pull-request effect. Three lifetime attempts bound retries.
+
+All eleven canonical pnpm check gates passed on the unchanged candidate source.
+Node: {node['tests']} total, {node['passed']} passed, {node['failed']} failed and
+{node['skipped']} skipped. Rust: {rust['passed']} passed, {rust['failed']} failed and
+{rust['ignored']} ignored across {rust['summaries']} summaries. The separate native
+EVM gate passed one test; migrations checked all 57 versions. Skips and ignores
+are not passes, and these counts overlap with focused lanes.
+
+Full-stack acceptance R10 passed all ten scenarios through real Chrome/App,
+server, PostgreSQL, runner and Git. Provider execution uses fake-process; the
+GitHub boundary is fake and publication targets a local bare remote. One
+publication branch and one fake PR were created at exact fixture commit
+21c5153d82e75e11a30c5a73e9e616529f232912. The reported two branches include main.
+The publisher credential was revoked and all owned services stopped; PostgreSQL
+shutdown exited zero. Automated fixture actors do not represent human signoff.
+
+The dedicated store lane passed 21 tests with 551 filtered; the predispatch lane
+passed 8 with 564 filtered. Both used owned PostgreSQL and had zero failures or
+ignored cases. Their matching 276-file manifests are incomplete. Canonical R2
+and acceptance R10 instead bind every one of the 7,162 physical source files:
+{PHYSICAL}.
+
+Canonical R1 failed with 13 Node failures and five later gates not run. Locked
+dependency installation and working Python resolved those environment failures
+before R2. Native prerequisite regressions passed 32 tests; their original
+wrapper's spec/TAP parsing error is preserved alongside a retrospective
+reconciliation. Earlier failures and limitations remain in the history directory.
+
+The publication commit did not exist during these executions. Source equivalence
+records the reconstructed tested tree, verifies all Git blobs against the tested
+bytes allowing only CRLF-to-LF normalization, and retains the complete physical
+manifest once. Matching duplicated manifests use explicit references. Evidence
+is added afterward; a separate validation checks original bytes, full command
+arguments, Node discovery, documentation, privacy and secret scans.
+
+The summary maps all eight issue criteria to implementation and observed evidence.
+Artifact SHA-256 pairs distinguish original retained bytes from the published,
+sanitized versions. Internal original hashes still identify original artifacts.
+Personal paths and discovered credential strings are redacted; synthetic operation
+identifiers use stable aliases. Original screenshot bytes are preserved.
+
+Required hosted CI, CodeQL, code-quality and security gates remain unavailable
+while GitHub Actions is disabled. This packet supports a draft implementation PR;
+issue #84 remains open. No merge, self-approval, human decision, production
+publication, live-provider acceptance or clean historical Cargo audit is claimed.
+
+Qualifications:
+"""
+    text += "\n".join("- " + q for q in qualifications) + "\n"
+    (PACKET / "README.md").write_text(text, encoding="utf-8", newline="\n")
+    original_files(physical)
+    pending_source()
+    assert index_digest() == real_index
+    files = sorted(p.relative_to(PACKET).as_posix() for p in PACKET.rglob("*") if p.is_file())
+    write(RECEIPT, {"issue": 84, "status": "assembled", "recorded_at_utc": now(), "base": MAIN,
+          "parents": [PARENT], "tested_tree": tested_tree, "source_receipt_sha256": sha(SOURCE.read_bytes()),
+          "physical_files_sha256": PHYSICAL, "publication_files": files,
+          "summary_sha256": sha((PACKET / "summary.json").read_bytes()), "code_paths": code_paths,
+          "original_physical_files_unchanged": True, "original_index_sha256": real_index,
+          "index_unchanged": True, "native_screenshots": len(shots)})
+finally:
+    secrets.clear()
+    aliases.clear()
+print(json.dumps({"status": "assembled", "tested_tree": tested_tree, "publication_files": len(files), "index_unchanged": True}))

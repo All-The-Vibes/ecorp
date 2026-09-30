@@ -184,6 +184,8 @@ pub enum ServerToRunner {
     },
     VerifyRun {
         #[serde(default, skip_serializing_if = "Option::is_none")]
+        base_refresh: Option<Box<BaseRefreshSource>>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         workspace_connection_id: Option<Uuid>,
         command_id: Uuid,
         corp_id: Uuid,
@@ -273,6 +275,21 @@ pub enum ServerToRunner {
 }
 
 pub const MAX_VERIFICATION_ARTIFACT_BYTES: usize = 16_777_216;
+
+/// Exact stored source for an authorized publication-base refresh. The server
+/// hydrates the signed bundle only for the selected runner; clients supply IDs.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BaseRefreshSource {
+    pub refresh_id: Uuid,
+    pub source_deliverable_id: Uuid,
+    pub old_base_commit: String,
+    pub source_head_commit: String,
+    pub source_branch: String,
+    pub verification_sha256: String,
+    pub git_bundle_sha256: String,
+    pub artifact: VerificationArtifactReference,
+}
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct VerificationArtifactReference {

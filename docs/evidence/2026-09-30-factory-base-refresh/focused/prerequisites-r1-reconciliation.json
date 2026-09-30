@@ -1,0 +1,36 @@
+{
+  "issue": 84,
+  "status": "reconciled",
+  "recorded_at_utc": "2026-09-30T20:55:35.146129+00:00",
+  "original_receipt": "issue84-prerequisite-regressions-r1.json",
+  "original_receipt_sha256": "ef460726aa761ade7d26556b636cef3415f5e85e3213a11f69c86a141e3ccc7d",
+  "original_receipt_status": "failed",
+  "original_failure_type": "IndexError",
+  "original_receipt_preserved": true,
+  "original_log": "issue84-prerequisite-regressions-r1.log",
+  "log_sha256": "942b4798893f8da5c2e90cb6b074d2d388fb603fd1fc8060c96d511178b19d79",
+  "helper_sha256": "89db60248fdf62c54906457bdf5739075fa1b360bea772565f5d0408626ac2b3",
+  "native_status": "passed",
+  "native_exit_code": 0,
+  "counts": {
+    "tests": 32,
+    "suites": 0,
+    "pass": 32,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "native_duration_ms": 36536.8663,
+  "source_file_count": 7162,
+  "source_sha256": "efe92db431183bd759bc833eda77c2a57b9fd2fc58cc06c3565abe80894c93c8",
+  "source_unchanged": true,
+  "rerun": false,
+  "session_observation": {
+    "session_id": 30996,
+    "exit_code": 0,
+    "source": "functions.exec/write_stdin observed completion in this continuation"
+  },
+  "explanation": "The five native Node suites passed. The original helper expected TAP count prefixes but Node emitted the spec reporter; its subsequent IndexError made the receipt failed. Its exception handler also incorrectly retained wrapper exit 0. This retrospective receipt parses the retained native output; it does not change the original failed receipt or claim another test execution.",
+  "assurance": "Focused prerequisite regressions only; not the complete canonical check plan or hosted CI."
+}

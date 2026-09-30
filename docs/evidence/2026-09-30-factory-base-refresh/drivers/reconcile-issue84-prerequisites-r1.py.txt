@@ -1,0 +1,64 @@
+"""Preserve the failed receipt and bind native spec-reporter results retrospectively."""
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+
+EV = Path(__file__).resolve().parent
+ROOT = Path(r'<USERPROFILE>\.codex\worktrees\issue84-base-refresh\ecorp')
+EXPECTED = 'efe92db431183bd759bc833eda77c2a57b9fd2fc58cc06c3565abe80894c93c8'
+OUT = EV / 'issue84-prerequisite-regressions-r1-reconciliation.json'
+assert not OUT.exists(), 'Preserve existing reconciliation'
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+original_path = EV / 'issue84-prerequisite-regressions-r1.json'
+original_bytes = original_path.read_bytes()
+original = json.loads(original_bytes.decode('utf-8-sig'))
+log_path = EV / 'issue84-prerequisite-regressions-r1.log'
+log_bytes = log_path.read_bytes()
+assert sha(log_bytes) == original['log_sha256']
+assert original['status'] == 'failed' and original['failure_type'] == 'IndexError'
+assert original['exit_code'] == 0 and original['wrapper_exit_code'] == 0
+assert original['source_unchanged'] is True
+text = log_bytes.decode('utf-8-sig')
+counts = {}
+for key in ['tests', 'suites', 'pass', 'fail', 'cancelled', 'skipped', 'todo']:
+    matches = re.findall(r'^(?:#|ℹ) ' + key + r' (\d+)\s*$', text, re.M)
+    assert len(matches) == 1, (key, len(matches))
+    counts[key] = int(matches[0])
+assert counts == {'tests': 32, 'suites': 0, 'pass': 32, 'fail': 0,
+                  'cancelled': 0, 'skipped': 0, 'todo': 0}
+duration = re.findall(r'^ℹ duration_ms ([0-9.]+)\s*$', text, re.M)
+assert len(duration) == 1
+env = {k: v for k, v in os.environ.items() if not k.upper().startswith('GIT_')}
+listed = subprocess.run(['git', '--no-optional-locks', '-C', str(ROOT), 'ls-files', '-z',
+                         '--cached', '--others', '--exclude-standard'], capture_output=True,
+                        check=True, env=env, creationflags=subprocess.CREATE_NO_WINDOW)
+pairs = [[p, sha((ROOT / p).read_bytes())]
+         for p in sorted(set(listed.stdout.decode().split('\0')) - {''})]
+source = sha(json.dumps(pairs, separators=(',', ':'), ensure_ascii=False).encode())
+assert len(pairs) == 7162 and source == EXPECTED
+record = dict(
+    issue=84, status='reconciled', recorded_at_utc=datetime.now(timezone.utc).isoformat(),
+    original_receipt=original_path.name, original_receipt_sha256=sha(original_bytes),
+    original_receipt_status=original['status'], original_failure_type=original['failure_type'],
+    original_receipt_preserved=True, original_log=log_path.name, log_sha256=sha(log_bytes),
+    helper_sha256=sha((EV / 'verify-issue84-prerequisites-r1.py').read_bytes()),
+    native_status='passed', native_exit_code=original['exit_code'], counts=counts,
+    native_duration_ms=float(duration[0]), source_file_count=len(pairs), source_sha256=source,
+    source_unchanged=True, rerun=False,
+    session_observation={'session_id': 30996, 'exit_code': 0,
+                         'source': 'functions.exec/write_stdin observed completion in this continuation'},
+    explanation='The five native Node suites passed. The original helper expected TAP count prefixes but Node emitted the spec reporter; its subsequent IndexError made the receipt failed. Its exception handler also incorrectly retained wrapper exit 0. This retrospective receipt parses the retained native output; it does not change the original failed receipt or claim another test execution.',
+    assurance='Focused prerequisite regressions only; not the complete canonical check plan or hosted CI.'
+)
+assert original_path.read_bytes() == original_bytes and log_path.read_bytes() == log_bytes
+with OUT.open('x', encoding='utf-8') as stream:
+    json.dump(record, stream, indent=2)
+    stream.write('\n')
+print(json.dumps(record, indent=2))

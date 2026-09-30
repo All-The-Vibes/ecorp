@@ -268,6 +268,20 @@ impl AuditOutcome for FactoryWorkItemOutcome {
     }
 }
 
+impl AuditOutcome for crony_domain::FactoryBaseRefreshResponse {
+    fn replay(mut self) -> Self {
+        self.events.clear();
+        self.replayed = true;
+        self
+    }
+    fn was_replayed(&self) -> bool {
+        self.replayed
+    }
+    fn requires_native_replay_validation() -> bool {
+        true
+    }
+}
+
 impl PgStore {
     pub async fn disable_audit_destination_for_divergence(&self, destination: Uuid) -> Result<()> {
         let changed = sqlx::query(
@@ -1328,6 +1342,12 @@ impl PgStore {
     {
         let mut tx = self.pool.begin().await?;
         // Every opted-in mutation shares the Corp head lock, before native locks.
+        // Refreshes affect two missions. The replacement may be independently
+        // covered even when the original is not; serialize before native locks.
+        if op.name.starts_with("base_refresh_") {
+            aggregate_breaker::lock_corp_tx(&mut tx, op.corp).await?;
+            lock_ledger(&mut tx, op.corp).await?;
+        }
         let covered: bool = sqlx::query_scalar(
             "SELECT EXISTS(SELECT 1 FROM state_audit_coverage WHERE corp_id=$1 AND mission_id=$2)",
         )
@@ -1569,7 +1589,7 @@ async fn authorize(
             row.get("requested_by"),
         )
         .await?;
-    } else if operation == "source_commit_upgrade" {
+    } else if operation == "source_commit_upgrade" || operation.starts_with("base_refresh_") {
         // The native factory operation validates the active claim, fencing
         // token, expected version, and immutable source policy in this same
         // transaction. Do not replace that authority with a broader role.
@@ -1602,6 +1622,58 @@ async fn lock_ledger(tx: &mut Transaction<'_, Postgres>, corp: Uuid) -> Result<O
             .fetch_optional(&mut **tx)
             .await?,
     )
+}
+
+/// Preserve coverage through a linked verification mission with an actual
+/// baseline, then record later adoption/abandonment against both resources.
+/// The caller holds the ledger before all native refresh locks.
+pub(crate) async fn refresh_secondary_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    refresh: &crony_domain::FactoryBaseRefresh,
+    actor: Uuid,
+    action: &'static str,
+    request_id: Uuid,
+) -> Result<()> {
+    let covered: Vec<Uuid> = sqlx::query_scalar(
+        "SELECT mission_id FROM state_audit_coverage WHERE corp_id=$1 AND mission_id=ANY($2)",
+    )
+    .bind(refresh.corp_id)
+    .bind(vec![refresh.source_mission_id, refresh.mission_id])
+    .fetch_all(&mut **tx)
+    .await?;
+    if covered.is_empty() {
+        return Ok(());
+    }
+    let baseline = !covered.contains(&refresh.mission_id);
+    let op = Operation {
+        corp: refresh.corp_id,
+        actor,
+        mission: refresh.mission_id,
+        request_id: derived_request_id(
+            "base-refresh-secondary",
+            refresh.corp_id,
+            actor,
+            &format!("{}:{action}:{request_id}", refresh.id),
+        )?,
+        name: if baseline { "baseline" } else { action },
+        request: json!({"refresh_id":refresh.id,"source_mission_id":refresh.source_mission_id,
+            "source_run_id":refresh.source_run_id,"action":action,"authorization_request_id":request_id}),
+    };
+    append(
+        tx,
+        &op,
+        if baseline { "baseline" } else { "accepted" },
+        baseline,
+    )
+    .await?;
+    if baseline {
+        sqlx::query("INSERT INTO state_audit_coverage(corp_id,mission_id,fingerprint) VALUES($1,$2,state_audit_fingerprint($2))")
+            .bind(refresh.corp_id).bind(refresh.mission_id).execute(&mut **tx).await?;
+    } else {
+        sqlx::query("UPDATE state_audit_coverage SET fingerprint=state_audit_fingerprint(mission_id) WHERE corp_id=$1 AND mission_id=$2")
+            .bind(refresh.corp_id).bind(refresh.mission_id).execute(&mut **tx).await?;
+    }
+    Ok(())
 }
 
 async fn snapshot(
@@ -1642,15 +1714,45 @@ async fn snapshot(
             "budget_cost_microusd":r.get::<i64,_>("proposed_budget_cost_microusd"),
             "replacement_contract_digest":contract,"replacement_verification_digest":verification}))
     }).collect::<Result<Vec<_>>>()?;
-    Ok(
-        json!({"schema_version":1,"ledger_id":ledger,"corp_id":corp,"mission_id":mission,
+    let mut content = json!({"schema_version":1,"ledger_id":ledger,"corp_id":corp,"mission_id":mission,
         "room_id":m.get::<Uuid,_>("room_id"),"requested_by":m.get::<Uuid,_>("requested_by"),
         "resource_key":format!("mission/{mission}/governance"),
         "description_digest":digest("description-input",m.get::<String,_>("description").as_bytes()),
         "specification_version":m.get::<i64,_>("specification_version"),
         "budget_tokens":m.get::<i64,_>("budget_tokens"),"budget_cost_microusd":m.get::<i64,_>("budget_cost_microusd"),
-        "tasks":task_content,"pending_budget_proposals":pending_content }),
-    )
+        "tasks":task_content,"pending_budget_proposals":pending_content });
+    let refreshes: Vec<Value> = sqlx::query_scalar(
+        "SELECT to_jsonb(r) FROM factory_base_refreshes r WHERE corp_id=$1 AND (source_mission_id=$2 OR mission_id=$2) ORDER BY id LIMIT 65",
+    ).bind(corp).bind(mission).fetch_all(&mut **tx).await?;
+    ensure!(
+        refreshes.len() <= 64,
+        "audit refresh lineage bound exceeded"
+    );
+    if !refreshes.is_empty() {
+        let links = refreshes.into_iter().map(|r| -> Result<Value> {
+            let mut link = json!({});
+            for key in ["id","factory_work_item_id","source_mission_id","source_task_id",
+                "source_run_id","source_deliverable_id","mission_id","task_id","run_id",
+                "authorized_by","original_base_commit","refreshed_base_commit","source_head_commit",
+                "state","result_deliverable_id","result_commit","review_decision_id"] {
+                link[key] = r[key].clone();
+            }
+            link["authority_digest"] = json!(digest("base-refresh-authority", &canonical(&json!({
+                "request":r["request"],"source_policy":r["source_policy"],
+                "source_contract":r["source_contract"],"source_verification_policy":r["source_verification_policy"],
+                "refreshed_contract":r["refreshed_contract"],"refreshed_verification_policy":r["refreshed_verification_policy"],
+                "observed_source_revision":r["observed_source_revision"],"source_recovery_id":r["source_recovery_id"]
+            }))?));
+            link["settlement_digest"] = if r["settlement_request"].is_null() { Value::Null } else {
+                json!(digest("base-refresh-settlement", &canonical(&json!({
+                    "request":r["settlement_request"],"actor":r["settled_by"],"key":r["settlement_key"]
+                }))?))
+            };
+            Ok(link)
+        }).collect::<Result<Vec<_>>>()?;
+        content["base_refreshes"] = json!(links);
+    }
+    Ok(content)
 }
 
 async fn append(

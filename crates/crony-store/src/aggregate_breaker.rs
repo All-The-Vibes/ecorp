@@ -374,7 +374,9 @@ pub(super) async fn evaluate_tx(
     let mut exempt = HashSet::new();
     for candidate in &candidates {
         let id: Uuid = candidate.get("id");
-        if budget_checkpoint::zero_provider_allocation_tx(tx, corp_id, id).await? {
+        if budget_checkpoint::zero_provider_allocation_tx(tx, corp_id, id).await?
+            || factory_base_refresh::zero_provider_allocation_tx(tx, corp_id, id).await?
+        {
             exempt.insert(id);
         }
     }

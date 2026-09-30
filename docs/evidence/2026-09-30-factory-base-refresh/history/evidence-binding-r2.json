@@ -1,0 +1,192 @@
+{
+  "observed_at_utc": "2026-09-30T20:41:23.514990+00:00",
+  "issue": 84,
+  "assurance": "Read-only source comparison while canonical validation is still running; not a final validation or commit-binding receipt.",
+  "source_count": 7162,
+  "physical_files_sha256": "efe92db431183bd759bc833eda77c2a57b9fd2fc58cc06c3565abe80894c93c8",
+  "inputs": [
+    {
+      "file": "issue84-check-r1.json",
+      "receipt_sha256": "bc261a43bc8a48e7a80bc45f03ace50e4cb71376a4bb9b7d2e417c6756c57402",
+      "status": "running",
+      "passed": null,
+      "exit_code": null,
+      "source_unchanged": null,
+      "recorded_source_count": 7162,
+      "matches": true,
+      "different_or_missing": [],
+      "complete_manifest": true,
+      "command": "pnpm check",
+      "test_results": null,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-check-r1.log"
+    },
+    {
+      "file": "issue84-acceptance-r10/acceptance.json",
+      "receipt_sha256": "e4f881f4b18df6281c2788543c7e2d0674f9e5051de90163518e93c2a754d26d",
+      "status": null,
+      "passed": true,
+      "exit_code": null,
+      "source_unchanged": true,
+      "recorded_source_count": 7162,
+      "matches": true,
+      "different_or_missing": [],
+      "complete_manifest": true,
+      "command": null,
+      "test_results": null,
+      "log": null
+    },
+    {
+      "file": "issue84-focused-r4.json",
+      "receipt_sha256": "8607d0e4564ac74cf7ba8e11c02d005495dd7c27417e17323162550a3ff5ac25",
+      "status": "passed",
+      "passed": null,
+      "exit_code": null,
+      "source_unchanged": true,
+      "recorded_source_count": 307,
+      "matches": false,
+      "different_or_missing": [
+        "crates/crony-runner/src/main.rs",
+        "crates/crony-server/src/factory_base_refresh.rs",
+        "crates/crony-store/src/factory_base_refresh_authority_tests.rs",
+        "crates/crony-store/src/factory_base_refresh/dispatch.rs",
+        "crates/crony-store/src/lib.rs"
+      ],
+      "complete_manifest": false,
+      "command": null,
+      "test_results": null,
+      "log": null,
+      "checks": [
+        {
+          "name": null,
+          "command": "cargo test --locked -p crony-runner base_refresh::tests -- --nocapture --test-threads=1",
+          "exit_code": 0,
+          "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-runner-native-r4.log",
+          "counts": null,
+          "sha256": null
+        },
+        {
+          "name": null,
+          "command": "node --test --test-reporter=tap apps/web/src/verificationDecisionOperation.test.mjs",
+          "exit_code": 0,
+          "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-browser-decision-r1.log",
+          "counts": null,
+          "sha256": null
+        }
+      ]
+    },
+    {
+      "file": "issue84-store-r11.json",
+      "receipt_sha256": "91a4fe21604737b51fe732822111fe45c4ecd5ea98bdc39c87a463e0f9a9a55e",
+      "status": "passed",
+      "passed": null,
+      "exit_code": 0,
+      "source_unchanged": true,
+      "recorded_source_count": 276,
+      "matches": true,
+      "different_or_missing": [],
+      "complete_manifest": false,
+      "command": "cargo test --locked -p crony-store budget_checkpoint_tests::correction_publication::base_refresh -- --ignored --nocapture --test-threads=1",
+      "test_results": [
+        "test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 551 filtered out; finished in 110.28s"
+      ],
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-store-r11.log"
+    },
+    {
+      "file": "issue84-predispatch-r1.json",
+      "receipt_sha256": "36b0f37adb16797502c9ff2d6e62f35861ccacad8f505e6918d16f9a729c6b20",
+      "status": "passed",
+      "passed": null,
+      "exit_code": 0,
+      "source_unchanged": true,
+      "recorded_source_count": 276,
+      "matches": true,
+      "different_or_missing": [],
+      "complete_manifest": false,
+      "command": "cargo test --locked -p crony-store tests::predispatch_failure -- --ignored --nocapture --test-threads=1",
+      "test_results": [
+        "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 564 filtered out; finished in 7.49s"
+      ],
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-predispatch-r1.log"
+    },
+    {
+      "file": "issue84-cli-tests-r4.json",
+      "receipt_sha256": "bc49fecfde5589fb389b8e67ca42c600ef35b5852287a6cf5262358fe1b7e094",
+      "status": "passed",
+      "passed": null,
+      "exit_code": 0,
+      "source_unchanged": true,
+      "recorded_source_count": 277,
+      "matches": false,
+      "different_or_missing": [
+        "crates/crony-runner/src/base_refresh_tests.rs",
+        "crates/crony-runner/src/base_refresh.rs",
+        "crates/crony-runner/src/main.rs",
+        "crates/crony-server/src/factory_base_refresh.rs",
+        "crates/crony-store/src/factory_base_refresh_authority_tests.rs",
+        "crates/crony-store/src/factory_base_refresh/dispatch.rs",
+        "crates/crony-store/src/lib.rs"
+      ],
+      "complete_manifest": false,
+      "command": "cargo test --locked -p crony-cli issue84_ -- --nocapture",
+      "test_results": [
+        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 156 filtered out; finished in 0.54s"
+      ],
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-cli-tests-r4.log"
+    },
+    {
+      "file": "issue84-runtime-build-r2.json",
+      "receipt_sha256": "618801363defef3f98b860e2d5bec378f9b7f5731ee094284921f9f82e9f40c2",
+      "status": "passed",
+      "passed": null,
+      "exit_code": 0,
+      "source_unchanged": true,
+      "recorded_source_count": 276,
+      "matches": true,
+      "different_or_missing": [],
+      "complete_manifest": false,
+      "command": "cargo build --locked -p crony-server -p crony-runner -p crony-cli",
+      "test_results": null,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-runtime-build-r2.log"
+    },
+    {
+      "file": "issue84-security-native-r1.json",
+      "receipt_sha256": "e52b2db5fcbcf0976befc1907d827e7ec5aff44c7db5cbd7e5d9ba6732dd6e87",
+      "status": "passed",
+      "passed": null,
+      "exit_code": null,
+      "source_unchanged": true,
+      "recorded_source_count": 6,
+      "matches": true,
+      "different_or_missing": [],
+      "complete_manifest": false,
+      "command": null,
+      "test_results": null,
+      "log": null,
+      "checks": [
+        {
+          "name": "snapshot-canary",
+          "command": "node tools/security_canary.mjs <USERPROFILE>\\code\\ecorp\\output\\pr-completion\\20260922T123548Z\\gitleaks-8.30.1\\gitleaks.exe",
+          "exit_code": 0,
+          "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-security-native-r1-snapshot-canary.log",
+          "counts": {},
+          "sha256": null
+        },
+        {
+          "name": "native-diagnostics",
+          "command": "node --test tools/secret_scan.test.mjs tools/secret_scan_native.test.mjs",
+          "exit_code": 0,
+          "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-security-native-r1-native-diagnostics.log",
+          "counts": {
+            "tests": 76,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0,
+            "pass": 76
+          },
+          "sha256": null
+        }
+      ]
+    }
+  ]
+}

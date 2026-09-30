@@ -1,4 +1,5 @@
 mod adapter;
+mod base_refresh;
 mod connections;
 mod deliverable;
 mod dependency_files;
@@ -179,6 +180,9 @@ struct Args {
 
 #[derive(Debug, Clone)]
 struct Assignment {
+    base_refresh: Option<crony_protocol::BaseRefreshSource>,
+    // Set only by native reconstruction, never accepted from the wire.
+    base_refresh_tree: Option<String>,
     dependency_files: Vec<crony_protocol::dependency_files::VerifiedDependencyFile>,
     corp_id: Uuid,
     connection_epoch: Uuid,
@@ -822,6 +826,19 @@ async fn run_connection(
     });
     capabilities.push(RunnerCapability {
         workspace_connection_id: None,
+        name: crony_domain::BASE_REFRESH_CAPABILITY.to_owned(),
+        available: true,
+        detail: Some(
+            "Native Git base reconstruction and persisted verification without a provider"
+                .to_owned(),
+        ),
+        models: Vec::new(),
+        source_repository: None,
+        source_base_ref: None,
+        source_base_commit: None,
+    });
+    capabilities.push(RunnerCapability {
+        workspace_connection_id: None,
         name: "retained-provider-receipt-v1".to_owned(),
         available: true,
         detail: Some(
@@ -1139,6 +1156,8 @@ async fn run_connection(
                     provider_artifact: None,
                     verification_command_id: None,
                     retained_provider_receipt: None,
+                    base_refresh: None,
+                    base_refresh_tree: None,
                     checkpoint_verification: false,
                     hard_boundary_checkpoint: Arc::default(),
                 };
@@ -1299,6 +1318,8 @@ async fn run_connection(
                     provider_artifact: None,
                     verification_command_id: None,
                     retained_provider_receipt: None,
+                    base_refresh: None,
+                    base_refresh_tree: None,
                     checkpoint_verification: false,
                     hard_boundary_checkpoint: Arc::default(),
                 };
@@ -1438,6 +1459,7 @@ async fn run_connection(
                 );
             }
             ServerToRunner::VerifyRun {
+                base_refresh,
                 workspace_connection_id,
                 command_id,
                 corp_id,
@@ -1501,6 +1523,8 @@ async fn run_connection(
                     provider_artifact,
                     verification_command_id: Some(command_id),
                     retained_provider_receipt: retained_provider_receipt.map(|grant| *grant),
+                    base_refresh: base_refresh.map(|source| *source),
+                    base_refresh_tree: None,
                     checkpoint_verification,
                     hard_boundary_checkpoint: Arc::default(),
                 };
@@ -1523,7 +1547,8 @@ async fn run_connection(
                     );
                     continue;
                 }
-                if assignment.workspace_connection_id.is_none()
+                if assignment.base_refresh.is_none()
+                    && assignment.workspace_connection_id.is_none()
                     && let Err(error) = validate_assignment_source(&workspaces, &assignment)
                 {
                     seen_commands.remove(&command_id);
@@ -1666,6 +1691,8 @@ async fn run_connection(
                     provider_artifact: None,
                     verification_command_id: None,
                     retained_provider_receipt: None,
+                    base_refresh: None,
+                    base_refresh_tree: None,
                     checkpoint_verification: false,
                     hard_boundary_checkpoint: Arc::default(),
                 };
@@ -2192,7 +2219,7 @@ async fn execute_connected_assignment(
 async fn execute_connected_verification_assignment(
     workspaces: Arc<WorkspaceManager>,
     runner_id: String,
-    assignment: Assignment,
+    mut assignment: Assignment,
     outbound: OutboundBus,
     channels: AssignmentChannels,
     connections: Option<Arc<connections::ConnectionManager>>,
@@ -2202,6 +2229,26 @@ async fn execute_connected_verification_assignment(
             .context("this runner cannot open the saved workspace")?
             .resolve_workspace(id, &connection_source(&assignment)?)
             .await?
+    } else {
+        workspaces
+    };
+    let workspaces = if let Some(source) = &assignment.base_refresh {
+        let reconstructed = base_refresh::reconstruct(&workspaces, &assignment, source).await?;
+        assignment.expected_workspace_fingerprint = Some(
+            reconstructed
+                .manager
+                .fingerprint(&reconstructed.workspace)
+                .await?,
+        );
+        assignment.expected_head_commit = Some(
+            reconstructed
+                .manager
+                .head_commit(&reconstructed.workspace)
+                .await?,
+        );
+        assignment.resume_workspace_base_commit = Some(reconstructed.workspace.base_commit.clone());
+        assignment.base_refresh_tree = Some(reconstructed.tree);
+        reconstructed.manager
     } else {
         workspaces
     };
@@ -2698,7 +2745,11 @@ async fn execute_verification_assignment(
                 source_artifacts.extend(prepared.source_artifact);
                 retained_provider_receipt::COLLECTION_SUMMARY
             } else {
-                "Verifier-only recovery completed without starting a provider."
+                if assignment.base_refresh_tree.is_some() {
+                    "Publication base refreshed by native Git and re-verified without starting a provider. Any provider artifact is historical evidence."
+                } else {
+                    "Verifier-only recovery completed without starting a provider."
+                }
             };
             if *cancellation_rx.borrow() {
                 return VerificationRunOutcome::Cancelled;
@@ -2717,7 +2768,7 @@ async fn execute_verification_assignment(
                 &mut artifact_acks,
                 summary,
                 Some(expected_fingerprint),
-                if assignment.checkpoint_verification {
+                if assignment.checkpoint_verification || assignment.base_refresh_tree.is_some() {
                     None
                 } else {
                     assignment.expected_head_commit.as_deref()
@@ -3286,16 +3337,27 @@ async fn send_verification_events(
         .map(|artifacts| artifacts.clone())
         .unwrap_or_default();
     let mut prepared = if let Some(spec) = &assignment.deliverable {
-        match deliverable::prepare(
-            assignment.run_id,
-            spec,
-            workspace,
-            source_artifacts.unwrap_or(&artifacts),
-            &assignment.write_scope,
-            preserve_head_commit,
-        )
-        .await
-        {
+        let candidate = if let Some(tree) = assignment.base_refresh_tree.as_deref() {
+            deliverable::prepare_tree(
+                assignment.run_id,
+                spec,
+                workspace,
+                &assignment.write_scope,
+                tree,
+            )
+            .await
+        } else {
+            deliverable::prepare(
+                assignment.run_id,
+                spec,
+                workspace,
+                source_artifacts.unwrap_or(&artifacts),
+                &assignment.write_scope,
+                preserve_head_commit,
+            )
+            .await
+        };
+        match candidate {
             Ok(prepared) => Some(prepared),
             Err(error) => {
                 let cleanup = match (
@@ -4086,7 +4148,7 @@ mod tests {
         )
     }
 
-    fn verification_assignment(workspace: &WorkspaceLease, run_id: Uuid) -> Assignment {
+    pub(super) fn verification_assignment(workspace: &WorkspaceLease, run_id: Uuid) -> Assignment {
         Assignment {
             dependency_files: Vec::new(),
             workspace_connection_id: None,
@@ -4119,6 +4181,8 @@ mod tests {
             provider_artifact: None,
             verification_command_id: None,
             retained_provider_receipt: None,
+            base_refresh: None,
+            base_refresh_tree: None,
             checkpoint_verification: false,
             hard_boundary_checkpoint: Arc::default(),
         }
@@ -5677,6 +5741,8 @@ mod tests {
             provider_artifact: None,
             verification_command_id: None,
             retained_provider_receipt: None,
+            base_refresh: None,
+            base_refresh_tree: None,
             checkpoint_verification: false,
             hard_boundary_checkpoint: Arc::default(),
         };
@@ -5800,6 +5866,8 @@ mod tests {
             provider_artifact: None,
             verification_command_id: None,
             retained_provider_receipt: None,
+            base_refresh: None,
+            base_refresh_tree: None,
             checkpoint_verification: false,
             hard_boundary_checkpoint: Arc::default(),
         };

@@ -655,7 +655,8 @@ async function main() {
         let body
         try { body = request.postDataJSON() } catch { /* Rejected below without recording payload. */ }
         if (body?.actor_id === fixture.bob_actor_id && body.approved === false && body.note === expectedNote
-          && Object.keys(body).sort().join(',') === 'actor_id,approved,note') {
+          && uuid.test(body.decision_key ?? '')
+          && Object.keys(body).sort().join(',') === 'actor_id,approved,decision_key,note') {
           rejectionArmed = false
           report.rejection_forwarded++
           return route.continue()
