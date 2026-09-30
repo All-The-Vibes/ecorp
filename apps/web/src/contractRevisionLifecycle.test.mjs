@@ -61,6 +61,26 @@ function deferred() {
   return { promise, resolve }
 }
 
+test('issue262 remount refuses malformed saved warnings without sending or overwriting a request', async () => {
+  const h = panelHarness({ props: { onRevise: async () => saved } })
+  openDraft(h)
+  await h.submit()
+  assert.equal(h.requests.length, 1)
+  const [[key, stored]] = h.values
+  for (const refreshWarning of [{ detail: 'Malformed warning' }, [{ detail: 'Malformed warning' }], null, true, 7]) {
+    const corrupted = JSON.parse(stored)
+    corrupted.result.refreshWarning = refreshWarning
+    const values = new Map([[key, JSON.stringify(corrupted)]])
+    const reloaded = panelHarness({ values })
+    assert.match(text(reloaded.render()), /Stored save result cannot be verified/)
+    assert.equal(reloaded.draft(), undefined)
+    assert.equal(reloaded.button('Revise contract').props.disabled, true)
+    await reloaded.submit()
+    assert.equal(reloaded.requests.length, 0)
+    assert.equal(values.get(key), JSON.stringify(corrupted), 'Keep the original stored bytes for explicit recovery')
+  }
+})
+
 test('issue262 explicit stale reconciliation keeps edits but captures the new baseline and a new key', async () => {
   const h = panelHarness()
   openDraft(h)

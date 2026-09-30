@@ -1,0 +1,97 @@
+{
+  "issue": 262,
+  "pr": 389,
+  "recorded_at_utc": "2026-09-30T15:48:09.599599+00:00",
+  "reviewer": "Codex assistant; implementation self-review, not independent or human approval",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parents": [
+    "dcf510abd809b16cf64a00bdcfd04c12f0e4458c"
+  ],
+  "tested_tree": "d663784b009b9f65b0dc6be913bda4735255fcdd",
+  "physical_files_sha256": "a75e5aa2a6609d78c6c022671d099b7d4720927a661e8323d0a763f64cd92ad5",
+  "reviewed_paths": [
+    "apps/web/src/contractRevision.test.mjs",
+    "apps/web/src/contractRevision.ts",
+    "apps/web/src/contractRevisionLifecycle.test.mjs"
+  ],
+  "surrounding_paths": [
+    "apps/web/src/App.tsx:904",
+    "apps/web/src/App.tsx:1066",
+    "apps/web/src/App.tsx:5198",
+    "apps/web/src/contractRevisionHarness.mjs"
+  ],
+  "review_comment": 4145802423,
+  "review_thread": "PRRT_kwDOUIQ-ns6nk3ie",
+  "confirmed_findings_resolved": [
+    {
+      "path": "apps/web/src/contractRevision.ts",
+      "line": 319,
+      "finding": "A saved receipt restored from session storage could contain an object refreshWarning that reached React rendering.",
+      "resolution": "Require every defined refreshWarning to be a string before restoring the draft. Invalid values use the existing storage-error path; absence and strings retain compatibility."
+    }
+  ],
+  "invariants": [
+    "The guard is evaluated before untrusted stored data returns to the component; null, objects, arrays and primitives other than strings are rejected without coercion.",
+    "Malformed storage is preserved for explicit recovery. The component does not dispatch, replay or overwrite it, and the saved server revision is unchanged.",
+    "Valid saved outcomes retain the existing immutable pending request and replay receipt. Storage parsing does not authorize any new effect.",
+    "No harness, secret, permission, tenant scope, budget, loop breaker, migration or server execution mechanism changes."
+  ],
+  "harness": "No execution or permission mechanism introduced; existing pinned native adapters and owned fixtures are reused.",
+  "acceptance_mapping": [
+    {
+      "criterion": "Reject malformed optional refresh warnings before restoring a saved receipt",
+      "implementation": [
+        "apps/web/src/contractRevision.ts:319",
+        "apps/web/src/contractRevision.test.mjs:224"
+      ],
+      "evidence": [
+        "regression/red.log",
+        "regression/green.log",
+        "native/browser-report.json: native_saved_receipt_malformed_warning_reload_fails_closed"
+      ],
+      "result": "An object, either array shape, empty array/object, null, booleans, number and zero fail closed. The actual panel shows its existing storage error, disables revision, renders no saved result, preserves exact stored bytes and sends zero revision requests. Server revisions and run counts remain unchanged."
+    },
+    {
+      "criterion": "Keep compatible saved receipts and exact idempotency state",
+      "implementation": [
+        "apps/web/src/contractRevision.ts:319",
+        "apps/web/src/contractRevision.test.mjs:207",
+        "apps/web/src/contractRevisionLifecycle.test.mjs:64"
+      ],
+      "evidence": [
+        "regression/green.log",
+        "native/browser-report.json: native_saved_receipt_optional_text_warning_restores_without_replay"
+      ],
+      "result": "Absent, empty-string and textual warnings restore correctly. Saved revision v2 retains its exact pending request and performs no replay or new write."
+    },
+    {
+      "criterion": "Revalidate the complete guided recovery implementation on the corrected source",
+      "implementation": [
+        "apps/web/src/App.tsx",
+        "apps/web/src/ContractRevisionEditor.tsx",
+        "crates/crony-store/src/contract_revision.rs"
+      ],
+      "evidence": [
+        "canonical-report.json",
+        "native/browser-report.json",
+        "coverage/summary.json"
+      ],
+      "result": "The full named check plan, model coverage, and all 15 browser acceptance groups passed on the same physical source. Existing actor/Corp denials, response-loss replay, stale reconciliation, explicit launch, native protocol resume, persisted verification, authority narrowing and budget restrictions were re-exercised."
+    }
+  ],
+  "qualifications": [
+    "This is retrospective observed regression and acceptance evidence, and an assistant implementation self-review. It is not original development chronology, an independent GitHub approval or a human decision.",
+    "The red test run used the published production guard with new regression tests and observed two failures. The green run changes only that production guard relative to the red source. Three new test cases account for the model-coverage increase from 499 to 502.",
+    "The browser/server/PostgreSQL/runner stack is fresh and owned. Execution uses the existing deterministic fake-process and synthetic Codex protocol fixture, not live vendor inference or production identity.",
+    "Malformed and valid warning variants are synthetic browser-storage edits to a receipt genuinely saved and replayed by the local server. They are not malformed API responses.",
+    "The 15 top-level browser groups include one group with seven explicitly synthetic recovery presentation cases; they are not 15 wholly native tests. Zero actual human reviews were performed.",
+    "Nineteen original screenshots are preserved. The two new warning views were visually spot checked at reduced display resolution; this does not establish exhaustive visual or accessibility certification.",
+    "Green regressions, coverage, native r10 and canonical checks observed identical 7,231-file physical source. The final commit did not exist then. The original evidence packet is retained byte-for-byte as historical validation of the previous implementation.",
+    "Native r10's receipt predates final canonical completion and records that check as pending. The completed canonical receipt and source-equivalence binding in this packet establish its later successful result without rewriting the native receipt.",
+    "Skipped Node and ignored Rust cases are not passes. Canonical, focused, coverage and native counts overlap. Dedicated live and immutable historical replay lanes remain separate.",
+    "Prior locked-dependency receipts are reused only with unchanged lockfiles. The pnpm install receipt included a log digest; the Steward receipt did not. Its retained log bytes were first bound retrospectively by the existing dependency-artifact receipt. Installs were not re-executed in this correction.",
+    "Required hosted CI, CodeQL, code-quality and security checks remain unavailable because GitHub Actions is disabled. Local checks do not replace them. No merge, issue closure, self-approval, policy change, live-provider acceptance or clean historical Cargo advisory audit is claimed."
+  ],
+  "unresolved_confirmed_defects_in_correction": [],
+  "independent_review_performed": false
+}

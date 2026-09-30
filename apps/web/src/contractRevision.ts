@@ -316,7 +316,8 @@ export function readRevisionDraft(storage: () => DraftStorage, scopeKey: string)
     if (draft.result !== null && (!draft.pending || !record(draft.result) || !['saved', 'rejected', 'unknown'].includes(draft.result.status) ||
       (draft.result.status === 'saved'
         ? !uuid(draft.result.id) || !Number.isSafeInteger(draft.result.version) || draft.result.version <= draft.target.version ||
-          typeof draft.result.replayed !== 'boolean'
+          typeof draft.result.replayed !== 'boolean' ||
+          (draft.result.refreshWarning !== undefined && typeof draft.result.refreshWarning !== 'string')
         : typeof draft.result.message !== 'string'))) throw new Error('Stored save result cannot be verified.')
     return { draft, error: null, serialized: json }
   } catch (caught) {

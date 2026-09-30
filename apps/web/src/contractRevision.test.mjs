@@ -204,6 +204,33 @@ test('restoring a draft rejects inconsistent action, source and Factory scope or
   assert.ok(read({ ...d, target }).draft)
 })
 
+test('restoring a saved receipt preserves absent, empty and textual refresh warnings', () => {
+  const d = draftFor()
+  d.pending = model.revisionRequest(d, JSON.parse(d.contractJson), JSON.parse(d.policyJson))
+  const saved = { status: 'saved', id: id(90), version: d.target.version + 1, replayed: true }
+  for (const result of [saved, { ...saved, refreshWarning: '' },
+    { ...saved, refreshWarning: 'Snapshot unavailable after save' }]) {
+    const serialized = JSON.stringify({ ...d, result })
+    const restored = model.readRevisionDraft(() => ({ getItem: () => serialized }), d.target.scopeKey)
+    assert.equal(restored.error, null)
+    assert.equal(restored.serialized, serialized)
+    assert.deepEqual(restored.draft.result, result)
+    assert.deepEqual(restored.draft.pending, d.pending)
+  }
+})
+
+test('restoring a saved receipt rejects every non-string refresh warning', () => {
+  const d = draftFor()
+  d.pending = model.revisionRequest(d, JSON.parse(d.contractJson), JSON.parse(d.policyJson))
+  for (const refreshWarning of [null, false, true, 0, 7, [], ['Snapshot unavailable'], {}, { detail: 'Malformed warning' }]) {
+    const result = { status: 'saved', id: id(90), version: d.target.version + 1, replayed: false, refreshWarning }
+    const restored = model.readRevisionDraft(() => ({ getItem: () => JSON.stringify({ ...d, result }) }), d.target.scopeKey)
+    assert.equal(restored.draft, null, JSON.stringify(refreshWarning))
+    assert.equal(restored.serialized, null)
+    assert.match(restored.error, /Stored save result cannot be verified/)
+  }
+})
+
 test('ordinary recovery chooses a provable latest lineage independently of snapshot order', () => {
   const first = run(), latest = run({ id: id(8), resumed_from_run_id: first.id })
   for (const values of [[first, latest], [latest, first]]) {
