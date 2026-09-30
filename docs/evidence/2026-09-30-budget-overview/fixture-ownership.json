@@ -1,0 +1,83 @@
+{
+  "plan": {
+    "phase": "Start",
+    "product": "<USERPROFILE>\\.codex\\worktrees\\issue261-budgets\\ecorp",
+    "product_commit": "c54e25b08276d29a7c6d514fcef593fb06e57fec",
+    "qa_root": "<USERPROFILE>\\qa\\pr265-run-activity-issue261-20260930-r1",
+    "server": "http://127.0.0.1:18867",
+    "web": "http://127.0.0.1:15867",
+    "database": {
+      "fresh": true,
+      "name": "pr265_activity",
+      "port": 15467,
+      "host": "127.0.0.1"
+    },
+    "runner_id": "pr265-activity-qa",
+    "provider": "native deterministic fake-process; no AI inference",
+    "source": "new independent synthetic Git repository, never the product checkout",
+    "factory_watcher": false,
+    "github_effects": false,
+    "existing_state_touched": false,
+    "build_required": false
+  },
+  "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue261-20260930-r1",
+  "test_owned": true,
+  "processes": {
+    "runner": {
+      "role": "runner",
+      "pid": 29628,
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue261-20260930-r1",
+      "started_utc": "2026-09-30T02:18:07.1854271Z",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue261-20260930-r1\\logs\\runner-20260930T021806499-e6c504cc5c4541439459118aa679b9be.stderr.log",
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue261-budgets\\ecorp\\target\\debug\\crony-runner.exe",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue261-20260930-r1\\logs\\runner-20260930T021806499-e6c504cc5c4541439459118aa679b9be.stdout.log"
+    },
+    "postgres": {
+      "role": "postgres",
+      "pid": 35372,
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue261-20260930-r1",
+      "started_utc": "2026-09-30T02:18:01.4101498Z",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue261-20260930-r1\\logs\\postgres-20260930T021801335-224d350919d949a381141d312ef8ccb5.stderr.log",
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue261-20260930-r1\\logs\\postgres-20260930T021801335-224d350919d949a381141d312ef8ccb5.stdout.log"
+    },
+    "server": {
+      "role": "server",
+      "pid": 35760,
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue261-20260930-r1",
+      "started_utc": "2026-09-30T02:18:04.0565693Z",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue261-20260930-r1\\logs\\server-20260930T021803051-992287ec029f40aaa57ed6411a889f0e.stderr.log",
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue261-budgets\\ecorp\\target\\debug\\crony-server.exe",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue261-20260930-r1\\logs\\server-20260930T021803051-992287ec029f40aaa57ed6411a889f0e.stdout.log"
+    },
+    "web": {
+      "role": "web",
+      "pid": 21328,
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue261-20260930-r1",
+      "started_utc": "2026-09-30T02:18:07.2238921Z",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue261-20260930-r1\\logs\\web-20260930T021807208-45e0fcfc28e64d328fa39c2f7d9c3e40.stderr.log",
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue261-20260930-r1\\logs\\web-20260930T021807208-45e0fcfc28e64d328fa39c2f7d9c3e40.stdout.log"
+    }
+  },
+  "schema_version": 2,
+  "updated_at": "2026-09-30T02:19:53.6447591Z",
+  "purpose": "pr265-run-activity",
+  "source": {
+    "base_ref": "HEAD",
+    "repository": "ecorp-fixture/pr265-run-activity",
+    "base_commit": "e374e49f6dcea9d34831534c2e3ca60efd6ddf20"
+  },
+  "ready_at": "2026-09-30T02:18:09.0560797Z",
+  "demo": {
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "room_id": "00000000-0000-4000-8000-000000000041",
+    "alice_actor_id": "00000000-0000-4000-8000-000000000011",
+    "bob_actor_id": "00000000-0000-4000-8000-000000000012",
+    "eve_actor_id": "00000000-0000-4000-8000-000000000013",
+    "manager_agent_id": "00000000-0000-4000-8000-000000000031",
+    "worker_agent_id": "00000000-0000-4000-8000-000000000032",
+    "codex_agent_id": "00000000-0000-4000-8000-000000000033"
+  },
+  "stopped_at": "2026-09-30T02:19:53.6332207Z"
+}

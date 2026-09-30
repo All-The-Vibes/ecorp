@@ -89,6 +89,7 @@ test('run navigation ignores the duplicate activity marker in a hidden Factory t
     compilerOptions: { target: ts.ScriptTarget.ES2023 },
   }).outputText
   const context = { document: { querySelectorAll: () => [hidden, visible] },
+    window: { matchMedia: () => ({ matches: false }) },
     CSS: { escape: (value) => value }, HTMLDetailsElement: class {} }
   vm.runInNewContext(compiledReveal, context)
   assert.equal(context.reveal('run', id(31)), true)
