@@ -11,7 +11,10 @@ import * as evidenceSelection from './evidenceSelection.ts'
 import * as workflow from './workflowContext.ts'
 import * as checkpointRecovery from './factoryCheckpointRecovery.ts'
 import * as workSelection from './workSelection.ts'
+import * as sourceEvidence from './sourceEvidence.ts'
+import * as collaboration from './missionCollaboration.ts'
 import { renderHooks } from './testSupport/renderHooks.mjs'
+import * as activity from './runActivity.ts'
 
 // Actual components, hook and reader; only hook scheduling, transport and timers
 // are controlled. SSR/callback tests are not browser, download or runtime proof.
@@ -41,6 +44,9 @@ const { WorkResultCard } = evaluate(await compile('WorkResultCard.tsx'), {
 })
 const { PublishedResultCard } = evaluate(await compile('PublishedResultCard.tsx'), {
   'react/jsx-runtime': jsxRuntime, './WorkResultCard': { WorkResultCard },
+})
+const activityComponents = evaluate(await compile('RunActivityDetails.tsx'), {
+  'react/jsx-runtime': jsxRuntime, './runActivity': activity,
 })
 const hookSource = await compile('useMissionResultContext.ts')
 const ids = {
@@ -606,9 +612,9 @@ test('actual hook treats positive revision as one refresh hint and never retries
 })
 
 // Keep App's actual MissionCard selection, hooks, dependent declarations and
-// result JSX. Omit unrelated dossier sections, not result predicates or actions.
+// result JSX (and optionally evidence). Keep each surface's outer predicate.
 // This seam avoids mounting the office, networking globals or browser services.
-async function compileAppResultSlice() {
+async function compileAppResultSlice(includeEvidence = false, includeActivity = false) {
   const source = await readFile(new URL('./App.tsx', import.meta.url), 'utf8')
   const file = ts.createSourceFile('App.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
   assert.deepEqual(file.parseDiagnostics, [])
@@ -622,18 +628,33 @@ async function compileAppResultSlice() {
   while (root && ts.isParenthesizedExpression(root)) root = root.expression
   assert.ok(root && ts.isJsxElement(root))
   const surfaces = []
+  const evidenceIds = new Set(['provider-evidence', 'source-deliverable', 'verification-evidence', 'review-decision'])
   const findSurface = (node) => {
-    if (ts.isJsxElement(node) && node.openingElement.attributes.properties.some((attribute) =>
-      ts.isJsxAttribute(attribute) && attribute.name.getText(file) === 'id' &&
-      attribute.initializer && ts.isJsxExpression(attribute.initializer) &&
-      attribute.initializer.expression && ts.isTemplateExpression(attribute.initializer.expression) &&
-      attribute.initializer.expression.head.text === 'mission-result-')) {
-      surfaces.push(node)
+    if (ts.isJsxElement(node) && node.openingElement.attributes.properties.some((attribute) => {
+      if (!ts.isJsxAttribute(attribute) || !attribute.initializer) return false
+      const name = attribute.name.getText(file), value = attribute.initializer
+      if (includeEvidence && name === 'data-testid' && ts.isStringLiteral(value)) return evidenceIds.has(value.text)
+      return name === 'id' && ts.isJsxExpression(value) && value.expression &&
+        ts.isTemplateExpression(value.expression) &&
+        (value.expression.head.text === 'mission-result-' ||
+          (includeEvidence && value.expression.head.text === 'mission-review-'))
+    })) {
+      let surface = node
+      while (surface.parent && surface.parent !== root) surface = surface.parent
+      assert.equal(surface.parent, root, 'retain the full actual conditional root child')
+      if (!surfaces.includes(surface)) surfaces.push(surface)
     }
     ts.forEachChild(node, findSurface)
   }
   findSurface(root)
-  assert.equal(surfaces.length, 1, 'select the actual result navigation target, not copied JSX')
+  assert.equal(surfaces.length, includeEvidence ? 6 : 1, 'select actual surfaces, not copied JSX')
+  if (includeActivity) {
+    const panels = root.children.filter((node) => ts.isJsxSelfClosingElement(node) && node.tagName.getText(file) === 'RunActivityPanel')
+    const evidence = root.children.filter((node) => ts.isJsxExpression(node) && node.getText(file).includes('id={`mission-evidence-panel-'))
+    assert.equal(panels.length, 1, 'retain the actual activity panel and its navigation callbacks')
+    assert.equal(evidence.length, 1, 'retain the actual conditional evidence selector')
+    surfaces.push(...panels, ...evidence)
+  }
   const identifiers = (node) => {
     const names = new Set()
     const visit = (child) => {
@@ -654,7 +675,7 @@ async function compileAppResultSlice() {
   }
   const selectedStatements = new Set()
   const selectedFunctions = new Set()
-  const required = new Set([...identifiers(surfaces[0]), ...identifiers(root.openingElement)])
+  const required = new Set([...surfaces.flatMap((surface) => [...identifiers(surface)]), ...identifiers(root.openingElement)])
   // Retain App's real guarded initial pin effect as well as the explicit selector.
   for (const statement of mission.body.statements) {
     if (ts.isExpressionStatement(statement) && ts.isCallExpression(statement.expression) &&
@@ -678,6 +699,7 @@ async function compileAppResultSlice() {
   for (const name of ['originRead', 'resultRead', 'evidenceRun', 'selectedEvidenceRunId']) {
     assert.ok(selectedStatements.has(declarations.get(name)), `actual ${name} wiring must remain in the seam`)
   }
+  if (includeActivity) assert.ok(selectedStatements.has(declarations.get('runActivity')), 'retain actual presenter inputs')
   const narrowedRoot = ts.factory.updateJsxElement(root, root.openingElement, surfaces, root.closingElement)
   const narrowedMission = ts.factory.updateFunctionDeclaration(
     mission, mission.modifiers, mission.asteriskToken, mission.name, mission.typeParameters,
@@ -690,7 +712,8 @@ async function compileAppResultSlice() {
   const importedModules = new Set([
     'react', './workflowContext', './evidenceSelection', './useMissionOriginContext',
     './useMissionResultContext', './missionResultContext', './WorkResultCard', './PublishedResultCard',
-    './factoryCheckpointRecovery',
+    './factoryCheckpointRecovery', './sourceEvidence', './EvidenceInspector', './missionCollaboration',
+    './runActivity', './RunActivityDetails',
   ])
   const imports = file.statements.filter((node) =>
     ts.isImportDeclaration(node) && importedModules.has(node.moduleSpecifier.text))
@@ -699,7 +722,7 @@ async function compileAppResultSlice() {
     ...imports, ...selectedFunctions, narrowedMission,
   ].map((node) => printer.printNode(ts.EmitHint.Unspecified, node, file)).join('\n')
   const compiled = ts.transpileModule(
-    `const { API_URL, api, window, document } = require('app-test-environment');\n${extracted}\nexports.AppMissionResult = MissionCard;`,
+    `const { API_URL, api, window, document, fetch } = require('app-test-environment');\n${extracted}\nexports.AppMissionResult = MissionCard;`,
     {
       fileName: 'AppResultSlice.tsx', reportDiagnostics: true,
       compilerOptions: {
@@ -712,6 +735,8 @@ async function compileAppResultSlice() {
 }
 
 const appResultSource = await compileAppResultSlice()
+const appEvidenceSource = await compileAppResultSlice(true)
+const appActivitySource = await compileAppResultSlice(false, true)
 const originHookSource = await compile('useMissionOriginContext.ts')
 const workSelectionHookSource = await compile('useWorkSelection.ts')
 const appApiUrl = 'http://ecorp-fixture.invalid'
@@ -737,7 +762,16 @@ function appOrigin(kind = 'factory') {
   }
 }
 
-function appResultFixture({ pinnedRunId = deliveredRunId, controlledSelection, storageDenied = false, ...overrides } = {}) {
+// Only a wiring sentinel here: production inspector/hook tests cover its rendering
+// and asynchronous reads; these tests inspect the actual App's supplied props.
+function InspectorSeam() { return null }
+function inspectors(node) {
+  if (Array.isArray(node)) return node.flatMap(inspectors)
+  if (!isValidElement(node)) return []
+  return node.type === InspectorSeam ? [node.props] : inspectors(node.props.children)
+}
+
+function appResultFixture({ pinnedRunId = deliveredRunId, controlledSelection, storageDenied = false, includeEvidence = false, includeActivity = false, ...overrides } = {}) {
   const slots = [], effects = [], calls = [], storageWrites = [], actions = [], clock = fakeClock()
   const animationFrames = [], focusCalls = []
   let cursor = 0, dirty = false, tree
@@ -818,22 +852,31 @@ function appResultFixture({ pinnedRunId = deliveredRunId, controlledSelection, s
   const parentSelection = parent && evaluate('const window = require("selection-test-window");\n' + workSelectionHookSource, {
     react: parent.react, './workSelection': workSelection, 'selection-test-window': { sessionStorage },
   })
-  const { AppMissionResult } = evaluate(appResultSource, {
+  const artifactReads = []
+  const { AppMissionResult } = evaluate(includeEvidence ? appEvidenceSource : includeActivity ? appActivitySource : appResultSource, {
     react, 'react/jsx-runtime': jsxRuntime,
     './workflowContext': workflow, './evidenceSelection': evidenceSelection,
     './factoryCheckpointRecovery': checkpointRecovery,
+    './sourceEvidence': sourceEvidence,
+    './missionCollaboration': collaboration,
+    './EvidenceInspector': { EvidenceInspector: InspectorSeam },
     './useMissionOriginContext': origin, './useMissionResultContext': result,
     './missionResultContext': reader, './WorkResultCard': { WorkResultCard },
     './PublishedResultCard': { PublishedResultCard },
+    './runActivity': activity, './RunActivityDetails': activityComponents,
     'app-test-environment': {
       API_URL: appApiUrl, api,
+      fetch(path, init) {
+        artifactReads.push({ path, init })
+        return Promise.resolve(new Response('fixture artifact'))
+      },
       window: {
         sessionStorage,
         requestAnimationFrame(callback) { animationFrames.push(callback); return animationFrames.length },
       },
       document: {
         getElementById(id) {
-          const target = elements(tree, 'div').find((node) => node.props.id === id)
+          const target = hosts(tree).find((node) => node.props.id === id)
           assert.ok(target, 'focus must target a currently rendered App result surface')
           assert.equal(target.props.tabIndex, -1)
           return {
@@ -848,6 +891,7 @@ function appResultFixture({ pinnedRunId = deliveredRunId, controlledSelection, s
     id, task_id: 'task-item-a', status, execution_mode: 'provider',
     input_tokens: 0, output_tokens: 0, cost_microusd: 0,
     verification_sha256: verification, deliverable_sha256: digest,
+    source_base_commit: baseCommit, workspace_base_commit: baseCommit,
   })
   let props = {
     corpId: ids.corpId, actorId: ids.actorId, actorRole: 'member', busy: false,
@@ -866,6 +910,7 @@ function appResultFixture({ pinnedRunId = deliveredRunId, controlledSelection, s
     onDownloadDeliverable: () => { actions.push('download') },
     onVerificationDecision: () => { actions.push('decide') },
     onViewAgents: () => { actions.push('agents') },
+    onViewAgent: (id) => { actions.push(['agent', id]) },
     onDiscuss: () => { actions.push('discuss') },
     ...overrides,
   }
@@ -901,7 +946,11 @@ function appResultFixture({ pinnedRunId = deliveredRunId, controlledSelection, s
   }
   const update = (next = props) => { render(next); commit() }
   return {
-    calls, actions, storageWrites, animationFrames, focusCalls, render, update,
+    calls, actions, storageWrites, animationFrames, focusCalls, artifactReads, render, update,
+    setAccessToken(value) {
+      if (value === null) storage.delete('ecorp_access_token')
+      else storage.set('ecorp_access_token', value)
+    },
     replayMount() { render(); commit(true) },
     get props() { return props },
     get tree() { return tree },
@@ -926,6 +975,97 @@ function assertPendingOriginCard(tree) {
   assert.equal(elements(tree, 'a').length, 0)
   assert.equal(elements(tree, 'button').length, 0)
 }
+
+function missionActivityFixture(overrides = {}) {
+  const at = '2026-09-29T12:00:00Z'
+  return appResultFixture({
+    includeActivity: true,
+    mission: { id: ids.missionId, room_id: ids.roomId, status: 'running' },
+    tasks: [{ id: 'task-item-a', mission_id: ids.missionId, title: 'Exact selected task', assigned_agent_id: 'agent-a' }],
+    runs: [
+      { id: newerRunId, task_id: 'task-item-a', agent_id: 'agent-a', runner_id: 'runner-a', status: 'completed' },
+      { id: deliveredRunId, task_id: 'task-item-a', agent_id: 'agent-a', runner_id: 'runner-a', status: 'waiting_for_approval' },
+    ],
+    agents: [{ id: 'agent-a', name: 'Recorded owner', adapter: 'fake-process', current_run_id: null }],
+    verificationRequests: [{ run_id: deliveredRunId, task_id: 'task-item-a', status: 'pending',
+      gate_type: 'human_approval', gate: { type: 'human_approval', roles: ['member'], exclude_requester: false } }],
+    collaborationInput: {
+      now: Date.parse(at), connection: 'live', snapshotFailed: false, leases: [],
+      runners: [{ id: 'runner-a', corp_id: ids.corpId, connected: true, status: 'connected', last_seen_at: at }],
+    },
+    ...overrides,
+  })
+}
+
+function activityPanel(tree) {
+  const panels = elements(tree, 'section').filter((node) => node.props['data-testid'] === 'run-activity-panel')
+  assert.equal(panels.length, 1)
+  return panels[0]
+}
+
+test('actual MissionCard activity stays on the pinned review and follows only explicit evidence selection', () => {
+  const view = missionActivityFixture()
+  try {
+    view.update()
+    const panel = activityPanel(view.tree)
+    assert.equal(panel.props['data-run-id'], deliveredRunId)
+    assert.match(text(panel), /Awaiting review/)
+    assert.match(text(panel), /Exact selected task/)
+    assert.match(text(panel), /Recorded owner/)
+    assert.doesNotMatch(text(panel), /reported active/)
+    assert.deepEqual(view.actions, [], 'rendering must not issue a command')
+    button(panel, /^Inspect selected run evidence$/).props.onClick()
+    assert.deepEqual(view.focusCalls.map((call) => call.id), [
+      `mission-evidence-panel-${ids.missionId}`, `mission-evidence-panel-${ids.missionId}`,
+    ])
+    button(panel, /^View run agent$/).props.onClick()
+    assert.deepEqual(view.actions, [['agent', 'agent-a']])
+    const select = elements(view.tree, 'select').find((node) => node.props.id === `mission-evidence-${ids.missionId}`)
+    select.props.onChange({ target: { value: newerRunId } })
+    view.update()
+    assert.equal(activityPanel(view.tree).props['data-run-id'], newerRunId)
+    assert.match(text(activityPanel(view.tree)), /Completed/)
+    assert.equal(view.pinned, newerRunId)
+    view.update({ ...view.props, runs: [{ ...view.props.runs[0], id: olderRunId }, ...view.props.runs] })
+    assert.equal(activityPanel(view.tree).props['data-run-id'], newerRunId, 'a snapshot update cannot replace the viewed run')
+  } finally { view.unmount() }
+})
+
+test('actual MissionCard preserves an unavailable explicit choice until the reader chooses a visible run', () => {
+  const unavailable = '00000000-0000-4000-8000-000000000199'
+  const view = missionActivityFixture({ pinnedRunId: unavailable })
+  try {
+    view.update()
+    const panel = activityPanel(view.tree)
+    assert.equal(panel.props['data-run-id'], undefined)
+    assert.match(text(panel), /Context unconfirmed/)
+    assert.doesNotMatch(text(panel), /Recorded owner|Exact selected task|Awaiting review/)
+    assert.equal(view.pinned, unavailable)
+    button(panel, /^Choose a run to inspect$/).props.onClick()
+    assert.equal(view.focusCalls[0].id, `mission-evidence-panel-${ids.missionId}`)
+    assert.deepEqual(view.actions, [])
+    const select = elements(view.tree, 'select').find((node) => node.props.id === `mission-evidence-${ids.missionId}`)
+    select.props.onChange({ target: { value: deliveredRunId } })
+    view.update()
+    assert.equal(activityPanel(view.tree).props['data-run-id'], deliveredRunId)
+    assert.match(text(activityPanel(view.tree)), /Awaiting review/)
+  } finally { view.unmount() }
+})
+
+test('actual MissionCard requires its wired snapshot freshness and does not invent Factory context', () => {
+  const view = missionActivityFixture({ factoryItem: undefined })
+  try {
+    view.update()
+    assert.doesNotMatch(text(activityPanel(view.tree)), /Intake record/)
+    for (const collaborationInput of [undefined, { ...view.props.collaborationInput, snapshotFailed: true },
+      { ...view.props.collaborationInput, connection: 'offline' }]) {
+      view.update({ ...view.props, collaborationInput })
+      assert.equal(activityPanel(view.tree).props['data-run-id'], deliveredRunId)
+      assert.match(text(activityPanel(view.tree)), /Updates unavailable/)
+      assert.doesNotMatch(text(activityPanel(view.tree)), /reported active/)
+    }
+  } finally { view.unmount() }
+})
 
 function assertResultRefocus(view) {
   assert.equal(view.animationFrames.length, 1, 'manual refresh queues exactly one post-render focus')
@@ -1159,4 +1299,217 @@ test('actual work pickers do not duplicate a recent selection or invent an absen
   assert.equal(choices(latest, undefined), latest)
   const empty = Object.freeze([])
   assert.equal(choices(empty, undefined), empty)
+})
+
+function appEvidenceFixture(overrides = {}) {
+  const view = appResultFixture({ includeEvidence: true, ...overrides })
+  const decisions = [], downloads = []
+  const runs = view.props.runs.map((run) => ({
+    ...run, verification_status: 'passed', artifact_id: `provider-${run.id}`,
+    artifact_uri: 'file:///never-follow-this-uri', artifact_sha256: '9'.repeat(64),
+    artifact_media_type: 'text/plain', artifact_signature: 'signed-server-record',
+    ...(run.id === olderRunId ? { verification_sha256: 'e'.repeat(64), deliverable_sha256: 'f'.repeat(64) } : {}),
+  }))
+  const deliverables = [...view.props.deliverables, {
+    ...view.props.deliverables[0], id: 'historical-source', artifact_id: 'historical-artifact',
+    run_id: olderRunId, verification_sha256: 'e'.repeat(64), sha256: 'f'.repeat(64),
+  }]
+  const mission = { ...view.props.mission, requested_by: 'requester' }
+  view.update({
+    ...view.props, mission, runs, deliverables,
+    collaborationInput: {
+      corpId: ids.corpId, mission, actor: { id: ids.actorId, name: 'Alice', role: 'member', kind: 'human' },
+      actors: [], tasks: view.props.tasks, runs, agents: [], runners: [], leases: [], reviews: [],
+      connection: 'live', snapshotFailed: false, now: Date.now(),
+    },
+    evidence: [deliveredRunId, olderRunId].map((run_id) => ({
+      id: `check-${run_id}`, run_id, task_id: 'task-item-a', check_index: 0,
+      status: 'passed', kind: 'command', summary: `Check for ${run_id}`,
+    })),
+    events: [deliveredRunId, olderRunId].map((aggregate_id) => ({
+      type: 'run.verification_started', aggregate_type: 'run', aggregate_id, payload: { check_count: 1 },
+    })),
+    onVerificationDecision: (run, approved) => { decisions.push({ run, approved }) },
+    onDownloadArtifact: (run) => { downloads.push({ kind: 'provider', id: run.id }) },
+    onDownloadDeliverable: (deliverable) => { downloads.push({ kind: 'source', id: deliverable.id }) },
+  })
+  return { view, decisions, downloads }
+}
+
+const evidenceSurface = (view, id) => hosts(view.tree).find((node) => node.props['data-testid'] === id)
+
+test('actual App keeps provider output, source, checks and historical evidence on the exact selected run', async () => {
+  const { view, decisions, downloads } = appEvidenceFixture()
+  try {
+    await view.flush()
+    view.calls[0].response.resolve(appOrigin())
+    await view.flush()
+    view.calls[1].response.resolve(appContext())
+    await view.flush()
+    assert.match(text(view.tree), /Published/)
+    assert.equal(evidenceSurface(view, 'source-deliverable').props['data-source-state'], 'matched')
+    assert.equal(inspectors(view.tree).length, 2)
+    const [provider, source] = inspectors(view.tree)
+    assert.equal(provider.source.kind, 'provider')
+    assert.equal(source.source.kind, 'source')
+    assert.equal(provider.source.runId, deliveredRunId)
+    assert.equal(source.source.runId, deliveredRunId)
+    assert.notEqual(provider.source.artifactId, source.source.artifactId)
+    assert.equal(source.available, true)
+    assert.deepEqual(source.viewer, {
+      server: appApiUrl, corpId: ids.corpId, actorId: ids.actorId, actorRole: 'member',
+      roomId: ids.roomId, missionId: ids.missionId,
+    })
+    let checks = evidenceSurface(view, 'verification-evidence')
+    assert.equal(checks.props['data-run-id'], deliveredRunId)
+    assert.equal(checks.props['data-verification-sha256'], verification)
+    assert.equal(checks.props['data-source-sha256'], digest)
+    assert.equal(elements(checks, 'a')[0].props.href, `#inspect-source-${source.source.artifactId}`)
+    assert.doesNotMatch(text(checks), new RegExp(olderRunId))
+    assert.equal(evidenceSurface(view, 'review-decision'), undefined)
+    assert.equal(view.artifactReads.length, 0, 'rendering metadata never fetches artifact bytes')
+    assert.deepEqual(decisions, [], 'artifact count is not a request for outcome decisions')
+    button(evidenceSurface(view, 'provider-evidence'), /^Download verified artifact$/).props.onClick()
+    button(evidenceSurface(view, 'source-deliverable'), /^Download source deliverable$/).props.onClick()
+    assert.deepEqual(downloads, [
+      { kind: 'provider', id: deliveredRunId }, { kind: 'source', id: view.props.deliverables[0].id },
+    ])
+    view.update({ ...view.props, workSelection: { missionId: ids.missionId, taskId: 'task-item-a', runId: olderRunId } })
+    assert.match(text(view.tree), /Historical evidence/)
+    assert.ok(inspectors(view.tree).every((entry) => entry.source.runId === olderRunId))
+    checks = evidenceSurface(view, 'verification-evidence')
+    assert.equal(checks.props['data-run-id'], olderRunId)
+    assert.equal(checks.props['data-verification-sha256'], 'e'.repeat(64))
+    assert.equal(checks.props['data-source-sha256'], 'f'.repeat(64))
+    assert.equal(elements(checks, 'a')[0].props.href, '#inspect-source-historical-artifact')
+    assert.doesNotMatch(text(checks), new RegExp(deliveredRunId))
+    assert.deepEqual(decisions, [])
+  } finally { view.unmount() }
+})
+
+test('actual App artifact transport uses the native artifact route and current credential without redirects or caching', async () => {
+  const { view } = appEvidenceFixture()
+  try {
+    const { request } = inspectors(view.tree)[0]
+    const controller = new AbortController()
+    for (const token of ['synthetic-session-a', 'synthetic-session-b', null]) {
+      view.setAccessToken(token)
+      await request(sourceEvidence.evidenceArtifactPath('corp-a', 'alice', 'provider-a'), controller.signal)
+      assert.deepEqual(view.artifactReads.at(-1), {
+        path: appApiUrl + '/api/corps/corp-a/artifacts/provider-a?actor_id=alice',
+        init: { method: 'GET', signal: controller.signal, redirect: 'error', cache: 'no-store',
+          headers: token ? { authorization: `Bearer ${token}` } : {} },
+      })
+    }
+    assert.equal(view.artifactReads.length, 3)
+    assert.doesNotMatch(JSON.stringify(inspectors(view.tree)), /synthetic-session|never-follow-this-uri/)
+  } finally { view.unmount() }
+})
+
+test('actual App disables inspection on unavailable or mismatched current snapshot scope', () => {
+  const { view } = appEvidenceFixture()
+  const original = view.props, snapshot = original.collaborationInput
+  try {
+    for (const input of [undefined, { ...snapshot, connection: 'offline' },
+      { ...snapshot, snapshotFailed: true }, { ...snapshot, now: 0 },
+      { ...snapshot, corpId: 'other' }, { ...snapshot, actor: { ...snapshot.actor, id: 'other' } },
+      { ...snapshot, actor: { ...snapshot.actor, role: 'admin' } },
+      { ...snapshot, mission: { ...snapshot.mission, id: 'other' } },
+      { ...snapshot, mission: { ...snapshot.mission, room_id: 'other' } }]) {
+      view.update({ ...original, collaborationInput: input })
+      assert.equal(inspectors(view.tree).length, 2)
+      assert.ok(inspectors(view.tree).every((entry) => !entry.available))
+      assert.equal(view.artifactReads.length, 0)
+    }
+    view.update({ ...original, tasks: original.tasks.map((task) => ({ ...task, mission_id: 'other' })) })
+    assert.ok(inspectors(view.tree).every((entry) => !entry.available))
+    view.update(original)
+    assert.ok(inspectors(view.tree).every((entry) => entry.available))
+  } finally { view.unmount() }
+})
+
+test('actual App withholds source download, inspector and links for missing, ambiguous or mismatched evidence', () => {
+  const { view, downloads } = appEvidenceFixture()
+  const original = view.props, selected = original.deliverables[0]
+  try {
+    for (const deliverables of [[], [selected, { ...selected }],
+      [{ ...selected, task_id: 'other-task' }], [{ ...selected, verification_sha256: '0'.repeat(64) }],
+      [{ ...selected, sha256: '0'.repeat(64) }], [{ ...selected, base_commit: '0'.repeat(40) }]]) {
+      view.update({ ...original, deliverables })
+      const surface = evidenceSurface(view, 'source-deliverable')
+      assert.equal(surface.props['data-source-state'], 'unavailable')
+      assert.match(text(surface), /Source deliverable unavailable/)
+      assert.equal(elements(surface, 'button').length, 0)
+      assert.deepEqual(inspectors(view.tree).map((entry) => entry.source.kind), ['provider'])
+      assert.equal(elements(evidenceSurface(view, 'verification-evidence'), 'a').length, 0)
+      assert.deepEqual(downloads, [])
+    }
+    view.update({ ...original, runs: original.runs.filter((run) => run.id !== deliveredRunId) })
+    assert.equal(inspectors(view.tree).length, 0, 'a missing selected run never substitutes a newer one')
+    assert.equal(evidenceSurface(view, 'verification-evidence'), undefined)
+    assert.equal(evidenceSurface(view, 'source-deliverable'), undefined)
+  } finally { view.unmount() }
+})
+
+test('actual App findings retain full reviewer text and exact source/run/verification links', () => {
+  const { view, decisions } = appEvidenceFixture()
+  const note = 'Resolve the observed contract mismatch. '.repeat(10) + '<script>untrusted findings</script>'
+  try {
+    view.update({ ...view.props, actors: [{ id: 'bob', name: 'Bob' }], verificationRequests: [{
+      run_id: deliveredRunId, task_id: 'task-item-a', status: 'rejected',
+      gate_type: 'independent_review', decided_by: 'bob', decision_note: note,
+    }] })
+    const findings = evidenceSurface(view, 'review-decision')
+    assert.equal(findings.props['data-run-id'], deliveredRunId)
+    assert.equal(findings.props['data-verification-sha256'], verification)
+    assert.equal(findings.props['data-source-sha256'], digest)
+    assert.match(text(findings), /Independent review.*Changes requested.*Reviewed by Bob/s)
+    assert.equal(elements(findings, 'a')[0].props.href, '#inspect-source-artifact-item-a')
+    assert.equal(text(elements(findings, 'div').find((node) => node.props['aria-label'] === 'Full reviewer findings')), note)
+    assert.equal(elements(findings, 'script').length, 0)
+    assert.match(renderToStaticMarkup(findings), /&lt;script&gt;untrusted findings&lt;\/script&gt;/)
+    assert.deepEqual(decisions, [])
+    view.update({ ...view.props, workSelection: { missionId: ids.missionId, taskId: 'task-item-a', runId: olderRunId } })
+    assert.equal(evidenceSurface(view, 'review-decision'), undefined, 'findings never follow another run')
+  } finally { view.unmount() }
+})
+
+test('actual App preserves existing reviewer eligibility and sends decisions for only the selected run', () => {
+  const { view, decisions } = appEvidenceFixture()
+  const original = view.props
+  const pending = {
+    ...original, mission: { ...original.mission, status: 'running' },
+    runs: original.runs.map((run) => ({ ...run, status: 'waiting_for_approval' })),
+    verificationRequests: [deliveredRunId, olderRunId].map((run_id) => ({
+      run_id, task_id: 'task-item-a', status: 'pending', gate_type: 'independent_review',
+      gate: { type: 'independent_review', roles: ['member', 'manager'], exclude_requester: true },
+    })),
+  }
+  try {
+    for (const change of [{ actorRole: 'viewer' }, { actorRole: 'owner' },
+      { actorId: 'requester' }, { busy: true }]) {
+      view.update({ ...pending, ...change })
+      assert.equal(button(view.tree, /^(Accept evidence|Submitting decision…)$/).props.disabled, true)
+      assert.equal(button(view.tree, /^Reject evidence$/).props.disabled, true)
+      assert.deepEqual(decisions, [])
+    }
+    for (const approved of [true, false]) {
+      view.update(pending)
+      const decide = button(view.tree, approved ? /^Accept evidence$/ : /^Reject evidence$/)
+      assert.equal(decide.props.disabled, false)
+      decide.props.onClick()
+      view.update()
+      assert.equal(decisions.at(-1).run.id, deliveredRunId)
+      assert.equal(decisions.at(-1).run.task_id, 'task-item-a')
+      assert.equal(decisions.at(-1).approved, approved)
+      assert.equal(view.pinned, deliveredRunId)
+    }
+    view.update({ ...pending, workSelection: { missionId: ids.missionId, taskId: 'task-item-a', runId: olderRunId } })
+    button(view.tree, /^Reject evidence$/).props.onClick()
+    assert.equal(decisions.at(-1).run.id, olderRunId)
+    assert.equal(decisions.length, 3)
+    view.update({ ...view.props, verificationRequests: pending.verificationRequests.filter((request) => request.run_id !== olderRunId) })
+    assert.ok(!elements(view.tree, 'button').some((node) => /^(Accept|Reject) evidence$/.test(text(node))))
+    assert.equal(decisions.length, 3)
+  } finally { view.unmount() }
 })

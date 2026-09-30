@@ -39,7 +39,7 @@ function setup({ writeFails = false, viewerActor = id(2), selectedActor = id(2) 
     missions: [{ id: id(20) }], rooms: [{ id: id(40) }] } }
   const storage = { getItem: (key) => store.get(key) ?? null,
     setItem: (key, value) => { if (writeFails) throw new Error('storage denied'); store.set(key, value) } }
-  const changes = { version: 0, errors: [], views: [], selected: [], reveals: [] }
+  const changes = { version: 0, errors: [], views: [], selected: [], reveals: [], inspector: [], modes: [] }
   const server = 'http://127.0.0.1:18865'
   const key = workSelectionKey({ server, corpId: id(1), actorId: id(2) })
   const selectedKey = workSelectionKey({ server, corpId: id(1), actorId: selectedActor })
@@ -57,6 +57,8 @@ function setup({ writeFails = false, viewerActor = id(2), selectedActor = id(2) 
     setEvidenceNavigationVersion: (update) => { changes.version = update(changes.version) },
     setSelectedMissionId: (value) => changes.selected.push(value), setMissionComposerCollapsed: () => {},
     setRoomMissionId: () => {}, setSelectedRoomId: () => {},
+    setFloorInspectorOpen: (value) => changes.inspector.push(value),
+    setPresentationMode: (value) => changes.modes.push(value),
     setActiveWorkspaceView: (value) => changes.views.push(value), setAnnouncement: () => {},
     revealEntityTarget: (...args) => { changes.reveals.push(args); return true }, statusLabel: (value) => value,
     window: { sessionStorage: storage, history: { replaceState: () => {} }, setTimeout: (fn) => fn() } }
@@ -76,6 +78,9 @@ test('Factory exact-run navigation replaces a remembered newer outcome before mi
   assert.equal(pendingReviewForRun(selected, reviews).run_id, s.older.id)
   assert.deepEqual(s.changes.errors, [])
   assert.deepEqual(s.changes.views, ['missions'])
+  assert.deepEqual(s.changes.modes, ['operations'])
+  assert.deepEqual(s.changes.inspector, [false], 'Exact evidence opens without an inspector obscuring its decision controls')
+  s.store.set(s.key, JSON.stringify(s.newerChoice))
   s.navigate('run', s.older.id)
   assert.equal(s.changes.version, 2, 'Repeated explicit navigation must remount the same mission too')
 })
@@ -118,6 +123,8 @@ test('unavailable run/task/mission cannot overwrite remembered evidence or open 
     assert.deepEqual(readWorkSelection(() => s.storage, s.key), s.newerChoice)
     assert.equal(s.changes.version, 0)
     assert.equal(s.changes.views.length, 0)
+    assert.deepEqual(s.changes.modes, [], 'Unavailable evidence must not switch presentation')
+    assert.deepEqual(s.changes.inspector, [], 'Unavailable evidence preserves the current inspector')
     assert.equal(s.changes.errors.length, 1)
   }
 })
@@ -129,6 +136,7 @@ test('storage failure or obsolete viewer fails closed before navigation', () => 
     assert.deepEqual(readWorkSelection(() => s.storage, s.key), s.newerChoice)
     assert.equal(s.changes.version, 0)
     assert.equal(s.changes.views.length, 0)
+    assert.deepEqual(s.changes.inspector, [], 'Failed or obsolete navigation preserves the current inspector')
     assert.match(s.changes.errors[0], /No different run has been opened/)
   }
 })

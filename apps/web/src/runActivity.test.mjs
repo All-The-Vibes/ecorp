@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFile } from 'node:fs/promises'
+import { isValidElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import * as jsxRuntime from 'react/jsx-runtime'
 import ts from 'typescript'
 import * as activity from './runActivity.ts'
+import { selectOfficeAgent } from './office/officeModel.ts'
 
 const at = (seconds) => new Date(Date.UTC(2026, 8, 14, 12, 0, seconds)).toISOString()
 const event = (seq, type, payload = {}, overrides = {}) => ({
@@ -16,8 +18,8 @@ function fixture(changes = {}) {
     corpId: 'corp-a', mission: { id: 'mission-a', room_id: 'room-a', status: 'running' },
     run: { id: 'run-a', task_id: 'task-a', agent_id: 'agent-a', runner_id: 'runner-a',
       status: 'running', execution_mode: 'provider', verification_status: 'pending' },
-    tasks: [{ id: 'task-a', mission_id: 'mission-a', title: 'Implement accessible search' }],
-    agents: [{ id: 'agent-a', name: 'Delivery engineer', adapter: 'github-copilot' }],
+    tasks: [{ id: 'task-a', mission_id: 'mission-a', title: 'Implement accessible search', assigned_agent_id: 'agent-a' }],
+    agents: [{ id: 'agent-a', name: 'Delivery engineer', adapter: 'github-copilot', current_run_id: 'run-a' }],
     runners: [{ id: 'runner-a', corp_id: 'corp-a', connected: true, status: 'connected', last_seen_at: at(29) }],
     actors: [{ id: 'alice', name: 'Alice' }],
     leases: [{ agent_id: 'agent-a', actor_id: 'alice', expires_at: at(60) }],
@@ -213,6 +215,116 @@ test('expired leases and foreign attribution do not display an active controller
   }
 })
 
+test('provider control requires fresh exact ownership and no recorded execution boundary', () => {
+  assert.equal(activity.presentRunActivity(fixture()).providerCurrent, true)
+  for (const changes of [
+    { agents: [{ ...fixture().agents[0], current_run_id: 'newer-run' }] },
+    { agents: [] },
+    { tasks: [{ ...fixture().tasks[0], assigned_agent_id: 'other-agent' }] },
+    { mission: { ...fixture().mission, status: 'cancelled' } },
+    { connection: 'offline' }, { snapshotFailed: true },
+    { run: { ...fixture().run, breaker_stage: 'suspend' } },
+    { run: { ...fixture().run, breaker_stage: 'stop' } },
+    { run: { ...fixture().run, workspace_disposition: 'quarantined' } },
+    { events: [event(1, 'run.started'), event(2, 'run.teardown_uncertain')] },
+    { events: [event(1, 'run.started'), event(2, 'run.session_terminated', { provider_process_alive: false })] },
+  ]) {
+    const view = activity.presentRunActivity(fixture(changes))
+    assert.equal(view.providerCurrent, false, JSON.stringify(changes))
+    assert.doesNotMatch(fact(view, 'Assigned agent').detail, /Control at snapshot: Alice/)
+    assert.doesNotMatch(fact(view, 'Provider execution').value, /reported active$/)
+  }
+})
+
+test('activity supports non-Factory work and an unavailable exact selection without inventing intake or a mission', () => {
+  const direct = activity.presentRunActivity(fixture({ factoryState: undefined }))
+  assert.equal(direct.context.some((entry) => entry.label === 'Intake record'), false)
+  const absent = activity.presentRunActivity(fixture({ mission: undefined, run: undefined, selectionUnavailable: true }))
+  assert.equal(absent.runId, null)
+  assert.equal(absent.providerCurrent, false)
+  assert.equal(absent.status, 'Context unconfirmed')
+  assert.match(absent.summary, /No alternative run/)
+  assert.equal(absent.context.some((entry) => entry.label === 'Mission record'), false)
+})
+
+test('agent activity honors the exact pointer and does not substitute a recorded run after context loss', () => {
+  assert.equal(typeof activity.selectAgentActivity, 'function')
+  const f = fixture()
+  const input = { agent: f.agents[0], tasks: f.tasks, missions: [f.mission], runs: [f.run], reviews: [], approvals: [] }
+  assert.equal(activity.selectAgentActivity(input).run, f.run)
+  for (const changes of [
+    { runs: [{ ...f.run, id: 'other-run' }] },
+    { runs: [{ ...f.run, agent_id: 'other-agent' }] },
+    { tasks: [{ ...f.tasks[0], assigned_agent_id: 'other-agent' }] },
+    { tasks: [] }, { missions: [] },
+    { agent: { ...f.agents[0], mission_id: 'other-mission' } },
+  ]) {
+    const selected = activity.selectAgentActivity({ ...input, ...changes })
+    assert.equal(selected.run, undefined, JSON.stringify(changes))
+    assert.equal(selected.selectionUnavailable, true)
+  }
+})
+
+test('an agent without a current pointer may show exact recorded review but cannot claim current execution', () => {
+  assert.equal(typeof activity.selectAgentActivity, 'function')
+  const f = fixture(), agent = { ...f.agents[0], current_run_id: null }
+  const review = { ...f.run, id: 'old-review', status: 'waiting_for_approval' }
+  const reviews = [{ run_id: review.id, task_id: review.task_id, status: 'pending' }]
+  const selected = activity.selectAgentActivity({ agent, tasks: f.tasks, missions: [f.mission],
+    runs: [f.run, review], reviews, approvals: [] })
+  assert.equal(selected.run, review)
+  const view = activity.presentRunActivity({ ...f, ...selected, agents: [agent], reviews })
+  assert.equal(view.status, 'Awaiting review')
+  assert.equal(view.providerCurrent, false)
+  assert.ok(view.notices.some((notice) => /recorded run|historical/i.test(notice)))
+  const recordedActive = activity.presentRunActivity({ ...f, agents: [agent] })
+  assert.equal(recordedActive.providerCurrent, false)
+  assert.doesNotMatch(fact(recordedActive, 'Provider execution').value, /reported active$/)
+})
+
+test('a concrete breaker reason uses only a matching native stage and allowlisted metric', () => {
+  const sentinel = 'NEVER_RENDER_RAW_BREAKER_REASON'
+  for (const [metric, expected] of [
+    ['run_tokens', /Run token budget/], ['mission_cost', /Mission cost budget/],
+    ['actor_tokens_24h', /Actor daily token budget/], ['corp_cost_24h', /Corp daily cost budget/],
+    ['no_progress', /No-progress limit/], ['repeated_tool', /Repeated-tool limit/],
+  ]) {
+    const view = viewFor({ breaker_stage: 'suspend' }, { events: [event(1, 'run.breaker_transition', {
+      stage: 'suspend', reason: sentinel, input: { metric, used: sentinel, limit: sentinel },
+    })] })
+    assert.match(fact(view, 'Execution blocker').value, expected)
+    assert.doesNotMatch(JSON.stringify(view), new RegExp(sentinel))
+  }
+  for (const payload of [
+    { stage: 'suspend', input: { metric: sentinel }, reason: sentinel },
+    { stage: 'stop', input: { metric: 'run_tokens' } },
+    { stage: 'suspend', input: { metric: '__proto__' } },
+  ]) {
+    const view = viewFor({ breaker_stage: 'suspend' }, { events: [event(1, 'run.breaker_transition', payload)] })
+    assert.match(fact(view, 'Execution blocker').value, /reason unavailable/)
+    assert.doesNotMatch(JSON.stringify(view), new RegExp(sentinel))
+  }
+})
+
+test('a recorded constrain stage cannot mask a current decision, verification or terminal outcome', () => {
+  const constrained = { breaker_stage: 'constrain' }
+  for (const [run, extra, expected] of [
+    [{ status: 'waiting_for_approval' }, { reviews: [{ run_id: 'run-a', task_id: 'task-a', status: 'pending' }] }, 'Human outcome review pending'],
+    [{ status: 'waiting_for_approval' }, { approvals: [{ run_id: 'run-a', status: 'pending' }] }, 'Requested action approval pending'],
+    [{ status: 'verifying' }, {}, 'Verification in progress'],
+    [{ status: 'failed', verification_status: 'failed' }, {}, 'Recorded verification failed'],
+    [{ status: 'completed' }, {}, 'Completed run; inspect recorded evidence'],
+    [{ status: 'cancelled' }, {}, 'Cancelled run; inspect recorded evidence'],
+  ]) {
+    const view = viewFor({ ...constrained, ...run }, extra)
+    assert.equal(fact(view, 'Execution blocker').value, expected)
+  }
+  assert.match(fact(viewFor(constrained), 'Execution blocker').value, /Constrain/)
+  for (const breaker_stage of ['suspend', 'stop']) {
+    assert.match(fact(viewFor({ status: 'completed', breaker_stage }), 'Execution blocker').value, /Suspend|Stop/)
+  }
+})
+
 const source = await readFile(new URL('./RunActivityDetails.tsx', import.meta.url), 'utf8')
 const compiled = ts.transpileModule(source, { fileName: 'RunActivityDetails.tsx', reportDiagnostics: true,
   compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } })
@@ -237,6 +349,185 @@ test('actual React detail component reuses current classes, native disclosure an
     assert.match(html, /data-run-id="run-a"/)
   }
   assert.doesNotMatch(source, /\b(fetch|setInterval|WebSocket)\s*\(/)
+})
+
+test('the shared panel keeps current state prominent and recorded details collapsed', () => {
+  assert.equal(typeof exports.RunActivityPanel, 'function')
+  const view = viewFor({ status: 'waiting_for_approval' }, {
+    reviews: [{ run_id: 'run-a', task_id: 'task-a', status: 'pending' }],
+  })
+  const html = renderToStaticMarkup(jsxRuntime.jsx(exports.RunActivityPanel, { view }))
+  assert.match(html, /aria-label="Selected run activity"/)
+  assert.match(html, /Awaiting review/)
+  assert.match(html, /This outcome needs review/)
+  assert.match(html, /Task in focus/)
+  assert.doesNotMatch(html, /<details[^>]*\bopen/)
+})
+
+// Compile the actual inspector and its control/idempotency helpers. Only hook
+// scheduling, storage, unrelated portraits and command callbacks are controlled.
+const appSource = await readFile(new URL('./App.tsx', import.meta.url), 'utf8')
+const appFile = ts.createSourceFile('App.tsx', appSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+assert.deepEqual(appFile.parseDiagnostics, [])
+const selectedAgentDeclarations = [], viewAgentCallbacks = []
+const inspectAppSelection = (node) => {
+  if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === 'selectedAgent') selectedAgentDeclarations.push(node)
+  if (ts.isJsxAttribute(node) && node.name.getText(appFile) === 'onViewAgent' &&
+    node.initializer && ts.isJsxExpression(node.initializer) && ts.isArrowFunction(node.initializer.expression)) {
+    viewAgentCallbacks.push(node.initializer.expression)
+  }
+  ts.forEachChild(node, inspectAppSelection)
+}
+inspectAppSelection(appFile)
+assert.equal(selectedAgentDeclarations.length, 1)
+assert.equal(viewAgentCallbacks.length, 1)
+const selectionCode = ts.transpileModule(`
+  exports.select = (data, floorAgents, selectedAgentId, selectOfficeAgent) => {
+    const selectedFloorAgent = selectOfficeAgent(floorAgents, selectedAgentId);
+    return (${selectedAgentDeclarations[0].initializer.getText(appFile)});
+  };
+  exports.open = (data, currentAgents, setSelectedAgentId, setFloorInspectorOpen, activateWorkspaceView) =>
+    (${viewAgentCallbacks[0].getText(appFile)});
+`, { compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.CommonJS } }).outputText
+const appSelection = {}
+new Function('exports', selectionCode)(appSelection)
+
+test('actual App inspector resolves exact hidden and retired identities without replacing a missing selection', () => {
+  const visible = { id: 'visible', retired_at: null }
+  const hidden = { id: 'hidden-test-agent', retired_at: null }
+  const retired = { id: 'historical-agent', retired_at: at(20) }
+  const data = { snapshot: { agents: [visible, hidden, retired] } }
+  for (const agent of [visible, hidden, retired]) {
+    assert.equal(appSelection.select(data, [visible], agent.id, selectOfficeAgent), agent)
+  }
+  assert.equal(appSelection.select(data, [visible], 'revoked-or-missing', selectOfficeAgent), undefined)
+  assert.equal(appSelection.select(data, [visible], null, selectOfficeAgent), visible)
+})
+
+test('actual Mission agent callback opens authorized historical identities without changing the workspace', () => {
+  const current = { id: 'current', retired_at: null }, retired = { id: 'retired', retired_at: at(20) }
+  const data = { snapshot: { agents: [current, retired] } }, calls = []
+  const open = appSelection.open(data, [current], (id) => calls.push(['select', id]),
+    (open) => calls.push(['open', open]), (view) => calls.push(['navigate', view]))
+  open(retired.id)
+  assert.deepEqual(calls, [['select', retired.id], ['open', true]])
+  open('not-authorized')
+  assert.equal(calls.length, 2, 'absent identities cannot be opened')
+})
+const deskNames = new Set(['AgentDesk', 'agentStatusLabel', 'adapterLabel', 'capabilitySupports',
+  'detailValue', 'canOperate', 'shortId', 'time', 'StatusMark', 'browserOperationKey', 'clearBrowserOperation'])
+const deskNodes = appFile.statements.filter((node) => ts.isFunctionDeclaration(node) && deskNames.has(node.name?.text))
+assert.equal(deskNodes.length, deskNames.size)
+const deskCompiled = ts.transpileModule(deskNodes.map((node) => node.getText(appFile)).join('\n') + '\nexports.AgentDesk = AgentDesk;', {
+  fileName: 'AgentDesk.tsx', reportDiagnostics: true,
+  compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
+})
+assert.deepEqual(deskCompiled.diagnostics, [])
+
+function deskHosts(node) {
+  if (Array.isArray(node)) return node.flatMap(deskHosts)
+  if (!isValidElement(node)) return []
+  if (typeof node.type === 'function') return deskHosts(node.type(node.props))
+  return [...(typeof node.type === 'string' ? [node] : []), ...deskHosts(node.props.children)]
+}
+function deskText(node) {
+  if (Array.isArray(node)) return node.map(deskText).join(' ')
+  if (!isValidElement(node)) return typeof node === 'string' || typeof node === 'number' ? String(node) : ''
+  return deskText(typeof node.type === 'function' ? node.type(node.props) : node.props.children)
+}
+function deskFixture(overrides = {}) {
+  let cursor = 0, tree
+  const slots = [], storage = new Map(), calls = []
+  const useState = (initial) => {
+    const index = cursor++
+    if (!slots[index]) slots[index] = { value: initial }
+    return [slots[index].value, (value) => { slots[index].value = value }]
+  }
+  const compiledExports = {}
+  new Function('require', 'exports', 'useState', 'presentRunActivity', 'RunActivityPanel', 'AgentAvatar', 'AgentPinControl', 'window', deskCompiled.outputText)(
+    (name) => { assert.equal(name, 'react/jsx-runtime'); return jsxRuntime }, compiledExports, useState,
+    activity.presentRunActivity, exports.RunActivityPanel, () => null, () => null,
+    { sessionStorage: { getItem: (key) => storage.get(key), setItem: (key, value) => storage.set(key, value), removeItem: (key) => storage.delete(key) } },
+  )
+  const input = fixture()
+  let props = {
+    agent: { ...input.agents[0], status: 'working', role: 'Engineer' }, activityInput: input,
+    actor: { id: 'alice', name: 'Alice', role: 'owner', kind: 'human' },
+    humans: [{ id: 'alice', name: 'Alice', role: 'owner' }, { id: 'bob', name: 'Bob', role: 'member' }],
+    capability: { detail: 'steer=yes;interrupt=yes;stop=yes' }, lease: input.leases[0], leaseToken: 'synthetic-test-token', queuedCount: 0,
+    onClaim: (...args) => calls.push(['claim', ...args]), onRelease: (...args) => calls.push(['release', ...args]),
+    onTransfer: (...args) => calls.push(['transfer', ...args]), onInterrupt: (...args) => calls.push(['interrupt', ...args]),
+    onEmergencyStop: (...args) => calls.push(['stop', ...args]), onPin: (...args) => calls.push(['pin', ...args]),
+    onInspectRun: (...args) => calls.push(['inspect', ...args]),
+    onMessage: async (...args) => { calls.push(['message', ...args]); return true }, ...overrides,
+  }
+  const render = (next = props) => { props = next; cursor = 0; tree = compiledExports.AgentDesk(props); renderToStaticMarkup(tree) }
+  render()
+  return {
+    calls, render, get props() { return props }, get tree() { return tree },
+    nodes: (type) => deskHosts(tree).filter((node) => node.type === type),
+    buttons: () => deskHosts(tree).filter((node) => node.type === 'button').map(deskText),
+  }
+}
+
+test('actual AgentDesk navigates to its exact run and passes a live lease only through the existing message action', async () => {
+  const desk = deskFixture()
+  assert.deepEqual(desk.calls, [])
+  assert.ok(desk.buttons().includes('Renew control'))
+  assert.ok(desk.buttons().includes('Interrupt turn'))
+  desk.nodes('button').find((node) => /Inspect this run/.test(deskText(node))).props.onClick()
+  assert.deepEqual(desk.calls, [['inspect', 'run-a']])
+  desk.nodes('input')[0].props.onChange({ target: { value: 'Continue the selected task' } })
+  desk.render()
+  await desk.nodes('form')[0].props.onSubmit({ preventDefault() {} })
+  const message = desk.calls[1]
+  assert.equal(message[0], 'message')
+  assert.equal(message[1].id, 'agent-a')
+  assert.equal(message[3], 'synthetic-test-token')
+  assert.match(message[4], /^[0-9a-f-]{36}$/, 'actual existing browser operation helper supplies the retry key')
+})
+
+test('actual AgentDesk hides live commands for review, historical, stale, terminated or mismatched run context', () => {
+  for (const changes of [
+    { run: { ...fixture().run, status: 'waiting_for_approval' }, reviews: [{ run_id: 'run-a', task_id: 'task-a', status: 'pending' }] },
+    { agents: [{ ...fixture().agents[0], current_run_id: null }] },
+    { connection: 'offline' }, { snapshotFailed: true }, { snapshotReceivedAt: null },
+    { tasks: [{ ...fixture().tasks[0], assigned_agent_id: 'other' }] },
+    { mission: { ...fixture().mission, status: 'cancelled' } },
+    { events: [event(2, 'run.session_terminated', { provider_process_alive: false })] },
+    { selectionUnavailable: true, run: undefined, mission: undefined },
+  ]) {
+    const desk = deskFixture({ activityInput: fixture(changes) })
+    assert.doesNotMatch(desk.buttons().join('|'), /Renew control|Claim live control|Release|Transfer|Interrupt turn|Emergency stop|Steer/, JSON.stringify(changes))
+    assert.match(deskText(desk.tree), /Live control unavailable/)
+    assert.deepEqual(desk.calls, [])
+  }
+})
+
+test('retired agent inspection is read-only even with an inconsistent current-run pointer', () => {
+  const retired = { ...fixture().agents[0], retired_at: at(20), status: 'working', role: 'Engineer' }
+  const input = fixture({ agents: [retired] })
+  assert.equal(activity.presentRunActivity(input).providerCurrent, false)
+  const desk = deskFixture({ agent: retired, activityInput: input })
+  assert.doesNotMatch(desk.buttons().join('|'), /Renew control|Claim live control|Release|Transfer|Interrupt turn|Emergency stop|Steer|Queue note/)
+  assert.equal(desk.nodes('form').length, 0)
+  assert.match(deskText(desk.tree), /retired|read-only/i)
+  assert.deepEqual(desk.calls, [])
+})
+
+test('actual AgentDesk does not use expired, foreign or role-ineligible leases for steering', async () => {
+  for (const changes of [
+    { lease: { ...fixture().leases[0], expires_at: at(10) } },
+    { lease: { ...fixture().leases[0], agent_id: 'other-agent' } },
+    { actor: { id: 'alice', name: 'Alice', role: 'viewer', kind: 'human' } },
+  ]) {
+    const desk = deskFixture(changes)
+    assert.doesNotMatch(desk.buttons().join('|'), /Renew control|Release|Transfer|Interrupt turn|Steer/)
+    desk.nodes('input')[0].props.onChange({ target: { value: 'A queued note' } })
+    desk.render()
+    await desk.nodes('form')[0].props.onSubmit({ preventDefault() {} })
+    assert.equal(desk.calls[0][3], undefined, 'queued notes cannot carry live steering authority')
+  }
 })
 
 test('the Factory integration uses the existing exact-run selector, scoped snapshot and old callbacks', async () => {

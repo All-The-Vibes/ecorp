@@ -1,0 +1,287 @@
+{
+  "issue": 259,
+  "kind": "assistant implementation self-review; not independent or human approval",
+  "recorded_at_utc": "2026-09-29T18:25:40.667372+00:00",
+  "status": "local-implementation-accepted",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "tested_tree": "65fbe9d0a65f2641a0e2a42d933a1ef431b9cbd9",
+  "source_receipt_sha256": "f99ee5f126795795800e997da6e3e56a66a328af46ed07c67a55676f569b0068",
+  "supersedes": "issue259-review-r1.md readiness status only; historical receipt preserved",
+  "code_paths": [
+    "apps/web/qa/run-activity.tsx",
+    "apps/web/src/App.tsx",
+    "apps/web/src/OfficeFloor.css",
+    "apps/web/src/OfficeInspector.tsx",
+    "apps/web/src/RunActivityDetails.tsx",
+    "apps/web/src/evidenceNavigation.test.mjs",
+    "apps/web/src/runActivity.test.mjs",
+    "apps/web/src/runActivity.ts",
+    "apps/web/src/snapshotRefresh.test.mjs",
+    "apps/web/src/workResultCard.test.mjs"
+  ],
+  "finding": "No unresolved confirmed defect in this selected-run activity implementation.",
+  "reviewed_behavior": [
+    "MissionCard supplies the actual selected evidence run. Missing explicit selection remains unavailable; agent current-run pointers fail closed instead of substituting another run.",
+    "Current provider/control requires a fresh authorized snapshot, exact unretired task owner, same-Corp connected runner, supported native provider state and a safe mission/run lifecycle.",
+    "Safety details use scoped ordered events and a fixed native metric allowlist, excluding arbitrary payload text. Existing roles, capabilities, leases and idempotent server commands remain authoritative.",
+    "Authorized hidden native workers and retired identities resolve from the snapshot; retired history remains read-only. The inspector overlays the current workspace and restores the invoking focus.",
+    "Mission, Factory and inspector reuse the existing coalesced five-second presence refresh. This refreshes terminal-run Grace/offline state without requiring a new run event or introducing another timer.",
+    "No backend, migration, dependency, custom execution or permission mechanism changes. Exact reviewed source is limited to ten web model, rendering and regression files."
+  ],
+  "source_references": {
+    "apps/web/src/runActivity.ts": [
+      79,
+      91,
+      150,
+      188
+    ],
+    "apps/web/src/RunActivityDetails.tsx": [
+      5,
+      20
+    ],
+    "apps/web/src/App.tsx": [
+      1953,
+      3107,
+      4879,
+      5876,
+      5882,
+      7193
+    ]
+  },
+  "prior_feedback": "The earlier issue comment established only a synthetic Factory slice. Native r8 adds browser/server/runner evidence; no historical human verdict or chronology is invented. The user's expanded session authorization covers publication while original tracking-only history remains preserved.",
+  "canonical_checks": [
+    {
+      "name": "migrations",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-compatibility",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-evm",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "repository-docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "node-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3119,
+          "passed": 3054,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      }
+    },
+    {
+      "name": "format",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "clippy",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "rust-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 877,
+          "failed": 0,
+          "ignored": 564,
+          "summaries": 41
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "web-build",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "web-lint",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    }
+  ],
+  "focused_counts": {
+    "tests": 86,
+    "pass": 86,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "coverage_counts": {
+    "tests": 479,
+    "pass": 479,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "coverage": {
+    "ok": true,
+    "output": "<USERPROFILE>\\.codex\\worktrees\\issue136-browser-docs\\ecorp\\output\\coverage\\issue259-r1",
+    "scope": "All 19 framework-independent web TypeScript models; excludes the two React hooks, TSX rendering, Rust, and other tools",
+    "thresholds": {
+      "lines": 99,
+      "functions": 95,
+      "branches": 97
+    },
+    "node": "v24.21.0",
+    "files": 19,
+    "testFiles": 29,
+    "exitCode": 0,
+    "sourceStable": true,
+    "coverage": {
+      "lines": {
+        "found": 2901,
+        "hit": 2893,
+        "percent": 99.72
+      },
+      "functions": {
+        "found": 279,
+        "hit": 271,
+        "percent": 97.13
+      },
+      "branches": {
+        "found": 1489,
+        "hit": 1457,
+        "percent": 97.85
+      }
+    }
+  },
+  "native": [
+    {
+      "lane": "browser",
+      "original_report_sha256": "c3af915ef29bc7c9145babb47616646b04018ee603bbe23e6d4c554cdbbab52b",
+      "status": "accepted",
+      "checks": [
+        "idle_no_selected_run",
+        "inspector_desktop_bounds",
+        "browser_dispatch",
+        "browser_disconnect_review_replay",
+        "snapshot_failure",
+        "native_runner_grace",
+        "revoked_room_empty_identity_bounds",
+        "authorized_scope",
+        "newer_review_accepted",
+        "exact_review_navigation",
+        "keyboard_mobile_reduced_motion",
+        "source_before_final_decision",
+        "final_completed",
+        "source_retained_final"
+      ],
+      "screenshots": 21
+    },
+    {
+      "lane": "offline",
+      "original_report_sha256": "97e9b33c411d6057356e7a40b4a30a8b36b90d59b1653218846294db12d3c7bd",
+      "status": "accepted",
+      "checks": [
+        "native_grace_offline_reconnect",
+        "configured_fixture_source_unchanged"
+      ],
+      "screenshots": 2
+    },
+    {
+      "lane": "suspension",
+      "original_report_sha256": "56ec2c3b82d531120dad3310295fb69421353d0ef01ce496203c2be825a74989",
+      "status": "accepted",
+      "checks": [
+        "native_factory_launch_transition",
+        "native_suspension",
+        "configured_fixture_source_unchanged"
+      ],
+      "screenshots": 3
+    },
+    {
+      "lane": "quarantine",
+      "original_report_sha256": "300cfcab3dae0f12587c71d96df9f9e4a4c5a325975ecab9e452998c279bd508",
+      "status": "accepted",
+      "checks": [
+        "native_factory_launch_transition",
+        "native_archive_checkpoint_contract",
+        "native_quarantine",
+        "configured_fixture_source_unchanged"
+      ],
+      "screenshots": 2
+    }
+  ],
+  "qualifications": [
+    "Development authentication and deterministic fake-process acceptance; not production OIDC or live vendor inference.",
+    "Fixture PostgreSQL uses initdb --auth=trust in an owned local environment; no SCRAM or wrong-password acceptance is claimed.",
+    "The native supervisor uses prebuilt binaries from the recorded locked build. Runtime binary hashes were not captured; no stronger binary binding is claimed. Subsequent changes affect web and test files only.",
+    "Revoked room membership hid mission/task/run/event/control activity. Baseline Factory intake still returned without room membership; this is not comprehensive Factory intake privacy acceptance.",
+    "The injected snapshot-error notice persists in some later captures while activity freshness updates correctly.",
+    "The focused lane lacks a complete pre/post physical inventory; the coverage lane binds only covered source. Those counts overlap canonical discovery.",
+    "RUST_TEST_THREADS=1 was explicit; issue #213 parallel qualification remains separate. Skipped Node and ignored Rust cases are not passes.",
+    "The existing web bundle-size warning and historical Cargo advisory debt remain; no clean dependency audit is claimed.",
+    "docs/PROJECT_MEMORY.md is absent from reviewed current main.",
+    "Required hosted CI, CodeQL, security and quality remain mandatory while Actions is disabled. This is an assistant self-review, not independent human approval, merge or issue completion."
+  ]
+}

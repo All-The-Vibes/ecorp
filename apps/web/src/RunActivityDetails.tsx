@@ -1,5 +1,20 @@
+import type { ReactNode } from 'react'
 import { activityTime } from './runActivity'
 import type { RunActivityPresentation } from './runActivity'
+
+export function RunActivityPanel({ view, actions }: { view: RunActivityPresentation; actions?: ReactNode }) {
+  return (
+    <section className={`work-result-card work-result-${view.tone}`} aria-label="Selected run activity" data-testid="run-activity-panel" data-run-id={view.runId ?? undefined}>
+      <div className="work-result-heading">
+        <div><span className="work-result-eyebrow">Selected run activity</span><h4>{view.heading}</h4></div>
+        <span className="work-result-status">{view.status}</span>
+      </div>
+      <p className="work-result-description" aria-live="polite">{view.summary}</p>
+      {actions ? <div className="work-result-actions">{actions}</div> : null}
+      <RunActivityDetails view={view} />
+    </section>
+  )
+}
 
 /** Shares existing result-card/disclosure styling; no commands, timers or data reads. */
 export function RunActivityDetails({ view }: { view: RunActivityPresentation }) {

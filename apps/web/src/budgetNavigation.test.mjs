@@ -32,7 +32,7 @@ const targets = [
 ]
 function setup() {
   const viewer = { corpId: id(1), actorId: id(2) }
-  const changes = { errors: [], reveals: [], saved: [], views: [], timers: [], clock: Date.now(), writeFails: false }
+  const changes = { errors: [], reveals: [], saved: [], views: [], modes: [], timers: [], clock: Date.now(), writeFails: false }
   const scoped = (n, extra) => ({ id: id(n), corp_id: id(1), ...extra })
   const data = { snapshot: { corp: { id: id(1), name: 'Current Corp' }, rooms: [scoped(10)],
     missions: [scoped(20, { room_id: id(10), title: 'Current mission', status: 'failed',
@@ -56,6 +56,7 @@ function setup() {
     rememberSelectedWork: (choice) => { if (changes.writeFails) return false; changes.saved.push(choice); return true },
     setError: (message) => changes.errors.push(message), setEvidenceNavigationVersion: () => {},
     setRoomMissionId: () => {}, setSelectedRoomId: () => {}, setMissionComposerCollapsed: () => {},
+    setFloorInspectorOpen: () => {}, setPresentationMode: (mode) => changes.modes.push(mode),
     setActiveWorkspaceView: (view) => changes.views.push(view), setAnnouncement: () => {}, statusLabel: (kind) => kind,
     revealEntityTarget: (...args) => { changes.reveals.push(args); return true },
     window: { history: { replaceState() {} }, setTimeout: (callback) => changes.timers.push(callback) },
@@ -68,6 +69,7 @@ for (const target of targets) test(`${target.kind} opens its exact record withou
   const s = setup()
   s.open(target)
   assert.deepEqual(s.changes.views, ['missions'])
+  assert.deepEqual(s.changes.modes, ['operations'])
   assert.equal(s.changes.saved.length, 1)
   assert.equal(s.changes.saved[0].runId, target.kind === 'suspension' ? id(30) : id(31))
   assert.deepEqual(s.changes.reveals, [])
@@ -99,6 +101,7 @@ for (const [name, invalidate] of invalidations) {
     s.open(targets[1])
     assert.deepEqual(s.changes.saved, [])
     assert.deepEqual(s.changes.views, [])
+    assert.deepEqual(s.changes.modes, [])
     assert.deepEqual(s.changes.timers, [])
     assert.equal(s.changes.errors.length, 1)
   })

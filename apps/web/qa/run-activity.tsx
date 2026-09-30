@@ -12,6 +12,7 @@ import { WorkResultCard } from '../src/WorkResultCard'
 import { RunActivityDetails } from '../src/RunActivityDetails'
 import { presentRunActivity } from '../src/runActivity'
 import type { RunActivityInput } from '../src/runActivity'
+import '../src/ConsoleTheme.css'
 
 const at = (seconds: number) => new Date(Date.UTC(2026, 8, 14, 12, 0, seconds)).toISOString()
 const event = (seq: number, type: string, payload = {}) => ({
@@ -23,8 +24,8 @@ function sample(state: string): RunActivityInput {
     corpId: 'example-corp', mission: { id: 'example-mission', room_id: 'example-room', status: 'running' },
     run: { id: 'example-run', task_id: 'example-task', agent_id: 'example-agent', runner_id: 'example-runner',
       status: 'running', execution_mode: 'provider' },
-    tasks: [{ id: 'example-task', mission_id: 'example-mission', title: 'Implement accessible invoice search' }],
-    agents: [{ id: 'example-agent', name: 'Delivery engineer', adapter: 'github-copilot' }],
+    tasks: [{ id: 'example-task', mission_id: 'example-mission', title: 'Implement accessible invoice search', assigned_agent_id: 'example-agent' }],
+    agents: [{ id: 'example-agent', name: 'Delivery engineer', adapter: 'github-copilot', current_run_id: 'example-run' }],
     runners: [{ id: 'example-runner', corp_id: 'example-corp', connected: true, status: 'connected', last_seen_at: at(25) }],
     actors: [{ id: 'example-operator', name: 'Example operator' }],
     leases: [{ agent_id: 'example-agent', actor_id: 'example-operator', expires_at: at(300) }],

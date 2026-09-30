@@ -37,6 +37,8 @@ import type { DiscussionScope } from './missionProjection'
 import { createSnapshotRefresher } from './snapshotRefresh'
 import { evidenceSelectionKey, readEvidenceSelection, rememberEvidenceSelection } from './evidenceSelection'
 import { HistoryPanel } from './HistoryPanel'
+import { EvidenceInspector } from './EvidenceInspector'
+import { evidenceSource, exactRunDeliverable } from './sourceEvidence'
 import type { HistoryKind } from './history'
 import { missionWorkSelection, workSelectionForLink } from './workSelection'
 import type { WorkSelection } from './workSelection'
@@ -44,17 +46,23 @@ import { useWorkSelection } from './useWorkSelection'
 import { ConnectionsPanel } from './ConnectionsPanel'
 import { AuditEvidencePanel } from './AuditEvidencePanel'
 import { BudgetOverviewPanel } from './BudgetOverviewPanel'
+import { ExecutiveDashboard } from './ExecutiveDashboard'
+import { buildExecutiveOverview, executiveDestinationAvailable } from './executiveOverview'
+import type { ExecutiveDestination } from './executiveOverview'
 import { budgetDestinationAvailable, buildBudgetOverview } from './budgetOverview'
 import type { BudgetDestination } from './budgetOverview'
 import { DelegatedPanel } from './DelegatedPanel'
+import { PresentationControls } from './PresentationControls'
+import { usePresentationPreferences } from './presentationPreferences'
 import { MissionOriginText } from './MissionOriginDetails'
 import { useMissionOriginContext } from './useMissionOriginContext'
 import { useMissionResultContext } from './useMissionResultContext'
 import { missionResultPresentation } from './missionResultContext'
 import { WorkResultCard } from './WorkResultCard'
 import { PublishedResultCard } from './PublishedResultCard'
-import { RunActivityDetails } from './RunActivityDetails'
-import { presentRunActivity, selectActivityRun } from './runActivity'
+import { RunActivityDetails, RunActivityPanel } from './RunActivityDetails'
+import { presentRunActivity, selectActivityRun, selectAgentActivity } from './runActivity'
+import type { RunActivityInput } from './runActivity'
 import {
   connectionLabel, connectionRunnerRevision, connectionScope, connectionStatusLabel,
   connectionTarget, connectionsNeedPresenceRefresh,
@@ -68,6 +76,7 @@ import { MissionCollaborationPanel } from './MissionCollaborationPanel'
 import { AgentPinControl } from './AgentPinControl'
 import { collaborationSnapshotIsCurrent, createDiscussionDraftStore, selectCollaborationMission } from './missionCollaboration'
 import type { CollaborationInput, DiscussionDraft } from './missionCollaboration'
+import './ConsoleTheme.css'
 
 type Actor = {
   id: string
@@ -903,6 +912,16 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     )
   }
   return body as T
+}
+
+// The inspector supplies only the validated, scoped native artifact route.
+// Read the current credential per request; never store it in evidence state.
+function artifactEvidenceRequest(path: string, signal: AbortSignal): Promise<Response> {
+  const token = storedAccessToken()
+  return fetch(`${API_URL}${path}`, {
+    method: 'GET', signal, redirect: 'error', cache: 'no-store',
+    headers: token ? { authorization: `Bearer ${token}` } : {},
+  })
 }
 
 function shortId(value: string | null | undefined): string {
@@ -1923,6 +1942,7 @@ function AgentAvatar({ agent }: { agent: Agent }) {
 
 function AgentDesk({
   agent,
+  activityInput,
   capability,
   lease,
   leaseToken,
@@ -1936,8 +1956,10 @@ function AgentDesk({
   onEmergencyStop,
   onMessage,
   onPin,
+  onInspectRun,
 }: {
   agent: Agent
+  activityInput: RunActivityInput
   capability: RunnerCapability | undefined
   lease: Lease | undefined
   leaseToken: string | undefined
@@ -1956,34 +1978,39 @@ function AgentDesk({
     idempotencyKey: string,
   ) => Promise<boolean>
   onPin: (agent: OfficeAgent, pinned: boolean) => Promise<void>
+  onInspectRun: (runId: string) => void
 }) {
   const [text, setText] = useState('')
   const [transferActorId, setTransferActorId] = useState('')
   const [operationError, setOperationError] = useState<string | null>(null)
-  const ownsLease = lease?.actor_id === actor.id
-  const live = Boolean(agent.current_run_id) && agent.status !== 'idle' && agent.status !== 'offline'
+  const runActivity = presentRunActivity(activityInput)
+  const retired = agent.retired_at != null
+  const live = !retired && runActivity.providerCurrent
+  const currentLease = live && lease?.agent_id === agent.id &&
+    Date.parse(lease.expires_at) > Date.parse(activityInput.snapshotReceivedAt ?? '') ? lease : undefined
+  const ownsLease = currentLease?.actor_id === actor.id
   const operator = canOperate(actor.role)
   const supportsSteer = capabilitySupports(capability, 'steer')
   const supportsInterrupt = capabilitySupports(capability, 'interrupt')
   const supportsStop = capabilitySupports(capability, 'stop')
   const canClaim = live && operator && (supportsSteer || supportsInterrupt)
-  const holder = humans.find((human) => human.id === lease?.actor_id)
+  const holder = humans.find((human) => human.id === currentLease?.actor_id)
   const transferCandidates = humans.filter((human) => human.id !== actor.id && canOperate(human.role))
   const transferTarget =
     transferCandidates.find((human) => human.id === transferActorId) ??
     transferCandidates[0]
-  const holderLabel = lease
+  const holderLabel = currentLease
     ? ownsLease
-      ? `You hold control until ${time(lease.expires_at)}`
-      : `${holder?.name ?? 'Another operator'} holds control until ${time(lease.expires_at)}`
+      ? `You hold control until ${time(currentLease.expires_at)}`
+      : `${holder?.name ?? 'Another operator'} holds control until ${time(currentLease.expires_at)}`
     : live
       ? 'Live session is unclaimed'
-      : 'No live session'
-  const messageToken = live && supportsSteer && ownsLease ? leaseToken : undefined
+      : 'Live control unavailable'
+  const messageToken = live && operator && supportsSteer && ownsLease ? leaseToken : undefined
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (!text.trim()) return
+    if (retired || !text.trim()) return
     const normalized = text.trim()
     const payload = JSON.stringify({
       agentId: agent.id,
@@ -2028,18 +2055,23 @@ function AgentDesk({
         </div>
       </div>
       <p className="agent-inspector-help">
-        {live
+        {retired
+          ? `${agent.name} is retired. This is a read-only view of its recorded work.`
+          : live
           ? `${agent.name} is ${agent.status === 'working' ? agent.station ?? agent.status : agent.status}. Claim control to steer the live session.`
           : agent.status === 'reviewing'
-            ? `${agent.name}'s provider process has ended. The recorded output is awaiting evidence review.`
+            ? `${agent.name} reports a review wait. Inspect the selected run’s recorded evidence and termination state below.`
           : agent.status === 'offline'
             ? `${agent.name}'s runner is unavailable. Inspect the mission's recorded state and recovery controls.`
           : agent.mission_id && !agent.pinned
             ? `${agent.name} reports ${agent.status}. This identity belongs to mission ${shortId(agent.mission_id)}; any next task is assigned by the server.`
           : agent.status === 'idle'
-            ? `${agent.name} is off shift. No provider process is running; the identity remains available for future ${adapterLabel(agent.adapter)} missions.`
-          : `${agent.name} reports ${agent.status}. No current provider run is reported.`}
+            ? `${agent.name} reports idle. Inspect the selected run’s recorded activity and execution state below.`
+          : `${agent.name} reports ${agent.status}. Current provider execution is unconfirmed; inspect the recorded activity below.`}
       </p>
+      <RunActivityPanel view={runActivity} actions={runActivity.runId ? (
+        <button type="button" className="button button-secondary" onClick={() => onInspectRun(runActivity.runId!)}>Inspect this run’s work item</button>
+      ) : undefined} />
       <AgentPinControl agent={agent} canOperate={operator && actor.kind === 'human'} onPin={onPin} />
       <div className="desk-actions">
         {canClaim ? (
@@ -2047,7 +2079,7 @@ function AgentDesk({
             {ownsLease && leaseToken ? 'Renew control' : 'Claim live control'}
           </button>
         ) : null}
-        {live && ownsLease && leaseToken ? (
+        {live && operator && ownsLease && leaseToken ? (
           <button
             type="button"
             className="button button-quiet"
@@ -2058,7 +2090,7 @@ function AgentDesk({
         ) : null}
         <span className="queue-count">{queuedCount} queued</span>
       </div>
-      {live && ownsLease && leaseToken && transferTarget ? (
+      {live && operator && ownsLease && leaseToken && transferTarget ? (
         <div className="transfer-row">
           <label htmlFor={`transfer-${agent.id}`}>Transfer control</label>
           <select
@@ -2090,7 +2122,7 @@ function AgentDesk({
           Emergency stop
         </button>
       ) : null}
-      {live && supportsInterrupt && ownsLease && leaseToken ? (
+      {live && operator && supportsInterrupt && ownsLease && leaseToken ? (
         <button
           type="button"
           className="interrupt-run"
@@ -2099,7 +2131,7 @@ function AgentDesk({
           Interrupt turn
         </button>
       ) : null}
-      <form className="agent-message" onSubmit={submit}>
+      {!retired ? <form className="agent-message" onSubmit={submit}>
         {operationError ? <p className="error-banner" role="alert">{operationError}</p> : null}
         <input
           aria-label={`Message ${agent.name}`}
@@ -2110,7 +2142,7 @@ function AgentDesk({
         <button className="button button-ink" type="submit">
           {messageToken ? 'Steer' : 'Queue note'}
         </button>
-      </form>
+      </form> : null}
       {live && !supportsSteer ? (
         <small className="control-note">
           {adapterLabel(agent.adapter)} does not support live steering. Notes are queued instead.
@@ -3126,6 +3158,16 @@ function MissionCard({
   const taskById = new Map(tasks.map((task) => [task.id, task]))
   const evidenceCandidates = selectedTaskId ? runs.filter((run) => run.task_id === selectedTaskId) : runs
   const evidenceRun = selectMissionEvidenceRun(evidenceCandidates, verificationRequests, selectedEvidenceRunId)
+  const runActivity = presentRunActivity({
+    corpId, mission, run: evidenceRun, tasks, agents, actors, events,
+    selectionUnavailable: selectedEvidenceRunId !== null && !evidenceRun,
+    runners: collaborationInput?.runners ?? [], leases: collaborationInput?.leases ?? [],
+    reviews: verificationRequests, approvals: actionApprovals, factoryState: factoryItem?.state,
+    connection: collaborationInput?.connection ?? 'offline',
+    snapshotFailed: collaborationInput?.snapshotFailed ?? true,
+    snapshotReceivedAt: collaborationInput && Number.isFinite(collaborationInput.now) && collaborationInput.now > 0
+      ? new Date(collaborationInput.now).toISOString() : null,
+  })
   const displayedEvidenceRunId = evidenceRun?.id
   const displayedEvidenceTaskId = evidenceRun?.task_id
   const initialEvidencePin = useRef<string | null>(null)
@@ -3207,9 +3249,20 @@ function MissionCard({
   const reviewDecisionSummary = compactReviewNote.length > 240
     ? `${compactReviewNote.slice(0, 237).trimEnd()}…`
     : compactReviewNote
-  const runDeliverable = evidenceRun
-    ? deliverables.find((deliverable) => deliverable.run_id === evidenceRun.id)
-    : undefined
+  const runDeliverable = exactRunDeliverable(evidenceRun, deliverables)
+  const providerEvidenceSource = evidenceRun ? evidenceSource(evidenceRun) : null
+  const sourceDeliverableEvidence = evidenceRun && runDeliverable
+    ? evidenceSource(evidenceRun, runDeliverable) : null
+  const hasSourceDeliverable = Boolean(evidenceRun && (evidenceRun.deliverable_sha256 ||
+    deliverables.some((deliverable) => deliverable.run_id === evidenceRun.id)))
+  const inspectionViewer = {
+    server: API_URL, corpId, actorId, actorRole, roomId: mission.room_id, missionId: mission.id,
+  }
+  const inspectionAvailable = Boolean(collaborationInput && collaborationSnapshotIsCurrent(collaborationInput) &&
+    collaborationInput.corpId === corpId && collaborationInput.actor.id === actorId &&
+    collaborationInput.actor.role === actorRole && collaborationInput.mission.id === mission.id &&
+    collaborationInput.mission.room_id === mission.room_id && evidenceRun &&
+    taskById.get(evidenceRun.task_id)?.mission_id === mission.id)
   const originRead = useMissionOriginContext({
     corpId, actorId, actorRole, missionId: mission.id, roomId: mission.room_id, api,
   })
@@ -3463,6 +3516,14 @@ function MissionCard({
         </WorkResultCard>
       )}
       </div>
+      <RunActivityPanel view={runActivity} actions={runs.length ? <>
+        <button type="button" className="button button-secondary" onClick={() => focusWorkSection(`mission-evidence-panel-${mission.id}`)}>
+          {runActivity.runId ? 'Inspect selected run evidence' : 'Choose a run to inspect'}
+        </button>
+        {runActivity.runId && evidenceRun && onViewAgent && agents.some((agent) => agent.id === evidenceRun.agent_id) ? (
+          <button type="button" className="button button-secondary" onClick={() => onViewAgent(evidenceRun.agent_id)}>View run agent</button>
+        ) : null}
+      </> : undefined} />
       <div className="mission-work-context">
         <MissionOriginText current={originRead.current} pending={originRead.pending} fallback={origin}
           onRefresh={mission.status === 'completed' ? undefined : refreshWorkContext} />
@@ -3722,10 +3783,15 @@ function MissionCard({
               ? 'Download verified artifact'
               : 'Download submitted artifact'}
           </button>
+          <EvidenceInspector viewer={inspectionViewer} source={providerEvidenceSource}
+            available={inspectionAvailable} request={artifactEvidenceRequest} />
         </div>
       ) : null}
-      {runDeliverable ? (
-        <div className="evidence-box evidence-source" data-testid="source-deliverable">
+      {hasSourceDeliverable ? (
+        <div className="evidence-box evidence-source" data-testid="source-deliverable"
+          data-run-id={evidenceRun?.id} data-verification-sha256={evidenceRun?.verification_sha256}
+          data-source-state={runDeliverable ? 'matched' : 'unavailable'}>
+          {runDeliverable ? <>
           <strong>Source deliverable · {statusLabel(runDeliverable.form)}</strong>
           <span>{runDeliverable.file_name} · {runDeliverable.bytes.toLocaleString()} bytes</span>
           <small>
@@ -3738,6 +3804,14 @@ function MissionCard({
           >
             Download source deliverable
           </button>
+          <EvidenceInspector viewer={inspectionViewer} source={sourceDeliverableEvidence}
+            available={inspectionAvailable} request={artifactEvidenceRequest} />
+          </> : <>
+            <strong>Source deliverable unavailable</strong>
+            <p>The current records do not identify one source deliverable matching this selected run,
+              task, base commit and verification hash. Refresh the view or ask an operator to inspect
+              the recorded evidence.</p>
+          </>}
         </div>
       ) : null}
       {evidenceRun &&
@@ -3747,6 +3821,9 @@ function MissionCard({
           className={`verification-box operations-verification verification-${automated.status}`}
           data-testid="verification-evidence"
           data-check-total={automated.total ?? 'unknown'}
+          data-run-id={evidenceRun.id}
+          data-verification-sha256={evidenceRun.verification_sha256}
+          data-source-sha256={runDeliverable?.sha256}
         >
           <summary>
             <span className="operations-verification-copy">
@@ -3763,6 +3840,9 @@ function MissionCard({
             </span>
             <span className="operations-disclosure-mark" aria-hidden="true">+</span>
           </summary>
+          <p>Selected run {shortId(evidenceRun.id)} · verification {shortId(evidenceRun.verification_sha256)}
+            {runDeliverable ? <> · <a href={`#inspect-source-${runDeliverable.artifact_id}`}>Inspect this source deliverable</a></> : null}
+          </p>
           {runEvidence.length ? (
             <ol className="evidence-checks">
               {runEvidence.map((item) => (
@@ -3782,6 +3862,9 @@ function MissionCard({
           role="alert"
           aria-labelledby={`review-decision-${mission.id}`}
           data-testid="review-decision"
+          data-run-id={evidenceRun?.id}
+          data-verification-sha256={evidenceRun?.verification_sha256}
+          data-source-sha256={runDeliverable?.sha256}
         >
           <span className="operations-review-label">{reviewDecisionLabel}</span>
           <strong id={`review-decision-${mission.id}`}>Changes requested</strong>
@@ -3792,6 +3875,9 @@ function MissionCard({
                 ? `Reviewer ${shortId(runVerificationRequest.decided_by)} (name unavailable)`
                 : 'Reviewer not recorded'}
           </small>
+          {runDeliverable ? <a href={`#inspect-source-${runDeliverable.artifact_id}`}>
+            Inspect the source for this reviewed run
+          </a> : null}
           <p>{reviewDecisionSummary}</p>
           {reviewDecisionSummary !== reviewDecisionNote ? (
             <details className="operations-review-details" key={runVerificationRequest?.run_id}>
@@ -4449,6 +4535,9 @@ function MissionAllocationPreview({
 }
 
 function App() {
+  const presentation = usePresentationPreferences()
+  const operationsActive = presentation.preferences.mode === 'operations'
+  const setPresentationMode = presentation.setMode
   const [bootstrap, setBootstrap] = useState<BootstrapResponse | null>(null)
   const [connectionAttempt, setConnectionAttempt] = useState(0)
   const [snapshotLoad, setSnapshotLoad] = useState<{
@@ -4566,10 +4655,17 @@ function App() {
   }, [rememberCurrentWork, selectedWork])
 
   useEffect(() => {
-    if (missionComposerCollapsed || activeWorkspaceView !== 'missions') return
+    if (!operationsActive || missionComposerCollapsed || activeWorkspaceView !== 'missions') return
     // Step changes should not leave keyboard users halfway down the old screen.
     missionComposerHeading.current?.focus()
-  }, [missionComposerStep, missionComposerCollapsed, activeWorkspaceView])
+  }, [missionComposerStep, missionComposerCollapsed, activeWorkspaceView, operationsActive])
+
+  useEffect(() => {
+    if (!operationsActive && document.activeElement instanceof HTMLElement &&
+        document.activeElement.closest('.operations-workspaces, .operations-chrome, .operations-audit')) {
+      document.getElementById('console-mode')?.focus({ preventScroll: true })
+    }
+  }, [operationsActive])
 
   useEffect(() => {
     if (!data || composerInitialized.current) return
@@ -4602,7 +4698,7 @@ function App() {
     const syncFromHash = () => {
       const view = workspaceViewFromHash(window.location.hash)
       setActiveWorkspaceView(view)
-      if (view !== 'floor') setFloorInspectorOpen(false)
+      setFloorInspectorOpen(false)
     }
     window.addEventListener('hashchange', syncFromHash)
     window.addEventListener('popstate', syncFromHash)
@@ -4613,13 +4709,13 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (!floorInspectorOpen) return
+    if (!operationsActive || !floorInspectorOpen) return
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setFloorInspectorOpen(false)
     }
     window.addEventListener('keydown', closeOnEscape)
     return () => window.removeEventListener('keydown', closeOnEscape)
-  }, [floorInspectorOpen])
+  }, [floorInspectorOpen, operationsActive])
 
   const navigateToWorkspaceEntity = useCallback(
     (kind: EntityLink['kind'] | 'room', targetId: string, focusTarget?: () => void): boolean => {
@@ -4630,6 +4726,8 @@ function App() {
           setError('The linked room is unavailable in the current view.')
           return false
         }
+        setPresentationMode('operations')
+        setFloorInspectorOpen(false)
         setRoomMissionId(null)
         setSelectedRoomId(targetId)
         setActiveWorkspaceView('room')
@@ -4648,6 +4746,7 @@ function App() {
         setError('The requested evidence selection could not be saved or is no longer current. No different run has been opened.')
         return false
       }
+      setPresentationMode('operations')
       const missionId = choice.missionId
       if (kind !== 'mission') {
         // Exact task/run/artifact navigation clears a previous task's evidence
@@ -4657,6 +4756,7 @@ function App() {
       setMissionComposerCollapsed(true)
       setRoomMissionId(missionId)
       setSelectedRoomId(null)
+      setFloorInspectorOpen(false)
       setActiveWorkspaceView('missions')
       window.history.replaceState(null, '', '#missions')
       setAnnouncement(`${statusLabel(kind)} opened in Missions.`)
@@ -4670,8 +4770,27 @@ function App() {
       }, 80)
       return true
     },
-    [data, selectedActorId, selectedWork, rememberCurrentWork],
+    [data, selectedActorId, selectedWork, rememberCurrentWork, setPresentationMode],
   )
+
+  const openExecutiveRecord = useCallback((target: ExecutiveDestination) => {
+    const context = budgetContext
+    const viewer = currentViewer.current
+    const available = () => Boolean(context && currentBudgetContext.current === context && data &&
+      currentViewer.current === viewer && viewer?.corpId === context.viewer.corpId &&
+      viewer.actorId === context.viewer.actorId &&
+      executiveDestinationAvailable(buildExecutiveOverview(context.snapshot, context.viewer, context.stamp, data.runners, Date.now()), target))
+    const unavailable = () => setError('The exact work is no longer available in the current view. Refresh work and try again.')
+    if (!available()) {
+      unavailable()
+      return
+    }
+    navigateToWorkspaceEntity(target.kind, target.id, () => {
+      // The rendered receipt and viewer must still own this exact target after
+      // switching views. Never fall back to another mission or a newer run.
+      if (!available() || !revealEntityTarget(target.kind, target.id)) unavailable()
+    })
+  }, [budgetContext, data, navigateToWorkspaceEntity])
 
   const openBudgetRecord = useCallback((target: BudgetDestination) => {
     const context = budgetContext
@@ -4931,13 +5050,13 @@ function App() {
   }, [bootstrap, refresh, selectedActorId])
 
   useEffect(() => {
-    if (!bootstrap || !selectedActorId || !(connectionsOpen || journeyOpen ||
-      (activeWorkspaceView === 'missions' && !missionComposerCollapsed))) return
+    if (!bootstrap || !selectedActorId || !(connectionsOpen || journeyOpen || floorInspectorOpen ||
+      activeWorkspaceView === 'missions' || activeWorkspaceView === 'factory')) return
     const snapshotRefresh = snapshotRefreshRef.current
     if (!snapshotRefresh) return
-    // Heartbeat-only readiness matters while choosing/configuring a connection,
-    // not in every idle client. Share the event coalescer; never restart its socket
-    // or overlap another full-Corp read when a connection-dependent view opens.
+    // Runner presence can change without a run event after work ends. Refresh
+    // visible connection and activity views through the shared event coalescer;
+    // never restart its socket or overlap another full-Corp read.
     const refreshVisiblePresence = () => {
       if (document.visibilityState === 'visible') snapshotRefresh.request()
     }
@@ -4947,7 +5066,7 @@ function App() {
       window.clearInterval(presenceTimer)
       document.removeEventListener('visibilitychange', refreshVisiblePresence)
     }
-  }, [bootstrap, refresh, selectedActorId, connectionsOpen, journeyOpen, activeWorkspaceView, missionComposerCollapsed])
+  }, [bootstrap, refresh, selectedActorId, connectionsOpen, journeyOpen, activeWorkspaceView, floorInspectorOpen])
 
   const humans = useMemo(
     () => data?.snapshot.actors.filter((actor) => actor.kind === 'human') ?? [],
@@ -5854,6 +5973,7 @@ function App() {
   if (requiresConnection) {
     return (
       <main className="loading-shell production-connect">
+        <PresentationControls preferences={presentation.preferences} onTheme={presentation.setTheme} onMode={presentation.setMode} />
         <div className="loading-stamp">ECORP SECURE CONNECTION</div>
         <h1>Connect to your Corp</h1>
         <p>Enter the Corp, actor, and short-lived OIDC access token issued for this session.</p>
@@ -5896,6 +6016,7 @@ function App() {
   if (!data || !bootstrap || !selectedActor) {
     return (
       <main className="loading-shell">
+        <PresentationControls preferences={presentation.preferences} onTheme={presentation.setTheme} onMode={presentation.setMode} />
         <div className="loading-stamp">ECORP OPERATIONS NETWORK</div>
         <h1>Authorizing the operations console…</h1>
         {error ? <p className="error-banner">{error}</p> : <p>Waiting for the control plane.</p>}
@@ -5931,9 +6052,18 @@ function App() {
     new Set(allAvailableAdapters.map((adapter) => adapter.name)),
     showRegisteredCrew,
   )
-  const selectedAgent = selectOfficeAgent(floorAgents, selectedAgentId)
-  const selectedAgentCapability = connectedRunners
-    .flatMap((runner) => runner.capabilities)
+  const selectedFloorAgent = selectOfficeAgent(floorAgents, selectedAgentId)
+  // A mission may reference a hidden test worker or a retired identity. Resolve
+  // its explicit selection only from the authorized snapshot, never the roster's fallback.
+  const selectedAgent = selectedAgentId === null ? selectedFloorAgent
+    : data.snapshot.agents.find((agent) => agent.id === selectedAgentId)
+  const selectedAgentActivity = selectedAgent ? selectAgentActivity({
+    agent: selectedAgent, tasks: data.snapshot.tasks, missions: data.snapshot.missions,
+    runs: data.snapshot.runs, reviews: data.snapshot.verification_requests, approvals: data.snapshot.action_approvals,
+  }) : undefined
+  const selectedAgentCapability = data.runners
+    .find((runner) => runner.id === selectedAgentActivity?.run?.runner_id &&
+      runner.corp_id === bootstrap.corp_id && runner.connected && runner.status === 'connected')?.capabilities
     .find(
       (capability) =>
         capability.available && capability.name === selectedAgent?.adapter,
@@ -5989,8 +6119,9 @@ function App() {
 
   const activateWorkspaceView = (view: WorkspaceView) => {
     const destination = WORKSPACE_VIEWS.find((candidate) => candidate.id === view)
+    setPresentationMode('operations')
     setActiveWorkspaceView(view)
-    if (view !== 'floor') setFloorInspectorOpen(false)
+    setFloorInspectorOpen(false)
     if (window.location.hash !== `#${view}`) {
       window.history.pushState(null, '', `#${view}`)
     }
@@ -6002,8 +6133,8 @@ function App() {
   }
 
   return (
-    <main className={`app-shell view-${activeWorkspaceView}`} aria-busy={busy}>
-      <a className="skip-link" href={`#${activeWorkspaceView}`}>
+    <main className={`app-shell view-${activeWorkspaceView} presentation-${presentation.preferences.mode}`} aria-busy={busy}>
+      <a className="skip-link" href={`#${operationsActive ? activeWorkspaceView : 'executive'}`}>
         Skip to workspace
       </a>
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
@@ -6022,6 +6153,7 @@ function App() {
           </div>
         </div>
         <div className="operator-console">
+          <PresentationControls preferences={presentation.preferences} onTheme={presentation.setTheme} onMode={presentation.setMode} />
           <div className={`live-indicator live-${connection}`}>
             <span />
             {connection}
@@ -6058,6 +6190,7 @@ function App() {
         </div>
       </header>
 
+      <div className="operations-chrome" hidden={!operationsActive}>
       <nav className="workspace-nav" aria-label="ECorp workspace sections">
         {WORKSPACE_VIEWS.map((view) => (
           <a
@@ -6098,9 +6231,8 @@ function App() {
               setSelectedAgentId(activeRuns[0].agent_id)
               setFloorInspectorOpen(true)
             } else {
-              setFloorInspectorOpen(false)
+              activateWorkspaceView('floor')
             }
-            activateWorkspaceView('floor')
           }}>
             <span>Live runs</span>
             <strong>{activeRuns.length}</strong>
@@ -6263,6 +6395,8 @@ function App() {
         ) : null}
       </section>
 
+      </div>
+
       {error ? (
         <div className="error-banner" role="alert">
           <strong>Operations notice</strong>
@@ -6273,13 +6407,22 @@ function App() {
         </div>
       ) : null}
 
+      <div className="operations-audit" hidden={!operationsActive}>
       <AuditEvidencePanel key={`audit:${data.snapshot.corp.id}:${selectedActor.id}`}
         corpId={data.snapshot.corp.id} actorId={selectedActor.id} api={api} />
+      </div>
 
       {budgetContext ? <BudgetOverviewPanel
         snapshot={budgetContext.snapshot} viewer={budgetContext.viewer} stamp={budgetContext.stamp}
         onRefresh={() => snapshotRefreshRef.current?.request()} onOpen={openBudgetRecord} /> : null}
 
+      {!operationsActive && budgetContext ? <ExecutiveDashboard
+        snapshot={data.snapshot} viewer={{ ...budgetContext.viewer, role: selectedActor.role }}
+        stamp={budgetContext.stamp} runners={data.runners} api={api}
+        onRefresh={() => snapshotRefreshRef.current?.request()} onOpen={openExecutiveRecord}
+        onWorkspace={activateWorkspaceView} /> : null}
+
+      <div className="operations-workspaces" hidden={!operationsActive}>
       <div className="workspace-surface" hidden={activeWorkspaceView !== 'factory'}>
         <FactoryPanel
           authorityCorp={data.snapshot.corp}
@@ -6364,7 +6507,7 @@ function App() {
           <div className="floor-plan">
             {activeWorkspaceView === 'floor' ? <OfficeFloor
               agents={floorAgents}
-              selectedAgentId={selectedAgent?.id ?? null}
+              selectedAgentId={selectedFloorAgent?.id ?? null}
               pendingApprovalRunIds={new Set(pendingApprovals.map((approval) => approval.run_id))}
               pendingReviewRunIds={new Set(pendingVerificationRequests.map((request) => request.run_id))}
               connection={connection}
@@ -6385,27 +6528,6 @@ function App() {
               }}
               onFactory={() => activateWorkspaceView('factory')}
             /> : null}
-            {floorInspectorOpen && selectedAgent && activeWorkspaceView === 'floor' ? (
-              <OfficeInspector agentName={selectedAgent.name} onClose={() => setFloorInspectorOpen(false)}>
-                  <AgentDesk
-                    key={selectedAgent.id}
-                    agent={selectedAgent}
-                    capability={selectedAgentCapability}
-                    actor={selectedActor}
-                    humans={humans}
-                    lease={data.snapshot.leases.find((lease) => lease.agent_id === selectedAgent.id)}
-                    leaseToken={leaseTokens[leaseTokenKey(selectedActor.id, selectedAgent.id)]}
-                    queuedCount={data.snapshot.queued_messages.filter((message) => message.agent_id === selectedAgent.id).length}
-                    onClaim={claimLease}
-                    onRelease={releaseLease}
-                    onTransfer={transferLease}
-                    onInterrupt={interruptRun}
-                    onEmergencyStop={emergencyStop}
-                    onMessage={sendMessage}
-                    onPin={setAgentPin}
-                  />
-              </OfficeInspector>
-            ) : null}
           </div>
         </div>
 
@@ -7225,10 +7347,9 @@ function App() {
                     snapshotFailed: snapshotLoad?.refreshFailed ?? true,
                   }}
                   onViewAgent={(agentId) => {
-                    if (!currentAgents.some((agent) => agent.id === agentId)) return
+                    if (!data.snapshot.agents.some((agent) => agent.id === agentId)) return
                     setSelectedAgentId(agentId)
                     setFloorInspectorOpen(true)
-                    activateWorkspaceView('floor')
                   }}
                   discussion={activeWorkspaceView === 'missions' ? <RoomPanel
                     key={discussionScopeKey(missionScope)}
@@ -7248,11 +7369,10 @@ function App() {
                     focusWorkSection(`mission-discussion-${mission.id}`)
                   }}
                   onViewAgents={() => {
-                    const run = selectedMissionRuns.find((candidate) => !terminalRun(candidate.status))
-                    if (run && currentAgents.some((agent) => agent.id === run.agent_id)) {
+                    const run = selectActivityRun(selectedMissionRuns, data.snapshot.verification_requests, data.snapshot.action_approvals)
+                    if (run && data.snapshot.agents.some((agent) => agent.id === run.agent_id)) {
                       setSelectedAgentId(run.agent_id)
                       setFloorInspectorOpen(true)
-                      activateWorkspaceView('floor')
                     } else if (selectedMissionTasks[0]) {
                       navigateToWorkspaceEntity('task', selectedMissionTasks[0].id)
                     }
@@ -7281,6 +7401,38 @@ function App() {
           )}
         </aside>
       </section>
+
+      {floorInspectorOpen ? (
+        <OfficeInspector active={operationsActive} agentName={selectedAgent?.name ?? 'Selected agent'} onClose={() => setFloorInspectorOpen(false)}>
+          {selectedAgent ? <AgentDesk
+            key={selectedAgent.id}
+            agent={selectedAgent}
+            activityInput={{
+              corpId: bootstrap.corp_id, ...selectedAgentActivity,
+              tasks: data.snapshot.tasks, agents: data.snapshot.agents, runners: data.runners,
+              actors: data.snapshot.actors, leases: data.snapshot.leases, events: data.snapshot.events,
+              reviews: data.snapshot.verification_requests, approvals: data.snapshot.action_approvals,
+              factoryState: data.snapshot.factory_work_items.find((item) => item.mission_id === selectedAgentActivity?.mission?.id)?.state,
+              connection, snapshotReceivedAt: snapshotLoad?.receivedAt ?? null,
+              snapshotFailed: snapshotLoad?.refreshFailed ?? true,
+            }}
+            capability={selectedAgentCapability}
+            actor={selectedActor}
+            humans={humans}
+            lease={data.snapshot.leases.find((lease) => lease.agent_id === selectedAgent.id)}
+            leaseToken={leaseTokens[leaseTokenKey(selectedActor.id, selectedAgent.id)]}
+            queuedCount={data.snapshot.queued_messages.filter((message) => message.agent_id === selectedAgent.id).length}
+            onClaim={claimLease}
+            onRelease={releaseLease}
+            onTransfer={transferLease}
+            onInterrupt={interruptRun}
+            onEmergencyStop={emergencyStop}
+            onMessage={sendMessage}
+            onPin={setAgentPin}
+            onInspectRun={(runId) => navigateToWorkspaceEntity('run', runId)}
+          /> : <p role="status">The selected agent is unavailable in your current view. No other identity has been selected.</p>}
+        </OfficeInspector>
+      ) : null}
 
       <div className="workspace-surface" hidden={activeWorkspaceView !== 'room'}>
         {activeWorkspaceView === 'room' ? (
@@ -7349,6 +7501,7 @@ function App() {
       {connectionsOpen && bootstrap && selectedActor && connectionRoom && (
         <ConnectionsPanel
           key={savedConnectionScope}
+          active={operationsActive}
           corpId={bootstrap.corp_id}
           roomId={connectionRoom.id}
           actorId={selectedActor.id}
@@ -7384,6 +7537,7 @@ function App() {
           }}
         />
       )}
+      </div>
     </main>
   )
 }

@@ -1,0 +1,111 @@
+/* Console presentation only. Office artwork and evidence pixels retain their source colors. */
+:root {
+  color-scheme: light;
+  --theme-canvas: #e8e8e4;
+  --theme-surface: #ffffff;
+  --theme-raised: #f6f7f5;
+  --theme-hover: #edf0ec;
+  --theme-text: #202b36;
+  --theme-muted: #526058;
+  --theme-border: #c8cec9;
+  --theme-control-border: #737e77;
+  --theme-accent: #a91636;
+  --theme-accent-hover: #80102a;
+  --theme-accent-surface: #fae8ec;
+  --theme-on-accent: #ffffff;
+  --theme-focus: #9c1027;
+  --theme-success: #175a39;
+  --theme-success-surface: #e6f3e9;
+  --theme-warning: #65470f;
+  --theme-warning-surface: #fff6de;
+  --theme-danger: #8e1934;
+  --theme-danger-surface: #fff3f4;
+  --theme-info: #17476c;
+  --theme-info-surface: #e7f2fa;
+  --theme-shadow: 0 2px 5px rgb(19 19 19 / 8%), 0 10px 30px rgb(19 19 19 / 5%);
+  --theme-scrim: rgb(12 20 26 / 60%);
+
+  /* Existing component names all resolve through the same semantic palette. */
+  --paper: var(--theme-raised);
+  --paper-light: var(--theme-surface);
+  --paper-deep: var(--theme-canvas);
+  --surface: var(--theme-surface);
+  --ink: var(--theme-text);
+  --ink-soft: var(--theme-muted);
+  --cobalt: var(--theme-accent);
+  --cobalt-dark: var(--theme-accent-hover);
+  --marigold: var(--theme-warning);
+  --signal: var(--theme-danger);
+  --mint: var(--theme-success);
+  --line: var(--theme-border);
+  --shadow: var(--theme-shadow);
+  --arcade-accent: var(--theme-accent);
+  --arcade-purple: var(--theme-accent-surface);
+  --arcade-violet: var(--theme-raised);
+  --arcade-screen: var(--theme-surface);
+  --focus-ring: var(--theme-focus);
+  --surface-hover: var(--theme-hover);
+  --surface-selected: var(--theme-accent-surface);
+  --success: var(--theme-success);
+  --warning: var(--theme-warning);
+  --danger: var(--theme-danger);
+  --font-mono: var(--mono);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --theme-canvas: #151a20;
+  --theme-surface: #20272f;
+  --theme-raised: #28313a;
+  --theme-hover: #34404b;
+  --theme-text: #f0f3f5;
+  --theme-muted: #bbc8ce;
+  --theme-border: #586772;
+  --theme-control-border: #8c9da8;
+  --theme-accent: #ff9fb3;
+  --theme-accent-hover: #ffc0ce;
+  --theme-accent-surface: #3e2935;
+  --theme-on-accent: #26151c;
+  --theme-focus: #ffc0ce;
+  --theme-success: #99e5b5;
+  --theme-success-surface: #173329;
+  --theme-warning: #f1ce80;
+  --theme-warning-surface: #392e1b;
+  --theme-danger: #ffabb7;
+  --theme-danger-surface: #401f2b;
+  --theme-info: #a6d5ff;
+  --theme-info-surface: #1c2e41;
+  --theme-shadow: 0 2px 5px rgb(0 0 0 / 28%), 0 10px 30px rgb(0 0 0 / 20%);
+  --theme-scrim: rgb(0 0 0 / 70%);
+}
+
+html { background: var(--theme-canvas); }
+body { color: var(--theme-text); background: var(--theme-canvas) !important; }
+.app-shell :is(input, select, textarea) { accent-color: var(--theme-accent); }
+.app-shell .brand-mark { background: #131313; color: #ffffff; }
+.app-shell .brand-e { color: #ffffff; }
+.app-shell :is(.button-danger, .emergency-stop) {
+  color: var(--theme-on-accent) !important;
+  background: var(--theme-danger) !important;
+}
+.app-shell .journey-complete > span { color: var(--theme-on-accent); }
+.app-shell .world-inspector-scrim { background: var(--theme-scrim); }
+.app-shell .world-inspector { color: var(--theme-text); background: var(--theme-surface); }
+.app-shell [hidden] { display: none !important; }
+
+.presentation-preferences {
+  display: flex; flex-wrap: wrap; gap: 0.5rem 0.75rem;
+  min-width: 0; max-width: 100%; margin: 0; padding: 0; border: 0;
+  color: var(--theme-text);
+}
+.presentation-preferences label { display: grid; gap: 0.25rem; min-width: 0; font-size: 0.8rem; }
+.presentation-preferences select { min-height: 44px; max-width: 100%; padding: 0.4rem 0.5rem; }
+.presentation-preferences small { flex-basis: 100%; max-width: 32ch; }
+.operations-chrome, .operations-workspaces, .operations-audit { display: contents; }
+.app-shell.presentation-executive { display: flex; flex-direction: column; gap: 1rem; }
+.presentation-executive .topbar { flex-wrap: wrap; }
+.presentation-executive .operator-console { flex-wrap: wrap; }
+@media (max-width: 440px) {
+  .presentation-preferences { width: 100%; }
+  .presentation-preferences label { flex: 1 1 100px; }
+}

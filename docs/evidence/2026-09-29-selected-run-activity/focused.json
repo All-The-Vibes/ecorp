@@ -1,0 +1,85 @@
+{
+  "issue": 259,
+  "status": "passed",
+  "started_at_utc": "2026-09-29T16:57:39.1210322+00:00",
+  "worktree": "<USERPROFILE>\\.codex\\worktrees\\issue136-browser-docs\\ecorp",
+  "checks": [
+    {
+      "name": "focused",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-timeout=180000",
+        "--test-reporter=tap",
+        "apps/web/src/evidenceNavigation.test.mjs",
+        "apps/web/src/snapshotRefresh.test.mjs",
+        "apps/web/src/runActivity.test.mjs",
+        "apps/web/src/workResultCard.test.mjs",
+        "tools/check_evidence_launch.test.mjs",
+        "tools/check_evidence_native_build.test.mjs",
+        "tools/check_evidence_personal_paths.test.mjs",
+        "tools/startup_validation_harness.test.mjs"
+      ],
+      "started_at_utc": "2026-09-29T16:57:39.6903855+00:00",
+      "finished_at_utc": "2026-09-29T16:58:23.1432389+00:00",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-focused-r4-focused.log",
+      "sha256": "61fd70f3019f90045a9685f6ef79fd0d5e54ec83188e6607a2336fda1329a714",
+      "counts": {
+        "tests": 86,
+        "pass": 86,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "name": "web-build",
+      "command": [
+        "pnpm",
+        "build:web"
+      ],
+      "started_at_utc": "2026-09-29T16:58:23.1933233+00:00",
+      "finished_at_utc": "2026-09-29T16:58:30.6292798+00:00",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-focused-r4-web-build.log",
+      "sha256": "14fff37facef8e888389ae6991ddfa1203e49666a3eda2358d7876f0760c0590"
+    },
+    {
+      "name": "web-lint",
+      "command": [
+        "pnpm",
+        "lint:web"
+      ],
+      "started_at_utc": "2026-09-29T16:58:30.6446286+00:00",
+      "finished_at_utc": "2026-09-29T16:58:33.1892925+00:00",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue259-focused-r4-web-lint.log",
+      "sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c"
+    }
+  ],
+  "python": {
+    "version": "Python 3.12.14",
+    "path": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "sha256": "372c2eae555b344520bf147be0096e009069aeca4e7f78d6aecea6d53158056a"
+  },
+  "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "branch": "codex/issue259-run-activity",
+  "diff_sha256": "40203ae124c8143fe21f154699535927ce8e87edf9f9e1e5d604099851446885",
+  "status_before": [
+    " M apps/web/qa/run-activity.tsx",
+    " M apps/web/src/App.tsx",
+    " M apps/web/src/OfficeFloor.css",
+    " M apps/web/src/OfficeInspector.tsx",
+    " M apps/web/src/RunActivityDetails.tsx",
+    " M apps/web/src/evidenceNavigation.test.mjs",
+    " M apps/web/src/runActivity.test.mjs",
+    " M apps/web/src/runActivity.ts",
+    " M apps/web/src/snapshotRefresh.test.mjs",
+    " M apps/web/src/workResultCard.test.mjs"
+  ],
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-29T16:58:33.5707656+00:00"
+}

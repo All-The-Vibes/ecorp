@@ -21,6 +21,7 @@ type Props = {
   initialSource?: RepositoryTarget
   api: ApiClient
   refreshRevision?: number
+  active?: boolean
   onSelect: (connection: WorkspaceConnection) => void
   onClose: () => void
 }
@@ -28,7 +29,7 @@ type Props = {
 const empty: WorkspaceConnections = { connections: [], operations: [], selected_connection_id: null }
 
 export function ConnectionsPanel({
-  corpId, roomId, actorId, actorRole, runners, initialSource, api, refreshRevision = 0, onSelect, onClose,
+  corpId, roomId, actorId, actorRole, runners, initialSource, api, refreshRevision = 0, active = true, onSelect, onClose,
 }: Props) {
   const scope = connectionScope(corpId, roomId, actorId)
   const scopeRef = useRef(scope)
@@ -82,15 +83,19 @@ export function ConnectionsPanel({
 
   useEffect(() => {
     mounted.current = true
+    return () => { mounted.current = false }
+  }, [])
+
+  useEffect(() => {
+    if (!active) return
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
     const element = dialog.current
     element?.showModal()
     return () => {
-      mounted.current = false
       element?.close()
-      if (opener?.isConnected) opener.focus()
+      if (opener?.isConnected && !opener.closest('[hidden]') && opener.getClientRects().length) opener.focus()
     }
-  }, [])
+  }, [active])
 
   const refresh = useCallback(async () => {
     const expected = scope
@@ -270,7 +275,7 @@ export function ConnectionsPanel({
   }
 
   return (
-    <dialog ref={dialog} className="connections-dialog" aria-labelledby="connections-title"
+    <dialog ref={dialog} hidden={!active} className="connections-dialog" aria-labelledby="connections-title"
       onCancel={(event) => { event.preventDefault(); onClose() }}>
       <header className="connections-header">
         <div>
