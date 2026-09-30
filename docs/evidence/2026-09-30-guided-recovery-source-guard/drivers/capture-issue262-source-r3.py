@@ -1,0 +1,78 @@
+"""Fresh source capture; supersedes the historical capture/publication alias predicates."""
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+from issue262_source_guard_r2 import ROOT, canonical_root, guard_identity, source_sha256
+
+EV = Path(__file__).absolute().parent
+PARENT = "97b141ed47b16aa9682f88a6378c60c86487ec35"
+ENV = {k: v for k, v in os.environ.items()
+       if not re.match(r"^(CRONY_|ECORP_|PG|GH_|GITHUB_|GITLEAKS_|AZURE_|GIT_)", k, re.I)
+       and k.upper() not in {"DATABASE_URL", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "COPILOT_GITHUB_TOKEN", "NODE_OPTIONS"}}
+ENV.update(GIT_TERMINAL_PROMPT="0", GIT_OPTIONAL_LOCKS="0")
+
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def git(*args):
+    result = subprocess.run(["git", "--no-optional-locks", "-C", str(ROOT), *args],
+                            env=ENV, capture_output=True, timeout=180,
+                            creationflags=subprocess.CREATE_NO_WINDOW)
+    assert result.returncode == 0, f"Git {args[0]} failed: {result.returncode}"
+    return result.stdout
+
+
+def identity():
+    return {
+        "head": git("rev-parse", "HEAD").decode().strip(),
+        "branch": git("branch", "--show-current").decode().strip(),
+        "diff_sha256": sha(git("diff", "--binary", "--no-ext-diff", "--no-textconv", "HEAD")),
+        "parent_tree": git("rev-parse", "HEAD^{tree}").decode().strip(),
+        "status": git("status", "--porcelain=v1", "--untracked-files=all").decode().splitlines(),
+        "files": git("ls-files", "-z", "--cached", "--others", "--exclude-standard").decode().split("\0")[:-1],
+    }
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--phase", required=True)
+parser.add_argument("--equals")
+args = parser.parse_args()
+assert re.fullmatch(r"[a-z0-9-]+", args.phase)
+if args.equals:
+    assert re.fullmatch(r"[a-z0-9-]+", args.equals)
+target = EV / f"issue262-source-{args.phase}.json"
+assert not target.exists(), "Preserve existing receipt"
+started = datetime.now(timezone.utc).isoformat()
+assert canonical_root(EV) == EV
+assert canonical_root(ROOT) == ROOT
+before, guard_before = identity(), guard_identity()
+assert before["head"] == PARENT and before["branch"] == "codex/issue262-guided-recovery"
+assert before["status"] == [], "Keep accepted implementation and historical evidence unchanged during fresh validation"
+assert not git("ls-files", "--unmerged").strip()
+physical = [[name, source_sha256(ROOT / name)] for name in sorted(before["files"])]
+assert len(physical) == len(dict(physical))
+assert identity() == before and guard_identity() == guard_before, "Source or source guard changed during capture"
+receipt = {
+    "issue": 262, "phase": args.phase, "started_at": started,
+    "recorded_at": datetime.now(timezone.utc).isoformat(),
+    "worktree": str(ROOT), "identity": before, "physical_files": physical,
+    "physical_files_sha256": sha(json.dumps(physical, separators=(",", ":"), ensure_ascii=False).encode()),
+    "source_file_count": len(physical), "test_config_sha256": source_sha256(ROOT / "test.config.json"),
+    "guard": guard_before, "capture_driver_sha256": sha(Path(__file__).read_bytes()),
+    "assurance": "Fresh observed physical bytes and native alias/link checks at this timestamp; historical capture metadata is not retroactively attested.",
+}
+if args.equals:
+    prior_path = EV / f"issue262-source-{args.equals}.json"
+    prior = json.loads(prior_path.read_text(encoding="utf-8-sig"))
+    assert prior["physical_files"] == physical and prior["identity"] == before and prior["guard"] == guard_before
+    receipt.update(equals=str(prior_path), equals_sha256=sha(prior_path.read_bytes()))
+with target.open("x", encoding="utf-8", newline="\n") as stream:
+    stream.write(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n")
+print(json.dumps({k: receipt[k] for k in ("phase", "recorded_at", "source_file_count", "physical_files_sha256")}))

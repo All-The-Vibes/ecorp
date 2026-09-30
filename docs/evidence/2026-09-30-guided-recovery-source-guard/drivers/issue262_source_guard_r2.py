@@ -1,0 +1,79 @@
+"""Thin source-capture adapter over the repository's existing native file guard."""
+import hashlib
+import importlib.util
+import os
+from pathlib import Path, PurePosixPath
+import stat
+
+if not __debug__:
+    raise SystemExit("Source assertions must remain enabled; remove Python optimization.")
+
+ROOT = Path(r"<USERPROFILE>\.codex\worktrees\issue262-recovery\ecorp")
+REFERENCE = ROOT / "docs/evidence/pr362-combined-20260921/verify_public.py"
+spec = importlib.util.spec_from_file_location("ecorp_existing_evidence_reader", REFERENCE)
+reader = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(reader)
+
+
+def canonical_root(root):
+    declared = Path(root).absolute()
+    resolved = reader.directory_root(declared)
+    assert os.path.normcase(str(declared)) == os.path.normcase(str(resolved)), "aliased source root"
+    return resolved
+
+
+def canonical_single_link_file(path, root=ROOT):
+    declared_root = Path(root).absolute()
+    canonical = canonical_root(declared_root)
+    declared = Path(path).absolute()
+    assert ".." not in declared.parts and declared.is_relative_to(declared_root), "source escaped declared root"
+    relative = declared.relative_to(declared_root).as_posix()
+    assert relative and PurePosixPath(relative).as_posix() == relative
+    resolved = reader.regular_file(canonical, relative)
+    assert os.path.normcase(str(declared)) == os.path.normcase(str(resolved)), "aliased source path"
+    return declared
+
+
+def metadata(info):
+    # Match the existing reader's portable native identity fields.
+    # This Windows runtime reports different lstat/fstat ctime for one unchanged file.
+    return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_nlink)
+
+
+def source_sha256(path, root=ROOT):
+    """Stream bytes with the existing alias/link guard and native open-file checks."""
+    declared = canonical_single_link_file(path, root)
+    before = declared.lstat()
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(declared, flags)
+    with os.fdopen(descriptor, "rb") as stream:
+        opened = os.fstat(stream.fileno())
+        assert stat.S_ISREG(opened.st_mode) and opened.st_nlink == 1
+        assert metadata(opened) == metadata(before), "source changed before read"
+        digest = hashlib.file_digest(stream, "sha256").hexdigest()
+        assert metadata(os.fstat(stream.fileno())) == metadata(opened), "source changed during read"
+        assert canonical_single_link_file(path, root) == declared
+        assert metadata(declared.lstat()) == metadata(opened), "source path replaced during read"
+    return digest
+
+
+def guard_identity():
+    return {
+        "adapter_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "repository_guard_path": REFERENCE.relative_to(ROOT).as_posix(),
+        "repository_guard_sha256": hashlib.sha256(REFERENCE.read_bytes()).hexdigest(),
+        "canonical_declared_paths": True,
+        "single_link_files": True,
+        "native_opened_file_identity": True,
+        "streamed_hashing": True,
+        "metadata_fields": ["st_dev", "st_ino", "st_size", "st_mtime_ns", "st_nlink"],
+        "scope": "Metadata and bytes checked at capture/publication boundaries; no claim of continuous OS locking or historical metadata.",
+    }
+
+
+def verify_source(physical, root=ROOT):
+    assert isinstance(physical, list) and len(physical) == len(dict(physical))
+    canonical_root(root)
+    for name, expected in physical:
+        assert isinstance(name, str) and PurePosixPath(name).as_posix() == name
+        assert source_sha256(Path(root) / name, root) == expected, name

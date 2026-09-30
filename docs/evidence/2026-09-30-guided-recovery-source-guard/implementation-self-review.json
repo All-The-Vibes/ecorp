@@ -1,0 +1,123 @@
+{
+  "issue": 262,
+  "pr": 389,
+  "recorded_at_utc": "2026-09-30T23:37:48.445381+00:00",
+  "reviewer": "Codex assistant; implementation self-review, not independent or human approval",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parents": [
+    "97b141ed47b16aa9682f88a6378c60c86487ec35"
+  ],
+  "tested_tree": "8022064f34762e4f1828bc9d7cb2da6af6a8de88",
+  "physical_files_sha256": "cff87be69660700f2c966a5c19ded9e8b377f4c1ef36ecc3ae3aee2d28d32fb0",
+  "reviewed_paths": [
+    "drivers/issue262_source_guard_r2.py",
+    "drivers/capture-issue262-source-r3.py",
+    "drivers/issue262_alias_publication_lib_r1.py",
+    "drivers/validate-issue262-source-alias-r1.py",
+    "drivers/commit-issue262-source-alias-r1.py"
+  ],
+  "surrounding_paths": [
+    "docs/evidence/pr362-combined-20260921/verify_public.py",
+    "tools/e2e_stopped_source_checkpoint.mjs",
+    "tools/run_checks.mjs",
+    "test.config.json"
+  ],
+  "review_comments": [
+    4146642007,
+    4146642079,
+    4146642119,
+    4146642183
+  ],
+  "confirmed_findings_resolved": [
+    {
+      "finding": "Both prior source captures admitted hard-linked files and aliases in parent directories.",
+      "resolution": "Fresh capture requires canonical declared paths, no linked/reparse ancestors, regular files and st_nlink == 1 before streaming bytes; the same checks follow the read."
+    },
+    {
+      "finding": "Both prior publication guards repeated the incomplete path predicate.",
+      "resolution": "The new publication path calls verify_source at assembly, evidence validation, commit and pre-push verification. Dependent evidence is regenerated on this guarded source."
+    }
+  ],
+  "invariants": [
+    "Configured source checkout and existing contributor work remain preserved; all acceptance runs in an owned isolated worktree and fixture.",
+    "All original tracked physical bytes, including the earlier product implementation and evidence packets, are unchanged.",
+    "No product authorization, tenant/Corp scope, secrets, task state, verification policy, budget, loop breaker, harness or migration behavior is changed.",
+    "The existing native evidence reader is reused rather than introducing a competing execution or permissions mechanism.",
+    "Observed native failures, skipped and ignored checks, runtime drift and unavailable hosted gates remain disclosed."
+  ],
+  "acceptance_mapping": [
+    {
+      "criterion": "Reject aliased and multiply linked source at fresh capture",
+      "implementation": [
+        "drivers/capture-issue262-source-r3.py: source capture",
+        "drivers/issue262_source_guard_r2.py: canonical_single_link_file and source_sha256"
+      ],
+      "evidence": [
+        "guard/native-regressions.json",
+        "source-equivalence.json"
+      ],
+      "result": "The complete 7,304-file source passes canonical declared-path, lexical ancestor/reparse-point, regular-file, single-link and opened-file identity checks. Owned native hard links and parent junctions fail closed."
+    },
+    {
+      "criterion": "Apply the same source admission during publication",
+      "implementation": [
+        "drivers/issue262_alias_publication_lib_r1.py: original_files",
+        "drivers/validate-issue262-source-alias-r1.py",
+        "drivers/commit-issue262-source-alias-r1.py"
+      ],
+      "evidence": [
+        "guard/native-regressions.json",
+        "source-equivalence.json"
+      ],
+      "result": "Assembly, evidence validation and commit call the same native verifier for every original file. Publication inputs and new packet files also require canonical single-link paths and matching bytes."
+    },
+    {
+      "criterion": "Regenerate evidence on the actual source after closing the metadata gap",
+      "implementation": [
+        "drivers/run-issue262-source-guard-focused-r1.ps1",
+        "drivers/run-issue262-coverage-r1.ps1",
+        "drivers/run-issue262-native-r12.ps1",
+        "drivers/run-issue262-check-final-r1.ps1"
+      ],
+      "evidence": [
+        "regression/fresh.log",
+        "coverage/summary.json",
+        "native/browser-report.json",
+        "canonical-report.json"
+      ],
+      "result": "Fresh focused regressions, model coverage, the complete owned local stack and all eleven canonical gates passed with matching physical source and guard identities at each boundary."
+    },
+    {
+      "criterion": "Preserve original development chronology and evidence history",
+      "implementation": [
+        "source-equivalence.json: physical_files"
+      ],
+      "evidence": [
+        "implementation-self-review.json",
+        "guard/first-attempt-failure.json",
+        "guard/first-attempt-diagnosis.json"
+      ],
+      "result": "No product or existing evidence byte changes. Historical capture predicates have an explicitly documented alias-assurance gap and are superseded for readiness by this fresh pass. Native guard attempt R1 failed before product validation; that receipt and diagnosis remain preserved."
+    }
+  ],
+  "qualifications": [
+    "This is newly observed validation and assistant implementation self-review. It is not original development chronology, independent GitHub approval or a human decision.",
+    "Both historical packets remain byte-for-byte intact. Their old capture/publication predicates did not attest canonical declared paths or single-link source. Fresh validation supersedes that assurance gap; it cannot establish past filesystem metadata.",
+    "Source guard R2 is a thin adapter over the existing repository verify_public.py directory_root, unlinked_path and regular_file guards. It adds streamed hashing and opened-file identity checks, not a new execution or permission system.",
+    "The first native guard attempt rejected an ordinary file because this Windows/Python runtime returned different lstat/fstat ctime_ns. That failed attempt is preserved. R2 uses the existing reader's portable device, inode, size, mtime_ns and link-count identity fields; all 22 fresh native guard cases passed.",
+    "Native R11 stopped before browser acceptance because its copied fixture helper rejected the new QA-root name. Source equality and owned shutdown passed. Its failure is retained; R12 uses a fresh owned stack and the corrected explicit path pattern.",
+    "Alias checks establish observed metadata and bytes at capture and publication boundaries. They do not claim continuous operating-system locking or historical metadata.",
+    "The fresh owned browser/server/PostgreSQL/runner stack uses deterministic fake-process execution and a synthetic Codex protocol, not live vendor inference, production identity or GitHub effects.",
+    "Fifteen top-level browser groups include seven explicitly synthetic recovery presentation cases. Malformed warning variants are synthetic browser-storage edits to a receipt saved by the local server. Zero actual human reviews occurred.",
+    "Nineteen original screenshots are retained. They are acceptance artifacts, not exhaustive visual or accessibility certification.",
+    "The product head was already committed before this execution. The final evidence-only commit did not yet exist. All original bytes remain unchanged; separately checked evidence is added afterward.",
+    "Native r12 records final canonical validation as pending because it completed earlier. The later canonical receipt and matching-source binding establish its successful completion without rewriting that historical native receipt.",
+    "Skipped Node and ignored Rust cases are not passes. Focused, coverage, native and canonical counts overlap. Dedicated live and immutable historical replay lanes remain separate.",
+    "Locked-dependency receipts are reused with unchanged locks. Steward log bytes were first bound retrospectively by the existing dependency-artifact receipt. Dependency installation was not re-executed.",
+    "Rust workspace tests use RUST_TEST_THREADS=1 without filtering tests. The separately required native EVM gate is still executed.",
+    "The actual Node runtime is 24.21.0, while the repository declares 24.19.0. Execution on the declared Node version is not claimed.",
+    "Required hosted CI, CodeQL, code-quality and security checks remain unavailable while GitHub Actions is disabled. No merge, issue closure, self-approval, policy change or clean historical Cargo advisory audit is claimed."
+  ],
+  "unresolved_confirmed_defects_in_correction": [],
+  "independent_review_performed": false
+}

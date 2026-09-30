@@ -1,0 +1,217 @@
+{
+  "issue": 262,
+  "status": "accepted",
+  "qa_root": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-alias-20260930-r12",
+  "worktree": "<USERPROFILE>\\.codex\\worktrees\\issue262-recovery\\ecorp",
+  "started_at_utc": "2026-09-30T22:33:15.0239147+00:00",
+  "steps": [
+    {
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T220921Z\\issue262-native-r12-source-before.log",
+      "started_at_utc": "2026-09-30T22:33:15.0967493+00:00",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-B",
+        "-X",
+        "utf8",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T220921Z\\capture-issue262-source-r3.py",
+        "--phase",
+        "before-native-r12",
+        "--equals",
+        "after-coverage-r1"
+      ],
+      "name": "source-before",
+      "finished_at_utc": "2026-09-30T22:33:49.8822626+00:00",
+      "sha256": "1294727acac9cc6f37f3af0706b305bef76a9fdf1fc4da18b0d58df1f0a0bcba"
+    },
+    {
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T220921Z\\issue262-native-r12-build.log",
+      "started_at_utc": "2026-09-30T22:33:49.9138898+00:00",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "crony-server",
+        "-p",
+        "crony-runner",
+        "--bins"
+      ],
+      "name": "build",
+      "finished_at_utc": "2026-09-30T22:33:51.5215903+00:00",
+      "sha256": "c75539536c9782595b54e56f179f7d8b8d94f94403b345e8dc67e5f91fb94c23"
+    },
+    {
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T220921Z\\issue262-native-r12-dry-run.log",
+      "started_at_utc": "2026-09-30T22:33:51.8272837+00:00",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue262-recovery\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "DryRun",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue262-alias-20260930-r12",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "name": "dry-run",
+      "finished_at_utc": "2026-09-30T22:33:53.2759132+00:00",
+      "sha256": "d18e2af4470157ea0f08aec5d77a36e38a1a9cf3b40fb878d938626a0574b256"
+    },
+    {
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T220921Z\\issue262-native-r12-start.log",
+      "started_at_utc": "2026-09-30T22:33:53.2929776+00:00",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue262-recovery\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Start",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue262-alias-20260930-r12",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "name": "start",
+      "finished_at_utc": "2026-09-30T22:34:07.5046689+00:00",
+      "sha256": "3886bfee7c4f6991797452640e5e3c250b63e082cb477d96d4d31c3502f19f28"
+    },
+    {
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T220921Z\\issue262-native-r12-native-codex.log",
+      "started_at_utc": "2026-09-30T22:34:07.5206254+00:00",
+      "command": [
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T220921Z\\issue262-native-codex-r2.ps1",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue262-alias-20260930-r12",
+        "-ProductRoot",
+        "<USERPROFILE>\\.codex\\worktrees\\issue262-recovery\\ecorp"
+      ],
+      "name": "native-codex",
+      "finished_at_utc": "2026-09-30T22:34:09.1822740+00:00",
+      "sha256": "0862b4805e2bb8f751050beec169bd67530e4f11fd7922fedf77908d17260afe"
+    },
+    {
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T220921Z\\issue262-native-r12-status.log",
+      "started_at_utc": "2026-09-30T22:34:09.1967040+00:00",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue262-recovery\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Status",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue262-alias-20260930-r12",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "name": "status",
+      "finished_at_utc": "2026-09-30T22:34:11.4634775+00:00",
+      "sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc"
+    },
+    {
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T220921Z\\issue262-native-r12-browser.log",
+      "started_at_utc": "2026-09-30T22:34:11.5335071+00:00",
+      "command": [
+        "node",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T220921Z\\issue262-native-browser-r9.mjs",
+        "--qa-root",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue262-alias-20260930-r12",
+        "--postgres-bin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin",
+        "--source-receipt",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T220921Z\\issue262-source-before-native-r12.json",
+        "--product-root",
+        "<USERPROFILE>\\.codex\\worktrees\\issue262-recovery\\ecorp",
+        "--source-receipt-sha256",
+        "7b00904ca3d6e176f268b9c61ee72f14971bc6ab076b2f9477d94067cdbb4a6c"
+      ],
+      "name": "browser",
+      "finished_at_utc": "2026-09-30T22:35:29.8335510+00:00",
+      "sha256": "b89a94dc48531bef4915fc8c9b45460234bd244bd661dc032abf1a6037255267"
+    },
+    {
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T220921Z\\issue262-native-r12-source-after.log",
+      "started_at_utc": "2026-09-30T22:35:29.8839481+00:00",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-B",
+        "-X",
+        "utf8",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T220921Z\\capture-issue262-source-r3.py",
+        "--phase",
+        "after-native-r12",
+        "--equals",
+        "before-native-r12"
+      ],
+      "name": "source-after",
+      "finished_at_utc": "2026-09-30T22:36:03.1947419+00:00",
+      "sha256": "8b8902245396ea8a901be117d82b1bd77d086566519f7075e0d558f073814317"
+    },
+    {
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T220921Z\\issue262-native-r12-stop.log",
+      "started_at_utc": "2026-09-30T22:36:03.2285413+00:00",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue262-recovery\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Stop",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue262-alias-20260930-r12",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "name": "stop",
+      "finished_at_utc": "2026-09-30T22:36:04.6681933+00:00",
+      "sha256": "65abe6fe9cb60eacc967eff94e7f98a3a958644944f9ce7caffa07021c10ae9e"
+    }
+  ],
+  "stopped": true,
+  "drivers": {
+    "issue264-native-admission-r1.mjs": "c639c521f2e1852a59859713ea6792892f029d87710ea0a046b7beb86382ba1e",
+    "run-issue262-native-r12.ps1": "e2fca7615e694fdf9026661a29ee950b002a8ecaad3793f01175d025cd2b84ae",
+    "issue262-native-revision-cases-r4.mjs": "e6999e4c1a593f1d71ca198a880541330b9f166567ed7723948035a3c715eaa8",
+    "issue262-native-warning-cases-r1.mjs": "3cbbf97c2617f18b71a78fabd55d3d711f9074ff921d9b4c46524aa8719102bc",
+    "issue262_source_guard_r2.py": "0511e03cd33841201ecf835fe68561163ce5084c5b873a2c76eae1ce7faa7da9",
+    "issue262-native-codex-r2.ps1": "e9eaa66dc29120d66a68f90e88a22b74fa240b2e54462a7ada0a9406bbfdad18",
+    "issue262-native-browser-r9.mjs": "d90478a1e3f7182fc78ef4ee6ae21bc6c1d7f16e9b38d17ec186a4312a4a9f24",
+    "capture-issue262-source-r3.py": "db7529e7cb3de0bc201e78037ee4512f1587bc4cd71c0502d576d68384e2916f",
+    "issue262-native-recovery-cases-r4.mjs": "42b84c65dd87cb67c6d2373398cf1a3a0e9ea09162a944c80d5b6b89d8974f74"
+  },
+  "binaries": {
+    "crony-server.exe": {
+      "sha256": "9a57d30db9cf994af56cf885b2b6ac3f53370d6bd4e8f5795d557033f460adbb",
+      "length": 44940800
+    },
+    "crony-runner.exe": {
+      "sha256": "91da5306c2fdacbbcceeb7e0eb0015781fcb93fdb2866fe047b427501402b379",
+      "length": 132572672
+    }
+  },
+  "final_source_canonical_validation": "pending; mandatory before publication",
+  "focused_regressions": "issue262-source-guard-focused-r1.json",
+  "coverage_receipt": "issue262-coverage-r1.json",
+  "scope": "Fresh owned browser/server/PostgreSQL/runner acceptance. Existing deterministic fake-process and synthetic Codex native-protocol fixture; no real inference, human decisions, production identity or GitHub effects. Browser-only variants are identified separately.",
+  "browser_report": "<USERPROFILE>\\qa\\pr265-run-activity-issue262-alias-20260930-r12\\evidence\\issue262-native-browser.json",
+  "browser_report_sha256": "8b767c63d936abab93fea3c6684be86b3cd84c57eb1566423f2e6984a8ad10ba",
+  "checks": [
+    "browser_exact_all_supported_fields_roundtrip_draft_only",
+    "guided_fields_errors_focus_lists_and_existing_verifier_editor",
+    "mobile_390_keyboard_close_reopen_preserves_draft",
+    "native_member_outsider_and_corp_denials_preserve_actor_draft",
+    "native_response_loss_reload_exact_replay_single_revision_no_execution",
+    "native_saved_receipt_malformed_warning_reload_fails_closed",
+    "native_saved_receipt_optional_text_warning_restores_without_replay",
+    "native_stale_version_denial_and_explicit_reconciliation",
+    "browser_explicit_launch_native_contract_v4_verified",
+    "native_and_guided_resume_authority_denials",
+    "native_resume_revision_saved_without_execution",
+    "browser_native_codex_resume_preserved_session_workspace_and_verifier",
+    "native_no_budget_guidance_save_preserves_restriction",
+    "synthetic_browser_recovery_restrictions_and_controller_handoff",
+    "native_final_snapshot_saved"
+  ],
+  "physical_source_unchanged": true,
+  "finished_at_utc": "2026-09-30T22:36:04.6743912+00:00"
+}
