@@ -43,6 +43,9 @@ import type { WorkSelection } from './workSelection'
 import { useWorkSelection } from './useWorkSelection'
 import { ConnectionsPanel } from './ConnectionsPanel'
 import { AuditEvidencePanel } from './AuditEvidencePanel'
+import { BudgetOverviewPanel } from './BudgetOverviewPanel'
+import { budgetDestinationAvailable, buildBudgetOverview } from './budgetOverview'
+import type { BudgetDestination } from './budgetOverview'
 import { DelegatedPanel } from './DelegatedPanel'
 import { MissionOriginText } from './MissionOriginDetails'
 import { useMissionOriginContext } from './useMissionOriginContext'
@@ -80,6 +83,7 @@ type Agent = OfficeAgent & {
 
 type Mission = {
   id: string
+  corp_id: string
   room_id: string
   requested_by: string
   title: string
@@ -128,6 +132,7 @@ type TaskContract = {
 
 type Task = {
   id: string
+  corp_id: string
   mission_id: string
   title: string
   objective: string
@@ -188,6 +193,7 @@ type MissionContractRevisionInput = {
 
 type Run = {
   id: string
+  corp_id: string
   task_id: string
   agent_id: string
   runner_id: string
@@ -376,6 +382,7 @@ type CircuitBreakerIncident = {
 
 type MissionBudgetRevision = {
   id: string
+  corp_id: string
   mission_id: string
   proposed_by: string
   status: 'pending' | 'approved' | 'rejected'
@@ -575,7 +582,7 @@ type SnapshotResponse = {
   snapshot: {
     corp: ClaimAuthorityCorp & { name: string }
     actors: Actor[]
-    rooms: { id: string; name: string; purpose: string }[]
+    rooms: { id: string; corp_id: string; name: string; purpose: string }[]
     agents: Agent[]
     missions: Mission[]
     mission_contract_revisions: MissionContractRevision[]
@@ -684,7 +691,7 @@ function workspaceViewFromHash(hash: string): WorkspaceView {
   return WORKSPACE_VIEWS.some((view) => view.id === candidate) ? candidate : 'floor'
 }
 
-function revealEntityTarget(kind: EntityLink['kind'] | 'room', id: string): boolean {
+function revealEntityTarget(kind: EntityLink['kind'] | 'room' | 'budget' | 'budget-revision', id: string): boolean {
   const target = Array.from(document.querySelectorAll<HTMLElement>(
     `[data-${kind}-id="${CSS.escape(id)}"]`,
   )).find((candidate) => !candidate.closest('[hidden]'))
@@ -701,7 +708,10 @@ function revealEntityTarget(kind: EntityLink['kind'] | 'room', id: string): bool
     target instanceof HTMLDetailsElement
       ? target.querySelector<HTMLElement>(':scope > summary') ?? target
       : target
-  focusTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  focusTarget.scrollIntoView({
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    block: 'center',
+  })
   focusTarget.focus({ preventScroll: true })
   return true
 }
@@ -2397,6 +2407,8 @@ function BudgetRevisionPanel({
     <section
       className={`budget-ledger${budgetNeedsAction ? ' budget-ledger-exhausted' : ''}`}
       data-testid="mission-budget-ledger"
+      data-budget-id={mission.id}
+      tabIndex={-1}
       data-budget-exhausted={budgetExhausted}
     >
       <div className="budget-ledger-heading">
@@ -2759,7 +2771,7 @@ function BudgetRevisionPanel({
           <summary>{orderedRevisions.length} recorded budget revision{orderedRevisions.length === 1 ? '' : 's'}</summary>
           <ol>
             {orderedRevisions.map((revision) => (
-              <li key={revision.id}>
+              <li key={revision.id} data-budget-revision-id={revision.id} tabIndex={-1}>
                 <div>
                   <span className={`budget-history-status budget-history-${revision.status}`}>
                     {statusLabel(revision.status)}
@@ -4518,6 +4530,7 @@ function App() {
   const reconnectTimer = useRef<number | null>(null)
   const snapshotRefreshRef = useRef<ReturnType<typeof createSnapshotRefresher> | null>(null)
   const currentViewer = useRef<{ corpId: string; actorId: string } | null>(null)
+  const snapshotReadVersion = useRef(0)
   const currentComments = useRef<{
     snapshot: SnapshotResponse['snapshot']
     room: DiscussionScope
@@ -4528,6 +4541,18 @@ function App() {
   const composerInitialized = useRef(false)
   const initialWorkspaceHash = useRef(window.location.hash)
   const missionComposerHeading = useRef<HTMLHeadingElement | null>(null)
+
+  const budgetContext = useMemo(() => data && selectedActorId && snapshotLoad ? {
+    snapshot: data.snapshot,
+    viewer: { corpId: data.snapshot.corp.id, actorId: selectedActorId },
+    stamp: { corpId: snapshotLoad.corpId, actorId: snapshotLoad.actorId,
+      receivedAt: snapshotLoad.receivedAt, refreshFailed: snapshotLoad.refreshFailed, connection },
+  } : null, [data, selectedActorId, snapshotLoad, connection])
+  const currentBudgetContext = useRef<typeof budgetContext>(null)
+  useLayoutEffect(() => {
+    currentBudgetContext.current = budgetContext
+    return () => { currentBudgetContext.current = null }
+  }, [budgetContext])
 
   const rememberCurrentWork = useCallback((choice: WorkSelection): boolean => {
     const viewer = currentViewer.current
@@ -4597,31 +4622,31 @@ function App() {
   }, [floorInspectorOpen])
 
   const navigateToWorkspaceEntity = useCallback(
-    (kind: EntityLink['kind'] | 'room', targetId: string) => {
+    (kind: EntityLink['kind'] | 'room', targetId: string, focusTarget?: () => void): boolean => {
       if (kind === 'room') {
         const viewer = currentViewer.current
         if (!data || viewer?.corpId !== data.snapshot.corp.id || viewer.actorId !== selectedActorId ||
           !data.snapshot.rooms.some((room) => room.id === targetId)) {
           setError('The linked room is unavailable in the current view.')
-          return
+          return false
         }
         setRoomMissionId(null)
         setSelectedRoomId(targetId)
         setActiveWorkspaceView('room')
         window.history.replaceState(null, '', '#room')
         setAnnouncement('Comms opened.')
-        window.setTimeout(() => revealEntityTarget(kind, targetId), 80)
-        return
+        window.setTimeout(focusTarget ?? (() => revealEntityTarget(kind, targetId)), 80)
+        return true
       }
 
       const choice = data ? workSelectionForLink({ kind, id: targetId }, data.snapshot, selectedWork) : null
       if (!choice) {
         setError('The exact linked work is unavailable in the current view. No other record was substituted.')
-        return
+        return false
       }
       if (!rememberCurrentWork(choice)) {
         setError('The requested evidence selection could not be saved or is no longer current. No different run has been opened.')
-        return
+        return false
       }
       const missionId = choice.missionId
       if (kind !== 'mission') {
@@ -4636,12 +4661,40 @@ function App() {
       window.history.replaceState(null, '', '#missions')
       setAnnouncement(`${statusLabel(kind)} opened in Missions.`)
       window.setTimeout(() => {
+        if (focusTarget) {
+          focusTarget()
+          return
+        }
         if (revealEntityTarget(kind, targetId)) return
         if (missionId) revealEntityTarget('mission', missionId)
       }, 80)
+      return true
     },
     [data, selectedActorId, selectedWork, rememberCurrentWork],
   )
+
+  const openBudgetRecord = useCallback((target: BudgetDestination) => {
+    const context = budgetContext
+    const viewer = currentViewer.current
+    const available = () => Boolean(context && currentBudgetContext.current === context &&
+      currentViewer.current === viewer && viewer?.corpId === context.viewer.corpId &&
+      viewer.actorId === context.viewer.actorId &&
+      budgetDestinationAvailable(buildBudgetOverview(context.snapshot, context.viewer, context.stamp, Date.now()), target))
+    const unavailable = () => setError('The exact budget record is no longer available in the current view. Refresh budgets and try again.')
+    if (!available()) {
+      unavailable()
+      return
+    }
+    navigateToWorkspaceEntity(target.kind === 'suspension' ? 'run' : 'mission',
+      target.kind === 'suspension' ? target.runId : target.missionId, () => {
+        // Check the same receipt and viewer generation after the destination
+        // renders. Never focus another revision or a newer run as a fallback.
+        if (!available()) return unavailable()
+        const kind = target.kind === 'revision' ? 'budget-revision' : target.kind === 'suspension' ? 'run' : 'budget'
+        const id = target.kind === 'revision' ? target.revisionId : target.kind === 'suspension' ? target.runId : target.missionId
+        if (!revealEntityTarget(kind, id)) unavailable()
+      })
+  }, [budgetContext, navigateToWorkspaceEntity])
 
   useEffect(() => {
     const focus = (raw: string) => {
@@ -4683,6 +4736,13 @@ function App() {
   const lastEventSeq = useRef<Record<string, number>>({})
 
   const refresh = useCallback(async (corpId: string, actorId: string, signal?: AbortSignal) => {
+    const viewer = currentViewer.current
+    // Viewer identity also distinguishes A -> B -> A. A request from an
+    // obsolete caller must not invalidate the current viewer's pending read.
+    const version = viewer?.corpId === corpId && viewer.actorId === actorId
+      ? ++snapshotReadVersion.current : null
+    const isCurrent = () => version !== null && snapshotReadVersion.current === version &&
+      currentViewer.current === viewer
     try {
       const snapshot = await api<SnapshotResponse>(
         `/api/corps/${corpId}/snapshot?actor_id=${actorId}`,
@@ -4690,15 +4750,17 @@ function App() {
       )
       if (signal?.aborted) throw new DOMException('Obsolete snapshot scope', 'AbortError')
       if (snapshot.snapshot.corp.id !== corpId) throw new Error('Snapshot Corp does not match the requested Corp.')
-      if (currentViewer.current?.corpId !== corpId || currentViewer.current.actorId !== actorId) {
+      if (!isCurrent()) {
         return snapshot
       }
       const newest = snapshot.snapshot.events.at(-1)?.seq ?? 0
       lastEventSeq.current[actorId] = Math.max(lastEventSeq.current[actorId] ?? 0, newest)
+      currentBudgetContext.current = null
       setSnapshotLoad({ corpId, actorId, response: snapshot, receivedAt: new Date().toISOString(), refreshFailed: false })
       return snapshot
     } catch (caught) {
-      if (!signal?.aborted && currentViewer.current?.corpId === corpId && currentViewer.current.actorId === actorId) {
+      if (!signal?.aborted && isCurrent()) {
+        currentBudgetContext.current = null
         setSnapshotLoad((previous) => previous?.corpId === corpId && previous.actorId === actorId
           ? { ...previous, refreshFailed: true } : previous)
       }
@@ -4741,6 +4803,8 @@ function App() {
         }
         if (cancelled) return
         currentViewer.current = { corpId, actorId }
+        currentBudgetContext.current = null
+        setSnapshotLoad(null)
         setBootstrap(result)
         setSelectedActorId(actorId)
         await refresh(corpId, actorId, controller.signal)
@@ -4760,6 +4824,8 @@ function App() {
           ? result.eve_actor_id
           : result.alice_actor_id
       currentViewer.current = { corpId: result.corp_id, actorId: initialActor }
+      currentBudgetContext.current = null
+      setSnapshotLoad(null)
       setSelectedActorId(initialActor)
       await refresh(result.corp_id, initialActor, controller.signal)
     })()
@@ -5067,6 +5133,9 @@ function App() {
   const selectActor = (actor: Actor) => {
     currentViewer.current = bootstrap ? { corpId: bootstrap.corp_id, actorId: actor.id } : null
     currentComments.current = null
+    currentBudgetContext.current = null
+    setSnapshotLoad(null)
+    const viewer = currentViewer.current
     setSelectedActorId(actor.id)
     setConnectionsOpen(false)
     setSavedConnectionLoad(null)
@@ -5080,7 +5149,7 @@ function App() {
     window.history.replaceState({}, '', url)
     if (bootstrap) {
       void refresh(bootstrap.corp_id, actor.id).catch((caught: unknown) => {
-        setError(caught instanceof Error ? caught.message : String(caught))
+        if (currentViewer.current === viewer) setError(caught instanceof Error ? caught.message : String(caught))
       })
     }
   }
@@ -5746,6 +5815,8 @@ function App() {
     setServerMode('unknown')
     currentViewer.current = { corpId, actorId }
     currentComments.current = null
+    currentBudgetContext.current = null
+    setSnapshotLoad(null)
     setBusy(true)
     setError(null)
     window.sessionStorage.setItem('ecorp_corp_id', corpId)
@@ -6204,6 +6275,10 @@ function App() {
 
       <AuditEvidencePanel key={`audit:${data.snapshot.corp.id}:${selectedActor.id}`}
         corpId={data.snapshot.corp.id} actorId={selectedActor.id} api={api} />
+
+      {budgetContext ? <BudgetOverviewPanel
+        snapshot={budgetContext.snapshot} viewer={budgetContext.viewer} stamp={budgetContext.stamp}
+        onRefresh={() => snapshotRefreshRef.current?.request()} onOpen={openBudgetRecord} /> : null}
 
       <div className="workspace-surface" hidden={activeWorkspaceView !== 'factory'}>
         <FactoryPanel

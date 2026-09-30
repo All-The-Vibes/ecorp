@@ -1,0 +1,250 @@
+{
+  "issue": 261,
+  "status": "accepted",
+  "started_at": "2026-09-30T02:18:31.276Z",
+  "scope": "Owned browser/server/PostgreSQL/native fake-process runner. Separate cancelled synthetic ledger rows test presentation, never provider recovery or actual human decisions. No production identity, real provider inference or real GitHub effects.",
+  "source_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue261-review-source-before-native-r1.json",
+  "source_receipt_sha256": "b594af4c3004b0e54d9c15e2a0f430ecda91bbcd63ef61eb330ed772766a3a73",
+  "source_files_sha256": "673e3435253fc8d98e0321e834e3b7e2069c2c587cd2c2815a62f6cdc121a3d0",
+  "operations": [
+    {
+      "name": "seed-synthetic-ledger",
+      "route": "owned PostgreSQL fixture only",
+      "started_at": "2026-09-30T02:18:31.449Z",
+      "completed": true
+    },
+    {
+      "name": "native-browser-launch",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions/8f666cfa-9209-495b-8b6d-448eb124e1b7/launch",
+      "started_at": "2026-09-30T02:18:41.243Z",
+      "completed": true
+    },
+    {
+      "name": "scripted-demo-review-61f8e3ab-a1d6-4313-a80a-19076bd54647",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/runs/61f8e3ab-a1d6-4313-a80a-19076bd54647/verification-decision",
+      "started_at": "2026-09-30T02:19:02.439Z",
+      "completed": true
+    },
+    {
+      "name": "scripted-demo-review-e2ebeee8-88ed-490b-ae05-f6c00d357940",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/runs/e2ebeee8-88ed-490b-ae05-f6c00d357940/verification-decision",
+      "started_at": "2026-09-30T02:19:03.351Z",
+      "completed": true
+    }
+  ],
+  "checks": {
+    "synthetic_ledger_matches_independent_sql_once": {
+      "rich": {
+        "tokens": "745",
+        "cost": "385001",
+        "runs": 5,
+        "agents": 3
+      },
+      "aggregate": {
+        "original_tokens": "97000",
+        "current_tokens": "98500",
+        "original_cost": "8000000",
+        "current_cost": "9500000"
+      },
+      "expected_consumption_tokens": 845,
+      "expected_consumption_microusd": 385001,
+      "aggregate_remainder_withheld": true,
+      "pending_not_authority": true,
+      "fixtures_are_synthetic": true
+    },
+    "exact_synthetic_revision_and_terminated_suspension_drilldown": {
+      "approved": "82f5b96a-e103-4198-af1b-21972a078a13",
+      "pending": "cee91d73-c9c1-444a-bad5-e6080878b03c",
+      "suspended_original": "df87a451-2b18-4121-be0f-b82065e1cac2",
+      "later_resumed_row": "981ee6db-640e-4194-8ad6-c6b2cf4170a3",
+      "revisions_unchanged": true,
+      "no_budget_grant_or_provider_resume": true
+    },
+    "native_runner_survival_and_reconnected_ledger": {
+      "mission": "8f666cfa-9209-495b-8b6d-448eb124e1b7",
+      "ledger": {
+        "tokens": "0",
+        "cost": "0",
+        "runs": 2,
+        "agents": 2
+      },
+      "run_ids": [
+        "e2ebeee8-88ed-490b-ae05-f6c00d357940",
+        "61f8e3ab-a1d6-4313-a80a-19076bd54647"
+      ],
+      "persisted_artifacts": [
+        {
+          "artifact_id": "ac10240d-a60e-4ae8-bd35-f64c22266c83",
+          "artifact_sha256": "f524bb8c6aca78981b4abcef9cf27d9c2ba9c1c286e31d83d0863e7ec4c5efa8"
+        },
+        {
+          "artifact_id": "9a226d87-6c87-437f-8dda-976eea6f0b5a",
+          "artifact_sha256": "457d1fc80bc53ea944f1e53e3ce17cf8793de7b8e632e98c1b9821b125ba28e9"
+        }
+      ],
+      "offline_totals_hidden": true
+    },
+    "native_complete_graph_and_consumption_after_scripted_reviews": {
+      "mission": "8f666cfa-9209-495b-8b6d-448eb124e1b7",
+      "ledger": {
+        "tokens": "0",
+        "cost": "0",
+        "runs": 3,
+        "agents": 3
+      },
+      "retained_runs": [
+        {
+          "run_id": "b5d58480-3db3-45a8-8e73-af79e40b8130",
+          "task_id": "33ae0511-44df-4a6d-94b8-0300346cc16a",
+          "artifact_id": "a5b73a5c-8de7-4d2a-ab21-0d58a86ad32f",
+          "artifact_sha256": "2d6cc08de5166dde118d25fd0db9791c1981d8cdead94bf6f03ff1bcbe70f0ab",
+          "workspace": "runner\\worktrees\\33ae051144df4a6d94b80300346cc16a\\b5d584803db345a88e73af79e40b8130",
+          "verification_status": "passed"
+        },
+        {
+          "run_id": "e2ebeee8-88ed-490b-ae05-f6c00d357940",
+          "task_id": "d339658c-26de-4d02-8307-c3d21d6387b9",
+          "artifact_id": "ac10240d-a60e-4ae8-bd35-f64c22266c83",
+          "artifact_sha256": "f524bb8c6aca78981b4abcef9cf27d9c2ba9c1c286e31d83d0863e7ec4c5efa8",
+          "workspace": "runner\\worktrees\\d339658c26de4d028307c3d21d6387b9\\e2ebeee888ed490bae05f6c00d357940",
+          "verification_status": "passed"
+        },
+        {
+          "run_id": "61f8e3ab-a1d6-4313-a80a-19076bd54647",
+          "task_id": "528551af-8508-44fb-96f9-8c2b1a096b8a",
+          "artifact_id": "9a226d87-6c87-437f-8dda-976eea6f0b5a",
+          "artifact_sha256": "457d1fc80bc53ea944f1e53e3ce17cf8793de7b8e632e98c1b9821b125ba28e9",
+          "workspace": "runner\\worktrees\\528551af850844fb96f98c2b1a096b8a\\61f8e3aba1d64313a80a19076bd54647",
+          "verification_status": "passed"
+        }
+      ],
+      "review_ids": [
+        null,
+        null
+      ],
+      "source_unchanged": true,
+      "actual_human_reviews": 0,
+      "github_effects": 0
+    },
+    "native_revoked_room_and_cross_corp_scope": {
+      "membership_absent_through_browser_reauthorization": true,
+      "hidden_missions": [
+        "8f666cfa-9209-495b-8b6d-448eb124e1b7",
+        "8502a1f5-1616-4185-bee2-9f8b496be9e1",
+        "80a4380a-b1b8-4fba-906a-dd925a90383b",
+        "90f0f2ff-e181-42ae-a46a-4304aaf0d65e"
+      ],
+      "cross_corp_http_status": 403,
+      "intercepted_denial": false
+    },
+    "synthetic_transport_failure_hides_previous_budget_values": {
+      "browser_fault_injected": true,
+      "server_failure_claimed": false,
+      "recovered": true
+    },
+    "browser_freshness_expiry_hides_totals": {
+      "simulated_browser_elapsed_ms": 61000,
+      "source_receipt_was_native": true,
+      "snapshot_requests_during_clock_advance": 0
+    },
+    "keyboard_390px_reduced_motion_exact_revision": {
+      "geometry": {
+        "width": 390,
+        "left": 8,
+        "right": 382,
+        "clientWidth": 372,
+        "scrollWidth": 372
+      },
+      "exact_revision": "cee91d73-c9c1-444a-bad5-e6080878b03c",
+      "reduced_motion": true
+    },
+    "read_only_budget_projection_no_duplicate_effects": {
+      "revision_digest_before": "3b0ebc491934fe9ee59a0af5bd586b29b4284bd087e8e30f164fc8a10b9996e3",
+      "revision_digest_after": "3b0ebc491934fe9ee59a0af5bd586b29b4284bd087e8e30f164fc8a10b9996e3",
+      "budget_mutations": 0,
+      "browser_page_errors": 0
+    }
+  },
+  "screenshots": {
+    "budget-overview-desktop": "budget-overview-desktop-42150bff.png",
+    "revoked-budget-scope": "revoked-budget-scope-62363d0b.png",
+    "budget-overview-390px": "budget-overview-390px-ce852d91.png"
+  },
+  "failures": [],
+  "limitations": [
+    "Executive presentation is pending issue 264; issue 261 is not complete.",
+    "Fake-process has no resumable provider session. No resumed provider session or budget grant is claimed.",
+    "Historical approved/pending rows are explicitly synthetic UI fixtures. Scripted demo-actor runtime verification decisions are not human reviews."
+  ],
+  "updated_at": "2026-09-30T02:19:34.155Z",
+  "fixture": {
+    "rich": {
+      "id": "8502a1f5-1616-4185-bee2-9f8b496be9e1",
+      "title": "Synthetic multi-worker ledger",
+      "tasks": [
+        "ec7bde47-0f70-4a34-b853-0ce300988227",
+        "49406111-340f-4eb3-9067-27f5ff753c3f",
+        "d0105a9f-142c-4034-b597-aa288c34a7b2"
+      ],
+      "runs": [
+        "df87a451-2b18-4121-be0f-b82065e1cac2",
+        "07b73acf-9975-4992-a238-0e3ffcb43cb1",
+        "981ee6db-640e-4194-8ad6-c6b2cf4170a3",
+        "ebc288af-45e7-4961-bc3d-197e37762d38",
+        "4d9dc976-4ccc-463b-b2a4-2db37f6c2bdb"
+      ],
+      "approved": "82f5b96a-e103-4198-af1b-21972a078a13",
+      "pending": "cee91d73-c9c1-444a-bad5-e6080878b03c"
+    },
+    "missing": {
+      "id": "80a4380a-b1b8-4fba-906a-dd925a90383b",
+      "title": "Synthetic missing attempt history",
+      "task": "2b46db88-6e61-414f-abdf-0b4a588a7d39",
+      "run": "499010e6-9726-4891-979d-2faadce68bf0"
+    },
+    "unknown": {
+      "id": "90f0f2ff-e181-42ae-a46a-4304aaf0d65e",
+      "title": "Synthetic revised ceiling without receipt",
+      "task": "e5d0d8e2-0feb-40e2-b5ce-2424b2c37dcb",
+      "run": "2767d186-e526-49af-a6e2-2ec7c423a1ab"
+    },
+    "auditor": {
+      "actor": "51961f15-bb05-4e12-946f-203af574a05b",
+      "agent": "0d75a66e-2a8f-473e-8566-068a286f5593"
+    },
+    "outside": {
+      "corp": "103acba1-8913-4542-9dc7-b59d03d041fc",
+      "actor": "1e1f6e01-6d4b-48b5-bf61-2c940aab46b8",
+      "room": "d44a39b1-6227-488b-a355-5dbc00baa6e8",
+      "mission": "381ec8f0-3f71-4f46-bfad-26c12c5b358e"
+    },
+    "native_mission": "8f666cfa-9209-495b-8b6d-448eb124e1b7",
+    "synthetic_only": [
+      "rich",
+      "missing",
+      "unknown",
+      "auditor",
+      "outside"
+    ],
+    "native_workers": [
+      "00000000-0000-4000-8000-000000000034",
+      "00000000-0000-4000-8000-000000000032"
+    ]
+  },
+  "native_roots": [
+    {
+      "id": "61f8e3ab-a1d6-4313-a80a-19076bd54647",
+      "task_id": "528551af-8508-44fb-96f9-8c2b1a096b8a"
+    },
+    {
+      "id": "e2ebeee8-88ed-490b-ae05-f6c00d357940",
+      "task_id": "d339658c-26de-4d02-8307-c3d21d6387b9"
+    }
+  ],
+  "completed_at": "2026-09-30T02:19:33.719Z",
+  "browser_closed": true,
+  "request_counts": {
+    "GET": 101,
+    "POST": 4
+  }
+}
