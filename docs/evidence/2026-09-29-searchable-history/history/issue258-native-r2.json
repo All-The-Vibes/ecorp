@@ -1,0 +1,180 @@
+{
+  "issue": 258,
+  "status": "failed",
+  "qa_root": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r2",
+  "worktree": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp",
+  "started_at_utc": "2026-09-29T20:20:29.3534706+00:00",
+  "steps": [
+    {
+      "sha256": "1520badd2f8f24b24b4b1cd7ce8994c173f912387397af61d434a948a70fc0ad",
+      "started_at_utc": "2026-09-29T20:20:29.4055646+00:00",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\capture-issue258-source-r1.py",
+        "--phase",
+        "before-native-r2"
+      ],
+      "finished_at_utc": "2026-09-29T20:20:41.4913890+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r2-source-before.log",
+      "exit_code": 0,
+      "name": "source-before"
+    },
+    {
+      "sha256": "031563e928c2f4c7bda3de22e5a4ddd5b78177260f51b82e898c7c88df781973",
+      "started_at_utc": "2026-09-29T20:20:41.5174823+00:00",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "crony-server",
+        "-p",
+        "crony-runner",
+        "--bins"
+      ],
+      "finished_at_utc": "2026-09-29T20:20:42.9954056+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r2-build.log",
+      "exit_code": 0,
+      "name": "build"
+    },
+    {
+      "sha256": "34df7962d7950b60c0d102f6f6777ffbbbdfd05bbc6048915a2e96bc9a4a8537",
+      "started_at_utc": "2026-09-29T20:20:43.3483295+00:00",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "DryRun",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r2",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "finished_at_utc": "2026-09-29T20:20:44.6475738+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r2-dry-run.log",
+      "exit_code": 0,
+      "name": "dry-run"
+    },
+    {
+      "sha256": "9dc3907591e4a45b5ed6c5b406bf8352d96170a661382d36221368ced67be1c6",
+      "started_at_utc": "2026-09-29T20:20:44.6643978+00:00",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Start",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r2",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "finished_at_utc": "2026-09-29T20:20:58.0943860+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r2-start.log",
+      "exit_code": 0,
+      "name": "start"
+    },
+    {
+      "sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+      "started_at_utc": "2026-09-29T20:20:58.1115401+00:00",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Status",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r2",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "finished_at_utc": "2026-09-29T20:20:59.9958067+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r2-status.log",
+      "exit_code": 0,
+      "name": "status"
+    },
+    {
+      "sha256": "5c8622fba8cc7bfcf5951c4d033f2b7438dcdfa6fc8b9329a5656cd8b72a3351",
+      "started_at_utc": "2026-09-29T20:21:00.0024277+00:00",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "tools/e2e_factory_run_activity.py",
+        "--qa-root",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r2",
+        "--postgres-bin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin",
+        "--phase",
+        "prepare"
+      ],
+      "finished_at_utc": "2026-09-29T20:21:04.0341615+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r2-prepare.log",
+      "exit_code": 0,
+      "name": "prepare"
+    },
+    {
+      "sha256": "c96f6aff00fa191787274c34939ba5c55eecb2a1c924b57a8cb8d8e88bb4b014",
+      "started_at_utc": "2026-09-29T20:21:04.0663679+00:00",
+      "command": [
+        "node",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-browser-r2.mjs",
+        "--qa-root",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r2",
+        "--postgres-bin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin",
+        "--source-receipt",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-source-before-native-r2.json"
+      ],
+      "finished_at_utc": "2026-09-29T20:21:42.8865210+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r2-browser.log",
+      "exit_code": 1,
+      "name": "browser"
+    },
+    {
+      "sha256": "8392071fc94d80af6f4554f88a4e6685048428762cb3c529182d5e4240f34a5b",
+      "started_at_utc": "2026-09-29T20:21:42.9161226+00:00",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\capture-issue258-source-r1.py",
+        "--phase",
+        "after-native-r2",
+        "--equals",
+        "before-native-r2"
+      ],
+      "finished_at_utc": "2026-09-29T20:21:55.0331489+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r2-source-after.log",
+      "exit_code": 0,
+      "name": "source-after"
+    },
+    {
+      "sha256": "65abe6fe9cb60eacc967eff94e7f98a3a958644944f9ce7caffa07021c10ae9e",
+      "started_at_utc": "2026-09-29T20:21:55.0537269+00:00",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Stop",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r2",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "finished_at_utc": "2026-09-29T20:21:56.4144513+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r2-stop.log",
+      "exit_code": 0,
+      "name": "stop"
+    }
+  ],
+  "stopped": true,
+  "reason": "Second owned browser/server/native-runner history acceptance attempt after a setup-only fixture budget correction. The failed r1 attempt is retained. Seeded cancelled history is separate from genuinely prepared, launched and reviewed native tasks. No provider inference, production identity, real GitHub effects or source checkout mutation.",
+  "drivers": {
+    "capture-issue258-source-r1.py": "4427cf45eb50f8037e79ec7fc252fecd1e32cee7704ad829e685fe11c1929ef1",
+    "issue258-browser-r2.mjs": "fdd9fc4b3a24ca0d08614220d60f53829acf0b20624627e75f6097bfac531c9e"
+  },
+  "binaries": {
+    "crony-server.exe": {
+      "length": 45195264,
+      "sha256": "d509ddb9802961beb77c1bb22f7fa3b95b16a413bf60ec945d0dc0e052609457"
+    },
+    "crony-runner.exe": {
+      "length": 132572672,
+      "sha256": "ebbaccd43e397c27f43c7004266ea4b518a4536b6dce67ec9345b9f1830c2d73"
+    }
+  },
+  "error": "Native acceptance step browser failed with exit 1; inspect retained evidence.",
+  "physical_source_unchanged": true,
+  "finished_at_utc": "2026-09-29T20:21:56.4281391+00:00"
+}

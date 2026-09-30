@@ -1,0 +1,83 @@
+{
+  "test_owned": true,
+  "ready_at": "2026-09-30T03:36:43.2069137Z",
+  "plan": {
+    "phase": "Start",
+    "product": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp",
+    "product_commit": "c54e25b08276d29a7c6d514fcef593fb06e57fec",
+    "qa_root": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1",
+    "server": "http://127.0.0.1:18865",
+    "web": "http://127.0.0.1:15865",
+    "database": {
+      "fresh": true,
+      "host": "127.0.0.1",
+      "port": 15465,
+      "name": "pr265_activity"
+    },
+    "runner_id": "pr265-activity-qa",
+    "provider": "native deterministic fake-process; no AI inference",
+    "source": "new independent synthetic Git repository, never the product checkout",
+    "factory_watcher": false,
+    "github_effects": false,
+    "existing_state_touched": false,
+    "build_required": false
+  },
+  "schema_version": 2,
+  "updated_at": "2026-09-30T03:38:35.0610690Z",
+  "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1",
+  "purpose": "pr265-run-activity",
+  "processes": {
+    "postgres": {
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1\\logs\\postgres-20260930T033636487-cae6a33120a94913a9e5a2cc15cb38db.stderr.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1",
+      "started_utc": "2026-09-30T03:36:36.5420067Z",
+      "pid": 32456,
+      "role": "postgres",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1\\logs\\postgres-20260930T033636487-cae6a33120a94913a9e5a2cc15cb38db.stdout.log"
+    },
+    "web": {
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1\\logs\\web-20260930T033641338-7babc58b97934f10a5d4955e32743624.stderr.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1",
+      "started_utc": "2026-09-30T03:36:41.3497804Z",
+      "pid": 5656,
+      "role": "web",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1\\logs\\web-20260930T033641338-7babc58b97934f10a5d4955e32743624.stdout.log"
+    },
+    "server": {
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\target\\debug\\crony-server.exe",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1\\logs\\server-20260930T033637847-f17fb9c98e164bda818046e65e56eab2.stderr.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1",
+      "started_utc": "2026-09-30T03:36:38.7865399Z",
+      "pid": 23016,
+      "role": "server",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1\\logs\\server-20260930T033637847-f17fb9c98e164bda818046e65e56eab2.stdout.log"
+    },
+    "runner": {
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\target\\debug\\crony-runner.exe",
+      "stderr": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1\\logs\\runner-20260930T033640666-c8540b5f68e94658ae7ff46241a288b0.stderr.log",
+      "workspace": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1",
+      "started_utc": "2026-09-30T03:36:41.3115019Z",
+      "pid": 35448,
+      "role": "runner",
+      "stdout": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1\\logs\\runner-20260930T033640666-c8540b5f68e94658ae7ff46241a288b0.stdout.log"
+    }
+  },
+  "source": {
+    "repository": "ecorp-fixture/pr265-run-activity",
+    "base_ref": "HEAD",
+    "base_commit": "e8224e79f840f8a572443ba3c68e30b702ac5731"
+  },
+  "demo": {
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "room_id": "00000000-0000-4000-8000-000000000041",
+    "alice_actor_id": "00000000-0000-4000-8000-000000000011",
+    "bob_actor_id": "00000000-0000-4000-8000-000000000012",
+    "eve_actor_id": "00000000-0000-4000-8000-000000000013",
+    "manager_agent_id": "00000000-0000-4000-8000-000000000031",
+    "worker_agent_id": "00000000-0000-4000-8000-000000000032",
+    "codex_agent_id": "00000000-0000-4000-8000-000000000033"
+  },
+  "stopped_at": "2026-09-30T03:38:35.0485647Z"
+}

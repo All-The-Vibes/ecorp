@@ -1,0 +1,79 @@
+{
+  "issue": 258,
+  "pr": 385,
+  "kind": "Assistant self-review, not independent or human approval",
+  "recorded_at_utc": "2026-09-30T01:44:23.416818+00:00",
+  "parent": "03fcf6cb7a3de3f8d0dca301c109312b72925938",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "tested_tree": "bc76425a0ccc7ec1e0b7d4b7cfd8c4897757e6b2",
+  "physical_files_sha256": "ec0a0d4e1d7a99597057eced872ac1a2e80549094f36d72a4c7a31b0bc15adcc",
+  "reviewed_paths": [
+    "apps/web/src/App.tsx",
+    "apps/web/src/HistoryPanel.css",
+    "apps/web/src/HistoryPanel.test.mjs",
+    "apps/web/src/HistoryPanel.tsx",
+    "apps/web/src/history.ts",
+    "apps/web/src/historyEventTypes.test.mjs",
+    "apps/web/src/missionSelectionEmptyState.test.mjs",
+    "tools/qa_factory_run_activity.ps1",
+    "tools/qa_factory_run_activity.test.mjs",
+    "tools/qa_factory_run_activity.test.ps1"
+  ],
+  "review_observation_sha256": "24ee23b559714fd71f124d39128b118864dd742fe0cd7f0f617f5d9bc6981d69",
+  "resolutions": [
+    {
+      "comment": 4139065284,
+      "status": "confirmed defect corrected",
+      "resolution": "The production activity supervisor reuses native U1 local-drive canonical identity, reparse-ancestor rejection and path-overlap checks. Function-local import preserves selected ports; Start rechecks before creating a fresh root.",
+      "files": [
+        "tools/qa_factory_run_activity.ps1",
+        "tools/qa_factory_run_activity.test.ps1",
+        "tools/qa_factory_run_activity.test.mjs"
+      ],
+      "evidence": "23 exact-entrypoint native Windows admission cases; final canonical discovery and native r6. Immutable archived driver retained with this explicit correction."
+    },
+    {
+      "comment": 4139065318,
+      "status": "defensive presentation correction; native allegation not reproduced",
+      "resolution": "The actual App fallback now distinguishes available missions awaiting selection, no missions, and a remembered unavailable selection without silently choosing substitute work.",
+      "files": [
+        "apps/web/src/App.tsx",
+        "apps/web/src/missionSelectionEmptyState.test.mjs"
+      ],
+      "evidence": "Three actual-App JSX regressions; native first visit with an authorized selected mission."
+    },
+    {
+      "comment": 4139065346,
+      "status": "confirmed client/server contract defect corrected",
+      "resolution": "The browser validates against the server event allowlist plus other. Unknown well-formed filters remain a form error, preserve applied results and send no request.",
+      "files": [
+        "apps/web/src/history.ts",
+        "apps/web/src/historyEventTypes.test.mjs",
+        "apps/web/src/HistoryPanel.tsx",
+        "apps/web/src/HistoryPanel.test.mjs"
+      ],
+      "evidence": "Exact Rust/browser allowlist parity, model and panel regressions, native unknown-filter and other checks."
+    },
+    {
+      "status": "additional confirmed layout defect corrected",
+      "resolution": "The browse-history grid child spans the full mission grid so selector and detail columns retain their intended placement.",
+      "files": [
+        "apps/web/src/HistoryPanel.css"
+      ],
+      "evidence": "Native desktop and 390px layout checkpoints plus six actual captures; final canonical r2."
+    }
+  ],
+  "invariants": "No migration, dependency, execution, permission or approval mechanism added. Existing native preflight is reused; tenant authorization, read-only history and exact selection stay authoritative.",
+  "unresolved_confirmed_defects_in_corrections": [],
+  "qualifications": [
+    "Development authentication, local PostgreSQL trust authentication and deterministic fake-process native runner; no production OIDC, vendor inference, GitHub effects or human review.",
+    "Two native review decisions use the scripted development Bob persona. They are fixture decisions, not independent human approvals.",
+    "First-visit misleading-empty behavior was not reproduced natively. The explicit available/empty/unavailable fallback is covered by actual-App JSX regressions; native first visit shows a selected authorized mission.",
+    "Focused red/green and earlier canonical r1 preceded the final layout correction. Their history remains labeled; canonical r2 and native r6 are the final-source evidence.",
+    "Native r1/r2 failed browser attempts; r3 accepted before the layout correction; r4 failed layout; r5 failed at the known-root launch 409. These attempts remain failed or limited. r6 uses the existing graph-completion helper and observed HTTP 200 without replay; issue #245 remains open.",
+    "Injected browser delays and HTTP 503 are synthetic transport tests. Six tall screenshots received scaled spot inspection, not exhaustive accessibility or pixel certification.",
+    "RUST_TEST_THREADS=1 is explicit; skipped Node and ignored Rust cases are not passes. Counts overlap focused/native/canonical lanes and must not be added together.",
+    "The old 59-file evidence packet is immutable historical evidence. Its copied pre-correction driver is not the current runnable supervisor; use tools/qa_factory_run_activity.ps1 and the new source receipt.",
+    "Hosted CI, CodeQL, code-quality and security checks remain required while organization Actions is disabled. No merge, issue completion, policy override or independent approval is claimed. Historical Cargo advisory debt is not a clean audit."
+  ]
+}

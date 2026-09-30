@@ -622,11 +622,12 @@ GitHub Actions success.
 
 ### Production web-model coverage
 
-`pnpm coverage:web-models` uses native Node 24 coverage for all 18 declared framework-independent
-TypeScript model modules, including run activity and mission collaboration. Every module is
+`pnpm coverage:web-models` uses native Node 24 coverage for all declared framework-independent
+TypeScript model modules, including run activity, mission collaboration, history and exact work
+selection. Every module is
 preloaded, including uninvoked modules, and the LCOV file set must exactly match the declared
 production scope. New TypeScript files require explicit classification before the command can
-pass. The two React hooks, TSX rendering, Rust and other tools are outside this coverage lane;
+pass. React hooks, TSX rendering, Rust and other tools are outside this coverage lane;
 their test results must be reported separately.
 
 Native thresholds are 99% lines, 95% functions and 97% branches for that scope. The command also
@@ -639,6 +640,24 @@ functions/branches when previously uncalled code runs, so compare raw counts as 
 The Repository checks workflow runs this lane separately from the Linux/Windows Node regressions.
 A high model-coverage percentage is not whole-application or repository coverage and does not
 replace browser/server/runner acceptance.
+
+### Searchable history and exact selection
+
+The history domain/store/server tests cover bounded query normalization, cursor binding and
+freshness, literal search, stable exclusive pagination, BIGINT journal positions, late commits,
+authorized causal links, current room/Corp isolation and static HTTP failures. The ignored SQLx
+cases require an explicitly owned PostgreSQL fixture; default workspace tests do not execute
+those database cases. Their actual execution receipts must be reported separately.
+
+Web regressions exercise the production history model, selection storage and hook, history
+panel and existing mission/evidence navigation seams. They cover malformed/stale responses,
+aborted requests, applied versus draft filters, exact task/run selection, reload scope, lost
+storage access and repeated StrictMode initialization. These model/component tests do not
+establish browser acceptance. Use an owned complete stack to demonstrate above-cap history,
+late-event refresh, safe details, exact persisted navigation, denied access, keyboard/focus,
+390px layout and reduced motion, with real deterministic runner dispatch and persisted evidence.
+Direct SQL history fixtures must be identified as historical test data, never accepted runtime
+completion. Local deterministic evidence does not establish real-provider or hosted CI success.
 
 The repository also contains `tools/e2e_smoke.ps1`, which exercises the actual running stack.
 `tools/e2e_demo_lifecycle.mjs` races bootstrap and reset requests to prove the demo lifecycle lock

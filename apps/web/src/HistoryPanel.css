@@ -1,0 +1,29 @@
+.history-browser { display: grid; gap: 1rem; min-width: 0; }
+.history-browser p { margin: 0; line-height: 1.55; }
+.history-browser button, .history-browser input, .history-browser select { min-height: 44px; }
+.history-browser input, .history-browser select { width: 100%; min-width: 0; }
+.history-browser :is(h3, h4, dd, p, summary) { overflow-wrap: anywhere; }
+.history-browser h3:focus { outline: 2px solid var(--accent, #ba633d); outline-offset: 5px; }
+.history-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 1rem; }
+.history-filters label { display: grid; gap: .45rem; font-weight: 600; }
+.history-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .65rem; }
+.history-filters .history-controls { grid-column: 1 / -1; }
+.history-applied, .history-limit { border: 1px solid var(--line, #bcb6a6); border-radius: .6rem; padding: 1rem; background: var(--surface, #fffdf5); }
+.history-browser dl { display: grid; gap: .55rem 1.2rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); margin: .5rem 0; }
+.history-browser dt { font-size: .8rem; opacity: .8; }
+.history-browser dd { margin: 0; }
+.history-results-heading, .history-entry-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: .7rem; }
+.history-results-heading h3, .history-entry-heading h4 { margin: 0; }
+.history-entries { list-style: none; display: grid; gap: .85rem; padding: 0; margin: 0; }
+.history-entries li { min-width: 0; }
+.history-entries article { display: grid; gap: .7rem; padding: 1rem; border: 1px solid var(--line, #bcb6a6); border-radius: .6rem; background: var(--surface, #fffdf5); }
+.history-attribution { font-size: .85rem; }
+.history-record-status { border: 1px solid currentColor; padding: .15rem .45rem; border-radius: .3rem; font-size: .8rem; overflow-wrap: anywhere; }
+.history-entries summary { cursor: pointer; padding: .45rem 0; }
+.history-browse { grid-column: 1 / -1; margin: .75rem 0; }
+.selected-work-context { overflow-wrap: anywhere; padding: .6rem 0; }
+@media (max-width: 480px) {
+  .history-browser { gap: .8rem; }
+  .history-controls > button { flex: 1 1 auto; white-space: normal; }
+  .history-results-heading > button { width: 100%; }
+}

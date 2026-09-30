@@ -1,0 +1,60 @@
+{
+  "issue": 258,
+  "recorded_at_utc": "2026-09-30T03:43:27.043974+00:00",
+  "status": "inspected",
+  "reviewer": "Codex scaled visual spot inspection, not an independent human review",
+  "physical_files_sha256": "bd30f819414dbde496c148c50f43c6ed231215e560b22ac8c5958b77703751e1",
+  "source_receipt": "issue258-performance-source-before-native-r1.json",
+  "native": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-performance-native-r1.json",
+    "sha256": "8e8bbc5d831baebf8617df492fbddfb1abd4a188f694992226cdd631ab2b5bda"
+  },
+  "browser": {
+    "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1\\evidence\\issue258-review-browser.json",
+    "sha256": "b97c9c9bd175811c0a4979357a06f2f90264681a79cfa54640d8db22033735bf"
+  },
+  "screenshots": [
+    {
+      "scenario": "first-visit-existing-mission",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1\\evidence\\first-visit-existing-mission-c48d1126.png",
+      "sha256": "0170849e9e02869da2f714e56abb84220b8e698636f81c309ee9acf51b736812",
+      "observed": "Authorized first visit shows the selected existing mission, separate mission list and detail columns, and a start action with runner online."
+    },
+    {
+      "scenario": "mission-layout-390px",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1\\evidence\\mission-layout-390px-f8e345c6.png",
+      "sha256": "1ee92256fa9be325d4c30676d46282cb35c588f818a8bd2dbe25356716228983",
+      "observed": "The 390px mission layout uses one column with wrapped controls; inspected as a scaled tall capture. Native geometry assertions supplement this spot inspection."
+    },
+    {
+      "scenario": "unsupported-event-filter-preserves-results",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1\\evidence\\unsupported-event-filter-preserves-results-1cd865f4.png",
+      "sha256": "4ccd4aaad6a8bb93a5c8c0048d49a0d4b038a8da39fa6d4dcd0658de426e3298",
+      "observed": "Unsupported event filter shows a local form error while keeping the applied result page. Tall capture was scaled; exact no-request behavior is established by native browser assertions."
+    },
+    {
+      "scenario": "event-history-desktop",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1\\evidence\\event-history-desktop-fad62ec2.png",
+      "sha256": "1b3e8e52ee9684976d66137da6afd77fcc0d37ca2c74a83a54a3e131b774781b",
+      "observed": "Event results retain applied room/actor/type filters, safe summaries and exact-run/cause actions. Pagination remains below the list. Scaled capture is a layout spot inspection."
+    },
+    {
+      "scenario": "revoked-room-history",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1\\evidence\\revoked-room-history-90f72934.png",
+      "sha256": "b4791542b811c4a50fe4e841b4548eaa9b905a7af000385069b2198476a9f5c3",
+      "observed": "Revoked-room view retains only currently authorized Corp-level rows; old room-run rows are absent. Guest/Corp/room denial is additionally asserted by the native driver."
+    },
+    {
+      "scenario": "history-390px-keyboard-page-two",
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260930-performance-r1\\evidence\\history-390px-keyboard-page-two-e581f1cb.png",
+      "sha256": "1cf5dbf36d2ec173323acf43ae27241f7542490dd6d3a717c2acf9630bd53934",
+      "observed": "Second history page at 390px remains one column with focused skip link, applied filters and page controls. This extremely tall image was scaled; no claim of exhaustive text or accessibility inspection."
+    }
+  ],
+  "confirmed_visual_defects": [],
+  "limitations": [
+    "Images were rendered at reduced dimensions; visual review supplements actual layout, authorization, selection, pagination and keyboard assertions.",
+    "Fake-process runner and scripted development Bob decisions do not establish provider inference, production grants or human approval.",
+    "All 11 canonical gates were still running at this timestamp."
+  ]
+}

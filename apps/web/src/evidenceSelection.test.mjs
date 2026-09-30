@@ -88,10 +88,10 @@ test('only the selected run ID is stored; reviews and authority never enter brow
 
 test('MissionCard scopes remounts, pins initial evidence and fails closed when persistence fails', async () => {
   const app = await readFile(new URL('./App.tsx', import.meta.url), 'utf8')
-  const card = app.slice(app.indexOf('function MissionCard('), app.indexOf('function EventRow('))
+  const card = app.slice(app.indexOf('function MissionCard('), app.indexOf('function RoomPanel('))
   assert.match(card, /evidenceSelectionKey\(\{ server: API_URL, corpId, actorId, missionId: mission\.id \}\)/)
   assert.match(card, /readEvidenceSelection\(\(\) => window\.sessionStorage, evidenceStorageKey\)/)
-  assert.match(card, /setSelectedEvidenceRunId\(remembered \? displayedEvidenceRunId : ''\)/)
+  assert.match(card, /setSelectedEvidenceRunId\(remembered \? displayedEvidenceRunId \?\? null : ''\)/)
   assert.match(card, /const pendingRun = selectedEvidenceRunId !== null && pendingRequest \? evidenceRun : undefined/)
   assert.match(card, /onChange=\{\(event\) => rememberEvidenceRun\(event\.target\.value\)\}/)
   assert.match(card, /Choose a run to inspect/)

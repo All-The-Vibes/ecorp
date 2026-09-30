@@ -10,6 +10,8 @@ import * as originReader from './missionOriginContext.ts'
 import * as evidenceSelection from './evidenceSelection.ts'
 import * as workflow from './workflowContext.ts'
 import * as checkpointRecovery from './factoryCheckpointRecovery.ts'
+import * as workSelection from './workSelection.ts'
+import { renderHooks } from './testSupport/renderHooks.mjs'
 
 // Actual components, hook and reader; only hook scheduling, transport and timers
 // are controlled. SSR/callback tests are not browser, download or runtime proof.
@@ -711,6 +713,7 @@ async function compileAppResultSlice() {
 
 const appResultSource = await compileAppResultSlice()
 const originHookSource = await compile('useMissionOriginContext.ts')
+const workSelectionHookSource = await compile('useWorkSelection.ts')
 const appApiUrl = 'http://ecorp-fixture.invalid'
 const deliveredRunId = '00000000-0000-4000-8000-000000000145'
 const olderRunId = '00000000-0000-4000-8000-000000000144'
@@ -734,13 +737,18 @@ function appOrigin(kind = 'factory') {
   }
 }
 
-function appResultFixture({ pinnedRunId = deliveredRunId, ...overrides } = {}) {
+function appResultFixture({ pinnedRunId = deliveredRunId, controlledSelection, storageDenied = false, ...overrides } = {}) {
   const slots = [], effects = [], calls = [], storageWrites = [], actions = [], clock = fakeClock()
   const animationFrames = [], focusCalls = []
   let cursor = 0, dirty = false, tree
   const different = (before, after) =>
     !before || before.length !== after.length || after.some((value, index) => !Object.is(value, before[index]))
   const react = {
+    useRef(initial) {
+      const index = cursor++
+      slots[index] ??= { value: { current: initial } }
+      return slots[index].value
+    },
     useMemo(create, deps) {
       const index = cursor++
       if (different(slots[index]?.deps, deps)) slots[index] = { deps, value: create() }
@@ -796,6 +804,20 @@ function appResultFixture({ pinnedRunId = deliveredRunId, ...overrides } = {}) {
     server: appApiUrl, corpId: ids.corpId, actorId: ids.actorId, missionId: ids.missionId,
   })
   const storage = new Map([[storageKey, pinnedRunId]])
+  const sessionStorage = {
+    getItem: (key) => storage.get(key) ?? null,
+    setItem(key, value) {
+      if (storageDenied) throw new Error('fixture storage denied')
+      storageWrites.push({ key, value }); storage.set(key, value)
+    },
+  }
+  const parent = controlledSelection === undefined ? null : renderHooks()
+  const selectionScope = { server: appApiUrl, corpId: overrides.corpId ?? ids.corpId, actorId: overrides.actorId ?? ids.actorId }
+  const selectionKey = workSelection.workSelectionKey(selectionScope)
+  if (controlledSelection) storage.set(selectionKey, JSON.stringify(controlledSelection))
+  const parentSelection = parent && evaluate('const window = require("selection-test-window");\n' + workSelectionHookSource, {
+    react: parent.react, './workSelection': workSelection, 'selection-test-window': { sessionStorage },
+  })
   const { AppMissionResult } = evaluate(appResultSource, {
     react, 'react/jsx-runtime': jsxRuntime,
     './workflowContext': workflow, './evidenceSelection': evidenceSelection,
@@ -806,10 +828,7 @@ function appResultFixture({ pinnedRunId = deliveredRunId, ...overrides } = {}) {
     'app-test-environment': {
       API_URL: appApiUrl, api,
       window: {
-        sessionStorage: {
-          getItem: (key) => storage.get(key) ?? null,
-          setItem(key, value) { storageWrites.push({ key, value }); storage.set(key, value) },
-        },
+        sessionStorage,
         requestAnimationFrame(callback) { animationFrames.push(callback); return animationFrames.length },
       },
       document: {
@@ -854,15 +873,27 @@ function appResultFixture({ pinnedRunId = deliveredRunId, ...overrides } = {}) {
     props = next
     cursor = 0
     dirty = false
-    tree = AppMissionResult(props)
+    const selected = parent?.render(() => parentSelection.useWorkSelection({
+      ...selectionScope, corpId: props.corpId, actorId: props.actorId,
+    }))
+    tree = AppMissionResult({ ...props, ...(selected ? {
+      workSelection: selected.selection, onRememberWork: selected.remember,
+    } : {}) })
     return renderToStaticMarkup(tree)
   }
-  const commit = () => {
+  const commit = (replayMount = false) => {
     for (let pass = 0; ; pass++) {
       assert.ok(pass < 10, 'actual App hook dependencies must settle')
-      for (const effect of effects.splice(0)) {
+      const pending = effects.splice(0)
+      for (const effect of pending) {
         effect.cleanup?.()
         effect.cleanup = effect.create()
+      }
+      if (replayMount) {
+        // Replay the captured mount setups before a parent state update renders.
+        // This is the child-mount ordering that can reuse an obsolete callback.
+        for (const effect of pending) { effect.cleanup?.(); effect.cleanup = effect.create() }
+        replayMount = false
       }
       if (!dirty) return
       render()
@@ -871,12 +902,15 @@ function appResultFixture({ pinnedRunId = deliveredRunId, ...overrides } = {}) {
   const update = (next = props) => { render(next); commit() }
   return {
     calls, actions, storageWrites, animationFrames, focusCalls, render, update,
+    replayMount() { render(); commit(true) },
     get props() { return props },
     get tree() { return tree },
     get pinned() { return storage.get(storageKey) },
+    get selectedWork() { return parent?.value.selection },
     async flush() { await tick(); update() },
     flushAnimationFrames() { animationFrames.splice(0).forEach((callback) => callback()) },
     unmount() {
+      parent?.unmount()
       slots.forEach((slot) => slot.cleanup?.())
       effects.length = 0
       animationFrames.length = 0
@@ -903,6 +937,68 @@ function assertResultRefocus(view) {
   ])
   assert.equal(view.animationFrames.length, 0)
 }
+
+const historyMission = '00000000-0000-4000-8000-000000000200'
+const historyTask = '00000000-0000-4000-8000-000000000201'
+const otherHistoryTask = '00000000-0000-4000-8000-000000000202'
+function historySelectionFixture(selection, overrides = {}) {
+  return appResultFixture({
+    controlledSelection: selection,
+    mission: { id: historyMission, room_id: ids.roomId, title: 'Historical mission', status: 'completed',
+      budget_tokens: 1000, budget_cost_microusd: 1000 },
+    tasks: [historyTask, otherHistoryTask].map((id) => ({
+      id, mission_id: historyMission, plan_key: 'deliver', depth: 0, status: 'completed',
+    })),
+    runs: [{ id: newerRunId, task_id: otherHistoryTask, status: 'completed' },
+      { id: olderRunId, task_id: historyTask, status: 'completed' }],
+    ...overrides,
+  })
+}
+
+test('actual controlled MissionCard initial pin survives repeated mount effects before parent rerender', () => {
+  const view = historySelectionFixture(null)
+  try {
+    view.replayMount()
+    assert.deepEqual(view.selectedWork, { missionId: historyMission, taskId: otherHistoryTask, runId: newerRunId })
+    assert.equal(view.tree.props['data-run-id'], newerRunId, 'effect replay cannot hide a successfully pinned run')
+    assert.equal(view.storageWrites.length, 1, 'one initial selection, with no duplicate save')
+    assert.deepEqual(view.actions, [])
+  } finally { view.unmount() }
+})
+
+test('actual controlled MissionCard restricts task-only selection and never substitutes an unavailable run', () => {
+  for (const [runId, expected] of [[null, olderRunId], [olderRunId, olderRunId], [deliveredRunId, undefined]]) {
+    const selected = { missionId: historyMission, taskId: historyTask, runId }
+    const view = historySelectionFixture(selected)
+    try {
+      view.update()
+      assert.equal(view.tree.props['data-run-id'], expected)
+      assert.deepEqual(view.selectedWork, { ...selected, runId: runId ?? olderRunId })
+    } finally { view.unmount() }
+  }
+})
+
+test('actual controlled MissionCard pins the first run when it arrives after a mission-only selection', () => {
+  const view = historySelectionFixture(null, { runs: [] })
+  try {
+    view.replayMount()
+    assert.deepEqual(view.selectedWork, { missionId: historyMission, taskId: null, runId: null })
+    view.update({ ...view.props, runs: [{ id: olderRunId, task_id: historyTask, status: 'completed' }] })
+    assert.deepEqual(view.selectedWork, { missionId: historyMission, taskId: historyTask, runId: olderRunId })
+    assert.equal(view.tree.props['data-run-id'], olderRunId)
+  } finally { view.unmount() }
+})
+
+test('actual controlled MissionCard hides default evidence if the initial selection cannot persist', () => {
+  const view = historySelectionFixture(null, { storageDenied: true })
+  try {
+    view.replayMount()
+    assert.equal(view.tree.props['data-run-id'], undefined)
+    assert.equal(view.selectedWork, null)
+    assert.deepEqual(view.actions, [])
+    assert.deepEqual(view.storageWrites, [])
+  } finally { view.unmount() }
+})
 
 test('actual App origin-unavailable branch offers manual Refresh work context with no PR CTA', async () => {
   const view = appResultFixture()

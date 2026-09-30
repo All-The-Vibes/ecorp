@@ -1,0 +1,292 @@
+{
+  "issue": 258,
+  "kind": "assistant implementation self-review; not independent or human approval",
+  "recorded_at_utc": "2026-09-29T22:21:47.589047+00:00",
+  "status": "local-implementation-accepted",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "tested_tree": "2224a7e35b549b801d18893b3365dd81ae78b830",
+  "source_receipt_sha256": "060298dc2c1a5b7da7c3e7d5594f0a9d06da0a02361cbb8359c14ccdebbdcc09",
+  "code_paths": [
+    "apps/web/src/App.tsx",
+    "apps/web/src/HistoryPanel.css",
+    "apps/web/src/HistoryPanel.test.mjs",
+    "apps/web/src/HistoryPanel.tsx",
+    "apps/web/src/evidenceNavigation.test.mjs",
+    "apps/web/src/evidenceSelection.test.mjs",
+    "apps/web/src/history.test.mjs",
+    "apps/web/src/history.ts",
+    "apps/web/src/missionComposer.test.mjs",
+    "apps/web/src/testSupport/renderHooks.mjs",
+    "apps/web/src/useWorkSelection.test.mjs",
+    "apps/web/src/useWorkSelection.ts",
+    "apps/web/src/workResultCard.test.mjs",
+    "apps/web/src/workSelection.test.mjs",
+    "apps/web/src/workSelection.ts",
+    "apps/web/src/workflowContext.test.mjs",
+    "crates/crony-domain/src/history.rs",
+    "crates/crony-domain/src/lib.rs",
+    "crates/crony-protocol/src/history.rs",
+    "crates/crony-protocol/src/lib.rs",
+    "crates/crony-server/src/history.rs",
+    "crates/crony-server/src/main.rs",
+    "crates/crony-store/src/history.rs",
+    "crates/crony-store/src/history.sql",
+    "crates/crony-store/src/history_tests.rs",
+    "crates/crony-store/src/lib.rs",
+    "docs/ARCHITECTURE.md",
+    "docs/EVALS.md",
+    "docs/SECURITY.md",
+    "tools/coverage_web_models.mjs"
+  ],
+  "finding": "No unresolved confirmed defect in the reviewed history implementation.",
+  "reviewed_behavior": [
+    "The protected read-only history route rechecks human Read authorization and room membership for every page. Corp-qualified joins and causal references prevent cross-Corp substitution.",
+    "Pages use a repeatable-read, read-only transaction and a five-second statement timeout. The unsigned query-bound cursor is a bounded position, never authorization or authenticated expiry. Separate pages are not a frozen export.",
+    "Immutable created_at/id ordering and textual BIGINT sequence cursors avoid precision loss. Query bounds, literal search, status and exact filters are validated. Arbitrary event payloads are neither returned nor searched.",
+    "HistoryPanel separates draft/applied filters, declares scope/order and partial/live-history limits, aborts stale requests, and provides bounded keyboard-accessible pagination with safe actor/time/causal details.",
+    "The shared selection hook persists an atomic server/Corp/actor tuple and fences stale callbacks, same-turn updates and A-to-B-to-A viewers. Missing or denied exact work remains unavailable instead of substituting another item.",
+    "Existing native authorization, roles, durable commands, verifiers, lifecycle state and task graphs remain authoritative. Recent shortcuts are explicitly bounded; operational controls require the persisted exact selection.",
+    "Existing protected routing, authorization and journal projections are reused. No new harness execution, tool/session permission, retry, workspace or approval mechanism, migration or dependency is introduced.",
+    "Current source and tests, SQL, web models, hook, panel/CSS, App integration and surrounding navigation/snapshot behavior were reviewed across the implementation continuations. Existing shared authorization database errors now use static 503 responses without changing permission decisions."
+  ],
+  "source_references": {
+    "crates/crony-server/src/history.rs": [
+      6,
+      30,
+      41,
+      55,
+      63
+    ],
+    "crates/crony-store/src/history.rs": [
+      48,
+      84,
+      106,
+      112,
+      155,
+      218
+    ],
+    "crates/crony-domain/src/history.rs": [
+      83,
+      236,
+      268
+    ],
+    "apps/web/src/history.ts": [
+      113,
+      175,
+      181,
+      208
+    ],
+    "apps/web/src/useWorkSelection.ts": [
+      20,
+      35
+    ],
+    "apps/web/src/HistoryPanel.tsx": [
+      76,
+      133,
+      145,
+      153,
+      160,
+      167,
+      195,
+      210
+    ]
+  },
+  "prior_feedback": "The original issue observation had no comments. Its tracking-only history remains intact; the user's later expanded session authorization covers implementation/publication. No human verdict or original development chronology is invented.",
+  "canonical_checks": [
+    {
+      "name": "migrations",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-compatibility",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-evm",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "repository-docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "node-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3135,
+          "passed": 3070,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      }
+    },
+    {
+      "name": "format",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "clippy",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "rust-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 881,
+          "failed": 0,
+          "ignored": 576,
+          "summaries": 41
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "web-build",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "web-lint",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    }
+  ],
+  "focused_sql_counts": {
+    "ignored": 0,
+    "failed": 0,
+    "summaries": 3,
+    "passed": 12
+  },
+  "supplemental_frontend_counts": {
+    "tests": 150,
+    "pass": 150,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "coverage_counts": {
+    "tests": 495,
+    "pass": 495,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "coverage": {
+    "ok": true,
+    "output": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\output\\coverage\\issue258-models-r1",
+    "scope": "All 21 framework-independent web TypeScript models; excludes the 3 React hooks, TSX rendering, Rust, and other tools",
+    "thresholds": {
+      "lines": 99,
+      "functions": 95,
+      "branches": 97
+    },
+    "node": "v24.21.0",
+    "files": 21,
+    "testFiles": 33,
+    "exitCode": 0,
+    "sourceStable": true,
+    "coverage": {
+      "lines": {
+        "found": 3095,
+        "hit": 3085,
+        "percent": 99.68
+      },
+      "functions": {
+        "found": 308,
+        "hit": 300,
+        "percent": 97.4
+      },
+      "branches": {
+        "found": 1598,
+        "hit": 1559,
+        "percent": 97.56
+      }
+    }
+  },
+  "native_checks": [
+    "all_kinds_beyond_caps_no_gaps_or_duplicates",
+    "late_event_requires_explicit_refresh",
+    "safe_summaries_attribution_cause_and_payload_search",
+    "draft_vs_applied_filters",
+    "synthetic_transport_loading_error_and_recovery",
+    "old_exact_selection_navigation_reload",
+    "native_runner_survives_browser_disconnect_exact_selection",
+    "task_only_link_clears_prior_run",
+    "missing_exact_run_does_not_substitute",
+    "native_current_room_corp_and_guest_denial",
+    "native_exact_reviews_artifacts_and_completed_graph",
+    "keyboard_390px_reduced_motion"
+  ],
+  "qualifications": [
+    "Development authentication and deterministic fake-process native runner; not production OIDC, live vendor inference or a real human review.",
+    "The native fixture uses local PostgreSQL trust authentication. The separate SQL regression fixture used SCRAM-SHA-256 and verified both an authenticated query and wrong-password rejection; SQLx environment-only delivery remains reduced assurance.",
+    "Native executable hashes were captured after the recorded locked build and before launch. No stronger operating-system attestation is claimed.",
+    "Cancelled seeded history proves pagination, not completed execution. The separate native three-task graph supplies persisted passed verifier and artifact evidence; two independent-review gates use the development Bob persona.",
+    "Loading delay and HTTP 503 were injected in the browser; they are not claimed native service failures. Three tall screenshots were spot inspected, not an exhaustive accessibility certification.",
+    "The supplemental 150-test frontend log lacks its own pre/post source receipt. SQL and coverage evidence have narrower verified source scope. Counts overlap canonical discovery and must not be added together.",
+    "RUST_TEST_THREADS=1 was explicit. Issue #213 parallel qualification is separate. Skipped Node and ignored Rust cases are not passes.",
+    "Existing web bundle-size warnings and historical Cargo advisory debt remain. No clean dependency audit is claimed. docs/PROJECT_MEMORY.md is absent from current main.",
+    "All hosted CI, CodeQL, security and code-quality checks remain mandatory while Actions is disabled. This is an assistant self-review, not independent approval, merge or issue completion."
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "recorded_at_utc": "2026-09-30T00:55:17.447164+00:00",
+  "attempt": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-native-r5.json",
+    "sha256": "e7b72e6c17257fa24f533847e1e195196282b645419340da6c692842bde51957"
+  },
+  "browser_report": {
+    "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r5\\evidence\\issue258-review-browser.json",
+    "sha256": "6bc5d4444df4b3f1ac77eef1ecedbd60a1a0dc67b339767274c3d3914594b912"
+  },
+  "result": "Failed attempt retained. Eleven history/layout checkpoints passed, then the driver rejected native HTTP 409 before run completion and review acceptance.",
+  "failure": "The explicit launch and native scheduling sweep selected the same known root; the store rejected a stale claim with task is not schedulable from status claimed. No completed native acceptance is claimed for r5.",
+  "existing_contract": {
+    "path": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\task_graph_fixture.mjs",
+    "sha256": "348dd860a05d68c98148dbdf2602b41ab4621507f51956896fc80c6238cd8aa7"
+  },
+  "existing_regressions": {
+    "path": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\task_graph_fixture.test.mjs",
+    "sha256": "7036388b822454550ce67a1ad96b752e7f158abf052aac6ff27ba293462fc36f"
+  },
+  "diagnosis": "The existing completeGraphFixtureLaunch helper recognizes only exact known-root claim conflicts, proves mission completion, and requires an HTTP 200 replay of persisted work afterward. The r5 generic browser POST assertion omitted this existing fixture contract.",
+  "next_attempt": "Fresh r6 owned stack and immutable driver; use the unchanged native helper around the complete browser/server/runner flow. Record the initial status, any completed-only replay, unchanged run identities, and attempt counts. All other browser POSTs still require HTTP 200.",
+  "product_source_changed": false,
+  "limitations": "This fixture adaptation does not fix or complete broader scheduler issue245, change runtime launch semantics, suppress arbitrary dispatch errors, or establish that the failed r5 mission completed."
+}

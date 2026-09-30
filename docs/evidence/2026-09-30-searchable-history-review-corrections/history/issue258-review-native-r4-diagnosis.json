@@ -1,0 +1,74 @@
+{
+  "issue": 258,
+  "pr": 385,
+  "recorded_at_utc": "2026-09-30T00:04:16.397207+00:00",
+  "classification": "confirmed_product_layout_defect",
+  "status": "changes_required",
+  "reviewed_head": "03fcf6cb7a3de3f8d0dca301c109312b72925938",
+  "physical_source_sha256": "1e5614763b4d62c14d405e9d33247f559e4ff22feee4745884233f8958ad68b7",
+  "finding": "The new history-browse element occupies the narrow first desktop grid cell. The selector takes the wide second cell and the selected mission wraps below into the narrow column.",
+  "observed_mission_layout": {
+    "browse": {
+      "left": 54,
+      "right": 440.265625,
+      "top": 437.75,
+      "bottom": 1117.75,
+      "width": 386.265625
+    },
+    "selector": {
+      "left": 440.265625,
+      "right": 1386,
+      "top": 425.75,
+      "bottom": 1129.75,
+      "width": 945.734375
+    },
+    "detail": {
+      "left": 54,
+      "right": 440.265625,
+      "top": 1129.75,
+      "bottom": 3883.40625,
+      "width": 386.265625
+    },
+    "viewport": 1440
+  },
+  "actual_failures": [
+    {
+      "at": "2026-09-30T00:01:16.381Z",
+      "error": "AssertionError [ERR_ASSERTION]: Selected mission stays to the right of its desktop selector\n    at file:///<USERPROFILE>/code/ecorp/output/issue-completion/20260926T112626Z/issue258-review-browser-r4.mjs:228:10"
+    }
+  ],
+  "passed_before_failure": [
+    "first_visit_with_authorized_missions_is_not_empty"
+  ],
+  "not_reached": "The remaining r4 functional and mobile layout checkpoints stopped at the first desktop geometry assertion. Their earlier r3 functional results are preserved separately.",
+  "evidence": [
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-native-r4.json",
+      "sha256": "726cb22d4d37db8585aff20ab6ecaa75b3a971da2893cd8fc0ab25057aaf06d6"
+    },
+    {
+      "path": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-review-r4\\evidence\\issue258-review-browser.json",
+      "sha256": "782a263d7a7c6746da3e36fe0cd80b27bc353eecf990d55b0d07ec85f10dfe37"
+    },
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-source-before-native-r4.json",
+      "sha256": "1a13055dbae4351c80f32c1acf448bc8b7a35cacdca96cf7f9dc77db28aef9cc"
+    },
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-source-after-native-r4.json",
+      "sha256": "9a3232ceebb9b1fe2750145940da909c16e6f2c6ed845ea578672afd0a55f7de"
+    },
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-browser-r4.mjs",
+      "sha256": "b0157fc8c4e0f202ed1f2b6b50d6b179e52607b8570d0f6a59774e1995cb35c1"
+    },
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-review-screenshot-review-r1.json",
+      "sha256": "7287c97634357cf1b1bfe4353631ec7acbb726606802b0acd1133ef3a5d57d06"
+    }
+  ],
+  "source_unchanged": true,
+  "exact_owned_services_stopped": true,
+  "next_step": "After the in-flight canonical source capture finishes, span history-browse across both grid columns, rebuild the web application, and rerun fresh owned desktop/mobile native acceptance and the full canonical plan.",
+  "limitations": "This is a new observed regression, not a historical test claim. Native fixtures use the fake-process harness and scripted development decisions, not provider inference or human approval. No merge or issue completion is claimed."
+}

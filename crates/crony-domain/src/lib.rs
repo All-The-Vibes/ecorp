@@ -3,7 +3,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
 
+mod history;
 mod workspace_connections;
+pub use history::*;
 pub use workspace_connections::*;
 mod factory_connection;
 pub use factory_connection::factory_workspace_connection_id;

@@ -1,0 +1,222 @@
+TAP version 13
+# Subtest: history shows loading, applied scope, safe details and explicit partial-history limits
+ok 1 - history shows loading, applied scope, safe details and explicit partial-history limits
+  ---
+  duration_ms: 57.1284
+  type: 'test'
+  ...
+# Subtest: next/previous use server cursors and preserve the applied query until explicit refresh
+ok 2 - next/previous use server cursors and preserve the applied query until explicit refresh
+  ---
+  duration_ms: 38.0375
+  type: 'test'
+  ...
+# Subtest: draft input does not silently change applied filters; invalid IDs make no request
+ok 3 - draft input does not silently change applied filters; invalid IDs make no request
+  ---
+  duration_ms: 88.9112
+  type: 'test'
+  ...
+# Subtest: unknown well-formed event filters show a form error without replacing authorized results or requesting the server
+ok 4 - unknown well-formed event filters show a form error without replacing authorized results or requesting the server
+  ---
+  duration_ms: 55.111
+  type: 'test'
+  ...
+# Subtest: causal navigation clears incompatible filters and names the exact event with no payload rendering
+ok 5 - causal navigation clears incompatible filters and names the exact event with no payload rendering
+  ---
+  duration_ms: 3.2986
+  type: 'test'
+  ...
+# Subtest: revocation, disconnect and stale responses cannot retain or substitute history rows
+ok 6 - revocation, disconnect and stale responses cannot retain or substitute history rows
+  ---
+  duration_ms: 6.6565
+  type: 'test'
+  ...
+# Subtest: browser and server use the same history event allowlist
+ok 7 - browser and server use the same history event allowlist
+  ---
+  duration_ms: 2.1315
+  type: 'test'
+  ...
+# Subtest: unknown well-formed event names cannot become history requests
+ok 8 - unknown well-formed event names cannot become history requests
+  ---
+  duration_ms: 0.5907
+  type: 'test'
+  ...
+# Subtest: first visit with authorized missions invites an explicit selection
+ok 9 - first visit with authorized missions invites an explicit selection
+  ---
+  duration_ms: 7.444
+  type: 'test'
+  ...
+# Subtest: an actually empty mission view retains the create-mission guidance
+ok 10 - an actually empty mission view retains the create-mission guidance
+  ---
+  duration_ms: 0.4593
+  type: 'test'
+  ...
+# Subtest: a remembered unavailable mission is never replaced by an available one
+ok 11 - a remembered unavailable mission is never replaced by an available one
+  ---
+  duration_ms: 0.8795
+  type: 'test'
+  ...
+# Subtest: Factory activity acceptance rejects redirected QA roots before effects
+    # Subtest: admits an independent path: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-c6e45fda677e4eff9b85d61bc382c2ea\\qa\\pr265-run-activity-new
+    ok 1 - admits an independent path: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-c6e45fda677e4eff9b85d61bc382c2ea\\qa\\pr265-run-activity-new
+      ---
+      duration_ms: 1.7802
+      type: 'test'
+      ...
+    # Subtest: admits an independent path: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-c6e45fda677e4eff9b85d61bc382c2ea\\product [literal] with spaces-peer\\qa\\pr265-run-activity-new
+    ok 2 - admits an independent path: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-c6e45fda677e4eff9b85d61bc382c2ea\\product [literal] with spaces-peer\\qa\\pr265-run-activity-new
+      ---
+      duration_ms: 0.1531
+      type: 'test'
+      ...
+    # Subtest: DryRun rejects a lexical product descendant
+    ok 3 - DryRun rejects a lexical product descendant
+      ---
+      duration_ms: 0.161
+      type: 'test'
+      ...
+    # Subtest: Start rejects a lexical product descendant
+    ok 4 - Start rejects a lexical product descendant
+      ---
+      duration_ms: 0.1258
+      type: 'test'
+      ...
+    # Subtest: Status rejects a lexical product descendant
+    ok 5 - Status rejects a lexical product descendant
+      ---
+      duration_ms: 0.1297
+      type: 'test'
+      ...
+    # Subtest: Stop rejects a lexical product descendant
+    ok 6 - Stop rejects a lexical product descendant
+      ---
+      duration_ms: 0.1148
+      type: 'test'
+      ...
+    # Subtest: DryRun rejects qa parent junction
+    ok 7 - DryRun rejects qa parent junction
+      ---
+      duration_ms: 0.136
+      type: 'test'
+      ...
+    # Subtest: Start rejects qa parent junction
+    ok 8 - Start rejects qa parent junction
+      ---
+      duration_ms: 0.1337
+      type: 'test'
+      ...
+    # Subtest: Status rejects qa parent junction
+    ok 9 - Status rejects qa parent junction
+      ---
+      duration_ms: 0.1922
+      type: 'test'
+      ...
+    # Subtest: Stop rejects qa parent junction
+    ok 10 - Stop rejects qa parent junction
+      ---
+      duration_ms: 0.2989
+      type: 'test'
+      ...
+    # Subtest: DryRun rejects higher ancestor junction with missing descendants
+    ok 11 - DryRun rejects higher ancestor junction with missing descendants
+      ---
+      duration_ms: 0.1247
+      type: 'test'
+      ...
+    # Subtest: Start rejects higher ancestor junction with missing descendants
+    ok 12 - Start rejects higher ancestor junction with missing descendants
+      ---
+      duration_ms: 0.0925
+      type: 'test'
+      ...
+    # Subtest: Status rejects higher ancestor junction with missing descendants
+    ok 13 - Status rejects higher ancestor junction with missing descendants
+      ---
+      duration_ms: 0.076
+      type: 'test'
+      ...
+    # Subtest: Stop rejects higher ancestor junction with missing descendants
+    ok 14 - Stop rejects higher ancestor junction with missing descendants
+      ---
+      duration_ms: 0.1628
+      type: 'test'
+      ...
+    # Subtest: DryRun rejects existing QA leaf junction
+    ok 15 - DryRun rejects existing QA leaf junction
+      ---
+      duration_ms: 0.0768
+      type: 'test'
+      ...
+    # Subtest: Start rejects existing QA leaf junction
+    ok 16 - Start rejects existing QA leaf junction
+      ---
+      duration_ms: 0.0675
+      type: 'test'
+      ...
+    # Subtest: Status rejects existing QA leaf junction
+    ok 17 - Status rejects existing QA leaf junction
+      ---
+      duration_ms: 0.1555
+      type: 'test'
+      ...
+    # Subtest: Stop rejects existing QA leaf junction
+    ok 18 - Stop rejects existing QA leaf junction
+      ---
+      duration_ms: 0.9615
+      type: 'test'
+      ...
+    # Subtest: rejects noncanonical input: qa\\pr265-run-activity-relative
+    ok 19 - rejects noncanonical input: qa\\pr265-run-activity-relative
+      ---
+      duration_ms: 0.1669
+      type: 'test'
+      ...
+    # Subtest: rejects noncanonical input: \\\\invalid.example\\share\\qa\\pr265-run-activity-network
+    ok 20 - rejects noncanonical input: \\\\invalid.example\\share\\qa\\pr265-run-activity-network
+      ---
+      duration_ms: 0.0829
+      type: 'test'
+      ...
+    # Subtest: rejects noncanonical input: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-c6e45fda677e4eff9b85d61bc382c2ea\\trailing.\\qa\\pr265-run-activity-new
+    ok 21 - rejects noncanonical input: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-c6e45fda677e4eff9b85d61bc382c2ea\\trailing.\\qa\\pr265-run-activity-new
+      ---
+      duration_ms: 0.1564
+      type: 'test'
+      ...
+    # Subtest: rejects noncanonical input: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-c6e45fda677e4eff9b85d61bc382c2ea\\qa\\pr265-run-activity-new:stream
+    ok 22 - rejects noncanonical input: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-activity-paths-c6e45fda677e4eff9b85d61bc382c2ea\\qa\\pr265-run-activity-new:stream
+      ---
+      duration_ms: 0.0665
+      type: 'test'
+      ...
+    # Subtest: all admissions preserve the protected sentinel and create no fixture descendants
+    ok 23 - all admissions preserve the protected sentinel and create no fixture descendants
+      ---
+      duration_ms: 0.068
+      type: 'test'
+      ...
+    1..23
+ok 12 - Factory activity acceptance rejects redirected QA roots before effects
+  ---
+  duration_ms: 2442.2076
+  type: 'test'
+  ...
+# {"fixture":"<USERPROFILE>\\\\AppData\\\\Local\\\\Temp\\\\ecorp-activity-paths-c6e45fda677e4eff9b85d61bc382c2ea","fixture_removed":true,"scope":"Native admission of the exact entrypoint in a synthetic product; missing PostgreSQL prevents any launch."}
+1..12
+# tests 35
+# suites 0
+# pass 35
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3895.4668

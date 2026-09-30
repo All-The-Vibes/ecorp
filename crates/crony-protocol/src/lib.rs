@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 pub use crony_domain::RunnerModel;
 pub mod dependency_files;
+pub mod history;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RunnerCapability {
