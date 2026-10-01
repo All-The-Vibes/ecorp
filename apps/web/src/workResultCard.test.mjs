@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 import { isValidElement } from 'react'
+import * as React from 'react'
 import * as jsxRuntime from 'react/jsx-runtime'
 import { renderToStaticMarkup } from 'react-dom/server'
 import ts from 'typescript'
@@ -10,6 +11,7 @@ import * as originReader from './missionOriginContext.ts'
 import * as evidenceSelection from './evidenceSelection.ts'
 import * as workflow from './workflowContext.ts'
 import * as checkpointRecovery from './factoryCheckpointRecovery.ts'
+import * as reviewRevisionOperations from './reviewRevisionOperations.ts'
 
 // Actual components, hook and reader; only hook scheduling, transport and timers
 // are controlled. SSR/callback tests are not browser, download or runtime proof.
@@ -39,6 +41,11 @@ const { WorkResultCard } = evaluate(await compile('WorkResultCard.tsx'), {
 })
 const { PublishedResultCard } = evaluate(await compile('PublishedResultCard.tsx'), {
   'react/jsx-runtime': jsxRuntime, './WorkResultCard': { WorkResultCard },
+})
+const { ReviewRevisionPanel } = evaluate(await compile('ReviewRevisionPanel.tsx'), {
+  react: React, 'react/jsx-runtime': jsxRuntime,
+  './missionResultContext': reader, './reviewRevisionOperations': reviewRevisionOperations,
+  './WorkResultCard': { WorkResultCard }, './ReviewRevisionPanel.css': {},
 })
 const hookSource = await compile('useMissionResultContext.ts')
 const ids = {
@@ -688,7 +695,7 @@ async function compileAppResultSlice() {
   const importedModules = new Set([
     'react', './workflowContext', './evidenceSelection', './useMissionOriginContext',
     './useMissionResultContext', './missionResultContext', './WorkResultCard', './PublishedResultCard',
-    './factoryCheckpointRecovery',
+    './factoryCheckpointRecovery', './ReviewRevisionPanel',
   ])
   const imports = file.statements.filter((node) =>
     ts.isImportDeclaration(node) && importedModules.has(node.moduleSpecifier.text))
@@ -803,6 +810,7 @@ function appResultFixture({ pinnedRunId = deliveredRunId, ...overrides } = {}) {
     './useMissionOriginContext': origin, './useMissionResultContext': result,
     './missionResultContext': reader, './WorkResultCard': { WorkResultCard },
     './PublishedResultCard': { PublishedResultCard },
+    './ReviewRevisionPanel': { ReviewRevisionPanel },
     'app-test-environment': {
       API_URL: appApiUrl, api,
       window: {
@@ -848,6 +856,8 @@ function appResultFixture({ pinnedRunId = deliveredRunId, ...overrides } = {}) {
     onVerificationDecision: () => { actions.push('decide') },
     onViewAgents: () => { actions.push('agents') },
     onDiscuss: () => { actions.push('discuss') },
+    onOpenMissionId: () => { actions.push('open-mission') },
+    onChanged: async () => { actions.push('changed') },
     ...overrides,
   }
   const render = (next = props) => {

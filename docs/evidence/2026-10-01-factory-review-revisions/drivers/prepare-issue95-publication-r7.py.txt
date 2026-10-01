@@ -1,0 +1,217 @@
+"""Version publication helpers for an explicitly validated test-fixture EOF delta."""
+import ast
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+assert __debug__
+sys.dont_write_bytecode = True
+EV = Path(__file__).resolve().parent
+helper = (EV / 'issue95_publication_r5.py').read_text(encoding='utf-8')
+publisher = (EV / 'publish-issue95-r4.ps1').read_text(encoding='utf-8-sig')
+assert hashlib.sha256((EV / 'issue95_publication_r5.py').read_bytes()).hexdigest() == '81f91d5f3ddb40a1dbc2fd79068bf3441d22ae6073429db7d413528901bba100'
+assert hashlib.sha256((EV / 'publish-issue95-r4.ps1').read_bytes()).hexdigest() == 'bf07e0aa2feac89f1ca55a551eca2fb1a35ee914c38c11da91c82c42dcce4be5'
+
+def replace(old, new, count=None):
+    global helper
+    actual = helper.count(old)
+    assert actual and (count is None or actual == count), (old[:100], actual, count)
+    helper = helper.replace(old, new)
+
+renames = {
+    '"issue95-publication-source-r3.json"': '"issue95-publication-source-r4.json"',
+    '"issue95-publication-assembly-r5.json"': '"issue95-publication-assembly-r7.json"',
+    '"issue95-publication-assembly-r6.json"': '"issue95-publication-assembly-r8.json"',
+    '"issue95-publication-commit-r3.json"': '"issue95-publication-commit-r4.json"',
+    '"issue95-publication-commit-r3.log"': '"issue95-publication-commit-r4.log"',
+    '"issue95-publication-committed-scan-r3.json"': '"issue95-publication-committed-scan-r4.json"',
+    '"issue95-committed-scan-r3"': '"issue95-committed-scan-r4"',
+    '"issue95-publication-validation-r5-session-exit.json"': '"issue95-publication-validation-r7-session-exit.json"',
+    '"issue95-publication-validation-r6-session-exit.json"': '"issue95-publication-validation-r8-session-exit.json"',
+    'validation_receipt(5)': 'validation_receipt(7)',
+    'validation_receipt(6)': 'validation_receipt(8)',
+    'assert revision in {5, 6}': 'assert revision in {7, 8}',
+    'if revision == 5:': 'if revision == 7:',
+    'if revision == 6:': 'if revision == 8:',
+    'lambda: validate(5)': 'lambda: validate(7)',
+    'lambda: validate(6)': 'lambda: validate(8)',
+    '"publication/evidence-validation-r5.json"': '"publication/evidence-validation-r7.json"',
+    'The subsequent R6 validation': 'The subsequent R8 validation',
+    'additions require separate R6 validation.': 'additions require separate R8 validation.',
+}
+for old, new in renames.items():
+    replace(old, new)
+replace('"""R5 publication binding: same tested source, array receipts, preserved failed assemblies."""',
+        '"""R6 publication: original canonical/acceptance source plus an observed one-LF test-fixture cleanup."""', 1)
+
+delta_function = '''def verified_fixture_normalization(original):
+    """Validate only the exact recorded EOF delta; reject all other source changes."""
+    receipt_path = EV / "issue95-fixture-eof-normalization-r1.json"
+    value = load(receipt_path)
+    native = observed_exit("issue95-fixture-eof-normalization-r1-session-exit.json")
+    assert native["session_id"] == 18396
+    assert value["status"] == "passed" and value["exit_code"] == 0 and value["finished_at_utc"]
+    assert value["original_source_files"] == original
+    current = value["source_files"]
+    assert len(current) == len(original) == len(dict(current)) == 7397
+    assert set(dict(current)) == set(dict(original))
+    name = "apps/web/src/missionResultFixtures.mjs"
+    assert value["fixture"] == value["only_changed_path"] == name
+    assert [n for n, h in original if dict(current)[n] != h] == [name]
+    before = guarded_bytes(EV / "issue95-publication-validation-failed-r5/original-missionResultFixtures.mjs.txt", EV)
+    after = guarded_bytes(ROOT / name, ROOT)
+    assert before.endswith(b"}\\n\\n") and after + b"\\n" == before
+    assert value["before_sha256"] == dict(original)[name] == sha(before)
+    assert value["after_sha256"] == dict(current)[name] == sha(after)
+    assert value["before_bytes"] == len(before) and value["after_bytes"] == len(after)
+    assert value["original_tested_tree"] == "d25ef2100f7bec0ecc65772f61308c111d8df3fd"
+    assert value["original_physical_files_sha256"] == sha(compact(original))
+    assert value["current_physical_files_sha256"] == sha(compact(current))
+    expected = ["apps/web/src/missionResultContext.test.mjs", "apps/web/src/reviewRevisionPanel.test.mjs"]
+    assert value["importers"] == expected
+    assert value["command"] == [str(NODE), "--test", "--test-concurrency=2", "--test-timeout=180000", *expected]
+    assert value["source_unchanged_during_regression"] and value["all_other_7396_files_unchanged"]
+    assert value["original_index_unchanged"] and value["policy_unchanged"]
+    assert value["canonical_and_acceptance_not_rerun"]
+    log = guarded_bytes(Path(value["log"]), EV)
+    assert sha(log) == value["log_sha256"]
+    text = log.decode("utf-8")
+    for summary in value["test_summaries"]:
+        assert summary in text
+    assert re.search(r"(?:# |ℹ )fail 0(?:\\r?\\n|$)", text)
+    assert re.search(r"(?:# |ℹ )pass [1-9][0-9]*(?:\\r?\\n|$)", text)
+    assert sha(guarded_bytes(Path(value["prior_packet_preservation"]), EV)) == value["prior_packet_preservation_sha256"]
+    verify_files(current)
+    return current, {"path": receipt_path.name, "sha256": sha(guarded_bytes(receipt_path, EV)),
+                     "fixture": name, "original_sha256": sha(before), "published_sha256": sha(after),
+                     "canonical_tested_tree": value["original_tested_tree"],
+                     "reviewed_source_tree": value["reviewed_source_tree"],
+                     "original_physical_files_sha256": sha(compact(original)),
+                     "current_physical_files_sha256": sha(compact(current)),
+                     "test_summaries": value["test_summaries"],
+                     "scope": value["validation_scope"]}
+
+
+'''
+replace('def completed_inputs():', delta_function + 'def completed_inputs():', 1)
+replace('    verify_files(physical)\n    return {"canonical": canonical,',
+'''    original_physical = physical
+    physical, fixture_normalization = verified_fixture_normalization(original_physical)
+    for lane in focused.values():
+        manifest = pairs(lane["value"]["source_files"])
+        lane["complete_manifest_match"] = manifest == physical
+        lane["differing_recorded_paths"] = [n for n, h in manifest if dict(physical).get(n) != h]
+        lane["all_recorded_files_match"] = not lane["differing_recorded_paths"]
+        lane["current_paths_not_recorded"] = sorted(set(dict(physical)) - set(dict(manifest)))
+    return {"canonical_physical": original_physical, "fixture_normalization": fixture_normalization,
+            "canonical": canonical,''', 1)
+replace('        manifest = pairs(result.pop("source_files"))',
+'''        rows = result.pop("source_files")
+        if rows and isinstance(rows[0], list):
+            assert all(isinstance(row, list) and len(row) == 2 and all(isinstance(v, str) for v in row) for row in rows)
+            manifest = sorted(rows)
+            assert len(manifest) == len(dict(manifest))
+        else:
+            manifest = pairs(rows)''', 1)
+replace('                public = clean_text(raw.decode("utf-8-sig")).encode()',
+'''                public = clean_text(raw.decode("utf-8-sig")).encode()
+                public = public.rstrip(b"\\n") + b"\\n" if public else b""''', 1)
+replace('LF and trailing-whitespace normalization.', 'LF, trailing-whitespace and redundant-EOF-blank-line normalization.')
+replace('def original_receipts(x):\n    copies = [', '''def original_receipts(x):
+    copies = [
+        (EV / "issue95-fixture-eof-normalization-r1.json", "publication-preparation/fixture-eof-normalization.json"),
+        (EV / "issue95-fixture-eof-normalization-r1.log", "publication-preparation/fixture-eof-regressions.log"),
+        (EV / "issue95-fixture-eof-normalization-r1-session-exit.json", "publication-preparation/fixture-eof-session-exit.json"),
+        (EV / "issue95-publication-validation-r5.json", "history/publication-validation-r5-failed/receipt.json"),
+        (EV / "issue95-publication-validation-r5-diff-check.log", "history/publication-validation-r5-failed/diff-check.log"),
+        (EV / "issue95-publication-validation-r5-session-exit.json", "history/publication-validation-r5-failed/session-exit.json"),
+        (EV / "issue95-publication-validation-failed-r5/preservation.json", "history/publication-validation-r5-failed/preservation.json"),''', 1)
+replace('                 "issue95_publication_r5.py", "publish-issue95-r4.ps1",',
+'''                 "issue95_publication_r6.py", "publish-issue95-r5.ps1",
+                 "prepare-issue95-publication-r7.py", "normalize-issue95-publication-r1.py",
+                 "issue95_publication_r5.py", "publish-issue95-r4.ps1",''', 1)
+replace('        "canonical_and_acceptance_same_complete_physical_source": True,',
+'''        "canonical_and_acceptance_same_complete_physical_source": False,
+        "canonical_and_acceptance_original_manifests_equal": True,
+        "canonical_physical_files": x["canonical_physical"],
+        "canonical_physical_files_sha256": sha(compact(x["canonical_physical"])),
+        "canonical_tested_tree": x["fixture_normalization"]["canonical_tested_tree"],
+        "post_validation_fixture_normalization_verified": True,
+        "fixture_normalization": x["fixture_normalization"],''', 1)
+replace('This retrospectively reconstructs the tested source tree; every source blob matches physical bytes with at most Git CRLF-to-LF normalization. Only separately checked evidence is added afterward.',
+        'This reconstructs the reviewed source tree after the separately validated one-LF cleanup in the test-only fixture. Original canonical R3 and acceptance R7 share the retained original manifest; current bytes are separately bound and all other 7,396 files are unchanged. Only separately checked evidence is added afterward.', 1)
+replace('    qualifications = [', '''    qualifications = [
+        "After canonical R3 and acceptance R7, one redundant final LF was removed from the test-only missionResultFixtures.mjs. Both importing test modules passed afterward on the recorded current manifest. The original common canonical/acceptance manifest is retained separately; all other 7,396 source files and every runtime/dependency byte remain unchanged. No new full canonical or acceptance run is claimed. Public evidence copies independently normalize redundant EOF blank lines; original receipts remain unchanged. Failed publication R5 and its full packet are retained.",''', 1)
+replace('Canonical R3, acceptance R7 and Windows-policy R1 match all 7,397 physical files.',
+        'Canonical R3, acceptance R7 and Windows-policy R1 match the original 7,397-file manifest before the separately recorded EOF cleanup.')
+replace('Current-source Windows\npolicy tests passed 35 cases.', 'Windows policy tests passed 35 cases before the test-only EOF cleanup.')
+replace('The complete 7,397-file physical manifest matches between canonical and acceptance.\nThe publication commit did not exist during those executions. [Source binding](source-binding.json)\nreconstructs the tested Git tree and permits only Git CRLF-to-LF normalization.',
+'''Canonical R3 and acceptance R7 share their original 7,397-file manifest and tree
+{x['fixture_normalization']['canonical_tested_tree']}. Afterward, one redundant
+final LF was removed from the test-only missionResultFixtures.mjs; both importing
+test modules passed on the new source. All other 7,396 files and all runtime and
+dependency bytes remain unchanged. Neither the full canonical plan nor acceptance
+was rerun for this cosmetic edit. [Source binding](source-binding.json) retains
+both exact manifests, trees and the observed delta receipt. The publication commit
+did not exist during those executions.''', 1)
+replace('Tested implementation tree: {tested_tree}.', 'Reviewed source tree after the separately tested fixture EOF cleanup: {tested_tree}.', 1)
+replace('    assert value["canonical_and_acceptance_same_complete_physical_source"]',
+'''    assert value["canonical_and_acceptance_same_complete_physical_source"] is False
+    assert value["canonical_and_acceptance_original_manifests_equal"]
+    assert value["post_validation_fixture_normalization_verified"]
+    assert value["original_physical_files_unchanged"] is False
+    assert value["all_other_source_files_unchanged"]
+    assert value["fixture_normalization"]["sha256"] == sha(guarded_bytes(EV / "issue95-fixture-eof-normalization-r1.json", EV))''', 1)
+replace('                      files=files, original_physical_files_unchanged=True,\n                      canonical_and_acceptance_same_complete_physical_source=True,',
+'''                      files=files, original_physical_files_unchanged=False,
+                      canonical_and_acceptance_same_complete_physical_source=False,
+                      canonical_and_acceptance_original_manifests_equal=True,
+                      post_validation_fixture_normalization_verified=True,
+                      all_other_source_files_unchanged=True,
+                      fixture_normalization=x["fixture_normalization"],''', 1)
+replace('        assert source["physical_files_sha256"] == x["physical_sha256"]',
+'''        assert source["physical_files_sha256"] == x["physical_sha256"]
+        assert source["canonical_physical_files"] == x["canonical_physical"]
+        assert source["fixture_normalization"] == x["fixture_normalization"]
+        assert source["tested_tree"] == x["fixture_normalization"]["reviewed_source_tree"]
+        assert source["canonical_tested_tree"] == x["fixture_normalization"]["canonical_tested_tree"]''', 1)
+replace('Publication boundaries, complete product source, canonical argv and discovery, plus evidence-only additions.',
+        'Publication boundaries, exact original canonical/acceptance source plus the observed test-only one-LF cleanup, unchanged canonical argv and full Node discovery, and separately validated evidence additions.', 1)
+replace('"canonical": {"revision": 3, "status": "passed", "gates": NAMES,',
+        '"canonical": {"revision": 3, "status": "passed", "source_tree": x["fixture_normalization"]["canonical_tested_tree"], "gates": NAMES,', 1)
+replace('"acceptance": {"revision": 7, "passed": True, "scenario_count": 15,',
+        '"acceptance": {"revision": 7, "source_tree": x["fixture_normalization"]["canonical_tested_tree"], "passed": True, "scenario_count": 15,', 1)
+replace('"criteria": acceptance_mapping(), "scenario_indices_are_zero_based": True,',
+        '"fixture_normalization": x["fixture_normalization"], "criteria": acceptance_mapping(), "scenario_indices_are_zero_based": True,', 1)
+replace('"The final publication includes evidence added after execution.',
+        '"The final publication includes the separately tested cosmetic fixture EOF cleanup and evidence added after full product execution.', 1)
+
+publisher_replacements = {
+    'issue95-publication-commit-r3.json': 'issue95-publication-commit-r4.json',
+    'issue95-publication-committed-scan-r3.json': 'issue95-publication-committed-scan-r4.json',
+    'issue95-publication-validation-r6.json': 'issue95-publication-validation-r8.json',
+    'issue95-publication-source-r3.json': 'issue95-publication-source-r4.json',
+    'queue-inventory-r21.json': 'queue-inventory-r22.json',
+    "'publication-validation-r5','publication-validation-r6','publication-committed-scan-r3'": "'publication-validation-r7','publication-validation-r8','publication-committed-scan-r4','fixture-eof-normalization-r1'",
+    '!$validation.original_physical_files_unchanged -or !$validation.canonical_and_acceptance_same_complete_physical_source': '$validation.original_physical_files_unchanged -ne $false -or $validation.canonical_and_acceptance_same_complete_physical_source -ne $false -or !$validation.canonical_and_acceptance_original_manifests_equal -or !$validation.post_validation_fixture_normalization_verified -or !$validation.all_other_source_files_unchanged',
+    "'issue95_publication_r5.py','publish-issue95-r4.ps1'": "'issue95_publication_r5.py','publish-issue95-r4.ps1','issue95_publication_r6.py','publish-issue95-r5.ps1'",
+    'Canonical R3 and acceptance R7 match all 7,397 physical source files, manifest SHA-256 $($commit.physical_files_sha256). The commit was created afterward and adds separately validated evidence. Source binding reconstructs every tested Git blob, allowing only CRLF-to-LF normalization.': 'Canonical R3 and acceptance R7 share the original 7,397-file manifest, SHA-256 $($source.canonical_physical_files_sha256). Afterward, one redundant final LF was removed from the test-only missionResultFixtures.mjs; both importing test modules passed on the recorded reviewed source. All other 7,396 files and every runtime/dependency byte remain unchanged. Neither the full canonical plan nor acceptance was rerun for this cosmetic edit. The commit adds separately validated evidence, with both exact manifests and the delta receipt retained.',
+    'Windows-policy tests passed 35 cases on the current complete source.': 'Windows-policy tests passed 35 cases on the complete source before the test-only EOF cleanup.',
+}
+for old, new in publisher_replacements.items():
+    assert old in publisher, old[:100]
+    publisher = publisher.replace(old, new)
+insertion = '''$normalizationPath=Join-Path $taskEvidence 'issue95-fixture-eof-normalization-r1.json'
+$normalization=Read-Json $normalizationPath
+if ($normalization.status -cne 'passed' -or $normalization.exit_code -ne 0 -or !$normalization.source_unchanged_during_regression -or !$normalization.all_other_7396_files_unchanged -or !$normalization.canonical_and_acceptance_not_rerun -or $normalization.reviewed_source_tree -cne $commit.tested_tree -or $source.fixture_normalization.sha256 -cne (Hash $normalizationPath) -or $validation.fixture_normalization.sha256 -cne (Hash $normalizationPath) -or $source.canonical_tested_tree -cne $normalization.original_tested_tree) { throw 'Test-only EOF cleanup or original-source binding is not verified.' }
+'''
+publisher = publisher.replace('$context=Read-Json $contextPath', insertion + '$context=Read-Json $contextPath', 1)
+publisher = publisher.replace('All 15 full-stack acceptance scenarios passed using real App/server/PostgreSQL/runner/Git with explicitly simulated provider and GitHub boundaries.',
+    'All 15 full-stack acceptance scenarios passed using real App/server/PostgreSQL/runner/Git with explicitly simulated provider and GitHub boundaries. These full validations preceded a one-LF test-fixture EOF cleanup; both importing test modules passed afterward, with every other source byte unchanged and both manifests retained.')
+ast.parse(helper)
+assert 'diff", "--check", PARENT, publication_tree' in helper
+for name, text in [('issue95_publication_r6.py', helper), ('publish-issue95-r5.ps1', publisher)]:
+    with (EV / name).open('x', encoding='utf-8', newline='\n') as stream:
+        stream.write(text.rstrip('\n') + '\n')
+print(json.dumps({'status': 'prepared', 'helpers': {name: hashlib.sha256((EV / name).read_bytes()).hexdigest() for name in ['issue95_publication_r6.py', 'publish-issue95-r5.ps1']}}))

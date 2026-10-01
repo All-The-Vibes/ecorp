@@ -15,6 +15,9 @@ use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
+#[path = "publish_review_revision.rs"]
+mod review_revision;
+
 use crate::factory::{
     gh_json, gh_output, gh_run, normalize_github_component, sanitize_failure_detail, server_json,
     source_git_output,
@@ -78,8 +81,9 @@ pub struct FactoryPublishArgs {
     pub dry_run: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct PublicationPlan {
+    review_predecessors: Vec<PullRequestPublication>,
     source_deliverable_id: Uuid,
     artifact_id: Uuid,
     target_repository: String,
@@ -292,6 +296,7 @@ pub async fn run(client: &Client, server: &str, args: FactoryPublishArgs) -> Res
     let mut response =
         start_publication(client, server, &args, &plan, &plan.idempotency_key).await?;
     if response.publication.state == PullRequestPublicationState::Published {
+        review_revision::validate_completed(&args, &plan, &response.publication)?;
         return Ok(plan_json(
             &args,
             &plan,
@@ -303,6 +308,7 @@ pub async fn run(client: &Client, server: &str, args: FactoryPublishArgs) -> Res
         response = wait_or_recover_publication(client, server, &args, &plan, response).await?;
     }
     if response.publication.state == PullRequestPublicationState::Published {
+        review_revision::validate_completed(&args, &plan, &response.publication)?;
         return Ok(plan_json(
             &args,
             &plan,
@@ -488,7 +494,9 @@ async fn execute_publication(
                 current_base.commit
             );
         }
+        review_revision::validate_predecessors(args, plan, &workspace.repository)?;
         push_or_adopt_branch(&workspace.repository, plan)?;
+        review_revision::validate_predecessors(args, plan, &workspace.repository)?;
         test_crash("after_branch_remote");
         checkpoint(
             client,
@@ -522,12 +530,16 @@ async fn execute_publication(
             "pull-request",
         )
         .await?;
+        ensure_remote_branch(&workspace.repository, plan)?;
+        review_revision::validate_predecessors(args, plan, &workspace.repository)?;
         let pull_request = create_or_adopt_pull_request(
             args,
             plan,
             &resolved_base.pull_request_base_ref,
             &workspace.body,
         )?;
+        ensure_remote_branch(&workspace.repository, plan)?;
+        review_revision::validate_predecessors(args, plan, &workspace.repository)?;
         test_crash("after_pull_request_remote");
         checkpoint(
             client,
@@ -589,6 +601,7 @@ async fn execute_publication(
         revalidate_durable_pull_request(
             args,
             plan,
+            &workspace.repository,
             &resolved_base.pull_request_base_ref,
             &response.publication,
         )?;
@@ -604,6 +617,13 @@ async fn execute_publication(
                 "project-review-effect",
             )
             .await?;
+            revalidate_durable_pull_request(
+                args,
+                plan,
+                &workspace.repository,
+                &resolved_base.pull_request_base_ref,
+                &response.publication,
+            )?;
             let edit_result = gh_run(
                 &args.github_cli,
                 &[
@@ -637,6 +657,7 @@ async fn execute_publication(
         revalidate_durable_pull_request(
             args,
             plan,
+            &workspace.repository,
             &resolved_base.pull_request_base_ref,
             &response.publication,
         )?;
@@ -1368,13 +1389,16 @@ fn ensure_pull_request_matches_publication(
 fn revalidate_durable_pull_request(
     args: &FactoryPublishArgs,
     plan: &PublicationPlan,
+    repository: &Path,
     pull_request_base_ref: &str,
     publication: &PullRequestPublication,
 ) -> Result<()> {
     let pull_request = find_pull_request(args, plan, pull_request_base_ref)?
         .context("persisted publication pull request no longer matches its durable identity")?;
     ensure_remote_pull_request_matches(&pull_request, plan, pull_request_base_ref)?;
-    ensure_pull_request_matches_publication(&pull_request, publication)
+    ensure_pull_request_matches_publication(&pull_request, publication)?;
+    ensure_remote_branch(repository, plan)?;
+    review_revision::validate_predecessors(args, plan, repository)
 }
 
 fn project_status(
@@ -1557,17 +1581,39 @@ fn publication_plan(args: &FactoryPublishArgs, context: &Value) -> Result<Public
     let commit_sha = value_string(deliverable, "/head_commit")?;
     let verified_base_commit = value_string(deliverable, "/base_commit")?;
     let issue_number = value_i64(work_item, "/source_issue_number")?;
+    let (revision_id, review_predecessors) =
+        review_revision::lineage(args, context, mission_id, deliverable)?;
+    let branch_prefix = publication_policy
+        .get("branch_prefix")
+        .and_then(Value::as_str)
+        .unwrap_or("ecorp/");
+    let correction_branch =
+        revision_id.map(|id| crony_domain::review_revision_branch(branch_prefix, issue_number, id));
     let branch = existing_publication
         .and_then(|publication| publication.get("branch"))
         .and_then(Value::as_str)
         .map(str::to_owned)
         .or_else(|| args.branch.clone())
+        .or_else(|| correction_branch.clone())
         .unwrap_or_else(|| {
             format!(
-                "ecorp/issue-{issue_number}-{}",
+                "{branch_prefix}issue-{issue_number}-{}",
                 commit_sha.chars().take(12).collect::<String>()
             )
         });
+    if correction_branch
+        .as_ref()
+        .is_some_and(|expected| *expected != branch)
+    {
+        bail!("correction publication must use its distinct authorized revision branch");
+    }
+    if review_predecessors.iter().any(|prior| {
+        prior.target_repository != target_repository
+            || prior.base_ref != base_ref
+            || prior.branch == branch
+    }) {
+        bail!("correction publication cannot change repository/base or reuse a predecessor branch");
+    }
     let title = existing_publication
         .and_then(|publication| publication.get("title"))
         .and_then(Value::as_str)
@@ -1590,7 +1636,34 @@ fn publication_plan(args: &FactoryPublishArgs, context: &Value) -> Result<Public
             value_string(deliverable, "/sha256").unwrap_or_default()
         )
     };
+    let body = if existing_publication.is_none() && args.body_file.is_none() {
+        if let Some(prior) = review_predecessors.first() {
+            format!(
+                "{body}\n\nSupersedes {} after governed review revision `{}`. Original published head: `{}`. The original publication remains preserved.",
+                prior
+                    .pull_request_url
+                    .as_deref()
+                    .context("predecessor omitted PR URL")?,
+                revision_id.context("correction omitted revision")?,
+                prior.commit_sha
+            )
+        } else {
+            body
+        }
+    } else {
+        body
+    };
     let body = normalize_publication_body(&body)?;
+    if let Some(prior) = review_predecessors.first()
+        && !body.contains(
+            prior
+                .pull_request_url
+                .as_deref()
+                .context("predecessor omitted PR URL")?,
+        )
+    {
+        bail!("correction PR body must link the immutable predecessor publication");
+    }
     let effect_key = existing_publication
         .and_then(|publication| publication.get("effect_key"))
         .and_then(Value::as_str)
@@ -1636,6 +1709,7 @@ fn publication_plan(args: &FactoryPublishArgs, context: &Value) -> Result<Public
         .clone()
         .unwrap_or_else(default_publisher_id);
     let mut plan = PublicationPlan {
+        review_predecessors,
         source_deliverable_id: value_uuid(deliverable, "/id")?,
         artifact_id: value_uuid(deliverable, "/artifact_id")?,
         target_repository,

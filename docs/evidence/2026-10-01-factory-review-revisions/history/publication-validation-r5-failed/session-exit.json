@@ -1,0 +1,16 @@
+{
+  "session_id": 68506,
+  "exit_code": 1,
+  "observation": "write_stdin returned process exit",
+  "recorded_at_utc": "2026-10-01T07:47:57.8253047Z",
+  "tool_return": {
+    "chunk_id": "e80495",
+    "wall_time_seconds": 1.08e-05,
+    "exit_code": 1,
+    "original_token_count": {
+      "redacted": "sha256",
+      "digest": "43c727ee4fc7250574d2ef90cfa16626388a10e1b30d36ece1c272953ad2ed9e"
+    },
+    "output": "{\"status\": \"failed\", \"revision\": 5, \"tested_tree\": \"d25ef2100f7bec0ecc65772f61308c111d8df3fd\", \"publication_tree\": \"63eea005a99fcb18eb04ea08151b75c1ebd5d06e\", \"failure\": \"diff-check failed; inspect retained log\"}\nTraceback (most recent call last):\n  File \"<RUN_EVIDENCE>\\issue95_publication_r5.py\", line 1325, in <module>\n    commands[sys.argv[1]]()\n  File \"<RUN_EVIDENCE>\\issue95_publication_r5.py\", line 1321, in <lambda>\n    commands = {\"assemble\": assemble, \"validate-core\": lambda: validate(5),\n                                                               ^^^^^^^^^^^\n  File \"<RUN_EVIDENCE>\\issue95_publication_r5.py\", line 1123, in validate\n    check(\"diff-check\", [\"git\", \"--no-optional-locks\", \"diff\", \"--check\", PARENT, publication_tree])\n  File \"<RUN_EVIDENCE>\\issue95_publication_r5.py\", line 1019, in check\n    assert result.returncode == 0, f\"{name} failed; inspect retained log\"\n           ^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: diff-check failed; inspect retained log\n"
+  }
+}

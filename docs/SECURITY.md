@@ -502,6 +502,24 @@ Pending refreshes block publication, and adoption revalidates the original and
 replacement evidence, budget/breaker state, and durable decision. Three lifetime
 attempts bound the work-item lineage. An existing publication blocks refresh.
 
+[Published review corrections](FACTORY_REVIEW_REVISIONS.md) require authenticated
+recovery authority, current room membership, item version and exact publication,
+head and source revision. Findings are typed and attributed to that principal;
+external links confer no reviewer identity or authority. The separate mission
+retains the source contract and receives only the intersection of remaining task
+and mission budgets and the remaining provider attempts. The original accepted
+records are immutable. Every automated check is retained and a new independent
+decision excludes authorizers and original requesters/producers across the
+lineage. Source hydration, dispatch and adoption repeat current authority checks.
+The runner restores the signed source into fresh private storage and resumes
+only a matching seed, fingerprint and HEAD through native harness mechanisms.
+One correction per publication and three per item bound the chain; abandonment
+is terminal. A superseding publication retains its predecessor, uses a distinct
+deterministic branch, and rechecks every predecessor PR and native branch before
+effects and on completed replay. Manual head drift fails closed. No operation
+widens source/tool authority, replenishes budgets, overwrites the old PR, or
+grants merge or deployment permission.
+
 Publisher fencing tokens are opaque, expiring capabilities omitted from shared state and events.
 They are insufficient by themselves: each publication mutation also requires a separate enrolled
 publisher workload credential. Enrollment and revocation require owner/admin `Manage` authority;

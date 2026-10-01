@@ -1041,6 +1041,14 @@ delta in a new isolated workspace, reruns every saved check, and requires a new
 independent review before explicit adoption. A pending refresh blocks publication;
 the original verified result stays selected until adoption.
 
+For findings against an already published result, use
+[governed review revisions](FACTORY_REVIEW_REVISIONS.md). The mission console
+records actor-attributed findings, authorizes a separate correction under the
+remaining authority, and requires fresh checks and independent review before
+adoption. The trusted publisher then creates an explicit superseding PR while
+preserving the original publication. Authorizing or adopting a correction does
+not itself publish, merge or close a PR.
+
 Publication is allowed only after:
 
 - the factory item is authoritatively `verified`;

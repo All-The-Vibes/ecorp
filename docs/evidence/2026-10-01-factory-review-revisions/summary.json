@@ -1,0 +1,1941 @@
+{
+  "issue": 95,
+  "tested_tree": "5072c911cf980d5b48ed78e6d946f491eef94a1a",
+  "parents": [
+    "7e65f46a0c0f991460eeb4c5b60723d2e0dff1f9",
+    "6f2375e06546806003a9a1d1a340bdc1a4ce4b8c"
+  ],
+  "main": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "canonical": {
+    "revision": 3,
+    "status": "passed",
+    "source_tree": "d25ef2100f7bec0ecc65772f61308c111d8df3fd",
+    "gates": [
+      "migrations",
+      "state-audit-compatibility",
+      "state-audit-evm",
+      "docs",
+      "repository-docs",
+      "node-tests",
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ],
+    "node": {
+      "tests": 3137,
+      "passed": 3072,
+      "failed": 0,
+      "skipped": 65,
+      "todo": 0,
+      "cancelled": 0
+    },
+    "rust": {
+      "passed": 912,
+      "failed": 0,
+      "ignored": 593,
+      "summaries": 41
+    },
+    "state_audit_evm": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "summaries": 1
+    }
+  },
+  "acceptance": {
+    "revision": 7,
+    "source_tree": "d25ef2100f7bec0ecc65772f61308c111d8df3fd",
+    "passed": true,
+    "scenario_count": 15,
+    "scenarios": [
+      {
+        "name": "Original provider execution, persisted checks and native publication",
+        "passed": true
+      },
+      {
+        "name": "Stale source, version, head and widened authority rejected",
+        "passed": true
+      },
+      {
+        "name": "Actual App authorizes one separate correction with exact replay",
+        "passed": true
+      },
+      {
+        "name": "Inherited contracts, residual budgets and remaining attempts",
+        "passed": true
+      },
+      {
+        "name": "Actual App opens and explicitly starts the correction mission",
+        "passed": true
+      },
+      {
+        "name": "Runner preserves exact seed ancestry and reruns every saved check",
+        "passed": true
+      },
+      {
+        "name": "Pending correction fences adoption and publication; requester cannot review",
+        "passed": true
+      },
+      {
+        "name": "Actual App records fresh independent fixture review",
+        "passed": true
+      },
+      {
+        "name": "Actual App adopts the verified correction; replay preserves lineage",
+        "passed": true
+      },
+      {
+        "name": "Drifted predecessor PR rejected before superseding remote effects",
+        "passed": true
+      },
+      {
+        "name": "Recovery and repeated publication create one superseding branch and PR",
+        "passed": true
+      },
+      {
+        "name": "Actual App history and exact correction navigation survive reload and mobile layout",
+        "passed": true
+      },
+      {
+        "name": "Second original publication for explicit abandonment",
+        "passed": true
+      },
+      {
+        "name": "Actual App explicitly abandons unstarted work with terminal replay",
+        "passed": true
+      },
+      {
+        "name": "Completed replay also fails closed on a native predecessor branch advance",
+        "passed": true
+      }
+    ],
+    "services_stopped": {
+      "web": true,
+      "server": true,
+      "acceptance": true,
+      "runner": true,
+      "postgres": true
+    },
+    "database_stop_exit_code": 0
+  },
+  "fixture_normalization": {
+    "path": "issue95-fixture-eof-normalization-r1.json",
+    "sha256": "136db664b5e2ddc4888fbe76915b15a2e0e6ee13008c0f3d9df1b82c30ecb99b",
+    "fixture": "apps/web/src/missionResultFixtures.mjs",
+    "original_sha256": "7876aeb317b207f7529588b2bef6ea565b20e0252481736c0397873258a4b1d3",
+    "published_sha256": "2de6dded94877062c418c2e5d06226f6a5b9a0863e2fca480a23de2bfa4a57e3",
+    "canonical_tested_tree": "d25ef2100f7bec0ecc65772f61308c111d8df3fd",
+    "reviewed_source_tree": "5072c911cf980d5b48ed78e6d946f491eef94a1a",
+    "original_physical_files_sha256": "e91923c7ac52a703ffe4f2164eaf71d004b10bc1135ed42e04167a126c0e07f0",
+    "current_physical_files_sha256": "cb56fa8c97966de2dddc516101a1f8bf6aee7429b51b1194aaa4a4f0138ab4be",
+    "test_summaries": [
+      "ℹ tests 47",
+      "ℹ pass 47",
+      "ℹ fail 0",
+      "ℹ cancelled 0",
+      "ℹ skipped 0",
+      "ℹ todo 0"
+    ],
+    "scope": "Canonical R3 and acceptance R7 retain their original common manifest. Only this test-only EOF normalization occurred afterward; its two importing test modules ran on the reviewed source. No runtime/dependency behavior changed."
+  },
+  "criteria": [
+    {
+      "criterion": "Explicit review-revision state preserves accepted deliverable",
+      "implementation": [
+        "crates/crony-store/src/factory_review_revision.rs",
+        "crates/crony-store/src/factory_review_revision/settlement.rs",
+        "db/migrations/0059_factory_review_revisions.sql"
+      ],
+      "scenarios": [
+        2,
+        8,
+        13
+      ]
+    },
+    {
+      "criterion": "Typed attributed findings bound to publication and PR",
+      "implementation": [
+        "crates/crony-domain/src/factory_review_revision.rs",
+        "crates/crony-server/src/factory_review_revision.rs"
+      ],
+      "scenarios": [
+        1,
+        2,
+        11
+      ]
+    },
+    {
+      "criterion": "Separate isolated correction derived from the exact published source",
+      "implementation": [
+        "crates/crony-runner/src/publication_source.rs",
+        "crates/crony-runner/src/review_revision.rs"
+      ],
+      "scenarios": [
+        4,
+        5
+      ]
+    },
+    {
+      "criterion": "Authority inherits exact repository, base, scope, tools and residual budgets",
+      "implementation": [
+        "crates/crony-domain/src/factory_review_revision.rs",
+        "crates/crony-store/src/factory_review_revision/lifecycle.rs",
+        "crates/crony-store/src/factory_review_revision/dispatch.rs"
+      ],
+      "scenarios": [
+        1,
+        3,
+        5
+      ]
+    },
+    {
+      "criterion": "Retain saved verifier checks and require fresh independent review",
+      "implementation": [
+        "crates/crony-domain/src/factory_review_revision.rs",
+        "crates/crony-store/src/factory_review_revision/settlement.rs",
+        "crates/crony-store/src/factory_review_revision_tests.rs"
+      ],
+      "scenarios": [
+        3,
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "criterion": "One explicit provenance-bound superseding publication",
+      "implementation": [
+        "crates/crony-store/src/publication.rs",
+        "crates/crony-cli/src/publish_review_revision.rs",
+        "crates/crony-cli/src/publish.rs"
+      ],
+      "scenarios": [
+        8,
+        10,
+        11
+      ]
+    },
+    {
+      "criterion": "Idempotent recovery avoids duplicate branches, PRs and Project transitions",
+      "implementation": [
+        "crates/crony-store/src/factory_review_revision.rs",
+        "crates/crony-store/src/factory_review_revision/settlement.rs",
+        "crates/crony-cli/src/publish.rs",
+        "apps/web/src/reviewRevisionOperations.ts"
+      ],
+      "scenarios": [
+        2,
+        8,
+        10,
+        13,
+        14
+      ]
+    },
+    {
+      "criterion": "UI retains original publication, findings, correction run, result and recorded review head",
+      "implementation": [
+        "apps/web/src/ReviewRevisionPanel.tsx",
+        "apps/web/src/missionResultContext.ts",
+        "apps/web/src/App.tsx"
+      ],
+      "scenarios": [
+        2,
+        4,
+        7,
+        8,
+        11,
+        13
+      ]
+    },
+    {
+      "criterion": "Manual unverified predecessor branch changes fail closed",
+      "implementation": [
+        "crates/crony-cli/src/publish_review_revision.rs",
+        "crates/crony-cli/src/publish.rs"
+      ],
+      "scenarios": [
+        9,
+        14
+      ]
+    }
+  ],
+  "scenario_indices_are_zero_based": true,
+  "qualifications": [
+    "After canonical R3 and acceptance R7, one redundant final LF was removed from the test-only missionResultFixtures.mjs. Both importing test modules passed afterward on the recorded current manifest. The original common canonical/acceptance manifest is retained separately; all other 7,396 source files and every runtime/dependency byte remain unchanged. No new full canonical or acceptance run is claimed. Public evidence copies independently normalize redundant EOF blank lines; original receipts remain unchanged. Failed publication R5 and its full packet are retained.",
+    "This packet records development validation and AI implementation self-review. It is not an independent GitHub approval, human decision, merge or issue closure.",
+    "Acceptance R7 passed 15 scenarios through real Chrome/App, server, PostgreSQL, runner and native Git. Provider execution is fake-process, GitHub is a fake boundary, principals are development fixtures and publication uses an owned bare remote. No live-provider or external-publication acceptance is claimed. The passing native build was reused because all 289 recorded Cargo/crates/db files and binary hashes were unchanged; this was not a new build.",
+    "The distinct fixture reviewer is automated. Fixture explicit_human metadata is not evidence of a human decision. Screenshots were visually inspected, not an exhaustive accessibility audit.",
+    "Canonical R3, acceptance R7 and Windows-policy R1 match the original 7,397-file manifest before the separately recorded EOF cleanup. Relative to that original source, the older 7,352-file Node parity receipt differs at six #382 paths and lacks 45 incoming evidence files; the 7,349-file focused receipts differ at fourteen paths and lack 48 files, and the earlier frozen-install receipt differs at seventeen paths and lacks those same 48 files. Relative to the reviewed source after cleanup, each of those full-source receipts additionally differs at missionResultFixtures.mjs: seven, fifteen and eighteen differing paths respectively, with unchanged missing-path counts. Windows-policy R1 differs only at that fixture. Native store/build/deliverable/correction and focused late-stop receipts still match their 289-file subsets. All twelve JavaScript dependency manifests, locks and configuration files are unchanged. The source-binding focused_source_comparison arrays use the reviewed post-cleanup source; both complete manifests and exact paths are retained. Earlier or incomplete manifests are not complete-source proof.",
+    "Actual runtime: Node 24.21.0, pnpm 11.19.0, Rust 1.98.1. The repository declares Node 24.19.0. RUST_TEST_THREADS was unset; reviewed prerequisite #382 selects Cargo's native --test-threads=1 for the Windows workspace gate. Linux/macOS retain native default scheduling. No assertion, deadline, workspace membership or required gate was removed.",
+    "Skipped Node and ignored Rust cases are not passes. Counts from canonical, EVM, focused and acceptance lanes overlap and must not be added. Standalone live and immutable replay fixtures remain in their dedicated lanes.",
+    "Earlier acceptance R1-R6 and failing store/UI attempts remain preserved. R1 stopped on a finding-selector timeout, R2 on a fake-provider session-ID assertion, R3 on a Project-transition count assertion and R4 on an overly narrow expected-error regex. R5 and R6 passed on earlier manifests; R7 provides new combined-source evidence without rewriting those attempts.",
+    "Canonical R1 exited 1: 3,135 Node tests, 3,055 passed, 15 failed and 65 skipped; the five later gates did not run. Eleven failures used a nonfunctional Windows Store Python alias, two lacked optional locked Teams dependencies, one recurrence assertion matched the checkout directory name, and one required review of deliberate native selection fingerprint drift. The failed receipt/log and isolated recurrence reproduction remain in history. Current runs prepend working Python locally, install the unchanged Teams lock with scripts disabled, and include two reviewed test corrections. These changes do not weaken product checks or grant new execution authority.",
+    "Canonical R2 exited 1 on its unchanged 7,352-file source. Node passed 3,070 of 3,135 cases with 65 skips and no failures. Rust stopped at 646 passed, 1 failed, 9 ignored across 31 summaries; the failing runner binary recorded 298 passed, 1 failed, 5 ignored. Web gates did not complete. The existing late-stop fixture exceeded its 15-second pre-stop upload setup wait. A focused unchanged-source rerun passed one case with 303 filtered; it is not full-suite or causal proof.",
+    "Temporary unchanged-assertion diagnostics exited wrapper 1/Cargo 101 with 297 passed, 2 failed, 5 ignored. Upload setup measured 16,835 ms against 15,000 ms; the later stop took 1 ms against 10,000 ms. A second verifier-start setup wait also failed. Exact original source bytes were restored before integration. Failed logs, diagnostic source/restoration receipts and owned fixtures are retained. These observations and #382 scheduling do not establish a cause or repair for #213's historical parallel failures.",
+    "The accepted source, original publication and provider workspace remain immutable. This implementation creates a separately authorized correction mission and one explicit superseding PR. Supersession does not merge or close either PR.",
+    "Required hosted CI, CodeQL, code-quality and security gates remain unavailable while GitHub Actions is disabled. PRs #390 and #382 are exact preserved parents of the ordinary local integration commit; this does not merge either GitHub PR. The draft is stacked on #390. Issue #95 remains open; no reviewer-only override, bypass or clean historical Cargo advisory audit is claimed.",
+    "docs/PROJECT_MEMORY.md is absent from current main. Current tracked product, architecture, security, eval and contributor guidance was read; missing memory was not fabricated.",
+    "The first core evidence scan exited 42 on 96 synthetic fixture UUID aliases in idempotency, decision, retry and settlement fields. Each finding was mapped back to the original fixture UUID in the same named field. The complete failed packet and redacted scanner receipt are retained. Replacement public copies use explicit fixture-reference labels with the same digest suffix. No original receipt, product source, secret rule or ignore policy was changed; security scans are required again.",
+    "Replacement assembly R3 stopped before validation because the receipt projector assumed an object root for the retained array-shaped Gitleaks report. Its partial packet and native failure remain preserved. The new projector preserves array roots unchanged; the actual scanner report and every object receipt were checked without changing tested source or scanner policy.",
+    "Personal paths and authority-bearing strings are redacted. Structured capability values are hashed using the repository sanitizer; synthetic UUID aliases preserve equality. Original and published artifact hashes are recorded separately; original screenshots are unchanged.",
+    "The final publication includes the separately tested cosmetic fixture EOF cleanup and evidence added after full product execution. Evidence validation compares all physical files, reconstructs the source tree, checks the entire named gate argv and full Node discovery, then runs documentation, native personal-path, secret and diff checks."
+  ],
+  "artifacts": [
+    {
+      "source": "issue95-publication-assembly-r7.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-assembly-r7-superseded/assembly.json",
+      "original_sha256": "cb3b345e98d69da912034f8166b045436a0ed58e7e5148d420179213b0581013",
+      "published_sha256": "cb3b345e98d69da912034f8166b045436a0ed58e7e5148d420179213b0581013",
+      "original_bytes": 37189,
+      "published_bytes": 37189,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-assembly-r7-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-assembly-r7-superseded/session-exit.json",
+      "original_sha256": "aa35a4eaa6b33496bf773ab0a2d293f6b200895db43730adf6c7ba557b1c51e3",
+      "published_sha256": "5016f8c4d60189650744531148f79f6cc726643a222d34290c104f814565c2e5",
+      "original_bytes": 684,
+      "published_bytes": 797,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-assembly-superseded-r7/preservation.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-assembly-r7-superseded/preservation.json",
+      "original_sha256": "d76c4808838d2c457d31e629454acd19ca8aa3c0760cb23308601aab865889e5",
+      "published_sha256": "132a8c7abfa957801f6149d0cf58b7c24bba0ab2a03c47567d64ecdfa76a6d99",
+      "original_bytes": 37659,
+      "published_bytes": 37538,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-fixture-eof-normalization-r1.json",
+      "source_root": "run_evidence",
+      "file": "publication-preparation/fixture-eof-normalization.json",
+      "original_sha256": "136db664b5e2ddc4888fbe76915b15a2e0e6ee13008c0f3d9df1b82c30ecb99b",
+      "published_sha256": "87771c4cb1444ff70bc6bab392a7ba2240bc85981b33412caef3996f1d501d00",
+      "original_bytes": 2517633,
+      "published_bytes": 1230866,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-fixture-eof-normalization-r1.log",
+      "source_root": "run_evidence",
+      "file": "publication-preparation/fixture-eof-regressions.log",
+      "original_sha256": "c772eea32f8ea839ef8872b1effaef2a98a553336cefabadb5f856d834130df7",
+      "published_sha256": "c772eea32f8ea839ef8872b1effaef2a98a553336cefabadb5f856d834130df7",
+      "original_bytes": 4814,
+      "published_bytes": 4814,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-fixture-eof-normalization-r1-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "publication-preparation/fixture-eof-session-exit.json",
+      "original_sha256": "1a48b6bb3210af46c08d4370785c04230636ec5fe8dacf3a894bf179bc87743c",
+      "published_sha256": "4fc83c9ce1e7a5732a5d2acfe10a793ba791ee1f9ad995ef54b290991337d80a",
+      "original_bytes": 588,
+      "published_bytes": 701,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-validation-r5.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-validation-r5-failed/receipt.json",
+      "original_sha256": "5d13c284552ac33eaa3647c54b141078c1d46b7bdc3245e45ec420892f5b0f64",
+      "published_sha256": "43af759bc57fb02c03aa43726321bd12615088f446412d51cbbe0e67f4210dcf",
+      "original_bytes": 132640,
+      "published_bytes": 125978,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-validation-r5-diff-check.log",
+      "source_root": "run_evidence",
+      "file": "history/publication-validation-r5-failed/diff-check.log",
+      "original_sha256": "2a898444c2a3ec70a36c51d250fc339a3c7898ef1fcfb3b2ba4270d39390530b",
+      "published_sha256": "2a898444c2a3ec70a36c51d250fc339a3c7898ef1fcfb3b2ba4270d39390530b",
+      "original_bytes": 1439,
+      "published_bytes": 1439,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-validation-r5-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-validation-r5-failed/session-exit.json",
+      "original_sha256": "cd9cb2b1e0c519c7b305ff76c0d860e6ba95d737fb20e284eeb43698af1c8a32",
+      "published_sha256": "b0d7fd2882360aebdff1a34dbad1da59987442bcaf39aabde9508f8d737522fa",
+      "original_bytes": 1651,
+      "published_bytes": 1465,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-validation-failed-r5/preservation.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-validation-r5-failed/preservation.json",
+      "original_sha256": "adb37b8096b5278f38654a554ff9c60f3dad0ebbe53c012d31bcbdef3f6b0f63",
+      "published_sha256": "c9507249b0e1d90a09b1fa136adebb8fac318ee4500a9ead516b1765df8210d8",
+      "original_bytes": 34897,
+      "published_bytes": 34776,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-assembly-r3-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-assembly-r3-failed/session-exit.json",
+      "original_sha256": "381cb69819333a1e1a166885ea2f639fd5e967b81ae12f9b52a14fc40e4985e1",
+      "published_sha256": "2ee408c4928085f5e8dcae521b8b7e1768c38b7a7281b4d7b72b2acb7374bee5",
+      "original_bytes": 1348,
+      "published_bytes": 1172,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-assembly-r3-failed/preservation.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-assembly-r3-failed/preservation.json",
+      "original_sha256": "ccd5a078df2201f8e57fcdae390de43366ae80d765d30a02d8a13e2ed961ccdc",
+      "published_sha256": "9bcaa6af8956ef57d3df6d792ca1b1594a7764c02e1839d30d8a72df88736a7c",
+      "original_bytes": 4830,
+      "published_bytes": 4721,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-json-projection-r2.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-assembly-r3-failed/projection-regression.json",
+      "original_sha256": "b32b2ad42bbd94f1bb897194c52516055049d516d26b0d08d41caf6b050592a6",
+      "published_sha256": "b32b2ad42bbd94f1bb897194c52516055049d516d26b0d08d41caf6b050592a6",
+      "original_bytes": 862,
+      "published_bytes": 862,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-prepare-r4-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-prepare-failed-r4/session-exit.json",
+      "original_sha256": "b657eeeb9430db5bd67284211f09a997be3532e48a28912085eac689b26538b7",
+      "published_sha256": "b399194fa2891d28f5052edd33acc0db7a0d6587a52b12cb2aac7dc602d43b4b",
+      "original_bytes": 700,
+      "published_bytes": 738,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-validation-r1.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-validation-failed-r1/receipt.json",
+      "original_sha256": "056c4ff0e42366fcd9ac3bde7dce3136891afc644feb796c3bde81dc6fe9f5b7",
+      "published_sha256": "942315004a685e9a1e8ce69030ec241090be6cf9a457e63a96484431f8e5e5c1",
+      "original_bytes": 77244,
+      "published_bytes": 48472,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-validation-r1-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-validation-failed-r1/session-exit.json",
+      "original_sha256": "06c72a67e4d677cf5bde0b03b81e92a42916b0609416be8df6b283abec803551",
+      "published_sha256": "bfcea2c1e0fe0d77ad4e67473c3706ba4c86d15504a690cca89b87557b580310",
+      "original_bytes": 1686,
+      "published_bytes": 1510,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-validation-r1-packet-redacted.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-validation-failed-r1/redacted-findings.json",
+      "original_sha256": "7a46bb1cf28c698bae33bdadb8527515795704eb863b1d38d44742fe508f4ddd",
+      "published_sha256": "cc58595bdfb06b394354ec1d6b01f1abef4c807dde6415129e99c55167e499bc",
+      "original_bytes": 77480,
+      "published_bytes": 82088,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-validation-r1-packet.log",
+      "source_root": "run_evidence",
+      "file": "history/publication-validation-failed-r1/gitleaks.log",
+      "original_sha256": "eb71ad1df7f8df51596d590d95cbf39ce6e8baee1d10b7f18b32f62817492b0e",
+      "published_sha256": "eb71ad1df7f8df51596d590d95cbf39ce6e8baee1d10b7f18b32f62817492b0e",
+      "original_bytes": 82,
+      "published_bytes": 82,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-validation-r1-docs.log",
+      "source_root": "run_evidence",
+      "file": "history/publication-validation-failed-r1/docs.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "published_bytes": 0,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-validation-r1-repository-docs.log",
+      "source_root": "run_evidence",
+      "file": "history/publication-validation-failed-r1/repository-docs.log",
+      "original_sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "published_sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "original_bytes": 276,
+      "published_bytes": 276,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-validation-r1-personal-paths.log",
+      "source_root": "run_evidence",
+      "file": "history/publication-validation-failed-r1/personal-paths.log",
+      "original_sha256": "7eb5fcc984d90e0ebcb02fadf8bc0f4128ac8bd0d3333f4b954ab0890e9c57fc",
+      "published_sha256": "7eb5fcc984d90e0ebcb02fadf8bc0f4128ac8bd0d3333f4b954ab0890e9c57fc",
+      "original_bytes": 40,
+      "published_bytes": 40,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-assembly-r1.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-validation-failed-r1/original-assembly.json",
+      "original_sha256": "7d70c66a3b815cfc5ad49184682b3f9b4bd8e55fe4f49dd44337569fa2ba1a11",
+      "published_sha256": "7d70c66a3b815cfc5ad49184682b3f9b4bd8e55fe4f49dd44337569fa2ba1a11",
+      "original_bytes": 29636,
+      "published_bytes": 29636,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-fixture-alias-triage-r1.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-validation-failed-r1/triage.json",
+      "original_sha256": "488aaa9045f2ab33603230ca93a4d0d7e51b809f24d9d1e7430d66db6dd403b8",
+      "published_sha256": "e3d731e1b3cbe885fcbbf22bdb88b31153f29a55882caa8dbc58e0d72bf35a87",
+      "original_bytes": 22448,
+      "published_bytes": 22555,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-validation-failed-r1/preservation.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-validation-failed-r1/preservation.json",
+      "original_sha256": "3b4b032636d5688c078b26318f29c6df7521f18c1dc8df7d738d49fa5f7e7bc3",
+      "published_sha256": "c12257d959d2ad45149e80707e0cf275f555cb691b7d0be370b87a56fd37e894",
+      "original_bytes": 32529,
+      "published_bytes": 31812,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-canonical-r3.json",
+      "source_root": "run_evidence",
+      "file": "canonical/driver.json",
+      "original_sha256": "5c84db377bcb011e8ca2bac5621a116b64642d3dab96eadda09b4106eef740bf",
+      "published_sha256": "6b313ff62cdeda3b88282facc08a629878f983b69aba0b458228796ce3ef9f3a",
+      "original_bytes": 1395464,
+      "published_bytes": 5237,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "output/readiness/2026-10-01T06-03-58-183Z-dd24fec6-a498-4957-9d3c-07429a655d90-full.json",
+      "source_root": "reviewed_checkout",
+      "file": "canonical/report.json",
+      "original_sha256": "af6a0b1c09f3fedee92de66dec55e42ae69f67ddfcc985af6cbeafa3053dbbea",
+      "published_sha256": "45932c3181716cb4904a91da03390d7cdf1dad7f040fbf7e2457f0488b9ad089",
+      "original_bytes": 604901,
+      "published_bytes": 13626,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-canonical-r3.log",
+      "source_root": "run_evidence",
+      "file": "canonical/pnpm-check.log",
+      "original_sha256": "a171375826aa8f81fea6e3292d2c69bb91c2c1c97ff39eb82de178378c36cb1f",
+      "published_sha256": "dbe50fd60175ad8c4a97ad6071f2a42b2c94fd24e2b4c69d9bda22b9f995fa6a",
+      "original_bytes": 10036,
+      "published_bytes": 9732,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-canonical-r3-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "canonical/session-exit.json",
+      "original_sha256": "2a462689fa6c9e54f714367f8904b148934328741aa056adc52f179a68dc7977",
+      "published_sha256": "55517498091bd81b11734fd1ea46b6f4607e21f62df219ea1a5907627918a03c",
+      "original_bytes": 9002,
+      "published_bytes": 8820,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-assembly-failed-r1-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-assembly-failed-r1.json",
+      "original_sha256": "e18b98472c0cb325f09cd2c545a2b80ddbe35f4a294ad5ba4ccf3ebfe6702be8",
+      "published_sha256": "01c83f487c6b2749d4a4d1ca8ee823e67bbdfea6604324c1d1fc49a2d8c75e50",
+      "original_bytes": 1665,
+      "published_bytes": 1429,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-assembly-failed-r2-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-assembly-failed-r2.json",
+      "original_sha256": "b0448f6b3402ee5c0d1110ded00b23a2402b73bd639ee2d739a37ab1f7dd0b52",
+      "published_sha256": "2056633c34c73f2f19a4aa3d2c086c85a51e2625c5a7dc4b0378863e000034c8",
+      "original_bytes": 1668,
+      "published_bytes": 1408,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-assembly-failed-r3-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-assembly-failed-r3.json",
+      "original_sha256": "93911f1e1bf462db0ede286a14d202e6aae1b4486ad10e87907085680c84f96f",
+      "published_sha256": "8a5a9cbb39d38c1686d8cec8f33acc0c33b843eafc72586c1ebfe79b3e4419e0",
+      "original_bytes": 788,
+      "published_bytes": 756,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-assembly-failed-r3/preservation.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-assembly-failed-r3-preservation.json",
+      "original_sha256": "95a2dc3dd1906ed3742ab1686155b4f1170145c82209cf8fe24260b79bf8f752",
+      "published_sha256": "80346f2aafa5e4a9e1939502653ba039f9da64d7078b5c83c1bf08e5f0855448",
+      "original_bytes": 798,
+      "published_bytes": 666,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-assembly-failed-r2/preservation.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-assembly-failed-r2-preservation.json",
+      "original_sha256": "9c2669ecf0012142173f7bf29d8024cc09561b64886ee742f30afb5ace5a5ee5",
+      "published_sha256": "177adcf3ddf3acef14361ce593f478b409758eefedfd6f177b18665cdb700f0d",
+      "original_bytes": 6433,
+      "published_bytes": 6223,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-projection-r1.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-projection-r1.json",
+      "original_sha256": "61d259d2458b9abc8b4d80e833ffa6c41cb96756c27af9c33774b0398e30be43",
+      "published_sha256": "c61c611007ee6e0ce4175fc2062c88814400dfa8cebc6d64f8e0a888a377ac0b",
+      "original_bytes": 1021,
+      "published_bytes": 1001,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-projection-r1-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/publication-projection-r1-session-exit.json",
+      "original_sha256": "43b280ab8e3328c162cdff362931ce528cde7b089de90107269cfb424361e2ec",
+      "published_sha256": "bbf9c5c736d48810907aa3bdc5d0cd67fb8107a3dbdb97fa5b797cd568ab9416",
+      "original_bytes": 365,
+      "published_bytes": 479,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-cargo-binary-guard-r1.json",
+      "source_root": "run_evidence",
+      "file": "history/cargo-binary-guard-r1.json",
+      "original_sha256": "ec25c205945ff525aeef25700b838588bced4e401730f5119f07e963577d7a39",
+      "published_sha256": "a8a82c6a75b84bd64921f71bcf3d13d55aaa959a1a3548078825a60d1e8d4116",
+      "original_bytes": 1616,
+      "published_bytes": 1574,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-cargo-binary-guard-r1-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/cargo-binary-guard-r1-session-exit.json",
+      "original_sha256": "ebc90300956929c22bdf268220084af744dd3cf5f1bc3cc7e026be6d68629ef7",
+      "published_sha256": "2187247407b3a914c87751e19f8704f8480903f0cccefd5adfa2c28e99fb2db8",
+      "original_bytes": 981,
+      "published_bytes": 946,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-cargo-binary-guard-r1.md",
+      "source_root": "run_evidence",
+      "file": "history/cargo-binary-guard-r1.md",
+      "original_sha256": "25573df0b0597a3f492aa1294aa99c84545e40474de43fec71c2c9f556403026",
+      "published_sha256": "25573df0b0597a3f492aa1294aa99c84545e40474de43fec71c2c9f556403026",
+      "original_bytes": 1927,
+      "published_bytes": 1927,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-cargo-binary-guard-r2.json",
+      "source_root": "run_evidence",
+      "file": "history/cargo-binary-guard-r2.json",
+      "original_sha256": "696c3952b05003cd251a1b327255fe9a68e1196a8df0bcdaa01735ea87360ff7",
+      "published_sha256": "d047de91934794c6793554dca1497ea1764a4d38b8d3fdc805bd8444aa20db52",
+      "original_bytes": 9652,
+      "published_bytes": 9477,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-cargo-binary-guard-r2-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/cargo-binary-guard-r2-session-exit.json",
+      "original_sha256": "0c7e25e39fe94bc4d48ef867509b4c45bc6efb3c19b63598132592aab5745145",
+      "published_sha256": "bebd5324ff84beef6b2dab7fabc735917decb22ddfe55036d16e4cb93bed09a9",
+      "original_bytes": 454,
+      "published_bytes": 555,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-publication-scope-correction-r2.md",
+      "source_root": "run_evidence",
+      "file": "history/publication-scope-correction-r2.md",
+      "original_sha256": "0380f77c49359212365992c4ff231d2b28f3a5c4f35899858b5dfa985d841bb9",
+      "published_sha256": "0380f77c49359212365992c4ff231d2b28f3a5c4f35899858b5dfa985d841bb9",
+      "original_bytes": 2439,
+      "published_bytes": 2439,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-design-r1.md",
+      "source_root": "run_evidence",
+      "file": "history/design-r1.md",
+      "original_sha256": "4d1cd82a9287aedf18113469eb8afda6f582e29092c74b2bcc1048452cd64e9a",
+      "published_sha256": "ade8de7afe0a4f125fb821900f945ebb2a74af8846414955a2e593759663762b",
+      "original_bytes": 4023,
+      "published_bytes": 3974,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-canonical-r1.json",
+      "source_root": "run_evidence",
+      "file": "history/canonical-r1/driver.json",
+      "original_sha256": "3f57cca9593ec09bce00c024124feb97d5cf4e08a882306fe0058aa8115592bc",
+      "published_sha256": "2f13f9fc6835782781e9e03be17adf5b87bb48e3f2183c13d21fd10f8adc2ef2",
+      "original_bytes": 1382224,
+      "published_bytes": 5588,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-canonical-r1.log",
+      "source_root": "run_evidence",
+      "file": "history/canonical-r1/pnpm-check.log",
+      "original_sha256": "872115ec3c5b17cc75b5798fba984605e901c9a5781abf29f5c61997a4b5fcc7",
+      "published_sha256": "b1ad7910ab6ac99c9d930a259e1c3e4e77746e4a0cd30bece208b41d03b03b4d",
+      "original_bytes": 786321,
+      "published_bytes": 762573,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-canonical-r1-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/canonical-r1/session-exit.json",
+      "original_sha256": "12e64ea6e70001dc3230c3360c2ef7eded719704b88270e03e3dcd85a754ac45",
+      "published_sha256": "c9ad418b3ef84e5256858c3f4256cbfb21d7a341ac390e32392d2ca5f634ade7",
+      "original_bytes": 507,
+      "published_bytes": 482,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "output/readiness/2026-10-01T04-04-39-554Z-d87bc756-e592-4286-aef7-a59ad088b176-full.json",
+      "source_root": "reviewed_checkout",
+      "file": "history/canonical-r1/report.json",
+      "original_sha256": "43d7c0c9c8073a46f8b316c4cefbfc7f63ca1a9355c4de8c2cf876086f6958e1",
+      "published_sha256": "27096c9cbc49b8b7f4c6b2ac7847c072da23cfabdd0e4eac667712190be8b55f",
+      "original_bytes": 599156,
+      "published_bytes": 599144,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-canonical-r2.json",
+      "source_root": "run_evidence",
+      "file": "history/canonical-r2/driver.json",
+      "original_sha256": "71e666be99cebfbca00ec027cf536a24bf800b79536bab3e2b3caf9c642a6ba8",
+      "published_sha256": "998bc949e23ed4d8f9f9c9268f401b7f579192e0e1fd550dc21fe54727c1dc0f",
+      "original_bytes": 1385383,
+      "published_bytes": 8617,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-canonical-r2.log",
+      "source_root": "run_evidence",
+      "file": "history/canonical-r2/pnpm-check.log",
+      "original_sha256": "10bb457cbfc54be12d55ff4e7d81d302f497c160d01038c6c23fef55d50d84b9",
+      "published_sha256": "d79bc20f70adb29fbab7e62dd893dd8962c3bb3c7900aa6179d800b1417f1c50",
+      "original_bytes": 81743,
+      "published_bytes": 79533,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-canonical-r2-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/canonical-r2/session-exit.json",
+      "original_sha256": "985ee6dccbb8965a704d2f2c02826e56aab358cd2a7df79477c8ea169f216042",
+      "published_sha256": "54218c24161b0dca100d4f3cf9780d57925f108b9cfbed965dff6534a561069a",
+      "original_bytes": 148,
+      "published_bytes": 147,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "output/readiness/2026-10-01T04-53-05-705Z-789d5fb6-9ed5-445a-a360-0b06ae61b9b6-full.json",
+      "source_root": "reviewed_checkout",
+      "file": "history/canonical-r2/report.json",
+      "original_sha256": "dc8b40c783b68e116994ee2d813c2d19e7afdc42a08316d0e022009760f726ec",
+      "published_sha256": "448f96bd0af647834721b360423063e96b8fb12a26ff746f44f28ad7221fb1e4",
+      "original_bytes": 600173,
+      "published_bytes": 600161,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-selection-parity-r2.md",
+      "source_root": "run_evidence",
+      "file": "history/selection-parity-r2.md",
+      "original_sha256": "10a894a5be8cdb08a8a5899f25a045152b214de93ec2eb01683b3c4fd34d2c17",
+      "published_sha256": "10a894a5be8cdb08a8a5899f25a045152b214de93ec2eb01683b3c4fd34d2c17",
+      "original_bytes": 4363,
+      "published_bytes": 4363,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r7-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "acceptance/session-exit.json",
+      "original_sha256": "15b1c6c85c4a6b24bdb99d509e4a1a083d541ddea0b4f21d7d5642de190576ae",
+      "published_sha256": "7d9af4bca4adb89bcf7956be3e5374ee100e4aac19125a1c0352a78e54913ecf",
+      "original_bytes": 1333,
+      "published_bytes": 1367,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r7-screenshot-review.json",
+      "source_root": "run_evidence",
+      "file": "acceptance/screenshot-review.json",
+      "original_sha256": "bf55115a24113fa1703f3bac32f2039d729a0f8c772060bf1d0e8c632180894f",
+      "published_sha256": "bf55115a24113fa1703f3bac32f2039d729a0f8c772060bf1d0e8c632180894f",
+      "original_bytes": 3164,
+      "published_bytes": 3164,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r7-preflight.json",
+      "source_root": "run_evidence",
+      "file": "acceptance/preflight.json",
+      "original_sha256": "2fc87c81a75dcb5fd087917b294cb9bd37a4f6802cdcd9e88300326526cab950",
+      "published_sha256": "a43d692c201e849dd9de51098a44149b4fecac1c2fa48232b247103dc2d605a6",
+      "original_bytes": 1438,
+      "published_bytes": 1383,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r7-verification.json",
+      "source_root": "run_evidence",
+      "file": "acceptance/verification.json",
+      "original_sha256": "880a83011239a5f69c03d1f12cb431f22795253581866059451d69f3989da38e",
+      "published_sha256": "2454c54b0ed6de5568eaefe80bbbed62fbc664ee47c8eed592f8db1d1a61b013",
+      "original_bytes": 3928,
+      "published_bytes": 4036,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-windows-prerequisite-r1/integration.json",
+      "source_root": "run_evidence",
+      "file": "history/windows-prerequisite/integration.json",
+      "original_sha256": "1d606291400039971414588a4eeea717692b85d0f7e32c934ffc1f89e6617946",
+      "published_sha256": "c361b026caf1306d07f4c0b01b3b7fc85971f6cb27bae30d30a7e5eed49347f3",
+      "original_bytes": 15163,
+      "published_bytes": 14773,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-windows-prerequisite-r1-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/windows-prerequisite/session-exit.json",
+      "original_sha256": "1a13cc6f3673d4dc5a657362e623219b2fdbb5da824a1fca7547b5bb2b09add6",
+      "published_sha256": "e7486feb17ec2dcb31abc6780ce07c149037eb6166e1aff1055cedfe794319c5",
+      "original_bytes": 278,
+      "published_bytes": 272,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-late-stop-diagnostic-runner-r1.json",
+      "source_root": "run_evidence",
+      "file": "history/late-stop-diagnostic/driver.json",
+      "original_sha256": "b75b6f80b93243812fd2a5318a856d98a8645dbf37df75b5241bcca8aaa5823b",
+      "published_sha256": "7fe1872d66d3353507ddd50e91a96baba5d86f9028982457376a2e0a29e9081f",
+      "original_bytes": 47655,
+      "published_bytes": 577176,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-late-stop-diagnostic-runner-r1.log",
+      "source_root": "run_evidence",
+      "file": "history/late-stop-diagnostic/runner.log",
+      "original_sha256": "f13cbcb0460f6b028dfad7d0df10cc684c429538becbe9772da6aead7aeb8a34",
+      "published_sha256": "3ab86d52ad88468a60918a5c1a3a76b8a5a836cd052d1b7550ae4323a0543eb0",
+      "original_bytes": 53730,
+      "published_bytes": 52571,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-late-stop-diagnostic-runner-r1-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/late-stop-diagnostic/session-exit.json",
+      "original_sha256": "276cf85f5802b9fe9742330c810014c4ee2c7a245902e234aa6299b86f7ac7f0",
+      "published_sha256": "276cf85f5802b9fe9742330c810014c4ee2c7a245902e234aa6299b86f7ac7f0",
+      "original_bytes": 805,
+      "published_bytes": 805,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-late-stop-diagnostic-source-r1.json",
+      "source_root": "run_evidence",
+      "file": "history/late-stop-diagnostic/source.json",
+      "original_sha256": "16d167d73e9e21b4f3f961becdfa642c3f40ab7bc247282e32c8b236fb232f39",
+      "published_sha256": "db9f52dd8ca5ab502e799674d0b98a5f1ec75f5cb12c3018d7d567e3ca530f3f",
+      "original_bytes": 1123,
+      "published_bytes": 982,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-late-stop-diagnostic-restoration-r1.json",
+      "source_root": "run_evidence",
+      "file": "history/late-stop-diagnostic/restoration.json",
+      "original_sha256": "a70608ec140258260dc633e284f64b7c0e452495f879a6fe4528513d5098ed34",
+      "published_sha256": "e5b99fd86e8add2be293c894e8a60b168530b08fe496bd68a454822874dc100c",
+      "original_bytes": 316,
+      "published_bytes": 261,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r7/acceptance.json",
+      "source_root": "run_evidence",
+      "file": "acceptance/acceptance.json",
+      "original_sha256": "8b04cf79016a2148e50e1a76ffa3680a641675d0c3c54d12322923506d4f04a6",
+      "published_sha256": "fb0ff672f3e3dd3a6d784ee54832917ea56dda767ce16813984ff9601aea3699",
+      "original_bytes": 1503628,
+      "published_bytes": 142432,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r7/driver.json",
+      "source_root": "run_evidence",
+      "file": "acceptance/driver.json",
+      "original_sha256": "d55c7556eb13d86da22524b4601df8e28ba9b02ff9e7582bbc105746a9e160a0",
+      "published_sha256": "e1acff29f3cf427d48b5be86e4bf6f75a42712cfec294a36402f4b8878167d98",
+      "original_bytes": 604,
+      "published_bytes": 457,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r7/owned-fixture.json",
+      "source_root": "run_evidence",
+      "file": "acceptance/owned-fixture.json",
+      "original_sha256": "66880e0ec4eb915e33ebe36be9f70ef547e3b492fcce0648453f6c5a1af06a31",
+      "published_sha256": "10d6934a66c1b846bf9eb4cd3dd89f478c70b3ec27e56428f0c3d1f17b33d54d",
+      "original_bytes": 3872,
+      "published_bytes": 3393,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r7/server-native-identity.json",
+      "source_root": "run_evidence",
+      "file": "acceptance/server-native-identity.json",
+      "original_sha256": "e8ad7d328136990e0a8f264ad034d0068291ff648bd67088aa239a18c0a8d140",
+      "published_sha256": "46e319d77507d6b424629b2f48e36fb8ac1257da4b43f6236db9b44a574db08d",
+      "original_bytes": 736,
+      "published_bytes": 616,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r7/web-native-identity.json",
+      "source_root": "run_evidence",
+      "file": "acceptance/web-native-identity.json",
+      "original_sha256": "0945400d1edaa70defdf0e5c530586b37a7b4039d1d2765f3a2dad9bcd231b9c",
+      "published_sha256": "7181c038ff8bbf8b546ab30a050b964f0a80f3e3920e9a7f8fb4204bbfdf69ec",
+      "original_bytes": 712,
+      "published_bytes": 678,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r7/correction-awaiting-review.png",
+      "source_root": "run_evidence",
+      "file": "acceptance/correction-awaiting-review.png",
+      "original_sha256": "490b8c6ae50c76daaa567ebdc3c6e5036a4212cb87bc2f0242556385ded2d810",
+      "published_sha256": "490b8c6ae50c76daaa567ebdc3c6e5036a4212cb87bc2f0242556385ded2d810",
+      "original_bytes": 354677,
+      "published_bytes": 354677,
+      "treatment": "Original PNG capture bytes; visually inspected in the implementation pass."
+    },
+    {
+      "source": "issue95-acceptance-r7/correction-published-history.png",
+      "source_root": "run_evidence",
+      "file": "acceptance/correction-published-history.png",
+      "original_sha256": "c204ab57c8bfa728a9485d130beb124f8a91465a8ccba6fbbfa6fd3ebed5bee4",
+      "published_sha256": "c204ab57c8bfa728a9485d130beb124f8a91465a8ccba6fbbfa6fd3ebed5bee4",
+      "original_bytes": 380957,
+      "published_bytes": 380957,
+      "treatment": "Original PNG capture bytes; visually inspected in the implementation pass."
+    },
+    {
+      "source": "issue95-acceptance-r7/correction-mobile.png",
+      "source_root": "run_evidence",
+      "file": "acceptance/correction-mobile.png",
+      "original_sha256": "adcdff9c2dc0004e52449321db70f3b70da6000f7f4ad66612f291fbdb18494b",
+      "published_sha256": "adcdff9c2dc0004e52449321db70f3b70da6000f7f4ad66612f291fbdb18494b",
+      "original_bytes": 356161,
+      "published_bytes": 356161,
+      "treatment": "Original PNG capture bytes; visually inspected in the implementation pass."
+    },
+    {
+      "source": "issue95-acceptance-r7/acceptance-20261001T061529503-2036506cdb8249cca699941979a20108.stderr.log",
+      "source_root": "run_evidence",
+      "file": "acceptance/acceptance-20261001T061529503-2036506cdb8249cca699941979a20108.stderr.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "published_bytes": 0,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r7/acceptance-20261001T061529503-2036506cdb8249cca699941979a20108.stdout.log",
+      "source_root": "run_evidence",
+      "file": "acceptance/acceptance-20261001T061529503-2036506cdb8249cca699941979a20108.stdout.log",
+      "original_sha256": "34ecb5f5067145f3ff874f6a892576e84d5fa19599855e7b98bf4a7251689aed",
+      "published_sha256": "9dc7f5036ca50d8ac7f6839f93637f35f9376c953adf0968ce46633995a975b1",
+      "original_bytes": 1246,
+      "published_bytes": 1234,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-store-r4.json",
+      "source_root": "run_evidence",
+      "file": "focused/store-r4.json",
+      "original_sha256": "772ba5307d628eafb3cee1a63eb803067e831de99f31a666a4bca74ed988177b",
+      "published_sha256": "82a30adde6b4b97f508bf330ad984a0893c674e68dfa69816e788998da1689b0",
+      "original_bytes": 47762,
+      "published_bytes": 577225,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-store-r4.log",
+      "source_root": "run_evidence",
+      "file": "focused/store-r4.log",
+      "original_sha256": "c7ed2a07783aba3ce3c96c60fdc5d7ef2564caa094247164e6531d68f77dc15e",
+      "published_sha256": "3aaadc1bb435428435299e69d73ef91b91b5f7d0baab3682b6f34d62a743983a",
+      "original_bytes": 1411,
+      "published_bytes": 1248,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-native-build-r1.json",
+      "source_root": "run_evidence",
+      "file": "focused/native-build-r1.json",
+      "original_sha256": "6dbb3309948bc3042ae4084bae31612fce1336615e1c7088d57246ddfe30fc67",
+      "published_sha256": "3fb90e5efc6455e7bb70487ea02a0d8711c702ed1b04153514a9cecdf057b485",
+      "original_bytes": 47521,
+      "published_bytes": 576986,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-native-build-r1.log",
+      "source_root": "run_evidence",
+      "file": "focused/native-build-r1.log",
+      "original_sha256": "a952f9e648598e118482974c2e2effbd1414e1975fb6b5189e4ac12140736d01",
+      "published_sha256": "ce78909944495788dbaa8c9370184f94b0e0829d72efb608a4d1565c1e0aaf24",
+      "original_bytes": 968,
+      "published_bytes": 616,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-domain-runner-r6.json",
+      "source_root": "run_evidence",
+      "file": "focused/domain-runner-r6.json",
+      "original_sha256": "fa14d8040012e145cfe7a83f37db5449286a7a27498245547fabead8b2e1f632",
+      "published_sha256": "ac3b8a2b512df9acd9410179a5d1e25cfd3fe71e522a3f542c3be588a16dfaf7",
+      "original_bytes": 1381975,
+      "published_bytes": 6141,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-domain-runner-r6.log",
+      "source_root": "run_evidence",
+      "file": "focused/domain-runner-r6.log",
+      "original_sha256": "0168d6d050b4b33b5bc6beb17558ef568f8c8a16f050a3b3f10ff1e526731c44",
+      "published_sha256": "884a55e5662389a294f4b13177594a8f3feb1af02d90cde79a2fdb747755735c",
+      "original_bytes": 3551,
+      "published_bytes": 3279,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-web-regressions-r2.json",
+      "source_root": "run_evidence",
+      "file": "focused/web-regressions-r2.json",
+      "original_sha256": "efa77807ed6684621a8770c2bed5f8f8c621f4467bccaf41101073b749928c1a",
+      "published_sha256": "d558c4e186dc278dc3ceffde14048f16ebd77cb15e064e2a2f7bbe54b6e4a85b",
+      "original_bytes": 1381893,
+      "published_bytes": 6058,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-web-regressions-r2.log",
+      "source_root": "run_evidence",
+      "file": "focused/web-regressions-r2.log",
+      "original_sha256": "0af5973a8bff5ecdab83f49107f2d29ab6b72c63b6651c9e1abe90b70dd5f182",
+      "published_sha256": "de4ff61167126a701bd7925801b636de1d9383e742e999a6ce344940d9f10b0a",
+      "original_bytes": 24393,
+      "published_bytes": 23813,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-web-build-r2.json",
+      "source_root": "run_evidence",
+      "file": "focused/web-build-r2.json",
+      "original_sha256": "8d6e47ecc0b1d92a5699e948bffb176951b013fe9a245b0633cb29ef0d9788fb",
+      "published_sha256": "e1a3b3b0661db3048b7622b3cb87fe15253ac0d9467c04a5e31b1210203e44c1",
+      "original_bytes": 1381525,
+      "published_bytes": 5703,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-web-build-r2.log",
+      "source_root": "run_evidence",
+      "file": "focused/web-build-r2.log",
+      "original_sha256": "db04909087a298ea1f2609f30543c19f0ab5ffcf21721e6c9be1f6accd3c602c",
+      "published_sha256": "0d14cc3d338967f2a7ede06a8aecb2753a26c933326cc33ceb5c2e857e2241cd",
+      "original_bytes": 940,
+      "published_bytes": 920,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-web-lint-r2.json",
+      "source_root": "run_evidence",
+      "file": "focused/web-lint-r2.json",
+      "original_sha256": "329039d470cde3f5d5a7b108fb6c6cca1d8bd193e8204e87fdaf8531bce34531",
+      "published_sha256": "18f3441d929d795a1dc077fddebeeb2125f949d3d8cc517a189ab594f22abf6c",
+      "original_bytes": 1381523,
+      "published_bytes": 5701,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-web-lint-r2.log",
+      "source_root": "run_evidence",
+      "file": "focused/web-lint-r2.log",
+      "original_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928",
+      "original_bytes": 38,
+      "published_bytes": 36,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-frozen-install-r1.json",
+      "source_root": "run_evidence",
+      "file": "focused/frozen-install-r1.json",
+      "original_sha256": "874e78f1d02574e917c16512da93d4e895bcb7f9e4ed847ab59c7bc315344e9d",
+      "published_sha256": "12d6963d1b0f89d91ecd250503f99d73e9cf0763d0ed8d73a8ea2c90a5a01925",
+      "original_bytes": 1381554,
+      "published_bytes": 5839,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-frozen-install-r1.log",
+      "source_root": "run_evidence",
+      "file": "focused/frozen-install-r1.log",
+      "original_sha256": "71248183c7ba4c0f9ed36774fc0619f568d98bf3208f325c99d967b07f11191b",
+      "published_sha256": "e2b98d98f8aba76fb2b0d52032463e771dc9f30d0aeb21ac843d6d2ad039429f",
+      "original_bytes": 88,
+      "published_bytes": 85,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-node-prerequisites-parity-r2.json",
+      "source_root": "run_evidence",
+      "file": "focused/node-prerequisites-parity-r2.json",
+      "original_sha256": "d3be1653948f3c0302d128b815b4e5b53e5666e46dddac11f6cda26aa108335d",
+      "published_sha256": "8d2335ba1e709ef421588efcf042101e0e3235c80a1233cdafceb114f141f759",
+      "original_bytes": 1382556,
+      "published_bytes": 5812,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-node-prerequisites-parity-r2.log",
+      "source_root": "run_evidence",
+      "file": "focused/node-prerequisites-parity-r2.log",
+      "original_sha256": "56f4736a9142448709665ba302a5d2b015ff622ffc5e60bbcc66cf1936a5a1ae",
+      "published_sha256": "c1b18b3d8056635a18ac50e8ec9a269ce2a79447fdff0ff655e1cb14c907e5d6",
+      "original_bytes": 10156,
+      "published_bytes": 10039,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-native-deliverable-parity-r2.json",
+      "source_root": "run_evidence",
+      "file": "focused/native-deliverable-parity-r2.json",
+      "original_sha256": "e9668b459dc14df76973373693d1f4193a28fda244c0acf13e4df707754c9b35",
+      "published_sha256": "400ed7108cd1f132434a67fd971a70e8c7c2ed2b7d08a22fa5d82119c7606705",
+      "original_bytes": 47738,
+      "published_bytes": 577201,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-native-deliverable-parity-r2.log",
+      "source_root": "run_evidence",
+      "file": "focused/native-deliverable-parity-r2.log",
+      "original_sha256": "5c012867d7748849ef852ce586b19e5226bc6656580690bea7eec2e4f944a977",
+      "published_sha256": "59ba0b4d1225b56e893a88d7c44d5fe302e612032b491f2721d3ee9b085b8423",
+      "original_bytes": 22485,
+      "published_bytes": 21847,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-native-correction-parity-r2.json",
+      "source_root": "run_evidence",
+      "file": "focused/native-correction-parity-r2.json",
+      "original_sha256": "5b7b2aa1c00867ecb469dc8bcd0119c5fd53414c4a0171b9f0bfb17322dce1fe",
+      "published_sha256": "dd9ff521a80bec6b2dd7a35e1afd8322d8b4a47a259b4d595e5164fd88c56d05",
+      "original_bytes": 47739,
+      "published_bytes": 577202,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-native-correction-parity-r2.log",
+      "source_root": "run_evidence",
+      "file": "focused/native-correction-parity-r2.log",
+      "original_sha256": "ad1de771102ead40f79eb29cdbab567cb1aff3db2ff6df4e071e14b9c3cdede1",
+      "published_sha256": "55d1ae48be7e2add584da356807d458fce64ce0b6e428293af7e21b01a8f5afc",
+      "original_bytes": 2649,
+      "published_bytes": 2536,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-late-stop-focused-r1.json",
+      "source_root": "run_evidence",
+      "file": "focused/late-stop-focused-r1.json",
+      "original_sha256": "f2f057cdda21aec4141d9343cccc51a317009e6e118618aa720c19b9c2c041fd",
+      "published_sha256": "cfbd704da732a1a77164cbcbd5325a2f7ca069acc7e42847a6bd6950c048a906",
+      "original_bytes": 47764,
+      "published_bytes": 577225,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-late-stop-focused-r1.log",
+      "source_root": "run_evidence",
+      "file": "focused/late-stop-focused-r1.log",
+      "original_sha256": "28a6074e34c2ac080f6b9f2f087e951c3f6747a5ac315530328378c7987c1360",
+      "published_sha256": "e6df8b3f2366bdccd7737ac54265899d3dc05f2d36db79bd8d302d2a2fd6b4da",
+      "original_bytes": 400,
+      "published_bytes": 391,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-windows-policy-r1.json",
+      "source_root": "run_evidence",
+      "file": "focused/windows-policy-r1.json",
+      "original_sha256": "d791914bc1c99bd66be25149abbf925cbe4896590da77b74eb797792eecbae2e",
+      "published_sha256": "a5b1946f15e9bb7981a24d65d14ea8d882fc4c4662914db37ae14b509e29eee5",
+      "original_bytes": 1391344,
+      "published_bytes": 1153,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-windows-policy-r1.log",
+      "source_root": "run_evidence",
+      "file": "focused/windows-policy-r1.log",
+      "original_sha256": "486959b00927546a68bb0c099769314fd3568b7583ce99a9198702df6bceec2f",
+      "published_sha256": "b674d130a6de8bca92870e1c042b22c8bae5dd23ebc40c589925c25dab9c59e7",
+      "original_bytes": 8080,
+      "published_bytes": 7860,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-node-prerequisites-parity-r2-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "focused/node-prerequisites-parity-r2-session-exit.json",
+      "original_sha256": "30a54703b1ff65b8ad0e6f51c0cfe48dd4b950b05cf1b408107130d9af09620b",
+      "published_sha256": "f5520419f23b2e0cfe2c383bdfd9b88758dcbc2a7851b553ad7e01f524da83c5",
+      "original_bytes": 221,
+      "published_bytes": 214,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-native-deliverable-parity-r2-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "focused/native-deliverable-parity-r2-session-exit.json",
+      "original_sha256": "c5a7d63bf21a68ee99b2d5bb1d310d3833869cb5abb6118fcb94e704bcd88a05",
+      "published_sha256": "6b7673f2849a45dafcb5895f4db683be407b2c9b8a9f7eb6c3038c8570ae60c9",
+      "original_bytes": 221,
+      "published_bytes": 214,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-native-correction-parity-r2-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "focused/native-correction-parity-r2-session-exit.json",
+      "original_sha256": "5634a12f32ad18e4971add0a0dc887193e2de8dbabeaffb74b51043571efdcd9",
+      "published_sha256": "f91a162ed065b8ac2da8e8725fb7b384f6005d7792b0dde90cf2e41949b8bb33",
+      "original_bytes": 220,
+      "published_bytes": 213,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-late-stop-focused-r1-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "focused/late-stop-focused-r1-session-exit.json",
+      "original_sha256": "0d1c355ea278a015b2f99ee4bf4d8a4299c10685cc50bd71a2155e2b89d120b5",
+      "published_sha256": "1f68c01a8f02ee1639c6c41a191bc42bc31d908da2eafcc892a5d962c6892237",
+      "original_bytes": 146,
+      "published_bytes": 147,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-windows-policy-r1-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "focused/windows-policy-r1-session-exit.json",
+      "original_sha256": "3d1d1d4579104a417653efb26bcb174938d90ef7a5bd9a302b70b482f323a99d",
+      "published_sha256": "ce5ff011f282fb915cd059c5a4854457e66995ebd52db529f17bdf71f0a5ca0c",
+      "original_bytes": 162,
+      "published_bytes": 156,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r1/acceptance.json",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r1/acceptance.json",
+      "original_sha256": "f792da604e6d9c6902431e38c48cdd798e13729dc81f4c9b6c2f610d7c34707e",
+      "published_sha256": "f67487ed85a5410e6e8469dd97d0864d6174fda3df509a75205f38a2723e5fe5",
+      "original_bytes": 1385673,
+      "published_bytes": 38257,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r1/driver.json",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r1/driver.json",
+      "original_sha256": "929606e3f015dc47e33355131a72b96d68b8e4f4a7c2b63038b37eff71e2e059",
+      "published_sha256": "49828405e5c3806f05a4ddc8ebc85f05ec2c3ef2ecfb1a63441fcee2c12f6ab0",
+      "original_bytes": 604,
+      "published_bytes": 457,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r2/acceptance.json",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r2/acceptance.json",
+      "original_sha256": "d4ad181128f97a655427ab6dbe7463de1e2183fe48097b23b98d1af34fe0d225",
+      "published_sha256": "3a7a00c355019dde6be441260dcd91373720e558a1fa97b1b786644f23c8d174",
+      "original_bytes": 1402327,
+      "published_bytes": 54930,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r2/driver.json",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r2/driver.json",
+      "original_sha256": "709046d29e650070c8a256b92b10fa1a5eda3593fcb8b9ef30081aa78326bdab",
+      "published_sha256": "30eb55248d67da32cd5d56f507c49605b4ac774eb445337ed10932a6ede432db",
+      "original_bytes": 604,
+      "published_bytes": 457,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r3/acceptance.json",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r3/acceptance.json",
+      "original_sha256": "a220b25a075dce83c4656de8476f4db815e0be321ca3fb499f819288b82e1c92",
+      "published_sha256": "37485c5e920bb52737a73808531b66179dcf2777dc0113202d64e087a43906a3",
+      "original_bytes": 1420497,
+      "published_bytes": 73080,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r3/driver.json",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r3/driver.json",
+      "original_sha256": "03d55d6d0d950ae1217e290991279a5df741332d8ef31996b3317171f1eff201",
+      "published_sha256": "10bbc820d9ed1595c9bff9163c42ae7831d2e6ff9389c658b22130fddccf8e28",
+      "original_bytes": 604,
+      "published_bytes": 457,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r4/acceptance.json",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r4/acceptance.json",
+      "original_sha256": "4151347a7cd16347afd43f46368cd82df20fdb1990f74181cf36260f5a900e57",
+      "published_sha256": "8030be34e989c0c79ab3fde9bc5b5122b49b8d0960637d7fb3fed18970e22044",
+      "original_bytes": 1494892,
+      "published_bytes": 146918,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r4/driver.json",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r4/driver.json",
+      "original_sha256": "ff69b8c06b585c05c66b1fbff4cda70ee431bb0378418643d4109da4d08a14ab",
+      "published_sha256": "aa638749dbe51c9fa8a15c19f1b7e901f2e35c8f50726a1c2f25d96b8892aaf2",
+      "original_bytes": 604,
+      "published_bytes": 457,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r5/acceptance.json",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r5/acceptance.json",
+      "original_sha256": "e726c27e1bd141a3f7490b505256f75cfc0c83353c20989b219ed6d3f3202bbd",
+      "published_sha256": "391a9fd2a2fee528ed25ce8e9d11c06296010c43686050de86cd592202845816",
+      "original_bytes": 1494763,
+      "published_bytes": 146938,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r5/driver.json",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r5/driver.json",
+      "original_sha256": "cd87a22e97af77026f22fb9d84519b5b9120ce0dd4dde419d80d6980ef1a4f72",
+      "published_sha256": "6786a1d2f2963bf9e56068230111c442cdebadbd20a40667662b54a7a00f60e8",
+      "original_bytes": 604,
+      "published_bytes": 457,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r6/acceptance.json",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r6/acceptance.json",
+      "original_sha256": "59d4c0ebf35e43b9885455c7a32860c9b7609fa536cc0b25198577fec0171c3d",
+      "published_sha256": "5e575bfc6f9bc059da0c6fc48be8d0990275e0652834d1a457c5a1d8bc17c925",
+      "original_bytes": 1494763,
+      "published_bytes": 146838,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r6/driver.json",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r6/driver.json",
+      "original_sha256": "aab8b935e1b8429aeb305fc4723df252ae7adc9ccc83c07208ed159b0512d87e",
+      "published_sha256": "32394defa05a03b147277be57dfd2e01dc6d989a7f6db924289d10e0624bec83",
+      "original_bytes": 604,
+      "published_bytes": 457,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r6/acceptance-20261001T045207947-365a1fee8de141afb01dff37a5c32f16.stderr.log",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r6/acceptance-20261001T045207947-365a1fee8de141afb01dff37a5c32f16.stderr.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "published_bytes": 0,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r6/acceptance-20261001T045207947-365a1fee8de141afb01dff37a5c32f16.stdout.log",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r6/acceptance-20261001T045207947-365a1fee8de141afb01dff37a5c32f16.stdout.log",
+      "original_sha256": "948f75ce78fe40708c1b992807ac9361b1d52a50648d28d3b1307e17d3c479fe",
+      "published_sha256": "3fa76259856d5d7b34759e9901806ed2d35c248bef618d3c7f9a4c23dd58ac72",
+      "original_bytes": 1246,
+      "published_bytes": 1234,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r6-session-exit.json",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r6/session-exit.json",
+      "original_sha256": "49e17d14cb23a44c7959f898bbbf917f9689e75804fc446ba596fb20ab53380e",
+      "published_sha256": "49e17d14cb23a44c7959f898bbbf917f9689e75804fc446ba596fb20ab53380e",
+      "original_bytes": 504,
+      "published_bytes": 504,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r6-screenshot-review.json",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r6/screenshot-review.json",
+      "original_sha256": "610e96ac241623a9e60807896336decdb0cdd7b823bedc03a4fbce9847657bb4",
+      "published_sha256": "610e96ac241623a9e60807896336decdb0cdd7b823bedc03a4fbce9847657bb4",
+      "original_bytes": 3016,
+      "published_bytes": 3016,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-acceptance-r6/correction-awaiting-review.png",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r6/correction-awaiting-review.png",
+      "original_sha256": "57fbe5acdb5cd58e0f9c1bc7c3d956c7fc51cfb62dd210afd0b35e40b6d0c360",
+      "published_sha256": "57fbe5acdb5cd58e0f9c1bc7c3d956c7fc51cfb62dd210afd0b35e40b6d0c360",
+      "original_bytes": 355856,
+      "published_bytes": 355856,
+      "treatment": "Original PNG capture bytes; visually inspected in the implementation pass."
+    },
+    {
+      "source": "issue95-acceptance-r6/correction-published-history.png",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r6/correction-published-history.png",
+      "original_sha256": "c9ae33928462f9192c12f0cc128922f9b770e53d1d0d81292aa04a77f023b1e8",
+      "published_sha256": "c9ae33928462f9192c12f0cc128922f9b770e53d1d0d81292aa04a77f023b1e8",
+      "original_bytes": 381365,
+      "published_bytes": 381365,
+      "treatment": "Original PNG capture bytes; visually inspected in the implementation pass."
+    },
+    {
+      "source": "issue95-acceptance-r6/correction-mobile.png",
+      "source_root": "run_evidence",
+      "file": "history/acceptance-r6/correction-mobile.png",
+      "original_sha256": "8085bcfb02d90a3d887ce4ab36653c7fcc606fcce326d814125665ebe9810cde",
+      "published_sha256": "8085bcfb02d90a3d887ce4ab36653c7fcc606fcce326d814125665ebe9810cde",
+      "original_bytes": 355418,
+      "published_bytes": 355418,
+      "treatment": "Original PNG capture bytes; visually inspected in the implementation pass."
+    },
+    {
+      "source": "issue95-store-r1.json",
+      "source_root": "run_evidence",
+      "file": "history/store-r1.json",
+      "original_sha256": "1b8048e5bd28af93491df344463a7f953e7cdea5aceb60c24f90bdc70d409a91",
+      "published_sha256": "aa4538516a0e74aa779068bfc29e264dd4db7a6023799aecd8dafdc1fbc76374",
+      "original_bytes": 47768,
+      "published_bytes": 577457,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-store-r1.log",
+      "source_root": "run_evidence",
+      "file": "history/store-r1.log",
+      "original_sha256": "0be95373deedbf6bdcd63c69a9197623ba271fb777a9c4fb68b269b5c25a3e3b",
+      "published_sha256": "74b156b542343146ee5612a70f08773ca13adc48caa6c7c30f7f7c4c36e7489e",
+      "original_bytes": 6607,
+      "published_bytes": 6205,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-store-r2.json",
+      "source_root": "run_evidence",
+      "file": "history/store-r2.json",
+      "original_sha256": "5c060bdcd756ec2fce5b6ab67b507627bbea88656b7381da06d15a4684f9d2dc",
+      "published_sha256": "84563dd7873b0d91500326d0951dbd7ab2d060c86a8ee2d36285876e56dc80f2",
+      "original_bytes": 47768,
+      "published_bytes": 577457,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-store-r2.log",
+      "source_root": "run_evidence",
+      "file": "history/store-r2.log",
+      "original_sha256": "db1c6bdff9e2c2ba56cb1d50c72695d17caed4317489136dd8b7dfebf0d48564",
+      "published_sha256": "9274760c3cb31f57941281fda41cdda8129589013e012d913a1cc81217f5db8a",
+      "original_bytes": 2122,
+      "published_bytes": 2050,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-store-r3.json",
+      "source_root": "run_evidence",
+      "file": "history/store-r3.json",
+      "original_sha256": "80842f017eeb6c2faf836eb277b0c59efed33193372125c0cf6dca6de38da958",
+      "published_sha256": "589da8168e5cedcabb1af4ef0577f52f9e5abf3e35c53b17048d4f564e4b36d9",
+      "original_bytes": 47762,
+      "published_bytes": 577386,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-store-r3.log",
+      "source_root": "run_evidence",
+      "file": "history/store-r3.log",
+      "original_sha256": "c321716794839555fdd21590d9836689f95a53f9fd1589a746e76f01d05a060b",
+      "published_sha256": "c333e429092650428b86bc05ca211c89f379ee9740dfff644bc81eb5fe17029b",
+      "original_bytes": 1157,
+      "published_bytes": 1094,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-web-regressions-r1.json",
+      "source_root": "run_evidence",
+      "file": "history/web-regressions-r1.json",
+      "original_sha256": "0ea67bff3a78246c942e5340b11c411c9d309c5c9d2d297c4d005cc5e956cffe",
+      "published_sha256": "11e0dc3d764ace2a0010f22cefb3dc0c7989e36b537c2b8c640011025447ce37",
+      "original_bytes": 1381893,
+      "published_bytes": 6166,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-web-regressions-r1.log",
+      "source_root": "run_evidence",
+      "file": "history/web-regressions-r1.log",
+      "original_sha256": "4e62b9a17f53a180385f92a289597526d412b584efecf16181f3b92d0e2bb837",
+      "published_sha256": "dea4678ec189fdb8141521ad4b2c1752157778ea90d08e26cf32a9c576ef4ab2",
+      "original_bytes": 26031,
+      "published_bytes": 25181,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-node-recurrence-red-r1.json",
+      "source_root": "run_evidence",
+      "file": "history/node-recurrence-red-r1.json",
+      "original_sha256": "1f1731671aa417f632fcd521646ca540e988b79e1f1681675c45c02aad527529",
+      "published_sha256": "ac7669b1e1fea401761622622a46ecd80afafd054a528e72175221f76fcbec92",
+      "original_bytes": 1382237,
+      "published_bytes": 5600,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-node-recurrence-red-r1.log",
+      "source_root": "run_evidence",
+      "file": "history/node-recurrence-red-r1.log",
+      "original_sha256": "e4e285d393b80bd5531609dbec44e1982216422665aff959605746c95406271d",
+      "published_sha256": "c83ef30287ac65c0e80a140b4014a795cae2843ceee7e1b212d83c5bc29a84a1",
+      "original_bytes": 928,
+      "published_bytes": 847,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-steward-install-r1.json",
+      "source_root": "run_evidence",
+      "file": "history/steward-install-r1.json",
+      "original_sha256": "4fb7fca59ee2992f0af993870d3684d737d687d164a05087f0213ef99caab383",
+      "published_sha256": "de57747c4a80e4f9707956079f40d48a3d51b9faa2b87a34977a78f2e03ceebf",
+      "original_bytes": 834,
+      "published_bytes": 692,
+      "treatment": "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95-steward-install-r1.log",
+      "source_root": "run_evidence",
+      "file": "history/steward-install-r1.log",
+      "original_sha256": "933a0c533204f1b0992f1cbb07c634a57855e7fdc75a62e71048dc264fa40e7a",
+      "published_sha256": "2a0348d86c37f64db915eac12d0f7ffb12d3b34edd6a5008e93f660f0ac6c1c9",
+      "original_bytes": 81,
+      "published_bytes": 77,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "run-issue95-evidence.ps1",
+      "source_root": "run_evidence",
+      "file": "drivers/run-issue95-evidence.ps1.txt",
+      "original_sha256": "441d645fb64c588e8c9482ea8f3231ec2d8e20221d8857d273864982c0a86ad8",
+      "published_sha256": "5df1674b459996766d3ed995af7d2db6f548201cd05f21625324b486cec05236",
+      "original_bytes": 2618,
+      "published_bytes": 2569,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "run-issue95-native-evidence.ps1",
+      "source_root": "run_evidence",
+      "file": "drivers/run-issue95-native-evidence.ps1.txt",
+      "original_sha256": "6d4c496ebde9ef572e231e6f598efbec960a0789464b631b5d47354d12969d04",
+      "published_sha256": "5503cef8657be2ed75389837e48240b3532c366d297f01dcac9c918615d44e2e",
+      "original_bytes": 2705,
+      "published_bytes": 2654,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "run-issue95-store.ps1",
+      "source_root": "run_evidence",
+      "file": "drivers/run-issue95-store.ps1.txt",
+      "original_sha256": "4d55dcc99298ae429530da7a3b9db5f5d67ff9142a9bb5338d08b9782440176c",
+      "published_sha256": "2ec17dd0f543780740db3e7b4a3118858d752c428ab0c6c3c3c1ca4b774533ef",
+      "original_bytes": 5918,
+      "published_bytes": 5850,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95_publication_r1.py",
+      "source_root": "run_evidence",
+      "file": "drivers/issue95_publication_r1.py.txt",
+      "original_sha256": "33e34c3060c85a82efa62af77c2d051d184bd7af7bf64d19e75ed78c7572acd0",
+      "published_sha256": "185d4cc04d80665d1369dfb4c9b07ae3edc00e838c2b0fb946a615cc83ffc01e",
+      "original_bytes": 63513,
+      "published_bytes": 63413,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95_publication_r2.py",
+      "source_root": "run_evidence",
+      "file": "drivers/issue95_publication_r2.py.txt",
+      "original_sha256": "d986754a56a17926e9f47e8e683d459c7c59774fd49524b840f666fba4a501d5",
+      "published_sha256": "6a0226c82c88b46b77d6a698d4fbb5ca8a143df9bad9da5e91ddcf61849b9a0b",
+      "original_bytes": 70634,
+      "published_bytes": 70532,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95_publication_r7.py",
+      "source_root": "run_evidence",
+      "file": "drivers/issue95_publication_r7.py.txt",
+      "original_sha256": "2ed4a56601e14becad1cfee2fc3a7f219fb0eeb4672ebb1f251be149e0ee27d5",
+      "published_sha256": "95720990e2256c9ee4fd54c74984cd852eb7323ebd237367bb8aa33b62dd5ce8",
+      "original_bytes": 98261,
+      "published_bytes": 98157,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "publish-issue95-r6.ps1",
+      "source_root": "run_evidence",
+      "file": "drivers/publish-issue95-r6.ps1.txt",
+      "original_sha256": "da4441b5f51fd4ae6c2adbe82929f4925d9b7b2835ec36d4b535ec01ab4681ef",
+      "published_sha256": "c0a17e11a6c31591f7f55958b480562d0a87f1a20128f06b3630be07768d2dba",
+      "original_bytes": 29978,
+      "published_bytes": 29914,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "prepare-issue95-publication-r8.py",
+      "source_root": "run_evidence",
+      "file": "drivers/prepare-issue95-publication-r8.py.txt",
+      "original_sha256": "24ae7aaa27f8c9631bb4265c36bd38d9ffe0d7d14cc4523385365d1285cd5598",
+      "published_sha256": "24ae7aaa27f8c9631bb4265c36bd38d9ffe0d7d14cc4523385365d1285cd5598",
+      "original_bytes": 9560,
+      "published_bytes": 9560,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95_publication_r6.py",
+      "source_root": "run_evidence",
+      "file": "drivers/issue95_publication_r6.py.txt",
+      "original_sha256": "82243cec77ae1d2b6bdff7f9ed3a4ad731ba71895fa62fbed5dccafa5f17502a",
+      "published_sha256": "837170c351191a84260a405cb08d3bf11cfce87baf616f6d0d242cadf25f155b",
+      "original_bytes": 97289,
+      "published_bytes": 97185,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "publish-issue95-r5.ps1",
+      "source_root": "run_evidence",
+      "file": "drivers/publish-issue95-r5.ps1.txt",
+      "original_sha256": "70c2efad6c0dd7b324fae25762680ee7868f16e8a171935cb46d15011401f5c9",
+      "published_sha256": "fab5d213576202ea92c258c0a72bf2c1bbbcdb28b4b06fb0b4bf6c6d9b174753",
+      "original_bytes": 29811,
+      "published_bytes": 29747,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "prepare-issue95-publication-r7.py",
+      "source_root": "run_evidence",
+      "file": "drivers/prepare-issue95-publication-r7.py.txt",
+      "original_sha256": "11f40ee40051baafae5199f62fb9b93f359e63f481c9207028fa6a6c80baf39a",
+      "published_sha256": "11f40ee40051baafae5199f62fb9b93f359e63f481c9207028fa6a6c80baf39a",
+      "original_bytes": 19181,
+      "published_bytes": 19181,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "normalize-issue95-publication-r1.py",
+      "source_root": "run_evidence",
+      "file": "drivers/normalize-issue95-publication-r1.py.txt",
+      "original_sha256": "b57b31601dae8291ca8071917d2fd2d64983696a2999197ed895be29d66b5175",
+      "published_sha256": "b57b31601dae8291ca8071917d2fd2d64983696a2999197ed895be29d66b5175",
+      "original_bytes": 7750,
+      "published_bytes": 7750,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95_publication_r5.py",
+      "source_root": "run_evidence",
+      "file": "drivers/issue95_publication_r5.py.txt",
+      "original_sha256": "81f91d5f3ddb40a1dbc2fd79068bf3441d22ae6073429db7d413528901bba100",
+      "published_sha256": "423f03a5909a4c924a739cb77249a0759005f12bf829335b2c3e81ed77777253",
+      "original_bytes": 89082,
+      "published_bytes": 88978,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "publish-issue95-r4.ps1",
+      "source_root": "run_evidence",
+      "file": "drivers/publish-issue95-r4.ps1.txt",
+      "original_sha256": "bf07e0aa2feac89f1ca55a551eca2fb1a35ee914c38c11da91c82c42dcce4be5",
+      "published_sha256": "314bbb4e908653eaf4f814154afd1867e9ea808aa1468e483458e022dbe2e380",
+      "original_bytes": 28328,
+      "published_bytes": 28264,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "prepare-issue95-publication-r6.py",
+      "source_root": "run_evidence",
+      "file": "drivers/prepare-issue95-publication-r6.py.txt",
+      "original_sha256": "889e44618fa4b06cd144bb7b2a6f369335a55a42bdff967bc6861bc6a9390a65",
+      "published_sha256": "6ba6b4127c83c57ae514dd1074ce18601ed8efcc2bd4b84a36d4e17a3bd4d8e8",
+      "original_bytes": 12742,
+      "published_bytes": 12741,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95_publication_r4.py",
+      "source_root": "run_evidence",
+      "file": "drivers/issue95_publication_r4.py.txt",
+      "original_sha256": "20d52399424f0dfc2eea93e85f6aa7499f730bfec5e40e700e4338759dd7c7f1",
+      "published_sha256": "86bd1e5af0403f38956b9e95200d31dc136d7508c082f962af2061cbc4e030c1",
+      "original_bytes": 88071,
+      "published_bytes": 87967,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "publish-issue95-r3.ps1",
+      "source_root": "run_evidence",
+      "file": "drivers/publish-issue95-r3.ps1.txt",
+      "original_sha256": "f2017a3df4026b90046ea98da2222e7c4820a1729fc60476406df275c72a3f4c",
+      "published_sha256": "bd3ef416d7efd29a83d5736370d960f8238df1f02c703e1e822ae0ff29a06d56",
+      "original_bytes": 28275,
+      "published_bytes": 28211,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "prepare-issue95-publication-r4.py",
+      "source_root": "run_evidence",
+      "file": "drivers/prepare-issue95-publication-r4.py.txt",
+      "original_sha256": "da8b811650a9860d5479d3141eea5f23fbdbec8c5d6b8702a9f0cca9c775b407",
+      "published_sha256": "4d549bda561043b00f6fc82cbde5f3ad44fea4c4e8b4123b566ebf608ced8c9b",
+      "original_bytes": 15516,
+      "published_bytes": 15515,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "prepare-issue95-publication-r5.py",
+      "source_root": "run_evidence",
+      "file": "drivers/prepare-issue95-publication-r5.py.txt",
+      "original_sha256": "0539fe4bd86584787c1fd51384d455c465e9ac7af79407a8f4593fa017f8655a",
+      "published_sha256": "1c37cedd5eab4b03ec2f691ca023c865026e31d001be1429e21eb6135bd61986",
+      "original_bytes": 15655,
+      "published_bytes": 15654,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95_publication_r3.py",
+      "source_root": "run_evidence",
+      "file": "drivers/issue95_publication_r3.py.txt",
+      "original_sha256": "4617603da8df815bd0c274be9334f9887e62114bbe141461077f4a7b9f360f0b",
+      "published_sha256": "155a8cb681afc18e693a7150bc1e0b3e6b932fa5b6de159c9c49c67f22bf6615",
+      "original_bytes": 85663,
+      "published_bytes": 85559,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95_publication_r3_pre_cargo_guard.py",
+      "source_root": "run_evidence",
+      "file": "drivers/issue95_publication_r3_pre_cargo_guard.py.txt",
+      "original_sha256": "9d366d5f2c298b0aeebca7bda8099b4560044f3c5d15c819a101b81a9a252aaf",
+      "published_sha256": "21ef44893a9d7b713391248cda5f5c69e10cb914acdd28ce0495f628a532d1ad",
+      "original_bytes": 80342,
+      "published_bytes": 80238,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95_publication_r3_pre_install_scope.py",
+      "source_root": "run_evidence",
+      "file": "drivers/issue95_publication_r3_pre_install_scope.py.txt",
+      "original_sha256": "e01af3bfda08daa4a2f8d0e85f2ea3a8724c9c34c6f2deb7054e63fdbd056d3f",
+      "published_sha256": "7c1db057bb1d6905e166f08658dbd77ba13305df18b63b461d0b343d03aae894",
+      "original_bytes": 82564,
+      "published_bytes": 82460,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "verify-issue95-cargo-guard-r1.py",
+      "source_root": "run_evidence",
+      "file": "drivers/verify-issue95-cargo-guard-r1.py.txt",
+      "original_sha256": "c7aab93b829cc7bfd5e41b0876f78c55fe20304b30040aebb2a278079593974c",
+      "published_sha256": "c7aab93b829cc7bfd5e41b0876f78c55fe20304b30040aebb2a278079593974c",
+      "original_bytes": 3841,
+      "published_bytes": 3841,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "verify-issue95-cargo-guard-r2.py",
+      "source_root": "run_evidence",
+      "file": "drivers/verify-issue95-cargo-guard-r2.py.txt",
+      "original_sha256": "cbe0f0762d7661ca5c8c8d64826b851e01b8047756eea3c3531a75ab62e9e5ee",
+      "published_sha256": "cbe0f0762d7661ca5c8c8d64826b851e01b8047756eea3c3531a75ab62e9e5ee",
+      "original_bytes": 5768,
+      "published_bytes": 5768,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95_publication_r3_pre_projection.py",
+      "source_root": "run_evidence",
+      "file": "drivers/issue95_publication_r3_pre_projection.py.txt",
+      "original_sha256": "1d968a9e6988a461913bfa1751c0011a53f36125d312633fde2c6656fa2676ac",
+      "published_sha256": "ea4437c1251005bd52c005aacd4fca08e06a2bc1c16db94e1556cc5d55c86303",
+      "original_bytes": 84329,
+      "published_bytes": 84225,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95_publication_r3_pre_bytecode.py",
+      "source_root": "run_evidence",
+      "file": "drivers/issue95_publication_r3_pre_bytecode.py.txt",
+      "original_sha256": "6f002625c89314f7c44780b6badc66991618b6ea69fe588aece820d22ee5013e",
+      "published_sha256": "57c691ea50db1b2bed8155188167cb2c4d65a53d5d2048c05c300aabbb92ddcb",
+      "original_bytes": 85315,
+      "published_bytes": 85211,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "preserve-issue95-failed-assembly-r2.py",
+      "source_root": "run_evidence",
+      "file": "drivers/preserve-issue95-failed-assembly-r2.py.txt",
+      "original_sha256": "bdea9935275ffe1e75966015aba4c44edfe72149cf230029bd275525489cb0d8",
+      "published_sha256": "bdea9935275ffe1e75966015aba4c44edfe72149cf230029bd275525489cb0d8",
+      "original_bytes": 3319,
+      "published_bytes": 3319,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "verify-issue95-publication-projection-r1.py",
+      "source_root": "run_evidence",
+      "file": "drivers/verify-issue95-publication-projection-r1.py.txt",
+      "original_sha256": "48bea981b82a8165c7e2385b8f6929a8f440075f238c55546cc48bdec4de45e8",
+      "published_sha256": "48bea981b82a8165c7e2385b8f6929a8f440075f238c55546cc48bdec4de45e8",
+      "original_bytes": 3800,
+      "published_bytes": 3800,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "publish-issue95-r2.ps1",
+      "source_root": "run_evidence",
+      "file": "drivers/publish-issue95-r2.ps1.txt",
+      "original_sha256": "979d884a35c4b550c7604e249499aaddc19b557c7ca9e9f0b67bfe608e12dbf3",
+      "published_sha256": "ceb2342b4a0720f53491e5b7b86fa9cd5de71d8abb35b1da11c4442fbbeaf338",
+      "original_bytes": 27909,
+      "published_bytes": 27845,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95_windows_prerequisite_r1.py",
+      "source_root": "run_evidence",
+      "file": "drivers/issue95_windows_prerequisite_r1.py.txt",
+      "original_sha256": "963d1a5ecf0c432bd441772c063508a7058a91ececfeb15adfa4c0411ae8f2d2",
+      "published_sha256": "49191c0c448b88bac5c0a69dbf86075e9e259d9ad81f41701fe391500c726e48",
+      "original_bytes": 6027,
+      "published_bytes": 5965,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "issue95_acceptance_r7_preflight.py",
+      "source_root": "run_evidence",
+      "file": "drivers/issue95_acceptance_r7_preflight.py.txt",
+      "original_sha256": "2e4da9001632c77e7051f229ac8299e703ef86fa207819e8c9fc6974e675e65d",
+      "published_sha256": "629add90b469a28285bfb227831bce8db457885afaa31e6b2b2fdcc1d86314ce",
+      "original_bytes": 3124,
+      "published_bytes": 3075,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "run-issue95-acceptance-r7.ps1",
+      "source_root": "run_evidence",
+      "file": "drivers/run-issue95-acceptance-r7.ps1.txt",
+      "original_sha256": "095d3e3effba98067b8494da77fe627a1f516508606264c4208b217a2a9cb772",
+      "published_sha256": "919a12bf3ef4b625a2f3a9946053a9326974740e7f760427fc245d489ac737c1",
+      "original_bytes": 1676,
+      "published_bytes": 1580,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    },
+    {
+      "source": "verify-issue95-acceptance-r7.py",
+      "source_root": "run_evidence",
+      "file": "drivers/verify-issue95-acceptance-r7.py.txt",
+      "original_sha256": "dccbe365b1ec7165e96b17ec1cf364c7f14d4b1d1fffb5e818849c43cb554cc3",
+      "published_sha256": "f32be882cc7e9774e526fde886cee717ad537dc75c11258d7f4d05366f662472",
+      "original_bytes": 9496,
+      "published_bytes": 9439,
+      "treatment": "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF, trailing-whitespace and redundant-EOF-blank-line normalization."
+    }
+  ],
+  "issue_completed": false,
+  "hosted_checks_available": false,
+  "pr_merge_performed": false
+}

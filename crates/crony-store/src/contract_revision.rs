@@ -71,6 +71,12 @@ impl PgStore {
         let mut tx = outer.begin().await?;
         factory_base_refresh::ensure_ordinary_mission_tx(&mut tx, input.corp_id, input.mission_id)
             .await?;
+        factory_review_revision::ensure_mutable_mission_tx(
+            &mut tx,
+            input.corp_id,
+            input.mission_id,
+        )
+        .await?;
         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
         lock_factory_keys_tx(
             &mut tx,

@@ -1,0 +1,109 @@
+{
+  "issue": 95,
+  "status": "preserved_and_replacement_prepared",
+  "started_at_utc": "2026-10-01T07:40:46.986389+00:00",
+  "original_packet": "docs/evidence/2026-10-01-factory-review-revisions",
+  "packet_files": [
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-prepare-failed-r4/session-exit.json",
+      "sha256": "b399194fa2891d28f5052edd33acc0db7a0d6587a52b12cb2aac7dc602d43b4b",
+      "bytes": 738
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/receipt.json",
+      "sha256": "942315004a685e9a1e8ce69030ec241090be6cf9a457e63a96484431f8e5e5c1",
+      "bytes": 48472
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/session-exit.json",
+      "sha256": "bfcea2c1e0fe0d77ad4e67473c3706ba4c86d15504a690cca89b87557b580310",
+      "bytes": 1510
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/source-binding.json",
+      "sha256": "547d9d66a90340f1a06deb10b74556d3ec8ed95496d94c3f6012558aa51b97c9",
+      "bytes": 4222218
+    }
+  ],
+  "source_receipt": "issue95-publication-source-r2.json",
+  "source_receipt_sha256": "547d9d66a90340f1a06deb10b74556d3ec8ed95496d94c3f6012558aa51b97c9",
+  "observed_failure_receipt": "issue95-publication-assembly-r3-session-exit.json",
+  "observed_failure_sha256": "381cb69819333a1e1a166885ea2f639fd5e967b81ae12f9b52a14fc40e4985e1",
+  "original_index_sha256": "b22d703f5ffde7b8af251438168338bc014b7a638e78df9a8c4b8ef09018b9e4",
+  "tested_tree": "d25ef2100f7bec0ecc65772f61308c111d8df3fd",
+  "method": "Verified same-volume rename of this run's owned partial packet; no deletion.",
+  "security_policy_sha256": {
+    ".gitleaksignore": "a8d6e15fa76e0c88f4266bca6d12f909f494a0ff646ef8699e88b8d9daec0ada",
+    ".gitleaks.toml": null
+  },
+  "replacement_counts": {
+    "\"\"\"R4 publication binding: same tested source, labeled fixture references, retained failed packet.\"\"\"": 1,
+    "\"issue95-publication-source-r2.json\"": 4,
+    "\"issue95-publication-assembly-r3.json\"": 3,
+    "\"issue95-publication-assembly-r4.json\"": 3,
+    "\"issue95-publication-commit-r2.json\"": 2,
+    "\"issue95-publication-commit-r2.log\"": 1,
+    "\"issue95-publication-committed-scan-r2.json\"": 1,
+    "\"issue95-committed-scan-r2\"": 2,
+    "\"issue95-publication-validation-r3-session-exit.json\"": 3,
+    "\"issue95-publication-validation-r4-session-exit.json\"": 1,
+    "validation_receipt(3)": 2,
+    "validation_receipt(4)": 2,
+    "assert revision in {3, 4}": 1,
+    "if revision == 3:": 1,
+    "if revision == 4:": 1,
+    "lambda: validate(3)": 1,
+    "lambda: validate(4)": 1,
+    "\"publication/evidence-validation-r3.json\"": 1,
+    "The subsequent R4 validation": 1,
+    "additions require separate R4 validation.": 1,
+    "def projected_receipt(value, physical):\n    result = dict(value)": 1
+  },
+  "changed_helper_functions": [
+    "projected_receipt",
+    "original_receipts",
+    "assemble",
+    "validate",
+    "extend",
+    "commit",
+    "scan_committed"
+  ],
+  "frozen_helper_sha256": {
+    "issue95_publication_r4.py": "20d52399424f0dfc2eea93e85f6aa7499f730bfec5e40e700e4338759dd7c7f1",
+    "publish-issue95-r3.ps1": "f2017a3df4026b90046ea98da2222e7c4820a1729fc60476406df275c72a3f4c"
+  },
+  "product_files_unchanged": true,
+  "product_files": 7397,
+  "original_index_unchanged": true,
+  "pending_merge_preserved": true,
+  "deletion_performed": false,
+  "frozen_helpers_unchanged": true,
+  "projection_regression": {
+    "issue": 95,
+    "recorded_at_utc": "2026-10-01T07:40:46.915119+00:00",
+    "status": "passed",
+    "scope": "Publication helper only; no product tests rerun or new product acceptance claimed.",
+    "original_array_bug_reproduced": {
+      "exception": "ValueError",
+      "message": "dictionary update sequence element #0 has length 18; 2 is required"
+    },
+    "actual_scanner_report_findings": 96,
+    "array_shape_and_content_preserved": true,
+    "input_roots_checked": {
+      "dict": 78,
+      "list": 1
+    },
+    "existing_object_receipt_projection_unchanged": true,
+    "object_receipts_checked": 78,
+    "tested_tree": "d25ef2100f7bec0ecc65772f61308c111d8df3fd",
+    "physical_files": 7397,
+    "security_policy_sha256": {
+      ".gitleaksignore": "a8d6e15fa76e0c88f4266bca6d12f909f494a0ff646ef8699e88b8d9daec0ada",
+      ".gitleaks.toml": null
+    },
+    "product_source_changed": false
+  },
+  "helper_r5_sha256": "81f91d5f3ddb40a1dbc2fd79068bf3441d22ae6073429db7d413528901bba100",
+  "publisher_r4_sha256": "bf07e0aa2feac89f1ca55a551eca2fb1a35ee914c38c11da91c82c42dcce4be5",
+  "finished_at_utc": "2026-10-01T07:41:14.054062+00:00"
+}

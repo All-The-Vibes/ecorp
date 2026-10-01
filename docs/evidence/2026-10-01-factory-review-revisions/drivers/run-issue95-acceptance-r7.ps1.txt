@@ -1,0 +1,21 @@
+# Fresh local acceptance only; preserve the active canonical process and source.
+$ErrorActionPreference = 'Stop'
+$taskRoot = '<ISOLATED_CHECKOUT>'
+$taskNodeDir = '<USER_HOME>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64'
+$taskPython = '<USER_HOME>\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe'
+$taskPlaywright = '<USER_HOME>\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright'
+$taskPostgres = '<USER_HOME>\AppData\Local\Programs\ecorp-tools\postgresql-17.10\pgsql\bin'
+foreach ($taskName in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($taskName -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|GITLEAKS_|AZURE_|GIT_)' -or $taskName -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','PYTHONPATH','PYTHONHOME','RUST_TEST_THREADS')) {
+        [Environment]::SetEnvironmentVariable($taskName, $null, 'Process')
+    }
+}
+$env:PATH = $taskNodeDir + ';' + (Split-Path -Parent $taskPython) + ';' + $env:PATH
+$env:GIT_TERMINAL_PROMPT = '0'
+$env:GCM_INTERACTIVE = 'Never'
+$env:GIT_OPTIONAL_LOCKS = '0'
+$env:PYTHONDONTWRITEBYTECODE = '1'
+& $taskPython (Join-Path $PSScriptRoot 'issue95_acceptance_r7_preflight.py')
+if ($LASTEXITCODE -ne 0) { throw 'Native/combined source preflight failed; preserve current source.' }
+& (Join-Path $taskRoot 'tools/e2e_factory_review_revision.ps1') -PostgresBin $taskPostgres -QaParent '<OWNED_QA_PARENT>' -OutputRoot (Join-Path $PSScriptRoot 'issue95-acceptance-r7') -PlaywrightModule $taskPlaywright
+exit $LASTEXITCODE

@@ -1,0 +1,279 @@
+{
+  "issue": 95,
+  "recorded_at_utc": "2026-10-01T08:03:09.070767+00:00",
+  "reviewer": "Codex assistant; implementation self-review",
+  "independent_review_performed": false,
+  "main": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parents": [
+    "7e65f46a0c0f991460eeb4c5b60723d2e0dff1f9",
+    "6f2375e06546806003a9a1d1a340bdc1a4ce4b8c"
+  ],
+  "tested_tree": "5072c911cf980d5b48ed78e6d946f491eef94a1a",
+  "reviewed_paths": [
+    "CONTRIBUTING.md",
+    "Cargo.lock",
+    "apps/web/src/App.tsx",
+    "apps/web/src/ReviewRevisionPanel.css",
+    "apps/web/src/ReviewRevisionPanel.tsx",
+    "apps/web/src/factoryCheckpointRecovery.test.mjs",
+    "apps/web/src/missionResultContext.test.mjs",
+    "apps/web/src/missionResultContext.ts",
+    "apps/web/src/missionResultFixtures.mjs",
+    "apps/web/src/reviewRevisionOperations.ts",
+    "apps/web/src/reviewRevisionPanel.test.mjs",
+    "apps/web/src/workResultCard.test.mjs",
+    "crates/crony-cli/src/publish.rs",
+    "crates/crony-cli/src/publish_review_revision.rs",
+    "crates/crony-domain/Cargo.toml",
+    "crates/crony-domain/src/factory_review_revision.rs",
+    "crates/crony-domain/src/lib.rs",
+    "crates/crony-protocol/src/lib.rs",
+    "crates/crony-runner/src/base_refresh.rs",
+    "crates/crony-runner/src/base_refresh_tests.rs",
+    "crates/crony-runner/src/deliverable.rs",
+    "crates/crony-runner/src/issue297_native_fixtures.rs",
+    "crates/crony-runner/src/main.rs",
+    "crates/crony-runner/src/publication_source.rs",
+    "crates/crony-runner/src/review_revision.rs",
+    "crates/crony-runner/src/review_revision_tests.rs",
+    "crates/crony-runner/src/source_checkpoint.rs",
+    "crates/crony-server/src/factory_base_refresh.rs",
+    "crates/crony-server/src/factory_review_revision.rs",
+    "crates/crony-server/src/main.rs",
+    "crates/crony-store/Cargo.toml",
+    "crates/crony-store/src/aggregate_breaker.rs",
+    "crates/crony-store/src/aggregate_breaker_tests.rs",
+    "crates/crony-store/src/budget_checkpoint_tests.rs",
+    "crates/crony-store/src/budget_revision.rs",
+    "crates/crony-store/src/checkpoint_correction_publication_tests.rs",
+    "crates/crony-store/src/contract_revision.rs",
+    "crates/crony-store/src/factory_base_refresh/lifecycle.rs",
+    "crates/crony-store/src/factory_review_revision.rs",
+    "crates/crony-store/src/factory_review_revision/dispatch.rs",
+    "crates/crony-store/src/factory_review_revision/lifecycle.rs",
+    "crates/crony-store/src/factory_review_revision/settlement.rs",
+    "crates/crony-store/src/factory_review_revision_tests.rs",
+    "crates/crony-store/src/lib.rs",
+    "crates/crony-store/src/mission_context.rs",
+    "crates/crony-store/src/publication.rs",
+    "crates/crony-store/src/state_audit.rs",
+    "db/migrations/0059_factory_review_revisions.sql",
+    "db/migrations/manifest.json",
+    "docs/ARCHITECTURE.md",
+    "docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md",
+    "docs/EVALS.md",
+    "docs/FACTORY_BASE_REFRESH.md",
+    "docs/FACTORY_REVIEW_REVISIONS.md",
+    "docs/SECURITY.md",
+    "docs/VALIDATION.md",
+    "docs/evidence/2026-09-29-windows-validation/README.md",
+    "docs/evidence/2026-09-29-windows-validation/canonical-driver.json",
+    "docs/evidence/2026-09-29-windows-validation/canonical-install-root.log",
+    "docs/evidence/2026-09-29-windows-validation/canonical-install-steward.log",
+    "docs/evidence/2026-09-29-windows-validation/canonical-install-web.log",
+    "docs/evidence/2026-09-29-windows-validation/canonical-pnpm-check.log",
+    "docs/evidence/2026-09-29-windows-validation/canonical-report.json",
+    "docs/evidence/2026-09-29-windows-validation/canonical-source-binding.json",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostic-r2-build.log",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostic-r2-list.log",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostic-r2-parallel-8-spans.json",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostic-r2-parallel-8.log",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostic-r2-serial-1-spans.json",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostic-r2-serial-1.log",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostic-source-r2.patch.json",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostics-r2.json",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-comparison-r1.json",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-r1-build.log",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-r1-list.log",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-r1-native-default-spans.json",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-r1-native-default.log",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-r1-serial-1-spans.json",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-r1-serial-1.log",
+    "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-source-r1.patch.json",
+    "docs/evidence/2026-09-29-windows-validation/helpers/issue213-owned-windows-process-r1.py.txt",
+    "docs/evidence/2026-09-29-windows-validation/helpers/issue213-passive-diagnostics-r1.rs.txt.txt",
+    "docs/evidence/2026-09-29-windows-validation/helpers/prepare-issue213-full-runner-r1.py.txt",
+    "docs/evidence/2026-09-29-windows-validation/helpers/run-issue213-canonical-bound-r2.ps1.txt",
+    "docs/evidence/2026-09-29-windows-validation/helpers/run-issue213-canonical-plan-r1.ps1.txt",
+    "docs/evidence/2026-09-29-windows-validation/helpers/run-issue213-export-diagnostics-r2.py.txt",
+    "docs/evidence/2026-09-29-windows-validation/helpers/run-issue213-full-runner-comparison-r1.py.txt",
+    "docs/evidence/2026-09-29-windows-validation/helpers/run-issue213-plan-regressions-r1.py.txt",
+    "docs/evidence/2026-09-29-windows-validation/historical-observations.json",
+    "docs/evidence/2026-09-29-windows-validation/history/canonical-wait-r1.json",
+    "docs/evidence/2026-09-29-windows-validation/issue213-doc-generation-r1-preview.json",
+    "docs/evidence/2026-09-29-windows-validation/issue213-doc-generation-r1.json",
+    "docs/evidence/2026-09-29-windows-validation/issue213-export-diagnostic-analysis-r2.json",
+    "docs/evidence/2026-09-29-windows-validation/issue213-full-runner-plan-r1.json",
+    "docs/evidence/2026-09-29-windows-validation/issue213-plan-green-r1.log",
+    "docs/evidence/2026-09-29-windows-validation/issue213-plan-red-r1.log",
+    "docs/evidence/2026-09-29-windows-validation/policy-green.json",
+    "docs/evidence/2026-09-29-windows-validation/policy-red.json",
+    "docs/evidence/2026-09-29-windows-validation/reviewed-code.patch.json",
+    "docs/evidence/2026-09-29-windows-validation/source-equivalence.json",
+    "docs/evidence/2026-09-29-windows-validation/summary.json",
+    "scenarios/repo-steward/maintenance.test.mjs",
+    "tests/readiness/cli.test.js",
+    "tools/check_deliverable_diff.test.mjs",
+    "tools/check_docs.mjs",
+    "tools/e2e_factory_base_refresh.ps1",
+    "tools/e2e_factory_review_revision.mjs",
+    "tools/e2e_factory_review_revision.ps1",
+    "tools/readiness_contract.test.mjs",
+    "tools/run_checks.mjs"
+  ],
+  "acceptance_mapping": [
+    {
+      "criterion": "Explicit review-revision state preserves accepted deliverable",
+      "implementation": [
+        "crates/crony-store/src/factory_review_revision.rs",
+        "crates/crony-store/src/factory_review_revision/settlement.rs",
+        "db/migrations/0059_factory_review_revisions.sql"
+      ],
+      "scenarios": [
+        2,
+        8,
+        13
+      ]
+    },
+    {
+      "criterion": "Typed attributed findings bound to publication and PR",
+      "implementation": [
+        "crates/crony-domain/src/factory_review_revision.rs",
+        "crates/crony-server/src/factory_review_revision.rs"
+      ],
+      "scenarios": [
+        1,
+        2,
+        11
+      ]
+    },
+    {
+      "criterion": "Separate isolated correction derived from the exact published source",
+      "implementation": [
+        "crates/crony-runner/src/publication_source.rs",
+        "crates/crony-runner/src/review_revision.rs"
+      ],
+      "scenarios": [
+        4,
+        5
+      ]
+    },
+    {
+      "criterion": "Authority inherits exact repository, base, scope, tools and residual budgets",
+      "implementation": [
+        "crates/crony-domain/src/factory_review_revision.rs",
+        "crates/crony-store/src/factory_review_revision/lifecycle.rs",
+        "crates/crony-store/src/factory_review_revision/dispatch.rs"
+      ],
+      "scenarios": [
+        1,
+        3,
+        5
+      ]
+    },
+    {
+      "criterion": "Retain saved verifier checks and require fresh independent review",
+      "implementation": [
+        "crates/crony-domain/src/factory_review_revision.rs",
+        "crates/crony-store/src/factory_review_revision/settlement.rs",
+        "crates/crony-store/src/factory_review_revision_tests.rs"
+      ],
+      "scenarios": [
+        3,
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "criterion": "One explicit provenance-bound superseding publication",
+      "implementation": [
+        "crates/crony-store/src/publication.rs",
+        "crates/crony-cli/src/publish_review_revision.rs",
+        "crates/crony-cli/src/publish.rs"
+      ],
+      "scenarios": [
+        8,
+        10,
+        11
+      ]
+    },
+    {
+      "criterion": "Idempotent recovery avoids duplicate branches, PRs and Project transitions",
+      "implementation": [
+        "crates/crony-store/src/factory_review_revision.rs",
+        "crates/crony-store/src/factory_review_revision/settlement.rs",
+        "crates/crony-cli/src/publish.rs",
+        "apps/web/src/reviewRevisionOperations.ts"
+      ],
+      "scenarios": [
+        2,
+        8,
+        10,
+        13,
+        14
+      ]
+    },
+    {
+      "criterion": "UI retains original publication, findings, correction run, result and recorded review head",
+      "implementation": [
+        "apps/web/src/ReviewRevisionPanel.tsx",
+        "apps/web/src/missionResultContext.ts",
+        "apps/web/src/App.tsx"
+      ],
+      "scenarios": [
+        2,
+        4,
+        7,
+        8,
+        11,
+        13
+      ]
+    },
+    {
+      "criterion": "Manual unverified predecessor branch changes fail closed",
+      "implementation": [
+        "crates/crony-cli/src/publish_review_revision.rs",
+        "crates/crony-cli/src/publish.rs"
+      ],
+      "scenarios": [
+        9,
+        14
+      ]
+    }
+  ],
+  "scenario_indices_are_zero_based": true,
+  "coverage": [
+    "tenant/Corp/room/current-actor authority and exact idempotency inputs",
+    "residual task/mission budgets, remaining attempts, stop and monotonic breaker fences",
+    "immutable original lineage, bounded nonforking correction succession and terminal abandonment",
+    "native source reconstruction, workspace fingerprint and resume seed/HEAD binding",
+    "saved verifier checks, fresh independent reviewer and exact adopted source evidence",
+    "publication leases, provenance, predecessor drift and completed replay",
+    "lock order, both mission audit coverage, migration compatibility and existing recovery paths",
+    "actual App callback, lineage projection, reload/mobile and source-bound native acceptance"
+  ],
+  "harness": "Pinned SDK 1.0.11 and CLI 1.0.79 retain execution, sessions, tools and permissions. ECorp adds scoped cross-mission authorization, source lineage, residual allocation and publication succession through existing adapters.",
+  "unresolved_confirmed_defects": [],
+  "qualifications": [
+    "After canonical R3 and acceptance R7, one redundant final LF was removed from the test-only missionResultFixtures.mjs. Both importing test modules passed afterward on the recorded current manifest. The original common canonical/acceptance manifest is retained separately; all other 7,396 source files and every runtime/dependency byte remain unchanged. No new full canonical or acceptance run is claimed. Public evidence copies independently normalize redundant EOF blank lines; original receipts remain unchanged. Failed publication R5 and its full packet are retained.",
+    "This packet records development validation and AI implementation self-review. It is not an independent GitHub approval, human decision, merge or issue closure.",
+    "Acceptance R7 passed 15 scenarios through real Chrome/App, server, PostgreSQL, runner and native Git. Provider execution is fake-process, GitHub is a fake boundary, principals are development fixtures and publication uses an owned bare remote. No live-provider or external-publication acceptance is claimed. The passing native build was reused because all 289 recorded Cargo/crates/db files and binary hashes were unchanged; this was not a new build.",
+    "The distinct fixture reviewer is automated. Fixture explicit_human metadata is not evidence of a human decision. Screenshots were visually inspected, not an exhaustive accessibility audit.",
+    "Canonical R3, acceptance R7 and Windows-policy R1 match the original 7,397-file manifest before the separately recorded EOF cleanup. Relative to that original source, the older 7,352-file Node parity receipt differs at six #382 paths and lacks 45 incoming evidence files; the 7,349-file focused receipts differ at fourteen paths and lack 48 files, and the earlier frozen-install receipt differs at seventeen paths and lacks those same 48 files. Relative to the reviewed source after cleanup, each of those full-source receipts additionally differs at missionResultFixtures.mjs: seven, fifteen and eighteen differing paths respectively, with unchanged missing-path counts. Windows-policy R1 differs only at that fixture. Native store/build/deliverable/correction and focused late-stop receipts still match their 289-file subsets. All twelve JavaScript dependency manifests, locks and configuration files are unchanged. The source-binding focused_source_comparison arrays use the reviewed post-cleanup source; both complete manifests and exact paths are retained. Earlier or incomplete manifests are not complete-source proof.",
+    "Actual runtime: Node 24.21.0, pnpm 11.19.0, Rust 1.98.1. The repository declares Node 24.19.0. RUST_TEST_THREADS was unset; reviewed prerequisite #382 selects Cargo's native --test-threads=1 for the Windows workspace gate. Linux/macOS retain native default scheduling. No assertion, deadline, workspace membership or required gate was removed.",
+    "Skipped Node and ignored Rust cases are not passes. Counts from canonical, EVM, focused and acceptance lanes overlap and must not be added. Standalone live and immutable replay fixtures remain in their dedicated lanes.",
+    "Earlier acceptance R1-R6 and failing store/UI attempts remain preserved. R1 stopped on a finding-selector timeout, R2 on a fake-provider session-ID assertion, R3 on a Project-transition count assertion and R4 on an overly narrow expected-error regex. R5 and R6 passed on earlier manifests; R7 provides new combined-source evidence without rewriting those attempts.",
+    "Canonical R1 exited 1: 3,135 Node tests, 3,055 passed, 15 failed and 65 skipped; the five later gates did not run. Eleven failures used a nonfunctional Windows Store Python alias, two lacked optional locked Teams dependencies, one recurrence assertion matched the checkout directory name, and one required review of deliberate native selection fingerprint drift. The failed receipt/log and isolated recurrence reproduction remain in history. Current runs prepend working Python locally, install the unchanged Teams lock with scripts disabled, and include two reviewed test corrections. These changes do not weaken product checks or grant new execution authority.",
+    "Canonical R2 exited 1 on its unchanged 7,352-file source. Node passed 3,070 of 3,135 cases with 65 skips and no failures. Rust stopped at 646 passed, 1 failed, 9 ignored across 31 summaries; the failing runner binary recorded 298 passed, 1 failed, 5 ignored. Web gates did not complete. The existing late-stop fixture exceeded its 15-second pre-stop upload setup wait. A focused unchanged-source rerun passed one case with 303 filtered; it is not full-suite or causal proof.",
+    "Temporary unchanged-assertion diagnostics exited wrapper 1/Cargo 101 with 297 passed, 2 failed, 5 ignored. Upload setup measured 16,835 ms against 15,000 ms; the later stop took 1 ms against 10,000 ms. A second verifier-start setup wait also failed. Exact original source bytes were restored before integration. Failed logs, diagnostic source/restoration receipts and owned fixtures are retained. These observations and #382 scheduling do not establish a cause or repair for #213's historical parallel failures.",
+    "The accepted source, original publication and provider workspace remain immutable. This implementation creates a separately authorized correction mission and one explicit superseding PR. Supersession does not merge or close either PR.",
+    "Required hosted CI, CodeQL, code-quality and security gates remain unavailable while GitHub Actions is disabled. PRs #390 and #382 are exact preserved parents of the ordinary local integration commit; this does not merge either GitHub PR. The draft is stacked on #390. Issue #95 remains open; no reviewer-only override, bypass or clean historical Cargo advisory audit is claimed.",
+    "docs/PROJECT_MEMORY.md is absent from current main. Current tracked product, architecture, security, eval and contributor guidance was read; missing memory was not fabricated.",
+    "The first core evidence scan exited 42 on 96 synthetic fixture UUID aliases in idempotency, decision, retry and settlement fields. Each finding was mapped back to the original fixture UUID in the same named field. The complete failed packet and redacted scanner receipt are retained. Replacement public copies use explicit fixture-reference labels with the same digest suffix. No original receipt, product source, secret rule or ignore policy was changed; security scans are required again.",
+    "Replacement assembly R3 stopped before validation because the receipt projector assumed an object root for the retained array-shaped Gitleaks report. Its partial packet and native failure remain preserved. The new projector preserves array roots unchanged; the actual scanner report and every object receipt were checked without changing tested source or scanner policy.",
+    "Personal paths and authority-bearing strings are redacted. Structured capability values are hashed using the repository sanitizer; synthetic UUID aliases preserve equality. Original and published artifact hashes are recorded separately; original screenshots are unchanged.",
+    "The final publication includes the separately tested cosmetic fixture EOF cleanup and evidence added after full product execution. Evidence validation compares all physical files, reconstructs the source tree, checks the entire named gate argv and full Node discovery, then runs documentation, native personal-path, secret and diff checks."
+  ]
+}

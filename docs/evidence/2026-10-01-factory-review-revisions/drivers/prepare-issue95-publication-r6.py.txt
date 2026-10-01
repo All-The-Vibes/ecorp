@@ -1,0 +1,211 @@
+"""Repair array receipt publication without changing tested source or frozen helpers."""
+from collections import Counter
+from datetime import datetime, timezone
+import ast
+import importlib.util
+import json
+from pathlib import Path
+import sys
+
+assert __debug__
+sys.dont_write_bytecode = True
+EV = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location("issue95_frozen_publication_r4", EV / "issue95_publication_r4.py")
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+stamp = lambda: datetime.now(timezone.utc).isoformat()
+m.pending_source()
+binding = m.load(EV / "issue95-publication-source-r2.json")
+native = m.load(EV / "issue95-publication-assembly-r3-session-exit.json")
+assert native["session_id"] == 32369 and native["exit_code"] == 1
+assert native["observation"] == "write_stdin returned process exit"
+assert native["tool_return"]["exit_code"] == 1
+assert "ValueError: dictionary update sequence element #0" in native["tool_return"]["output"]
+assert not (EV / "issue95-publication-assembly-r3.json").exists()
+expected_helpers = {
+    "issue95_publication_r4.py": "20d52399424f0dfc2eea93e85f6aa7499f730bfec5e40e700e4338759dd7c7f1",
+    "publish-issue95-r3.ps1": "f2017a3df4026b90046ea98da2222e7c4820a1729fc60476406df275c72a3f4c",
+}
+# The exact helper hash is checked against the observed preparation receipt below.
+prior_preparation = m.load(EV / "issue95-publication-validation-failed-r1/preservation.json")
+expected_helpers["issue95_publication_r4.py"] = prior_preparation["helper_r4_sha256"]
+assert expected_helpers["publish-issue95-r3.ps1"] == prior_preparation["publisher_r3_sha256"]
+for name, digest in expected_helpers.items():
+    assert m.sha(m.guarded_bytes(EV / name, EV)) == digest
+x = m.completed_inputs()
+physical = x["physical"]
+assert physical == binding["physical_files"] and len(physical) == 7397
+assert binding["tested_tree"] == "d25ef2100f7bec0ecc65772f61308c111d8df3fd"
+assert m.index_digest() == binding["original_index_sha256"]
+original_policy = m.policy_state()
+helper = (EV / "issue95_publication_r4.py").read_text(encoding="utf-8")
+publisher = (EV / "publish-issue95-r3.ps1").read_text(encoding="utf-8-sig")
+before_ast = ast.parse(helper)
+replacements = {
+    '"""R4 publication binding: same tested source, labeled fixture references, retained failed packet."""':
+        '"""R5 publication binding: same tested source, array receipts, preserved failed assemblies."""',
+    '"issue95-publication-source-r2.json"': '"issue95-publication-source-r3.json"',
+    '"issue95-publication-assembly-r3.json"': '"issue95-publication-assembly-r5.json"',
+    '"issue95-publication-assembly-r4.json"': '"issue95-publication-assembly-r6.json"',
+    '"issue95-publication-commit-r2.json"': '"issue95-publication-commit-r3.json"',
+    '"issue95-publication-commit-r2.log"': '"issue95-publication-commit-r3.log"',
+    '"issue95-publication-committed-scan-r2.json"': '"issue95-publication-committed-scan-r3.json"',
+    '"issue95-committed-scan-r2"': '"issue95-committed-scan-r3"',
+    '"issue95-publication-validation-r3-session-exit.json"': '"issue95-publication-validation-r5-session-exit.json"',
+    '"issue95-publication-validation-r4-session-exit.json"': '"issue95-publication-validation-r6-session-exit.json"',
+    "validation_receipt(3)": "validation_receipt(5)",
+    "validation_receipt(4)": "validation_receipt(6)",
+    "assert revision in {3, 4}": "assert revision in {5, 6}",
+    "if revision == 3:": "if revision == 5:",
+    "if revision == 4:": "if revision == 6:",
+    "lambda: validate(3)": "lambda: validate(5)",
+    "lambda: validate(4)": "lambda: validate(6)",
+    '"publication/evidence-validation-r3.json"': '"publication/evidence-validation-r5.json"',
+    "The subsequent R4 validation": "The subsequent R6 validation",
+    "additions require separate R4 validation.": "additions require separate R6 validation.",
+    "def projected_receipt(value, physical):\n    result = dict(value)":
+        "def projected_receipt(value, physical):\n"
+        "    if isinstance(value, list):\n"
+        "        return value\n"
+        "    assert isinstance(value, dict), \"Unexpected receipt root\"\n"
+        "    result = dict(value)",
+}
+counts = {}
+for old, new in replacements.items():
+    assert old in helper, "Missing expected replacement: " + old
+    counts[old] = helper.count(old)
+    helper = helper.replace(old, new)
+needle = "    copies = [\n"
+assert helper.count(needle) == 1
+helper = helper.replace(needle, needle + '''
+        (EV / "issue95-publication-assembly-r3-session-exit.json", "history/publication-assembly-r3-failed/session-exit.json"),
+        (EV / "issue95-publication-assembly-r3-failed/preservation.json", "history/publication-assembly-r3-failed/preservation.json"),
+        (EV / "issue95-publication-json-projection-r2.json", "history/publication-assembly-r3-failed/projection-regression.json"),
+''', 1)
+needle = '                 "issue95_publication_r4.py", "publish-issue95-r3.ps1",'
+assert helper.count(needle) == 1
+helper = helper.replace(needle,
+    '                 "issue95_publication_r5.py", "publish-issue95-r4.ps1",\n'
+    '                 "prepare-issue95-publication-r6.py",\n' + needle, 1)
+needle = '        "Personal paths and authority-bearing strings are redacted.'
+assert helper.count(needle) == 1
+helper = helper.replace(needle,
+    '        "Replacement assembly R3 stopped before validation because the receipt projector assumed an object root for the retained array-shaped Gitleaks report. Its partial packet and native failure remain preserved. The new projector preserves array roots unchanged; the actual scanner report and every object receipt were checked without changing tested source or scanner policy.",\n' + needle, 1)
+after_ast = ast.parse(helper)
+def functions(tree):
+    return {n.name: ast.dump(n, include_attributes=False) for n in tree.body
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+before_functions, after_functions = functions(before_ast), functions(after_ast)
+assert before_functions.keys() == after_functions.keys()
+changed_functions = [name for name in before_functions if before_functions[name] != after_functions[name]]
+assert set(changed_functions) <= {"projected_receipt", "original_receipts", "assemble", "validate", "extend", "commit", "scan_committed"}
+projection_ast = next(n for n in after_ast.body if isinstance(n, ast.FunctionDef) and n.name == "projected_receipt")
+ns = {"pairs": m.pairs, "sha": m.sha, "compact": m.compact}
+exec(compile(ast.Module(body=[projection_ast], type_ignores=[]), "reviewed_projection", "exec"), ns)
+projection = ns["projected_receipt"]
+findings = m.load(EV / "issue95-publication-validation-r1-packet-redacted.json")
+assert isinstance(findings, list) and len(findings) == 96
+try:
+    m.projected_receipt(findings, physical)
+except ValueError as error:
+    assert "dictionary update sequence" in str(error)
+    red_observation = {"exception": type(error).__name__, "message": str(error)}
+else:
+    raise AssertionError("The reported array bug did not reproduce")
+assert projection(findings, physical) is findings
+roots = Counter()
+object_count = 0
+for path, _ in m.original_receipts(x):
+    if path.suffix != ".json":
+        continue
+    value = m.load(path)
+    assert isinstance(value, (dict, list))
+    roots[type(value).__name__] += 1
+    actual = projection(value, physical)
+    if isinstance(value, dict):
+        assert actual == m.projected_receipt(value, physical)
+        object_count += 1
+    else:
+        assert actual is value
+assert roots["list"] == 1 and object_count > 0
+regression = {
+    "issue": 95, "recorded_at_utc": stamp(), "status": "passed",
+    "scope": "Publication helper only; no product tests rerun or new product acceptance claimed.",
+    "original_array_bug_reproduced": red_observation, "actual_scanner_report_findings": len(findings),
+    "array_shape_and_content_preserved": True, "input_roots_checked": dict(roots),
+    "existing_object_receipt_projection_unchanged": True, "object_receipts_checked": object_count,
+    "tested_tree": binding["tested_tree"], "physical_files": len(physical),
+    "security_policy_sha256": original_policy, "product_source_changed": False,
+}
+for old, new in {
+    "issue95-publication-commit-r2.json": "issue95-publication-commit-r3.json",
+    "issue95-publication-committed-scan-r2.json": "issue95-publication-committed-scan-r3.json",
+    "issue95-publication-validation-r4.json": "issue95-publication-validation-r6.json",
+    "issue95-publication-source-r2.json": "issue95-publication-source-r3.json",
+    "'publication-validation-r3'": "'publication-validation-r5'",
+    "'publication-validation-r4'": "'publication-validation-r6'",
+    "'publication-committed-scan-r2'": "'publication-committed-scan-r3'",
+    "@('issue95_publication_r3.py','publish-issue95-r2.ps1','issue95_publication_r4.py','publish-issue95-r3.ps1')":
+        "@('issue95_publication_r3.py','publish-issue95-r2.ps1','issue95_publication_r4.py','publish-issue95-r3.ps1','issue95_publication_r5.py','publish-issue95-r4.ps1')",
+}.items():
+    assert old in publisher, old
+    publisher = publisher.replace(old, new)
+for name in ["issue95_publication_r5.py", "publish-issue95-r4.ps1", "issue95-publication-json-projection-r2.json",
+             "issue95-publication-source-r3.json", "issue95-publication-assembly-r5.json"]:
+    assert not (EV / name).exists()
+packet = m.reader.directory_root(m.PACKET)
+evidence_root = m.reader.directory_root(EV)
+destination = EV / "issue95-publication-assembly-r3-failed"
+assert packet == m.ROOT / m.PACKET_REL and packet.is_relative_to(m.ROOT)
+assert destination.parent == evidence_root and not destination.exists()
+assert not any(name.startswith(m.PACKET_REL + "/") for name, _ in physical)
+files = m.packet_files()
+assert files and files[0]["path"].startswith(m.PACKET_REL + "/")
+destination.mkdir()
+record = {
+    "issue": 95, "status": "preserving", "started_at_utc": stamp(),
+    "original_packet": m.PACKET_REL, "packet_files": files,
+    "source_receipt": "issue95-publication-source-r2.json",
+    "source_receipt_sha256": m.sha(m.guarded_bytes(EV / "issue95-publication-source-r2.json", EV)),
+    "observed_failure_receipt": "issue95-publication-assembly-r3-session-exit.json",
+    "observed_failure_sha256": m.sha(m.guarded_bytes(EV / "issue95-publication-assembly-r3-session-exit.json", EV)),
+    "original_index_sha256": m.index_digest(), "tested_tree": binding["tested_tree"],
+    "method": "Verified same-volume rename of this run's owned partial packet; no deletion.",
+    "security_policy_sha256": original_policy, "replacement_counts": counts,
+    "changed_helper_functions": changed_functions, "frozen_helper_sha256": expected_helpers,
+}
+record_path = destination / "preservation.json"
+def save():
+    record_path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+save()
+try:
+    assert destination.resolve(strict=True).parent == evidence_root
+    packet.rename(destination / "packet")
+    for item in files:
+        relative = Path(item["path"]).relative_to(m.PACKET_REL)
+        assert m.sha(m.guarded_bytes(destination / "packet" / relative, EV)) == item["sha256"]
+    m.write(EV / "issue95-publication-json-projection-r2.json", regression)
+    for path, content in [(EV / "issue95_publication_r5.py", helper), (EV / "publish-issue95-r4.ps1", publisher)]:
+        with path.open("x", encoding="utf-8", newline="\n") as stream:
+            stream.write(content)
+    m.verify_files(physical)
+    m.pending_source()
+    assert m.index_digest() == record["original_index_sha256"]
+    assert m.policy_state() == original_policy
+    assert m.source_inventory() == set(dict(physical))
+    for name, digest in expected_helpers.items():
+        assert m.sha(m.guarded_bytes(EV / name, EV)) == digest
+    record.update(status="preserved_and_replacement_prepared", product_files_unchanged=True,
+                  product_files=7397, original_index_unchanged=True, pending_merge_preserved=True,
+                  deletion_performed=False, frozen_helpers_unchanged=True, projection_regression=regression,
+                  helper_r5_sha256=m.sha((EV / "issue95_publication_r5.py").read_bytes()),
+                  publisher_r4_sha256=m.sha((EV / "publish-issue95-r4.ps1").read_bytes()))
+except Exception as error:
+    record.update(status="failed", failure_type=type(error).__name__, failure=str(error))
+    raise
+finally:
+    record["finished_at_utc"] = stamp()
+    save()
+    print(json.dumps({key: record.get(key) for key in [
+        "status", "product_files", "product_files_unchanged", "original_index_unchanged",
+        "pending_merge_preserved", "changed_helper_functions", "helper_r5_sha256", "publisher_r4_sha256"]}))

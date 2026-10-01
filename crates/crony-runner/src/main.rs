@@ -5,9 +5,11 @@ mod deliverable;
 mod dependency_files;
 #[cfg(test)]
 mod issue297_native_fixtures;
+mod publication_source;
 mod retained_provider_receipt;
 #[cfg(test)]
 mod retained_provider_receipt_tests;
+mod review_revision;
 mod source_checkpoint;
 #[cfg(test)]
 mod stopped_session_probe_tests;
@@ -181,6 +183,7 @@ struct Args {
 #[derive(Debug, Clone)]
 struct Assignment {
     base_refresh: Option<crony_protocol::BaseRefreshSource>,
+    review_revision: Option<crony_protocol::ReviewRevisionSource>,
     // Set only by native reconstruction, never accepted from the wire.
     base_refresh_tree: Option<String>,
     dependency_files: Vec<crony_protocol::dependency_files::VerifiedDependencyFile>,
@@ -839,6 +842,18 @@ async fn run_connection(
     });
     capabilities.push(RunnerCapability {
         workspace_connection_id: None,
+        name: crony_domain::REVIEW_REVISION_CAPABILITY.to_owned(),
+        available: true,
+        detail: Some(
+            "Isolated published source corrections with exact native resume checkpoints".to_owned(),
+        ),
+        models: Vec::new(),
+        source_repository: None,
+        source_base_ref: None,
+        source_base_commit: None,
+    });
+    capabilities.push(RunnerCapability {
+        workspace_connection_id: None,
         name: "retained-provider-receipt-v1".to_owned(),
         available: true,
         detail: Some(
@@ -1106,6 +1121,7 @@ async fn run_connection(
                 }
             }
             ServerToRunner::StartRun {
+                review_revision,
                 dependency_files,
                 workspace_connection_id,
                 corp_id,
@@ -1157,6 +1173,7 @@ async fn run_connection(
                     verification_command_id: None,
                     retained_provider_receipt: None,
                     base_refresh: None,
+                    review_revision: review_revision.map(|source| *source),
                     base_refresh_tree: None,
                     checkpoint_verification: false,
                     hard_boundary_checkpoint: Arc::default(),
@@ -1251,6 +1268,7 @@ async fn run_connection(
                 });
             }
             ServerToRunner::ResumeRun {
+                review_revision,
                 dependency_files,
                 workspace_connection_id,
                 command_id,
@@ -1319,6 +1337,7 @@ async fn run_connection(
                     verification_command_id: None,
                     retained_provider_receipt: None,
                     base_refresh: None,
+                    review_revision: review_revision.map(|source| *source),
                     base_refresh_tree: None,
                     checkpoint_verification: false,
                     hard_boundary_checkpoint: Arc::default(),
@@ -1524,6 +1543,7 @@ async fn run_connection(
                     verification_command_id: Some(command_id),
                     retained_provider_receipt: retained_provider_receipt.map(|grant| *grant),
                     base_refresh: base_refresh.map(|source| *source),
+                    review_revision: None,
                     base_refresh_tree: None,
                     checkpoint_verification,
                     hard_boundary_checkpoint: Arc::default(),
@@ -1692,6 +1712,7 @@ async fn run_connection(
                     verification_command_id: None,
                     retained_provider_receipt: None,
                     base_refresh: None,
+                    review_revision: None,
                     base_refresh_tree: None,
                     checkpoint_verification: false,
                     hard_boundary_checkpoint: Arc::default(),
@@ -2187,7 +2208,7 @@ fn connection_source(assignment: &Assignment) -> Result<crony_domain::WorkspaceS
 async fn execute_connected_assignment(
     workspaces: Arc<WorkspaceManager>,
     runner_id: String,
-    assignment: Assignment,
+    mut assignment: Assignment,
     adapter: Arc<dyn AgentAdapter>,
     outbound: OutboundBus,
     channels: AssignmentChannels,
@@ -2203,6 +2224,22 @@ async fn execute_connected_assignment(
         (runtime.workspaces, runtime.adapter)
     } else {
         (workspaces, adapter)
+    };
+    let workspaces = if let Some(source) = &assignment.review_revision {
+        let seeded = review_revision::reconstruct(
+            &workspaces,
+            &assignment,
+            source,
+            resume_session_id.is_some(),
+        )
+        .await?;
+        let (head, fingerprint) = seeded.manager.checkpoint(&seeded.workspace).await?;
+        assignment.resume_workspace_base_commit = Some(seeded.workspace.base_commit.clone());
+        assignment.expected_workspace_fingerprint = Some(fingerprint);
+        assignment.expected_head_commit = Some(head);
+        seeded.manager
+    } else {
+        workspaces
     };
     execute_assignment(
         workspaces,
@@ -2516,23 +2553,27 @@ async fn execute_assignment(
         return Ok(());
     }
     if teardown_uncertain.load(Ordering::Acquire) || preserve_workspace {
-        let fingerprint = workspaces.fingerprint(&workspace).await.ok();
+        let checkpoint = if teardown_uncertain.load(Ordering::Acquire) || workspace_quarantined {
+            None
+        } else {
+            workspaces.checkpoint(&workspace).await.ok()
+        };
         send_teardown_workspace_preserved(
             &outbound,
             &runner_id,
             &assignment,
             &workspace,
             "provider recovery, failure, or teardown requires the exact worktree to be retained",
-            fingerprint.as_deref(),
+            checkpoint.as_ref().map(PreservedCheckpoint::from),
             workspace_quarantined,
         );
     } else {
         let cleanup = workspaces.finalize(&workspace).await;
-        let fingerprint = match &cleanup {
+        let checkpoint = match &cleanup {
             Ok(cleanup) if cleanup.disposition == WorkspaceDisposition::Preserved => {
-                workspaces.fingerprint(&workspace).await.ok()
+                workspaces.checkpoint(&workspace).await.ok()
             }
-            Err(_) => workspaces.fingerprint(&workspace).await.ok(),
+            Err(_) => workspaces.checkpoint(&workspace).await.ok(),
             _ => None,
         };
         send_workspace_cleanup_event(
@@ -2541,7 +2582,7 @@ async fn execute_assignment(
             &assignment,
             &workspace,
             cleanup,
-            fingerprint.as_deref(),
+            checkpoint.as_ref().map(PreservedCheckpoint::from),
         );
     }
     execution?;
@@ -2894,7 +2935,12 @@ async fn execute_verification_assignment(
         } else {
             "verifier-only source workspace retained without an admitted checkpoint"
         },
-        trusted_fingerprint,
+        trusted_fingerprint.zip(cleanup_head_commit.as_deref()).map(
+            |(fingerprint, head_commit)| PreservedCheckpoint {
+                head_commit,
+                fingerprint,
+            },
+        ),
         workspace_quarantined,
     );
     Ok(())
@@ -3344,6 +3390,16 @@ async fn send_verification_events(
                 workspace,
                 &assignment.write_scope,
                 tree,
+            )
+            .await
+        } else if let Some(source) = &assignment.review_revision {
+            deliverable::prepare_revision(
+                assignment.run_id,
+                spec,
+                workspace,
+                source_artifacts.unwrap_or(&artifacts),
+                &assignment.write_scope,
+                &source.source_head_commit,
             )
             .await
         } else {
@@ -3808,13 +3864,28 @@ async fn send_verification_events(
     VerificationRunOutcome::Finished
 }
 
+#[derive(Clone, Copy)]
+struct PreservedCheckpoint<'a> {
+    head_commit: &'a str,
+    fingerprint: &'a str,
+}
+
+impl<'a> From<&'a (String, String)> for PreservedCheckpoint<'a> {
+    fn from((head_commit, fingerprint): &'a (String, String)) -> Self {
+        Self {
+            head_commit,
+            fingerprint,
+        }
+    }
+}
+
 fn send_workspace_cleanup_event(
     outbound: &OutboundBus,
     runner_id: &str,
     assignment: &Assignment,
     workspace: &WorkspaceLease,
     cleanup: Result<WorkspaceCleanup>,
-    workspace_fingerprint: Option<&str>,
+    checkpoint: Option<PreservedCheckpoint<'_>>,
 ) {
     let (event_type, cleanup) = match cleanup {
         Ok(cleanup) => {
@@ -3850,7 +3921,8 @@ fn send_workspace_cleanup_event(
             "dirty": cleanup.dirty,
             "commits_ahead": cleanup.commits_ahead,
             "branch_deleted": cleanup.branch_deleted,
-            "workspace_fingerprint": workspace_fingerprint,
+            "workspace_fingerprint": checkpoint.map(|value| value.fingerprint),
+            "head_commit": checkpoint.map(|value| value.head_commit),
         }),
     );
 }
@@ -3861,13 +3933,13 @@ fn send_teardown_workspace_preserved(
     assignment: &Assignment,
     workspace: &WorkspaceLease,
     detail: &str,
-    workspace_fingerprint: Option<&str>,
+    checkpoint: Option<PreservedCheckpoint<'_>>,
     workspace_quarantined: bool,
 ) {
-    let workspace_fingerprint = if workspace_quarantined {
+    let checkpoint = if workspace_quarantined {
         None
     } else {
-        workspace_fingerprint
+        checkpoint
     };
     send_run_event(
         outbound,
@@ -3883,7 +3955,8 @@ fn send_teardown_workspace_preserved(
             "dirty": Value::Null,
             "commits_ahead": Value::Null,
             "branch_deleted": false,
-            "workspace_fingerprint": workspace_fingerprint,
+            "workspace_fingerprint": checkpoint.map(|value| value.fingerprint),
+            "head_commit": checkpoint.map(|value| value.head_commit),
             "workspace_quarantined": workspace_quarantined,
         }),
     );
@@ -4182,6 +4255,7 @@ mod tests {
             verification_command_id: None,
             retained_provider_receipt: None,
             base_refresh: None,
+            review_revision: None,
             base_refresh_tree: None,
             checkpoint_verification: false,
             hard_boundary_checkpoint: Arc::default(),
@@ -5256,13 +5330,17 @@ mod tests {
         let assignment = verification_assignment(&workspace, Uuid::new_v4());
         let outbound = OutboundBus::default();
         let fingerprint = "b".repeat(64);
+        let checkpoint = Some(PreservedCheckpoint {
+            head_commit: &workspace.base_commit,
+            fingerprint: &fingerprint,
+        });
         send_teardown_workspace_preserved(
             &outbound,
             "runner-test",
             &assignment,
             &workspace,
             "display text mentions quarantine but grants no authority",
-            Some(&fingerprint),
+            checkpoint,
             false,
         );
         send_teardown_workspace_preserved(
@@ -5271,14 +5349,16 @@ mod tests {
             &assignment,
             &workspace,
             "display text does not classify this outcome",
-            Some(&fingerprint),
+            checkpoint,
             true,
         );
         let events = recorded_run_events(&outbound);
         assert_eq!(events[0].1["workspace_quarantined"], false);
         assert_eq!(events[0].1["workspace_fingerprint"], fingerprint);
+        assert_eq!(events[0].1["head_commit"], workspace.base_commit);
         assert_eq!(events[1].1["workspace_quarantined"], true);
         assert_eq!(events[1].1["workspace_fingerprint"], Value::Null);
+        assert_eq!(events[1].1["head_commit"], Value::Null);
     }
 
     #[tokio::test]
@@ -5742,6 +5822,7 @@ mod tests {
             verification_command_id: None,
             retained_provider_receipt: None,
             base_refresh: None,
+            review_revision: None,
             base_refresh_tree: None,
             checkpoint_verification: false,
             hard_boundary_checkpoint: Arc::default(),
@@ -5867,6 +5948,7 @@ mod tests {
             verification_command_id: None,
             retained_provider_receipt: None,
             base_refresh: None,
+            review_revision: None,
             base_refresh_tree: None,
             checkpoint_verification: false,
             hard_boundary_checkpoint: Arc::default(),

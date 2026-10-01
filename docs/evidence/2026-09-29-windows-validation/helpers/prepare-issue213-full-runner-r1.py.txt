@@ -1,0 +1,95 @@
+"""Declare one full-runner control after the inconclusive 51-test cohort."""
+from datetime import datetime, timezone
+import ast
+import hashlib
+import json
+import os
+from pathlib import Path
+import statistics
+
+EV = Path(__file__).resolve().parent
+SOURCE = EV / "run-issue213-export-diagnostics-r2.py"
+DEST = EV / "run-issue213-full-runner-comparison-r1.py"
+PLAN = EV / "issue213-full-runner-plan-r1.json"
+ANALYSIS = EV / "issue213-export-diagnostic-analysis-r2.json"
+assert not any(path.exists() for path in [DEST, PLAN, ANALYSIS])
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+prior_path = EV / "issue213-export-diagnostics-r2.json"
+prior = json.loads(prior_path.read_text(encoding="utf-8-sig"))
+assert prior["status"] == "observed" and prior["source_restored"]
+assert prior["one_binary_used_for_both_lanes"] and len(prior["lanes"]) == 2
+assert digest(SOURCE) == "a886868383e265da006c49e5b4e86b3aaf4e2757f65d3abf188247ba00ab4c1d"
+analyses = []
+for lane in prior["lanes"]:
+    spans_path = Path(lane["spans"])
+    assert digest(spans_path) == lane["spans_sha256"]
+    spans = json.loads(spans_path.read_text(encoding="utf-8-sig"))
+    ended = [span for span in spans if span["event"] == "scope-ended"]
+    summary = {"lane": lane["name"], "counts": lane["counts"], "span_events": len(spans),
+               "max_observed_active_git": max(span["active_git"] for span in spans), "phases": []}
+    for operation in ["prepared-export", "export-prepared", "create-git-bundle", "held-ack-case"]:
+        rows = [span for span in ended if span["operation"] == operation]
+        if rows:
+            durations = [span["elapsed_us"] / 1000 for span in rows]
+            summary["phases"].append({"operation": operation, "count": len(rows),
+                                      "median_ms": round(statistics.median(durations), 3),
+                                      "max_ms": round(max(durations), 3)})
+    summary["slowest_git"] = sorted((span for span in ended if span["kind"] == "git"),
+                                   key=lambda span: span["elapsed_us"], reverse=True)[:10]
+    summary["held_ack_events"] = [span for span in spans if "held_ack" in span["thread"]
+                                  and span["kind"] in ["phase", "event"]]
+    analyses.append(summary)
+ANALYSIS.write_text(json.dumps({"issue": 213, "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+    "source_receipt": prior_path.name, "source_sha256": digest(prior_path), "lanes": analyses,
+    "interpretation": "Both selected cohorts passed. The held-ACK case reached upload in both. No historical failure was reproduced and no contention or product-defect cause is established. Span ends include error and cancellation paths; durations are observations, not success evidence.",
+    "limits": "The parallel lane used eight threads and 51 selected tests; it did not exercise the complete current runner cohort under native default scheduling."}, indent=2) + "\n")
+
+text = SOURCE.read_text(encoding="utf-8-sig")
+
+
+def replace_once(before, after):
+    global text
+    assert text.count(before) == 1, before
+    text = text.replace(before, after, 1)
+
+
+text = text.replace("issue213-export-diagnostics-r2", "issue213-full-runner-comparison-r1")
+text = text.replace("issue213-export-diagnostic-source-r2", "issue213-full-runner-source-r1")
+text = text.replace("issue213-export-diagnostic-r2", "issue213-full-runner-r1")
+replace_once('"parallel_threads": 8, "serial_threads": 1,',
+             '"native_default_scheduling": True, "host_logical_processors": os.cpu_count(), "serial_threads": 1,')
+replace_once('"scope": "Matched current-source diagnostic, not reconstruction of September 9/18 chronology or a parallel stability claim.",',
+             '"scope": "One complete current runner comparison, native default versus supported serial scheduling, on the same instrumented binary. Not reconstruction of September 9/18 chronology or a parallel stability claim.",\n'
+             '              "declared_plan_sha256": sha((EV / "issue213-full-runner-plan-r1.json").read_bytes()),')
+replace_once('        filters = ["source_checkpoint::tests::", "deliverable::tests::", "deliverable::canonical_tests::",\n'
+             '                   "adapter::external::tests::claude_permission_bridge_denies_rejection_and_expiry",\n'
+             '                   "tests::teardown_fail_closed_execute_assignment_preserves_exact_workspace_until_verified"]',
+             '        filters = []  # Full native runner discovery, including its unchanged ignored-case declarations.')
+replace_once('assert len(selected) >= 30 and any("held_ack" in name for name in selected)',
+             'assert len(selected) == 286 and any("held_ack" in name for name in selected)')
+replace_once('for label, threads in [("parallel-8", 8), ("serial-1", 1)]:',
+             'for label, threads in [("native-default", None), ("serial-1", 1)]:')
+replace_once('            result, lane = command(label, [binary, *filters, "--test-threads=" + str(threads), "--nocapture"], env=lane_env)',
+             '            arguments = [binary, *filters, *([] if threads is None else ["--test-threads=" + str(threads)]), "--nocapture"]\n'
+             '            result, lane = command(label, arguments, env=lane_env)')
+ast.parse(text)
+DEST.write_text(text, encoding="utf-8")
+plan = {"issue": 213, "declared_at_utc": datetime.now(timezone.utc).isoformat(),
+        "head": prior["head"], "prior_receipt": prior_path.name, "prior_sha256": digest(prior_path),
+        "prior_analysis": ANALYSIS.name, "prior_analysis_sha256": digest(ANALYSIS),
+        "helper": DEST.name, "helper_sha256": digest(DEST),
+        "reason": "The selected eight-thread cohort passed without reproducing the historical failures. Its filters and explicit concurrency do not represent the full default runner. One full-runner comparison will observe that unresolved difference before deciding whether serial scheduling is the supported contributor contract.",
+        "behavioral_invocations": 2, "builds": 1,
+        "lanes": ["Native default scheduling with RUST_TEST_THREADS removed", "Explicit native --test-threads=1"],
+        "expected_discovery": 286, "per_lane_timeout_seconds": 1800,
+        "source_policy": "One binary; passive cfg(test) spans only; exact source restored in finally. Same assertions, deadlines, permissions, ignored declarations and product behavior. No limiter, guessed sleeps, real inference or application database.",
+        "resource_policy": "Fresh short owned roots outside ambient Git. Existing native suspended-launch JobObject helper owns and reaps descendants; existing target mutex prevents concurrent validation. Build jobs limited to two. Preserve logs and failed fixtures.",
+        "decision_policy": "Retain all outcomes. No repeat-until-green. Missing result summaries are unavailable validation. Neither paired passes nor serial-only success establish the historical cause or substitute for an uninstrumented full canonical gate."}
+PLAN.write_text(json.dumps(plan, indent=2) + "\n")
+print(json.dumps({"status": "declared", "plan": str(PLAN), "helper": str(DEST),
+                  "helper_sha256": digest(DEST), "behavioral_invocations": 2}))

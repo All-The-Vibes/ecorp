@@ -26,7 +26,7 @@ async fn commit_failure_preserves_transport(pool: PgPool, connected: bool) {
     let (sender, receiver) = std::sync::mpsc::channel();
     let receiver = connected.then_some(receiver);
     let outcome = dispatcher
-        .with_run_budget_dispatch(CORP, run_id(1), run_id(1), "issue56-runner-1", || {
+        .with_run_budget_dispatch(CORP, run_id(1), run_id(1), "issue56-runner-1", None, || {
             let transport = sender.send(run_id(1));
             // PostgreSQL ends the idle transaction after the real enqueue,
             // without a production fault hook or a synthetic commit error.
@@ -364,7 +364,7 @@ async fn issue56_native_enqueue_rejects_fenced_and_wrong_assignments(pool: PgPoo
     ] {
         assert!(
             store
-                .with_run_budget_dispatch(corp, run_id(1), token, runner, || {
+                .with_run_budget_dispatch(corp, run_id(1), token, runner, None, || {
                     panic!("wrong assignment must never enqueue native work")
                 })
                 .await
@@ -376,7 +376,7 @@ async fn issue56_native_enqueue_rejects_fenced_and_wrong_assignments(pool: PgPoo
         .await
         .unwrap();
     let error = store
-        .with_run_budget_dispatch(CORP, run_id(1), run_id(1), "issue56-runner-1", || {
+        .with_run_budget_dispatch(CORP, run_id(1), run_id(1), "issue56-runner-1", None, || {
             panic!("a fenced starting run must never enqueue StartRun or ResumeRun")
         })
         .await
@@ -409,7 +409,7 @@ async fn issue56_native_enqueue_precedes_a_concurrent_fence(pool: PgPool) {
     let dispatcher = store.clone();
     let dispatch = tokio::spawn(async move {
         dispatcher
-            .with_run_budget_dispatch(CORP, run_id(1), run_id(1), "issue56-runner-1", || {
+            .with_run_budget_dispatch(CORP, run_id(1), run_id(1), "issue56-runner-1", None, || {
                 sent.store(true, std::sync::atomic::Ordering::SeqCst);
                 true
             })

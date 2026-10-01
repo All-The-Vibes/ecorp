@@ -1,0 +1,1325 @@
+"""R5 publication binding: same tested source, array receipts, preserved failed assemblies."""
+from contextlib import contextmanager
+from datetime import datetime, timezone
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import re
+import stat
+import subprocess
+import sys
+import tempfile
+
+if not __debug__:
+    raise SystemExit("Publication assertions require normal Python execution")
+
+sys.dont_write_bytecode = True
+
+EV = Path(__file__).resolve().parent
+ROOT = Path(r"<ISOLATED_CHECKOUT>")
+MAIN = "878a1774774b0630c904cbaf4b05e1b346777817"
+PARENT = "7e65f46a0c0f991460eeb4c5b60723d2e0dff1f9"
+SECOND_PARENT = "6f2375e06546806003a9a1d1a340bdc1a4ce4b8c"
+PARENTS = [PARENT, SECOND_PARENT]
+BRANCH = "codex/issue95-governed-review-revision"
+BASE_BRANCH = "codex/issue84-base-refresh"
+PACKET_REL = "docs/evidence/2026-10-01-factory-review-revisions"
+PACKET = ROOT / PACKET_REL
+NATIVE_REPORT = ROOT / "output/readiness/2026-10-01T06-03-58-183Z-fixture reference 6f5ca9a30c765e54-full.json"
+FAILED_NATIVE_REPORT = ROOT / "output/readiness/2026-10-01T04-04-39-554Z-fixture reference dcf60c4dc78e2c86-full.json"
+FAILED_R2_NATIVE_REPORT = ROOT / "output/readiness/2026-10-01T04-53-05-705Z-fixture reference 4444d01a76642980-full.json"
+REPORTS = {NATIVE_REPORT, FAILED_NATIVE_REPORT, FAILED_R2_NATIVE_REPORT}
+NODE = Path(r"<USER_HOME>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe")
+GITLEAKS = Path(r"<CONFIGURED_SOURCE>\output\pr-completion\20260922T123548Z\gitleaks-8.30.1\gitleaks.exe")
+GITLEAKS_SHA = "17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c"
+NAMES = ["migrations", "state-audit-compatibility", "state-audit-evm", "docs",
+         "repository-docs", "node-tests", "format", "clippy", "rust-tests", "web-build", "web-lint"]
+ENV = {k: v for k, v in os.environ.items()
+       if not re.match(r"^(CRONY_|ECORP_|PG|GH_|GITHUB_|GITLEAKS_|AZURE_|GIT_)", k, re.I)
+       and k.upper() not in {"DATABASE_URL", "OPENAI_API_KEY", "ANTHROPIC_API_KEY",
+                             "COPILOT_GITHUB_TOKEN", "NODE_OPTIONS", "PYTHONPATH", "PYTHONHOME", "RUST_TEST_THREADS"}}
+ENV.update(GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="Never", GIT_OPTIONAL_LOCKS="0", PYTHONDONTWRITEBYTECODE="1")
+ENV["PATH"] = str(NODE.parent) + os.pathsep + str(Path(sys.executable).parent) + os.pathsep + ENV["PATH"]
+
+# The existing repository reader supplies native alias/link/open-file guards.
+GUARD = ROOT / "docs/evidence/pr362-combined-20260921/verify_public.py"
+spec = importlib.util.spec_from_file_location("issue95_existing_evidence_reader", GUARD)
+reader = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(reader)
+
+
+def now():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def compact(value):
+    return json.dumps(value, separators=(",", ":"), ensure_ascii=False).encode()
+
+
+def load(path):
+    return json.loads(Path(path).read_text(encoding="utf-8-sig"))
+
+
+def write(path, value):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("x", encoding="utf-8", newline="\n") as stream:
+        stream.write(json.dumps(value, indent=2, ensure_ascii=False) + "\n")
+
+
+def git(*args, env=ENV, data=None, timeout=240):
+    result = subprocess.run(["git", "--no-optional-locks", "-C", str(ROOT), *args],
+                            env=env, input=data, capture_output=True, timeout=timeout,
+                            creationflags=subprocess.CREATE_NO_WINDOW)
+    if result.returncode:
+        raise RuntimeError(f"Git {args[0]} exited {result.returncode}")
+    return result.stdout
+
+
+def index_digest():
+    path = Path(git("rev-parse", "--path-format=absolute", "--git-path", "index").decode().strip())
+    return sha(path.read_bytes())
+
+
+def pending_source():
+    assert git("rev-parse", "HEAD").decode().strip() == PARENT
+    assert git("branch", "--show-current").decode().strip() == BRANCH
+    assert not git("ls-files", "--unmerged").strip()
+    merge = Path(git("rev-parse", "--path-format=absolute", "--git-path", "MERGE_HEAD").decode().strip())
+    assert merge.is_file() and merge.read_text().split() == [SECOND_PARENT], "Preserve the exact pending prerequisite merge"
+    assert git("remote", "get-url", "origin").decode().strip() in {
+        "https://github.com/All-The-Vibes/ecorp.git", "https://github.com/All-The-Vibes/ecorp"}
+    git("merge-base", "--is-ancestor", MAIN, PARENT)
+    git("merge-base", "--is-ancestor", MAIN, SECOND_PARENT)
+    integration = load(EV / "issue95-windows-prerequisite-r1/integration.json")
+    assert integration["status"] == "integrated_uncommitted" and integration["merge_exit_code"] == 0
+    assert integration["first_parent"] == PARENT and integration["incoming_head"] == SECOND_PARENT
+    assert integration["expected_eventual_parents"] == PARENTS and not integration["conflicts"]
+    assert integration["dirty_work_verified_unchanged"] and integration["incoming_files_match_exact_commit"]
+    assert integration["source_checkout_status_unchanged"]
+
+
+def guarded_bytes(path, root):
+    declared_root = Path(root).absolute()
+    resolved_root = reader.directory_root(declared_root)
+    assert os.path.normcase(str(declared_root)) == os.path.normcase(str(resolved_root))
+    declared = Path(path).absolute()
+    assert declared.is_relative_to(declared_root)
+    relative = declared.relative_to(declared_root).as_posix()
+    resolved = reader.regular_file(resolved_root, relative)
+    assert os.path.normcase(str(declared)) == os.path.normcase(str(resolved))
+    before = declared.lstat()
+    fields = lambda s: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns, s.st_nlink)
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(declared, flags)
+    with os.fdopen(descriptor, "rb") as stream:
+        opened = os.fstat(stream.fileno())
+        assert stat.S_ISREG(opened.st_mode) and opened.st_nlink == 1
+        assert fields(before) == fields(opened), "source changed before read"
+        raw = stream.read()
+        assert len(raw) == opened.st_size
+        assert fields(os.fstat(stream.fileno())) == fields(opened), "source changed during read"
+        assert reader.regular_file(resolved_root, relative) == resolved
+        assert fields(declared.lstat()) == fields(opened), "source path replaced during read"
+    return raw
+
+
+def guarded_cargo_binary(path):
+    """Read only the three fixed Cargo output/dep pairs, without relaxing evidence guards."""
+    root = reader.directory_root(ROOT)
+    assert os.path.normcase(str(root)) == os.path.normcase(str(ROOT.absolute()))
+    peers = {f"target/debug/crony-{name}.exe": f"target/debug/deps/crony_{name}.exe"
+             for name in ("server", "runner", "cli")}
+    relative = Path(path).absolute().relative_to(ROOT.absolute()).as_posix()
+    assert relative in peers, "Unexpected native build output"
+    declared = [root / relative, root / peers[relative]]
+    paths = [reader.unlinked_path(item) for item in declared]
+    assert all(os.path.normcase(str(a)) == os.path.normcase(str(b)) for a, b in zip(declared, paths))
+    fields = lambda s: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns, s.st_nlink)
+    before = [item.lstat() for item in paths]
+    assert all(stat.S_ISREG(info.st_mode) and info.st_nlink == 2 for info in before)
+    assert fields(before[0]) == fields(before[1]), "Cargo output/dep identities differ"
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    with os.fdopen(os.open(paths[0], flags), "rb") as stream:
+        opened = os.fstat(stream.fileno())
+        assert stat.S_ISREG(opened.st_mode) and fields(opened) == fields(before[0])
+        raw = stream.read()
+        assert len(raw) == opened.st_size and fields(os.fstat(stream.fileno())) == fields(opened)
+        for declared_path, canonical_path in zip(declared, paths):
+            assert reader.unlinked_path(declared_path) == canonical_path
+            assert fields(declared_path.lstat()) == fields(opened), "Cargo binary changed during read"
+    return raw
+
+
+def verify_files(physical):
+    assert len(physical) == len(dict(physical))
+    for name, digest in physical:
+        assert sha(guarded_bytes(ROOT / name, ROOT)) == digest, name
+
+
+def pairs(rows):
+    values = [[row["path"], row["sha256"].lower()] for row in rows]
+    assert len(values) == len(dict(values))
+    return sorted(values)
+
+
+def log_path(receipt):
+    path = Path(receipt["log"])
+    assert path.resolve().is_relative_to(EV) and path.is_file()
+    return path
+
+
+def require_pass(receipt):
+    assert receipt["status"] == "passed" and receipt["exit_code"] == 0
+    assert receipt["source_unchanged"] and receipt["head"] == PARENT and receipt["finished_at_utc"]
+    log_path(receipt)
+
+
+def completed_inputs():
+    """Never publish before the current canonical native process has exited."""
+    pending_source()
+    observed = observed_exit("issue95-canonical-r3-session-exit.json")
+    assert observed["session_id"] == 52398
+    canonical = load(EV / "issue95-canonical-r3.json")
+    require_pass(canonical)
+    assert canonical["command"] == ["pnpm", "check"]
+    assert canonical.get("rust_test_threads") is None
+    assert canonical["node"] == "v24.21.0" and canonical["pnpm"] == "11.19.0"
+    native = load(NATIVE_REPORT)
+    assert native["group"] == "full" and native["status"] == "passed" and native["finishedAt"] and not native["notRun"]
+    assert native["sourceChangedDuringValidation"] is False and native["runningCheck"] is None
+    assert [c["name"] for c in native["checks"]] == NAMES
+    assert all(c["passed"] and c["exitCode"] == 0 and not c["errorCode"] for c in native["checks"])
+    assert next(c["argv"] for c in native["checks"] if c["name"] == "rust-tests") == [
+        "cargo", "test", "--workspace", "--locked", "--", "--test-threads=1"]
+    assert native["source"]["commit"] == PARENT and native["source"]["branch"] == BRANCH
+    node = next(c["counts"]["node"] for c in native["checks"] if c["name"] == "node-tests")
+    rust = next(c["counts"]["rust"] for c in native["checks"] if c["name"] == "rust-tests")
+    assert node["tests"] > 3000 and node["failed"] == node["cancelled"] == node["todo"] == 0
+    assert node["tests"] == node["passed"] + node["skipped"]
+    assert rust["passed"] > 800 and rust["failed"] == 0
+    physical = pairs(canonical["source_files"])
+    assert len(physical) == 7397 and set(native["source"]["files"]) == set(dict(physical))
+    assert all(dict(physical)[p] == h for p, h in native["source"]["untrackedDigests"])
+    assert sha(git("diff", "--binary", "--no-ext-diff", "--no-textconv", "HEAD")) == native["source"]["trackedDiffSha256"]
+    acceptance_path = EV / "issue95-acceptance-r7/acceptance.json"
+    assert observed_exit("issue95-acceptance-r7-session-exit.json")["session_id"] == 14518
+    acceptance, driver = load(acceptance_path), load(acceptance_path.with_name("driver.json"))
+    assert acceptance["passed"] and acceptance["source_unchanged"] and acceptance["publisher_credential_revoked"]
+    assert acceptance["product_head"] == PARENT and pairs(acceptance["source_files"]) == physical
+    assert acceptance["finished_at"] and len(acceptance["scenarios"]) == 15
+    assert all(s["passed"] is True for s in acceptance["scenarios"])
+    assert driver["status"] == "passed" and driver["finished_at"] and driver["database_stop_exit_code"] == 0
+    assert set(driver["stopped"]) == {"postgres", "server", "web", "runner", "acceptance"}
+    assert all(driver["stopped"].values())
+    verify_screenshot_review(acceptance_path, physical)
+    verified = load(EV / "issue95-acceptance-r7-verification.json")
+    assert verified["status"] == "passed" and verified["observed_native_session"] == 14518
+    assert verified["observed_native_exit"] == 0 and verified["source_files"] == len(physical)
+    assert verified["product_head"] == PARENT and verified["pending_merge_head"] == SECOND_PARENT
+    assert verified["matches_canonical_r3_manifest"] and verified["current_files_exact_match"]
+    assert verified["native_build_reused"] and verified["unchanged_native_build_source_files"] == 289
+    assert verified["binaries_match_preflight"] and not verified["browser_errors"] and not verified["external_requests"]
+    assert verified["services_stopped_as_recorded"] == driver["stopped"] and verified["publisher_credential_revoked"]
+    assert verified["scenarios"] == [{"name": s["name"], "passed": s["passed"]} for s in acceptance["scenarios"]]
+    for name, digest in verified["receipts"].items():
+        assert sha(guarded_bytes(EV / name, EV)) == digest
+    preflight = load(EV / "issue95-acceptance-r7-preflight.json")
+    assert preflight["status"] == "passed" and preflight["head"] == PARENT
+    assert preflight["pending_merge_head"] == SECOND_PARENT and preflight["native_source_exact_match"]
+    assert preflight["combined_source_exact_match"]
+    for binary in preflight["binaries"]:
+        assert sha(guarded_cargo_binary(ROOT / binary["path"])) == binary["sha256"]
+    focused = {}
+    for name in ["store-r4", "native-build-r1", "domain-runner-r6", "web-regressions-r2",
+                 "web-build-r2", "web-lint-r2", "frozen-install-r1",
+                 "node-prerequisites-parity-r2", "native-deliverable-parity-r2", "native-correction-parity-r2",
+                 "late-stop-focused-r1", "windows-policy-r1"]:
+        path = EV / f"issue95-{name}.json"
+        value = load(path)
+        require_pass(value)
+        manifest = pairs(value["source_files"])
+        mapping = dict(physical)
+        differing = [n for n, h in manifest if mapping.get(n) != h]
+        extra = sorted(set(mapping) - set(dict(manifest)))
+        policy_paths = ["CONTRIBUTING.md", "docs/VALIDATION.md", "tests/readiness/cli.test.js",
+                        "tools/check_docs.mjs", "tools/readiness_contract.test.mjs", "tools/run_checks.mjs"]
+        if name in {"store-r4", "native-build-r1", "native-deliverable-parity-r2", "native-correction-parity-r2",
+                    "late-stop-focused-r1"}:
+            assert len(manifest) == 289 and not differing
+        elif name == "windows-policy-r1":
+            assert manifest == physical
+        elif name == "node-prerequisites-parity-r2":
+            assert len(manifest) == 7352 and differing == policy_paths and len(extra) == 45
+            assert all(n.startswith("docs/evidence/2026-09-29-windows-validation/") for n in extra)
+        else:
+            assert len(manifest) == 7349
+            historical_install_paths = ["Cargo.lock", "apps/web/src/reviewRevisionPanel.test.mjs",
+                                        "db/migrations/manifest.json"] if name == "frozen-install-r1" else []
+            assert differing == sorted(policy_paths + historical_install_paths + [
+                "docs/ARCHITECTURE.md", "docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md", "docs/EVALS.md",
+                "docs/FACTORY_BASE_REFRESH.md", "docs/SECURITY.md",
+                "scenarios/repo-steward/maintenance.test.mjs", "tools/check_deliverable_diff.test.mjs",
+                "tools/e2e_factory_base_refresh.ps1"])
+            assert len(extra) == 48
+            assert [n for n in extra if not n.startswith("docs/evidence/2026-09-29-windows-validation/")] == [
+                "docs/FACTORY_REVIEW_REVISIONS.md", "tools/e2e_factory_review_revision.mjs",
+                "tools/e2e_factory_review_revision.ps1"]
+        if name == "store-r4":
+            assert value["database_stopped"] and value["database_stop_exit_code"] == 0
+            assert len(value["test_results"]) == 1 and "5 passed; 0 failed; 0 ignored" in value["test_results"][0]
+        focused[name] = {"path": path, "value": value, "source_file_count": len(manifest),
+                         "manifest_sha256": sha(compact(manifest)), "complete_manifest_match": manifest == physical,
+                         "all_recorded_files_match": not differing, "differing_recorded_paths": differing,
+                         "current_paths_not_recorded": extra}
+    install = focused["frozen-install-r1"]["value"]
+    assert install["command"] == ["pnpm", "install", "--frozen-lockfile"]
+    dependency_pattern = re.compile(r"(^|/)(package\.json|package-lock\.json|pnpm-lock\.yaml|"
+                                    r"pnpm-workspace\.yaml|\.npmrc|\.pnpmfile\.cjs)$")
+    dependency_files = [n for n, _ in physical if dependency_pattern.search(n) and not n.startswith("docs/evidence/")]
+    install_mapping = dict(pairs(install["source_files"]))
+    assert dependency_files == [n for n in sorted(install_mapping)
+                                if dependency_pattern.search(n) and not n.startswith("docs/evidence/")]
+    assert {"package.json", "apps/web/package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".npmrc"} <= set(dependency_files)
+    assert all(install_mapping[n] == dict(physical)[n] for n in dependency_files)
+    focused["frozen-install-r1"]["unchanged_javascript_dependency_inputs"] = dependency_files
+    for name, session in [("node-prerequisites-parity-r2", 86821),
+                          ("native-deliverable-parity-r2", 71940), ("native-correction-parity-r2", 50757),
+                          ("late-stop-focused-r1", 32650), ("windows-policy-r1", 83806)]:
+        assert observed_exit(f"issue95-{name}-session-exit.json")["session_id"] == session
+    verify_focused_counts(focused)
+    prerequisites = load(EV / "issue95-steward-install-r1.json")
+    assert prerequisites["status"] == "passed" and prerequisites["exit_code"] == 0
+    assert prerequisites["head"] == PARENT and prerequisites["lock_unchanged"]
+    assert prerequisites["command"] == ["npm", "ci", "--ignore-scripts", "--no-fund", "--workspaces=false"]
+    assert prerequisites["lock_sha256_before"].lower() == prerequisites["lock_sha256_after"].lower()
+    assert prerequisites["lock_sha256_after"].lower() == dict(physical)["scenarios/repo-steward/package-lock.json"]
+    failed = load(EV / "issue95-canonical-r1.json")
+    assert failed["status"] == "failed" and failed["exit_code"] == 1 and failed["source_unchanged"]
+    assert load(EV / "issue95-canonical-r1-session-exit.json")["exit_code"] == 1
+    failed_node = next(c["counts"]["node"] for c in load(FAILED_NATIVE_REPORT)["checks"] if c["name"] == "node-tests")
+    assert failed_node == {"tests": 3135, "passed": 3055, "failed": 15, "skipped": 65, "todo": 0, "cancelled": 0}
+    failed_r2 = load(EV / "issue95-canonical-r2.json")
+    assert failed_r2["status"] == "failed" and failed_r2["exit_code"] == 1 and failed_r2["source_unchanged"]
+    failed_r2_exit = load(EV / "issue95-canonical-r2-session-exit.json")
+    assert failed_r2_exit["session_id"] == 61495 and failed_r2_exit["exit_code"] == 1
+    failed_r2_native = load(FAILED_R2_NATIVE_REPORT)
+    assert failed_r2_native["status"] == "failed"
+    failed_r2_node = next(c["counts"]["node"] for c in failed_r2_native["checks"] if c["name"] == "node-tests")
+    assert failed_r2_node == {"tests": 3135, "passed": 3070, "failed": 0, "skipped": 65, "todo": 0, "cancelled": 0}
+    failed_r2_rust = next(c["counts"]["rust"] for c in failed_r2_native["checks"] if c["name"] == "rust-tests")
+    assert (failed_r2_rust["passed"], failed_r2_rust["failed"], failed_r2_rust["ignored"],
+            failed_r2_rust["summaries"]) == (646, 1, 9, 31)
+    diagnostic = load(EV / "issue95-late-stop-diagnostic-runner-r1.json")
+    assert diagnostic["status"] == "failed" and diagnostic["exit_code"] == 101 and diagnostic["source_unchanged"]
+    assert diagnostic["test_summaries"] == [
+        "test result: FAILED. 297 passed; 2 failed; 5 ignored; 0 measured; 0 filtered out; finished in 173.80s"]
+    restoration = load(EV / "issue95-late-stop-diagnostic-restoration-r1.json")
+    assert restoration["matches_original"] and restoration["restored_sha256"] == \
+        dict(physical)["crates/crony-runner/src/source_checkpoint.rs"]
+    verify_files(physical)
+    return {"canonical": canonical, "native": native, "node": node, "rust": rust, "physical": physical,
+            "physical_sha256": sha(compact(physical)), "acceptance": acceptance, "driver": driver, "focused": focused}
+
+
+@contextmanager
+def temporary_index(initial):
+    descriptor, name = tempfile.mkstemp(prefix="issue95-publication-index-", dir=EV)
+    os.close(descriptor)
+    path = Path(name).resolve()
+    assert path.parent == EV and path.name.startswith("issue95-publication-index-")
+    path.unlink()
+    try:
+        env = dict(ENV, GIT_INDEX_FILE=str(path), GIT_LITERAL_PATHSPECS="1")
+        git("read-tree", initial, env=env)
+        yield env
+    finally:
+        if path.exists():
+            assert path.resolve().parent == EV and path.name.startswith("issue95-publication-index-")
+            path.unlink()
+
+
+def stage_names(names, env):
+    names = sorted(set(names))
+    assert names and all("\0" not in n and not Path(n).is_absolute() and ".." not in Path(n).parts for n in names)
+    git("add", "--force", "--all", "--pathspec-from-file=-", "--pathspec-file-nul", env=env,
+        data=("\0".join(names) + "\0").encode())
+
+
+def sanitize_text(value):
+    roots = [(str(ROOT), "<ISOLATED_CHECKOUT>"), (str(EV), "<RUN_EVIDENCE>"),
+             (r"<CONFIGURED_SOURCE>", "<CONFIGURED_SOURCE>"),
+             (r"<OWNED_QA_PARENT>", "<OWNED_QA_PARENT>")]
+    for source, replacement in roots:
+        value = value.replace(source, replacement).replace(source.replace("\\", "/"), replacement)
+    value = re.sub(r"(?:[a-z]:)?[/\\]+Users[/\\]+[^/\\\s\"'<>]+", "<USER_HOME>", value, flags=re.I)
+    value = re.sub(r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b",
+                   lambda m: "fixture reference " + sha(m[0].lower().encode())[:16], value, flags=re.I)
+    value = re.sub(r"(?i)C\^?:\^?<USER_HOME>\\shyamsridhar", "<USER_HOME>", value)
+    value = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", value).replace("\r\n", "\n").replace("\r", "\n")
+    return "\n".join(line.rstrip() for line in value.split("\n"))
+
+
+def sanitize(value):
+    script = ("import {readFileSync} from 'node:fs';import {redactEvidenceCapabilities} from './tools/redact_evidence_capabilities.mjs';"
+              "process.stdout.write(JSON.stringify(redactEvidenceCapabilities(JSON.parse(readFileSync(0,'utf8')))));")
+    result = subprocess.run([str(NODE), "--input-type=module", "-e", script], cwd=ROOT, env=ENV,
+                            input=compact(value), capture_output=True, timeout=120, creationflags=subprocess.CREATE_NO_WINDOW)
+    assert result.returncode == 0
+    def walk(item):
+        if isinstance(item, str):
+            return sanitize_text(item)
+        if isinstance(item, list):
+            return [walk(v) for v in item]
+        if isinstance(item, dict):
+            return {k: walk(v) for k, v in item.items()}
+        return item
+    return walk(json.loads(result.stdout))
+
+
+def projected_receipt(value, physical):
+    if isinstance(value, list):
+        return value
+    assert isinstance(value, dict), "Unexpected receipt root"
+    result = dict(value)
+    if isinstance(result.get("source_files"), list):
+        manifest = pairs(result.pop("source_files"))
+        current = dict(physical)
+        result["source_manifest_projection"] = {"recorded_files": len(manifest), "sha256": sha(compact(manifest)),
+            "packet_root_manifest": "source-binding.json#/physical_files", "complete_match": manifest == physical,
+            "differing_recorded_paths": [n for n, h in manifest if current.get(n) != h],
+            "current_paths_not_recorded": sorted(set(current) - set(dict(manifest)))}
+    elif "source_files" in result:
+        assert type(result["source_files"]) is int and result["source_files"] >= 0, "Unexpected source file count"
+    if isinstance(result.get("source"), dict):
+        source = dict(result["source"])
+        if isinstance(source.get("files"), list) and set(source["files"]) == set(dict(physical)):
+            source["files"] = {"packet_root_manifest": "source-binding.json#/physical_files",
+                               "projection": "paths only", "recorded_files": len(physical),
+                               "original_array_sha256": sha(compact(source["files"]))}
+        result["source"] = source
+    return result
+
+
+def source_inventory():
+    return set(git("ls-files", "-z", "--cached", "--others", "--exclude-standard").decode().split("\0")) - {""}
+
+
+def source_tree(physical):
+    with temporary_index(PARENT) as temporary:
+        stage_names(dict(physical), temporary)
+        return git("write-tree", env=temporary).decode().strip()
+
+
+def bind_blobs(tree, physical):
+    mapping = dict(physical)
+    proof = []
+    for entry in git("ls-tree", "-r", "-z", tree).split(b"\0")[:-1]:
+        meta, filename = entry.split(b"\t", 1)
+        mode, kind, oid = meta.decode().split()
+        name = filename.decode()
+        assert kind == "blob" and mode in {"100644", "100755"} and name in mapping, name
+        raw = guarded_bytes(ROOT / name, ROOT)
+        assert sha(raw) == mapping[name], name
+        object_id = lambda data: hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
+        transform = "identical bytes"
+        if object_id(raw) != oid:
+            assert object_id(raw.replace(b"\r\n", b"\n")) == oid, "Unexpected Git filter: " + name
+            transform = "CRLF to LF only"
+        proof.append([name, mode, oid, transform])
+    assert len(proof) == len(physical) and {row[0] for row in proof} == set(mapping)
+    return sorted(proof)
+
+
+def plan_for(names):
+    script = ("import {readFileSync} from 'node:fs';import {checkPlan,selectNodeTests} from './tools/run_checks.mjs';"
+              "const files=JSON.parse(readFileSync(0,'utf8'));"
+              "process.stdout.write(JSON.stringify({plan:checkPlan('full',files),node:selectNodeTests(files)}));")
+    result = subprocess.run([str(NODE), "--input-type=module", "-e", script], cwd=ROOT, env=ENV,
+                            input=compact(sorted(names)), capture_output=True, timeout=180,
+                            creationflags=subprocess.CREATE_NO_WINDOW)
+    assert result.returncode == 0
+    return json.loads(result.stdout)
+
+
+def original_receipts(x):
+    copies = [
+
+        (EV / "issue95-publication-assembly-r3-session-exit.json", "history/publication-assembly-r3-failed/session-exit.json"),
+        (EV / "issue95-publication-assembly-r3-failed/preservation.json", "history/publication-assembly-r3-failed/preservation.json"),
+        (EV / "issue95-publication-json-projection-r2.json", "history/publication-assembly-r3-failed/projection-regression.json"),
+
+        (EV / "issue95-publication-prepare-r4-session-exit.json", "history/publication-prepare-failed-r4/session-exit.json"),
+        (EV / "issue95-publication-validation-r1.json", "history/publication-validation-failed-r1/receipt.json"),
+        (EV / "issue95-publication-validation-r1-session-exit.json", "history/publication-validation-failed-r1/session-exit.json"),
+        (EV / "issue95-publication-validation-r1-packet-redacted.json", "history/publication-validation-failed-r1/redacted-findings.json"),
+        (EV / "issue95-publication-validation-r1-packet.log", "history/publication-validation-failed-r1/gitleaks.log"),
+        (EV / "issue95-publication-validation-r1-docs.log", "history/publication-validation-failed-r1/docs.log"),
+        (EV / "issue95-publication-validation-r1-repository-docs.log", "history/publication-validation-failed-r1/repository-docs.log"),
+        (EV / "issue95-publication-validation-r1-personal-paths.log", "history/publication-validation-failed-r1/personal-paths.log"),
+        (EV / "issue95-publication-assembly-r1.json", "history/publication-validation-failed-r1/original-assembly.json"),
+        (EV / "issue95-publication-fixture-alias-triage-r1.json", "history/publication-validation-failed-r1/triage.json"),
+        (EV / "issue95-publication-validation-failed-r1/preservation.json", "history/publication-validation-failed-r1/preservation.json"),
+        (EV / "issue95-canonical-r3.json", "canonical/driver.json"),
+        (NATIVE_REPORT, "canonical/report.json"),
+        (log_path(x["canonical"]), "canonical/pnpm-check.log"),
+        (EV / "issue95-canonical-r3-session-exit.json", "canonical/session-exit.json"),
+        (EV / "issue95-publication-assembly-failed-r1-session-exit.json", "history/publication-assembly-failed-r1.json"),
+        (EV / "issue95-publication-assembly-failed-r2-session-exit.json", "history/publication-assembly-failed-r2.json"),
+        (EV / "issue95-publication-assembly-failed-r3-session-exit.json", "history/publication-assembly-failed-r3.json"),
+        (EV / "issue95-publication-assembly-failed-r3/preservation.json", "history/publication-assembly-failed-r3-preservation.json"),
+        (EV / "issue95-publication-assembly-failed-r2/preservation.json", "history/publication-assembly-failed-r2-preservation.json"),
+        (EV / "issue95-publication-projection-r1.json", "history/publication-projection-r1.json"),
+        (EV / "issue95-publication-projection-r1-session-exit.json", "history/publication-projection-r1-session-exit.json"),
+        (EV / "issue95-cargo-binary-guard-r1.json", "history/cargo-binary-guard-r1.json"),
+        (EV / "issue95-cargo-binary-guard-r1-session-exit.json", "history/cargo-binary-guard-r1-session-exit.json"),
+        (EV / "issue95-cargo-binary-guard-r1.md", "history/cargo-binary-guard-r1.md"),
+        (EV / "issue95-cargo-binary-guard-r2.json", "history/cargo-binary-guard-r2.json"),
+        (EV / "issue95-cargo-binary-guard-r2-session-exit.json", "history/cargo-binary-guard-r2-session-exit.json"),
+        (EV / "issue95-publication-scope-correction-r2.md", "history/publication-scope-correction-r2.md"),
+        (EV / "issue95-design-r1.md", "history/design-r1.md"),
+        (EV / "issue95-canonical-r1.json", "history/canonical-r1/driver.json"),
+        (EV / "issue95-canonical-r1.log", "history/canonical-r1/pnpm-check.log"),
+        (EV / "issue95-canonical-r1-session-exit.json", "history/canonical-r1/session-exit.json"),
+        (FAILED_NATIVE_REPORT, "history/canonical-r1/report.json"),
+        (EV / "issue95-canonical-r2.json", "history/canonical-r2/driver.json"),
+        (EV / "issue95-canonical-r2.log", "history/canonical-r2/pnpm-check.log"),
+        (EV / "issue95-canonical-r2-session-exit.json", "history/canonical-r2/session-exit.json"),
+        (FAILED_R2_NATIVE_REPORT, "history/canonical-r2/report.json"),
+        (EV / "issue95-selection-parity-r2.md", "history/selection-parity-r2.md"),
+        (EV / "issue95-acceptance-r7-session-exit.json", "acceptance/session-exit.json"),
+        (EV / "issue95-acceptance-r7-screenshot-review.json", "acceptance/screenshot-review.json"),
+        (EV / "issue95-acceptance-r7-preflight.json", "acceptance/preflight.json"),
+        (EV / "issue95-acceptance-r7-verification.json", "acceptance/verification.json"),
+        (EV / "issue95-windows-prerequisite-r1/integration.json", "history/windows-prerequisite/integration.json"),
+        (EV / "issue95-windows-prerequisite-r1-session-exit.json", "history/windows-prerequisite/session-exit.json"),
+        (EV / "issue95-late-stop-diagnostic-runner-r1.json", "history/late-stop-diagnostic/driver.json"),
+        (EV / "issue95-late-stop-diagnostic-runner-r1.log", "history/late-stop-diagnostic/runner.log"),
+        (EV / "issue95-late-stop-diagnostic-runner-r1-session-exit.json", "history/late-stop-diagnostic/session-exit.json"),
+        (EV / "issue95-late-stop-diagnostic-source-r1.json", "history/late-stop-diagnostic/source.json"),
+        (EV / "issue95-late-stop-diagnostic-restoration-r1.json", "history/late-stop-diagnostic/restoration.json"),
+    ]
+    acceptance_dir = EV / "issue95-acceptance-r7"
+    for name in ["acceptance.json", "driver.json", "owned-fixture.json",
+                 "server-native-identity.json", "web-native-identity.json",
+                 "correction-awaiting-review.png", "correction-published-history.png", "correction-mobile.png"]:
+        copies.append((acceptance_dir / name, "acceptance/" + name))
+    copies.extend((path, "acceptance/" + path.name) for path in sorted(acceptance_dir.glob("*.log")))
+    for name, receipt in x["focused"].items():
+        copies.extend([(receipt["path"], "focused/" + name + ".json"),
+                       (log_path(receipt["value"]), "focused/" + name + ".log")])
+    for name in ["node-prerequisites-parity-r2", "native-deliverable-parity-r2", "native-correction-parity-r2",
+                 "late-stop-focused-r1", "windows-policy-r1"]:
+        copies.append((EV / f"issue95-{name}-session-exit.json", "focused/" + name + "-session-exit.json"))
+    for revision in range(1, 7):
+        for name in ["acceptance.json", "driver.json"]:
+            copies.append((EV / f"issue95-acceptance-r{revision}" / name,
+                            f"history/acceptance-r{revision}/" + name))
+    for path in sorted((EV / "issue95-acceptance-r6").glob("*.log")):
+        copies.append((path, "history/acceptance-r6/" + path.name))
+    for name in ["session-exit", "screenshot-review"]:
+        copies.append((EV / f"issue95-acceptance-r6-{name}.json", f"history/acceptance-r6/{name}.json"))
+    for name in ["correction-awaiting-review.png", "correction-published-history.png", "correction-mobile.png"]:
+        copies.append((EV / "issue95-acceptance-r6" / name, "history/acceptance-r6/" + name))
+    for name in ["store-r1", "store-r2", "store-r3", "web-regressions-r1",
+                 "node-recurrence-red-r1", "steward-install-r1"]:
+        path = EV / f"issue95-{name}.json"
+        copies.extend([(path, "history/" + name + ".json"),
+                       (log_path(load(path)), "history/" + name + ".log")])
+    for name in ["run-issue95-evidence.ps1", "run-issue95-native-evidence.ps1",
+                 "run-issue95-store.ps1", "issue95_publication_r1.py", "issue95_publication_r2.py",
+                 "issue95_publication_r5.py", "publish-issue95-r4.ps1",
+                 "prepare-issue95-publication-r6.py",
+                 "issue95_publication_r4.py", "publish-issue95-r3.ps1",
+                 "prepare-issue95-publication-r4.py", "prepare-issue95-publication-r5.py",
+                 "issue95_publication_r3.py", "issue95_publication_r3_pre_cargo_guard.py",
+                 "issue95_publication_r3_pre_install_scope.py", "verify-issue95-cargo-guard-r1.py",
+                 "verify-issue95-cargo-guard-r2.py", "issue95_publication_r3_pre_projection.py",
+                 "issue95_publication_r3_pre_bytecode.py",
+                 "preserve-issue95-failed-assembly-r2.py", "verify-issue95-publication-projection-r1.py",
+                 "publish-issue95-r2.ps1", "issue95_windows_prerequisite_r1.py",
+                 "issue95_acceptance_r7_preflight.py", "run-issue95-acceptance-r7.ps1",
+                 "verify-issue95-acceptance-r7.py"]:
+        copies.append((EV / name, "drivers/" + name + ".txt"))
+    assert len({name for _, name in copies}) == len(copies)
+    assert all(path.is_file() and (path.resolve().is_relative_to(EV) or path in REPORTS)
+               for path, _ in copies)
+    return copies
+
+
+def make_public_copies(copies, physical, destination):
+    """Discover authority-bearing strings in memory, then redact every public text."""
+    sensitive = set()
+    key_pattern = re.compile(r"capabilit(?:y|ies)|(?:^|_)(?:token|secret|password|credential)(?:$|_)|"
+                             r"^(?:authorization|cookie|private_key|signing_key|api_key)$", re.I)
+
+    def collect_strings(value):
+        if isinstance(value, str) and len(value) >= 12:
+            sensitive.add(value)
+        elif isinstance(value, list):
+            for item in value:
+                collect_strings(item)
+        elif isinstance(value, dict):
+            for item in value.values():
+                collect_strings(item)
+
+    def discover(value):
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if key_pattern.search(key) and not isinstance(child, (dict, list)):
+                    collect_strings(child)
+                else:
+                    discover(child)
+        elif isinstance(value, list):
+            for child in value:
+                discover(child)
+
+    for path, _ in copies:
+        if path.suffix == ".json":
+            discover(load(path))
+    for revision in (6, 7):
+        qa = Path(load(EV / f"issue95-acceptance-r{revision}/acceptance.json")["qa_root"])
+        assert qa.resolve().is_relative_to(Path(r"<OWNED_QA_PARENT>").resolve())
+        for path in [*qa.glob("*.json"), *(qa / "evidence").glob("*.json")]:
+            discover(load(path))
+
+    def clean_text(value):
+        for secret in sorted(sensitive, key=len, reverse=True):
+            value = value.replace(secret, "<REDACTED_AUTHORITY_STRING>")
+        return sanitize_text(value)
+
+    def clean(value):
+        if isinstance(value, str):
+            return clean_text(value)
+        if isinstance(value, list):
+            return [clean(child) for child in value]
+        if isinstance(value, dict):
+            return {key: clean(child) for key, child in value.items()}
+        return value
+
+    artifacts = []
+    try:
+        for path, name in copies:
+            declared_root = ROOT if path in REPORTS else EV
+            raw = guarded_bytes(path, declared_root)
+            target = destination / name
+            assert target.is_relative_to(destination)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if path.suffix == ".png":
+                public = raw
+                treatment = "Original PNG capture bytes; visually inspected in the implementation pass."
+            elif path.suffix == ".json":
+                original = json.loads(raw.decode("utf-8-sig"))
+                projected = projected_receipt(original, physical)
+                public = (json.dumps(clean(sanitize(projected)), indent=2, ensure_ascii=False) + "\n").encode()
+                treatment = "Structured capability hashes, stable explicitly labeled fixture UUID references, personal-path and authority-string redaction, manifest projection, LF and trailing-whitespace normalization."
+            else:
+                public = clean_text(raw.decode("utf-8-sig")).encode()
+                treatment = "Personal-path and discovered authority-string redaction, stable explicitly labeled fixture UUID references, LF and trailing-whitespace normalization."
+            with target.open("xb") as stream:
+                stream.write(public)
+            artifacts.append({"source": path.relative_to(declared_root).as_posix(),
+                              "source_root": "reviewed_checkout" if declared_root == ROOT else "run_evidence",
+                              "file": name, "original_sha256": sha(raw), "published_sha256": sha(public),
+                              "original_bytes": len(raw), "published_bytes": len(public), "treatment": treatment})
+    finally:
+        sensitive.clear()
+    return artifacts
+
+
+def acceptance_mapping():
+    return [
+        {"criterion": "Explicit review-revision state preserves accepted deliverable",
+         "implementation": ["crates/crony-store/src/factory_review_revision.rs",
+                            "crates/crony-store/src/factory_review_revision/settlement.rs",
+                            "db/migrations/0059_factory_review_revisions.sql"],
+         "scenarios": [2, 8, 13]},
+        {"criterion": "Typed attributed findings bound to publication and PR",
+         "implementation": ["crates/crony-domain/src/factory_review_revision.rs",
+                            "crates/crony-server/src/factory_review_revision.rs"],
+         "scenarios": [1, 2, 11]},
+        {"criterion": "Separate isolated correction derived from the exact published source",
+         "implementation": ["crates/crony-runner/src/publication_source.rs",
+                            "crates/crony-runner/src/review_revision.rs"],
+         "scenarios": [4, 5]},
+        {"criterion": "Authority inherits exact repository, base, scope, tools and residual budgets",
+         "implementation": ["crates/crony-domain/src/factory_review_revision.rs",
+                            "crates/crony-store/src/factory_review_revision/lifecycle.rs",
+                            "crates/crony-store/src/factory_review_revision/dispatch.rs"],
+         "scenarios": [1, 3, 5]},
+        {"criterion": "Retain saved verifier checks and require fresh independent review",
+         "implementation": ["crates/crony-domain/src/factory_review_revision.rs",
+                            "crates/crony-store/src/factory_review_revision/settlement.rs",
+                            "crates/crony-store/src/factory_review_revision_tests.rs"],
+         "scenarios": [3, 5, 6, 7, 8]},
+        {"criterion": "One explicit provenance-bound superseding publication",
+         "implementation": ["crates/crony-store/src/publication.rs",
+                            "crates/crony-cli/src/publish_review_revision.rs",
+                            "crates/crony-cli/src/publish.rs"],
+         "scenarios": [8, 10, 11]},
+        {"criterion": "Idempotent recovery avoids duplicate branches, PRs and Project transitions",
+         "implementation": ["crates/crony-store/src/factory_review_revision.rs",
+                            "crates/crony-store/src/factory_review_revision/settlement.rs",
+                            "crates/crony-cli/src/publish.rs", "apps/web/src/reviewRevisionOperations.ts"],
+         "scenarios": [2, 8, 10, 13, 14]},
+        {"criterion": "UI retains original publication, findings, correction run, result and recorded review head",
+         "implementation": ["apps/web/src/ReviewRevisionPanel.tsx", "apps/web/src/missionResultContext.ts",
+                            "apps/web/src/App.tsx"],
+         "scenarios": [2, 4, 7, 8, 11, 13]},
+        {"criterion": "Manual unverified predecessor branch changes fail closed",
+         "implementation": ["crates/crony-cli/src/publish_review_revision.rs",
+                            "crates/crony-cli/src/publish.rs"],
+         "scenarios": [9, 14]},
+    ]
+
+
+def assemble():
+    receipt_path = EV / "issue95-publication-assembly-r5.json"
+    source_path = EV / "issue95-publication-source-r3.json"
+    assert not any(path.exists() for path in [receipt_path, source_path, PACKET])
+    x = completed_inputs()
+    physical = x["physical"]
+    initial_index = index_digest()
+    assert source_inventory() == set(dict(physical))
+    tested_tree = source_tree(physical)
+    proof = bind_blobs(tested_tree, physical)
+    changed = git("diff", "--name-only", "--no-renames", PARENT, tested_tree).decode().splitlines()
+    assert set(git("diff", "--name-only", PARENT, tested_tree, "--", "db/migrations").decode().splitlines()) == {
+        "db/migrations/0059_factory_review_revisions.sql", "db/migrations/manifest.json"}
+    source = {
+        "issue": 95, "recorded_at_utc": now(), "main": MAIN, "parents": PARENTS, "branch": BRANCH,
+        "base_branch": BASE_BRANCH, "tested_tree": tested_tree, "physical_files": physical,
+        "physical_files_sha256": x["physical_sha256"], "source_file_count": len(physical),
+        "code_paths": changed, "code_patch_sha256": sha(git("diff", "--binary", "--no-ext-diff", "--no-textconv",
+                                                          "--unified=0", PARENT, tested_tree)),
+        "original_index_sha256": initial_index,
+        "git_blob_binding_sha256": sha(compact(proof)),
+        "git_blob_content_comparison": {"identical_bytes": sum(row[3] == "identical bytes" for row in proof),
+                                       "crlf_to_lf_only": sum(row[3] == "CRLF to LF only" for row in proof),
+                                       "other_transformations": 0},
+        "canonical_receipt_sha256": sha((EV / "issue95-canonical-r3.json").read_bytes()),
+        "canonical_report_sha256": sha(NATIVE_REPORT.read_bytes()),
+        "acceptance_receipt_sha256": sha((EV / "issue95-acceptance-r7/acceptance.json").read_bytes()),
+        "acceptance_verification_sha256": sha((EV / "issue95-acceptance-r7-verification.json").read_bytes()),
+        "prerequisite_integration_sha256": sha((EV / "issue95-windows-prerequisite-r1/integration.json").read_bytes()),
+        "canonical_and_acceptance_same_complete_physical_source": True,
+        "focused_source_comparison": [{key: value for key, value in lane.items() if key not in {"value", "path"}}
+                                     | {"lane": name} for name, lane in x["focused"].items()],
+        "file_guard": {"repository_path": GUARD.relative_to(ROOT).as_posix(),
+                       "repository_sha256": sha(GUARD.read_bytes()), "canonical_single_link_paths": True,
+                       "opened_file_identity_checked": True,
+                       "scope": "Observed at publication boundaries, not continuous locking or historical metadata."},
+        "scope": "The publication commit does not exist at test time. This retrospectively reconstructs the tested source tree; every source blob matches physical bytes with at most Git CRLF-to-LF normalization. Only separately checked evidence is added afterward.",
+    }
+    write(source_path, source)
+    PACKET.mkdir(parents=True)
+    write(PACKET / "source-binding.json", source)
+    copies = original_receipts(x)
+    artifacts = make_public_copies(copies, physical, PACKET)
+    qualifications = [
+        "This packet records development validation and AI implementation self-review. It is not an independent GitHub approval, human decision, merge or issue closure.",
+        "Acceptance R7 passed 15 scenarios through real Chrome/App, server, PostgreSQL, runner and native Git. Provider execution is fake-process, GitHub is a fake boundary, principals are development fixtures and publication uses an owned bare remote. No live-provider or external-publication acceptance is claimed. The passing native build was reused because all 289 recorded Cargo/crates/db files and binary hashes were unchanged; this was not a new build.",
+        "The distinct fixture reviewer is automated. Fixture explicit_human metadata is not evidence of a human decision. Screenshots were visually inspected, not an exhaustive accessibility audit.",
+        "Canonical R3, acceptance R7 and Windows-policy R1 match all 7,397 physical files. Native store/build/deliverable/correction and focused late-stop receipts match 289-file subsets. The older 7,352-file Node parity receipt differs at six #382 paths and lacks 45 incoming evidence files. The 7,349-file focused test receipts differ at fourteen paths and lack 48 files; the earlier frozen-install receipt differs at seventeen paths and lacks those same 48 files. All twelve JavaScript dependency manifests, locks and configuration files are unchanged. Exact paths and manifests are retained; earlier or incomplete manifests are not complete-source proof.",
+        "Actual runtime: Node 24.21.0, pnpm 11.19.0, Rust 1.98.1. The repository declares Node 24.19.0. RUST_TEST_THREADS was unset; reviewed prerequisite #382 selects Cargo's native --test-threads=1 for the Windows workspace gate. Linux/macOS retain native default scheduling. No assertion, deadline, workspace membership or required gate was removed.",
+        "Skipped Node and ignored Rust cases are not passes. Counts from canonical, EVM, focused and acceptance lanes overlap and must not be added. Standalone live and immutable replay fixtures remain in their dedicated lanes.",
+        "Earlier acceptance R1-R6 and failing store/UI attempts remain preserved. R1 stopped on a finding-selector timeout, R2 on a fake-provider session-ID assertion, R3 on a Project-transition count assertion and R4 on an overly narrow expected-error regex. R5 and R6 passed on earlier manifests; R7 provides new combined-source evidence without rewriting those attempts.",
+        "Canonical R1 exited 1: 3,135 Node tests, 3,055 passed, 15 failed and 65 skipped; the five later gates did not run. Eleven failures used a nonfunctional Windows Store Python alias, two lacked optional locked Teams dependencies, one recurrence assertion matched the checkout directory name, and one required review of deliberate native selection fingerprint drift. The failed receipt/log and isolated recurrence reproduction remain in history. Current runs prepend working Python locally, install the unchanged Teams lock with scripts disabled, and include two reviewed test corrections. These changes do not weaken product checks or grant new execution authority.",
+        "Canonical R2 exited 1 on its unchanged 7,352-file source. Node passed 3,070 of 3,135 cases with 65 skips and no failures. Rust stopped at 646 passed, 1 failed, 9 ignored across 31 summaries; the failing runner binary recorded 298 passed, 1 failed, 5 ignored. Web gates did not complete. The existing late-stop fixture exceeded its 15-second pre-stop upload setup wait. A focused unchanged-source rerun passed one case with 303 filtered; it is not full-suite or causal proof.",
+        "Temporary unchanged-assertion diagnostics exited wrapper 1/Cargo 101 with 297 passed, 2 failed, 5 ignored. Upload setup measured 16,835 ms against 15,000 ms; the later stop took 1 ms against 10,000 ms. A second verifier-start setup wait also failed. Exact original source bytes were restored before integration. Failed logs, diagnostic source/restoration receipts and owned fixtures are retained. These observations and #382 scheduling do not establish a cause or repair for #213's historical parallel failures.",
+        "The accepted source, original publication and provider workspace remain immutable. This implementation creates a separately authorized correction mission and one explicit superseding PR. Supersession does not merge or close either PR.",
+        "Required hosted CI, CodeQL, code-quality and security gates remain unavailable while GitHub Actions is disabled. PRs #390 and #382 are exact preserved parents of the ordinary local integration commit; this does not merge either GitHub PR. The draft is stacked on #390. Issue #95 remains open; no reviewer-only override, bypass or clean historical Cargo advisory audit is claimed.",
+        "docs/PROJECT_MEMORY.md is absent from current main. Current tracked product, architecture, security, eval and contributor guidance was read; missing memory was not fabricated.",
+        "The first core evidence scan exited 42 on 96 synthetic fixture UUID aliases in idempotency, decision, retry and settlement fields. Each finding was mapped back to the original fixture UUID in the same named field. The complete failed packet and redacted scanner receipt are retained. Replacement public copies use explicit fixture-reference labels with the same digest suffix. No original receipt, product source, secret rule or ignore policy was changed; security scans are required again.",
+        "Replacement assembly R3 stopped before validation because the receipt projector assumed an object root for the retained array-shaped Gitleaks report. Its partial packet and native failure remain preserved. The new projector preserves array roots unchanged; the actual scanner report and every object receipt were checked without changing tested source or scanner policy.",
+        "Personal paths and authority-bearing strings are redacted. Structured capability values are hashed using the repository sanitizer; synthetic UUID aliases preserve equality. Original and published artifact hashes are recorded separately; original screenshots are unchanged.",
+        "The final publication includes evidence added after execution. Evidence validation compares all physical files, reconstructs the source tree, checks the entire named gate argv and full Node discovery, then runs documentation, native personal-path, secret and diff checks.",
+    ]
+    review = {
+        "issue": 95, "recorded_at_utc": now(), "reviewer": "Codex assistant; implementation self-review",
+        "independent_review_performed": False, "main": MAIN, "parents": PARENTS, "tested_tree": tested_tree,
+        "reviewed_paths": changed, "acceptance_mapping": acceptance_mapping(), "scenario_indices_are_zero_based": True,
+        "coverage": ["tenant/Corp/room/current-actor authority and exact idempotency inputs",
+                     "residual task/mission budgets, remaining attempts, stop and monotonic breaker fences",
+                     "immutable original lineage, bounded nonforking correction succession and terminal abandonment",
+                     "native source reconstruction, workspace fingerprint and resume seed/HEAD binding",
+                     "saved verifier checks, fresh independent reviewer and exact adopted source evidence",
+                     "publication leases, provenance, predecessor drift and completed replay",
+                     "lock order, both mission audit coverage, migration compatibility and existing recovery paths",
+                     "actual App callback, lineage projection, reload/mobile and source-bound native acceptance"],
+        "harness": "Pinned SDK 1.0.11 and CLI 1.0.79 retain execution, sessions, tools and permissions. ECorp adds scoped cross-mission authorization, source lineage, residual allocation and publication succession through existing adapters.",
+        "unresolved_confirmed_defects": [], "qualifications": qualifications,
+    }
+    write(PACKET / "implementation-self-review.json", review)
+    summary = {"issue": 95, "tested_tree": tested_tree, "parents": PARENTS, "main": MAIN,
+               "canonical": {"revision": 3, "status": "passed", "gates": NAMES, "node": x["node"], "rust": x["rust"],
+                             "state_audit_evm": next(c["counts"]["rust"] for c in x["native"]["checks"]
+                                                    if c["name"] == "state-audit-evm")},
+               "acceptance": {"revision": 7, "passed": True, "scenario_count": 15,
+                              "scenarios": [{"name": s["name"], "passed": s["passed"]} for s in x["acceptance"]["scenarios"]],
+                              "services_stopped": x["driver"]["stopped"],
+                              "database_stop_exit_code": x["driver"]["database_stop_exit_code"]},
+               "criteria": acceptance_mapping(), "scenario_indices_are_zero_based": True,
+               "qualifications": qualifications, "artifacts": artifacts, "issue_completed": False,
+               "hosted_checks_available": False, "pr_merge_performed": False}
+    write(PACKET / "summary.json", summary)
+    readme = f"""# Governed review corrections after publication
+
+Issue #95; prerequisite PR #390 at {PARENT}, and #382 at {SECOND_PARENT}.
+Both exact heads are retained as parents; current main is {MAIN}.
+Tested implementation tree: {tested_tree}.
+
+Published Factory results can enter an explicit correction state, retain typed
+attributed findings and create a separate mission from the signed published source.
+The correction inherits bounded authority and the saved checks, requires a fresh
+independent review, and permits explicit adoption followed by one separately
+authorized superseding publication. Original records remain unchanged. Predecessor
+PR and native branch drift fail closed even on completed publication replay.
+
+Canonical pnpm check passed all eleven gates. Node: {x['node']['tests']} total,
+{x['node']['passed']} passed, {x['node']['failed']} failed, {x['node']['skipped']} skipped.
+Rust: {x['rust']['passed']} passed, {x['rust']['failed']} failed,
+{x['rust']['ignored']} ignored across {x['rust']['summaries']} summaries.
+The separate native state-audit EVM gate passed one case. Skips and ignores are not
+passes, and overlapping lane counts must not be added.
+
+Fresh acceptance R7 passed 15 browser-to-server-to-runner scenarios using real
+Chrome/App, PostgreSQL and native Git. Its provider, GitHub boundary and principals
+are deterministic fixtures. Across two items it observed three fake PRs, three
+create calls, two Project updates and five effects; the main correction created
+one superseding PR without repeating the original Project transition. All owned
+services stopped and PostgreSQL shutdown exited zero.
+
+The complete 7,397-file physical manifest matches between canonical and acceptance.
+The publication commit did not exist during those executions. [Source binding](source-binding.json)
+reconstructs the tested Git tree and permits only Git CRLF-to-LF normalization.
+Other focused receipts have explicitly recorded earlier or incomplete source
+coverage. [Summary and original/published artifact hashes](summary.json) and
+[implementation self-review](implementation-self-review.json) map all nine issue
+criteria to code and observed scenarios. [Canonical results](canonical/report.json)
+and [acceptance](acceptance/acceptance.json) retain actual counts and receipts.
+
+Failed canonical R1/R2, temporary diagnostic failures and exact restoration,
+earlier acceptance attempts and the recurrence reproduction are retained under
+history. The older prerequisite/parity Node lane passed 103 cases; native
+deliverable and correction lanes passed 36 and 9 cases. Current-source Windows
+policy tests passed 35 cases. Their exact source coverage is recorded, and the
+counts overlap canonical validation. R3 uses #382's native Windows serial Rust
+flag without changing assertions, deadlines or the eleven gates. This neither
+diagnoses nor closes #213. Public copies redact authority
+values and personal paths and consistently alias synthetic identifiers; screenshots
+retain original bytes. Publication validation is separate from product execution.
+The first publication scan failed on 96 synthetic UUID aliases; its redacted
+findings and exact classification are retained under history. These non-secret
+fixture identifiers now use explicit fixture-reference labels. The secret
+scanner and repository policy remain unchanged.
+
+This remains draft work dependent on #390 and #382. Required hosted CI, CodeQL, code-quality
+and security checks are unavailable while GitHub Actions is disabled. Node 24.21.0
+was used although the repository declares 24.19.0. No independent GitHub approval,
+human signoff, live-provider acceptance, merge, issue closure or clean historical
+Cargo advisory audit is claimed.
+"""
+    with (PACKET / "README.md").open("x", encoding="utf-8", newline="\n") as stream:
+        stream.write(readme)
+    verify_files(physical)
+    pending_source()
+    assert index_digest() == initial_index
+    files = packet_files()
+    write(receipt_path, {"issue": 95, "status": "assembled_pending_evidence_validation",
+                         "finished_at_utc": now(), "source_receipt": source_path.name,
+                         "source_receipt_sha256": sha(source_path.read_bytes()),
+                         "tested_tree": tested_tree, "packet_files": files,
+                         "original_index_sha256": initial_index, "original_index_unchanged": True})
+    print(json.dumps({"status": "assembled_pending_evidence_validation", "tested_tree": tested_tree,
+                      "files": len(files), "node": x["node"], "rust": x["rust"]}))
+
+
+def packet_files():
+    return [{"path": path.relative_to(ROOT).as_posix(), "sha256": sha(guarded_bytes(path, ROOT)),
+             "bytes": path.stat().st_size}
+            for path in sorted(PACKET.rglob("*")) if path.is_file()]
+
+
+def observed_exit(name):
+    receipt = load(EV / name)
+    assert receipt["exit_code"] == 0
+    assert receipt["observation"] in {"write_stdin returned process exit", "exec_command returned process exit"}
+    if receipt["observation"] == "write_stdin returned process exit":
+        assert isinstance(receipt["session_id"], int)
+    else:
+        assert receipt.get("session_id") is None and receipt["tool_return"]["exit_code"] == 0
+    # Recording time is deliberately not relabeled as the exact tool-return time.
+    timestamp = receipt.get("observed_at_utc") or receipt.get("recorded_at_utc")
+    assert timestamp
+    assert datetime.fromisoformat(timestamp).utcoffset() is not None
+    if "tool_return" in receipt:
+        assert receipt["tool_return"]["exit_code"] == receipt["exit_code"]
+    if "receipt_sha256" in receipt:
+        target = EV / receipt["receipt"]
+        assert target.is_relative_to(EV)
+        assert sha(guarded_bytes(target, EV)) == receipt["receipt_sha256"]
+    return receipt
+
+
+def verify_screenshot_review(acceptance_path, physical):
+    review = load(EV / "issue95-acceptance-r7-screenshot-review.json")
+    assert review["issue"] == 95 and review["acceptance_revision"] == "R7"
+    assert review["product_head"] == PARENT and review["source_manifest_file_count"] == len(physical)
+    assert review["pending_merge_head"] == SECOND_PARENT
+    assert review["acceptance_receipt_sha256"] == sha(guarded_bytes(acceptance_path, EV))
+    assert review["review_kind"] == "Implementation self-review of saved browser captures"
+    assert review["original_capture_bytes_unchanged"] and review["material_ui_defects_observed"] == []
+    expected = {"correction-awaiting-review.png": (1440, 3940),
+                "correction-published-history.png": (1440, 4228), "correction-mobile.png": (390, 6548)}
+    captures = review["screenshots"]
+    assert len(captures) == len(expected) and {item["file"] for item in captures} == set(expected)
+    for item in captures:
+        raw = guarded_bytes(acceptance_path.parent / item["file"], EV)
+        assert sha(raw) == item["sha256"] and len(raw) == item["bytes"]
+        assert raw.startswith(b"\x89PNG\r\n\x1a\n") and raw[12:16] == b"IHDR"
+        dimensions = (int.from_bytes(raw[16:20], "big"), int.from_bytes(raw[20:24], "big"))
+        assert dimensions == (item["width"], item["height"]) == expected[item["file"]]
+        assert item["visually_inspected"] is True and item["observations"]
+
+
+def verify_focused_counts(focused):
+    assert focused["windows-policy-r1"]["value"]["test_summaries"] == [
+        "# tests 35", "# suites 0", "# pass 35", "# fail 0", "# cancelled 0", "# skipped 0", "# todo 0"]
+    assert focused["late-stop-focused-r1"]["value"]["test_summaries"] == [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 303 filtered out; finished in 9.25s"]
+    assert focused["node-prerequisites-parity-r2"]["value"]["test_summaries"] == [
+        "ℹ tests 103", "ℹ suites 0", "ℹ pass 103", "ℹ fail 0",
+        "ℹ cancelled 0", "ℹ skipped 0", "ℹ todo 0"]
+    rust_summary = re.compile(r"test result: ok\. (\d+) passed; (\d+) failed; (\d+) ignored; "
+                              r"(\d+) measured; (\d+) filtered out; finished in [0-9.]+s")
+    for name, passed, filtered in [("native-deliverable-parity-r2", 36, 268),
+                                    ("native-correction-parity-r2", 9, 295)]:
+        rows = focused[name]["value"]["test_summaries"]
+        matches = [rust_summary.fullmatch(row) for row in rows]
+        assert len(matches) == 2 and all(matches)
+        assert [tuple(map(int, match.groups())) for match in matches] == [
+            (0, 0, 0, 0, 25), (passed, 0, 0, 0, filtered)]
+
+
+def check_artifacts(artifacts):
+    for item in artifacts:
+        original_root = ROOT if item["source_root"] == "reviewed_checkout" else EV
+        assert sha(guarded_bytes(original_root / item["source"], original_root)) == item["original_sha256"]
+        assert sha(guarded_bytes(PACKET / item["file"], ROOT)) == item["published_sha256"]
+
+
+def policy_state():
+    return {name: sha(guarded_bytes(ROOT / name, ROOT)) if (ROOT / name).is_file() else None
+            for name in [".gitleaksignore", ".gitleaks.toml"]}
+
+
+def scan_secrets(lane, args, record, save, prefix, policy):
+    assert sha(guarded_bytes(GITLEAKS, GITLEAKS.parent)) == GITLEAKS_SHA
+    version = subprocess.check_output([str(GITLEAKS), "version"], env=ENV).decode().strip()
+    assert version == "8.30.1"
+    log, report = EV / f"{prefix}-{lane}.log", EV / f"{prefix}-{lane}-redacted.json"
+    assert not log.exists() and not report.exists()
+    flags = ["--redact=100", "--no-banner", "--no-color", "--ignore-gitleaks-allow",
+             "--gitleaks-ignore-path", str(ROOT / ".gitleaksignore"), "--exit-code=42",
+             "--timeout=300", "--report-format=json", "--report-path", str(report)]
+    if policy[".gitleaks.toml"] is not None:
+        flags += ["--config", str(ROOT / ".gitleaks.toml")]
+    started = now()
+    result = subprocess.run([str(GITLEAKS), *args, *flags], cwd=ROOT, env=ENV,
+                            capture_output=True, timeout=360, creationflags=subprocess.CREATE_NO_WINDOW)
+    with log.open("xb") as stream:
+        stream.write(result.stdout + result.stderr)
+    findings = load(report) if report.exists() else None
+    item = {"lane": lane, "version": version, "binary_sha256": GITLEAKS_SHA,
+            "arguments": [str(GITLEAKS), *args, *flags], "started_at_utc": started,
+            "finished_at_utc": now(), "exit_code": result.returncode,
+            "finding_count": len(findings) if isinstance(findings, list) else None,
+            "policy_sha256": policy, "log": str(log), "log_sha256": sha(log.read_bytes()),
+            "report": str(report), "report_sha256": sha(report.read_bytes()) if report.exists() else None}
+    if findings:
+        item["finding_metadata"] = [{"rule": f.get("RuleID"), "file": f.get("File"),
+                                     "start_line": f.get("StartLine")} for f in findings]
+    record.setdefault("secret_scans", []).append(item)
+    save()
+    assert result.returncode == 0 and isinstance(findings, list) and not findings, "Triage retained secret findings"
+
+
+def materialize(tree, names, directory):
+    root = Path(directory).resolve(strict=True)
+    assert root.is_relative_to(EV) and root != EV
+    blobs = []
+    for name in sorted(names):
+        entry = git("ls-tree", "-z", tree, "--", name).split(b"\0")
+        assert len(entry) == 2 and not entry[1]
+        metadata, actual = entry[0].split(b"\t", 1)
+        mode, kind, oid = metadata.decode().split()
+        assert actual.decode() == name and kind == "blob" and mode in {"100644", "100755"}
+        raw = git("cat-file", "blob", oid)
+        target = root / name
+        assert target.resolve().is_relative_to(root) and not target.exists()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("xb") as stream:
+            stream.write(raw)
+        blobs.append({"path": name, "git_blob": oid, "sha256": sha(raw), "bytes": len(raw)})
+    return blobs
+
+
+def validation_receipt(revision):
+    return EV / f"issue95-publication-validation-r{revision}.json"
+
+
+def verify_validation(value):
+    assert value["status"] == "passed" and value["finished_at_utc"]
+    assert value["original_index_unchanged"] and value["full_plan_unchanged"]
+    assert value["canonical_and_acceptance_same_complete_physical_source"]
+    assert [c["name"] for c in value["checks"]] == ["docs", "repository-docs", "personal-paths", "diff-check"]
+    for item in value["checks"]:
+        assert item["exit_code"] == 0
+        assert sha(guarded_bytes(Path(item["log"]), EV)) == item["log_sha256"]
+    assert [scan["lane"] for scan in value["secret_scans"]] == ["packet", "changed-blobs"]
+    for item in value["secret_scans"]:
+        assert item["exit_code"] == item["finding_count"] == 0 and item["policy_sha256"] == policy_state()
+        assert sha(guarded_bytes(Path(item["log"]), EV)) == item["log_sha256"]
+        assert sha(guarded_bytes(Path(item["report"]), EV)) == item["report_sha256"]
+        assert load(item["report"]) == []
+
+
+def validate(revision):
+    assert revision in {5, 6}
+    receipt_path = validation_receipt(revision)
+    assert not receipt_path.exists(), "Preserve previous validation attempts"
+    prefix = f"issue95-publication-validation-r{revision}"
+    record = {"issue": 95, "status": "running", "revision": revision, "started_at_utc": now(),
+              "checks": [], "secret_scans": [], "issue_completed": False, "pr_merge_performed": False,
+              "scope": "Publication boundaries, complete product source, canonical argv and discovery, plus evidence-only additions."}
+
+    def save():
+        receipt_path.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    def check(name, args, timeout=900):
+        log = EV / f"{prefix}-{name}.log"
+        assert not log.exists()
+        started = now()
+        result = subprocess.run([str(a) for a in args], cwd=ROOT, env=ENV, capture_output=True,
+                                timeout=timeout, creationflags=subprocess.CREATE_NO_WINDOW)
+        with log.open("xb") as stream:
+            stream.write(result.stdout + result.stderr)
+        record["checks"].append({"name": name, "arguments": [str(a) for a in args],
+                                 "started_at_utc": started, "finished_at_utc": now(),
+                                 "exit_code": result.returncode, "log": str(log),
+                                 "log_sha256": sha(log.read_bytes())})
+        save()
+        assert result.returncode == 0, f"{name} failed; inspect retained log"
+
+    save()
+    try:
+        x = completed_inputs()
+        source_path = EV / "issue95-publication-source-r3.json"
+        source, assembly = load(source_path), load(EV / "issue95-publication-assembly-r5.json")
+        assert source["parents"] == PARENTS and source["main"] == MAIN
+        assert assembly["source_receipt_sha256"] == sha(guarded_bytes(source_path, EV))
+        assert load(PACKET / "source-binding.json") == source
+        assert source["physical_files"] == x["physical"]
+        assert source["physical_files_sha256"] == x["physical_sha256"]
+        assert source["canonical_receipt_sha256"] == sha(guarded_bytes(EV / "issue95-canonical-r3.json", EV))
+        assert source["canonical_report_sha256"] == sha(guarded_bytes(NATIVE_REPORT, ROOT))
+        assert source["acceptance_receipt_sha256"] == sha(guarded_bytes(EV / "issue95-acceptance-r7/acceptance.json", EV))
+        assert source["acceptance_verification_sha256"] == sha(guarded_bytes(EV / "issue95-acceptance-r7-verification.json", EV))
+        assert source["prerequisite_integration_sha256"] == sha(guarded_bytes(EV / "issue95-windows-prerequisite-r1/integration.json", EV))
+        summary = load(PACKET / "summary.json")
+        check_artifacts(summary["artifacts"])
+        initial_index = index_digest()
+        assert source["original_index_sha256"] == assembly["original_index_sha256"] == initial_index
+        files = packet_files()
+        original_names, packet_names = set(dict(x["physical"])), {f["path"] for f in files}
+        assert not original_names & packet_names
+        core_names = {f["path"] for f in assembly["packet_files"]}
+        verify_files([[f["path"], f["sha256"]] for f in assembly["packet_files"]])
+        if revision == 5:
+            assert files == assembly["packet_files"]
+        else:
+            core_path = validation_receipt(5)
+            core = load(core_path)
+            verify_validation(core)
+            observed_exit("issue95-publication-validation-r5-session-exit.json")
+            extension = load(EV / "issue95-publication-assembly-r6.json")
+            manifest = load(PACKET / "publication/manifest.json")
+            assert core["files"] == assembly["packet_files"] == manifest["core_files"]
+            assert sha(guarded_bytes(core_path, EV)) == manifest["core_validation_sha256"] == extension["core_validation_sha256"]
+            assert core["publication_tree"] == manifest["core_publication_tree"] == extension["core_publication_tree"]
+            assert files == extension["packet_files"]
+            assert sha(guarded_bytes(PACKET / "publication/README.md", ROOT)) == manifest["scope_document_sha256"]
+            check_artifacts(manifest["artifacts"])
+            expected_additions = {PACKET_REL + "/" + a["file"] for a in manifest["artifacts"]}
+            expected_additions |= {PACKET_REL + "/publication/README.md", PACKET_REL + "/publication/manifest.json"}
+            assert packet_names - core_names == expected_additions
+            record.update(published_core_validation_verified=True, core_packet_unchanged=True,
+                          core_validation_sha256=manifest["core_validation_sha256"],
+                          core_publication_tree=core["publication_tree"])
+        current_names = source_inventory()
+        assert original_names <= current_names <= original_names | packet_names
+        ignored = packet_names - current_names
+        if ignored:
+            confirmed = set(git("check-ignore", "--stdin", "-z",
+                                data=("\0".join(sorted(ignored)) + "\0").encode()).decode().split("\0")) - {""}
+            assert confirmed == ignored
+        with temporary_index(PARENT) as temporary:
+            stage_names(original_names, temporary)
+            tested_tree = git("write-tree", env=temporary).decode().strip()
+            assert tested_tree == source["tested_tree"] == assembly["tested_tree"]
+            assert sha(compact(bind_blobs(tested_tree, x["physical"]))) == source["git_blob_binding_sha256"]
+            assert git("diff", "--name-only", "--no-renames", PARENT, tested_tree).decode().splitlines() == source["code_paths"]
+            assert sha(git("diff", "--binary", "--no-ext-diff", "--no-textconv", "--unified=0",
+                           PARENT, tested_tree)) == source["code_patch_sha256"]
+            stage_names(core_names, temporary)
+            core_tree = git("write-tree", env=temporary).decode().strip()
+            if revision == 6:
+                assert core_tree == record["core_publication_tree"]
+            stage_names(packet_names, temporary)
+            publication_tree = git("write-tree", env=temporary).decode().strip()
+        assert set(git("diff", "--name-only", tested_tree, publication_tree).decode().splitlines()) == packet_names
+        personal = re.compile(rb"(?:[a-z]:)?[/\\]+Users[/\\]+[^/\\\s\"'<>]+", re.I)
+        for item in files:
+            path = ROOT / item["path"]
+            raw = guarded_bytes(path, ROOT)
+            if path.suffix != ".png":
+                raw.decode("utf-8")
+                assert not personal.search(raw.replace(b"^", b"")), item["path"]
+            assert git("hash-object", "--no-filters", "--", str(path)) == git("hash-object", "--path=" + item["path"], "--", str(path))
+        original_plan, final_plan = plan_for(original_names), plan_for(original_names | packet_names)
+        assert original_plan == final_plan
+        assert final_plan["plan"] == [{"name": c["name"], "argv": c["argv"]} for c in x["native"]["checks"]]
+        assert next(c["argv"][5:] for c in final_plan["plan"] if c["name"] == "node-tests") == final_plan["node"]
+        assert x["native"]["source"]["testConfigSha256"] == sha(guarded_bytes(ROOT / "test.config.json", ROOT))
+        policy = policy_state()
+        assert not git("diff", "--name-only", PARENT, publication_tree, "--", *policy).strip()
+        record.update(main=MAIN, parents=PARENTS, branch=BRANCH, tested_tree=tested_tree,
+                      publication_tree=publication_tree, source_receipt_sha256=sha(source_path.read_bytes()),
+                      physical_files_sha256=x["physical_sha256"], original_index_sha256=initial_index,
+                      files=files, original_physical_files_unchanged=True,
+                      canonical_and_acceptance_same_complete_physical_source=True,
+                      evidence_added_after_product_execution=True, full_plan_unchanged=True,
+                      final_plan=final_plan, explicit_ignored_publication_paths=sorted(ignored),
+                      policy_sha256=policy)
+        save()
+        check("docs", [NODE, "tools/check_docs.mjs"])
+        check("repository-docs", [NODE, "tools/check_documentation.mjs"])
+        check("personal-paths", [NODE, "tools/check_evidence_personal_paths.mjs", PACKET])
+        scan_secrets("packet", ["dir", str(PACKET)], record, save, prefix, policy)
+        with tempfile.TemporaryDirectory(prefix=prefix + "-owned-blobs-", dir=EV) as directory:
+            owned = Path(directory).resolve(strict=True)
+            assert owned.parent == EV.resolve() and owned.name.startswith(prefix + "-owned-blobs-")
+            names = set(source["code_paths"]) | packet_names
+            record["scanned_blobs"] = materialize(publication_tree, names, owned)
+            save()
+            scan_secrets("changed-blobs", ["dir", str(owned)], record, save, prefix, policy)
+        check("diff-check", ["git", "--no-optional-locks", "diff", "--check", PARENT, publication_tree])
+        verify_files(x["physical"])
+        verify_files([[f["path"], f["sha256"]] for f in files])
+        pending_source()
+        assert index_digest() == initial_index and policy_state() == policy
+        record.update(status="passed", original_index_unchanged=True)
+    except Exception as error:
+        record.update(status="failed", failure=str(error), failure_type=type(error).__name__)
+        raise
+    finally:
+        record["finished_at_utc"] = now()
+        save()
+        print(json.dumps({k: record.get(k) for k in ["status", "revision", "tested_tree", "publication_tree", "failure"]}))
+
+
+def extend():
+    receipt_path = EV / "issue95-publication-assembly-r6.json"
+    assert not receipt_path.exists() and not (PACKET / "publication").exists()
+    x = completed_inputs()
+    core_path, assembly_path = validation_receipt(5), EV / "issue95-publication-assembly-r5.json"
+    core, assembly = load(core_path), load(assembly_path)
+    verify_validation(core)
+    observed_exit("issue95-publication-validation-r5-session-exit.json")
+    assert packet_files() == core["files"] == assembly["packet_files"]
+    verify_files([[f["path"], f["sha256"]] for f in core["files"]])
+    assert index_digest() == assembly["original_index_sha256"]
+    copies = [(core_path, "publication/evidence-validation-r5.json"),
+              (EV / "issue95-publication-validation-r5-session-exit.json", "publication/session-exit.json"),
+              (assembly_path, "publication/core-assembly.json")]
+    copies.extend((Path(item["log"]), "publication/" + Path(item["log"]).name) for item in core["checks"])
+    for item in core["secret_scans"]:
+        copies.extend((Path(item[key]), "publication/" + Path(item[key]).name) for key in ["log", "report"])
+    artifacts = make_public_copies(copies, x["physical"], PACKET)
+    readme = PACKET / "publication/README.md"
+    with readme.open("x", encoding="utf-8", newline="\n") as stream:
+        stream.write(f"""# Observed publication validation
+
+The core packet passed its separate evidence checks at {core['finished_at_utc']}.
+Its tested product tree is {core['tested_tree']} and core publication tree is
+{core['publication_tree']}. This directory publishes the actual passing receipt,
+observed native process exit, documentation and native personal-path checks,
+diff check, and redacted native Gitleaks logs. Both packet and all changed-blob
+scans returned zero findings under the unchanged repository policy.
+
+The original packet remains byte-for-byte unchanged. These files were added
+afterward; the core validation does not validate itself or these additions.
+The subsequent R6 validation checks the extended packet and reconstructs the
+exact core tree. Its result is retained in the run record and will be reported
+against the final commit after execution. Product code is not changed here.
+
+The manifest binds original local bytes to their sanitized public copies and
+names the entire core packet. No hosted CI, independent approval, human signoff,
+issue closure or merge is implied.
+""")
+    manifest = {"issue": 95, "recorded_at_utc": now(), "core_tested_tree": core["tested_tree"],
+                "core_publication_tree": core["publication_tree"], "core_files": core["files"],
+                "core_validation_sha256": sha(guarded_bytes(core_path, EV)), "artifacts": artifacts,
+                "scope_document_sha256": sha(guarded_bytes(readme, ROOT)),
+                "scope": "Observed core pass only; publication additions require separate R6 validation."}
+    write(PACKET / "publication/manifest.json", manifest)
+    verify_files(x["physical"])
+    verify_files([[f["path"], f["sha256"]] for f in core["files"]])
+    pending_source()
+    assert index_digest() == assembly["original_index_sha256"]
+    files = packet_files()
+    write(receipt_path, {"issue": 95, "status": "extended_pending_validation", "finished_at_utc": now(),
+                         "core_validation_sha256": manifest["core_validation_sha256"],
+                         "core_publication_tree": core["publication_tree"],
+                         "preceding_assembly_sha256": sha(guarded_bytes(assembly_path, EV)),
+                         "packet_files": files, "original_index_sha256": index_digest()})
+    print(json.dumps({"status": "extended_pending_validation", "files": len(files)}))
+
+
+def commit():
+    receipt_path = EV / "issue95-publication-commit-r3.json"
+    assert not receipt_path.exists()
+    record = {"issue": 95, "status": "preparing", "started_at_utc": now(), "main": MAIN,
+              "parents": PARENTS, "branch": BRANCH, "pr_merge_performed": False, "issue_completed": False}
+
+    def save():
+        receipt_path.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    save()
+    try:
+        x = completed_inputs()
+        observed_exit("issue95-publication-validation-r6-session-exit.json")
+        source_path, validation_path = EV / "issue95-publication-source-r3.json", validation_receipt(6)
+        source, validation = load(source_path), load(validation_path)
+        verify_validation(validation)
+        assert validation["published_core_validation_verified"] and validation["core_packet_unchanged"]
+        assert validation["source_receipt_sha256"] == sha(guarded_bytes(source_path, EV))
+        assert source["original_index_sha256"] == validation["original_index_sha256"] == index_digest()
+        assert packet_files() == validation["files"] == load(EV / "issue95-publication-assembly-r6.json")["packet_files"]
+        check_artifacts(load(PACKET / "summary.json")["artifacts"])
+        check_artifacts(load(PACKET / "publication/manifest.json")["artifacts"])
+        verify_files(x["physical"])
+        verify_files([[f["path"], f["sha256"]] for f in validation["files"]])
+        original, published = set(dict(x["physical"])), {f["path"] for f in validation["files"]}
+        assert original <= source_inventory() <= original | published
+        with temporary_index(PARENT) as temporary:
+            stage_names(original, temporary)
+            assert git("write-tree", env=temporary).decode().strip() == source["tested_tree"]
+            stage_names(published, temporary)
+            assert git("write-tree", env=temporary).decode().strip() == validation["publication_tree"]
+        record.update(tested_tree=source["tested_tree"], publication_tree=validation["publication_tree"],
+                      validation_sha256=sha(guarded_bytes(validation_path, EV)),
+                      source_receipt_sha256=sha(guarded_bytes(source_path, EV)),
+                      author_identity=git("var", "GIT_AUTHOR_IDENT").decode().strip(),
+                      physical_files_sha256=x["physical_sha256"])
+        save()
+        stage_names(original | published, dict(ENV, GIT_LITERAL_PATHSPECS="1"))
+        assert git("write-tree").decode().strip() == validation["publication_tree"]
+        git("diff", "--cached", "--check", PARENT)
+        assert not git("diff", "--name-only").strip()
+        verify_files(x["physical"])
+        verify_files([[f["path"], f["sha256"]] for f in validation["files"]])
+        pending_source()
+        assert set(git("diff", "--cached", "--name-only", PARENT).decode().splitlines()) == set(source["code_paths"]) | published
+        record["status"] = "staged-and-verified"
+        save()
+        result = git("commit", "-m", "Add governed review corrections for published Factory results")
+        with (EV / "issue95-publication-commit-r3.log").open("xb") as stream:
+            stream.write(result)
+        head = git("rev-parse", "HEAD").decode().strip()
+        assert git("show", "-s", "--format=%P", head).decode().split() == PARENTS
+        assert not Path(git("rev-parse", "--path-format=absolute", "--git-path", "MERGE_HEAD").decode().strip()).exists()
+        assert git("rev-parse", "HEAD^{tree}").decode().strip() == validation["publication_tree"]
+        assert not git("status", "--porcelain=v1", "--untracked-files=all").strip()
+        assert set(git("diff", "--name-only", PARENT, head).decode().splitlines()) == set(source["code_paths"]) | published
+        verify_files(x["physical"])
+        verify_files([[f["path"], f["sha256"]] for f in validation["files"]])
+        record.update(status="committed-and-verified", head=head, committed_tree=validation["publication_tree"],
+                      commit_log_sha256=sha(result), worktree_clean=True, ordinary_two_parent_commit=True,
+                      prerequisite_head_preserved_as_parent=True)
+    except Exception as error:
+        record.update(status="failed", failure=str(error), failure_type=type(error).__name__)
+        raise
+    finally:
+        record["finished_at_utc"] = now()
+        save()
+        print(json.dumps({k: record.get(k) for k in ["status", "head", "tested_tree", "publication_tree", "failure"]}))
+
+
+def scan_committed():
+    receipt_path = EV / "issue95-publication-committed-scan-r3.json"
+    assert not receipt_path.exists()
+    committed = load(EV / "issue95-publication-commit-r3.json")
+    assert committed["status"] == "committed-and-verified"
+    head = committed["head"]
+    source, validation = load(EV / "issue95-publication-source-r3.json"), load(validation_receipt(6))
+    assert git("rev-parse", "HEAD").decode().strip() == head
+    assert git("rev-parse", "HEAD^{tree}").decode().strip() == validation["publication_tree"]
+    assert git("show", "-s", "--format=%P", head).decode().split() == PARENTS
+    assert git("branch", "--show-current").decode().strip() == BRANCH
+    assert not git("status", "--porcelain=v1", "--untracked-files=all").strip()
+    verify_validation(validation)
+    record = {"issue": 95, "status": "running", "started_at_utc": now(), "head": head, "main": MAIN,
+              "parents": PARENTS, "tree": validation["publication_tree"], "secret_scans": [],
+              "scope": "Every changed committed blob and all introduced history since main; merge diffs enabled."}
+
+    def save():
+        receipt_path.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    save()
+    try:
+        policy = policy_state()
+        assert not git("diff", "--name-only", PARENT, head, "--", *policy).strip()
+        published = {f["path"] for f in validation["files"]}
+        names = set(git("diff", "--name-only", "--no-renames", PARENT, head).decode().splitlines())
+        assert names == set(source["code_paths"]) | published
+        with tempfile.TemporaryDirectory(prefix="issue95-committed-owned-blobs-", dir=EV) as directory:
+            owned = Path(directory).resolve(strict=True)
+            assert owned.parent == EV.resolve() and owned.name.startswith("issue95-committed-owned-blobs-")
+            record["committed_blobs"] = materialize(head, names, owned)
+            save()
+            scan_secrets("changed-blobs", ["dir", str(owned)], record, save, "issue95-committed-scan-r3", policy)
+        history = git("log", "-m", "--format=%H", "--name-only", MAIN + ".." + head)
+        assert head.encode() in history and all(name.encode() in history for name in names)
+        record.update(history_log_options="-m " + MAIN + ".." + head,
+                      history_listing_sha256=sha(history))
+        save()
+        scan_secrets("introduced-history", ["git", str(ROOT), "--log-opts=" + record["history_log_options"]],
+                     record, save, "issue95-committed-scan-r3", policy)
+        assert git("rev-parse", "HEAD").decode().strip() == head and policy_state() == policy
+        assert not git("status", "--porcelain=v1", "--untracked-files=all").strip()
+        verify_files(source["physical_files"])
+        verify_files([[f["path"], f["sha256"]] for f in validation["files"]])
+        record.update(status="passed", exit_code=0, finding_count=0, worktree_unchanged=True)
+    except Exception as error:
+        record.update(status="failed", failure=str(error), failure_type=type(error).__name__)
+        raise
+    finally:
+        record["finished_at_utc"] = now()
+        save()
+        print(json.dumps({k: record.get(k) for k in ["status", "head", "finding_count", "exit_code", "failure"]}))
+
+
+if __name__ == "__main__":
+    commands = {"assemble": assemble, "validate-core": lambda: validate(5),
+                "extend": extend, "validate-extended": lambda: validate(6),
+                "commit": commit, "scan-committed": scan_committed}
+    assert len(sys.argv) == 2 and sys.argv[1] in commands
+    commands[sys.argv[1]]()

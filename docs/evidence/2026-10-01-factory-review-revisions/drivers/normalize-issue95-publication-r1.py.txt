@@ -1,0 +1,104 @@
+"""Preserve failed publication R5 and validate the exact test-fixture EOF cleanup."""
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import sys
+
+assert __debug__
+sys.dont_write_bytecode = True
+EV = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location('issue95_frozen_r5', EV / 'issue95_publication_r5.py')
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+assert m.sha(m.guarded_bytes(EV / 'issue95_publication_r5.py', EV)) == '81f91d5f3ddb40a1dbc2fd79068bf3441d22ae6073429db7d413528901bba100'
+assert m.sha(m.guarded_bytes(EV / 'publish-issue95-r4.ps1', EV)) == 'bf07e0aa2feac89f1ca55a551eca2fb1a35ee914c38c11da91c82c42dcce4be5'
+receipt = EV / 'issue95-fixture-eof-normalization-r1.json'
+owned = EV / 'issue95-publication-validation-failed-r5'
+assert not receipt.exists() and not owned.exists()
+record = {'issue': 95, 'status': 'preparing', 'started_at_utc': m.now(), 'scope': 'Remove one redundant EOF LF from a test-only fixture; preserve every other source byte and all previous receipts.'}
+
+def save():
+    receipt.write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+
+save()
+try:
+    m.pending_source()
+    failed = m.load(EV / 'issue95-publication-validation-r5.json')
+    native = m.load(EV / 'issue95-publication-validation-r5-session-exit.json')
+    assert native['session_id'] == 68506 and native['exit_code'] == native['tool_return']['exit_code'] == 1
+    assert failed['status'] == 'failed' and failed['failure'] == 'diff-check failed; inspect retained log'
+    assert failed['checks'][-1]['name'] == 'diff-check' and failed['checks'][-1]['exit_code'] == 2
+    assert all(c['exit_code'] == 0 for c in failed['checks'][:-1])
+    assert all(s['exit_code'] == s['finding_count'] == 0 for s in failed['secret_scans'])
+    x = m.completed_inputs()
+    before = x['physical']
+    binding = m.load(EV / 'issue95-publication-source-r3.json')
+    assert before == binding['physical_files']
+    assert binding['tested_tree'] == 'd25ef2100f7bec0ecc65772f61308c111d8df3fd'
+    before_index = m.index_digest()
+    assert before_index == binding['original_index_sha256']
+    policy = m.policy_state()
+    files = m.packet_files()
+    assert files == failed['files'] == m.load(EV / 'issue95-publication-assembly-r5.json')['packet_files']
+    m.verify_files([[f['path'], f['sha256']] for f in files])
+    fixture = 'apps/web/src/missionResultFixtures.mjs'
+    path = m.ROOT / fixture
+    raw = m.guarded_bytes(path, m.ROOT)
+    assert m.sha(raw) == dict(before)[fixture]
+    assert raw.endswith(b'}\n\n') and not raw.endswith(b'\n\n\n')
+    updated = raw[:-1]
+    assert updated + b'\n' == raw
+    references = subprocess.run(['rg', '-l', 'missionResultFixtures', 'apps', 'crates', 'tools', 'tests', 'scenarios'], cwd=m.ROOT, env=m.ENV, capture_output=True, timeout=120, creationflags=subprocess.CREATE_NO_WINDOW)
+    assert references.returncode == 0
+    importers = sorted(p.replace('\\', '/') for p in references.stdout.decode().splitlines())
+    expected_importers = ['apps/web/src/missionResultContext.test.mjs', 'apps/web/src/reviewRevisionPanel.test.mjs']
+    assert importers == expected_importers
+    # Verify both absolute move paths and every owned file before preserving the packet.
+    source_dir = m.reader.directory_root(m.PACKET)
+    assert source_dir == m.PACKET.resolve() and source_dir.is_relative_to(m.ROOT.resolve())
+    assert owned.resolve().parent == EV.resolve()
+    owned.mkdir()
+    target = owned / 'packet'
+    assert target.resolve().parent == owned.resolve() and not target.exists()
+    source_dir.rename(target)
+    for item in files:
+        relative = Path(item['path']).relative_to(m.PACKET_REL)
+        assert m.sha(m.guarded_bytes(target / relative, target)) == item['sha256']
+    m.write(owned / 'preservation.json', {'issue': 95, 'recorded_at_utc': m.now(), 'original_packet': str(m.PACKET), 'retained_packet': str(target), 'packet_files': files, 'native_exit': 1, 'native_session': 68506, 'failure_receipt_sha256': m.sha((EV / 'issue95-publication-validation-r5.json').read_bytes()), 'native_exit_receipt_sha256': m.sha((EV / 'issue95-publication-validation-r5-session-exit.json').read_bytes()), 'original_index_sha256': before_index, 'source_unchanged_before_normalization': True})
+    assert m.guarded_bytes(path, m.ROOT) == raw
+    with (owned / 'original-missionResultFixtures.mjs.txt').open('xb') as stream:
+        stream.write(raw)
+    path.write_bytes(updated)
+    after = [[n, m.sha(updated) if n == fixture else digest] for n, digest in before]
+    m.verify_files(after)
+    after_tree = m.source_tree(after)
+    assert m.git('diff', '--name-only', binding['tested_tree'], after_tree).decode().splitlines() == [fixture]
+    assert not m.git('diff', '--ignore-blank-lines', binding['tested_tree'], after_tree).strip()
+    delta = m.git('diff', '--no-ext-diff', '--no-textconv', '--unified=3', binding['tested_tree'], after_tree)
+    with (owned / 'fixture-eof-cleanup.patch').open('xb') as stream:
+        stream.write(delta)
+    record.update(status='running-regressions', fixture=fixture, change='Remove exactly the final LF byte; no remaining byte is changed.', before_sha256=m.sha(raw), after_sha256=m.sha(updated), before_bytes=len(raw), after_bytes=len(updated), original_tested_tree=binding['tested_tree'], reviewed_source_tree=after_tree, original_physical_files_sha256=m.sha(m.compact(before)), current_physical_files_sha256=m.sha(m.compact(after)), original_source_files=before, source_files=after, only_changed_path=fixture, importers=importers, original_index_sha256=before_index, policy_sha256=policy, prior_packet_preservation=str(owned / 'preservation.json'), prior_packet_preservation_sha256=m.sha((owned / 'preservation.json').read_bytes()), patch_sha256=m.sha(delta))
+    args = [str(m.NODE), '--test', '--test-concurrency=2', '--test-timeout=180000', *expected_importers]
+    log = EV / 'issue95-fixture-eof-normalization-r1.log'
+    assert not log.exists()
+    record.update(command=args, tests_started_at_utc=m.now(), log=str(log))
+    save()
+    with log.open('xb') as stream:
+        result = subprocess.run(args, cwd=m.ROOT, env=m.ENV, stdout=stream, stderr=subprocess.STDOUT, timeout=900, creationflags=subprocess.CREATE_NO_WINDOW)
+    output = log.read_text(encoding='utf-8')
+    summaries = [line for line in output.splitlines() if line.startswith(('ℹ tests', 'ℹ pass', 'ℹ fail', 'ℹ skipped', 'ℹ cancelled', 'ℹ todo', '# tests', '# pass', '# fail', '# skipped', '# cancelled', '# todo'))]
+    record.update(exit_code=result.returncode, tests_finished_at_utc=m.now(), test_summaries=summaries, log_sha256=m.sha(log.read_bytes()))
+    assert result.returncode == 0, 'Focused tests failed; preserve changed source and failed evidence.'
+    m.verify_files(after)
+    m.pending_source()
+    assert m.index_digest() == before_index and m.policy_state() == policy
+    assert m.source_inventory() == set(dict(after))
+    record.update(status='passed', source_unchanged_during_regression=True, all_other_7396_files_unchanged=True, original_index_unchanged=True, policy_unchanged=True, canonical_and_acceptance_not_rerun=True, validation_scope='Canonical R3 and acceptance R7 retain their original common manifest. Only this test-only EOF normalization occurred afterward; its two importing test modules ran on the reviewed source. No runtime/dependency behavior changed.')
+except Exception as error:
+    record.update(status='failed', failure=str(error), failure_type=type(error).__name__)
+    raise
+finally:
+    record['finished_at_utc'] = m.now()
+    save()
+    print(json.dumps({k: record.get(k) for k in ['status', 'exit_code', 'reviewed_source_tree', 'test_summaries', 'failure']}))

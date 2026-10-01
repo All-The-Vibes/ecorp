@@ -1,0 +1,75 @@
+"""Exercise manifest and scalar-count receipt projections without changing source."""
+import ast
+from datetime import datetime, timezone
+import importlib.util
+import json
+from pathlib import Path
+
+EV = Path(__file__).resolve().parent
+target = EV / "issue95_publication_r3.py"
+before = EV / "issue95_publication_r3_pre_projection.py"
+spec = importlib.util.spec_from_file_location("issue95_projection_verification", target)
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+assert __debug__
+path = EV / "issue95-publication-projection-r1.json"
+assert not path.exists()
+record = {"issue": 95, "status": "running", "started_at_utc": datetime.now(timezone.utc).isoformat(),
+          "helper_sha256": m.sha(target.read_bytes()), "previous_helper_sha256": m.sha(before.read_bytes()),
+          "checks": [], "scope": "Publication receipt shape handling only; no product test rerun."}
+
+
+def function_text(path, name):
+    source = path.read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    node = next(item for item in tree.body if isinstance(item, ast.FunctionDef) and item.name == name)
+    return ast.get_source_segment(source, node)
+
+
+def save():
+    path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+
+
+save()
+try:
+    for name in ["guarded_bytes", "guarded_cargo_binary", "completed_inputs"]:
+        assert function_text(target, name) == function_text(before, name)
+    record["checks"].append("File guards and completed-input verification are unchanged")
+    canonical = m.load(EV / "issue95-canonical-r3.json")
+    physical = m.pairs(canonical["source_files"])
+    assert len(physical) == 7397
+    projected = m.projected_receipt(canonical, physical)
+    assert "source_files" not in projected
+    summary = projected["source_manifest_projection"]
+    assert summary["recorded_files"] == 7397 and summary["complete_match"]
+    assert not summary["differing_recorded_paths"] and not summary["current_paths_not_recorded"]
+    assert summary["sha256"] == m.sha(m.compact(physical))
+    assert len(canonical["source_files"]) == 7397
+    record["checks"].append("Actual canonical manifest projects accurately without mutating its original")
+    verification_path = EV / "issue95-acceptance-r7-verification.json"
+    verification = m.load(verification_path)
+    assert verification["source_files"] == 7397
+    assert m.projected_receipt(verification, physical) == verification
+    record["acceptance_verification_sha256"] = m.sha(verification_path.read_bytes())
+    record["checks"].append("Actual acceptance verification retains its scalar count and all fields")
+    for count in [0, 7397]:
+        assert m.projected_receipt({"source_files": count}, physical) == {"source_files": count}
+    record["checks"].append("Nonnegative integer count boundaries remain counts")
+    for malformed in [-1, True, "7397", None, {}]:
+        try:
+            m.projected_receipt({"source_files": malformed}, physical)
+        except AssertionError as error:
+            assert "Unexpected source file count" in str(error)
+        else:
+            raise AssertionError("Malformed scalar accepted")
+    record["checks"].append("Negative, boolean, text, null and object scalar shapes are rejected")
+    assert m.projected_receipt({"status": "passed"}, physical) == {"status": "passed"}
+    record["checks"].append("Receipts without source_files remain unchanged")
+    record.update(status="passed", check_count=len(record["checks"]), product_source_changes=0)
+except Exception as error:
+    record.update(status="failed", failure_type=type(error).__name__, failure=str(error))
+    raise
+finally:
+    record["finished_at_utc"] = datetime.now(timezone.utc).isoformat()
+    save()
+    print(json.dumps({key: record.get(key) for key in ["status", "check_count", "failure"]}))

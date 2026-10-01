@@ -1,0 +1,56 @@
+"""Bind the fresh combined-source acceptance to the already built native source."""
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+
+EV = Path(__file__).resolve().parent
+ROOT = Path(r"<ISOLATED_CHECKOUT>")
+PARENT = "7e65f46a0c0f991460eeb4c5b60723d2e0dff1f9"
+INCOMING = "6f2375e06546806003a9a1d1a340bdc1a4ce4b8c"
+
+def load(path):
+    return json.loads(path.read_text(encoding="utf-8-sig"))
+
+def git(*args):
+    return subprocess.check_output(["git", "--no-optional-locks", "-C", str(ROOT), *args]).decode().strip()
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+assert __debug__
+assert git("rev-parse", "HEAD") == PARENT
+assert git("rev-parse", "MERGE_HEAD") == INCOMING
+assert git("branch", "--show-current") == "codex/issue95-governed-review-revision"
+assert not git("ls-files", "--unmerged")
+build = load(EV / "issue95-native-build-r1.json")
+canonical = load(EV / "issue95-canonical-r3.json")
+assert build["status"] == "passed" and build["exit_code"] == 0 and build["source_unchanged"]
+assert build["head"] == canonical["head"] == PARENT
+expected = {r["path"]: r["sha256"].lower() for r in build["source_files"]}
+combined = {r["path"]: r["sha256"].lower() for r in canonical["source_files"]}
+files = set(git("ls-files", "--cached", "--others", "--exclude-standard", "-z").rstrip("\0").split("\0"))
+native = {p for p in files if p in {"Cargo.toml", "Cargo.lock"} or p.startswith(("crates/", "db/"))}
+assert len(expected) == len(build["source_files"]) == 289
+assert len(combined) == len(canonical["source_files"]) == 7397
+assert native == set(expected) and files == set(combined)
+assert all(expected[p] == combined[p] == digest(ROOT / p) for p in native)
+assert all(combined[p] == digest(ROOT / p) for p in files)
+binaries = []
+for name in ["crony-server.exe", "crony-runner.exe", "crony-cli.exe"]:
+    path = ROOT / "target/debug" / name
+    binaries.append({"path": path.relative_to(ROOT).as_posix(), "sha256": digest(path),
+                     "modified_at_utc": datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat()})
+receipt = {
+    "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+    "status": "passed", "worktree": str(ROOT), "head": PARENT, "pending_merge_head": INCOMING,
+    "build_receipt": "issue95-native-build-r1.json", "native_source_files": 289,
+    "native_source_exact_match": True, "combined_source_files": 7397,
+    "combined_source_reference": "issue95-canonical-r3.json#/source_files",
+    "combined_source_exact_match": True, "binaries": binaries,
+    "qualification": "Reuses the recorded passing native build because its complete 289-file Cargo/crates/db source is unchanged. This is not a new native build and does not claim the earlier full 7352-file acceptance validates the combined source.",
+}
+with (EV / "issue95-acceptance-r7-preflight.json").open("x", encoding="utf-8", newline="\n") as stream:
+    stream.write(json.dumps(receipt, indent=2) + "\n")
+print(json.dumps({k:v for k,v in receipt.items() if k != "binaries"}))

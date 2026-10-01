@@ -48,13 +48,25 @@ test('Windows package-manager execution uses an explicit argument vector, never 
   assert.throws(() => invocationFor('pnpm', ['build:web'], 'win32', 'pnpm.cmd'), /native CLI path/)
 })
 test('full gate retains Rust, web and migration checks and adds Node/docs validation', () => {
-  const plan = checkPlan('full', ['tools/a.test.mjs'])
+  const plan = checkPlan('full', ['tools/a.test.mjs'], 'linux')
   assert.deepEqual(plan.map(check => check.name), ['migrations', 'state-audit-compatibility', 'state-audit-evm', 'docs', 'repository-docs', 'node-tests', 'format', 'clippy', 'rust-tests', 'web-build', 'web-lint'])
   assert.deepEqual(plan.find(check => check.name === 'state-audit-compatibility').argv, ['node', 'tools/check_state_audit_compatibility.mjs'])
   assert.deepEqual(plan.find(check => check.name === 'state-audit-evm').argv, ['cargo', 'test', '--locked', '-p', 'crony-audit', '--test', 'ethereum_local_chain'])
   assert.deepEqual(plan.find(check => check.name === 'rust-tests').argv, ['cargo', 'test', '--workspace', '--locked'])
   assert.deepEqual(plan.find(check => check.name === 'repository-docs').argv, ['node', 'tools/check_documentation.mjs'])
   assert.deepEqual(checkPlan('docs', ['tools/a.test.mjs']).map(check => check.name), ['docs', 'repository-docs'])
+})
+test('Windows workspace gates enforce the native serial harness without excluding tests', () => {
+  for (const group of ['test', 'full']) {
+    const windows = checkPlan(group, ['tools/a.test.mjs'], 'win32')
+    const linux = checkPlan(group, ['tools/a.test.mjs'], 'linux')
+    assert.deepEqual(windows.map(check => check.name), linux.map(check => check.name))
+    assert.deepEqual(windows.find(check => check.name === 'rust-tests').argv,
+      ['cargo', 'test', '--workspace', '--locked', '--', '--test-threads=1'])
+    assert.deepEqual(windows.filter(check => check.name !== 'rust-tests'),
+      linux.filter(check => check.name !== 'rust-tests'))
+    assert.deepEqual(checkPlan(group, ['tools/a.test.mjs'], 'darwin'), linux)
+  }
 })
 test('every Node test group retains the native 180-second per-test deadline', () => {
   for (const group of ['node', 'test', 'full']) {
@@ -77,6 +89,8 @@ test('generated docs follow canonical command and version changes', () => {
   const rendered = renderContract(pkg, '24.19.0', '1.98.1', settings)
   assert.match(rendered, /pnpm test:js/u)
   assert.ok(rendered.includes('`tools/fixtures/live.test.mjs`'), 'document separately run fixtures')
+  assert.ok(rendered.includes('Rust suite (Linux/macOS): `cargo test`.'))
+  assert.ok(rendered.includes('Rust suite (Windows): `cargo test -- --test-threads=1`.'))
   assert.notEqual(rendered, renderContract({ ...pkg, scripts: { ...pkg.scripts, check: 'node new.mjs' } }, '24.19.0', '1.98.1', settings))
   assert.throws(() => renderContract(pkg, 'latest', '1.98.1', settings), /exact versions/)
 })

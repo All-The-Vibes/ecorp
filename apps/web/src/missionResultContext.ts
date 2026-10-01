@@ -8,6 +8,9 @@ export type MissionResultScope = MissionOriginScope & Readonly<{
 
 export type MissionResultPublication = Readonly<{
   id: string
+  mission_id: string
+  source_revision: string | null
+  supersedes_publication_id: string | null
   state: 'requested' | 'publishing' | 'branch_pushed' | 'pull_request_created' | 'published'
   version: number
   task_id: string
@@ -53,8 +56,50 @@ export type MissionResultContext = Readonly<{
   work_item_id: string
   work_item_version: number
   source_repository: string
+  selected_mission_id: string
+  work_item_state: string | null
+  lineage_supported: boolean
+  current_publication_id: string | null
+  publication_history: readonly MissionPublishedResult[]
+  review_revisions: readonly MissionReviewRevision[]
   publication: MissionResultPublication | null
   deliverable: MissionResultDeliverable | null
+}>
+
+export type MissionPublishedResult = Readonly<{
+  publication: MissionResultPublication
+  deliverable: MissionResultDeliverable
+}>
+
+export type MissionReviewFinding = Readonly<{
+  kind: 'correctness' | 'security' | 'verification' | 'product_contract'
+  summary: string
+  source_url: string | null
+  path: string | null
+  line: number | null
+}>
+
+export type MissionReviewRevision = Readonly<{
+  id: string
+  publication_id: string
+  source_mission_id: string
+  source_task_id: string
+  source_run_id: string
+  source_deliverable_id: string
+  source_head_commit: string
+  mission_id: string
+  task_id: string
+  authorized_by: string
+  findings: readonly MissionReviewFinding[]
+  state: 'pending' | 'adopted' | 'abandoned'
+  result_run_id: string | null
+  result_deliverable_id: string | null
+  result_commit: string | null
+  review_decision_id: string | null
+  settled_by: string | null
+  created_at: string
+  replacement: MissionResultDeliverable | null
+  replacement_count: number
 }>
 
 export type MissionResultLoad =
@@ -153,27 +198,39 @@ export function currentMissionResult(scope: MissionResultScope | null, load: Mis
   return scope && load?.scope === scope ? load : null
 }
 
-function readContext(value: unknown, scope: MissionResultScope): MissionResultContext {
-  if (!record(value) || !record(value.work_item) || !Array.isArray(value.source_deliverables)) {
-    throw new Error('Invalid result context')
+function readDeliverable(d: unknown, scope: MissionResultScope): MissionResultDeliverable {
+  if (!record(d) || d.corp_id !== scope.corpId ||
+    ![d.id, d.task_id, d.run_id, d.artifact_id].every(identifier) ||
+    !identifier(d.id) || !identifier(d.task_id) || !identifier(d.run_id) || !identifier(d.artifact_id)) {
+    throw new Error('Invalid source identity')
   }
-  const item = value.work_item
-  if (item.id !== scope.workItemId || item.corp_id !== scope.corpId || item.mission_id !== scope.missionId ||
-    !positiveInteger(item.version) || typeof item.source_repository_owner !== 'string' ||
-    typeof item.source_repository_name !== 'string' ||
-    !sameRepository(`${item.source_repository_owner}/${item.source_repository_name}`, scope.sourceRepository) ||
-    !githubUrl(item.source_issue_url, scope.sourceRepository, 'issues', item.source_issue_number)) {
-    throw new Error('Mismatched result context')
+  const uri = `/api/corps/${encodeURIComponent(scope.corpId)}/artifacts/${encodeURIComponent(d.artifact_id)}`
+  const sha = hash(d.sha256), verification = hash(d.verification_sha256)
+  const base = hash(d.base_commit, true), head = hash(d.head_commit, true)
+  const signature = hash(d.provenance_signature)
+  if (d.form !== 'commit_branch' || d.uri !== uri || !sha || !verification || !base || !head || !signature ||
+    !text(d.branch) || !text(d.file_name, 255) || /[\\/:]/.test(d.file_name) || ['.', '..'].includes(d.file_name) ||
+    !text(d.media_type, 128) || !/^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/i.test(d.media_type) ||
+    !positiveInteger(d.bytes) || typeof d.integration_state !== 'string' ||
+    !['not_applicable', 'ready_for_review', 'published', 'integrated'].includes(d.integration_state) ||
+    !text(d.retention_until, 64) || !Number.isFinite(Date.parse(d.retention_until))) {
+    throw new Error('Invalid source evidence')
   }
-  const identity = {
-    corp_id: scope.corpId, mission_id: scope.missionId, work_item_id: scope.workItemId,
-    work_item_version: item.version, source_repository: scope.sourceRepository,
+  return {
+    id: d.id, task_id: d.task_id, run_id: d.run_id, artifact_id: d.artifact_id,
+    form: 'commit_branch', file_name: d.file_name, uri, sha256: sha, media_type: d.media_type,
+    bytes: d.bytes, provenance_signature: signature, verification_sha256: verification,
+    base_commit: base, head_commit: head, branch: d.branch,
+    integration_state: d.integration_state as MissionResultDeliverable['integration_state'],
+    retention_until: d.retention_until,
   }
-  // This endpoint does not echo actor/room. Those remain bound to this request
-  // generation; current Operate and mission-room authorization belong to the server.
-  if (value.publication === null) return { ...identity, publication: null, deliverable: null }
-  const p = value.publication
-  if (!record(p) || p.corp_id !== scope.corpId || p.mission_id !== scope.missionId ||
+}
+
+function readPublication(
+  p: unknown, item: Record<string, unknown>, sourceDeliverables: unknown[],
+  scope: MissionResultScope, missionId: string,
+): MissionPublishedResult {
+  if (!record(p) || p.corp_id !== scope.corpId || p.mission_id !== missionId ||
     p.factory_work_item_id !== scope.workItemId ||
     !identifier(p.id) || !identifier(p.run_id) || !identifier(p.task_id) ||
     !identifier(p.source_deliverable_id) || !identifier(p.artifact_id) ||
@@ -183,42 +240,30 @@ function readContext(value: unknown, scope: MissionResultScope): MissionResultCo
     !text(p.base_ref) || !text(p.branch) ||
     typeof p.state !== 'string' ||
     !['requested', 'publishing', 'branch_pushed', 'pull_request_created', 'published'].includes(p.state) ||
-    !(p.failure_detail === null || typeof p.failure_detail === 'string') || !record(p.provenance)) {
+    !(p.failure_detail === null || typeof p.failure_detail === 'string') || !record(p.provenance) ||
+    !(p.supersedes_publication_id == null || identifier(p.supersedes_publication_id))) {
     throw new Error('Invalid publication')
   }
-  const matches = value.source_deliverables.filter((entry) =>
+  const matches = sourceDeliverables.filter((entry) =>
     record(entry) && entry.id === p.source_deliverable_id)
   if (matches.length !== 1) throw new Error('Missing or ambiguous published deliverable')
-  const d = matches[0] as Record<string, unknown>
+  const d = readDeliverable(matches[0], scope)
   const proof = p.provenance
   const dp = proof.deliverable
   const target = proof.target
   const sourceIssue = proof.source_issue
   const commit = hash(p.commit_sha, true)
-  const bytesDigest = hash(d.sha256)
-  const verificationDigest = hash(d.verification_sha256)
-  const baseCommit = hash(d.base_commit, true)
-  const signature = hash(d.provenance_signature)
-  const uri = `/api/corps/${encodeURIComponent(scope.corpId)}/artifacts/${encodeURIComponent(p.artifact_id)}`
-  if (d.corp_id !== scope.corpId || d.run_id !== p.run_id || d.task_id !== p.task_id ||
-    d.artifact_id !== p.artifact_id || d.form !== 'commit_branch' || d.uri !== uri ||
-    !commit || !bytesDigest || !verificationDigest || !baseCommit || !signature ||
-    hash(d.head_commit, true) !== commit || !text(d.branch) ||
-    !text(d.file_name, 255) || /[\\/:]/.test(d.file_name) || ['.', '..'].includes(d.file_name) ||
-    !text(d.media_type, 128) || !/^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/i.test(d.media_type) ||
-    !positiveInteger(d.bytes) ||
-    typeof d.integration_state !== 'string' ||
-    !['not_applicable', 'ready_for_review', 'published', 'integrated'].includes(d.integration_state) ||
-    !text(d.retention_until, 64) || !Number.isFinite(Date.parse(d.retention_until)) ||
+  if (d.run_id !== p.run_id || d.task_id !== p.task_id || d.artifact_id !== p.artifact_id ||
+    !commit || d.head_commit !== commit ||
     ![1, 2, 3].includes(Number(proof.schema_version)) || typeof proof.schema_version !== 'number' ||
-    proof.factory_work_item_id !== scope.workItemId || proof.mission_id !== scope.missionId ||
+    proof.factory_work_item_id !== scope.workItemId || proof.mission_id !== missionId ||
     (sourceIssue !== undefined && (!record(sourceIssue) || sourceIssue.number !== item.source_issue_number ||
       !githubUrl(sourceIssue.url, scope.sourceRepository, 'issues', item.source_issue_number))) ||
     !containsIdentity(proof.task_ids, p.task_id) || !containsIdentity(proof.run_ids, p.run_id) ||
-    hash(proof.verification_sha256) !== verificationDigest ||
+    hash(proof.verification_sha256) !== d.verification_sha256 ||
     !record(dp) || dp.id !== d.id || dp.artifact_id !== d.artifact_id ||
-    hash(dp.sha256) !== bytesDigest || hash(dp.head_commit, true) !== commit ||
-    hash(dp.base_commit, true) !== baseCommit || dp.source_branch !== d.branch ||
+    hash(dp.sha256) !== d.sha256 || hash(dp.head_commit, true) !== commit ||
+    hash(dp.base_commit, true) !== d.base_commit || dp.source_branch !== d.branch ||
     !record(target) || !sameRepository(target.repository, scope.sourceRepository) ||
     target.base_ref !== p.base_ref || target.branch !== p.branch || hash(target.commit, true) !== commit) {
     throw new Error('Inconsistent publication evidence')
@@ -254,9 +299,11 @@ function readContext(value: unknown, scope: MissionResultScope): MissionResultCo
   // Binding/format checks are not signature verification, renewed publication
   // authority, remote PR liveness, application hosting or provider completion.
   return {
-    ...identity,
     publication: {
-      id: p.id, state: p.state as MissionResultPublication['state'], version: p.version,
+      id: p.id, mission_id: missionId,
+      source_revision: record(sourceIssue) && text(sourceIssue.revision, 200) ? sourceIssue.revision : null,
+      supersedes_publication_id: p.supersedes_publication_id as string | null | undefined ?? null,
+      state: p.state as MissionResultPublication['state'], version: p.version,
       task_id: p.task_id, run_id: p.run_id, source_deliverable_id: p.source_deliverable_id,
       artifact_id: p.artifact_id, target_repository: p.target_repository as string,
       base_ref: p.base_ref, branch: p.branch, commit_sha: commit,
@@ -264,15 +311,183 @@ function readContext(value: unknown, scope: MissionResultScope): MissionResultCo
       pull_request_state: prState, pull_request_draft: prDraft,
       failed: typeof p.failure_detail === 'string' && p.failure_detail.trim().length > 0,
     },
-    deliverable: {
-      id: p.source_deliverable_id, task_id: p.task_id, run_id: p.run_id, artifact_id: p.artifact_id,
-      form: 'commit_branch', file_name: d.file_name, uri, sha256: bytesDigest,
-      media_type: d.media_type, bytes: d.bytes, provenance_signature: signature,
-      verification_sha256: verificationDigest, base_commit: baseCommit, head_commit: commit,
-      branch: d.branch, integration_state: d.integration_state as MissionResultDeliverable['integration_state'],
-      retention_until: d.retention_until,
-    },
+    deliverable: d,
   }
+}
+
+export function readReviewFinding(value: unknown): MissionReviewFinding {
+  if (!record(value) || typeof value.kind !== 'string' ||
+    !['correctness', 'security', 'verification', 'product_contract'].includes(value.kind) ||
+    typeof value.summary !== 'string' || !value.summary.trim() || value.summary.includes('\0') ||
+    new TextEncoder().encode(value.summary).length > 2000) throw new Error('Invalid finding')
+  if (value.path !== null && (typeof value.path !== 'string' || !value.path ||
+    new TextEncoder().encode(value.path).length > 500 || value.path.trim() !== value.path ||
+    /[\\:]/.test(value.path) || [...value.path].some((char) => /\p{Cc}/u.test(char)) ||
+    value.path.split('/').some((part) => ['', '.', '..'].includes(part)))) throw new Error('Invalid finding location')
+  if (value.line !== null && (!positiveInteger(value.line) || value.line > 0xffff_ffff || value.path === null)) {
+    throw new Error('Invalid finding line')
+  }
+  if (value.source_url !== null) {
+    if (!text(value.source_url, 2000) || !value.source_url.startsWith('https://') ||
+      new TextEncoder().encode(value.source_url).length > 2000) throw new Error('Invalid finding link')
+    const url = new URL(value.source_url)
+    if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Invalid finding link')
+  }
+  return {
+    kind: value.kind as MissionReviewFinding['kind'], summary: value.summary,
+    source_url: value.source_url as string | null, path: value.path as string | null,
+    line: value.line as number | null,
+  }
+}
+
+function readRevision(
+  value: unknown, history: readonly MissionPublishedResult[], sourceDeliverables: unknown[], scope: MissionResultScope,
+): MissionReviewRevision {
+  if (!record(value) || value.corp_id !== scope.corpId || value.factory_work_item_id !== scope.workItemId ||
+    !identifier(value.id) || !identifier(value.mission_id) || !identifier(value.task_id) ||
+    !identifier(value.authorized_by) || !identifier(value.publication_id) ||
+    !['pending', 'adopted', 'abandoned'].includes(String(value.state)) ||
+    !text(value.created_at, 64) || !Number.isFinite(Date.parse(value.created_at)) ||
+    !Array.isArray(value.findings) || value.findings.length === 0 || value.findings.length > 20) {
+    throw new Error('Invalid correction')
+  }
+  const source = history.find(({ publication }) => publication.id === value.publication_id)?.publication
+  if (!source || source.state !== 'published' || value.source_mission_id !== source.mission_id ||
+    value.source_task_id !== source.task_id || value.source_run_id !== source.run_id ||
+    value.source_deliverable_id !== source.source_deliverable_id ||
+    hash(value.source_head_commit, true) !== source.commit_sha ||
+    value.mission_id === source.mission_id || value.task_id === source.task_id) throw new Error('Invalid correction source')
+  const candidates = sourceDeliverables.filter((d) => record(d) && d.task_id === value.task_id)
+    .map((d) => readDeliverable(d, scope))
+  if (new Set(candidates.map((d) => d.id)).size !== candidates.length) throw new Error('Duplicate correction source')
+  let replacement: MissionResultDeliverable | null = null
+  const adopted = value.state === 'adopted'
+  if (adopted) {
+    if (!identifier(value.result_run_id) || !identifier(value.result_deliverable_id) ||
+      !identifier(value.review_decision_id) || !identifier(value.settled_by) || !hash(value.result_commit, true)) {
+      throw new Error('Missing adoption evidence')
+    }
+    replacement = candidates.find((d) => d.id === value.result_deliverable_id) ?? null
+    if (!replacement || replacement.run_id !== value.result_run_id ||
+      replacement.head_commit !== hash(value.result_commit, true) || replacement.head_commit === source.commit_sha) {
+      throw new Error('Inconsistent adopted source')
+    }
+  } else {
+    if (value.result_run_id !== null || value.result_deliverable_id !== null || value.result_commit !== null ||
+      value.review_decision_id !== null || (value.state === 'pending' ? value.settled_by !== null : !identifier(value.settled_by))) {
+      throw new Error('Premature adoption evidence')
+    }
+    // A pending export is never an accepted replacement. Ambiguous exports are
+    // left unselected; the server alone determines what can be adopted.
+    replacement = candidates.length === 1 ? candidates[0] : null
+  }
+  return {
+    id: value.id, publication_id: source.id, source_mission_id: source.mission_id,
+    source_task_id: source.task_id, source_run_id: source.run_id, source_deliverable_id: source.source_deliverable_id,
+    source_head_commit: source.commit_sha, mission_id: value.mission_id, task_id: value.task_id,
+    authorized_by: value.authorized_by, findings: value.findings.map(readReviewFinding),
+    state: value.state as MissionReviewRevision['state'],
+    result_run_id: adopted ? value.result_run_id as string : null,
+    result_deliverable_id: adopted ? value.result_deliverable_id as string : null,
+    result_commit: adopted ? hash(value.result_commit, true) : null,
+    review_decision_id: adopted ? value.review_decision_id as string : null,
+    settled_by: value.settled_by as string | null, created_at: value.created_at,
+    replacement, replacement_count: candidates.length,
+  }
+}
+
+function readContext(value: unknown, scope: MissionResultScope): MissionResultContext {
+  if (!record(value) || !record(value.work_item) || !Array.isArray(value.source_deliverables)) {
+    throw new Error('Invalid result context')
+  }
+  const item = value.work_item
+  if (item.id !== scope.workItemId || item.corp_id !== scope.corpId || !identifier(item.mission_id) ||
+    !positiveInteger(item.version) || typeof item.source_repository_owner !== 'string' ||
+    typeof item.source_repository_name !== 'string' ||
+    !sameRepository(`${item.source_repository_owner}/${item.source_repository_name}`, scope.sourceRepository) ||
+    !githubUrl(item.source_issue_url, scope.sourceRepository, 'issues', item.source_issue_number)) {
+    throw new Error('Mismatched result context')
+  }
+  const identity = {
+    corp_id: scope.corpId, mission_id: scope.missionId, work_item_id: scope.workItemId,
+    work_item_version: item.version, source_repository: scope.sourceRepository,
+    selected_mission_id: item.mission_id, work_item_state: text(item.state, 40) ? item.state : null,
+  }
+  // Both fields must be absent for a legacy response. Legacy reads can show an
+  // exact result, but never establish authority for correction mutations.
+  const legacy = !Object.hasOwn(value, 'publication_history') && !Object.hasOwn(value, 'review_revisions')
+  if (legacy) {
+    if (item.mission_id !== scope.missionId) throw new Error('Mismatched legacy mission')
+    const result = value.publication === null ? null
+      : readPublication(value.publication, item, value.source_deliverables, scope, item.mission_id)
+    return { ...identity, lineage_supported: false, current_publication_id: result?.publication.id ?? null,
+      publication_history: result ? [result] : [], review_revisions: [],
+      publication: result?.publication ?? null, deliverable: result?.deliverable ?? null }
+  }
+  if (!Array.isArray(value.publication_history) || value.publication_history.length > 4 ||
+    !Array.isArray(value.review_revisions) || value.review_revisions.length > 3) throw new Error('Invalid result history')
+  const history = value.publication_history.map((p) => {
+    if (!record(p) || !identifier(p.mission_id)) throw new Error('Missing historical mission')
+    return readPublication(p, item, value.source_deliverables as unknown[], scope, p.mission_id)
+  })
+  for (const key of ['id', 'mission_id', 'source_deliverable_id'] as const) {
+    if (new Set(history.map(({ publication }) => publication[key])).size !== history.length) throw new Error('Ambiguous result history')
+  }
+  const revisions = value.review_revisions.map((r) => readRevision(r, history, value.source_deliverables as unknown[], scope))
+  for (const key of ['id', 'mission_id', 'task_id', 'publication_id'] as const) {
+    if (new Set(revisions.map((r) => r[key])).size !== revisions.length) throw new Error('Ambiguous correction history')
+  }
+  const current = value.publication === null ? null
+    : readPublication(value.publication, item, value.source_deliverables, scope, item.mission_id)
+  const selected = history.find(({ publication }) => publication.mission_id === item.mission_id)
+  if (JSON.stringify(current) !== JSON.stringify(selected ?? null)) throw new Error('Inconsistent current publication')
+  if (history.length) {
+    const roots = history.filter(({ publication }) => !publication.supersedes_publication_id)
+    if (roots.length !== 1) throw new Error('Invalid publication root')
+    let previous = roots[0].publication
+    const seen = new Set([previous.id])
+    for (;;) {
+      const successors = history.filter(({ publication }) => publication.supersedes_publication_id === previous.id)
+      if (!successors.length) break
+      if (successors.length !== 1) throw new Error('Forked publication history')
+      const next = successors[0].publication
+      const revision = revisions.find((r) => r.publication_id === previous.id)
+      const raw = value.publication_history.find((p) => record(p) && p.id === next.id) as Record<string, unknown>
+      const proof = record(raw.provenance) ? raw.provenance.review_revision : null
+      const predecessorPr = record(proof) ? proof.source_pull_request : null
+      if (seen.has(next.id) || !revision || revision.state !== 'adopted' ||
+        next.mission_id !== revision.mission_id || next.task_id !== revision.task_id ||
+        next.run_id !== revision.result_run_id || next.source_deliverable_id !== revision.result_deliverable_id ||
+        next.commit_sha !== revision.result_commit || next.base_ref !== previous.base_ref || next.branch === previous.branch ||
+        !record(proof) || proof.id !== revision.id || proof.supersedes_publication_id !== previous.id ||
+        proof.authorized_by !== revision.authorized_by || proof.review_decision_id !== revision.review_decision_id ||
+        proof.source_mission_id !== previous.mission_id || proof.source_run_id !== previous.run_id ||
+        proof.source_deliverable_id !== previous.source_deliverable_id || hash(proof.source_head_commit, true) !== previous.commit_sha ||
+        !record(predecessorPr) || predecessorPr.number !== previous.pull_request_number ||
+        predecessorPr.url !== previous.pull_request_url || !sameRepository(predecessorPr.repository, previous.target_repository) ||
+        predecessorPr.base_ref !== previous.base_ref || predecessorPr.branch !== previous.branch ||
+        hash(predecessorPr.head_sha, true) !== previous.commit_sha ||
+        proof.mission_id !== next.mission_id || proof.task_id !== next.task_id || proof.result_run_id !== next.run_id ||
+        proof.result_deliverable_id !== next.source_deliverable_id || hash(proof.result_commit, true) !== next.commit_sha) {
+        throw new Error('Unbound successor publication')
+      }
+      seen.add(next.id)
+      previous = next
+    }
+    if (seen.size !== history.length) throw new Error('Disconnected publication history')
+    const latestRevision = revisions.find((r) => r.publication_id === previous.id)
+    const expectedMission = latestRevision?.state === 'adopted' ? latestRevision.mission_id : previous.mission_id
+    if (item.mission_id !== expectedMission ||
+      revisions.some((r) => r.state === 'pending' && r.publication_id !== previous.id) ||
+      (item.state === 'review_revision') !== (latestRevision?.state === 'pending')) throw new Error('Invalid Factory selection')
+  } else if (revisions.length || current) throw new Error('Missing publication history')
+  if (scope.missionId !== item.mission_id &&
+    !history.some(({ publication }) => publication.mission_id === scope.missionId) &&
+    !revisions.some((r) => r.mission_id === scope.missionId)) throw new Error('Unrelated mission')
+  const viewed = history.find(({ publication }) => publication.mission_id === scope.missionId)
+  return { ...identity, lineage_supported: true, current_publication_id: current?.publication.id ?? null,
+    publication_history: history, review_revisions: revisions,
+    publication: viewed?.publication ?? null, deliverable: viewed?.deliverable ?? null }
 }
 
 type Timer = ReturnType<typeof globalThis.setTimeout>

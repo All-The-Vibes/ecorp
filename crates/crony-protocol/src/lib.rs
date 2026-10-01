@@ -124,6 +124,8 @@ pub enum ServerToRunner {
         sha256: String,
     },
     StartRun {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        review_revision: Option<Box<ReviewRevisionSource>>,
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         dependency_files: Vec<dependency_files::VerifiedDependencyFile>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -149,6 +151,8 @@ pub enum ServerToRunner {
         secrets: Vec<ResolvedSecret>,
     },
     ResumeRun {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        review_revision: Option<Box<ReviewRevisionSource>>,
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         dependency_files: Vec<dependency_files::VerifiedDependencyFile>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -291,7 +295,24 @@ pub struct BaseRefreshSource {
     pub artifact: VerificationArtifactReference,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+/// Immutable publication seed for an ordinary, separately authorized correction
+/// run. The server supplies verified bytes; clients can only select saved IDs.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ReviewRevisionSource {
+    pub revision_id: Uuid,
+    pub publication_id: Uuid,
+    pub source_run_id: Uuid,
+    pub source_deliverable_id: Uuid,
+    pub original_base_commit: String,
+    pub source_head_commit: String,
+    pub source_branch: String,
+    pub verification_sha256: String,
+    pub git_bundle_sha256: String,
+    pub artifact: VerificationArtifactReference,
+}
+
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct VerificationArtifactReference {
     pub path: String,
     pub sha256: String,
@@ -877,6 +898,10 @@ pub struct MaterializeFactoryMissionResponse {
 pub struct FactoryPublicationContextResponse {
     pub work_item: FactoryWorkItem,
     pub publication: Option<PullRequestPublication>,
+    #[serde(default)]
+    pub publication_history: Vec<PullRequestPublication>,
+    #[serde(default)]
+    pub review_revisions: Vec<crony_domain::FactoryReviewRevision>,
     pub source_deliverables: Vec<SourceDeliverable>,
 }
 

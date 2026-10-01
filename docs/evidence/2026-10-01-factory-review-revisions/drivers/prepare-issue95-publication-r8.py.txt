@@ -1,0 +1,124 @@
+"""Preserve successful R7 assembly and clarify pre/post-cleanup source coverage."""
+import ast
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import sys
+
+assert __debug__
+sys.dont_write_bytecode = True
+EV = Path(__file__).resolve().parent
+old_helper = EV / 'issue95_publication_r6.py'
+old_publisher = EV / 'publish-issue95-r5.ps1'
+digest = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+assert digest(old_helper) == '82243cec77ae1d2b6bdff7f9ed3a4ad731ba71895fa62fbed5dccafa5f17502a'
+assert digest(old_publisher) == '70c2efad6c0dd7b324fae25762680ee7868f16e8a171935cb46d15011401f5c9'
+helper = old_helper.read_text(encoding='utf-8')
+publisher = old_publisher.read_text(encoding='utf-8-sig')
+
+def replace(old, new, count=None):
+    global helper
+    actual = helper.count(old)
+    assert actual and (count is None or actual == count), (old[:100], actual, count)
+    helper = helper.replace(old, new)
+
+for old, new in {
+    '"issue95-publication-source-r4.json"': '"issue95-publication-source-r5.json"',
+    '"issue95-publication-assembly-r7.json"': '"issue95-publication-assembly-r9.json"',
+    '"issue95-publication-assembly-r8.json"': '"issue95-publication-assembly-r10.json"',
+    '"issue95-publication-commit-r4.json"': '"issue95-publication-commit-r5.json"',
+    '"issue95-publication-commit-r4.log"': '"issue95-publication-commit-r5.log"',
+    '"issue95-publication-committed-scan-r4.json"': '"issue95-publication-committed-scan-r5.json"',
+    '"issue95-committed-scan-r4"': '"issue95-committed-scan-r5"',
+    '"issue95-publication-validation-r7-session-exit.json"': '"issue95-publication-validation-r9-session-exit.json"',
+    '"issue95-publication-validation-r8-session-exit.json"': '"issue95-publication-validation-r10-session-exit.json"',
+    'validation_receipt(7)': 'validation_receipt(9)',
+    'validation_receipt(8)': 'validation_receipt(10)',
+    'assert revision in {7, 8}': 'assert revision in {9, 10}',
+    'if revision == 7:': 'if revision == 9:',
+    'if revision == 8:': 'if revision == 10:',
+    'lambda: validate(7)': 'lambda: validate(9)',
+    'lambda: validate(8)': 'lambda: validate(10)',
+    '"publication/evidence-validation-r7.json"': '"publication/evidence-validation-r9.json"',
+    'The subsequent R8 validation': 'The subsequent R10 validation',
+    'additions require separate R8 validation.': 'additions require separate R10 validation.',
+}.items():
+    replace(old, new)
+replace('"""R6 publication: original canonical/acceptance source plus an observed one-LF test-fixture cleanup."""',
+        '"""R7 publication: exact original/current source with explicit historical coverage comparisons."""', 1)
+replace('Canonical R3, acceptance R7 and Windows-policy R1 match the original 7,397-file manifest before the separately recorded EOF cleanup. Native store/build/deliverable/correction and focused late-stop receipts match 289-file subsets. The older 7,352-file Node parity receipt differs at six #382 paths and lacks 45 incoming evidence files. The 7,349-file focused test receipts differ at fourteen paths and lack 48 files; the earlier frozen-install receipt differs at seventeen paths and lacks those same 48 files. All twelve JavaScript dependency manifests, locks and configuration files are unchanged. Exact paths and manifests are retained; earlier or incomplete manifests are not complete-source proof.',
+        'Canonical R3, acceptance R7 and Windows-policy R1 match the original 7,397-file manifest before the separately recorded EOF cleanup. Relative to that original source, the older 7,352-file Node parity receipt differs at six #382 paths and lacks 45 incoming evidence files; the 7,349-file focused receipts differ at fourteen paths and lack 48 files, and the earlier frozen-install receipt differs at seventeen paths and lacks those same 48 files. Relative to the reviewed source after cleanup, each of those full-source receipts additionally differs at missionResultFixtures.mjs: seven, fifteen and eighteen differing paths respectively, with unchanged missing-path counts. Windows-policy R1 differs only at that fixture. Native store/build/deliverable/correction and focused late-stop receipts still match their 289-file subsets. All twelve JavaScript dependency manifests, locks and configuration files are unchanged. The source-binding focused_source_comparison arrays use the reviewed post-cleanup source; both complete manifests and exact paths are retained. Earlier or incomplete manifests are not complete-source proof.', 1)
+replace('def original_receipts(x):\n    copies = [', '''def original_receipts(x):
+    copies = [
+        (EV / "issue95-publication-assembly-r7.json", "history/publication-assembly-r7-superseded/assembly.json"),
+        (EV / "issue95-publication-assembly-r7-session-exit.json", "history/publication-assembly-r7-superseded/session-exit.json"),
+        (EV / "issue95-publication-assembly-superseded-r7/preservation.json", "history/publication-assembly-r7-superseded/preservation.json"),''', 1)
+replace('                 "issue95_publication_r6.py", "publish-issue95-r5.ps1",', '''                 "issue95_publication_r7.py", "publish-issue95-r6.ps1",
+                 "prepare-issue95-publication-r8.py",
+                 "issue95_publication_r6.py", "publish-issue95-r5.ps1",''', 1)
+replace('Its tested product tree is {core[\'tested_tree\']} and core publication tree is',
+        'Its reviewed source tree after the fixture cleanup is {core[\'tested_tree\']} and core publication tree is', 1)
+
+for old, new in {
+    'issue95-publication-commit-r4.json': 'issue95-publication-commit-r5.json',
+    'issue95-publication-committed-scan-r4.json': 'issue95-publication-committed-scan-r5.json',
+    'issue95-publication-validation-r8.json': 'issue95-publication-validation-r10.json',
+    'issue95-publication-source-r4.json': 'issue95-publication-source-r5.json',
+    "'publication-validation-r7','publication-validation-r8','publication-committed-scan-r4'": "'publication-validation-r9','publication-validation-r10','publication-committed-scan-r5'",
+    "'issue95_publication_r6.py','publish-issue95-r5.ps1'": "'issue95_publication_r6.py','publish-issue95-r5.ps1','issue95_publication_r7.py','publish-issue95-r6.ps1'",
+    'Reviewed head: $head. Tested implementation tree: $($commit.tested_tree).': 'Reviewed head: $head. Reviewed source tree after the separately tested fixture cleanup: $($commit.tested_tree). Original canonical and acceptance tree: $($source.canonical_tested_tree).',
+}.items():
+    assert old in publisher, old[:100]
+    publisher = publisher.replace(old, new)
+ast.parse(helper)
+assert 'diff", "--check", PARENT, publication_tree' in helper
+new_names = ['issue95_publication_r7.py', 'publish-issue95-r6.ps1']
+assert not any((EV / name).exists() for name in new_names)
+
+spec = importlib.util.spec_from_file_location('frozen_issue95_r6', old_helper)
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+m.pending_source()
+assembly_path = EV / 'issue95-publication-assembly-r7.json'
+assembly = m.load(assembly_path)
+assert assembly['status'] == 'assembled_pending_evidence_validation'
+assert m.observed_exit('issue95-publication-assembly-r7-session-exit.json')['session_id'] == 21428
+assert m.index_digest() == assembly['original_index_sha256']
+files = m.packet_files()
+assert files == assembly['packet_files'] and len(files) == 163
+assert not (EV / 'issue95-publication-validation-r7.json').exists()
+source = m.load(EV / assembly['source_receipt'])
+assert digest(EV / assembly['source_receipt']) == assembly['source_receipt_sha256']
+assert source == m.load(m.PACKET / 'source-binding.json')
+assert source['tested_tree'] == '5072c911cf980d5b48ed78e6d946f491eef94a1a'
+for name, content in [(new_names[0], helper), (new_names[1], publisher)]:
+    with (EV / name).open('x', encoding='utf-8', newline='\n') as stream:
+        stream.write(content.rstrip('\n') + '\n')
+
+# Both exact absolute move targets are checked before preserving this owned packet.
+preserved = EV / 'issue95-publication-assembly-superseded-r7'
+assert not preserved.exists()
+preserved.mkdir()
+target = preserved / 'packet'
+assert m.PACKET.absolute() == m.ROOT / 'docs/evidence/2026-10-01-factory-review-revisions'
+assert m.reader.directory_root(m.PACKET) == m.PACKET.absolute()
+assert m.reader.directory_root(preserved) == preserved.absolute()
+assert preserved.resolve().parent == EV and target.absolute() == preserved.absolute() / 'packet'
+assert not target.exists()
+m.PACKET.rename(target)
+for item in files:
+    relative = Path(item['path']).relative_to(m.PACKET_REL)
+    assert m.sha(m.guarded_bytes(target / relative, EV)) == item['sha256']
+assert not m.PACKET.exists() and m.index_digest() == assembly['original_index_sha256']
+m.write(preserved / 'preservation.json', {
+    'issue': 95, 'status': 'successful_assembly_preserved_before_validation',
+    'recorded_at_utc': m.now(), 'original_assembly': assembly_path.name,
+    'original_assembly_sha256': digest(assembly_path), 'original_native_exit': 0,
+    'source_tree': source['tested_tree'], 'packet_files': files,
+    'original_path': str(m.PACKET), 'preserved_path': str(target),
+    'all_original_bytes_preserved': True, 'product_source_changed': False,
+    'reason': 'Clarify which historical source comparisons precede the separately tested one-LF fixture cleanup. The prior assembly passed; evidence validation had not run.',
+})
+print(json.dumps({'status': 'prepared', 'preserved_files': len(files),
+                  'helpers': {name: digest(EV / name) for name in new_names}}))

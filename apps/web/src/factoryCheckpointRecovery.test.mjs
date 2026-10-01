@@ -270,7 +270,7 @@ function budgetRecoveryScopeHarness(extra = {}) {
     corpId: scope.corpId, actorId: scope.actorId,
     mission: { id: scope.missionId, budget_tokens: 6000, budget_cost_microusd: 10000 },
     revisions: [], recoveryItemId: scope.itemId, recoveryItemVersion: scope.version,
-    recoveryItemState: 'running', recoveryReload: 0, needsFactoryRecoveryContext,
+    recoveryItemState: 'running', recoveryReload: 0, hasPublishedLineage: false, needsFactoryRecoveryContext,
     useMemo: (create, dependencies) => {
       if (!previousDependencies || dependencies.some((value, index) => !Object.is(value, previousDependencies[index]))) {
         previousScope = create()
@@ -288,6 +288,18 @@ function budgetRecoveryScopeHarness(extra = {}) {
     };`, globals)
   return globals
 }
+
+test('published lineage retires the actual prepublication recovery scope without changing native resume', () => {
+  const globals = budgetRecoveryScopeHarness()
+  const before = globals.readScope()
+  assert.ok(before)
+  globals.hasPublishedLineage = true
+  assert.equal(globals.readScope(), null)
+  assert.equal(globals.currentFactoryRecoveryLoad(null, { scope: before, status: 'ready', data: {} }), null)
+  globals.hasPublishedLineage = false
+  assert.ok(globals.readScope())
+  assert.notEqual(globals.readScope(), before)
+})
 
 test('issue50 actual recovery scope invalidates old responses on budget proposals and decisions without a Factory version change', async () => {
   const loads = []

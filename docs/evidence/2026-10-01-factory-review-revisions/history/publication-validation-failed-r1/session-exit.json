@@ -1,0 +1,16 @@
+{
+  "session_id": 90536,
+  "exit_code": 1,
+  "observation": "write_stdin returned process exit",
+  "recorded_at_utc": "2026-10-01T07:26:02Z",
+  "tool_return": {
+    "chunk_id": "0a0c03",
+    "wall_time_seconds": 1.02e-05,
+    "exit_code": 1,
+    "original_token_count": {
+      "redacted": "sha256",
+      "digest": "1038e0b72d98745fac0fb015fd9c56704862adf11392936242a2ff5a65629f50"
+    },
+    "output": "{\"status\": \"failed\", \"revision\": 1, \"tested_tree\": \"d25ef2100f7bec0ecc65772f61308c111d8df3fd\", \"publication_tree\": \"8f429f3160590ebc367c84ca710d7cb9522a871b\", \"failure\": \"Triage retained secret findings\"}\nTraceback (most recent call last):\n  File \"<RUN_EVIDENCE>\\issue95_publication_r3.py\", line 1296, in <module>\n    commands[sys.argv[1]]()\n  File \"<RUN_EVIDENCE>\\issue95_publication_r3.py\", line 1292, in <lambda>\n    commands = {\"assemble\": assemble, \"validate-core\": lambda: validate(1),\n                                                               ^^^^^^^^^^^\n  File \"<RUN_EVIDENCE>\\issue95_publication_r3.py\", line 1086, in validate\n    scan_secrets(\"packet\", [\"dir\", str(PACKET)], record, save, prefix, policy)\n  File \"<RUN_EVIDENCE>\\issue95_publication_r3.py\", line 922, in scan_secrets\n    assert result.returncode == 0 and isinstance(findings, list) and not findings, \"Triage retained secret findings\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Triage retained secret findings\n"
+  }
+}

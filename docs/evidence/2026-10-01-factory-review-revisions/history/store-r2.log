@@ -1,0 +1,23 @@
+   Compiling crony-store v0.1.0 (<ISOLATED_CHECKOUT>\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 52s
+     Running unittests src\lib.rs (target\debug\deps\crony_store-a6f234d79c2d2eb3.exe)
+
+running 5 tests
+test budget_checkpoint_tests::correction_publication::review_revision::issue95_admission_replay_keeps_exact_source_and_residual_authority ... ok
+test budget_checkpoint_tests::correction_publication::review_revision::issue95_concurrent_admission_allocates_one_mission_and_abandonment_is_terminal ... ok
+test budget_checkpoint_tests::correction_publication::review_revision::issue95_exhausted_completed_authority_cannot_be_replenished ... ok
+
+thread 'budget_checkpoint_tests::correction_publication::review_revision::issue95_fresh_review_adoption_and_superseding_publication_preserve_history' (28020) panicked at crates\crony-store\src\factory_review_revision_tests.rs:371:67:
+called `Result::unwrap()` on an `Err` value: Database(PgDatabaseError { severity: Error, code: "42703", message: "column \"display_name\" of relation \"actors\" does not exist", detail: None, hint: None, position: Some(Original(41)), where: None, schema: None, table: None, column: None, data_type: None, constraint: None, file: Some("parse_target.c"), line: Some(1070), routine: Some("checkInsertTargets") })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test budget_checkpoint_tests::correction_publication::review_revision::issue95_fresh_review_adoption_and_superseding_publication_preserve_history ... FAILED
+test budget_checkpoint_tests::correction_publication::review_revision::issue95_role_room_revocation_and_foreign_scope_fence_replays_and_dispatch ... ok
+
+failures:
+
+failures:
+    budget_checkpoint_tests::correction_publication::review_revision::issue95_fresh_review_adoption_and_superseding_publication_preserve_history
+
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 575 filtered out; finished in 18.30s
+
+error: test failed, to rerun pass `-p crony-store --lib`

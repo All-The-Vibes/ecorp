@@ -151,7 +151,7 @@ fn same_artifact(left: &StoredArtifact, right: &StoredArtifact) -> bool {
         && left.metadata == right.metadata
 }
 
-async fn hydrate(
+pub(super) async fn hydrate(
     state: &AppState,
     artifact: &StoredArtifact,
     reference: &mut VerificationArtifactReference,

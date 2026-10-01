@@ -69,7 +69,8 @@ test('finite recurrence reloads snapshot and feedback on every cycle', async () 
   assert.deepEqual(snapshots.map(value => value.snapshot.revision), [1, 3, 5]);
   assert.ok(snapshots.every(value => value.sourceCommit === commit && value.source === 'provided-snapshot'));
   assert.deepEqual(pauses, [1000, 1000]);
-  assert.equal(JSON.stringify(result).includes('revision'), false);
+  // Match the input property, not a directory name in state_directory.
+  assert.equal(JSON.stringify(result).includes('"revision":'), false);
 });
 
 test('paused and stopped records prevent collection and input reads', async () => {
