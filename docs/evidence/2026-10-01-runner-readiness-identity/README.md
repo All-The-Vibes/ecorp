@@ -1,5 +1,25 @@
 # Runner readiness identities — October 1, 2026
 
+## Current review correction
+
+The [review correction](review-correction.md) supersedes the historical R2
+non-ECorp default-source claim. Fresh [R3 acceptance](acceptance-r3/browser.json)
+passed **44 assertions** with explicit synthetic default and saved local source
+identities. Product source did not change. The original R1/R2 evidence, old
+summary and pre-canonical self-review are preserved as historical checkpoints.
+Previously omitted successful publication checks for the parent revision are
+now in [publication-r3](publication-r3/issue198-publication-validation-r3.json).
+The [correction receipt](review-correction.json) binds the new source observations
+and explains the separate final publication checks. New original images:
+
+![R3 desktop readiness identities](acceptance-r3/readiness-desktop.png)
+
+![R3 readiness wrapping at 390 pixels](acceptance-r3/readiness-narrow.png)
+
+The sections below retain the initial publication's chronology. R2's default
+origin identified ECorp; its saved local clones had distinct local identities.
+Only R3 proves the newly asserted synthetic default identity.
+
 This partial contribution addresses issue #198 comment 5710390211. A runner can
 legitimately advertise an unavailable base provider and multiple ready saved
 connections using the same provider name. The old list reused that name as its
