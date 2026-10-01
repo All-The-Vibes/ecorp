@@ -1167,6 +1167,15 @@ ADR 0021.
 
 ## Idempotent pull-request publication
 
+[Factory base refresh](FACTORY_BASE_REFRESH.md) links an immutable verified source
+to a separate verification-only mission at an advanced immutable base. Native Git
+reconstructs the delta in fresh private storage, and the existing canonical
+verifier/export path reruns the unchanged automated policy with a new independent
+gate. The original selection remains authoritative until explicit adoption.
+Pending refreshes fence publication, and adoption revalidates the full bounded
+source lineage before switching the Factory selection. Both missions participate
+in enabled state-audit coverage; existing publication authority cannot be replaced.
+
 Publication is a dedicated durable aggregate rather than a generic factory state transition. It
 links one verified factory work item and one ready commit/branch deliverable to an immutable target
 repository, base ref, branch, commit, pull-request title/body, source issue, explicit human

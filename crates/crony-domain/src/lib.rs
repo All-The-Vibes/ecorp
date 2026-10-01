@@ -9,6 +9,8 @@ mod factory_connection;
 pub use factory_connection::factory_workspace_connection_id;
 mod factory_authority;
 pub use factory_authority::{FactoryAuthority, factory_claim_authority_id};
+mod factory_base_refresh;
+pub use factory_base_refresh::*;
 mod planned_attempts;
 pub use planned_attempts::{MAX_TASK_ATTEMPTS, factory_max_task_attempts};
 mod planning_cost;

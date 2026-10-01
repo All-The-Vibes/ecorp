@@ -1,0 +1,1330 @@
+{
+  "issue": 84,
+  "status": "locally-validated-awaiting-required-hosted-checks",
+  "issue_completed": false,
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parents": [
+    "878a1774774b0630c904cbaf4b05e1b346777817"
+  ],
+  "tested_tree": "52867f5d35cb30be622fe9a550cec7e07322c8e6",
+  "physical_files_sha256": "efe92db431183bd759bc833eda77c2a57b9fd2fc58cc06c3565abe80894c93c8",
+  "source_file_count": 7162,
+  "canonical_and_acceptance_same_complete_physical_source": true,
+  "evidence_added_after_code_execution": true,
+  "checks": [
+    {
+      "name": "migrations",
+      "argv": [
+        "node",
+        "tools/check_migrations.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-compatibility",
+      "argv": [
+        "node",
+        "tools/check_state_audit_compatibility.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-evm",
+      "argv": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "crony-audit",
+        "--test",
+        "ethereum_local_chain"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "docs",
+      "argv": [
+        "node",
+        "tools/check_docs.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "repository-docs",
+      "argv": [
+        "node",
+        "tools/check_documentation.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "node-tests",
+      "argv": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-timeout=180000",
+        "--test-reporter=tap",
+        ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+        ".github/skills/code-review/tests/executor-state.test.mjs",
+        ".github/skills/code-review/tests/package.test.mjs",
+        "apps/web/src/AgentPinControl.test.mjs",
+        "apps/web/src/DelegatedPanel.test.mjs",
+        "apps/web/src/VerificationPolicyEditor.test.mjs",
+        "apps/web/src/agentPinOperation.test.mjs",
+        "apps/web/src/evidenceNavigation.test.mjs",
+        "apps/web/src/evidenceSelection.test.mjs",
+        "apps/web/src/factoryAuthority.test.mjs",
+        "apps/web/src/factoryAuthorityConnection.test.mjs",
+        "apps/web/src/factoryCheckpointRecovery.test.mjs",
+        "apps/web/src/factoryControllerSelection.test.mjs",
+        "apps/web/src/factoryPolling.test.mjs",
+        "apps/web/src/formText.test.mjs",
+        "apps/web/src/missionCollaboration.test.mjs",
+        "apps/web/src/missionComposer.test.mjs",
+        "apps/web/src/missionOriginContext.test.mjs",
+        "apps/web/src/missionPreview.test.mjs",
+        "apps/web/src/missionProjection.test.mjs",
+        "apps/web/src/missionResultContext.test.mjs",
+        "apps/web/src/missionReviewSummary.test.mjs",
+        "apps/web/src/missionRuntime.test.mjs",
+        "apps/web/src/office/characterAssets.test.mjs",
+        "apps/web/src/office/officeModel.test.mjs",
+        "apps/web/src/runActivity.test.mjs",
+        "apps/web/src/snapshotRefresh.test.mjs",
+        "apps/web/src/verificationDecisionOperation.test.mjs",
+        "apps/web/src/verificationPolicy.test.mjs",
+        "apps/web/src/workResultCard.test.mjs",
+        "apps/web/src/workflowContext.test.mjs",
+        "apps/web/src/workspaceConnections.test.mjs",
+        "scenarios/repo-steward/actions.test.mjs",
+        "scenarios/repo-steward/feedback-cli.test.mjs",
+        "scenarios/repo-steward/feedback.test.mjs",
+        "scenarios/repo-steward/maintenance.test.mjs",
+        "scenarios/repo-steward/recurring-audit.test.mjs",
+        "scenarios/repo-steward/steward.test.mjs",
+        "scenarios/repo-steward/teams-host.test.mjs",
+        "tests/readiness/cli.test.js",
+        "tools/budget_fixture.test.mjs",
+        "tools/check_deliverable_diff.test.mjs",
+        "tools/check_documentation.test.mjs",
+        "tools/check_evidence_launch.test.mjs",
+        "tools/check_evidence_native_build.test.mjs",
+        "tools/check_evidence_personal_paths.test.mjs",
+        "tools/check_migrations.test.mjs",
+        "tools/check_replay_source.test.mjs",
+        "tools/checkpoint_application_fixture.test.mjs",
+        "tools/ci_external_adapters_windows.test.mjs",
+        "tools/ci_factory_repository.test.mjs",
+        "tools/ci_maintenance.test.mjs",
+        "tools/ci_owned_test_server.test.mjs",
+        "tools/ci_runner_tests.test.mjs",
+        "tools/consume_operation_receipt.test.mjs",
+        "tools/controlled_runner_fixture.test.mjs",
+        "tools/copilot_fs_wire_observer.test.mjs",
+        "tools/copilot_fs_wire_process.test.mjs",
+        "tools/copilot_probe_boundaries.test.mjs",
+        "tools/copilot_probe_environment.test.mjs",
+        "tools/copilot_probe_native_read.test.mjs",
+        "tools/copilot_probe_process.test.mjs",
+        "tools/coverage_web_models.test.mjs",
+        "tools/delegated_lifecycle.test.mjs",
+        "tools/delegated_qa_root.test.mjs",
+        "tools/e2e_agent_pinning.test.mjs",
+        "tools/e2e_checkpoint_verification.test.mjs",
+        "tools/e2e_evidence_selection.test.mjs",
+        "tools/e2e_external_adapters.test.mjs",
+        "tools/e2e_external_adapters_http.test.mjs",
+        "tools/e2e_factory_budget_recovery.test.mjs",
+        "tools/e2e_late_termination.test.mjs",
+        "tools/e2e_predispatch_failure.test.mjs",
+        "tools/e2e_stopped_source_checkpoint.test.mjs",
+        "tools/e2e_verifier_browser_retention.test.mjs",
+        "tools/e2e_verifier_browser_scope.test.mjs",
+        "tools/factory_budget_fixture_config.test.mjs",
+        "tools/factory_budget_git.test.mjs",
+        "tools/factory_budget_process.test.mjs",
+        "tools/factory_budget_provenance.test.mjs",
+        "tools/factory_budget_start.test.mjs",
+        "tools/fake_codex_budget_stream.test.mjs",
+        "tools/fake_github_quota.test.mjs",
+        "tools/fixture_source_identity.test.mjs",
+        "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+        "tools/identity_fixture.test.mjs",
+        "tools/import_operation_behavior.test.mjs",
+        "tools/issue161/qa-api-provenance.test.mjs",
+        "tools/issue161/qa-plan.test.mjs",
+        "tools/local_source_commit.test.mjs",
+        "tools/local_stack_lifecycle.test.mjs",
+        "tools/local_stack_operation.test.mjs",
+        "tools/native_qualification_attempt.test.mjs",
+        "tools/native_qualification_finality.test.mjs",
+        "tools/native_qualification_trust.test.mjs",
+        "tools/office_model.test.mjs",
+        "tools/operation_feedback.test.mjs",
+        "tools/operation_receipt.test.mjs",
+        "tools/owned_test_stack.test.mjs",
+        "tools/probe_mcp.test.mjs",
+        "tools/qa_multiplayer_object_sources.test.mjs",
+        "tools/readiness_contract.test.mjs",
+        "tools/readiness_replay_contract.test.mjs",
+        "tools/redact_evidence_capabilities.test.mjs",
+        "tools/research_handoff_adversarial.test.mjs",
+        "tools/research_handoff_browser.test.mjs",
+        "tools/research_handoff_native.test.mjs",
+        "tools/runner_ack_fault_relay.test.mjs",
+        "tools/secret_scan.test.mjs",
+        "tools/secret_scan_native.test.mjs",
+        "tools/security_fixtures.test.mjs",
+        "tools/startup_validation_harness.test.mjs",
+        "tools/task_graph_fixture.test.mjs",
+        "tools/verifier_browser.test.mjs",
+        "tools/verify_toolchain.test.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3108,
+          "passed": 3043,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      }
+    },
+    {
+      "name": "format",
+      "argv": [
+        "cargo",
+        "fmt",
+        "--check"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "clippy",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "rust-tests",
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 900,
+          "failed": 0,
+          "ignored": 585,
+          "summaries": 41
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "web-build",
+      "argv": [
+        "pnpm",
+        "build:web"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "web-lint",
+      "argv": [
+        "pnpm",
+        "lint:web"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    }
+  ],
+  "focused_counts": [
+    {
+      "passed": 21,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 551
+    },
+    {
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 564
+    }
+  ],
+  "acceptance_scenarios": [
+    {
+      "name": "Original provider run and canonical export",
+      "passed": true
+    },
+    {
+      "name": "Stale publication rejected before durable effects",
+      "passed": true
+    },
+    {
+      "name": "Changed issue authority and replacement checks rejected",
+      "passed": true
+    },
+    {
+      "name": "Authorization retry converges on one governed run",
+      "passed": true
+    },
+    {
+      "name": "Saved verification checks run without a provider allocation",
+      "passed": true
+    },
+    {
+      "name": "Pending refresh fences publication and adoption; requester cannot review",
+      "passed": true
+    },
+    {
+      "name": "Actual App independent review persists across reload",
+      "passed": true
+    },
+    {
+      "name": "Adoption and retry preserve immutable result lineage",
+      "passed": true
+    },
+    {
+      "name": "Publish exact refreshed commit with one branch and pull request",
+      "passed": true
+    },
+    {
+      "name": "Conflicting base fails safely and can be explicitly abandoned",
+      "passed": true
+    }
+  ],
+  "native_screenshots": 2,
+  "acceptance_mapping": [
+    {
+      "criterion": "Explicit actor authorization and idempotency",
+      "implementation": [
+        "crates/crony-store/src/factory_base_refresh.rs:290",
+        "crates/crony-store/src/factory_base_refresh.rs:342"
+      ],
+      "evidence": [
+        "acceptance/acceptance.json: scenarios[3]",
+        "acceptance/acceptance.json: scenarios[7]",
+        "focused/store-r11.log",
+        "focused/predispatch-r1.log"
+      ],
+      "result": "Authorization, adoption and abandonment replay with the saved actor, claim, version and exact arguments; changed authorities and replacement checks fail closed."
+    },
+    {
+      "criterion": "Pin the new base and preserve original verified lineage",
+      "implementation": [
+        "crates/crony-domain/src/factory_base_refresh.rs",
+        "db/migrations/0057_factory_base_refresh.sql"
+      ],
+      "evidence": [
+        "acceptance/acceptance.json: scenarios[7]",
+        "focused/store-r11.log"
+      ],
+      "result": "Immutable source and replacement identities and both bases are retained. Explicit adoption changes the selected mission without rewriting the original result."
+    },
+    {
+      "criterion": "Reconstruct in new isolated storage without rewriting the verified commit",
+      "implementation": [
+        "crates/crony-runner/src/base_refresh.rs:84",
+        "crates/crony-runner/src/base_refresh_tests.rs"
+      ],
+      "evidence": [
+        "canonical-report.json",
+        "acceptance/acceptance.json: scenarios[4]",
+        "acceptance/acceptance.json: scenarios[9]"
+      ],
+      "result": "Existing portable bundles, native Git merge-tree, private materialization and canonical export are reused. Conflicts retain the original source and permit explicit abandonment."
+    },
+    {
+      "criterion": "Rerun the complete persisted verifier policy",
+      "implementation": [
+        "crates/crony-domain/src/factory_base_refresh.rs:68",
+        "crates/crony-runner/src/deliverable_verification.rs"
+      ],
+      "evidence": [
+        "acceptance/acceptance.json: scenarios[2]",
+        "acceptance/acceptance.json: scenarios[4]",
+        "focused/predispatch-r1.log"
+      ],
+      "result": "All saved automated checks are copied and revalidated. Artifact, file and command checks execute on the refreshed run without a provider allocation."
+    },
+    {
+      "criterion": "Require a fresh independent review when base or tree changes",
+      "implementation": [
+        "crates/crony-store/src/factory_base_refresh/lifecycle.rs:311",
+        "crates/crony-store/src/factory_base_refresh.rs:198",
+        "apps/web/src/App.tsx"
+      ],
+      "evidence": [
+        "acceptance/acceptance.json: scenarios[5]",
+        "acceptance/acceptance.json: scenarios[6]",
+        "acceptance/refresh-awaiting-review.png",
+        "acceptance/refresh-reviewed-reload.png"
+      ],
+      "result": "Requester review and premature adoption are rejected. The actual App saves the distinct fixture reviewer's decision and retains it across reload; fixture actors are not human signoff."
+    },
+    {
+      "criterion": "Publish one branch and PR from the exact refreshed verified result",
+      "implementation": [
+        "crates/crony-store/src/publication.rs",
+        "crates/crony-cli/src/publish.rs"
+      ],
+      "evidence": [
+        "acceptance/acceptance.json: scenarios[5]",
+        "acceptance/acceptance.json: scenarios[8]"
+      ],
+      "result": "Pending refresh fences publication. Native publication and replay create one publication branch and one fake GitHub PR at commit 21c5153d82e75e11a30c5a73e9e616529f232912 on a local bare remote. The recorded branch count of two includes main."
+    },
+    {
+      "criterion": "Reject conflicts, changed authority or repository identity, and verifier weakening",
+      "implementation": [
+        "crates/crony-cli/src/factory/base_refresh.rs",
+        "crates/crony-store/src/factory_base_refresh.rs",
+        "crates/crony-store/src/factory_base_refresh/lifecycle.rs"
+      ],
+      "evidence": [
+        "acceptance/acceptance.json: scenarios[1]",
+        "acceptance/acceptance.json: scenarios[2]",
+        "acceptance/acceptance.json: scenarios[9]",
+        "focused/store-r11.log",
+        "focused/predispatch-r1.log"
+      ],
+      "result": "Observed issue/repository identity, exact base, claim, connection, saved contracts and dispatch scope are revalidated. Source conflicts fail without automatic resolution."
+    },
+    {
+      "criterion": "Record both bases, source, result and review in durable audit state",
+      "implementation": [
+        "db/migrations/0057_factory_base_refresh.sql",
+        "crates/crony-store/src/state_audit.rs",
+        "crates/crony-audit/src/history.rs"
+      ],
+      "evidence": [
+        "focused/store-r11.log",
+        "acceptance/acceptance.json: scenarios[7]",
+        "canonical-report.json"
+      ],
+      "result": "Authorization and terminal settlement retain scoped immutable lineage and the exact independent decision. The adopted archive regression includes both mission histories; applied SQL is unchanged."
+    }
+  ],
+  "qualifications": [
+    "Assembly R1 exited one because its helper misread the scanner path/hash-pair schema. R2 validates every pair and preserves the failure receipt. Canonical/single-link path checks were added and observed at publication time; they are not retroactive proof of path metadata during earlier test execution.",
+    "This is retrospective development validation and an AI implementation self-review, not an independent GitHub approval or a real human decision. No historical tests, reviews or chronology are invented.",
+    "Acceptance R10 uses real Chrome, the actual App, server, PostgreSQL, runner and native Git. Provider execution is the deterministic fake-process adapter; GitHub is a fake boundary backed by a local bare publication remote. This is not live-provider or hosted-publication acceptance.",
+    "The fixture reviewer is an automated distinct actor. Product explicit_human metadata in this fixture is not evidence of a human decision. Both original screenshots were visually inspected at reduced display resolution; this is not exhaustive visual or accessibility certification.",
+    "Acceptance R10 and canonical R2 bind all 7,162 physical files. Store R11, predispatch R1 and runtime-build R2 have matching but incomplete 276-file manifests; those alone do not prove complete-source equivalence. Runtime binary hashes are historical build identities and are not asserted unchanged after later canonical builds.",
+    "The publication commit is created after tests. Temporary-index reconstruction verifies every source blob, permitting only Git CRLF-to-LF normalization, and separately checks evidence-only additions against the original bytes, all full-plan arguments and Node discovery.",
+    "Canonical R1 failed with 3,108 Node tests: 3,030 passed, 13 failed and 65 skipped. Two failures required the locked Teams SDK dependencies; eleven required working Python rather than the Windows Store alias. Five later gates did not run. R3 setup then completed frozen pnpm installation and the locked Repo Steward npm installation, without changing source or lockfiles.",
+    "Prerequisite regressions observed native process exit zero and 32 passing tests. Their original wrapper wrongly expected TAP but received spec output, raising IndexError. The retained reconciliation parses the existing log retrospectively; it is not a new execution or a claim that the original wrapper succeeded.",
+    "Earlier failed acceptance and validation attempts are preserved. Acceptance R8/R9 and canonical R1 are included as history; successful later evidence does not rewrite them. Runner/CLI R4 predate later changes and are not used as final-source validation.",
+    "Optional legacy browser pure-test comparison R2 has the same 28 total, 18 passing and 10 failing tests on main and candidate. It is outside canonical Node discovery and is retained as a failure, not relabeled as a pass.",
+    "The actual validation runtime is Node 24.21.0, pnpm 11.19.0, Rust 1.98.1 and Python 3.12.14. The repository declares Node 24.19.0; this is not a pinned-Node execution claim. RUST_TEST_THREADS was explicitly unset for canonical R2, so Rust used native thread defaults.",
+    "Skipped Node and ignored Rust tests are not passes. Canonical, EVM, focused and full-stack counts overlap and must not be summed. Dedicated live and immutable historical replay lanes remain separate.",
+    "GitHub Actions is disabled in the latest retained inventory. Required hosted CI, CodeQL, code-quality and security gates remain mandatory and unavailable. Issue 84 is open; no merge, issue closure, self-approval, policy override or clean historical Cargo advisory audit is claimed.",
+    "The first evidence validator exited one after three generic-api-key alerts for synthetic browser decision_key UUIDs. The original failed packet and scan receipt were preserved locally. Published copies consistently alias those fixture idempotency identifiers; no scanner policy or ignore rule changed. Product source, original acceptance, test counts and original artifact hashes are unchanged. The revised packet requires a fresh complete evidence validation.",
+    "The second evidence validator exited one before documentation, privacy or secret checks because the alias-correction helper had written summary.json with Windows CRLF, which Git would normalize. The complete failed packet and receipt were preserved locally. This packaging correction writes explicit LF bytes and retains the failed validation and observed exit; it changes no product source, test result or original acceptance receipt. A fresh evidence validation is required."
+  ],
+  "artifacts": [
+    {
+      "file": "history/assembly-r1-session-exit.json",
+      "source_name": "issue84-publication-assembly-r1-session-exit.json",
+      "original_sha256": "3864fc3cfd193be800c3b237b7fc13d21c2e058694701f00e9e864206a0d7bb9",
+      "published_sha256": "3864fc3cfd193be800c3b237b7fc13d21c2e058694701f00e9e864206a0d7bb9",
+      "bytes": 701,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "security/publication-path-guard-r1.json",
+      "source_name": "issue84-publication-path-guard-r1.json",
+      "original_sha256": "6b17e4e512ccec8b42fc84fe05725eae01256fe122e03ce703149b54c7a004e1",
+      "published_sha256": "f93b6477b70fcdccbc8dd9e521eb53293a8484a4ff070f73f4fc162c81e57256",
+      "bytes": 1469,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "source-equivalence.json",
+      "source_name": "issue84-publication-source-r1.json",
+      "original_sha256": "c8c5ce65c9fd16a9aa35dd825e7551415df35ac2a6504d13ade09e4d6a3878af",
+      "published_sha256": "c8c5ce65c9fd16a9aa35dd825e7551415df35ac2a6504d13ade09e4d6a3878af",
+      "bytes": 1188274,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "implementation-self-review.json",
+      "source_name": "issue84-publication-self-review-r1.json",
+      "original_sha256": "88edaddbc981e0e24f2bdfa3cb7c5d52f8d400c61df2adb85747ed6b39de0c66",
+      "published_sha256": "88edaddbc981e0e24f2bdfa3cb7c5d52f8d400c61df2adb85747ed6b39de0c66",
+      "bytes": 13034,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "canonical-driver.json",
+      "source_name": "issue84-check-r2.json",
+      "original_sha256": "1ed93d54193b290a868ddf0105cf3b91c07539d85b2454546a9d674271ffb9b0",
+      "published_sha256": "3d7024033ca6159ad5020edc016263d3b443d749c7648f90b89279998d47825c",
+      "bytes": 11290,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "canonical-report.json",
+      "source_name": "issue84-check-r2-native.json",
+      "original_sha256": "a24350beb00e1bd5adab4205412be7db2c2f8e8ee2840370c9354a6b04e03fa0",
+      "published_sha256": "680d3d39b4829a54088f462c224c96d42f9ac4263dbef4b27cc2762e8a50a830",
+      "bytes": 13012,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "canonical-pnpm-check.log",
+      "source_name": "issue84-check-r2.log",
+      "original_sha256": "0f765ccd734fd83934af01039729c4911b0d8991c1bcdb8407ec24b3042bea0f",
+      "published_sha256": "7b40c3da344e2abf322ac5d57fc3006c9f1b2a0e21fb455dfd4b560e8d23cb42",
+      "bytes": 21551,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "canonical-session-exit.json",
+      "source_name": "issue84-check-r2-session-exit.json",
+      "original_sha256": "a3baf925095d162a0988c1ab85ac5867d4291dc47d7f271f15dc57582b96f188",
+      "published_sha256": "4c590d7157fd3291f0222a0b5decfe82e79d64df3e201f16960ceddc1086127e",
+      "bytes": 143,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "acceptance/acceptance.json",
+      "source_name": "acceptance.json",
+      "original_sha256": "e4f881f4b18df6281c2788543c7e2d0674f9e5051de90163518e93c2a754d26d",
+      "published_sha256": "6f0d7665d3736a047939d58a3c071bdffad6c51b46f50597da506f8b1644f1e2",
+      "bytes": 62117,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference; synthetic decision UUID consistently aliased after scanner triage"
+    },
+    {
+      "file": "acceptance/driver.json",
+      "source_name": "driver.json",
+      "original_sha256": "ea8e660d13111db43c5125797c8372021bedb60867ed3bfeb7d4267861933d36",
+      "published_sha256": "b6308601439c87ae9164398c947cd542947808cdc80a17ee9f77927a6aebf18a",
+      "bytes": 556,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "dependencies/setup-r3.json",
+      "source_name": "issue84-validation-environment-r3.json",
+      "original_sha256": "4a7d2ab8e919a2ae470a0345ef318105f56e18e7b9bf9b29a066bda06467dfb7",
+      "published_sha256": "ff4bbd5e178269aba0f786afb3dadb7824584c03e0c03c36a5ee0c7be3bf0f18",
+      "bytes": 2095,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "security/physical-source-scan-r1.json",
+      "source_name": "issue84-physical-secret-scan-r1.json",
+      "original_sha256": "b08abf7fcbb0eeee641c0ea52e976713dd593d1cefcd5b4404d415167006ab16",
+      "published_sha256": "1b5455d1e8a4aebf81a043e286540bd834b4501a9c8111f74edc0598f282966f",
+      "bytes": 7788,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "security/physical-source-scan-r1.log",
+      "source_name": "issue84-physical-secret-scan-r1.log",
+      "original_sha256": "a3ce8b7db7bc756315fbc79894f94825c5871da62f476c6b0c173cf8e3b19c92",
+      "published_sha256": "a3ce8b7db7bc756315fbc79894f94825c5871da62f476c6b0c173cf8e3b19c92",
+      "bytes": 79,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "security/native-detector-r1.json",
+      "source_name": "issue84-security-native-r1.json",
+      "original_sha256": "e52b2db5fcbcf0976befc1907d827e7ec5aff44c7db5cbd7e5d9ba6732dd6e87",
+      "published_sha256": "b281fb48fe2f37f883e110fc8b51f4e98d36f3d88422d40078f5b4986a2e6c91",
+      "bytes": 2672,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "security/native-detector-session-exit.json",
+      "source_name": "issue84-security-native-r1-session-exit.json",
+      "original_sha256": "c2f9d4a3e2dd69ce91de44f69773a0105b2e96f2b999a9de21f1d2b659d6dd7b",
+      "published_sha256": "1883436013ddf342933149c451da38114998b6fdf1c9bdc02fba033b0b088444",
+      "bytes": 156,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "history/precommit-review-r1.md",
+      "source_name": "issue84-review-precommit-r1.md",
+      "original_sha256": "e7db4dfd8ef9ce95fb5156ca314a12afcaf105d4b360edabfe3c7f3d81f1b1e7",
+      "published_sha256": "1a7519dae89364b836644b59fdf474b346527ae39749ae36a876e8c2f06ec34d",
+      "bytes": 8381,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "history/design-progress-r1.md",
+      "source_name": "issue84-design-progress-r1.md",
+      "original_sha256": "89b0f4a5f3d91683cc1e74639f83d0cb9d4ecc2bb3d903cd0bd9bf756b259230",
+      "published_sha256": "89b0f4a5f3d91683cc1e74639f83d0cb9d4ecc2bb3d903cd0bd9bf756b259230",
+      "bytes": 2750,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "history/source-binding-r1.json",
+      "source_name": "issue84-source-binding-r1.json",
+      "original_sha256": "d91f1c43e1e4dc6f8b0ad75180fca2e8666941d30c1c82c0233e86b33e691999",
+      "published_sha256": "1c0b71473baec6306a994e7c697de5908bc2a6dc80e61e27c32ee476e105318d",
+      "bytes": 1982,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "history/evidence-binding-r2.json",
+      "source_name": "issue84-evidence-binding-r2.json",
+      "original_sha256": "5eb2ec55f5714d5514b738c5a50c34ca1dafc067b604fb1e27a72cc4acd25e0e",
+      "published_sha256": "651cf7aa57a232610ff60a530bb3ec67b879522527bfc101b82c70aa46b4bc98",
+      "bytes": 7523,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "history/canonical-r1-driver.json",
+      "source_name": "issue84-check-r1.json",
+      "original_sha256": "65caaef199d036317c22fe0664253e58b4f4e5646616aa442479d7b2eaf66f47",
+      "published_sha256": "03290e0e413da329550ed261c4726ea767f09e23804eb9fb0773ea3f7019ef90",
+      "bytes": 9168,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "history/canonical-r1-report.json",
+      "source_name": "issue84-check-r1-native.json",
+      "original_sha256": "fc265d5dc9f620a8327c220fd8802e4d4897bcd2894cc8c668934718114dc875",
+      "published_sha256": "3b24b5d7e0e03381f1bc9068e633aff46cc7b56b4125e161addbf916ee16e5f1",
+      "bytes": 11506,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "history/canonical-r1.log",
+      "source_name": "issue84-check-r1.log",
+      "original_sha256": "d050fab0da9bb793db6ed2773602146c895d0ba8a0e061665de6961324a6df27",
+      "published_sha256": "64e1d2c8c92663715007b7f84f41aed2d8331ae1d29c6d10fcd0e2f7902e8171",
+      "bytes": 756039,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "history/canonical-r1-session-exit.json",
+      "source_name": "issue84-check-r1-session-exit.json",
+      "original_sha256": "748e32be678e9201d6d29a71db8c16ab8bd88cbc1f3a85b3dd84fa64c255a369",
+      "published_sha256": "df087f8b9e32671ea690c57d9923e79cbd04cc852ae3313d121ab187db9ed65d",
+      "bytes": 451,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "history/prerequisite-original-driver.json",
+      "source_name": "issue84-prerequisite-regressions-r1.json",
+      "original_sha256": "ef460726aa761ade7d26556b636cef3415f5e85e3213a11f69c86a141e3ccc7d",
+      "published_sha256": "130f59bc4f28a3df3fb673b2525823d6a877d53a099704e62d28074ab9da8071",
+      "bytes": 1218,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "focused/prerequisites-r1.log",
+      "source_name": "issue84-prerequisite-regressions-r1.log",
+      "original_sha256": "942b4798893f8da5c2e90cb6b074d2d388fb603fd1fc8060c96d511178b19d79",
+      "published_sha256": "942b4798893f8da5c2e90cb6b074d2d388fb603fd1fc8060c96d511178b19d79",
+      "bytes": 3441,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "focused/prerequisites-r1-reconciliation.json",
+      "source_name": "issue84-prerequisite-regressions-r1-reconciliation.json",
+      "original_sha256": "333200caef5aad9830ce172de3cba0be861441576bee2fee9e819d5ac0acd1f7",
+      "published_sha256": "c2090e83371a7c8225a6d56a97d4d0730116b061e404e02b4fdd97125b0a9986",
+      "bytes": 1669,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "history/setup-r2-failed.json",
+      "source_name": "issue84-validation-environment-r2.json",
+      "original_sha256": "2734259c73602d834748dd595de30abdf3b02a42a8b35cefb5bd04bc38f8841c",
+      "published_sha256": "eee53f3a015f34b0182b4906f6d6f7c128d8e30606610a7db2c8994f28fb56b3",
+      "bytes": 1433,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "history/legacy-browser-comparison-r2.json",
+      "source_name": "issue84-legacy-browser-comparison-r2.json",
+      "original_sha256": "e8bddf8c86bb2c78dd1aae1cf260d81a24f2d082ee1a177ba0f06bfe10bf24d4",
+      "published_sha256": "2b40a3905a2a0e5f88ac7c12f5fa5ee7ad4e286a7957d6b05386cb50bd5e71d1",
+      "bytes": 5239,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "history/runtime-build-r2.json",
+      "source_name": "issue84-runtime-build-r2.json",
+      "original_sha256": "618801363defef3f98b860e2d5bec378f9b7f5731ee094284921f9f82e9f40c2",
+      "published_sha256": "823e736e0b42689c739448a5088e5c08347e6432c8bef013e8a18faa198b7c5d",
+      "bytes": 44569,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "history/runtime-build-r2.log",
+      "source_name": "issue84-runtime-build-r2.log",
+      "original_sha256": "0cfabe7f40e3de36e6d2d683830da44d1aceeff5fb54c53de9c4228d5c45957f",
+      "published_sha256": "7f25fce9155a08052dbce0cc172f2463f2af7c2c5f1b3e456ae4ba169e030d9c",
+      "bytes": 410,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "focused/store-r11.json",
+      "source_name": "issue84-store-r11.json",
+      "original_sha256": "91a4fe21604737b51fe732822111fe45c4ecd5ea98bdc39c87a463e0f9a9a55e",
+      "published_sha256": "fd1ad49c79f4a09c6833b977f9ae41fb5935c4ca531376bd82ca5d98de5409e8",
+      "bytes": 44404,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "focused/store-r11.log",
+      "source_name": "issue84-store-r11.log",
+      "original_sha256": "e8e26071b5f85fa12136252d2e460be3532fcd48179e00764292a02c58de9ae5",
+      "published_sha256": "e04abee77d3e858a1fad2d91c85d4c259a31e76b8468435ac51edd19b92e0d8d",
+      "bytes": 3512,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "focused/predispatch-r1.json",
+      "source_name": "issue84-predispatch-r1.json",
+      "original_sha256": "36b0f37adb16797502c9ff2d6e62f35861ccacad8f505e6918d16f9a729c6b20",
+      "published_sha256": "a7888f6f1c2598482b9bf02150d9ab1080898126ac12ea1f78a534674d86fe04",
+      "bytes": 44386,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "focused/predispatch-r1.log",
+      "source_name": "issue84-predispatch-r1.log",
+      "original_sha256": "1fdfc03b48ea5edebcc3e77e9a8f856e79f0dde3f9aa207a878c008f70be4d94",
+      "published_sha256": "8eb389bd4016f61ab37056ee4c53df3ceb7bdb185e35121f046d3e98681ccffa",
+      "bytes": 965,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "dependencies/issue84-dependencies-r3.log",
+      "source_name": "issue84-dependencies-r3.log",
+      "original_sha256": "2ca3a7fe610ee2a216ba0186ae371dd5c3388c2cb096aa977c8ea8762d2c554f",
+      "published_sha256": "f6c75d2d25a2bb05ddf5392e23367b5232cb72a25bbf3294084cc9df99f30896",
+      "bytes": 85,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "dependencies/issue84-steward-dependencies-r1.log",
+      "source_name": "issue84-steward-dependencies-r1.log",
+      "original_sha256": "72bb19153990ca3f99f55373182212816b1321a6009655e0c3c51e94e5c67020",
+      "published_sha256": "8eadbbee213b945206c578d442dc63d627dbac0cb64941ddd6526991596aba1b",
+      "bytes": 26,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "security/snapshot-canary.log",
+      "source_name": "issue84-security-native-r1-snapshot-canary.log",
+      "original_sha256": "e4fac3554c4c40740cf5843d3f6e481e53f9ff28f3ca2984eea303a3f8cf4891",
+      "published_sha256": "549f1ef753ee60dab032b6666aaa735272603e4f976e79dd84b7710c5c9d9751",
+      "bytes": 303,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "security/native-diagnostics.log",
+      "source_name": "issue84-security-native-r1-native-diagnostics.log",
+      "original_sha256": "d2cc76c939d80fe8b42739eb1b74e960296234bcdc02bd3820882df42fd17457",
+      "published_sha256": "fd6fcbb20418d6d682a4bef1a189a07e83ed885af4a17ede62441808232e6f8a",
+      "bytes": 6834,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "acceptance/refresh-awaiting-review.png",
+      "source_name": "refresh-awaiting-review.png",
+      "original_sha256": "79a792e8b67c611f20a798debad60c83519121de9060428da85c1a0ee13dd6ce",
+      "published_sha256": "79a792e8b67c611f20a798debad60c83519121de9060428da85c1a0ee13dd6ce",
+      "bytes": 279545,
+      "transform": "None; original screenshot capture bytes"
+    },
+    {
+      "file": "acceptance/refresh-reviewed-reload.png",
+      "source_name": "refresh-reviewed-reload.png",
+      "original_sha256": "34a58d16dab6a7042620c32e0150acccd8a4365411ec7e2351a88f7164b49364",
+      "published_sha256": "34a58d16dab6a7042620c32e0150acccd8a4365411ec7e2351a88f7164b49364",
+      "bytes": 261160,
+      "transform": "None; original screenshot capture bytes"
+    },
+    {
+      "file": "acceptance/acceptance-20260930T200909245-7751a674686b40d4af732115ac714938.stderr.log",
+      "source_name": "acceptance-20260930T200909245-7751a674686b40d4af732115ac714938.stderr.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "bytes": 1,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "acceptance/acceptance-20260930T200909245-7751a674686b40d4af732115ac714938.stdout.log",
+      "source_name": "acceptance-20260930T200909245-7751a674686b40d4af732115ac714938.stdout.log",
+      "original_sha256": "5ed0129624ab801609e66ef18c5240f715e69cb2a2b11c9b7c5989039221cfe2",
+      "published_sha256": "9dd36cad7980b257699beb831de7961c6e9c143a4fe2f3086adbf9a22a988caf",
+      "bytes": 797,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "acceptance/owned-fixture.json",
+      "source_name": "owned-fixture.json",
+      "original_sha256": "6dc782eab34fd76e42db614ed1357ace006f38c561103fa2d40532b0432fccdf",
+      "published_sha256": "bdfd665b493f02dec729f9a41ea1bbdee4a895cadfe02299b3bf468f9926cfee",
+      "bytes": 3596,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "acceptance/server-native-identity.json",
+      "source_name": "server-native-identity.json",
+      "original_sha256": "f0afcc3429dfff985431956894e2865a36a54301edc30b6b4b89a627367dd185",
+      "published_sha256": "3b97f09c7d7c3f1d77acd01fa1fbb2b4fcb52b04cbf891325b7d8a8ad198429e",
+      "bytes": 700,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "acceptance/web-native-identity.json",
+      "source_name": "web-native-identity.json",
+      "original_sha256": "e18b956d2677f2773a298b464c3e4dfe7026096109e1d424a3a50f3d8a2083f1",
+      "published_sha256": "52c192507cce04413ed54e3f8e835eedabf20125a616e5d28f1e726dca1ffc0f",
+      "bytes": 682,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "history/acceptance-r8/acceptance.json",
+      "source_name": "acceptance.json",
+      "original_sha256": "1477d2ac88aa6a6f17fad628993e9e27d29c5f2a40e97eef5aa278630b8278ff",
+      "published_sha256": "f025060ff02270184183437657c69bece53f3cc4193535e0f6ed72f877f2b66e",
+      "bytes": 1346765,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference; synthetic decision UUID consistently aliased after scanner triage"
+    },
+    {
+      "file": "history/acceptance-r8/driver.json",
+      "source_name": "driver.json",
+      "original_sha256": "52989aa19621315a8143ceb7fe138a0fec06691eece4769b5466268a0991abfc",
+      "published_sha256": "30f9528b0f8a8d0fae4d6e9e3f918d4ebed2e6c0f66dbbc1b6bce33b8c37fa29",
+      "bytes": 555,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "history/acceptance-r9/acceptance.json",
+      "source_name": "acceptance.json",
+      "original_sha256": "2d4a58dcca69ac012268f39a5e9d0f11af1896b3d8b3a8895a3672e175f86bc2",
+      "published_sha256": "1b3e94ef0df27d3a16b5c896288a3fa73bde8a8b0cad9b34dddc643d61e3c337",
+      "bytes": 1346455,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference; synthetic decision UUID consistently aliased after scanner triage"
+    },
+    {
+      "file": "history/acceptance-r9/driver.json",
+      "source_name": "driver.json",
+      "original_sha256": "7b5d77593cb335450d4958ced0879346333647bffa0f9f3130648068779b8c5e",
+      "published_sha256": "2f1346badc7c54376174c7f2c6a180bc36407d46ba7a7350b616f4e4585fb8d2",
+      "bytes": 555,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "drivers/run-issue84-check-r2.ps1.txt",
+      "source_name": "run-issue84-check-r2.ps1",
+      "original_sha256": "7f6efd3f74c3dfbf5e1ea5411bda656f6d988649cc1c4899dc4ff3044a5e0b43",
+      "published_sha256": "f625483cb6acdce98ca209de34bdb079b7dfda80ab580f495623ce2f6d008a66",
+      "bytes": 5768,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "drivers/prepare-issue84-validation-r3.ps1.txt",
+      "source_name": "prepare-issue84-validation-r3.ps1",
+      "original_sha256": "0cb8227eafe1129bb4531f8030c091cf54ced55f44b58bb31d3df0549bbd9b52",
+      "published_sha256": "8e636e8bcb48c9d08cdf34a687cff540705de7081b985a0cb2cbaca4c3b0901a",
+      "bytes": 5263,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "drivers/verify-issue84-prerequisites-r1.py.txt",
+      "source_name": "verify-issue84-prerequisites-r1.py",
+      "original_sha256": "89db60248fdf62c54906457bdf5739075fa1b360bea772565f5d0408626ac2b3",
+      "published_sha256": "c63802727218cb7377f49416dd769b4d206c6ad4ac478036a7d7b930cd60f24b",
+      "bytes": 4029,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "drivers/reconcile-issue84-prerequisites-r1.py.txt",
+      "source_name": "reconcile-issue84-prerequisites-r1.py",
+      "original_sha256": "c8909526195e29bc931e0329eeb4a6cbed6d8435b6aa8399b090dd50c70fa63c",
+      "published_sha256": "336ff8f8d72f484598878899093f0b5b4b4a6202f105122e054a63b396776cbc",
+      "bytes": 3804,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "drivers/issue84_publication_lib_r1.py.txt",
+      "source_name": "issue84_publication_lib_r1.py",
+      "original_sha256": "2b3716f2b0323235dac67beb08e9df2f4658fa4515ffaf28d9bf5f8e16d89ec3",
+      "published_sha256": "e69b65e9056eb0b11e70e307ddd2b03caa9ad83b24bbdf6818c2e02a8a8ea528",
+      "bytes": 11220,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "drivers/assemble-issue84-publication-r1.py.txt",
+      "source_name": "assemble-issue84-publication-r1.py",
+      "original_sha256": "2a17d0fb3a3857f34f54ecc423c18a0325096dfc82ddc39a313deba3139a21b6",
+      "published_sha256": "b252005f02c3f73145d70b14bb55e4d7edc071c35e0912b42653cf81092a94c6",
+      "bytes": 28458,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "drivers/issue84_publication_lib_r2.py.txt",
+      "source_name": "issue84_publication_lib_r2.py",
+      "original_sha256": "5c590f35990b5f64d3cd9173e0f6f0f4b0b8e262857557db9de828e1d40111fe",
+      "published_sha256": "87ce91c7834d2f0a479ac44c445b2b1c2fd743d174b2ce7d50e424fcabe36f81",
+      "bytes": 11944,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "drivers/assemble-issue84-publication-r2.py.txt",
+      "source_name": "assemble-issue84-publication-r2.py",
+      "original_sha256": "b2ad21c624dcd0861e345b3ce2d645753cc859dfde24f9deb4fa58dbbd834146",
+      "published_sha256": "be7649516b075ebaf8d5932f7f5b79169df9a43779bb6b0bab273447b38b18d1",
+      "bytes": 29674,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "drivers/validate-issue84-publication-r2.py.txt",
+      "source_name": "validate-issue84-publication-r2.py",
+      "original_sha256": "0ae4a0339e8b063139411c075fb00fe2c1050f8e8d8f34db7fe35a19360cd58e",
+      "published_sha256": "0ae4a0339e8b063139411c075fb00fe2c1050f8e8d8f34db7fe35a19360cd58e",
+      "bytes": 9166,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "drivers/commit-issue84-publication-r2.py.txt",
+      "source_name": "commit-issue84-publication-r2.py",
+      "original_sha256": "6ae11a9bc1c737a08ee0ba9dbf70eed5a37e41a0257d5cd6a794dad286a4f181",
+      "published_sha256": "6ae11a9bc1c737a08ee0ba9dbf70eed5a37e41a0257d5cd6a794dad286a4f181",
+      "bytes": 5061,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "drivers/scan-issue84-publication-r2.py.txt",
+      "source_name": "scan-issue84-publication-r2.py",
+      "original_sha256": "0d43a2547e15573c5f748c010f033adc3424e18ac710d875e185a10efe4d8572",
+      "published_sha256": "0d43a2547e15573c5f748c010f033adc3424e18ac710d875e185a10efe4d8572",
+      "bytes": 5788,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "drivers/verify-issue84-publication-path-guard-r1.py.txt",
+      "source_name": "verify-issue84-publication-path-guard-r1.py",
+      "original_sha256": "c425beb656de6fa86c4f20d88868c925cd474552a30a48fc2024d4c776c4b628",
+      "published_sha256": "c425beb656de6fa86c4f20d88868c925cd474552a30a48fc2024d4c776c4b628",
+      "bytes": 3668,
+      "transform": "UTF-8/LF and trailing-whitespace normalization; personal paths and discovered credential strings redacted; synthetic operation identifiers consistently aliased; JSON reserialized; matching complete manifests deduplicated by reference"
+    },
+    {
+      "file": "reviewed-code.patch.json",
+      "original_sha256": "c949c5b1bb7e87efc605d9aed494be49b3858e802ce43d03f63eef5835f82d61",
+      "published_sha256": "a393cd5fde8226ec25337e715f01dbe78326738416568547f6b5f8158453f46e",
+      "bytes": 347310,
+      "transform": "Exact implementation diff encoded as JSON"
+    },
+    {
+      "file": "history/publication-validation-r1-failed.json",
+      "source_name": "issue84-publication-evidence-validation-r1.json",
+      "original_sha256": "0d585779d522a81e9388222922c101a29b387407f75cf89d28b750ce7cc71773",
+      "published_sha256": "ae54055acdc79766cc02059633f1ac45bd6ff799b365528db5c1a9b8e22facaf",
+      "bytes": 26793,
+      "transform": "UTF-8/LF and personal path redaction; no outcome or count changes"
+    },
+    {
+      "file": "history/publication-validation-r1-session-exit.json",
+      "source_name": "issue84-publication-validation-r2-session-exit.json",
+      "original_sha256": "91502d1df8270f87142234d0eb807a843855859c9d623fd08a685f11cd198cf6",
+      "published_sha256": "f846e4a879682b4a3be78b6ab14a8523cc77cf32c3d60faccc5ab9ca368c4d82",
+      "bytes": 226,
+      "transform": "UTF-8/LF and personal path redaction; no outcome or count changes"
+    },
+    {
+      "file": "drivers/validate-issue84-publication-r3.py.txt",
+      "source_name": "validate-issue84-publication-r3.py",
+      "original_sha256": "b52f44ecdc37bb3a695dbf1c9adb189b9a9363dda31625fccc6f38a2259ac445",
+      "published_sha256": "b52f44ecdc37bb3a695dbf1c9adb189b9a9363dda31625fccc6f38a2259ac445",
+      "bytes": 9166,
+      "transform": "UTF-8/LF and personal path redaction; no outcome or count changes"
+    },
+    {
+      "file": "drivers/commit-issue84-publication-r3.py.txt",
+      "source_name": "commit-issue84-publication-r3.py",
+      "original_sha256": "360bfc5dd59899e979d336208fc34d6a6152a82002a21795a02fe21f35f13407",
+      "published_sha256": "360bfc5dd59899e979d336208fc34d6a6152a82002a21795a02fe21f35f13407",
+      "bytes": 5061,
+      "transform": "UTF-8/LF and personal path redaction; no outcome or count changes"
+    },
+    {
+      "file": "drivers/scan-issue84-publication-r3.py.txt",
+      "source_name": "scan-issue84-publication-r3.py",
+      "original_sha256": "297a3fb50b0ac156aeb3b085d540909edf88f93c990de2e5bce07180685f455b",
+      "published_sha256": "297a3fb50b0ac156aeb3b085d540909edf88f93c990de2e5bce07180685f455b",
+      "bytes": 5788,
+      "transform": "UTF-8/LF and personal path redaction; no outcome or count changes"
+    },
+    {
+      "file": "drivers/repair-issue84-publication-aliases-r1.py.txt",
+      "source_name": "repair-issue84-publication-aliases-r1.py",
+      "original_sha256": "7644618a72dd21e962179264f08742f45afba6b6627d205ab2f306f21c4a47cd",
+      "published_sha256": "28e4ad145f3cc3cb2677a8ba872ecfc58614fc6b761b32a95d26b2a0f364329c",
+      "bytes": 10478,
+      "transform": "UTF-8/LF and personal path redaction; no outcome or count changes"
+    },
+    {
+      "file": "history/publication-validation-r2-failed.json",
+      "source_name": "issue84-publication-evidence-validation-r2.json",
+      "original_sha256": "67cb53a598d12a6a9706125f4d54a392037127a71662e2b4c3d49347a3a87cd5",
+      "published_sha256": "91fd038a60eeb3bd140ed9fb58897e9a3af0416126ce538faaacbb9cc90ff03c",
+      "bytes": 364,
+      "transform": "UTF-8/LF and personal path redaction; no outcome or count changes"
+    },
+    {
+      "file": "history/publication-validation-r2-session-exit.json",
+      "source_name": "issue84-publication-validation-r3-session-exit.json",
+      "original_sha256": "f5293c0db79735ad513279dfd4ee940611f7eed5b9834c9cec10936803ed9143",
+      "published_sha256": "f5293c0db79735ad513279dfd4ee940611f7eed5b9834c9cec10936803ed9143",
+      "bytes": 494,
+      "transform": "UTF-8/LF and personal path redaction; no outcome or count changes"
+    },
+    {
+      "file": "drivers/validate-issue84-publication-r4.py.txt",
+      "source_name": "validate-issue84-publication-r4.py",
+      "original_sha256": "53c4aa615a6c51087582eca3eaae50d0f795555c327b021a5b8f576dc3fd90e0",
+      "published_sha256": "53c4aa615a6c51087582eca3eaae50d0f795555c327b021a5b8f576dc3fd90e0",
+      "bytes": 9166,
+      "transform": "UTF-8/LF and personal path redaction; no outcome or count changes"
+    },
+    {
+      "file": "drivers/commit-issue84-publication-r4.py.txt",
+      "source_name": "commit-issue84-publication-r4.py",
+      "original_sha256": "90d9d0cd937fd4a3c3744fdd0a1b1a20ece850f858e07bf71f911cc296542a56",
+      "published_sha256": "90d9d0cd937fd4a3c3744fdd0a1b1a20ece850f858e07bf71f911cc296542a56",
+      "bytes": 5061,
+      "transform": "UTF-8/LF and personal path redaction; no outcome or count changes"
+    },
+    {
+      "file": "drivers/scan-issue84-publication-r4.py.txt",
+      "source_name": "scan-issue84-publication-r4.py",
+      "original_sha256": "da781b7d0befd284584faa53233b8c49a3bcc6e23461319a3e8aa3e42f6861fc",
+      "published_sha256": "da781b7d0befd284584faa53233b8c49a3bcc6e23461319a3e8aa3e42f6861fc",
+      "bytes": 5788,
+      "transform": "UTF-8/LF and personal path redaction; no outcome or count changes"
+    },
+    {
+      "file": "drivers/repair-issue84-publication-newlines-r1.py.txt",
+      "source_name": "repair-issue84-publication-newlines-r1.py",
+      "original_sha256": "17b17b735e54fa3625bef8ba3aab9b233e4642b6652d1fb3c8da697a633b6336",
+      "published_sha256": "b3f5d641eddd513c0525c4cb9cd285140ae5f42679f43753a73b5d09e9ad48a3",
+      "bytes": 8754,
+      "transform": "UTF-8/LF and personal path redaction; no outcome or count changes"
+    }
+  ],
+  "redactions": [
+    {
+      "file": "acceptance/acceptance.json",
+      "json_path": "$.scenarios[3].receipt.refresh.idempotency_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-001>"
+    },
+    {
+      "file": "acceptance/acceptance.json",
+      "json_path": "$.scenarios[3].receipt.operation_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-001>"
+    },
+    {
+      "file": "acceptance/acceptance.json",
+      "json_path": "$.scenarios[7].receipt.refresh.idempotency_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-001>"
+    },
+    {
+      "file": "acceptance/acceptance.json",
+      "json_path": "$.scenarios[7].receipt.refresh.settlement_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-002>"
+    },
+    {
+      "file": "acceptance/acceptance.json",
+      "json_path": "$.scenarios[7].receipt.operation_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-002>"
+    },
+    {
+      "file": "acceptance/acceptance.json",
+      "json_path": "$.scenarios[8].receipt.publication.idempotency_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-003>"
+    },
+    {
+      "file": "acceptance/acceptance.json",
+      "json_path": "$.scenarios[8].receipt.first_response.idempotency_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-003>"
+    },
+    {
+      "file": "acceptance/acceptance.json",
+      "json_path": "$.scenarios[8].receipt.first_response.publication.idempotency_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-003>"
+    },
+    {
+      "file": "acceptance/acceptance.json",
+      "json_path": "$.scenarios[8].receipt.replay_response.idempotency_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-003>"
+    },
+    {
+      "file": "acceptance/acceptance.json",
+      "json_path": "$.scenarios[8].receipt.replay_response.publication.idempotency_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-003>"
+    },
+    {
+      "file": "acceptance/acceptance.json",
+      "json_path": "$.scenarios[9].receipt.refresh.idempotency_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-004>"
+    },
+    {
+      "file": "acceptance/acceptance.json",
+      "json_path": "$.scenarios[9].receipt.refresh.settlement_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-005>"
+    },
+    {
+      "file": "acceptance/acceptance.json",
+      "json_path": "$.scenarios[9].receipt.operation_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-005>"
+    },
+    {
+      "file": "history/acceptance-r8/acceptance.json",
+      "json_path": "$.scenarios[3].receipt.refresh.idempotency_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-006>"
+    },
+    {
+      "file": "history/acceptance-r8/acceptance.json",
+      "json_path": "$.scenarios[3].receipt.operation_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-006>"
+    },
+    {
+      "file": "history/acceptance-r8/acceptance.json",
+      "json_path": "$.scenarios[7].receipt.refresh.idempotency_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-006>"
+    },
+    {
+      "file": "history/acceptance-r8/acceptance.json",
+      "json_path": "$.scenarios[7].receipt.refresh.settlement_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-007>"
+    },
+    {
+      "file": "history/acceptance-r8/acceptance.json",
+      "json_path": "$.scenarios[7].receipt.operation_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-007>"
+    },
+    {
+      "file": "history/acceptance-r9/acceptance.json",
+      "json_path": "$.scenarios[3].receipt.refresh.idempotency_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-008>"
+    },
+    {
+      "file": "history/acceptance-r9/acceptance.json",
+      "json_path": "$.scenarios[3].receipt.operation_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-008>"
+    },
+    {
+      "file": "history/acceptance-r9/acceptance.json",
+      "json_path": "$.scenarios[7].receipt.refresh.idempotency_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-008>"
+    },
+    {
+      "file": "history/acceptance-r9/acceptance.json",
+      "json_path": "$.scenarios[7].receipt.refresh.settlement_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-009>"
+    },
+    {
+      "file": "history/acceptance-r9/acceptance.json",
+      "json_path": "$.scenarios[7].receipt.operation_key",
+      "treatment": "Synthetic operation identifier replaced by a stable alias preserving equality",
+      "alias": "<operation-009>"
+    },
+    {
+      "file": "acceptance/acceptance.json",
+      "json_path": "$.scenarios[6].receipt.request.decision_key",
+      "alias": "<decision-001>",
+      "treatment": "Synthetic fixture decision identifier consistently aliased after native scanner triage"
+    },
+    {
+      "file": "history/acceptance-r8/acceptance.json",
+      "json_path": "$.scenarios[6].receipt.request.decision_key",
+      "alias": "<decision-002>",
+      "treatment": "Synthetic fixture decision identifier consistently aliased after native scanner triage"
+    },
+    {
+      "file": "history/acceptance-r9/acceptance.json",
+      "json_path": "$.scenarios[6].receipt.request.decision_key",
+      "alias": "<decision-003>",
+      "treatment": "Synthetic fixture decision identifier consistently aliased after native scanner triage"
+    }
+  ],
+  "manifest_transforms": [
+    {
+      "file": "canonical-driver.json",
+      "field": "source_files",
+      "treatment": "Complete manifest deduplicated by reference; original array digest retained"
+    },
+    {
+      "file": "canonical-report.json",
+      "field": "files",
+      "treatment": "Complete manifest deduplicated by reference; original array digest retained"
+    },
+    {
+      "file": "acceptance/acceptance.json",
+      "field": "source_files",
+      "treatment": "Complete manifest deduplicated by reference; original array digest retained"
+    },
+    {
+      "file": "history/canonical-r1-driver.json",
+      "field": "source_files",
+      "treatment": "Complete manifest deduplicated by reference; original array digest retained"
+    },
+    {
+      "file": "history/canonical-r1-report.json",
+      "field": "files",
+      "treatment": "Complete manifest deduplicated by reference; original array digest retained"
+    }
+  ],
+  "publication_alias_correction": {
+    "failed_validator_status": "failed",
+    "scan_exit_code": 42,
+    "finding_count": 3,
+    "classification": "Three generic-api-key findings are synthetic request decision_key UUIDs captured from an automated browser fixture.",
+    "semantic_source": "tools/e2e_factory_base_refresh.mjs:282-285 verifies the browser request decision_key is a UUID; it is an idempotency identifier, not a credential.",
+    "changes": [
+      {
+        "file": "acceptance/acceptance.json",
+        "before_sha256": "608318bf9d13a29a7e91ce8bc88c76e800048cb8a4f945e98cac0a601642c371",
+        "after_sha256": "6f0d7665d3736a047939d58a3c071bdffad6c51b46f50597da506f8b1644f1e2",
+        "replacements": 2
+      },
+      {
+        "file": "history/acceptance-r8/acceptance.json",
+        "before_sha256": "7c0590aa591bfe4d750cdf50c15748e6948ec61124bcda895e8dcd217970a1bd",
+        "after_sha256": "f025060ff02270184183437657c69bece53f3cc4193535e0f6ed72f877f2b66e",
+        "replacements": 2
+      },
+      {
+        "file": "history/acceptance-r9/acceptance.json",
+        "before_sha256": "d02ab98654a38e86d0aafba29265144409a6b9261be04aea539aae2b8809256c",
+        "after_sha256": "1b3e94ef0df27d3a16b5c896288a3fa73bde8a8b0cad9b34dddc643d61e3c337",
+        "replacements": 2
+      }
+    ],
+    "aliases": [
+      {
+        "file": "acceptance/acceptance.json",
+        "json_path": "$.scenarios[6].receipt.request.decision_key",
+        "alias": "<decision-001>"
+      },
+      {
+        "file": "history/acceptance-r8/acceptance.json",
+        "json_path": "$.scenarios[6].receipt.request.decision_key",
+        "alias": "<decision-002>"
+      },
+      {
+        "file": "history/acceptance-r9/acceptance.json",
+        "json_path": "$.scenarios[6].receipt.request.decision_key",
+        "alias": "<decision-003>"
+      }
+    ],
+    "policy_changed": false,
+    "original_receipts_preserved": true,
+    "product_source_unchanged": true
+  },
+  "publication_newline_correction": {
+    "failed_validator_status": "failed",
+    "failed_before_checks": true,
+    "affected_files": [
+      "summary.json"
+    ],
+    "before_sha256": "b2a71827c2f9c0cceda408e603093ec1a50f6b494c756db9238062a0e96e2dfe",
+    "lf_normalized_before_annotation_sha256": "34d603eecb353f71ca6c9c1f6c0321908748cdbcf8a54c8f20f28f0dece9d88b",
+    "json_semantics_unchanged_by_normalization": true,
+    "original_failed_packet_preserved": true,
+    "product_source_unchanged": true
+  }
+}

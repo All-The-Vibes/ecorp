@@ -144,6 +144,102 @@ struct PendingBudgetContent {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+struct BaseRefreshContent {
+    id: String,
+    factory_work_item_id: String,
+    source_mission_id: String,
+    source_task_id: String,
+    source_run_id: String,
+    source_deliverable_id: String,
+    mission_id: String,
+    task_id: String,
+    run_id: String,
+    authorized_by: String,
+    original_base_commit: String,
+    refreshed_base_commit: String,
+    source_head_commit: String,
+    state: String,
+    result_deliverable_id: Option<String>,
+    result_commit: Option<String>,
+    review_decision_id: Option<String>,
+    authority_digest: String,
+    settlement_digest: Option<String>,
+}
+
+impl BaseRefreshContent {
+    fn validate(&self, mission: &str) -> Result<()> {
+        let canonical_uuid = |value: &str| {
+            uuid::Uuid::parse_str(value).is_ok_and(|id| !id.is_nil() && id.to_string() == value)
+        };
+        let git_object = |value: &str| {
+            matches!(value.len(), 40 | 64)
+                && value
+                    .bytes()
+                    .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+        };
+        ensure!(
+            [
+                &self.id,
+                &self.factory_work_item_id,
+                &self.source_mission_id,
+                &self.source_task_id,
+                &self.source_run_id,
+                &self.source_deliverable_id,
+                &self.mission_id,
+                &self.task_id,
+                &self.run_id,
+                &self.authorized_by,
+            ]
+            .into_iter()
+            .all(|id| canonical_uuid(id))
+                && self.source_mission_id != self.mission_id
+                && self.source_task_id != self.task_id
+                && self.source_run_id != self.run_id
+                && (mission == self.source_mission_id || mission == self.mission_id),
+            "invalid base refresh scope"
+        );
+        ensure!(
+            [
+                &self.original_base_commit,
+                &self.refreshed_base_commit,
+                &self.source_head_commit,
+            ]
+            .into_iter()
+            .all(|oid| git_object(oid) && oid.len() == self.original_base_commit.len())
+                && self.original_base_commit != self.refreshed_base_commit
+                && valid_hash(&self.authority_digest)
+                && self.settlement_digest.as_deref().is_none_or(valid_hash),
+            "invalid base refresh source authority"
+        );
+        let no_result = self.result_deliverable_id.is_none()
+            && self.result_commit.is_none()
+            && self.review_decision_id.is_none();
+        ensure!(
+            match self.state.as_str() {
+                "pending" => no_result && self.settlement_digest.is_none(),
+                "abandoned" => no_result && self.settlement_digest.is_some(),
+                "adopted" => self.settlement_digest.is_some()
+                    && self
+                        .result_deliverable_id
+                        .as_deref()
+                        .is_some_and(|id| canonical_uuid(id) && id != self.source_deliverable_id)
+                    && self
+                        .review_decision_id
+                        .as_deref()
+                        .is_some_and(canonical_uuid)
+                    && self.result_commit.as_deref().is_some_and(
+                        |oid| git_object(oid) && oid.len() == self.original_base_commit.len()
+                    ),
+                _ => false,
+            },
+            "invalid base refresh settlement"
+        );
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct MissionGovernanceContent {
     schema_version: u32,
     ledger_id: String,
@@ -158,6 +254,8 @@ struct MissionGovernanceContent {
     budget_cost_microusd: i64,
     tasks: Vec<MissionTaskContent>,
     pending_budget_proposals: Vec<PendingBudgetContent>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    base_refreshes: Vec<BaseRefreshContent>,
 }
 
 fn validate_policy(value: Value, decision: &Decision) -> Result<()> {
@@ -188,7 +286,8 @@ fn validate_content(value: Value, ledger_id: &str, resource_key: &str) -> Result
             && content.budget_tokens >= 0
             && content.budget_cost_microusd >= 0
             && content.tasks.len() <= 64
-            && content.pending_budget_proposals.len() <= 64,
+            && content.pending_budget_proposals.len() <= 64
+            && content.base_refreshes.len() <= 64,
         "invalid mission governance content"
     );
     for task in &content.tasks {
@@ -221,6 +320,26 @@ fn validate_content(value: Value, ledger_id: &str, resource_key: &str) -> Result
                     .as_deref()
                     .is_none_or(valid_hash),
             "invalid pending budget content"
+        );
+    }
+    let mut refresh_ids = BTreeSet::new();
+    let mut attempts = BTreeMap::<&str, usize>::new();
+    for refresh in &content.base_refreshes {
+        refresh.validate(&content.mission_id)?;
+        let count = attempts.entry(&refresh.factory_work_item_id).or_default();
+        *count += 1;
+        ensure!(
+            refresh_ids.insert(&refresh.id) && *count <= 3,
+            "duplicate or unbounded base refresh lineage"
+        );
+        let task = if content.mission_id == refresh.mission_id {
+            &refresh.task_id
+        } else {
+            &refresh.source_task_id
+        };
+        ensure!(
+            content.tasks.iter().any(|entry| &entry.task_id == task),
+            "base refresh does not reference a governed task"
         );
     }
     Ok(())
@@ -287,6 +406,9 @@ impl HistoryVerifier {
                     | "budget_proposal"
                     | "budget_decision"
                     | "source_commit_upgrade"
+                    | "base_refresh_authorize"
+                    | "base_refresh_adopt"
+                    | "base_refresh_abandon"
             ),
             "unsupported covered operation"
         );

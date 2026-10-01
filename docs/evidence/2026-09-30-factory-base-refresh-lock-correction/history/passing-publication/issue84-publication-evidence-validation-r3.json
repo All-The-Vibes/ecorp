@@ -1,0 +1,698 @@
+{
+  "issue": 84,
+  "status": "passed",
+  "started_at_utc": "2026-09-30T22:05:09.030121+00:00",
+  "checks": [
+    {
+      "name": "docs",
+      "arguments": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "tools/check_docs.mjs"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-30T22:05:40.745129+00:00",
+      "finished_at_utc": "2026-09-30T22:05:40.864298+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-publication-validation-r3-docs.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "repository-docs",
+      "arguments": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "tools/check_documentation.mjs"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-30T22:05:40.867821+00:00",
+      "finished_at_utc": "2026-09-30T22:05:41.002344+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-publication-validation-r3-repository-docs.log",
+      "sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d"
+    },
+    {
+      "name": "personal-paths",
+      "arguments": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "tools/check_evidence_personal_paths.mjs",
+        "<USERPROFILE>\\.codex\\worktrees\\issue84-base-refresh\\ecorp\\docs\\evidence\\2026-09-30-factory-base-refresh"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-30T22:05:41.013351+00:00",
+      "finished_at_utc": "2026-09-30T22:06:00.274149+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-publication-validation-r3-personal-paths.log",
+      "sha256": "7eb5fcc984d90e0ebcb02fadf8bc0f4128ac8bd0d3333f4b954ab0890e9c57fc"
+    },
+    {
+      "name": "diff-check",
+      "arguments": [
+        "git",
+        "--no-optional-locks",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-30T22:06:01.511357+00:00",
+      "finished_at_utc": "2026-09-30T22:06:01.713697+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-publication-validation-r3-diff-check.log",
+      "sha256": "d725c56240465b862849b5aa573cfce237126c93b643d7941c2d4710491fc8fe"
+    }
+  ],
+  "scope": "After canonical process exit, verify original bytes, publication tree, full gate argv and Node discovery.",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parents": [
+    "878a1774774b0630c904cbaf4b05e1b346777817"
+  ],
+  "branch": "codex/issue84-base-refresh",
+  "tested_tree": "52867f5d35cb30be622fe9a550cec7e07322c8e6",
+  "publication_tree": "a5c854eaf73333092f32ead0e5e00c96b1133009",
+  "source_receipt_sha256": "c8c5ce65c9fd16a9aa35dd825e7551415df35ac2a6504d13ade09e4d6a3878af",
+  "physical_files_sha256": "efe92db431183bd759bc833eda77c2a57b9fd2fc58cc06c3565abe80894c93c8",
+  "files": [
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/acceptance/acceptance-20260930T200909245-7751a674686b40d4af732115ac714938.stderr.log",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "bytes": 1
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/acceptance/acceptance-20260930T200909245-7751a674686b40d4af732115ac714938.stdout.log",
+      "sha256": "9dd36cad7980b257699beb831de7961c6e9c143a4fe2f3086adbf9a22a988caf",
+      "bytes": 797
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/acceptance/acceptance.json",
+      "sha256": "6f0d7665d3736a047939d58a3c071bdffad6c51b46f50597da506f8b1644f1e2",
+      "bytes": 62117
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/acceptance/driver.json",
+      "sha256": "b6308601439c87ae9164398c947cd542947808cdc80a17ee9f77927a6aebf18a",
+      "bytes": 556
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/acceptance/owned-fixture.json",
+      "sha256": "bdfd665b493f02dec729f9a41ea1bbdee4a895cadfe02299b3bf468f9926cfee",
+      "bytes": 3596
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/acceptance/refresh-awaiting-review.png",
+      "sha256": "79a792e8b67c611f20a798debad60c83519121de9060428da85c1a0ee13dd6ce",
+      "bytes": 279545
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/acceptance/refresh-reviewed-reload.png",
+      "sha256": "34a58d16dab6a7042620c32e0150acccd8a4365411ec7e2351a88f7164b49364",
+      "bytes": 261160
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/acceptance/server-native-identity.json",
+      "sha256": "3b97f09c7d7c3f1d77acd01fa1fbb2b4fcb52b04cbf891325b7d8a8ad198429e",
+      "bytes": 700
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/acceptance/web-native-identity.json",
+      "sha256": "52c192507cce04413ed54e3f8e835eedabf20125a616e5d28f1e726dca1ffc0f",
+      "bytes": 682
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/canonical-driver.json",
+      "sha256": "3d7024033ca6159ad5020edc016263d3b443d749c7648f90b89279998d47825c",
+      "bytes": 11290
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/canonical-pnpm-check.log",
+      "sha256": "7b40c3da344e2abf322ac5d57fc3006c9f1b2a0e21fb455dfd4b560e8d23cb42",
+      "bytes": 21551
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/canonical-report.json",
+      "sha256": "680d3d39b4829a54088f462c224c96d42f9ac4263dbef4b27cc2762e8a50a830",
+      "bytes": 13012
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/canonical-session-exit.json",
+      "sha256": "4c590d7157fd3291f0222a0b5decfe82e79d64df3e201f16960ceddc1086127e",
+      "bytes": 143
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/dependencies/issue84-dependencies-r3.log",
+      "sha256": "f6c75d2d25a2bb05ddf5392e23367b5232cb72a25bbf3294084cc9df99f30896",
+      "bytes": 85
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/dependencies/issue84-steward-dependencies-r1.log",
+      "sha256": "8eadbbee213b945206c578d442dc63d627dbac0cb64941ddd6526991596aba1b",
+      "bytes": 26
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/dependencies/setup-r3.json",
+      "sha256": "ff4bbd5e178269aba0f786afb3dadb7824584c03e0c03c36a5ee0c7be3bf0f18",
+      "bytes": 2095
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/assemble-issue84-publication-r1.py.txt",
+      "sha256": "b252005f02c3f73145d70b14bb55e4d7edc071c35e0912b42653cf81092a94c6",
+      "bytes": 28458
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/assemble-issue84-publication-r2.py.txt",
+      "sha256": "be7649516b075ebaf8d5932f7f5b79169df9a43779bb6b0bab273447b38b18d1",
+      "bytes": 29674
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/commit-issue84-publication-r2.py.txt",
+      "sha256": "6ae11a9bc1c737a08ee0ba9dbf70eed5a37e41a0257d5cd6a794dad286a4f181",
+      "bytes": 5061
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/commit-issue84-publication-r3.py.txt",
+      "sha256": "360bfc5dd59899e979d336208fc34d6a6152a82002a21795a02fe21f35f13407",
+      "bytes": 5061
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/commit-issue84-publication-r4.py.txt",
+      "sha256": "90d9d0cd937fd4a3c3744fdd0a1b1a20ece850f858e07bf71f911cc296542a56",
+      "bytes": 5061
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/issue84_publication_lib_r1.py.txt",
+      "sha256": "e69b65e9056eb0b11e70e307ddd2b03caa9ad83b24bbdf6818c2e02a8a8ea528",
+      "bytes": 11220
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/issue84_publication_lib_r2.py.txt",
+      "sha256": "87ce91c7834d2f0a479ac44c445b2b1c2fd743d174b2ce7d50e424fcabe36f81",
+      "bytes": 11944
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/prepare-issue84-validation-r3.ps1.txt",
+      "sha256": "8e636e8bcb48c9d08cdf34a687cff540705de7081b985a0cb2cbaca4c3b0901a",
+      "bytes": 5263
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/reconcile-issue84-prerequisites-r1.py.txt",
+      "sha256": "336ff8f8d72f484598878899093f0b5b4b4a6202f105122e054a63b396776cbc",
+      "bytes": 3804
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/repair-issue84-publication-aliases-r1.py.txt",
+      "sha256": "28e4ad145f3cc3cb2677a8ba872ecfc58614fc6b761b32a95d26b2a0f364329c",
+      "bytes": 10478
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/repair-issue84-publication-newlines-r1.py.txt",
+      "sha256": "b3f5d641eddd513c0525c4cb9cd285140ae5f42679f43753a73b5d09e9ad48a3",
+      "bytes": 8754
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/run-issue84-check-r2.ps1.txt",
+      "sha256": "f625483cb6acdce98ca209de34bdb079b7dfda80ab580f495623ce2f6d008a66",
+      "bytes": 5768
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/scan-issue84-publication-r2.py.txt",
+      "sha256": "0d43a2547e15573c5f748c010f033adc3424e18ac710d875e185a10efe4d8572",
+      "bytes": 5788
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/scan-issue84-publication-r3.py.txt",
+      "sha256": "297a3fb50b0ac156aeb3b085d540909edf88f93c990de2e5bce07180685f455b",
+      "bytes": 5788
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/scan-issue84-publication-r4.py.txt",
+      "sha256": "da781b7d0befd284584faa53233b8c49a3bcc6e23461319a3e8aa3e42f6861fc",
+      "bytes": 5788
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/validate-issue84-publication-r2.py.txt",
+      "sha256": "0ae4a0339e8b063139411c075fb00fe2c1050f8e8d8f34db7fe35a19360cd58e",
+      "bytes": 9166
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/validate-issue84-publication-r3.py.txt",
+      "sha256": "b52f44ecdc37bb3a695dbf1c9adb189b9a9363dda31625fccc6f38a2259ac445",
+      "bytes": 9166
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/validate-issue84-publication-r4.py.txt",
+      "sha256": "53c4aa615a6c51087582eca3eaae50d0f795555c327b021a5b8f576dc3fd90e0",
+      "bytes": 9166
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/verify-issue84-prerequisites-r1.py.txt",
+      "sha256": "c63802727218cb7377f49416dd769b4d206c6ad4ac478036a7d7b930cd60f24b",
+      "bytes": 4029
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/drivers/verify-issue84-publication-path-guard-r1.py.txt",
+      "sha256": "c425beb656de6fa86c4f20d88868c925cd474552a30a48fc2024d4c776c4b628",
+      "bytes": 3668
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/focused/predispatch-r1.json",
+      "sha256": "a7888f6f1c2598482b9bf02150d9ab1080898126ac12ea1f78a534674d86fe04",
+      "bytes": 44386
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/focused/predispatch-r1.log",
+      "sha256": "8eb389bd4016f61ab37056ee4c53df3ceb7bdb185e35121f046d3e98681ccffa",
+      "bytes": 965
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/focused/prerequisites-r1-reconciliation.json",
+      "sha256": "c2090e83371a7c8225a6d56a97d4d0730116b061e404e02b4fdd97125b0a9986",
+      "bytes": 1669
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/focused/prerequisites-r1.log",
+      "sha256": "942b4798893f8da5c2e90cb6b074d2d388fb603fd1fc8060c96d511178b19d79",
+      "bytes": 3441
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/focused/store-r11.json",
+      "sha256": "fd1ad49c79f4a09c6833b977f9ae41fb5935c4ca531376bd82ca5d98de5409e8",
+      "bytes": 44404
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/focused/store-r11.log",
+      "sha256": "e04abee77d3e858a1fad2d91c85d4c259a31e76b8468435ac51edd19b92e0d8d",
+      "bytes": 3512
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/acceptance-r8/acceptance.json",
+      "sha256": "f025060ff02270184183437657c69bece53f3cc4193535e0f6ed72f877f2b66e",
+      "bytes": 1346765
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/acceptance-r8/driver.json",
+      "sha256": "30f9528b0f8a8d0fae4d6e9e3f918d4ebed2e6c0f66dbbc1b6bce33b8c37fa29",
+      "bytes": 555
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/acceptance-r9/acceptance.json",
+      "sha256": "1b3e94ef0df27d3a16b5c896288a3fa73bde8a8b0cad9b34dddc643d61e3c337",
+      "bytes": 1346455
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/acceptance-r9/driver.json",
+      "sha256": "2f1346badc7c54376174c7f2c6a180bc36407d46ba7a7350b616f4e4585fb8d2",
+      "bytes": 555
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/assembly-r1-session-exit.json",
+      "sha256": "3864fc3cfd193be800c3b237b7fc13d21c2e058694701f00e9e864206a0d7bb9",
+      "bytes": 701
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/canonical-r1-driver.json",
+      "sha256": "03290e0e413da329550ed261c4726ea767f09e23804eb9fb0773ea3f7019ef90",
+      "bytes": 9168
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/canonical-r1-report.json",
+      "sha256": "3b24b5d7e0e03381f1bc9068e633aff46cc7b56b4125e161addbf916ee16e5f1",
+      "bytes": 11506
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/canonical-r1-session-exit.json",
+      "sha256": "df087f8b9e32671ea690c57d9923e79cbd04cc852ae3313d121ab187db9ed65d",
+      "bytes": 451
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/canonical-r1.log",
+      "sha256": "64e1d2c8c92663715007b7f84f41aed2d8331ae1d29c6d10fcd0e2f7902e8171",
+      "bytes": 756039
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/design-progress-r1.md",
+      "sha256": "89b0f4a5f3d91683cc1e74639f83d0cb9d4ecc2bb3d903cd0bd9bf756b259230",
+      "bytes": 2750
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/evidence-binding-r2.json",
+      "sha256": "651cf7aa57a232610ff60a530bb3ec67b879522527bfc101b82c70aa46b4bc98",
+      "bytes": 7523
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/legacy-browser-comparison-r2.json",
+      "sha256": "2b40a3905a2a0e5f88ac7c12f5fa5ee7ad4e286a7957d6b05386cb50bd5e71d1",
+      "bytes": 5239
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/precommit-review-r1.md",
+      "sha256": "1a7519dae89364b836644b59fdf474b346527ae39749ae36a876e8c2f06ec34d",
+      "bytes": 8381
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/prerequisite-original-driver.json",
+      "sha256": "130f59bc4f28a3df3fb673b2525823d6a877d53a099704e62d28074ab9da8071",
+      "bytes": 1218
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/publication-validation-r1-failed.json",
+      "sha256": "ae54055acdc79766cc02059633f1ac45bd6ff799b365528db5c1a9b8e22facaf",
+      "bytes": 26793
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/publication-validation-r1-session-exit.json",
+      "sha256": "f846e4a879682b4a3be78b6ab14a8523cc77cf32c3d60faccc5ab9ca368c4d82",
+      "bytes": 226
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/publication-validation-r2-failed.json",
+      "sha256": "91fd038a60eeb3bd140ed9fb58897e9a3af0416126ce538faaacbb9cc90ff03c",
+      "bytes": 364
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/publication-validation-r2-session-exit.json",
+      "sha256": "f5293c0db79735ad513279dfd4ee940611f7eed5b9834c9cec10936803ed9143",
+      "bytes": 494
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/runtime-build-r2.json",
+      "sha256": "823e736e0b42689c739448a5088e5c08347e6432c8bef013e8a18faa198b7c5d",
+      "bytes": 44569
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/runtime-build-r2.log",
+      "sha256": "7f25fce9155a08052dbce0cc172f2463f2af7c2c5f1b3e456ae4ba169e030d9c",
+      "bytes": 410
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/setup-r2-failed.json",
+      "sha256": "eee53f3a015f34b0182b4906f6d6f7c128d8e30606610a7db2c8994f28fb56b3",
+      "bytes": 1433
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/history/source-binding-r1.json",
+      "sha256": "1c0b71473baec6306a994e7c697de5908bc2a6dc80e61e27c32ee476e105318d",
+      "bytes": 1982
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/implementation-self-review.json",
+      "sha256": "88edaddbc981e0e24f2bdfa3cb7c5d52f8d400c61df2adb85747ed6b39de0c66",
+      "bytes": 13034
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/README.md",
+      "sha256": "fdbb6f8064ffe91d3d3760c5bb823c186ed4ea2d304faf2def64b55007ca32a4",
+      "bytes": 8073
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/reviewed-code.patch.json",
+      "sha256": "a393cd5fde8226ec25337e715f01dbe78326738416568547f6b5f8158453f46e",
+      "bytes": 347310
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/security/native-detector-r1.json",
+      "sha256": "b281fb48fe2f37f883e110fc8b51f4e98d36f3d88422d40078f5b4986a2e6c91",
+      "bytes": 2672
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/security/native-detector-session-exit.json",
+      "sha256": "1883436013ddf342933149c451da38114998b6fdf1c9bdc02fba033b0b088444",
+      "bytes": 156
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/security/native-diagnostics.log",
+      "sha256": "fd6fcbb20418d6d682a4bef1a189a07e83ed885af4a17ede62441808232e6f8a",
+      "bytes": 6834
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/security/physical-source-scan-r1.json",
+      "sha256": "1b5455d1e8a4aebf81a043e286540bd834b4501a9c8111f74edc0598f282966f",
+      "bytes": 7788
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/security/physical-source-scan-r1.log",
+      "sha256": "a3ce8b7db7bc756315fbc79894f94825c5871da62f476c6b0c173cf8e3b19c92",
+      "bytes": 79
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/security/publication-path-guard-r1.json",
+      "sha256": "f93b6477b70fcdccbc8dd9e521eb53293a8484a4ff070f73f4fc162c81e57256",
+      "bytes": 1469
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/security/snapshot-canary.log",
+      "sha256": "549f1ef753ee60dab032b6666aaa735272603e4f976e79dd84b7710c5c9d9751",
+      "bytes": 303
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/source-equivalence.json",
+      "sha256": "c8c5ce65c9fd16a9aa35dd825e7551415df35ac2a6504d13ade09e4d6a3878af",
+      "bytes": 1188274
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh/summary.json",
+      "sha256": "dfc2a3869727ebc0e8b826497e9228ed73fb8bd69f07a1e6313c904f20b0e1d9",
+      "bytes": 72142
+    }
+  ],
+  "original_physical_files_unchanged": true,
+  "canonical_and_acceptance_same_complete_physical_source": true,
+  "evidence_added_after_code_execution": true,
+  "full_plan_unchanged": true,
+  "git_preserves_packet_bytes": true,
+  "final_plan": [
+    {
+      "name": "migrations",
+      "argv": [
+        "node",
+        "tools/check_migrations.mjs"
+      ]
+    },
+    {
+      "name": "state-audit-compatibility",
+      "argv": [
+        "node",
+        "tools/check_state_audit_compatibility.mjs"
+      ]
+    },
+    {
+      "name": "state-audit-evm",
+      "argv": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "crony-audit",
+        "--test",
+        "ethereum_local_chain"
+      ]
+    },
+    {
+      "name": "docs",
+      "argv": [
+        "node",
+        "tools/check_docs.mjs"
+      ]
+    },
+    {
+      "name": "repository-docs",
+      "argv": [
+        "node",
+        "tools/check_documentation.mjs"
+      ]
+    },
+    {
+      "name": "node-tests",
+      "argv": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-timeout=180000",
+        "--test-reporter=tap",
+        ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+        ".github/skills/code-review/tests/executor-state.test.mjs",
+        ".github/skills/code-review/tests/package.test.mjs",
+        "apps/web/src/AgentPinControl.test.mjs",
+        "apps/web/src/DelegatedPanel.test.mjs",
+        "apps/web/src/VerificationPolicyEditor.test.mjs",
+        "apps/web/src/agentPinOperation.test.mjs",
+        "apps/web/src/evidenceNavigation.test.mjs",
+        "apps/web/src/evidenceSelection.test.mjs",
+        "apps/web/src/factoryAuthority.test.mjs",
+        "apps/web/src/factoryAuthorityConnection.test.mjs",
+        "apps/web/src/factoryCheckpointRecovery.test.mjs",
+        "apps/web/src/factoryControllerSelection.test.mjs",
+        "apps/web/src/factoryPolling.test.mjs",
+        "apps/web/src/formText.test.mjs",
+        "apps/web/src/missionCollaboration.test.mjs",
+        "apps/web/src/missionComposer.test.mjs",
+        "apps/web/src/missionOriginContext.test.mjs",
+        "apps/web/src/missionPreview.test.mjs",
+        "apps/web/src/missionProjection.test.mjs",
+        "apps/web/src/missionResultContext.test.mjs",
+        "apps/web/src/missionReviewSummary.test.mjs",
+        "apps/web/src/missionRuntime.test.mjs",
+        "apps/web/src/office/characterAssets.test.mjs",
+        "apps/web/src/office/officeModel.test.mjs",
+        "apps/web/src/runActivity.test.mjs",
+        "apps/web/src/snapshotRefresh.test.mjs",
+        "apps/web/src/verificationDecisionOperation.test.mjs",
+        "apps/web/src/verificationPolicy.test.mjs",
+        "apps/web/src/workResultCard.test.mjs",
+        "apps/web/src/workflowContext.test.mjs",
+        "apps/web/src/workspaceConnections.test.mjs",
+        "scenarios/repo-steward/actions.test.mjs",
+        "scenarios/repo-steward/feedback-cli.test.mjs",
+        "scenarios/repo-steward/feedback.test.mjs",
+        "scenarios/repo-steward/maintenance.test.mjs",
+        "scenarios/repo-steward/recurring-audit.test.mjs",
+        "scenarios/repo-steward/steward.test.mjs",
+        "scenarios/repo-steward/teams-host.test.mjs",
+        "tests/readiness/cli.test.js",
+        "tools/budget_fixture.test.mjs",
+        "tools/check_deliverable_diff.test.mjs",
+        "tools/check_documentation.test.mjs",
+        "tools/check_evidence_launch.test.mjs",
+        "tools/check_evidence_native_build.test.mjs",
+        "tools/check_evidence_personal_paths.test.mjs",
+        "tools/check_migrations.test.mjs",
+        "tools/check_replay_source.test.mjs",
+        "tools/checkpoint_application_fixture.test.mjs",
+        "tools/ci_external_adapters_windows.test.mjs",
+        "tools/ci_factory_repository.test.mjs",
+        "tools/ci_maintenance.test.mjs",
+        "tools/ci_owned_test_server.test.mjs",
+        "tools/ci_runner_tests.test.mjs",
+        "tools/consume_operation_receipt.test.mjs",
+        "tools/controlled_runner_fixture.test.mjs",
+        "tools/copilot_fs_wire_observer.test.mjs",
+        "tools/copilot_fs_wire_process.test.mjs",
+        "tools/copilot_probe_boundaries.test.mjs",
+        "tools/copilot_probe_environment.test.mjs",
+        "tools/copilot_probe_native_read.test.mjs",
+        "tools/copilot_probe_process.test.mjs",
+        "tools/coverage_web_models.test.mjs",
+        "tools/delegated_lifecycle.test.mjs",
+        "tools/delegated_qa_root.test.mjs",
+        "tools/e2e_agent_pinning.test.mjs",
+        "tools/e2e_checkpoint_verification.test.mjs",
+        "tools/e2e_evidence_selection.test.mjs",
+        "tools/e2e_external_adapters.test.mjs",
+        "tools/e2e_external_adapters_http.test.mjs",
+        "tools/e2e_factory_budget_recovery.test.mjs",
+        "tools/e2e_late_termination.test.mjs",
+        "tools/e2e_predispatch_failure.test.mjs",
+        "tools/e2e_stopped_source_checkpoint.test.mjs",
+        "tools/e2e_verifier_browser_retention.test.mjs",
+        "tools/e2e_verifier_browser_scope.test.mjs",
+        "tools/factory_budget_fixture_config.test.mjs",
+        "tools/factory_budget_git.test.mjs",
+        "tools/factory_budget_process.test.mjs",
+        "tools/factory_budget_provenance.test.mjs",
+        "tools/factory_budget_start.test.mjs",
+        "tools/fake_codex_budget_stream.test.mjs",
+        "tools/fake_github_quota.test.mjs",
+        "tools/fixture_source_identity.test.mjs",
+        "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+        "tools/identity_fixture.test.mjs",
+        "tools/import_operation_behavior.test.mjs",
+        "tools/issue161/qa-api-provenance.test.mjs",
+        "tools/issue161/qa-plan.test.mjs",
+        "tools/local_source_commit.test.mjs",
+        "tools/local_stack_lifecycle.test.mjs",
+        "tools/local_stack_operation.test.mjs",
+        "tools/native_qualification_attempt.test.mjs",
+        "tools/native_qualification_finality.test.mjs",
+        "tools/native_qualification_trust.test.mjs",
+        "tools/office_model.test.mjs",
+        "tools/operation_feedback.test.mjs",
+        "tools/operation_receipt.test.mjs",
+        "tools/owned_test_stack.test.mjs",
+        "tools/probe_mcp.test.mjs",
+        "tools/qa_multiplayer_object_sources.test.mjs",
+        "tools/readiness_contract.test.mjs",
+        "tools/readiness_replay_contract.test.mjs",
+        "tools/redact_evidence_capabilities.test.mjs",
+        "tools/research_handoff_adversarial.test.mjs",
+        "tools/research_handoff_browser.test.mjs",
+        "tools/research_handoff_native.test.mjs",
+        "tools/runner_ack_fault_relay.test.mjs",
+        "tools/secret_scan.test.mjs",
+        "tools/secret_scan_native.test.mjs",
+        "tools/security_fixtures.test.mjs",
+        "tools/startup_validation_harness.test.mjs",
+        "tools/task_graph_fixture.test.mjs",
+        "tools/verifier_browser.test.mjs",
+        "tools/verify_toolchain.test.mjs"
+      ]
+    },
+    {
+      "name": "format",
+      "argv": [
+        "cargo",
+        "fmt",
+        "--check"
+      ]
+    },
+    {
+      "name": "clippy",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    },
+    {
+      "name": "rust-tests",
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ]
+    },
+    {
+      "name": "web-build",
+      "argv": [
+        "pnpm",
+        "build:web"
+      ]
+    },
+    {
+      "name": "web-lint",
+      "argv": [
+        "pnpm",
+        "lint:web"
+      ]
+    }
+  ],
+  "issue_completed": false,
+  "original_index_sha256": "351982ffb86ace536dddcd22347c4d0f1b075f58d0abeaed6c77e990a14645f0",
+  "explicit_ignored_publication_paths": [
+    "docs/evidence/2026-09-30-factory-base-refresh/acceptance/acceptance-20260930T200909245-7751a674686b40d4af732115ac714938.stderr.log",
+    "docs/evidence/2026-09-30-factory-base-refresh/acceptance/acceptance-20260930T200909245-7751a674686b40d4af732115ac714938.stdout.log",
+    "docs/evidence/2026-09-30-factory-base-refresh/canonical-pnpm-check.log",
+    "docs/evidence/2026-09-30-factory-base-refresh/dependencies/issue84-dependencies-r3.log",
+    "docs/evidence/2026-09-30-factory-base-refresh/dependencies/issue84-steward-dependencies-r1.log",
+    "docs/evidence/2026-09-30-factory-base-refresh/focused/predispatch-r1.log",
+    "docs/evidence/2026-09-30-factory-base-refresh/focused/prerequisites-r1.log",
+    "docs/evidence/2026-09-30-factory-base-refresh/focused/store-r11.log",
+    "docs/evidence/2026-09-30-factory-base-refresh/history/canonical-r1.log",
+    "docs/evidence/2026-09-30-factory-base-refresh/history/runtime-build-r2.log",
+    "docs/evidence/2026-09-30-factory-base-refresh/security/native-diagnostics.log",
+    "docs/evidence/2026-09-30-factory-base-refresh/security/physical-source-scan-r1.log",
+    "docs/evidence/2026-09-30-factory-base-refresh/security/snapshot-canary.log"
+  ],
+  "secret_scan": {
+    "version": "8.30.1",
+    "native_sha256": "17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c",
+    "exit_code": 0,
+    "finding_count": 0,
+    "policy_sha256": {
+      ".gitleaksignore": "a8d6e15fa76e0c88f4266bca6d12f909f494a0ff646ef8699e88b8d9daec0ada",
+      ".gitleaks.toml": null
+    },
+    "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-publication-validation-r3-gitleaks.log",
+    "log_sha256": "4b5d111ff5f2493fd29303eec766ccedec7316903d289fc146797121d85cb94a"
+  },
+  "original_index_unchanged": true,
+  "unresolved_conflicts": false,
+  "finished_at_utc": "2026-09-30T22:06:12.090746+00:00"
+}

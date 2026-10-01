@@ -88,12 +88,12 @@ pub(super) async fn source_authority_with_contract_tx(
                run.source_repository, run.source_base_ref, run.source_base_commit,
                task.contract, task.verification_policy,
                recovery.checkpoint_authority, recovery.source_run_id AS parent_id,
-               run.resumed_from_run_id
+               run.resumed_from_run_id, item.mission_id AS selected_mission_id
         FROM runs run
         JOIN tasks task ON task.id = run.task_id AND task.corp_id = run.corp_id
         JOIN missions mission ON mission.id=task.mission_id AND mission.corp_id=run.corp_id
         JOIN factory_work_items item
-          ON item.mission_id = task.mission_id AND item.corp_id = run.corp_id
+          ON item.corp_id = run.corp_id
          AND item.id = $3
         LEFT JOIN factory_verification_recoveries recovery
           ON recovery.replacement_run_id = run.id AND recovery.corp_id = run.corp_id
@@ -109,6 +109,20 @@ pub(super) async fn source_authority_with_contract_tx(
     .fetch_optional(&mut **tx)
     .await?
     .context("checkpoint verification source is not in this factory item")?;
+    if source.get::<Option<Uuid>, _>("selected_mission_id")
+        != Some(source.get::<Uuid, _>("mission_id"))
+        && !factory_base_refresh::adopted_source_contains_run_tx(
+            tx,
+            corp_id,
+            work_item_id,
+            source_run_id,
+        )
+        .await?
+    {
+        return Err(anyhow!(
+            "checkpoint source is outside the selected adopted lineage"
+        ));
+    }
     let source_mode: String = source.get("execution_mode");
     if !matches!(
         source.get::<String, _>("status").as_str(),
@@ -487,7 +501,8 @@ pub(super) async fn zero_provider_allocation_tx(
         r#"
           SELECT source.id AS source_run_id, origin.id AS origin_run_id,
                  recovery.request->>'expected_head_commit' AS requested_head,
-                 recovery.checkpoint_authority->'checkpoint'->>'head_commit' AS origin_head
+                 recovery.checkpoint_authority->'checkpoint'->>'head_commit' AS origin_head,
+                 item.id AS item_id,item.mission_id AS selected_mission_id,task.mission_id,run.status
           FROM runs run
           JOIN tasks task ON task.id=run.task_id AND task.corp_id=run.corp_id
           JOIN factory_verification_recoveries recovery
@@ -495,7 +510,6 @@ pub(super) async fn zero_provider_allocation_tx(
            AND recovery.task_id=run.task_id AND recovery.mission_id=task.mission_id
           JOIN factory_work_items item
             ON item.id=recovery.factory_work_item_id AND item.corp_id=run.corp_id
-           AND item.mission_id=task.mission_id
           JOIN runs source
             ON source.id=recovery.source_run_id AND source.corp_id=run.corp_id
            AND source.id=run.resumed_from_run_id AND source.task_id=run.task_id
@@ -545,6 +559,18 @@ pub(super) async fn zero_provider_allocation_tx(
     let Some(row) = row else {
         return Ok(false);
     };
+    if row.get::<Option<Uuid>, _>("selected_mission_id") != Some(row.get::<Uuid, _>("mission_id"))
+        && (row.get::<String, _>("status") != "completed"
+            || !factory_base_refresh::adopted_source_contains_run_tx(
+                tx,
+                corp_id,
+                row.get("item_id"),
+                run_id,
+            )
+            .await?)
+    {
+        return Ok(false);
+    }
     let source_run_id: Uuid = row.get("source_run_id");
     // Reuse the exact retained-export/lineage validation without introducing
     // ancestor row locks into event accounting. A verifier retry's HEAD can

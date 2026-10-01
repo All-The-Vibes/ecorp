@@ -1,0 +1,325 @@
+"""Assemble new correction evidence; never rewrite the original publication packet."""
+from issue84_lock_publication_r1 import *
+
+RECEIPT = EV / f"{PREFIX}-packet-r1.json"
+SOURCE = EV / f"{PREFIX}-source-r1.json"
+assert not RECEIPT.exists() and not SOURCE.exists() and not PACKET.exists()
+x = completed_inputs()
+physical = x["physical"]
+real_index = index_digest()
+with temporary_index("tested-source", PARENT) as temporary:
+    stage_names(dict(physical), temporary)
+    tested_tree = git("write-tree", env=temporary).decode().strip()
+    code_paths = git("diff", "--name-only", PARENT, tested_tree).decode().splitlines()
+    assert code_paths == CODE
+    patch = git("diff", "--binary", "--no-ext-diff", "--no-textconv", "--unified=0", PARENT, tested_tree)
+assert index_digest() == real_index
+source = {
+    "issue": 84, "pr": 390, "recorded_at_utc": now(), "base": MAIN, "parents": [PARENT],
+    "tested_tree": tested_tree, "physical_files_sha256": PHYSICAL,
+    "physical_files": physical, "source_file_count": len(physical), "code_paths": code_paths,
+    "code_patch_sha256": sha(patch), "original_index_sha256": real_index,
+    "snapshot_receipts": [{"file": p.name, "original_sha256": sha(p.read_bytes()),
+                           "started_at": s["started_at"], "recorded_at": s["recorded_at"]}
+                          for p, s in x["snapshots"]],
+    "lane_receipts": [{"lane": name, "file": p.name, "original_sha256": sha(p.read_bytes())}
+                      for name, p in x["lane_paths"].items()],
+    "canonical_report_sha256": sha(x["gate_path"].read_bytes()),
+    "acceptance_report_sha256": sha(x["acceptance_path"].read_bytes()),
+    "canonical_native_same_complete_physical_source": True,
+    "evidence_added_after_code_execution": True, "native_guard": guard_identity(),
+}
+write(SOURCE, source)
+review = {
+    "issue": 84, "pr": 390, "reviewed_at_utc": now(), "base": MAIN, "parent": PARENT,
+    "tested_tree": tested_tree, "code_paths": code_paths,
+    "review_kind": "Implementation self-review; no independent or human review claimed",
+    "findings": [
+        {"review_comment": 4149881329,
+         "cause": "base_refresh operations acquired the native Corp advisory lock before the audit ledger row, inverting ordinary audited transactions.",
+         "resolution": "audited_inner now calls existing lock_ledger before existing aggregate_breaker::lock_corp_tx.",
+         "location": "crates/crony-store/src/state_audit.rs:1347",
+         "evidence": "Three native PostgreSQL tests observe a ledger waiter and then request the Corp lock. All three deadlock on the old order and pass on the corrected order. Adoption and abandonment enable coverage only for the replacement mission."},
+        {"review_comment": 4149881373,
+         "cause": "The original packet retained failed publication attempts but omitted the eventual passing publication receipt and logs.",
+         "resolution": "This separate packet includes the unchanged original successful receipt, observed process exits and logs with explicit historical tree scope.",
+         "evidence": "Historical receipt tested tree 52867f5d35cb30be622fe9a550cec7e07322c8e6, publication tree a5c854eaf73333092f32ead0e5e00c96b1133009; this is not validation of the later lock-order correction."},
+    ],
+    "surrounding_code_reviewed": [
+        "audited_inner transaction boundaries and primary coverage",
+        "lock_ledger optional-ledger behavior and SELECT FOR UPDATE",
+        "aggregate_breaker::lock_corp_tx native advisory lock",
+        "refresh_secondary_tx and independently covered replacement missions",
+        "public authorize_factory_base_refresh and settle_factory_base_refresh flows",
+    ],
+    "invariants": [
+        "The correction reuses existing transaction and lock helpers.",
+        "Authorization, tenant/Corp scope, idempotency, verification and budget contracts are preserved.",
+        "No migration SQL, pinned harness, provider permissions or execution mechanism changes.",
+        "Owned SQLx and browser fixtures do not write to the configured source checkout.",
+        "The original evidence packet remains byte-for-byte unchanged.",
+    ],
+}
+review_path = EV / f"{PREFIX}-self-review-r1.json"
+write(review_path, review)
+copies = [(SOURCE, "source-equivalence.json"), (review_path, "implementation-self-review.json"),
+          (x["gate_path"], "canonical-report.json"),
+          (x["acceptance_path"], "native/acceptance.json"),
+          (x["driver_path"], "native/driver.json"),
+          (x["setup_path"], "dependencies/setup.json")]
+for name, p in x["lane_paths"].items():
+    value = x["lanes"][name]
+    copies += [(p, f"lanes/{name}-driver.json"), (Path(value["log"]), f"lanes/{name}.log"),
+               (EV / f"issue84-lock-{name}-r1-session-exit.json", f"lanes/{name}-session-exit.json")]
+    if name in {"store", "build"}:
+        child = Path(value["child_receipt"])
+        copies.append((child, f"lanes/{name}-native-driver.json"))
+        child_value = load(child)
+        if child_value.get("log"):
+            copies.append((Path(child_value["log"]), f"lanes/{name}-native.log"))
+for command in x["setup"]["commands"]:
+    p = Path(command["log"])
+    copies.append((p, "dependencies/" + p.name))
+for revision in [1, 2, 3]:
+    for suffix in [".json", ".log", "-session-exit.json"]:
+        p = EV / f"issue84-lock-order-r{revision}{suffix}"
+        assert p.is_file(), p.name
+        copies.append((p, "regression/" + p.name))
+copies += [(EV / "issue84-lock-order-r1-diagnosis.json", "regression/first-attempt-diagnosis.json"),
+           (EV / "issue84-lock-source-guard-r1.json", "guard/native-regressions.json"),
+           (EV / "issue84-lock-native-wrapper-schema-r1.json", "history/native-wrapper-schema-correction.json")]
+historical_files = [
+    "issue84-publication-evidence-validation-r3.json",
+    "issue84-publication-validation-r3-session-exit.json",
+    "issue84-publication-validation-r4-session-exit.json",
+    "issue84-publication-validation-r3-docs.log",
+    "issue84-publication-validation-r3-repository-docs.log",
+    "issue84-publication-validation-r3-personal-paths.log",
+    "issue84-publication-validation-r3-diff-check.log",
+    "issue84-publication-validation-r3-gitleaks.log",
+]
+copies += [(EV / name, "history/passing-publication/" + name) for name in historical_files]
+native_root = x["acceptance_path"].parent
+shots = sorted(set(png_names(x["acceptance"]["scenarios"])))
+for name in shots:
+    p = Path(name)
+    p = p if p.is_absolute() else native_root / p
+    assert p.is_relative_to(native_root)
+    copies.append((p, "native/" + p.relative_to(native_root).as_posix()))
+for p in sorted(native_root.glob("*.log")):
+    copies.append((p, "native/" + p.name))
+qa_root = canonical_root(Path(x["native"]["qa_root"]))
+ownership = qa_root / "ownership.json"
+if ownership.is_file():
+    copies.append((ownership, "native/fixture-ownership.json"))
+driver_paths = {Path(p) for lane in x["lanes"].values() for p in lane["drivers"]}
+driver_paths.update({
+    Path(__file__), EV / "issue84_lock_publication_r1.py",
+    EV / "verify-issue84-lock-source-guard-r1.py",
+    EV / "validate-issue84-lock-publication-r1.py",
+    EV / "commit-issue84-lock-publication-r1.py",
+    EV / "scan-issue84-lock-publication-r1.py",
+})
+copies += [(p, "drivers/" + p.name + ".txt") for p in sorted(driver_paths)]
+assert len(copies) == len({name for _, name in copies})
+roots = [EV, ROOT, qa_root]
+
+
+def owner(path):
+    declared = Path(path).absolute()
+    for root in roots:
+        if declared.is_relative_to(root):
+            canonical_single_link_file(declared, root)
+            return root
+    raise AssertionError("Publication input outside the explicit source and owned evidence roots")
+
+
+secret_key = re.compile(r"^(?:.*_)?(?:credential|credentials|password|passwd|secret|private_key|signing_key|api_key|authorization|cookie|token|access_token|refresh_token|enrollment_token|claim_token|assignment_token|lease_token|publisher_token|auth_token|session_token)$", re.I)
+personal = re.compile(r"(?:[a-z]:)?[/\\]+Users[/\\]+[^/\\\s\"'<>]+", re.I)
+secrets, identifiers, redactions = set(), {}, []
+
+
+def discover(value, filename, location="$"):
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key == "idempotency_key" and isinstance(child, str) and child:
+                alias = identifiers.setdefault(child, f"<idempotency-{len(identifiers)+1:03d}>")
+                redactions.append({"file": filename, "json_path": location + "." + key,
+                                   "treatment": "stable fixture idempotency alias", "alias": alias})
+            elif secret_key.fullmatch(key) and isinstance(child, str) and child:
+                redactions.append({"file": filename, "json_path": location + "." + key,
+                                   "treatment": "credential-bearing string redacted"})
+                if child not in {"[REDACTED]", "<REDACTED>", "***"}:
+                    secrets.add(child)
+            else:
+                discover(child, filename, location + "." + key)
+    elif isinstance(value, list):
+        for i, child in enumerate(value):
+            discover(child, filename, f"{location}[{i}]")
+
+
+def redact(value):
+    for secret in sorted(secrets, key=len, reverse=True):
+        value = value.replace(secret, "<REDACTED>")
+    for identifier, alias in identifiers.items():
+        value = value.replace(identifier, alias)
+    value = re.sub(r"(?i)C\^?:\^?<USERPROFILE>\\shyamsridhar", "<USERPROFILE>", value)
+    return personal.sub("<USERPROFILE>", value).replace("\r\n", "\n")
+
+
+def scrub(value):
+    if isinstance(value, dict):
+        return {k: "<REDACTED>" if secret_key.fullmatch(k) and isinstance(v, str) and v else scrub(v)
+                for k, v in value.items()}
+    if isinstance(value, list):
+        return [scrub(v) for v in value]
+    return redact(value) if isinstance(value, str) else value
+
+
+try:
+    for path, name in copies:
+        assert "credential" not in path.name.lower(), name
+        raw = guarded_bytes(path, owner(path))
+        if path.suffix == ".json":
+            discover(json.loads(raw.decode("utf-8-sig")), name)
+    for path in [*qa_root.glob("*.json"), *(qa_root / "evidence").glob("*.json")]:
+        discover(json.loads(guarded_bytes(path, qa_root).decode("utf-8-sig")),
+                 "private-fixture-discovery:" + path.name)
+    canonical_root(PACKET.parent)
+    PACKET.mkdir()
+    artifacts = []
+    for path, name in copies:
+        raw = guarded_bytes(path, owner(path))
+        if path.suffix == ".png":
+            published, transform = raw, "none; original screenshot bytes"
+        else:
+            value = json.dumps(scrub(json.loads(raw.decode("utf-8-sig"))), indent=2, ensure_ascii=False) if path.suffix == ".json" else redact(raw.decode("utf-8-sig"))
+            value = "\n".join(line.rstrip() for line in value.splitlines()).rstrip() + "\n"
+            assert not personal.search(value.replace("^", "")), name
+            assert all(secret not in value for secret in secrets), name
+            assert all(identifier not in value for identifier in identifiers), name
+            published = value.encode()
+            transform = "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture idempotency strings replaced with stable aliases; JSON reserialized"
+        target = PACKET / name
+        assert target.is_relative_to(PACKET)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("xb") as stream:
+            stream.write(published)
+        assert source_sha256(target, ROOT) == sha(published)
+        artifacts.append({"file": name, "source_name": path.name, "original_sha256": sha(raw),
+                          "published_sha256": sha(published), "bytes": len(published),
+                          "transform": transform})
+    assert not personal.search(patch.decode()) and all(s not in patch.decode() for s in secrets)
+    write(PACKET / "reviewed-code.patch.json",
+          {"encoding": "utf-8", "context_lines": 0, "base": PARENT, "tested_tree": tested_tree,
+           "decoded_sha256": sha(patch), "patch": patch.decode()})
+    native_names = [{"name": s["name"], "passed": s["passed"]} for s in x["acceptance"]["scenarios"]]
+    summary = {
+        "issue": 84, "pr": 390, "review_comments": [4149881329, 4149881373],
+        "status": "locally-validated-awaiting-required-hosted-checks", "issue_completed": False,
+        "base": MAIN, "parent": PARENT, "tested_tree": tested_tree,
+        "physical_files_sha256": PHYSICAL, "source_file_count": len(physical),
+        "code_paths": code_paths, "canonical_native_same_complete_physical_source": True,
+        "evidence_added_after_code_execution": True,
+        "checks": [{k: c[k] for k in ["name", "argv", "exitCode", "passed", "counts"]}
+                   for c in x["gate"]["checks"]],
+        "red_regression_results": x["red"]["test_results"],
+        "green_regression_results": x["green"]["test_results"],
+        "base_refresh_store_results": x["lanes"]["store"]["test_results"],
+        "source_guard": {"passed": 22, "failed": 0, "skipped": 0},
+        "native_scenarios": native_names, "original_screenshot_count": len(shots),
+        "actual_human_reviews": 0, "owned_services_stopped": x["driver"]["stopped"],
+        "historical_passing_publication_scope": {
+            "tested_tree": x["historical"]["tested_tree"],
+            "publication_tree": x["historical"]["publication_tree"],
+            "finished_at_utc": x["historical"]["finished_at_utc"],
+            "validates_new_lock_correction": False,
+        },
+        "qualifications": [
+            "The three lock tests are included in the 24-test native base-refresh store filter; counts overlap.",
+            "Canonical ignored SQLx tests are reported separately; the focused native lane invokes the owned-database base-refresh tests explicitly.",
+            "First lock-regression attempt failed during prerequisite setup; the corrected R2 reproduced three real deadlocks; R3 passed. All attempts are retained.",
+            "Browser/provider and GitHub boundaries use deterministic fixtures; no live external provider or GitHub publication is claimed by acceptance.",
+            "Source metadata is checked at fresh boundaries; no historical metadata or continuous operating-system lock is claimed.",
+            "Actual Node runtime 24.21.0 differs from the repository declaration 24.19.0.",
+            "No hosted CI, CodeQL, independent approval, issue completion or clean historical Cargo advisory audit is claimed.",
+        ],
+        "artifacts": artifacts, "redactions": redactions,
+    }
+    write(PACKET / "summary.json", scrub(summary))
+    node, rust = x["node"], x["rust"]
+    text = f"""# Factory base-refresh lock-order correction
+
+Issue #84, PR #390. Review comments 4149881329 and 4149881373.
+Current main: {MAIN}. Parent: {PARENT}. Tested source tree: {tested_tree}.
+
+Base refresh now acquires the audit ledger before the native Corp lock, matching
+ordinary audited transactions. The correction calls the existing lock helpers and
+preserves transaction, authorization, idempotency, verification and budget behavior.
+It changes no migration SQL or harness mechanism.
+
+Three native PostgreSQL regressions observe the refresh waiting on a held ledger
+before the ledger owner requests the Corp lock. On the old ordering, all three
+reproduced real deadlocks: 0 passed, 3 failed, 0 ignored, 572 filtered, Cargo exit101.
+On the correction: 3 passed, 0 failed, 0 ignored, 572 filtered, Cargo exit0.
+Authorization, adoption and abandonment are covered; the latter two deliberately
+cover only the replacement mission. The broader base-refresh store lane passed
+24 tests, with 0 failed, 0 ignored and 551 filtered. Its count includes those three.
+The first regression attempt's fixture-prerequisite failure remains documented.
+
+All eleven canonical pnpm check gates passed. Node: {node['tests']} total,
+{node['passed']} passed, {node['skipped']} skipped, {node['failed']} failed.
+Rust: {rust['passed']} passed, {rust['ignored']} ignored, {rust['failed']} failed
+across {rust['summaries']} summaries. The separate native EVM gate also passed.
+Rust used one test thread; locked dependencies and the full Node discovery lane
+were preserved. No ignored native test is represented as executed by that lane.
+
+A fresh owned PostgreSQL/server/runner/Vite/browser stack passed all 10 acceptance
+scenarios and retained {len(shots)} original screenshots. Provider execution and
+GitHub responses use explicit deterministic local fixtures. These are acceptance
+observations, not actual human approvals or live external-service receipts.
+The fixture publisher credential was revoked and owned services stopped.
+
+All validation boundaries observed the same 7,239 source files:
+{PHYSICAL}. The new native source guard also passed 22 regressions, including
+real NTFS hard links and aliased parents. Publication uses the same guard. This
+establishes fresh boundary checks, not historical filesystem metadata or continuous
+operating-system locking.
+
+The [original packet](../2026-09-30-factory-base-refresh/README.md) stays unchanged.
+Its omitted successful publication receipt, observed exits and original logs are
+included under history/passing-publication. That success concerns tested tree
+52867f5d35cb30be622fe9a550cec7e07322c8e6 and publication tree
+a5c854eaf73333092f32ead0e5e00c96b1133009, completed September 30, 2026 at
+22:06:12 UTC. It does not validate this later lock-order correction.
+
+This packet was assembled after source execution. Its documentation, privacy,
+secret scan, full check-plan equivalence and exact publication tree are verified
+separately before committing. Artifact hashes distinguish original bytes from
+sanitized copies. Screenshots retain original bytes. Text copies normalize
+whitespace and personal paths; fixture credentials are redacted and idempotency
+identifiers use stable aliases. Published driver copies require explicit local
+path configuration before reproduction; run Python with bytecode caching disabled.
+
+Actual Node was 24.21.0; the repository declares 24.19.0. Hosted CI, CodeQL, quality,
+security and review requirements remain required before merge. No issue closure,
+merge, independent approval or clean historical Cargo advisory audit is claimed.
+"""
+    (PACKET / "README.md").write_text(text, encoding="utf-8", newline="\n")
+    original_files(physical)
+    pending_source()
+    assert index_digest() == real_index
+    files = sorted(p.relative_to(PACKET).as_posix() for p in PACKET.rglob("*") if p.is_file())
+    write(RECEIPT, {
+        "issue": 84, "pr": 390, "status": "assembled", "recorded_at_utc": now(),
+        "base": MAIN, "parents": [PARENT], "tested_tree": tested_tree,
+        "source_receipt_sha256": sha(SOURCE.read_bytes()), "physical_files_sha256": PHYSICAL,
+        "publication_files": files, "summary_sha256": sha((PACKET / "summary.json").read_bytes()),
+        "original_index_sha256": real_index, "index_unchanged": True,
+        "code_paths": code_paths, "native_screenshots": len(shots), "native_guard": guard_identity(),
+    })
+finally:
+    secrets.clear()
+    identifiers.clear()
+print(json.dumps({"status": "assembled", "tested_tree": tested_tree,
+                  "publication_files": len(files), "index_unchanged": True}))

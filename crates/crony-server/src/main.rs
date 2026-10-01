@@ -11,6 +11,7 @@ mod delegated;
 mod delegated_provider;
 mod dependency_source;
 mod factory_authority;
+mod factory_base_refresh;
 #[cfg(test)]
 mod factory_connection_tests;
 mod factory_readiness;
@@ -680,6 +681,14 @@ async fn run_server() -> anyhow::Result<()> {
             "/api/corps/{corp_id}/factory/work-items/{work_item_id}/verification-recoveries",
             get(get_factory_verification_recovery_context)
                 .post(create_factory_verification_recovery),
+        )
+        .route(
+            "/api/corps/{corp_id}/factory/work-items/{work_item_id}/base-refreshes",
+            get(factory_base_refresh::list).post(factory_base_refresh::authorize),
+        )
+        .route(
+            "/api/corps/{corp_id}/factory/work-items/{work_item_id}/base-refreshes/{refresh_id}/{action}",
+            post(factory_base_refresh::settle),
         )
         .route(
             "/api/corps/{corp_id}/factory/work-items/{work_item_id}/checkpoint-reconciliation",
@@ -1607,11 +1616,15 @@ enum RunnerDispatchError {
     UnsupportedVerifierPolicy,
     UnsupportedDependencyFiles,
     UnsupportedCanonicalSource,
+    UnsupportedBaseRefresh,
 }
 
 impl RunnerDispatchError {
     fn detail(&self) -> &'static str {
         match self {
+            Self::UnsupportedBaseRefresh => {
+                "runner requires governed base-refresh, durable control, artifact transfer and canonical verification support"
+            }
             Self::UnsupportedCanonicalSource => {
                 "runner requires canonical-source-verification-v1 before accepting a source deliverable"
             }
@@ -1666,6 +1679,16 @@ fn send_command_to_current_runner(
         .ok_or(RunnerDispatchError::Unavailable)?;
     if connection.connection_epoch != connection_epoch || !connection.dispatch_ready {
         return Err(RunnerDispatchError::Unavailable);
+    }
+    if matches!(
+        &command,
+        ServerToRunner::VerifyRun {
+            base_refresh: Some(_),
+            ..
+        }
+    ) && !factory_base_refresh::supported(&connection.capabilities)
+    {
+        return Err(RunnerDispatchError::UnsupportedBaseRefresh);
     }
     if let ServerToRunner::StartRun {
         dependency_files, ..
@@ -1783,7 +1806,7 @@ async fn pending_recovery_runs_at_reconnect(
         JOIN runner_nodes runner ON runner.id = command.runner_id
           AND runner.corp_id = command.corp_id
         WHERE command.runner_id = $1 AND command.corp_id = $2
-          AND command.command_kind = 'factory_verification_recovery'
+          AND command.command_kind IN ('factory_verification_recovery', 'factory_base_refresh')
           AND command.status = 'pending'
           AND runner.connection_epoch = $3 AND runner.status = 'connected'
         ORDER BY command.run_id
@@ -1859,21 +1882,13 @@ async fn dispatch_pending_runner_commands_for_epoch(
                     Ok(Some(outgoing)) => Some(outgoing),
                     Ok(None) => continue,
                     Err(error)
-                        if command.command_kind == "factory_verification_recovery"
-                            && !factory_recovery_failure_is_retryable(&error) =>
+                        if matches!(
+                            command.command_kind.as_str(),
+                            "factory_verification_recovery" | "factory_base_refresh"
+                        ) && !factory_recovery_failure_is_retryable(&error) =>
                     {
                         let detail = factory_recovery_dispatch_failure_detail(&error);
-                        for event in state
-                            .store
-                            .fail_factory_recovery_before_dispatch(
-                                command.corp_id,
-                                command.run_id,
-                                &detail,
-                            )
-                            .await?
-                        {
-                            publish(state, event);
-                        }
+                        fail_factory_command_before_dispatch(state, &command, &detail).await?;
                         warn!(%error, run_id = %command.run_id, command_id = %command.id,
                         "factory recovery command failed before runner dispatch");
                         continue;
@@ -1908,6 +1923,17 @@ async fn dispatch_pending_runner_commands_for_epoch(
                     .store
                     .with_progress_command_dispatch(&command, enqueue)
                     .await?
+            } else if command.command_kind == "factory_base_refresh" {
+                let outcome = state
+                    .store
+                    .with_base_refresh_command_dispatch(&command, || enqueue(None))
+                    .await?;
+                if outcome.commit_error.is_some() {
+                    warn!(run_id = %command.run_id, command_id = %command.id,
+                        enqueued = matches!(outcome.transport_result, RunnerCommandDispatchOutcome::Sent),
+                        "native base refresh transport result retained after authority commit failure");
+                }
+                outcome.transport_result
             } else if command.command_kind == "factory_verification_recovery"
                 && command
                     .payload
@@ -1927,18 +1953,17 @@ async fn dispatch_pending_runner_commands_for_epoch(
             match dispatch {
                 RunnerCommandDispatchOutcome::Sent => {}
                 RunnerCommandDispatchOutcome::Disconnected => {
-                    if rejection == Some(RunnerDispatchError::UnsupportedVerifierPolicy) {
-                        for event in state
-                            .store
-                            .fail_factory_recovery_before_dispatch(
-                                command.corp_id,
-                                command.run_id,
-                                RunnerDispatchError::UnsupportedVerifierPolicy.detail(),
-                            )
-                            .await?
-                        {
-                            publish(state, event);
-                        }
+                    if matches!(
+                        command.command_kind.as_str(),
+                        "factory_verification_recovery" | "factory_base_refresh"
+                    ) && let Some(
+                        error @ (RunnerDispatchError::UnsupportedVerifierPolicy
+                        | RunnerDispatchError::UnsupportedCanonicalSource
+                        | RunnerDispatchError::UnsupportedBaseRefresh),
+                    ) = rejection
+                    {
+                        fail_factory_command_before_dispatch(state, &command, error.detail())
+                            .await?;
                         continue;
                     }
                     if rejection == Some(RunnerDispatchError::UnsupportedDependencyFiles) {
@@ -1951,6 +1976,13 @@ async fn dispatch_pending_runner_commands_for_epoch(
                 }
                 RunnerCommandDispatchOutcome::Settled => continue,
                 RunnerCommandDispatchOutcome::Obsolete => {
+                    if command.command_kind == "factory_base_refresh" {
+                        fail_factory_command_before_dispatch(
+                            state, &command,
+                            "base refresh authority changed or a budget or stop fence blocked native enqueue",
+                        ).await?;
+                        continue;
+                    }
                     // The transaction owns budget and lease admission. Retire only
                     // this stale command; its native fence owns the run state.
                     let reason = if progress {
@@ -2047,6 +2079,7 @@ async fn decode_recovery_runner_command(
     durable_control: bool,
 ) -> anyhow::Result<Option<ServerToRunner>> {
     match command.command_kind.as_str() {
+        "factory_base_refresh" => factory_base_refresh::decode(state, command).await,
         "factory_verification_recovery" => {
             if !recovery_command_can_dispatch(state, command).await? {
                 return Ok(None);
@@ -2200,6 +2233,7 @@ async fn decode_recovery_runner_command(
                         return Ok(None);
                     }
                     Ok(Some(ServerToRunner::VerifyRun {
+                        base_refresh: None,
                         workspace_connection_id: payload.workspace_connection_id,
                         command_id: command.id,
                         corp_id: payload.corp_id,
@@ -2359,6 +2393,28 @@ fn factory_recovery_failure_is_retryable(error: &anyhow::Error) -> bool {
     error.downcast_ref::<sqlx::Error>().is_some()
 }
 
+async fn fail_factory_command_before_dispatch(
+    state: &AppState,
+    command: &PendingRunnerCommand,
+    detail: &str,
+) -> anyhow::Result<()> {
+    let events = if command.command_kind == "factory_base_refresh" {
+        state
+            .store
+            .fail_base_refresh_before_dispatch(command, detail)
+            .await?
+    } else {
+        state
+            .store
+            .fail_factory_recovery_before_dispatch(command.corp_id, command.run_id, detail)
+            .await?
+    };
+    for event in events {
+        publish(state, event);
+    }
+    Ok(())
+}
+
 async fn recovery_command_can_dispatch(
     state: &AppState,
     command: &PendingRunnerCommand,
@@ -2367,6 +2423,15 @@ async fn recovery_command_can_dispatch(
         RunnerCommandDispatchState::Pending => Ok(true),
         RunnerCommandDispatchState::Settled => Ok(false),
         RunnerCommandDispatchState::Obsolete => {
+            if command.command_kind == "factory_base_refresh" {
+                fail_factory_command_before_dispatch(
+                    state,
+                    command,
+                    "base refresh target is no longer active; no repeated execution",
+                )
+                .await?;
+                return Ok(false);
+            }
             if let Some(event) = state
                 .store
                 .fail_runner_command(

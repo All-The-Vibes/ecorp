@@ -1,0 +1,44 @@
+#requires -Version 7.5
+param([Parameter(Mandatory)][ValidatePattern('^r[0-9]+$')][string]$Revision)
+$ErrorActionPreference = 'Stop'
+$taskProduct = '<USERPROFILE>\.codex\worktrees\issue84-base-refresh\ecorp'
+$taskLog = Join-Path $PSScriptRoot "issue84-runtime-build-$Revision.log"
+$taskReceipt = Join-Path $PSScriptRoot "issue84-runtime-build-$Revision.json"
+if ((Test-Path -LiteralPath $taskLog) -or (Test-Path -LiteralPath $taskReceipt)) { throw 'Preserve existing build evidence.' }
+function Get-SourceIdentity {
+    @(& git -C $taskProduct ls-files --cached --others --exclude-standard -- Cargo.toml Cargo.lock crates db | Sort-Object -Unique | ForEach-Object {
+        @{path=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $taskProduct $_) -Algorithm SHA256).Hash.ToLowerInvariant()}
+    })
+}
+$taskResult = [ordered]@{
+    command='cargo build --locked -p crony-server -p crony-runner -p crony-cli'
+    started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');worktree=$taskProduct
+    head=(& git -C $taskProduct rev-parse HEAD);source_files=(Get-SourceIdentity)
+    status='running';log=$taskLog
+}
+$taskResult | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+$taskCode = 1
+Push-Location $taskProduct
+try {
+    & cargo build --locked -p crony-server -p crony-runner -p crony-cli *> $taskLog
+    $taskCode = $LASTEXITCODE
+    $taskResult.exit_code = $taskCode
+    $taskResult.status = if ($taskCode -eq 0) {'passed'} else {'failed'}
+    if ($taskCode -eq 0) {
+        $taskResult.binaries = @('crony-server','crony-runner','crony-cli') | ForEach-Object {
+            $taskPath = Join-Path $taskProduct "target/debug/$_.exe"
+            @{path=$taskPath;sha256=(Get-FileHash -LiteralPath $taskPath -Algorithm SHA256).Hash.ToLowerInvariant()}
+        }
+    }
+} catch {
+    $taskCode=1;$taskResult.status='failed';$taskResult.failure=$_.Exception.Message
+} finally {
+    Pop-Location
+    $taskResult.source_unchanged = (ConvertTo-Json -InputObject $taskResult.source_files -Depth 5 -Compress) -ceq (ConvertTo-Json -InputObject (Get-SourceIdentity) -Depth 5 -Compress)
+    if (!$taskResult.source_unchanged) { $taskCode=1;$taskResult.status='failed';$taskResult.failure='Source changed during build.' }
+    $taskResult.finished_at_utc = [DateTimeOffset]::UtcNow.ToString('o')
+    $taskResult | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+}
+$taskResult | Select-Object * -ExcludeProperty source_files | ConvertTo-Json -Depth 8
+Get-Content -LiteralPath $taskLog -Tail 30
+exit $taskCode

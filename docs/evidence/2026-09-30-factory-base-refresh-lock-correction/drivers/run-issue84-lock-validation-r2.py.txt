@@ -1,0 +1,200 @@
+"""Run existing repository validation lanes with fresh complete-source boundaries."""
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+from issue84_lock_source_guard_r1 import ROOT, canonical_root, guard_identity, source_sha256
+
+EV = canonical_root(Path(__file__).absolute().parent)
+PYTHON = Path(sys.executable)
+PWSH = Path(r"C:\Program Files\PowerShell\7\pwsh.exe")
+NODE = Path(r"<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe")
+PG = Path(r"<USERPROFILE>\AppData\Local\Programs\ecorp-tools\postgresql-17.10\pgsql\bin")
+PLAYWRIGHT = Path(r"<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright\index.mjs")
+QA = Path(r"<USERPROFILE>\qa")
+ENV = {k: v for k, v in os.environ.items()
+       if not re.match(r"^(CRONY_|ECORP_|PG|GH_|GITHUB_|GITLEAKS_|AZURE_|GIT_)", k, re.I)
+       and k.upper() not in {"DATABASE_URL", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "COPILOT_GITHUB_TOKEN", "NODE_OPTIONS", "PYTHONPATH", "PYTHONHOME", "RUST_TEST_THREADS"}}
+ENV.update(PYTHONDONTWRITEBYTECODE="1", PYTHON=str(PYTHON), RUST_TEST_THREADS="1",
+           GIT_OPTIONAL_LOCKS="0", GIT_TERMINAL_PROMPT="0")
+ENV["PATH"] = str(NODE.parent) + os.pathsep + str(PYTHON.parent) + os.pathsep + ENV["PATH"]
+
+
+def now():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def load(path):
+    return json.loads(Path(path).read_text(encoding="utf-8-sig"))
+
+
+def sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("lane", choices=["store", "build", "native", "check"])
+args = parser.parse_args()
+lane = args.lane
+prefix = f"issue84-lock-{lane}-r1"
+receipt = EV / (prefix + ".json")
+log = EV / (prefix + ".log")
+assert not receipt.exists() and not log.exists(), "Preserve existing attempts"
+record = {"issue": 84, "pr": 390, "lane": lane, "status": "starting", "started_at_utc": now(),
+          "head": "31337c258360b7df2421e605e54d9a6f31753628", "log": str(log),
+          "guard": guard_identity(), "assurance": "Fresh complete physical-source metadata and bytes at boundaries. No historical, live-provider, hosted-CI or continuous-locking claim."}
+
+
+def save():
+    receipt.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+
+
+def capture(phase, equals=None):
+    cmd = [str(PYTHON), "-B", "-X", "utf8", str(EV / "capture-issue84-lock-source-r1.py"), "--phase", phase]
+    if equals:
+        cmd += ["--equals", equals]
+    result = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, timeout=300,
+                            creationflags=subprocess.CREATE_NO_WINDOW)
+    assert result.returncode == 0, f"Source boundary {phase} failed: {result.stderr.decode('utf-8', errors='replace')}"
+    return EV / f"issue84-lock-source-{phase}.json"
+
+
+def completed(name):
+    path = EV / f"issue84-lock-{name}-r1.json"
+    value = load(path)
+    assert value["status"] == "passed" and value["exit_code"] == 0 and value["physical_source_unchanged"]
+    assert sha(Path(value["log"])) == value["log_sha256"]
+    return value
+
+
+code = 1
+before = None
+phase = f"before-{lane}-r1"
+try:
+    green = load(EV / "issue84-lock-order-r3.json")
+    assert green["status"] == "passed" and green["exit_code"] == 0 and green["source_unchanged"] and green["database_stopped"]
+    assert load(EV / "issue84-lock-order-r3-session-exit.json")["observed_exit_code"] == 0
+    guard_test = load(EV / "issue84-lock-source-guard-r1.json")
+    assert guard_test["status"] == "passed" and guard_test["passed"] == 22 and guard_test["guard"] == record["guard"]
+    dependency_path = EV / "issue84-validation-environment-r3.json"
+    setup = load(dependency_path)
+    assert setup["status"] == "passed" and setup["exit_code"] == 0 and setup["source_unchanged"]
+    assert len(setup["commands"]) == 2
+    for command in setup["commands"]:
+        assert command["exit_code"] == 0 and command["lock_unchanged"]
+        assert source_sha256(ROOT / command["lock_path"]) == command["lock_before"] == command["lock_after"]
+        assert sha(command["log"]) == command["log_sha256"]
+    record["dependency_receipt"] = str(dependency_path)
+    record["dependency_receipt_sha256"] = sha(dependency_path)
+    record["lock_sha256"] = {name: source_sha256(ROOT / name) for name in ["Cargo.lock", "pnpm-lock.yaml", "scenarios/repo-steward/package-lock.json"]}
+    before = capture(phase)
+    baseline = load(before)
+    assert baseline["identity"]["head"] == green["head"]
+    assert all(dict(baseline["physical_files"])[f["path"]] == f["sha256"] for f in green["source_files"])
+    record.update(source_before=str(before), source_before_sha256=sha(before),
+                  physical_files_sha256=baseline["physical_files_sha256"], source_file_count=baseline["source_file_count"])
+    dependencies = []
+    if lane == "store":
+        command = [PWSH, "-NoProfile", "-File", EV / "run-issue84-store.ps1", "-Revision", "r12"]
+        child = EV / "issue84-store-r12.json"
+        record["scope"] = "All native base-refresh store regressions, using the existing isolated SQLx driver; this is a focused store lane, not all store tests."
+    elif lane == "build":
+        dependencies = [completed("store")]
+        command = [PWSH, "-NoProfile", "-File", EV / "run-issue84-build.ps1", "-Revision", "r3"]
+        child = EV / "issue84-runtime-build-r3.json"
+    elif lane == "native":
+        dependencies = [completed("store"), completed("build")]
+        build = load(EV / "issue84-runtime-build-r3.json")
+        assert all(sha(item["path"]) == item["sha256"] for item in build["binaries"])
+        record["binaries"] = build["binaries"]
+        output = EV / "issue84-lock-acceptance-r1"
+        assert not output.exists() and PLAYWRIGHT.is_file()
+        command = [PWSH, "-NoProfile", "-File", ROOT / "tools/e2e_factory_base_refresh.ps1",
+                   "-PostgresBin", PG, "-QaParent", QA, "-OutputRoot", output, "-PlaywrightModule", PLAYWRIGHT]
+        child = output / "driver.json"
+        record["scope"] = "Fresh owned PostgreSQL, server, runner, Vite and browser. Provider and GitHub boundaries use explicit deterministic local fixtures."
+        record["acceptance_output"] = str(output)
+    else:
+        command = [PWSH, "-NoProfile", "-Command", "$ErrorActionPreference='Stop'\npnpm check\nexit $LASTEXITCODE"]
+        child = None
+        record["scope"] = "Canonical pnpm check, all eleven current gates, full Node discovery and serial unfiltered Rust workspace tests; ignored cases remain separately reported."
+    for dependency in dependencies:
+        assert dependency["physical_files_sha256"] == baseline["physical_files_sha256"]
+    drivers = [Path(__file__), EV / "capture-issue84-lock-source-r1.py", EV / "issue84_lock_source_guard_r1.py"]
+    drivers += [Path(item) for item in command if str(item).endswith(".ps1")]
+    record["drivers"] = {str(path): sha(path) for path in drivers}
+    record["command"] = [str(c) for c in command]
+    record.update(status="running", rust_test_threads=1)
+    record["node_version"] = subprocess.check_output([str(NODE), "--version"], env=ENV).decode().strip()
+    save()
+    print(json.dumps({"lane": lane, "status": "running", "source_files": baseline["source_file_count"]}), flush=True)
+    with log.open("xb") as stream:
+        result = subprocess.run([str(c) for c in command], cwd=ROOT, env=ENV, stdout=stream, stderr=subprocess.STDOUT,
+                                creationflags=subprocess.CREATE_NO_WINDOW)
+    code = result.returncode
+    record["exit_code"] = code
+    if child is not None:
+        data = load(child)
+        record["child_receipt"] = str(child)
+        record["child_receipt_sha256"] = sha(child)
+        assert data["status"] == "passed", "Existing driver did not pass"
+        if lane == "store":
+            assert data["database_stopped"] and data["source_unchanged"] and data["exit_code"] == 0
+            record["test_results"] = re.findall(r"test result:.*", Path(data["log"]).read_text(encoding="utf-8-sig"))
+        elif lane == "build":
+            assert data["source_unchanged"] and data["exit_code"] == 0
+            record["binaries"] = data["binaries"]
+        else:
+            assert data["stopped"] and all(data["stopped"].values())
+            report_path = child.parent / "acceptance.json"
+            report = load(report_path)
+            assert report["schema_version"] == 1 and report["passed"] is True and not report.get("failure")
+            assert report["source_unchanged"] and report["publisher_credential_revoked"]
+            assert len(report["scenarios"]) == 10 and all(s["passed"] is True for s in report["scenarios"])
+            assert report["product_head"] == record["head"]
+            record["acceptance_scenarios"] = [{"name": s["name"], "passed": s["passed"]} for s in report["scenarios"]]
+            record["actual_human_reviews"] = 0
+            record.update(acceptance_report=str(report_path), acceptance_report_sha256=sha(report_path),
+                          qa_root=data["qa_root"], stopped=data["stopped"])
+            assert all(sha(item["path"]) == item["sha256"] for item in build["binaries"])
+    else:
+        lines = re.findall(r"(?m)^Validation report: (.+)$", log.read_text(encoding="utf-8-sig"))
+        assert len(lines) == 1, "Expected one canonical validation report"
+        report_path = Path(lines[0].strip())
+        report = load(report_path)
+        expected = ["migrations", "state-audit-compatibility", "state-audit-evm", "docs", "repository-docs", "node-tests", "format", "clippy", "rust-tests", "web-build", "web-lint"]
+        record.update(canonical_report=str(report_path), canonical_report_sha256=sha(report_path),
+                      canonical_status=report["status"], checks=report["checks"], not_run=report["notRun"])
+        assert report["status"] == "passed" and not report["sourceChangedDuringValidation"] and not report["notRun"]
+        assert [c["name"] for c in report["checks"]] == expected
+        assert all(c["passed"] and c["exitCode"] == 0 and not c.get("errorCode") for c in report["checks"])
+        assert report["source"]["commit"] == record["head"]
+        assert set(report["source"]["files"]) == set(dict(baseline["physical_files"]))
+        assert report["source"]["trackedDiffSha256"] == baseline["identity"]["diff_sha256"]
+    assert code == 0, "Native command failed"
+    record["status"] = "passed"
+except Exception as error:
+    code = 1
+    record.update(status="failed", failure=str(error))
+finally:
+    if before:
+        try:
+            after = capture(f"after-{lane}-r1", phase)
+            record.update(source_after=str(after), source_after_sha256=sha(after), physical_source_unchanged=True)
+        except Exception as error:
+            code = 1
+            record.update(status="failed", physical_source_unchanged=False, source_error=str(error))
+    if log.exists():
+        record["log_sha256"] = sha(log)
+    if any(sha(path) != digest for path, digest in record.get("drivers", {}).items()):
+        code = 1
+        record.update(status="failed", driver_error="Validation driver changed during execution")
+    record["finished_at_utc"] = now()
+    save()
+    print(json.dumps({k: record.get(k) for k in ["lane", "status", "exit_code", "physical_source_unchanged", "test_results", "failure", "source_error"]}))
+sys.exit(code)

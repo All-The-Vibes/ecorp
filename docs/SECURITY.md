@@ -489,6 +489,19 @@ Pull-request publication runs only in the trusted publisher CLI after a dedicate
 authorization check. GitHub credentials stay in the publisher's keyring or process environment;
 they are never returned by the server, passed to the runner or producing agent, written into the
 portable bundle, persisted in authorization/provenance records, or included in command arguments.
+
+[Base refresh](FACTORY_BASE_REFRESH.md) requires the current claimant, fencing
+token, version, recovery permission, room membership, exact source deliverable,
+and unchanged issue/repository authority. It accepts no replacement verifier
+checks and cannot rewrite the old commit. Native Git reconstructs only a
+conflict-free delta on a descendant base in a new private workspace. The new run
+has no provider session, provider secrets, or provider budget allocation; saved
+verifier commands retain their existing authority and bounds. Every refresh
+authorizer and original requester/producer is excluded from independent review.
+Pending refreshes block publication, and adoption revalidates the original and
+replacement evidence, budget/breaker state, and durable decision. Three lifetime
+attempts bound the work-item lineage. An existing publication blocks refresh.
+
 Publisher fencing tokens are opaque, expiring capabilities omitted from shared state and events.
 They are insufficient by themselves: each publication mutation also requires a separate enrolled
 publisher workload credential. Enrollment and revocation require owner/admin `Manage` authority;

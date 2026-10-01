@@ -1,0 +1,166 @@
+{
+  "issue": 84,
+  "pr": 390,
+  "status": "passed",
+  "started_at_utc": "2026-09-30T22:55:08.388168+00:00",
+  "owned_fixture": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-lock-source-guard-aqlpeokj",
+  "guard": {
+    "adapter_sha256": "a4489392ff29b6350b930517f127b58252c41ca9bdf1844406745db1224acc1d",
+    "repository_guard_path": "docs/evidence/pr362-combined-20260921/verify_public.py",
+    "repository_guard_sha256": "9131baf3156f04b246cbfc38c2e000fdd2a8db1eeb7627ac34ce6b6988777d12",
+    "canonical_declared_paths": true,
+    "single_link_files": true,
+    "native_opened_file_identity": true,
+    "streamed_hashing": true,
+    "metadata_fields": [
+      "st_dev",
+      "st_ino",
+      "st_size",
+      "st_mtime_ns",
+      "st_nlink"
+    ],
+    "scope": "Metadata and bytes checked at capture/publication boundaries; no claim of continuous OS locking or historical metadata."
+  },
+  "checks": [
+    {
+      "name": "canonical single-link file accepted at capture",
+      "passed": true,
+      "rejected": false,
+      "reason": null
+    },
+    {
+      "name": "canonical single-link file accepted at publication",
+      "passed": true,
+      "rejected": false,
+      "reason": null
+    },
+    {
+      "name": "hard-linked source rejected at capture",
+      "passed": true,
+      "rejected": true,
+      "reason": "('hard-linked evidence entry', 'source.txt')"
+    },
+    {
+      "name": "hard-linked source rejected at publication",
+      "passed": true,
+      "rejected": true,
+      "reason": "('hard-linked evidence entry', 'source.txt')"
+    },
+    {
+      "name": "hard-link alias rejected at capture",
+      "passed": true,
+      "rejected": true,
+      "reason": "('hard-linked evidence entry', 'hard.txt')"
+    },
+    {
+      "name": "hard-link alias rejected at publication",
+      "passed": true,
+      "rejected": true,
+      "reason": "('hard-linked evidence entry', 'hard.txt')"
+    },
+    {
+      "name": "single-link source accepted after owned alias removal at capture",
+      "passed": true,
+      "rejected": false,
+      "reason": null
+    },
+    {
+      "name": "single-link source accepted after owned alias removal at publication",
+      "passed": true,
+      "rejected": false,
+      "reason": null
+    },
+    {
+      "name": "ordinary child accepted at capture",
+      "passed": true,
+      "rejected": false,
+      "reason": null
+    },
+    {
+      "name": "ordinary child accepted at publication",
+      "passed": true,
+      "rejected": false,
+      "reason": null
+    },
+    {
+      "name": "file reached through parent junction rejected at capture",
+      "passed": true,
+      "rejected": true,
+      "reason": "('linked evidence path', '<USERPROFILE>\\\\code\\\\ecorp\\\\output\\\\issue-completion\\\\20260930T155855Z\\\\issue84-lock-source-guard-aqlpeokj\\\\alias')"
+    },
+    {
+      "name": "file reached through parent junction rejected at publication",
+      "passed": true,
+      "rejected": true,
+      "reason": "('linked evidence path', '<USERPROFILE>\\\\code\\\\ecorp\\\\output\\\\issue-completion\\\\20260930T155855Z\\\\issue84-lock-source-guard-aqlpeokj\\\\alias')"
+    },
+    {
+      "name": "aliased root rejected at capture",
+      "passed": true,
+      "rejected": true,
+      "reason": "('linked evidence path', '<USERPROFILE>\\\\code\\\\ecorp\\\\output\\\\issue-completion\\\\20260930T155855Z\\\\issue84-lock-source-guard-aqlpeokj\\\\alias')"
+    },
+    {
+      "name": "aliased root rejected at publication",
+      "passed": true,
+      "rejected": true,
+      "reason": "('linked evidence path', '<USERPROFILE>\\\\code\\\\ecorp\\\\output\\\\issue-completion\\\\20260930T155855Z\\\\issue84-lock-source-guard-aqlpeokj\\\\alias')"
+    },
+    {
+      "name": "out-of-root file rejected at capture",
+      "passed": true,
+      "rejected": true,
+      "reason": "source escaped declared root"
+    },
+    {
+      "name": "out-of-root file rejected at publication",
+      "passed": true,
+      "rejected": true,
+      "reason": "source escaped declared root"
+    },
+    {
+      "name": "directory rejected at capture",
+      "passed": true,
+      "rejected": true,
+      "reason": "('non-regular evidence entry', 'actual')"
+    },
+    {
+      "name": "directory rejected at publication",
+      "passed": true,
+      "rejected": true,
+      "reason": "('non-regular evidence entry', 'actual')"
+    },
+    {
+      "name": "legitimate source larger than historical packet read limit accepted at capture",
+      "passed": true,
+      "rejected": false,
+      "reason": null
+    },
+    {
+      "name": "legitimate source larger than historical packet read limit accepted at publication",
+      "passed": true,
+      "rejected": false,
+      "reason": null
+    },
+    {
+      "name": "changed expected bytes rejected at publication",
+      "passed": true,
+      "rejected": true,
+      "reason": "source.txt"
+    },
+    {
+      "name": "native metadata change during read rejected",
+      "passed": true,
+      "rejected": true,
+      "reason": "source changed during read"
+    }
+  ],
+  "scope": "Fresh native NTFS fixtures at capture/publication boundaries; no historical metadata or continuous locking claim.",
+  "historical_predicate_hardlink_accepted": true,
+  "historical_predicate_parent_junction_accepted": true,
+  "passed": 22,
+  "failed": 0,
+  "skipped": 0,
+  "owned_fixture_removed": true,
+  "finished_at_utc": "2026-09-30T22:55:09.092625+00:00"
+}

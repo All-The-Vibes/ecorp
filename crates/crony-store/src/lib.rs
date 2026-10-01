@@ -43,6 +43,7 @@ pub use checkpoint_cancellation::ReconcileCheckpointCancellationInput;
 mod contract_revision;
 mod factory_attempt_policy;
 mod factory_authority;
+mod factory_base_refresh;
 mod factory_controller;
 mod factory_run_failure;
 mod mission_context;
@@ -6368,6 +6369,7 @@ impl PgStore {
         runner_id: &str,
     ) -> Result<(LaunchRecord, DomainEvent)> {
         let mut tx = self.pool.begin().await?;
+        factory_base_refresh::ensure_ordinary_mission_tx(&mut tx, corp_id, mission_id).await?;
         aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
         if let Some(actor_id) = requested_by {
             assert_mission_operator_tx(&mut tx, corp_id, actor_id).await?;
@@ -6687,6 +6689,8 @@ impl PgStore {
         .await
         .context("source run not found")?;
         let room_id: Uuid = row.get("room_id");
+        factory_base_refresh::ensure_ordinary_mission_tx(&mut tx, corp_id, row.get("mission_id"))
+            .await?;
         assert_room_membership_tx(&mut tx, corp_id, room_id, requested_by).await?;
         ensure_generic_resume_is_not_factory_recovery(
             row.get("factory_linked"),
@@ -6957,6 +6961,19 @@ impl PgStore {
         reason: &str,
     ) -> Result<Vec<DomainEvent>> {
         let mut tx = self.pool.begin().await?;
+        let events =
+            Self::fail_run_before_dispatch_tx(&mut tx, corp_id, run_id, reason, None).await?;
+        tx.commit().await?;
+        Ok(events)
+    }
+
+    async fn fail_run_before_dispatch_tx(
+        tx: &mut Transaction<'_, Postgres>,
+        corp_id: Uuid,
+        run_id: Uuid,
+        reason: &str,
+        pending_command: Option<&PendingRunnerCommand>,
+    ) -> Result<Vec<DomainEvent>> {
         let scope = sqlx::query(
             "SELECT task.mission_id, item.id AS factory_id
              FROM runs run
@@ -6967,7 +6984,7 @@ impl PgStore {
         )
         .bind(run_id)
         .bind(corp_id)
-        .fetch_one(&mut *tx)
+        .fetch_one(&mut **tx)
         .await
         .context("run not found for dispatch failure")?;
         let expected_mission_id: Uuid = scope.get("mission_id");
@@ -6976,7 +6993,7 @@ impl PgStore {
             // Recovery and publication already take these gates before their
             // row locks. Join that ordering before locking run/task/mission.
             lock_factory_keys_tx(
-                &mut tx,
+                tx,
                 &[
                     format!("factory:item:{corp_id}:{factory_id}"),
                     format!("publication:factory:{corp_id}:{factory_id}"),
@@ -7000,13 +7017,38 @@ impl PgStore {
         )
         .bind(run_id)
         .bind(corp_id)
-        .fetch_one(&mut *tx)
+        .fetch_one(&mut **tx)
         .await
         .context("run not found for dispatch failure")?;
         let task_id: Uuid = row.get("task_id");
         let agent_id: Uuid = row.get("agent_id");
         let mission_id: Uuid = row.get("mission_id");
         let room_id: Uuid = row.get("room_id");
+        if let Some(command) = pending_command {
+            anyhow::ensure!(
+                command.corp_id == corp_id && command.run_id == run_id,
+                "dispatch failure command has a different run scope"
+            );
+            // Keep run -> command ordering consistent with native progress.
+            // ACK and failure contend on this row before any lifecycle writes.
+            let status: String = sqlx::query_scalar(
+                "SELECT status FROM runner_commands
+                 WHERE id=$1 AND corp_id=$2 AND run_id=$3 AND runner_id=$4
+                   AND command_kind=$5 AND payload=$6 FOR UPDATE",
+            )
+            .bind(command.id)
+            .bind(corp_id)
+            .bind(run_id)
+            .bind(&command.runner_id)
+            .bind(&command.command_kind)
+            .bind(&command.payload)
+            .fetch_optional(&mut **tx)
+            .await?
+            .context("dispatch failure command scope changed")?;
+            if status != "pending" {
+                return Ok(Vec::new());
+            }
+        }
         if mission_id != expected_mission_id {
             return Err(anyhow!("dispatch failure mission scope changed"));
         }
@@ -7026,7 +7068,7 @@ impl PgStore {
         )
         .bind(task_id)
         .bind(corp_id)
-        .fetch_one(&mut *tx)
+        .fetch_one(&mut **tx)
         .await?;
         let started: bool = sqlx::query_scalar(
             "SELECT EXISTS(SELECT 1 FROM events WHERE corp_id = $1
@@ -7035,7 +7077,7 @@ impl PgStore {
         )
         .bind(corp_id)
         .bind(run_id)
-        .fetch_one(&mut *tx)
+        .fetch_one(&mut **tx)
         .await?;
         if latest_run != run_id
             || started
@@ -7043,7 +7085,6 @@ impl PgStore {
             || matches!(mission_status.as_str(), "completed" | "cancelled")
             || (!replay && !matches!(run_status.as_str(), "provisioning" | "starting"))
         {
-            tx.commit().await?;
             return Ok(Vec::new());
         }
         let factory = sqlx::query(
@@ -7052,7 +7093,7 @@ impl PgStore {
         )
         .bind(corp_id)
         .bind(mission_id)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut **tx)
         .await?;
         if factory.as_ref().map(|item| item.get::<Uuid, _>("id")) != expected_factory_id {
             return Err(anyhow!("dispatch failure factory scope changed"));
@@ -7091,7 +7132,7 @@ impl PgStore {
             .bind(&reason)
             .bind(run_id)
             .bind(corp_id)
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await?;
             sqlx::query(
                 "UPDATE queued_messages SET status = 'queued', run_id = NULL
@@ -7099,21 +7140,21 @@ impl PgStore {
             )
             .bind(run_id)
             .bind(corp_id)
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await?;
             sqlx::query(
                 "UPDATE tasks SET status = 'failed', updated_at = now() WHERE id = $1 AND corp_id = $2",
             )
             .bind(task_id)
             .bind(corp_id)
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await?;
             sqlx::query(
                 "UPDATE missions SET status = 'failed', updated_at = now() WHERE id = $1 AND corp_id = $2",
             )
             .bind(mission_id)
             .bind(corp_id)
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await?;
             sqlx::query(
                 "UPDATE agents SET status = 'idle', station = NULL, current_run_id = NULL
@@ -7122,12 +7163,12 @@ impl PgStore {
             .bind(agent_id)
             .bind(run_id)
             .bind(corp_id)
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await?;
             let expired_secret_access_grant_count =
-                expire_run_secret_access_grants_tx(&mut tx, corp_id, run_id).await?;
+                expire_run_secret_access_grants_tx(tx, corp_id, run_id).await?;
             if let Some(event) = append_event_tx(
-                &mut tx,
+                tx,
                 NewEvent {
                     room_id: Some(room_id),
                     correlation_id: Some(mission_id),
@@ -7156,7 +7197,7 @@ impl PgStore {
             )
             .bind(corp_id)
             .bind(&key)
-            .fetch_one(&mut *tx)
+            .fetch_one(&mut **tx)
             .await?;
             if !recorded {
                 let version: i64 = sqlx::query_scalar(
@@ -7167,10 +7208,10 @@ impl PgStore {
                 .bind(&reason)
                 .bind(factory_id)
                 .bind(corp_id)
-                .fetch_one(&mut *tx)
+                .fetch_one(&mut **tx)
                 .await?;
                 if let Some(event) = append_event_tx(
-                    &mut tx,
+                    tx,
                     NewEvent {
                         room_id: Some(room_id),
                         aggregate_version: version,
@@ -7200,7 +7241,6 @@ impl PgStore {
             }
         }
         events.sort_by_key(|event| event.seq);
-        tx.commit().await?;
         Ok(events)
     }
 
@@ -8345,11 +8385,11 @@ impl PgStore {
         let existing_workspace_disposition: Option<String> =
             row.get("existing_workspace_disposition");
         let breaker_stage: String = row.get("breaker_stage");
-        if event_type == "run.usage"
+        if matches!(event_type.as_str(), "run.usage" | "run.session")
             && row.get::<String, _>("execution_mode") == "verification_only"
         {
             return Err(anyhow!(
-                "provider-free verification cannot report model usage"
+                "provider-free verification cannot report provider sessions or model usage"
             ));
         }
         if event_type == "run.session_terminated" {
@@ -9855,6 +9895,18 @@ impl PgStore {
         runner_id: &str,
         detail: &str,
     ) -> Result<Option<DomainEvent>> {
+        let mut tx = self.pool.begin().await?;
+        let event = Self::fail_runner_command_tx(&mut tx, command_id, runner_id, detail).await?;
+        tx.commit().await?;
+        Ok(event)
+    }
+
+    async fn fail_runner_command_tx(
+        tx: &mut Transaction<'_, Postgres>,
+        command_id: Uuid,
+        runner_id: &str,
+        detail: &str,
+    ) -> Result<Option<DomainEvent>> {
         let mut detail = detail.split_whitespace().collect::<Vec<_>>().join(" ");
         while detail.len() > 1_000 {
             detail.pop();
@@ -9862,7 +9914,6 @@ impl PgStore {
         if detail.is_empty() {
             detail = "runner rejected the durable command".to_owned();
         }
-        let mut tx = self.pool.begin().await?;
         let command = sqlx::query(
             r#"
             UPDATE runner_commands
@@ -9874,10 +9925,9 @@ impl PgStore {
         .bind(&detail)
         .bind(command_id)
         .bind(runner_id)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut **tx)
         .await?;
         let Some(command) = command else {
-            tx.commit().await?;
             return Ok(None);
         };
         let corp_id: Uuid = command.get("corp_id");
@@ -9902,7 +9952,7 @@ impl PgStore {
             .bind(command_id)
             .bind(corp_id)
             .bind(message_id)
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await?;
             Some(message_id)
         } else {
@@ -9919,12 +9969,12 @@ impl PgStore {
         )
         .bind(run_id)
         .bind(corp_id)
-        .fetch_one(&mut *tx)
+        .fetch_one(&mut **tx)
         .await?;
         let mission_id: Uuid = context.get("mission_id");
         let room_id: Uuid = context.get("room_id");
         let event = append_event_tx(
-            &mut tx,
+            tx,
             NewEvent {
                 room_id: Some(room_id),
                 correlation_id: Some(mission_id),
@@ -9947,7 +9997,6 @@ impl PgStore {
         )
         .await?
         .context("runner command failure event unexpectedly existed")?;
-        tx.commit().await?;
         Ok(Some(event))
     }
 
@@ -10190,12 +10239,13 @@ impl PgStore {
             .validate_tx(&mut tx, corp_id, mission_id)
             .await?;
         assert_room_membership_tx(&mut tx, corp_id, room_id, actor_id).await?;
-        let actor = sqlx::query("SELECT kind, role FROM actors WHERE id = $1 AND corp_id = $2")
-            .bind(actor_id)
-            .bind(corp_id)
-            .fetch_one(&mut *tx)
-            .await
-            .context("verification actor not found")?;
+        let actor =
+            sqlx::query("SELECT kind, role FROM actors WHERE id = $1 AND corp_id = $2 FOR SHARE")
+                .bind(actor_id)
+                .bind(corp_id)
+                .fetch_one(&mut *tx)
+                .await
+                .context("verification actor not found")?;
         let actor_kind: String = actor.get("kind");
         let actor_role: String = actor.get("role");
         if actor_kind != "human" {
@@ -10226,6 +10276,14 @@ impl PgStore {
                 ));
             }
         }
+        factory_base_refresh::validate_reviewer_tx(
+            &mut tx,
+            corp_id,
+            run_id,
+            actor_id,
+            decision_key,
+        )
+        .await?;
         let request_status: String = row.get("request_status");
         let run_status: String = row.get("run_status");
         let task_status: String = row.get("task_status");
@@ -11534,7 +11592,7 @@ async fn mark_runner_runs_lost_tx(
               SELECT 1 FROM runner_commands command
               WHERE command.run_id = r.id AND command.corp_id = r.corp_id
                 AND command.runner_id = r.runner_id
-                AND command.command_kind = 'factory_verification_recovery'
+                AND command.command_kind IN ('factory_verification_recovery','factory_base_refresh')
                 AND command.status = 'pending'
             )
           )
@@ -11555,6 +11613,7 @@ async fn mark_runner_runs_lost_tx(
         let corp_id: Uuid = row.get("corp_id");
         if finished_provider_review_tx(tx, corp_id, run_id).await?
             || checkpoint_retention::review_ready_tx(tx, corp_id, run_id).await?
+            || factory_base_refresh::review_ready_tx(tx, corp_id, run_id).await?
         {
             // The verifier finished. Its durable human review does not require
             // an active provider claim and must survive runner/server reconnect.
@@ -11721,6 +11780,38 @@ async fn create_mission_tx(
 ) -> Result<(MissionPlanIds, Vec<DomainEvent>)> {
     let (title, description, room_id) =
         mission_creation_admission_tx(tx, corp_id, requested_by, title, description, plan).await?;
+    create_mission_in_room_tx(
+        tx,
+        corp_id,
+        requested_by,
+        &title,
+        &description,
+        plan,
+        room_id,
+    )
+    .await
+}
+
+async fn create_mission_in_room_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    corp_id: Uuid,
+    requested_by: Uuid,
+    title: &str,
+    description: &str,
+    plan: &TaskGraphPlan,
+    room_id: Uuid,
+) -> Result<(MissionPlanIds, Vec<DomainEvent>)> {
+    let title = normalize_mission_title(title)?;
+    let description = normalize_mission_description(description)?;
+    assert_mission_operator_tx(tx, corp_id, requested_by).await?;
+    assert_room_membership_tx(tx, corp_id, room_id, requested_by).await?;
+    staffing::validate_staffing(plan)?;
+    if workspace_connections::plan_room_tx(tx, corp_id, requested_by, plan)
+        .await?
+        .is_some_and(|planned_room| planned_room != room_id)
+    {
+        return Err(anyhow!("mission source connection belongs to another room"));
+    }
     let mission_id = Uuid::new_v4();
     sqlx::query(
         r#"
@@ -12962,6 +13053,11 @@ async fn source_workspace_checkpoint_with_lock_tx(
     run_id: Uuid,
     lock_source: bool,
 ) -> Result<SourceWorkspaceCheckpoint> {
+    if let Some(checkpoint) =
+        factory_base_refresh::checkpoint_tx(tx, corp_id, run_id, lock_source).await?
+    {
+        return Ok(checkpoint);
+    }
     let source_lock = if lock_source { "FOR UPDATE OF run" } else { "" };
     let row = sqlx::query(&format!(
         r#"
@@ -13085,6 +13181,7 @@ async fn ensure_factory_recovery_authorizer_tx(
         FROM missions mission
         JOIN actors actor ON actor.id = $3 AND actor.corp_id = mission.corp_id
         WHERE mission.id = $1 AND mission.corp_id = $2
+        FOR SHARE OF actor
         "#,
     )
     .bind(mission_id)
@@ -14656,6 +14753,15 @@ async fn sanitize_verification_evidence_tx(
     .await?
     .map(map_stored_artifact);
 
+    let artifact = if artifact.is_some() {
+        artifact
+    } else {
+        let corp: Uuid = sqlx::query_scalar("SELECT corp_id FROM runs WHERE id=$1")
+            .bind(run_id)
+            .fetch_one(&mut **tx)
+            .await?;
+        factory_base_refresh::inherited_provider_artifact_tx(tx, corp, run_id).await?
+    };
     let mut sanitized = match artifact {
         Some(artifact) => {
             if status == "passed" {
@@ -15778,6 +15884,7 @@ async fn ensure_run_not_hard_blocked_tx(
     action: &str,
 ) -> Result<()> {
     ensure_breaker_allows_human_progress(stage, action)?;
+    factory_base_refresh::validate_progress_tx(tx, corp_id, run_id).await?;
     if hard_breaker_reached_tx(tx, corp_id, run_id).await? {
         return Err(anyhow!(
             "{action} is blocked because current budget or loop metrics require a hard breaker"
@@ -15791,7 +15898,8 @@ async fn hard_breaker_reached_tx(
     corp_id: Uuid,
     run_id: Uuid,
 ) -> Result<bool> {
-    let zero_provider = budget_checkpoint::zero_provider_allocation_tx(tx, corp_id, run_id).await?;
+    let zero_provider = budget_checkpoint::zero_provider_allocation_tx(tx, corp_id, run_id).await?
+        || factory_base_refresh::zero_provider_allocation_tx(tx, corp_id, run_id).await?;
     let reached = sqlx::query_scalar::<_, bool>(
         r#"
         SELECT

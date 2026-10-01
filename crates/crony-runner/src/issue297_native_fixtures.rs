@@ -298,6 +298,8 @@ impl Fixture {
             provider_artifact: None,
             verification_command_id: None,
             retained_provider_receipt: None,
+            base_refresh: None,
+            base_refresh_tree: None,
             checkpoint_verification: false,
             hard_boundary_checkpoint: Arc::default(),
         }

@@ -1,0 +1,680 @@
+{
+  "issue": 84,
+  "status": "failed",
+  "started_at_utc": "2026-10-01T00:07:10.598875+00:00",
+  "checks": [
+    {
+      "name": "docs",
+      "arguments": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "tools/check_docs.mjs"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-10-01T00:08:35.809094+00:00",
+      "finished_at_utc": "2026-10-01T00:08:35.929521+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-lock-publication-validation-r1-docs.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "repository-docs",
+      "arguments": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "tools/check_documentation.mjs"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-10-01T00:08:35.931560+00:00",
+      "finished_at_utc": "2026-10-01T00:08:36.063631+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-lock-publication-validation-r1-repository-docs.log",
+      "sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d"
+    },
+    {
+      "name": "personal-paths",
+      "arguments": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "tools/check_evidence_personal_paths.mjs",
+        "<USERPROFILE>\\.codex\\worktrees\\issue84-base-refresh\\ecorp\\docs\\evidence\\2026-09-30-factory-base-refresh-lock-correction"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-10-01T00:08:36.067663+00:00",
+      "finished_at_utc": "2026-10-01T00:08:53.711198+00:00",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-lock-publication-validation-r1-personal-paths.log",
+      "sha256": "7eb5fcc984d90e0ebcb02fadf8bc0f4128ac8bd0d3333f4b954ab0890e9c57fc"
+    }
+  ],
+  "scope": "After canonical process exit, verify original bytes, publication tree, full gate argv and Node discovery.",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parents": [
+    "31337c258360b7df2421e605e54d9a6f31753628"
+  ],
+  "branch": "codex/issue84-base-refresh",
+  "tested_tree": "e19869b13b8a4a59231a2d9babece644f2b9e43c",
+  "publication_tree": "469338026e6baa01a0c168e6c0b6bbc402a114e5",
+  "source_receipt_sha256": "27d23b52cdc5d98c2b09cf96d803aff283054b33423f5b8e643d70080ce99be6",
+  "physical_files_sha256": "db1161f52fd2ace790c0fecf494d165b2030d776fb37ac457fb1fce01c110a8b",
+  "files": [
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/canonical-report.json",
+      "sha256": "9560562eda1c0847287d46da3f4d32ec299eea90ef5ab74520e47bfd2b5bff59",
+      "bytes": 585761
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/dependencies/issue84-dependencies-r3.log",
+      "sha256": "f6c75d2d25a2bb05ddf5392e23367b5232cb72a25bbf3294084cc9df99f30896",
+      "bytes": 85
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/dependencies/issue84-steward-dependencies-r1.log",
+      "sha256": "8eadbbee213b945206c578d442dc63d627dbac0cb64941ddd6526991596aba1b",
+      "bytes": 26
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/dependencies/setup.json",
+      "sha256": "ff4bbd5e178269aba0f786afb3dadb7824584c03e0c03c36a5ee0c7be3bf0f18",
+      "bytes": 2095
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/drivers/assemble-issue84-lock-publication-r1.py.txt",
+      "sha256": "659b677ba5afcf75ab298f6c8d99a884c35d8d6923dc3c1cbc21bfac3efde86f",
+      "bytes": 19407
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/drivers/assemble-issue84-lock-publication-r2.py.txt",
+      "sha256": "54211729ecba387a865b174b815679f4eda9c598b0bf24e25049b51b1265f3ee",
+      "bytes": 20203
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/drivers/capture-issue84-lock-source-r1.py.txt",
+      "sha256": "b46f24a1419e51c88bd3996602fef2075b8c5f3ed6093c33cff446cba3a57747",
+      "bytes": 4179
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/drivers/commit-issue84-lock-publication-r1.py.txt",
+      "sha256": "d975f93551eda5ec02d8c5e5398abb95d4aa2d8a27cecd4760a52cebe17419be",
+      "bytes": 5264
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/drivers/e2e_factory_base_refresh.ps1.txt",
+      "sha256": "3d066f8be3bb42efe7193a095a983093b2e1b8b3ffd2498b635882c9aad57bf2",
+      "bytes": 12021
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/drivers/issue84_lock_publication_r1.py.txt",
+      "sha256": "8b788a549c0a53b92bb594e63d3eb16671d2c29ef8c8a73eac180271426ace0f",
+      "bytes": 13288
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/drivers/issue84_lock_source_guard_r1.py.txt",
+      "sha256": "a7bf86c6efacd22bd77113b068427e9eb1feb50fec70a82b6267cb5e58fa5524",
+      "bytes": 3637
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/drivers/prepare-issue84-lock-assembly-retry-r2.py.txt",
+      "sha256": "9a9b9b276d5f3da093441ac5a2dfb65e408cc1cd41d0eb5b11d60465a566c8ea",
+      "bytes": 7591
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/drivers/run-issue84-build.ps1.txt",
+      "sha256": "504eed3926016a56cc04f0f1a648ea7bcbdab3eec555050081ca1d620bcf6dc8",
+      "bytes": 2551
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/drivers/run-issue84-lock-validation-r1.py.txt",
+      "sha256": "9cb656bf7458f224a6f1325d74d9d7a7778161cff5be4ea90fd72a70f69c38f2",
+      "bytes": 11011
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/drivers/run-issue84-lock-validation-r2.py.txt",
+      "sha256": "20f11f0733c1e9ebe4723b5d76a717aefdeaf8038cc3210e6d378a07c6cb6899",
+      "bytes": 11463
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/drivers/run-issue84-store.ps1.txt",
+      "sha256": "31137e5f7f50a769478f19078abd75b2a5da30bdc8fc40cd270494e1de0c8c65",
+      "bytes": 5883
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/drivers/scan-issue84-lock-publication-r1.py.txt",
+      "sha256": "822deb19cbbaae0dd68cd66b8c97cecf26fbeb61be5407ae5f6f7833f7353ffe",
+      "bytes": 6008
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/drivers/validate-issue84-lock-publication-r1.py.txt",
+      "sha256": "16b7f2060d15913b9757f1009f5d9610c2299e27e74609fb5c469bf6c0d16be0",
+      "bytes": 9461
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/drivers/verify-issue84-lock-source-guard-r1.py.txt",
+      "sha256": "33dd927b74282e4fa55c5cf8ba8d2d04e39d4129c302d68473be435714eda5f3",
+      "bytes": 6273
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/guard/native-regressions.json",
+      "sha256": "a42b91afea19cfa986815e6682e5e7d61639df589838c2c5e450e7b6c54ebf1b",
+      "bytes": 5441
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/assembly-r1-diagnosis.json",
+      "sha256": "36b86bd36f60a83dcda8b201fd2cc35e9b7b25281f153ce117b78f44002efd8e",
+      "bytes": 2574
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/assembly-r1-session-exit.json",
+      "sha256": "36e4b41eb2f93b28374c6122eeb6d5e54aec2ffeb317d54036d1923cca6d93e7",
+      "bytes": 305
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/native-wrapper-schema-correction.json",
+      "sha256": "12ca3b998b4f9cbfe031071e7308e6568667406b5b4f955bcb6aafa925d04c57",
+      "bytes": 1808
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/passing-publication/issue84-publication-evidence-validation-r3.json",
+      "sha256": "c645edd3b3c32301cb5b5a6444a3775e213d41656fe183bccc6cf9a8ec2ecd93",
+      "bytes": 29311
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/passing-publication/issue84-publication-validation-r3-diff-check.log",
+      "sha256": "d725c56240465b862849b5aa573cfce237126c93b643d7941c2d4710491fc8fe",
+      "bytes": 4077
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/passing-publication/issue84-publication-validation-r3-docs.log",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "bytes": 1
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/passing-publication/issue84-publication-validation-r3-gitleaks.log",
+      "sha256": "4b5d111ff5f2493fd29303eec766ccedec7316903d289fc146797121d85cb94a",
+      "bytes": 79
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/passing-publication/issue84-publication-validation-r3-personal-paths.log",
+      "sha256": "7eb5fcc984d90e0ebcb02fadf8bc0f4128ac8bd0d3333f4b954ab0890e9c57fc",
+      "bytes": 40
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/passing-publication/issue84-publication-validation-r3-repository-docs.log",
+      "sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "bytes": 276
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/passing-publication/issue84-publication-validation-r3-session-exit.json",
+      "sha256": "f5293c0db79735ad513279dfd4ee940611f7eed5b9834c9cec10936803ed9143",
+      "bytes": 494
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/passing-publication/issue84-publication-validation-r4-session-exit.json",
+      "sha256": "87f6e5bc5a9d9ef3d29529b29177175863f757ffc9fefea6ae4b5c14a63ba6de",
+      "bytes": 308
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/implementation-self-review.json",
+      "sha256": "51a726f36879e435a01144282a20e31fa802473ac41640162f0822ca3914dcfc",
+      "bytes": 2591
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/build-driver.json",
+      "sha256": "d0482fb36d37b8e1f64a43fada2bcb3b84c787b1487416f4660d05ae666a91ec",
+      "bytes": 4331
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/build-native-driver.json",
+      "sha256": "27a0c2697034d2c694aef2cfa35fab3c662cc805a15c7bbc3c9ce35da8c96025",
+      "bytes": 44740
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/build-native.log",
+      "sha256": "cf947e6c845967e5b6f70b8b3ea0153b3db579c00b337655d756c41a8fb03472",
+      "bytes": 410
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/build-session-exit.json",
+      "sha256": "d13f8bf951f702ac932bfc7a6f1308535357516a772fa84bbc93de9b52a14ff9",
+      "bytes": 175
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/build.log",
+      "sha256": "8c3cc8c585624cb660a88eca9a1ab6fa63348ace4d4c72d3e9e93413ec4050a1",
+      "bytes": 94606
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/check-driver.json",
+      "sha256": "6dba5b4012a269abb2d3c0613a4bf6fd1e20175f6e45b33c705f0d3d1c5925f3",
+      "bytes": 13284
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/check-session-exit.json",
+      "sha256": "af88d12d548a0061715cf52b6ddbe3620598ddabe06ac78f9d8e9667bef0ed45",
+      "bytes": 167
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/check.log",
+      "sha256": "5a9ebd8481aa09402076254aef46f5f5cf3db68d369ade1b7071a7106a00f5ae",
+      "bytes": 9960
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/native-driver.json",
+      "sha256": "bdca3ea4d50c127d8d066ea193ea5c9f96e95aaf276cf2c373670da3eb229716",
+      "bytes": 6600
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/native-session-exit.json",
+      "sha256": "3a13d5e5f304931da5e2ec600b57074bebede67499ed1080e1b8cb0614a87c7f",
+      "bytes": 167
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/native.log",
+      "sha256": "aeda1c061ad85e1871d882bdb6560f7b56fcb075248153b5ab1a4d95072af2d5",
+      "bytes": 560
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/store-driver.json",
+      "sha256": "eb61daabf6a98d2f37112e27967345d5f2cd207a57f8d4cfc4dcaaa533939957",
+      "bytes": 3963
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/store-native-driver.json",
+      "sha256": "015809887c2ec3a88e0fd239d6711fbfb79ecbb56f8416ebce04597e9016531a",
+      "bytes": 44575
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/store-native.log",
+      "sha256": "5acff4c30419eef07a0299717614045cd20f39ec940d59e52ab2a8804f501a26",
+      "bytes": 4582
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/store-session-exit.json",
+      "sha256": "c2f0e86c5e3eaa77217d356482b7f2d50dbf8d8b948dbb97805ac51b4b1b7870",
+      "bytes": 207
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/store.log",
+      "sha256": "0f3f7bc3148021ba9c8ede8270dd268508fdb8688d429d4875f0f343571a3a4b",
+      "bytes": 4936
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/native/acceptance-20260930T230715187-b6890455bc404db68702e57d843610da.stderr.log",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "bytes": 1
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/native/acceptance-20260930T230715187-b6890455bc404db68702e57d843610da.stdout.log",
+      "sha256": "0cfc49946328e483975b363f18b3f4546f7d7f1f06ceabde4e43d4e71ea20972",
+      "bytes": 801
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/native/acceptance.json",
+      "sha256": "430a2c539209d398ba6ed307e00e6c558d6f9a8dc32ddd8fedf0fe5f47dfeada",
+      "bytes": 1390101
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/native/driver.json",
+      "sha256": "aeda1c061ad85e1871d882bdb6560f7b56fcb075248153b5ab1a4d95072af2d5",
+      "bytes": 560
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/native/fixture-ownership.json",
+      "sha256": "3565b5a3cd1f6f997ab653e766f156189a1374e7f628a91f2bd605355be9786a",
+      "bytes": 3517
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/native/refresh-awaiting-review.png",
+      "sha256": "548f08d27e933ee84e8eb554f5ac12a7bcd433a10036135e0488932256081a65",
+      "bytes": 277809
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/native/refresh-reviewed-reload.png",
+      "sha256": "b66450fa17019fd7bce9f791bc19eedae3fedffa55a241f8c15147a30748f9ba",
+      "bytes": 259322
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/README.md",
+      "sha256": "1292a581b5220523929deebe283295a182ab6841fba0c07336debba1f0284b03",
+      "bytes": 3614
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/regression/first-attempt-diagnosis.json",
+      "sha256": "3e8944a5d3922b26c42defee7dd36d143c45bec46bef1d42e8453e8dfaa3dee8",
+      "bytes": 726
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/regression/issue84-lock-order-r1-session-exit.json",
+      "sha256": "1904c9f20db1556ffcca11943ee03e4decd7d823fb70e1501ed72d653d952354",
+      "bytes": 491
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/regression/issue84-lock-order-r1.json",
+      "sha256": "7d474576334abd70f315177921cc811c0c6320c8ea2b6d3e87d5da02d1d80b97",
+      "bytes": 44606
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/regression/issue84-lock-order-r1.log",
+      "sha256": "874fddcc916ee933917ca62babf7570dfebc7a8b9cb3c4a9f5ba577b0b6f6f8a",
+      "bytes": 3552
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/regression/issue84-lock-order-r2-session-exit.json",
+      "sha256": "4fa4951ac1d43696aa1e1c7f678c895c0c383a63d1ecbc9b3e87757f0dd5424c",
+      "bytes": 512
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/regression/issue84-lock-order-r2.json",
+      "sha256": "5b2d8f004f641bb8edd5d963be9372cbeae7999d48f6693717cde3592b9afcc6",
+      "bytes": 44606
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/regression/issue84-lock-order-r2.log",
+      "sha256": "087cabd8439bc42de71299521f3fc2f4acabf1453594e9cd422f318618e3456b",
+      "bytes": 3483
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/regression/issue84-lock-order-r3-session-exit.json",
+      "sha256": "f19da7b0900012f08a33cb7913604ca187ed517a5732690ddec5a2e86cf08d0f",
+      "bytes": 455
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/regression/issue84-lock-order-r3.json",
+      "sha256": "5a02b650a7f406960d45da65baedb7c86225daa2858aa12d2759bc827fff136a",
+      "bytes": 44600
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/regression/issue84-lock-order-r3.log",
+      "sha256": "dbe9600ee1abf7777bd6b3d72f2d78b8bd4aecf4cbc30dd0080c84ca15d0989e",
+      "bytes": 1568
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/reviewed-code.patch.json",
+      "sha256": "40f9d25989dc00d726de6a36cf00c677a1a5d56d12156b3000226014870c4121",
+      "bytes": 7889
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/source-equivalence.json",
+      "sha256": "27d23b52cdc5d98c2b09cf96d803aff283054b33423f5b8e643d70080ce99be6",
+      "bytes": 1202606
+    },
+    {
+      "path": "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/summary.json",
+      "sha256": "175f99c7d4578bc5525fb6b6a563e22f0c0c9a6752f0cd753173a6c01f7840a7",
+      "bytes": 49403
+    }
+  ],
+  "original_physical_files_unchanged": true,
+  "canonical_native_same_complete_physical_source": true,
+  "evidence_added_after_code_execution": true,
+  "full_plan_unchanged": true,
+  "git_preserves_packet_bytes": true,
+  "final_plan": [
+    {
+      "name": "migrations",
+      "argv": [
+        "node",
+        "tools/check_migrations.mjs"
+      ]
+    },
+    {
+      "name": "state-audit-compatibility",
+      "argv": [
+        "node",
+        "tools/check_state_audit_compatibility.mjs"
+      ]
+    },
+    {
+      "name": "state-audit-evm",
+      "argv": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "crony-audit",
+        "--test",
+        "ethereum_local_chain"
+      ]
+    },
+    {
+      "name": "docs",
+      "argv": [
+        "node",
+        "tools/check_docs.mjs"
+      ]
+    },
+    {
+      "name": "repository-docs",
+      "argv": [
+        "node",
+        "tools/check_documentation.mjs"
+      ]
+    },
+    {
+      "name": "node-tests",
+      "argv": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-timeout=180000",
+        "--test-reporter=tap",
+        ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+        ".github/skills/code-review/tests/executor-state.test.mjs",
+        ".github/skills/code-review/tests/package.test.mjs",
+        "apps/web/src/AgentPinControl.test.mjs",
+        "apps/web/src/DelegatedPanel.test.mjs",
+        "apps/web/src/VerificationPolicyEditor.test.mjs",
+        "apps/web/src/agentPinOperation.test.mjs",
+        "apps/web/src/evidenceNavigation.test.mjs",
+        "apps/web/src/evidenceSelection.test.mjs",
+        "apps/web/src/factoryAuthority.test.mjs",
+        "apps/web/src/factoryAuthorityConnection.test.mjs",
+        "apps/web/src/factoryCheckpointRecovery.test.mjs",
+        "apps/web/src/factoryControllerSelection.test.mjs",
+        "apps/web/src/factoryPolling.test.mjs",
+        "apps/web/src/formText.test.mjs",
+        "apps/web/src/missionCollaboration.test.mjs",
+        "apps/web/src/missionComposer.test.mjs",
+        "apps/web/src/missionOriginContext.test.mjs",
+        "apps/web/src/missionPreview.test.mjs",
+        "apps/web/src/missionProjection.test.mjs",
+        "apps/web/src/missionResultContext.test.mjs",
+        "apps/web/src/missionReviewSummary.test.mjs",
+        "apps/web/src/missionRuntime.test.mjs",
+        "apps/web/src/office/characterAssets.test.mjs",
+        "apps/web/src/office/officeModel.test.mjs",
+        "apps/web/src/runActivity.test.mjs",
+        "apps/web/src/snapshotRefresh.test.mjs",
+        "apps/web/src/verificationDecisionOperation.test.mjs",
+        "apps/web/src/verificationPolicy.test.mjs",
+        "apps/web/src/workResultCard.test.mjs",
+        "apps/web/src/workflowContext.test.mjs",
+        "apps/web/src/workspaceConnections.test.mjs",
+        "scenarios/repo-steward/actions.test.mjs",
+        "scenarios/repo-steward/feedback-cli.test.mjs",
+        "scenarios/repo-steward/feedback.test.mjs",
+        "scenarios/repo-steward/maintenance.test.mjs",
+        "scenarios/repo-steward/recurring-audit.test.mjs",
+        "scenarios/repo-steward/steward.test.mjs",
+        "scenarios/repo-steward/teams-host.test.mjs",
+        "tests/readiness/cli.test.js",
+        "tools/budget_fixture.test.mjs",
+        "tools/check_deliverable_diff.test.mjs",
+        "tools/check_documentation.test.mjs",
+        "tools/check_evidence_launch.test.mjs",
+        "tools/check_evidence_native_build.test.mjs",
+        "tools/check_evidence_personal_paths.test.mjs",
+        "tools/check_migrations.test.mjs",
+        "tools/check_replay_source.test.mjs",
+        "tools/checkpoint_application_fixture.test.mjs",
+        "tools/ci_external_adapters_windows.test.mjs",
+        "tools/ci_factory_repository.test.mjs",
+        "tools/ci_maintenance.test.mjs",
+        "tools/ci_owned_test_server.test.mjs",
+        "tools/ci_runner_tests.test.mjs",
+        "tools/consume_operation_receipt.test.mjs",
+        "tools/controlled_runner_fixture.test.mjs",
+        "tools/copilot_fs_wire_observer.test.mjs",
+        "tools/copilot_fs_wire_process.test.mjs",
+        "tools/copilot_probe_boundaries.test.mjs",
+        "tools/copilot_probe_environment.test.mjs",
+        "tools/copilot_probe_native_read.test.mjs",
+        "tools/copilot_probe_process.test.mjs",
+        "tools/coverage_web_models.test.mjs",
+        "tools/delegated_lifecycle.test.mjs",
+        "tools/delegated_qa_root.test.mjs",
+        "tools/e2e_agent_pinning.test.mjs",
+        "tools/e2e_checkpoint_verification.test.mjs",
+        "tools/e2e_evidence_selection.test.mjs",
+        "tools/e2e_external_adapters.test.mjs",
+        "tools/e2e_external_adapters_http.test.mjs",
+        "tools/e2e_factory_budget_recovery.test.mjs",
+        "tools/e2e_late_termination.test.mjs",
+        "tools/e2e_predispatch_failure.test.mjs",
+        "tools/e2e_stopped_source_checkpoint.test.mjs",
+        "tools/e2e_verifier_browser_retention.test.mjs",
+        "tools/e2e_verifier_browser_scope.test.mjs",
+        "tools/factory_budget_fixture_config.test.mjs",
+        "tools/factory_budget_git.test.mjs",
+        "tools/factory_budget_process.test.mjs",
+        "tools/factory_budget_provenance.test.mjs",
+        "tools/factory_budget_start.test.mjs",
+        "tools/fake_codex_budget_stream.test.mjs",
+        "tools/fake_github_quota.test.mjs",
+        "tools/fixture_source_identity.test.mjs",
+        "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+        "tools/identity_fixture.test.mjs",
+        "tools/import_operation_behavior.test.mjs",
+        "tools/issue161/qa-api-provenance.test.mjs",
+        "tools/issue161/qa-plan.test.mjs",
+        "tools/local_source_commit.test.mjs",
+        "tools/local_stack_lifecycle.test.mjs",
+        "tools/local_stack_operation.test.mjs",
+        "tools/native_qualification_attempt.test.mjs",
+        "tools/native_qualification_finality.test.mjs",
+        "tools/native_qualification_trust.test.mjs",
+        "tools/office_model.test.mjs",
+        "tools/operation_feedback.test.mjs",
+        "tools/operation_receipt.test.mjs",
+        "tools/owned_test_stack.test.mjs",
+        "tools/probe_mcp.test.mjs",
+        "tools/qa_multiplayer_object_sources.test.mjs",
+        "tools/readiness_contract.test.mjs",
+        "tools/readiness_replay_contract.test.mjs",
+        "tools/redact_evidence_capabilities.test.mjs",
+        "tools/research_handoff_adversarial.test.mjs",
+        "tools/research_handoff_browser.test.mjs",
+        "tools/research_handoff_native.test.mjs",
+        "tools/runner_ack_fault_relay.test.mjs",
+        "tools/secret_scan.test.mjs",
+        "tools/secret_scan_native.test.mjs",
+        "tools/security_fixtures.test.mjs",
+        "tools/startup_validation_harness.test.mjs",
+        "tools/task_graph_fixture.test.mjs",
+        "tools/verifier_browser.test.mjs",
+        "tools/verify_toolchain.test.mjs"
+      ]
+    },
+    {
+      "name": "format",
+      "argv": [
+        "cargo",
+        "fmt",
+        "--check"
+      ]
+    },
+    {
+      "name": "clippy",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    },
+    {
+      "name": "rust-tests",
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ]
+    },
+    {
+      "name": "web-build",
+      "argv": [
+        "pnpm",
+        "build:web"
+      ]
+    },
+    {
+      "name": "web-lint",
+      "argv": [
+        "pnpm",
+        "lint:web"
+      ]
+    }
+  ],
+  "issue_completed": false,
+  "original_index_sha256": "ec234d868dce88ee58b975e54efb1b935103ca9c1ebaaf81aad708db51ae7b1e",
+  "explicit_ignored_publication_paths": [
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/dependencies/issue84-dependencies-r3.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/dependencies/issue84-steward-dependencies-r1.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/passing-publication/issue84-publication-validation-r3-diff-check.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/passing-publication/issue84-publication-validation-r3-docs.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/passing-publication/issue84-publication-validation-r3-gitleaks.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/passing-publication/issue84-publication-validation-r3-personal-paths.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/history/passing-publication/issue84-publication-validation-r3-repository-docs.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/build-native.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/build.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/check.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/native.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/store-native.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/lanes/store.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/native/acceptance-20260930T230715187-b6890455bc404db68702e57d843610da.stderr.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/native/acceptance-20260930T230715187-b6890455bc404db68702e57d843610da.stdout.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/regression/issue84-lock-order-r1.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/regression/issue84-lock-order-r2.log",
+    "docs/evidence/2026-09-30-factory-base-refresh-lock-correction/regression/issue84-lock-order-r3.log"
+  ],
+  "secret_scan": {
+    "version": "8.30.1",
+    "native_sha256": "17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c",
+    "exit_code": 42,
+    "finding_count": 5,
+    "policy_sha256": {
+      ".gitleaksignore": "a8d6e15fa76e0c88f4266bca6d12f909f494a0ff646ef8699e88b8d9daec0ada",
+      ".gitleaks.toml": null
+    },
+    "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-lock-publication-validation-r1-gitleaks.log",
+    "log_sha256": "86c1626092462302c644276811ea3acff14182bf2ed9061fdfcc329bf4fda0ec",
+    "finding_metadata": [
+      {
+        "rule": "generic-api-key",
+        "file": "<USERPROFILE>/.codex/worktrees/issue84-base-refresh/ecorp/docs/evidence/2026-09-30-factory-base-refresh-lock-correction/native/acceptance.json",
+        "start_line": 346
+      },
+      {
+        "rule": "generic-api-key",
+        "file": "<USERPROFILE>/.codex/worktrees/issue84-base-refresh/ecorp/docs/evidence/2026-09-30-factory-base-refresh-lock-correction/native/acceptance.json",
+        "start_line": 395
+      },
+      {
+        "rule": "generic-api-key",
+        "file": "<USERPROFILE>/.codex/worktrees/issue84-base-refresh/ecorp/docs/evidence/2026-09-30-factory-base-refresh-lock-correction/native/acceptance.json",
+        "start_line": 405
+      },
+      {
+        "rule": "generic-api-key",
+        "file": "<USERPROFILE>/.codex/worktrees/issue84-base-refresh/ecorp/docs/evidence/2026-09-30-factory-base-refresh-lock-correction/native/acceptance.json",
+        "start_line": 922
+      },
+      {
+        "rule": "generic-api-key",
+        "file": "<USERPROFILE>/.codex/worktrees/issue84-base-refresh/ecorp/docs/evidence/2026-09-30-factory-base-refresh-lock-correction/native/acceptance.json",
+        "start_line": 934
+      }
+    ]
+  },
+  "failure": "Triage secret findings before publication",
+  "finished_at_utc": "2026-10-01T00:08:54.918238+00:00"
+}

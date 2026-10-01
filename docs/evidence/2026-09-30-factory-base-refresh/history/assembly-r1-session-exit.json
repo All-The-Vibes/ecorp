@@ -1,0 +1,14 @@
+{
+  "issue": 84,
+  "session_id": 46208,
+  "exit_code": 1,
+  "observation": "write_stdin returned process exit",
+  "recorded_at_utc": "2026-09-30T21:50:51.410989+00:00",
+  "script": "assemble-issue84-publication-r1.py",
+  "script_sha256": "2a17d0fb3a3857f34f54ecc423c18a0325096dfc82ddc39a313deba3139a21b6",
+  "failure": "TypeError: unhashable type: 'list' at scan_names construction, line 36",
+  "diagnosis": "The physical scan receipt stores [path, SHA-256] pairs. R1 expected strings or dictionaries.",
+  "source_receipt_created": false,
+  "packet_receipt_created": false,
+  "qualification": "This is an evidence-assembly failure after successful canonical validation; not a product-test failure."
+}

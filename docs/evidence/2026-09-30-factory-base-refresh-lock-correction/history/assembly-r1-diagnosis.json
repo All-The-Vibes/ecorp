@@ -1,0 +1,58 @@
+{
+  "issue": 84,
+  "pr": 390,
+  "recorded_at_utc": "2026-10-01T00:04:57.855258+00:00",
+  "failure": "The first evidence assembler sanitized JSON values but retained absolute personal paths used as object keys in lanes/store-driver.json.",
+  "status": "failed-attempt-preserved-and-key-redaction-corrected",
+  "observed_exit_sha256": "ec547cd4bc044d8fe2987780b3dcd7df37f445080d1278215a56095a2bacad90",
+  "failed_assembler_sha256": "808fc741a704a0cb1a6527a256b57d51128207a40c963af4f0d12ef6e28434ce",
+  "replacement_assembler_sha256": "7c95112beeafc1cae235250d7e288ce0ce66e5b4ac2635ba80c25a4c246033e5",
+  "preserved_partial_packet": [
+    {
+      "file": "canonical-report.json",
+      "sha256": "9560562eda1c0847287d46da3f4d32ec299eea90ef5ab74520e47bfd2b5bff59",
+      "bytes": 585761
+    },
+    {
+      "file": "dependencies/setup.json",
+      "sha256": "ff4bbd5e178269aba0f786afb3dadb7824584c03e0c03c36a5ee0c7be3bf0f18",
+      "bytes": 2095
+    },
+    {
+      "file": "implementation-self-review.json",
+      "sha256": "6e052e85e7adf3438217e877558e867b066c0d5f94dfed5a553507a5395f590a",
+      "bytes": 2591
+    },
+    {
+      "file": "native/acceptance.json",
+      "sha256": "430a2c539209d398ba6ed307e00e6c558d6f9a8dc32ddd8fedf0fe5f47dfeada",
+      "bytes": 1390101
+    },
+    {
+      "file": "native/driver.json",
+      "sha256": "aeda1c061ad85e1871d882bdb6560f7b56fcb075248153b5ab1a4d95072af2d5",
+      "bytes": 560
+    },
+    {
+      "file": "source-equivalence.json",
+      "sha256": "75a26a5c97f80175e6712346cad13bfdba7c5fddcb9c78e22e325452cc7eaeb5",
+      "bytes": 1202606
+    }
+  ],
+  "preserved_source_receipt_sha256": "75a26a5c97f80175e6712346cad13bfdba7c5fddcb9c78e22e325452cc7eaeb5",
+  "preserved_self_review_sha256": "6e052e85e7adf3438217e877558e867b066c0d5f94dfed5a553507a5395f590a",
+  "source_head": "31337c258360b7df2421e605e54d9a6f31753628",
+  "tested_tree": "e19869b13b8a4a59231a2d9babece644f2b9e43c",
+  "physical_files_sha256": "db1161f52fd2ace790c0fecf494d165b2030d776fb37ac457fb1fce01c110a8b",
+  "product_source_and_original_validation_unchanged": true,
+  "sanitizer_regressions": {
+    "original_failure_reproduced": true,
+    "passed": 3,
+    "cases": [
+      "personal path in JSON driver key",
+      "nested keys, values and fixture credential redaction",
+      "fail closed on sanitized-key collision"
+    ]
+  },
+  "recovery": "Moved only the newly created failed partial packet and its source/self-review receipts to the named run-owned failed-attempt directory. All bytes and hashes were verified. No files deleted and no product tests rerun."
+}

@@ -2182,6 +2182,12 @@ async fn issue283_publication_gate_precedes_governance_locks(pool: PgPool) {
 
 async fn publication_state(store: &PgStore) -> Value {
     let mut snapshot = state(store).await;
+    snapshot["base_refreshes"] = sqlx::query_scalar(
+        "SELECT coalesce(jsonb_agg(to_jsonb(r) ORDER BY id),'[]') FROM factory_base_refreshes r",
+    )
+    .fetch_one(&store.pool)
+    .await
+    .unwrap();
     snapshot["publication"] = sqlx::query_scalar(
         "SELECT jsonb_build_object(
           'rows',(SELECT coalesce(jsonb_agg(to_jsonb(p) ORDER BY id),'[]') FROM pull_request_publications p),
@@ -2205,6 +2211,7 @@ fn assert_publication_preserves_models(before: &Value, after: &Value) {
         "deliverables",
         "verification_evidence",
         "verification_requests",
+        "base_refreshes",
     ] {
         assert_eq!(after[key], before[key], "publication must not change {key}");
     }

@@ -1,0 +1,75 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$taskProduct = '<USERPROFILE>\.codex\worktrees\issue84-base-refresh\ecorp'
+$taskPython = '<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe'
+$taskLog = Join-Path $PSScriptRoot 'issue84-check-r2.log'
+$taskReceipt = Join-Path $PSScriptRoot 'issue84-check-r2.json'
+$taskNativeReceipt = Join-Path $PSScriptRoot 'issue84-check-r2-native.json'
+if ((Test-Path -LiteralPath $taskLog) -or (Test-Path -LiteralPath $taskReceipt) -or (Test-Path -LiteralPath $taskNativeReceipt)) { throw 'Preserve existing validation evidence.' }
+$taskSetup = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'issue84-validation-environment-r3.json') -Raw | ConvertFrom-Json
+if ($taskSetup.status -cne 'passed' -or $taskSetup.exit_code -ne 0 -or !$taskSetup.source_unchanged) { throw 'Required local test setup has not passed.' }
+function Get-SourceIdentity {
+    @(& git -C $taskProduct ls-files --cached --others --exclude-standard | Sort-Object -Unique | ForEach-Object {
+        [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $taskProduct $_) -Algorithm SHA256).Hash.ToLowerInvariant()}
+    })
+}
+$taskReadiness = Join-Path $taskProduct 'output/readiness'
+$taskBeforeReports = if (Test-Path -LiteralPath $taskReadiness) { @(Get-ChildItem -LiteralPath $taskReadiness -File -Filter '*-full.json' | Select-Object -ExpandProperty FullName) } else { @() }
+$taskPriorPath = $env:PATH
+$taskRemovedEnvironment=@{}
+# Do not inherit product credentials, database authorities, runtime flags or secret-scanner configuration.
+foreach ($item in @(Get-ChildItem Env:)) {
+    if ($item.Name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|GITLEAKS_|AZURE_|GIT_)' -or $item.Name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','PYTHONPATH','PYTHONHOME','RUST_TEST_THREADS')) {
+        $taskRemovedEnvironment[$item.Name]=$item.Value
+        [Environment]::SetEnvironmentVariable($item.Name,$null,'Process')
+    }
+}
+$env:PATH=(Split-Path -Parent $taskPython) + [IO.Path]::PathSeparator + $taskPriorPath
+$taskResult = [ordered]@{
+    command='pnpm check';started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');worktree=$taskProduct
+    head=(& git -C $taskProduct rev-parse HEAD);source_files=(Get-SourceIdentity)
+    status='running';log=$taskLog;node_version=(& node --version);pnpm_version=(& pnpm --version)
+    python_executable=(Get-Command python).Source;python_version=(& python --version)
+    rust_test_threads=$null;rust_thread_configuration='RUST_TEST_THREADS explicitly unset; native Cargo defaults'
+    dependency_receipt='issue84-validation-environment-r3.json';dependency_receipt_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'issue84-validation-environment-r3.json') -Algorithm SHA256).Hash.ToLowerInvariant()
+    assurance='Canonical local validation. Ignored or unavailable tests are not passes; no hosted CI claim.'
+}
+$taskResult | ConvertTo-Json -Depth 25 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+$taskCode = 1
+Push-Location $taskProduct
+try {
+    if ($taskResult.python_executable -cne $taskPython) { throw 'Python resolved to an unsupported executable.' }
+    if ($taskResult.head -cne '878a1774774b0630c904cbaf4b05e1b346777817') { throw 'Unexpected head.' }
+    & pnpm check *> $taskLog
+    $taskCode = $LASTEXITCODE
+    $taskResult.exit_code = $taskCode
+    $taskResult.status = if ($taskCode -eq 0) {'passed'} else {'failed'}
+} catch {
+    $taskCode=1; $taskResult.status='failed'; $taskResult.failure=$_.Exception.Message
+} finally {
+    Pop-Location
+    $taskResult.source_unchanged = (ConvertTo-Json -InputObject $taskResult.source_files -Depth 5 -Compress) -ceq (ConvertTo-Json -InputObject (Get-SourceIdentity) -Depth 5 -Compress)
+    if (!$taskResult.source_unchanged) { $taskCode=1; $taskResult.status='failed'; $taskResult.failure='Source changed during validation.' }
+    if (Test-Path -LiteralPath $taskReadiness) {
+        $taskNewReports = @(Get-ChildItem -LiteralPath $taskReadiness -File -Filter '*-full.json' | Where-Object { $_.FullName -notin $taskBeforeReports })
+        if ($taskNewReports.Count -eq 1) {
+            Copy-Item -LiteralPath $taskNewReports[0].FullName -Destination $taskNativeReceipt
+            $taskNative = Get-Content -LiteralPath $taskNativeReceipt -Raw | ConvertFrom-Json
+            $taskResult.native_report = $taskNativeReceipt
+            $taskResult.native_sha256 = (Get-FileHash -LiteralPath $taskNativeReceipt -Algorithm SHA256).Hash.ToLowerInvariant()
+            $taskResult.native_status = $taskNative.status
+            $taskResult.checks = $taskNative.checks
+            $taskResult.not_run = $taskNative.notRun
+        } else { $taskResult.native_report_error='Expected exactly one owned canonical report.'; $taskCode=1; $taskResult.status='failed' }
+    }
+    $taskResult.exit_code=$taskCode
+    if (Test-Path -LiteralPath $taskLog) { $taskResult.log_sha256=(Get-FileHash -LiteralPath $taskLog -Algorithm SHA256).Hash.ToLowerInvariant() }
+    $taskResult.finished_at_utc = [DateTimeOffset]::UtcNow.ToString('o')
+    $taskResult | ConvertTo-Json -Depth 25 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+    $env:PATH=$taskPriorPath
+    foreach ($name in $taskRemovedEnvironment.Keys) { [Environment]::SetEnvironmentVariable($name,$taskRemovedEnvironment[$name],'Process') }
+    $taskRemovedEnvironment.Clear()
+}
+[pscustomobject]@{status=$taskResult.status;exit_code=$taskCode;source_unchanged=$taskResult.source_unchanged;native_report=$taskResult.native_report;not_run=$taskResult.not_run;checks=@($taskResult.checks | Select-Object name,passed,exitCode,counts)} | ConvertTo-Json -Depth 8
+Get-Content -LiteralPath $taskLog -Tail 12
+exit $taskCode

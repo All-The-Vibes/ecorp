@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "exit_code": 0,
+  "source_unchanged": true,
+  "database_stopped": true,
+  "results": [
+    "test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 551 filtered out; finished in 134.15s"
+  ],
+  "failure": null,
+  "receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260930T155855Z\\issue84-store-r12.json"
+}
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.16s
+     Running unittests src\lib.rs (target\debug\deps\crony_store-6a2535fa07039b57.exe)
+
+running 24 tests
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::issue84_acknowledged_refresh_survives_stale_artifact_dispatch_callbacks ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::issue84_adopted_audit_archive_retains_both_missions_and_exact_lineage ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::issue84_adoption_requires_unchanged_source_and_complete_saved_policies ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::issue84_current_reviewer_role_and_membership_fence_adoption_and_publication ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::issue84_dispatch_revalidates_selection_contracts_and_connection ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::issue84_emergency_stop_fences_native_dispatch_and_late_progress ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::issue84_final_dispatch_rejects_altered_command_and_foreign_scope ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::issue84_inherited_provider_evidence_preserves_exact_producer_identity ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::issue84_original_stop_after_adoption_blocks_publication ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::issue84_original_stop_after_review_blocks_adoption ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::issue84_quarantine_fences_native_dispatch ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::issue84_refresh_dispatch_failure_and_command_retirement_are_atomic ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::issue84_started_refresh_preserves_pending_ack_during_stale_failure ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::issue84_stop_breaker_fences_native_dispatch ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::issue84_zero_provider_exemption_rejects_session_and_provider_metadata ... ok
+Observed refresh PID 36408 waiting behind ledger holder 32004: SELECT ledger_id FROM state_audit_ledgers WHERE corp_id=$1 FOR UPDATE
+Audit ledger holder's native Corp lock result: Ok(Ok(()))
+Refresh result after release: Ok(("abandoned", false))
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::lock_order::issue84_abandonment_locks_secondary_ledger_before_corp ... ok
+Observed refresh PID 31660 waiting behind ledger holder 40508: SELECT ledger_id FROM state_audit_ledgers WHERE corp_id=$1 FOR UPDATE
+Audit ledger holder's native Corp lock result: Ok(Ok(()))
+Refresh result after release: Ok(("adopted", false))
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::lock_order::issue84_adoption_locks_secondary_ledger_before_corp ... ok
+Observed refresh PID 39144 waiting behind ledger holder 13704: SELECT ledger_id FROM state_audit_ledgers WHERE corp_id=$1 FOR UPDATE
+Audit ledger holder's native Corp lock result: Ok(Ok(()))
+Refresh result after release: Ok(("pending", false))
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::lock_order::issue84_authorization_locks_ledger_before_corp ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::issue84_abandonment_is_terminal_authorized_and_bounded_after_issue_changes ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::issue84_admission_replays_and_preserves_original_publication_source ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::issue84_complete_verification_independent_review_and_explicit_adoption_publish_once ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::issue84_dispatch_rechecks_claim_after_artifact_transfer_and_allows_renewal ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::issue84_publication_already_started_cannot_allocate_refresh ... ok
+test budget_checkpoint_tests::correction_publication::base_refresh::issue84_stale_connection_and_changed_authority_cannot_allocate_refresh ... ok
+
+test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 551 filtered out; finished in 134.15s

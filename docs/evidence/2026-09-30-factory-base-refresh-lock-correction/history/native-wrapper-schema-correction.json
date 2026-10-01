@@ -1,0 +1,9 @@
+{
+  "status": "prepared-before-native-execution",
+  "original_driver_sha256": "1e68bc42e068d613dbf0e5b04f6d7c5d077f7629bbe2be2b7d98427fbd395308",
+  "corrected_driver_sha256": "99ad19bf72012436bdd4a0a56ce85b1e443850a58567850ba600d6e9bec934c1",
+  "finding": "The existing native acceptance producer uses schema_version=1, passed and failure fields, not status and failures.",
+  "correction": "Require the actual producer fields, all ten scenarios, unchanged source, revoked fixture credential and exact tested parent.",
+  "original_active_drivers_unchanged": true,
+  "diff": "--- run-issue84-lock-validation-r1.py\n+++ run-issue84-lock-validation-r2.py\n@@ -153,7 +153,12 @@\n             assert data[\"stopped\"] and all(data[\"stopped\"].values())\n             report_path = child.parent / \"acceptance.json\"\n             report = load(report_path)\n-            assert report[\"status\"] == \"passed\" and not report.get(\"failures\")\n+            assert report[\"schema_version\"] == 1 and report[\"passed\"] is True and not report.get(\"failure\")\n+            assert report[\"source_unchanged\"] and report[\"publisher_credential_revoked\"]\n+            assert len(report[\"scenarios\"]) == 10 and all(s[\"passed\"] is True for s in report[\"scenarios\"])\n+            assert report[\"product_head\"] == record[\"head\"]\n+            record[\"acceptance_scenarios\"] = [{\"name\": s[\"name\"], \"passed\": s[\"passed\"]} for s in report[\"scenarios\"]]\n+            record[\"actual_human_reviews\"] = 0\n             record.update(acceptance_report=str(report_path), acceptance_report_sha256=sha(report_path),\n                           qa_root=data[\"qa_root\"], stopped=data[\"stopped\"])\n             assert all(sha(item[\"path\"]) == item[\"sha256\"] for item in build[\"binaries\"])\n"
+}

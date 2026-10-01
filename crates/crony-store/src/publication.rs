@@ -49,20 +49,20 @@ struct NewPublicationOperation<'a> {
 }
 
 #[derive(Debug)]
-struct PublicationPrerequisites {
-    work_item: FactoryWorkItem,
-    effective_source_revision: String,
-    source_recovery_id: Option<Uuid>,
-    mission_id: Uuid,
-    room_id: Uuid,
-    artifact_id: Uuid,
-    task_id: Uuid,
-    run_id: Uuid,
-    commit_sha: String,
-    deliverable_sha256: String,
-    verification_sha256: String,
-    base_commit: String,
-    source_branch: String,
+pub(super) struct PublicationPrerequisites {
+    pub(super) work_item: FactoryWorkItem,
+    pub(super) effective_source_revision: String,
+    pub(super) source_recovery_id: Option<Uuid>,
+    pub(super) mission_id: Uuid,
+    pub(super) room_id: Uuid,
+    pub(super) artifact_id: Uuid,
+    pub(super) task_id: Uuid,
+    pub(super) run_id: Uuid,
+    pub(super) commit_sha: String,
+    pub(super) deliverable_sha256: String,
+    pub(super) verification_sha256: String,
+    pub(super) base_commit: String,
+    pub(super) source_branch: String,
     project_status_before: String,
     review_status: String,
     task_ids: Vec<Uuid>,
@@ -1744,6 +1744,54 @@ async fn validate_publication_prerequisites(
     let (work_item, _) = factory_work_item_tx(tx, request.corp_id, request.work_item_id, true)
         .await?
         .context("factory work item not found")?;
+    factory_base_refresh::ensure_no_pending_tx(tx, request.corp_id, work_item.id).await?;
+    let result = validate_publication_source_tx(tx, request, work_item, existing).await?;
+    factory_base_refresh::validate_adopted_lineage_tx(tx, &result.work_item, result.run_id).await?;
+    Ok(result)
+}
+
+/// Only refresh admission/settlement may validate an immutable historical item
+/// snapshot. Ordinary publication always locks and validates the selected item.
+pub(super) async fn validate_refresh_source_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    item: FactoryWorkItem,
+    deliverable: Uuid,
+) -> Result<PublicationPrerequisites> {
+    let repository = format!(
+        "{}/{}",
+        item.source_repository_owner, item.source_repository_name
+    );
+    let base_ref = item
+        .policy
+        .pointer("/publication/base_ref")
+        .and_then(Value::as_str)
+        .context("publication base ref missing")?
+        .to_owned();
+    let prefix = item
+        .policy
+        .pointer("/publication/branch_prefix")
+        .and_then(Value::as_str)
+        .unwrap_or("ecorp/");
+    let branch = format!("{prefix}base-refresh-source-check");
+    let body = item.source_issue_url.clone();
+    let request = PublicationPrerequisiteRequest {
+        corp_id: item.corp_id,
+        work_item_id: item.id,
+        source_deliverable_id: deliverable,
+        target_repository: &repository,
+        base_ref: &base_ref,
+        branch: &branch,
+        body: &body,
+    };
+    validate_publication_source_tx(tx, &request, item, false).await
+}
+
+async fn validate_publication_source_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    request: &PublicationPrerequisiteRequest<'_>,
+    work_item: FactoryWorkItem,
+    existing: bool,
+) -> Result<PublicationPrerequisites> {
     let allowed_state = if existing {
         matches!(
             work_item.state,
@@ -2043,8 +2091,15 @@ async fn validate_publication_prerequisites(
     .collect::<Vec<_>>();
     let completed_recovery =
         publication_recovery_for_lineage(&completed_recoveries, &selected_lineage);
-    let (effective_source_revision, source_recovery_id) =
+    let (mut effective_source_revision, mut source_recovery_id) =
         publication_source_revision(&work_item.source_revision, completed_recovery);
+    if let Some((revision, recovery)) =
+        factory_base_refresh::source_revision_tx(tx, request.corp_id, work_item.id, selected_run_id)
+            .await?
+    {
+        effective_source_revision = revision;
+        source_recovery_id = recovery;
+    }
     let mut run_ids = Vec::with_capacity(run_rows.len());
     for run in run_rows {
         let run_id: Uuid = run.get("id");

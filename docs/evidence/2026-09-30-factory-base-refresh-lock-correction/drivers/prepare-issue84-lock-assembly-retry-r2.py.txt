@@ -1,0 +1,128 @@
+"""Preserve the failed local packet and correct JSON-key sanitization only."""
+import ast
+from issue84_lock_publication_r1 import *
+
+archive = EV / "issue84-lock-publication-assembly-r1-failed"
+diagnosis = EV / "issue84-lock-publication-assembly-r1-diagnosis.json"
+old_driver = EV / "assemble-issue84-lock-publication-r1.py"
+new_driver = EV / "assemble-issue84-lock-publication-r2.py"
+source_path = EV / "issue84-lock-publication-source-r1.json"
+review_path = EV / "issue84-lock-publication-self-review-r1.json"
+exit_path = EV / "issue84-lock-publication-assembly-r1-session-exit.json"
+assert not archive.exists() and not diagnosis.exists() and not new_driver.exists()
+assert not (EV / "issue84-lock-publication-packet-r1.json").exists()
+failure = load(exit_path)
+assert failure["exit_code"] == 1 and failure["session_id"] == 97752
+assert failure["chunk_id"] == "cd240c" and failure["observation"] == "write_stdin returned process exit"
+assert failure["failure"] == "AssertionError: lanes/store-driver.json"
+pending_source()
+source = load(source_path)
+original_files(source["physical_files"])
+assert index_digest() == source["original_index_sha256"]
+
+old_bytes = guarded_bytes(old_driver, EV)
+old = old_bytes.decode("utf-8-sig")
+needle = '''        return {k: "<REDACTED>" if secret_key.fullmatch(k) and isinstance(v, str) and v else scrub(v)
+                for k, v in value.items()}'''
+replacement = '''        result = {}
+        for key, child in value.items():
+            published_key = redact(key)
+            assert published_key not in result, "Publication redaction would merge JSON keys"
+            result[published_key] = "<REDACTED>" if secret_key.fullmatch(key) and isinstance(child, str) and child else scrub(child)
+        return result'''
+assert old.count(needle) == 1
+updated = old.replace(needle, replacement)
+driver_needle = '''    Path(__file__), EV / "issue84_lock_publication_r1.py",'''
+assert updated.count(driver_needle) == 1
+updated = updated.replace(driver_needle, '''    Path(__file__), EV / "issue84_lock_publication_r1.py",
+    EV / "assemble-issue84-lock-publication-r1.py",
+    EV / "prepare-issue84-lock-assembly-retry-r2.py",''')
+copy_needle = '''copies += [(EV / name, "history/passing-publication/" + name) for name in historical_files]'''
+assert updated.count(copy_needle) == 1
+updated = updated.replace(copy_needle, copy_needle + '''
+copies += [(EV / "issue84-lock-publication-assembly-r1-session-exit.json", "history/assembly-r1-session-exit.json"),
+           (EV / "issue84-lock-publication-assembly-r1-diagnosis.json", "history/assembly-r1-diagnosis.json")]''')
+qualification = '''            "The three lock tests are included in the 24-test native base-refresh store filter; counts overlap.",'''
+assert updated.count(qualification) == 1
+updated = updated.replace(qualification, qualification + '''
+            "Initial evidence assembly rejected an unsanitized personal path in a JSON object key. The failed partial packet is preserved locally; the retry redacts keys and values and rejects key collisions without changing the validated product source.",''')
+compile(updated, str(new_driver), "exec")
+
+
+def sanitizer(text):
+    parsed = ast.parse(text)
+    wanted = []
+    for node in parsed.body:
+        if isinstance(node, ast.FunctionDef) and node.name in {"redact", "scrub"}:
+            wanted.append(node)
+        elif isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id in {"personal", "secret_key"} for t in node.targets):
+            wanted.append(node)
+    context = {"re": re, "secrets": set(), "identifiers": {}}
+    exec(compile(ast.Module(body=wanted, type_ignores=[]), "publication-sanitizer", "exec"), context)
+    return context
+
+
+before, after = sanitizer(old), sanitizer(updated)
+windows_path = chr(92).join(["C:", "Users", "fixture-owner", "driver.py"])
+sample = {"drivers": {windows_path: "unchanged-sha256"}}
+old_result = json.dumps(before["scrub"](sample))
+assert before["personal"].search(old_result), "The actual unsanitized-key defect must reproduce"
+cleaned = after["scrub"](sample)
+assert cleaned == {"drivers": {"<USERPROFILE>" + chr(92) + "driver.py": "unchanged-sha256"}}
+assert not after["personal"].search(json.dumps(cleaned))
+nested = [{windows_path: {"password": "synthetic-fixture-only", "path": windows_path, "count": 3}}]
+nested_result = after["scrub"](nested)
+assert list(nested_result[0].values())[0] == {"password": "<REDACTED>", "path": "<USERPROFILE>" + chr(92) + "driver.py", "count": 3}
+collision = {"/".join(["C:", "Users", owner, "same.py"]): owner for owner in ["first-fixture", "second-fixture"]}
+try:
+    after["scrub"](collision)
+except AssertionError as error:
+    assert str(error) == "Publication redaction would merge JSON keys"
+else:
+    raise AssertionError("Redaction must not silently overwrite colliding dictionary keys")
+
+canonical_root(PACKET)
+preserved = []
+for path in sorted(PACKET.rglob("*")):
+    if path.is_dir():
+        canonical_root(path)
+    else:
+        raw = guarded_bytes(path, ROOT)
+        preserved.append({"file": path.relative_to(PACKET).as_posix(), "sha256": sha(raw), "bytes": len(raw)})
+assert preserved and not any(row["file"] == "lanes/store-driver.json" for row in preserved)
+source_digest, review_digest = sha(guarded_bytes(source_path, EV)), sha(guarded_bytes(review_path, EV))
+assert archive.parent == EV and PACKET.parent == ROOT / "docs/evidence"
+assert PACKET.resolve() == PACKET and EV.resolve() == EV
+archive.mkdir()
+canonical_root(archive)
+packet_archive = archive / "partial-packet"
+assert packet_archive.parent == archive and not packet_archive.exists()
+PACKET.rename(packet_archive)
+source_path.rename(archive / source_path.name)
+review_path.rename(archive / review_path.name)
+for row in preserved:
+    assert sha(guarded_bytes(packet_archive / row["file"], EV)) == row["sha256"]
+assert sha(guarded_bytes(archive / source_path.name, EV)) == source_digest
+assert sha(guarded_bytes(archive / review_path.name, EV)) == review_digest
+with new_driver.open("x", encoding="utf-8", newline="\n") as stream:
+    stream.write(updated)
+write(diagnosis, {
+    "issue": 84, "pr": 390, "recorded_at_utc": now(),
+    "failure": "The first evidence assembler sanitized JSON values but retained absolute personal paths used as object keys in lanes/store-driver.json.",
+    "status": "failed-attempt-preserved-and-key-redaction-corrected",
+    "observed_exit_sha256": sha(guarded_bytes(exit_path, EV)),
+    "failed_assembler_sha256": sha(old_bytes), "replacement_assembler_sha256": sha(updated.encode()),
+    "preserved_partial_packet": preserved,
+    "preserved_source_receipt_sha256": source_digest,
+    "preserved_self_review_sha256": review_digest,
+    "source_head": PARENT, "tested_tree": source["tested_tree"],
+    "physical_files_sha256": PHYSICAL,
+    "product_source_and_original_validation_unchanged": True,
+    "sanitizer_regressions": {"original_failure_reproduced": True, "passed": 3,
+        "cases": ["personal path in JSON driver key", "nested keys, values and fixture credential redaction", "fail closed on sanitized-key collision"]},
+    "recovery": "Moved only the newly created failed partial packet and its source/self-review receipts to the named run-owned failed-attempt directory. All bytes and hashes were verified. No files deleted and no product tests rerun."
+})
+assert index_digest() == source["original_index_sha256"]
+pending_source()
+print(json.dumps({"status": "retry-prepared", "partial_files_preserved": len(preserved),
+                  "redaction_regressions_passed": 3, "product_source_unchanged": True}))
