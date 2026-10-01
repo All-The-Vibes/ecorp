@@ -456,8 +456,8 @@ pub(super) async fn evaluate_tx(
         });
         sqlx::query(
             "INSERT INTO circuit_breaker_incidents
-            (id,corp_id,mission_id,task_id,run_id,stage,reason,input)
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8)",
+            (id,corp_id,mission_id,task_id,run_id,stage,reason,input,created_at)
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8,clock_timestamp())",
         )
         .bind(Uuid::new_v4())
         .bind(corp_id)
@@ -479,8 +479,8 @@ pub(super) async fn evaluate_tx(
         };
         sqlx::query(
             "INSERT INTO runner_commands
-            (id,corp_id,runner_id,run_id,command_kind,payload,idempotency_key)
-            VALUES($1,$2,$3,$4,$5,$6,$7)",
+            (id,corp_id,runner_id,run_id,command_kind,payload,idempotency_key,created_at)
+            VALUES($1,$2,$3,$4,$5,$6,$7,clock_timestamp())",
         )
         .bind(command.id)
         .bind(corp_id)

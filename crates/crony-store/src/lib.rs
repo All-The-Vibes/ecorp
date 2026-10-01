@@ -41,6 +41,13 @@ pub mod state_audit;
 mod state_audit_tests;
 pub use checkpoint_cancellation::ReconcileCheckpointCancellationInput;
 mod contract_revision;
+mod control_accounting;
+#[cfg(test)]
+mod control_accounting_tests;
+mod control_receipts;
+#[cfg(test)]
+mod control_receipts_tests;
+pub use control_receipts::{RunnerCommandReceipt, RunnerCommandSocketSend};
 mod factory_attempt_policy;
 mod factory_authority;
 mod factory_controller;
@@ -8265,9 +8272,22 @@ impl PgStore {
             run_id,
             agent_id,
             assignment_token,
-            event_type,
+            mut event_type,
             mut payload,
         } = input;
+        if matches!(
+            event_type.as_str(),
+            "run.usage_observed"
+                | "run.stop_requested"
+                | "run.breaker_transition"
+                | "runner.command_socket_sent"
+                | "runner.command_acknowledged"
+                | "runner.command_failed"
+        ) {
+            return Err(anyhow!(
+                "runner cannot emit server-owned control or accounting events"
+            ));
+        }
         let mut tx = self.pool.begin().await?;
         aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
         let factory_scope = if factory_run_failure::event_reconciles_factory(&event_type) {
@@ -8294,7 +8314,8 @@ impl PgStore {
                 r.status IN ('provisioning', 'starting', 'running',
                              'waiting_for_input', 'waiting_for_approval', 'verifying')
                 OR (
-                  $6::text IN ('run.workspace_preserved', 'run.workspace_removed', 'run.session_terminated')
+                  $6::text IN ('run.workspace_preserved', 'run.workspace_removed', 'run.session_terminated',
+                              'run.usage', 'run.control_observed')
                   AND r.status IN ('completed', 'failed', 'cancelled', 'lost')
                 )
               )
@@ -8388,6 +8409,19 @@ impl PgStore {
         }
         if event_type == "run.verification_evidence" {
             payload = sanitize_verification_evidence_tx(&mut tx, run_id, payload).await?;
+        }
+        if event_type == "run.usage" {
+            (event_type, payload) = control_accounting::admit_usage_tx(
+                &mut tx,
+                corp_id,
+                run_id,
+                &breaker_stage,
+                &row.get::<String, _>("run_status"),
+                payload,
+            )
+            .await?;
+        } else if event_type == "run.control_observed" {
+            payload = control_accounting::run_observation_tx(&mut tx, payload).await?;
         }
 
         let event = append_event_tx(
@@ -9855,25 +9889,36 @@ impl PgStore {
         runner_id: &str,
         detail: &str,
     ) -> Result<Option<DomainEvent>> {
-        let mut detail = detail.split_whitespace().collect::<Vec<_>>().join(" ");
-        while detail.len() > 1_000 {
-            detail.pop();
-        }
+        self.fail_runner_command_with_receipt(command_id, runner_id, detail, None)
+            .await
+    }
+
+    pub async fn fail_runner_command_with_receipt(
+        &self,
+        command_id: Uuid,
+        runner_id: &str,
+        detail: &str,
+        receipt: Option<RunnerCommandReceipt>,
+    ) -> Result<Option<DomainEvent>> {
+        let mut detail = control_receipts::bounded_detail(detail);
         if detail.is_empty() {
             detail = "runner rejected the durable command".to_owned();
         }
         let mut tx = self.pool.begin().await?;
+        control_receipts::validate_receipt_scope_tx(&mut tx, runner_id, receipt.as_ref()).await?;
         let command = sqlx::query(
             r#"
             UPDATE runner_commands
-            SET status = 'failed', failure_detail = $1, failed_at = now()
+            SET status = 'failed', failure_detail = $1, failed_at = clock_timestamp()
             WHERE id = $2 AND runner_id = $3 AND status = 'pending'
-            RETURNING corp_id, run_id, command_kind, payload
+              AND ($4::uuid IS NULL OR corp_id=$4)
+            RETURNING corp_id, run_id, command_kind, payload, failed_at
             "#,
         )
         .bind(&detail)
         .bind(command_id)
         .bind(runner_id)
+        .bind(receipt.as_ref().map(|receipt| receipt.corp_id))
         .fetch_optional(&mut *tx)
         .await?;
         let Some(command) = command else {
@@ -9912,8 +9957,8 @@ impl PgStore {
             r#"
             SELECT task.mission_id, mission.room_id
             FROM runs run
-            JOIN tasks task ON task.id = run.task_id
-            JOIN missions mission ON mission.id = task.mission_id
+            JOIN tasks task ON task.id = run.task_id AND task.corp_id = run.corp_id
+            JOIN missions mission ON mission.id = task.mission_id AND mission.corp_id = task.corp_id
             WHERE run.id = $1 AND run.corp_id = $2
             "#,
         )
@@ -9940,7 +9985,11 @@ impl PgStore {
                         "runner_id": runner_id,
                         "command_kind": command_kind,
                         "message_id": message_id,
-                        "detail": detail
+                        "detail": detail,
+                        "stage": payload.get("stage"),
+                        "receipt": control_receipts::observation(
+                            receipt.as_ref(), &detail, command.get("failed_at")
+                        )
                     }),
                 )
             },
@@ -9956,17 +10005,31 @@ impl PgStore {
         command_id: Uuid,
         runner_id: &str,
     ) -> Result<Option<DomainEvent>> {
+        self.acknowledge_runner_command_with_receipt(command_id, runner_id, "", None)
+            .await
+    }
+
+    pub async fn acknowledge_runner_command_with_receipt(
+        &self,
+        command_id: Uuid,
+        runner_id: &str,
+        detail: &str,
+        receipt: Option<RunnerCommandReceipt>,
+    ) -> Result<Option<DomainEvent>> {
         let mut tx = self.pool.begin().await?;
+        control_receipts::validate_receipt_scope_tx(&mut tx, runner_id, receipt.as_ref()).await?;
         let command = sqlx::query(
             r#"
             UPDATE runner_commands
-            SET status = 'dispatched', dispatched_at = now()
+            SET status = 'dispatched', dispatched_at = clock_timestamp()
             WHERE id = $1 AND runner_id = $2 AND status = 'pending'
-            RETURNING corp_id, run_id, command_kind, payload
+              AND ($3::uuid IS NULL OR corp_id=$3)
+            RETURNING corp_id, run_id, command_kind, payload, dispatched_at
             "#,
         )
         .bind(command_id)
         .bind(runner_id)
+        .bind(receipt.as_ref().map(|receipt| receipt.corp_id))
         .fetch_optional(&mut *tx)
         .await?;
         let Some(command) = command else {
@@ -10005,8 +10068,8 @@ impl PgStore {
             r#"
             SELECT task.mission_id, mission.room_id
             FROM runs run
-            JOIN tasks task ON task.id = run.task_id
-            JOIN missions mission ON mission.id = task.mission_id
+            JOIN tasks task ON task.id = run.task_id AND task.corp_id = run.corp_id
+            JOIN missions mission ON mission.id = task.mission_id AND mission.corp_id = task.corp_id
             WHERE run.id = $1 AND run.corp_id = $2
             "#,
         )
@@ -10032,7 +10095,11 @@ impl PgStore {
                         "command_id": command_id,
                         "runner_id": runner_id,
                         "command_kind": command_kind,
-                        "message_id": message_id
+                        "message_id": message_id,
+                        "stage": payload.get("stage"),
+                        "receipt": control_receipts::observation(
+                            receipt.as_ref(), detail, command.get("dispatched_at")
+                        )
                     }),
                 )
             },
@@ -11201,6 +11268,7 @@ impl PgStore {
         }
 
         let mut tx = self.pool.begin().await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
         assert_actor_agent_scope_tx(&mut tx, corp_id, actor_id, agent_id).await?;
         let role: String =
             sqlx::query_scalar("SELECT role FROM actors WHERE id = $1 AND corp_id = $2")
@@ -11216,10 +11284,10 @@ impl PgStore {
 
         let row = sqlx::query(
             r#"
-            SELECT r.id, r.runner_id, t.mission_id, m.room_id
+            SELECT r.id, r.runner_id, r.task_id, r.breaker_stage, t.mission_id, m.room_id
             FROM runs r
-            JOIN tasks t ON t.id = r.task_id
-            JOIN missions m ON m.id = t.mission_id
+            JOIN tasks t ON t.id = r.task_id AND t.corp_id = r.corp_id
+            JOIN missions m ON m.id = t.mission_id AND m.corp_id = t.corp_id
             WHERE r.agent_id = $1 AND r.corp_id = $2
               AND r.status IN ('provisioning', 'starting', 'running',
                                'waiting_for_input', 'waiting_for_approval', 'verifying')
@@ -11237,6 +11305,17 @@ impl PgStore {
         let runner_id: String = row.get("runner_id");
         let mission_id: Uuid = row.get("mission_id");
         let room_id: Uuid = row.get("room_id");
+        let command_id = control_accounting::enqueue_emergency_stop_tx(
+            &mut tx,
+            corp_id,
+            run_id,
+            &runner_id,
+            row.get("task_id"),
+            mission_id,
+            actor_id,
+            reason,
+        )
+        .await?;
         let event = append_event_tx(
             &mut tx,
             NewEvent {
@@ -11249,7 +11328,10 @@ impl PgStore {
                     "run",
                     run_id,
                     format!("run-stop:{run_id}:{}", Uuid::new_v4()),
-                    json!({"agent_id": agent_id, "reason": reason}),
+                    json!({
+                        "agent_id": agent_id, "reason": reason, "command_id": command_id,
+                        "stage": "stop", "previous_stage": row.get::<String, _>("breaker_stage")
+                    }),
                 )
             },
         )
@@ -15778,6 +15860,11 @@ async fn ensure_run_not_hard_blocked_tx(
     action: &str,
 ) -> Result<()> {
     ensure_breaker_allows_human_progress(stage, action)?;
+    if control_accounting::stop_was_requested_tx(tx, corp_id, run_id).await? {
+        return Err(anyhow!(
+            "{action} is blocked by an authoritative stop request"
+        ));
+    }
     if hard_breaker_reached_tx(tx, corp_id, run_id).await? {
         return Err(anyhow!(
             "{action} is blocked because current budget or loop metrics require a hard breaker"

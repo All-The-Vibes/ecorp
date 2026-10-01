@@ -14,7 +14,7 @@ use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use tokio::{
     io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
-    process::{ChildStdin, Command},
+    process::Command,
     sync::mpsc,
     time::Instant,
 };
@@ -29,8 +29,14 @@ const INITIALIZE_REQUEST_ID: u64 = 1;
 const THREAD_REQUEST_ID: u64 = 2;
 const TURN_REQUEST_ID: u64 = 3;
 const STARTUP_TIMEOUT: Duration = Duration::from_secs(90);
-const INTERRUPT_TIMEOUT: Duration = Duration::from_secs(20);
-const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(3);
+const INTERRUPT_TIMEOUT: Duration = Duration::from_secs(2);
+
+#[path = "codex_runtime.rs"]
+mod runtime;
+
+#[cfg(test)]
+#[path = "codex_stop_tests.rs"]
+mod stop_tests;
 
 #[derive(Clone)]
 pub struct CodexAdapter {
@@ -57,7 +63,7 @@ enum TerminationKind {
 struct TerminationRequest {
     kind: TerminationKind,
     reason: String,
-    sent: bool,
+    received_at: Instant,
 }
 
 #[derive(Debug)]
@@ -74,6 +80,7 @@ struct ParsedRun {
     final_message: String,
     usage: UsageSnapshot,
     last_usage_total: Option<u64>,
+    last_usage_observed_at: Option<String>,
     streamed_command_items: HashSet<String>,
 }
 
@@ -160,402 +167,23 @@ impl CodexAdapter {
         if let Some(profile) = &self.profile {
             profile.apply_request(&mut command, &request.environment)?;
         }
-        let mut child = command
-            .spawn()
-            .with_context(|| format!("spawn Codex app-server {}", self.command.display()))?;
-        let mut stdin = child
-            .stdin
-            .take()
-            .context("Codex app-server stdin missing")?;
-        let stdout = child
-            .stdout
-            .take()
-            .context("Codex app-server stdout missing")?;
-        let stderr = child
-            .stderr
-            .take()
-            .context("Codex app-server stderr missing")?;
-
-        let stderr_sink = sink.clone();
-        let stderr_task = tokio::spawn(async move {
-            let mut lines = BufReader::new(stderr).lines();
-            while let Ok(Some(line)) = lines.next_line().await {
-                stderr_sink.emit(AdapterEvent::Output {
-                    stream: "stderr".to_owned(),
-                    text: line,
-                });
-            }
-        });
-
-        send_rpc(
-            &mut stdin,
-            json!({
-                "method": "initialize",
-                "id": INITIALIZE_REQUEST_ID,
-                "params": {
-                    "clientInfo": {
-                        "name": "ecorp-operations",
-                        "title": "ECorp Runner",
-                        "version": env!("CARGO_PKG_VERSION")
-                    },
-                    "capabilities": {
-                        "experimentalApi": true
-                    }
-                }
-            }),
-        )
-        .await?;
-
-        let mut lines = BufReader::new(stdout).lines();
         let mut parsed = ParsedRun::default();
         if let CodexMode::Resume { session_id } = &mode {
             parsed.thread_id = Some(session_id.clone());
         }
-        let mut pending_steers = VecDeque::<(uuid::Uuid, String)>::new();
+        let mut termination = None;
         let mut controls_open = true;
-        let mut next_request_id = 10_u64;
-        let mut initialized = false;
-        let mut thread_requested = false;
-        let mut session_emitted = false;
-        let mut termination: Option<TerminationRequest> = None;
-        let startup_timeout = tokio::time::sleep(STARTUP_TIMEOUT);
-        tokio::pin!(startup_timeout);
-        let interrupt_timeout = tokio::time::sleep(Duration::from_secs(365 * 24 * 60 * 60));
-        tokio::pin!(interrupt_timeout);
-        let mut interrupt_timer_active = false;
-
-        let outcome = loop {
-            tokio::select! {
-                control = controls.recv(), if controls_open => {
-                    match control {
-                        Some(AdapterControl::Steer { actor_id, text }) => {
-                            if termination.is_some() {
-                                sink.emit(AdapterEvent::Output {
-                                    stream: "control".to_owned(),
-                                    text: format!(
-                                        "Ignored direction from {actor_id} because termination is already in progress"
-                                    ),
-                                });
-                            } else if let (Some(thread_id), Some(turn_id)) =
-                                (parsed.thread_id.as_deref(), parsed.turn_id.as_deref())
-                            {
-                                send_steer(
-                                    &mut stdin,
-                                    &mut next_request_id,
-                                    thread_id,
-                                    turn_id,
-                                    actor_id,
-                                    &text,
-                                )
-                                .await?;
-                                sink.emit(AdapterEvent::Output {
-                                    stream: "control".to_owned(),
-                                    text: format!("Forwarded live direction from {actor_id}: {text}"),
-                                });
-                            } else {
-                                pending_steers.push_back((actor_id, text));
-                            }
-                        }
-                        Some(AdapterControl::Interrupt { reason }) => {
-                            if termination.is_none() {
-                                termination = Some(TerminationRequest {
-                                    kind: TerminationKind::Interrupt,
-                                    reason,
-                                    sent: false,
-                                });
-                            }
-                        }
-                        Some(AdapterControl::Stop { reason }) => {
-                            if termination.is_none() {
-                                termination = Some(TerminationRequest {
-                                    kind: TerminationKind::Stop,
-                                    reason,
-                                    sent: false,
-                                });
-                            }
-                        }
-                        Some(AdapterControl::ApprovalDecision {
-                            approval_id,
-                            approved,
-                            note,
-                        }) => {
-                            let text = if approved {
-                                format!(
-                                    "Approval {approval_id} was granted. Continue the suspended action. Decision note: {note}"
-                                )
-                            } else {
-                                format!(
-                                    "Approval {approval_id} was rejected. Do not perform the action. Decision note: {note}"
-                                )
-                            };
-                            pending_steers.push_back((Uuid::nil(), text));
-                        }
-                        Some(AdapterControl::CircuitBreaker { stage, reason }) => {
-                            if matches!(stage.as_str(), "suspend" | "stop") {
-                                if termination.is_none() {
-                                    termination = Some(TerminationRequest {
-                                        kind: TerminationKind::Stop,
-                                        reason: format!(
-                                            "Circuit breaker {stage} checkpoint: {reason}"
-                                        ),
-                                        sent: false,
-                                    });
-                                }
-                            } else {
-                                pending_steers.push_back((
-                                    Uuid::nil(),
-                                    format!("Circuit breaker stage {stage}: {reason}"),
-                                ));
-                            }
-                        }
-                        None => controls_open = false,
-                    }
-
-                    if let Some(requested) = termination.as_mut()
-                        && !requested.sent
-                    {
-                        if let (Some(thread_id), Some(turn_id)) =
-                            (parsed.thread_id.as_deref(), parsed.turn_id.as_deref())
-                        {
-                            send_interrupt(
-                                &mut stdin,
-                                &mut next_request_id,
-                                thread_id,
-                                turn_id,
-                            )
-                            .await?;
-                            requested.sent = true;
-                            interrupt_timeout
-                                .as_mut()
-                                .reset(Instant::now() + INTERRUPT_TIMEOUT);
-                            interrupt_timer_active = true;
-                        } else if !thread_requested {
-                            let reason = terminal_reason(requested);
-                            let _ = child.kill().await;
-                            break TerminalOutcome::Cancelled(reason);
-                        }
-                    }
-                }
-                line = lines.next_line() => {
-                    let Some(line) = line? else {
-                        let status = child.wait().await?;
-                        break match termination.as_ref() {
-                            Some(requested) => TerminalOutcome::Cancelled(terminal_reason(requested)),
-                            None => TerminalOutcome::Failed(format!(
-                                "Codex app-server exited with {status} before a terminal turn event"
-                            )),
-                        };
-                    };
-                    let value: Value = match serde_json::from_str(&line) {
-                        Ok(value) => value,
-                        Err(_) => {
-                            sink.emit(AdapterEvent::Output {
-                                stream: "stdout".to_owned(),
-                                text: line,
-                            });
-                            continue;
-                        }
-                    };
-
-                    if value.get("method").is_some() && value.get("id").is_some() {
-                        answer_server_request(&mut stdin, &value, sink.clone()).await?;
-                        continue;
-                    }
-
-                    if let Some(id) = value.get("id").and_then(Value::as_u64) {
-                        if let Some(error) = rpc_error(&value) {
-                            if id <= TURN_REQUEST_ID {
-                                break TerminalOutcome::Failed(error);
-                            }
-                            sink.emit(AdapterEvent::Output {
-                                stream: "stderr".to_owned(),
-                                text: error,
-                            });
-                            continue;
-                        }
-                        match id {
-                            INITIALIZE_REQUEST_ID => {
-                                initialized = true;
-                                send_rpc(
-                                    &mut stdin,
-                                    json!({"method": "initialized", "params": {}}),
-                                )
-                                .await?;
-                                let thread_method = match &mode {
-                                    CodexMode::Start => "thread/start",
-                                    CodexMode::Resume { .. } => "thread/resume",
-                                };
-                                let mut params = json!({
-                                    "cwd": request.workspace,
-                                    "approvalPolicy": "never",
-                                    "sandbox": "workspace-write"
-                                });
-                                match &mode {
-                                    CodexMode::Start => {
-                                        params["ephemeral"] = Value::Bool(false);
-                                        params["threadSource"] = Value::String("ecorp-operations".to_owned());
-                                    }
-                                    CodexMode::Resume { session_id } => {
-                                        params["threadId"] = Value::String(session_id.clone());
-                                    }
-                                }
-                                send_rpc(
-                                    &mut stdin,
-                                    json!({
-                                        "method": thread_method,
-                                        "id": THREAD_REQUEST_ID,
-                                        "params": params
-                                    }),
-                                )
-                                .await?;
-                                thread_requested = true;
-                            }
-                            THREAD_REQUEST_ID => {
-                                let thread_id = value
-                                    .pointer("/result/thread/id")
-                                    .and_then(Value::as_str)
-                                    .context("Codex thread response omitted result.thread.id")?
-                                    .to_owned();
-                                parsed.thread_id = Some(thread_id.clone());
-                                if !session_emitted {
-                                    sink.emit(AdapterEvent::Session {
-                                        session_id: thread_id.clone(),
-                                    });
-                                    session_emitted = true;
-                                }
-                                send_turn_start(
-                                    &mut stdin,
-                                    &request,
-                                    &thread_id,
-                                )
-                                .await?;
-                            }
-                            TURN_REQUEST_ID => {
-                                if let Some(turn_id) = value
-                                    .pointer("/result/turn/id")
-                                    .and_then(Value::as_str)
-                                {
-                                    parsed.turn_id = Some(turn_id.to_owned());
-                                }
-                            }
-                            _ => {}
-                        }
-                    } else if let Some(method) = value.get("method").and_then(Value::as_str) {
-                        if method == "thread/started"
-                            && let Some(thread_id) = value
-                                .pointer("/params/thread/id")
-                                .and_then(Value::as_str)
-                        {
-                            parsed.thread_id = Some(thread_id.to_owned());
-                            if !session_emitted {
-                                sink.emit(AdapterEvent::Session {
-                                    session_id: thread_id.to_owned(),
-                                });
-                                session_emitted = true;
-                            }
-                        }
-                        if method == "turn/started"
-                            && let Some(turn_id) = value
-                                .pointer("/params/turn/id")
-                                .and_then(Value::as_str)
-                        {
-                            parsed.turn_id = Some(turn_id.to_owned());
-                        }
-
-                        handle_notification(&value, &mut parsed, sink.clone());
-
-                        if method == "turn/completed" {
-                            let status = value
-                                .pointer("/params/turn/status")
-                                .and_then(Value::as_str)
-                                .unwrap_or("failed");
-                            break match status {
-                                "completed" => TerminalOutcome::Completed,
-                                "interrupted" => TerminalOutcome::Cancelled(
-                                    termination
-                                        .as_ref()
-                                        .map(terminal_reason)
-                                        .unwrap_or_else(|| "Codex interrupted the turn".to_owned()),
-                                ),
-                                _ => TerminalOutcome::Failed(
-                                    value
-                                        .pointer("/params/turn/error/message")
-                                        .and_then(Value::as_str)
-                                        .unwrap_or("Codex turn failed")
-                                        .to_owned(),
-                                ),
-                            };
-                        }
-                    }
-
-                    if parsed.turn_id.is_some() {
-                        while let Some((actor_id, text)) = pending_steers.pop_front() {
-                            if termination.is_some() {
-                                break;
-                            }
-                            send_steer(
-                                &mut stdin,
-                                &mut next_request_id,
-                                parsed.thread_id.as_deref().context("Codex thread id missing")?,
-                                parsed.turn_id.as_deref().context("Codex turn id missing")?,
-                                actor_id,
-                                &text,
-                            )
-                            .await?;
-                            sink.emit(AdapterEvent::Output {
-                                stream: "control".to_owned(),
-                                text: format!("Forwarded live direction from {actor_id}: {text}"),
-                            });
-                        }
-                        if let Some(requested) = termination.as_mut()
-                            && !requested.sent
-                        {
-                            send_interrupt(
-                                &mut stdin,
-                                &mut next_request_id,
-                                parsed.thread_id.as_deref().context("Codex thread id missing")?,
-                                parsed.turn_id.as_deref().context("Codex turn id missing")?,
-                            )
-                            .await?;
-                            requested.sent = true;
-                            interrupt_timeout
-                                .as_mut()
-                                .reset(Instant::now() + INTERRUPT_TIMEOUT);
-                            interrupt_timer_active = true;
-                        }
-                    }
-                }
-                _ = &mut startup_timeout, if parsed.turn_id.is_none() => {
-                    break TerminalOutcome::Failed(format!(
-                        "Codex app-server did not start a turn within {} seconds \
-                         (initialized={initialized}, thread_requested={thread_requested})",
-                        STARTUP_TIMEOUT.as_secs()
-                    ));
-                }
-                _ = &mut interrupt_timeout, if interrupt_timer_active => {
-                    let reason = termination
-                        .as_ref()
-                        .map(terminal_reason)
-                        .unwrap_or_else(|| "Codex termination timed out".to_owned());
-                    let _ = child.kill().await;
-                    break TerminalOutcome::Cancelled(format!(
-                        "{reason}; Codex did not acknowledge interruption within {} seconds",
-                        INTERRUPT_TIMEOUT.as_secs()
-                    ));
-                }
-            }
-        };
-
-        drop(stdin);
-        if tokio::time::timeout(SHUTDOWN_TIMEOUT, child.wait())
-            .await
-            .is_err()
-        {
-            let _ = child.kill().await;
-            let _ = child.wait().await;
-        }
-        stderr_task.abort();
-        let _ = stderr_task.await;
+        let mut outcome = runtime::execute(
+            &mut command,
+            &request,
+            &mode,
+            &mut controls,
+            &mut controls_open,
+            &sink,
+            &mut parsed,
+            &mut termination,
+        )
+        .await?;
 
         if let Some(thread_id) = parsed.thread_id.as_deref() {
             self.usage
@@ -575,15 +203,29 @@ impl CodexAdapter {
             TerminalOutcome::Failed(error) => ("failed", error.clone()),
             TerminalOutcome::Cancelled(reason) => ("cancelled", reason.clone()),
         };
-        let artifact = write_evidence(
-            &request,
-            parsed.thread_id.as_deref(),
-            status,
-            &summary,
-            &parsed.usage,
+        let artifact = runtime::finish(
+            write_evidence(
+                &request,
+                parsed.thread_id.as_deref(),
+                status,
+                &summary,
+                &parsed.usage,
+            ),
+            &mut controls,
+            &mut controls_open,
+            &mut termination,
+            &sink,
         )
         .await?;
-        sink.emit(AdapterEvent::Artifact(artifact));
+        if let Some(requested) = &termination {
+            outcome = TerminalOutcome::Cancelled(terminal_reason(requested));
+        }
+        // Keep local cancelled transcripts, but do not emit an artifact labeled
+        // completed if stop arrived while it was being collected. The runner
+        // independently fences uploads at receipt of every hard directive.
+        if status == "cancelled" || termination.is_none() {
+            sink.emit(AdapterEvent::Artifact(artifact));
+        }
 
         Ok(match outcome {
             TerminalOutcome::Completed => {
@@ -696,101 +338,49 @@ impl AgentAdapter for CodexAdapter {
     }
 }
 
-async fn send_rpc(stdin: &mut ChildStdin, value: Value) -> Result<(), AdapterError> {
-    let mut body = serde_json::to_vec(&value).context("serialize Codex app-server request")?;
-    body.push(b'\n');
-    stdin.write_all(&body).await?;
-    stdin.flush().await?;
-    Ok(())
-}
-
-async fn send_turn_start(
-    stdin: &mut ChildStdin,
-    request: &AdapterRunRequest,
-    thread_id: &str,
-) -> Result<(), AdapterError> {
+fn turn_start_request(request: &AdapterRunRequest, thread_id: &str) -> Value {
     let prompt = format!(
         "You are executing a bounded task under ECorp supervision.\n\
          Work only inside the current repository. Do not modify files outside it.\n\
          Complete this mission and verify the resulting files:\n\n{}",
         request.mission_title
     );
-    send_rpc(
-        stdin,
-        json!({
-            "method": "turn/start",
-            "id": TURN_REQUEST_ID,
-            "params": {
-                "threadId": thread_id,
-                "input": [{"type": "text", "text": prompt}],
-                "cwd": request.workspace,
-                "approvalPolicy": "never",
-                "sandboxPolicy": {
-                    "type": "workspaceWrite",
-                    "writableRoots": [request.workspace],
-                    "networkAccess": false
-                }
+    json!({
+        "method": "turn/start",
+        "id": TURN_REQUEST_ID,
+        "params": {
+            "threadId": thread_id,
+            "input": [{"type": "text", "text": prompt}],
+            "cwd": request.workspace,
+            "approvalPolicy": "never",
+            "sandboxPolicy": {
+                "type": "workspaceWrite",
+                "writableRoots": [request.workspace],
+                "networkAccess": false
             }
-        }),
-    )
-    .await
+        }
+    })
 }
 
-async fn send_steer(
-    stdin: &mut ChildStdin,
+fn steer_request(
     next_request_id: &mut u64,
     thread_id: &str,
     turn_id: &str,
-    actor_id: uuid::Uuid,
+    actor_id: Uuid,
     text: &str,
-) -> Result<(), AdapterError> {
+) -> Value {
     let id = *next_request_id;
     *next_request_id = next_request_id.saturating_add(1);
-    send_rpc(
-        stdin,
-        json!({
-            "method": "turn/steer",
-            "id": id,
-            "params": {
-                "threadId": thread_id,
-                "expectedTurnId": turn_id,
-                "input": [{
-                    "type": "text",
-                    "text": format!("Live direction from human actor {actor_id}: {text}")
-                }]
-            }
-        }),
-    )
-    .await
+    json!({
+        "method": "turn/steer", "id": id,
+        "params": {
+            "threadId": thread_id, "expectedTurnId": turn_id,
+            "input": [{"type": "text", "text": format!("Live direction from human actor {actor_id}: {text}")}]
+        }
+    })
 }
 
-async fn send_interrupt(
-    stdin: &mut ChildStdin,
-    next_request_id: &mut u64,
-    thread_id: &str,
-    turn_id: &str,
-) -> Result<(), AdapterError> {
-    let id = *next_request_id;
-    *next_request_id = next_request_id.saturating_add(1);
-    send_rpc(
-        stdin,
-        json!({
-            "method": "turn/interrupt",
-            "id": id,
-            "params": {
-                "threadId": thread_id,
-                "turnId": turn_id
-            }
-        }),
-    )
-    .await
-}
-
-async fn answer_server_request(
-    stdin: &mut ChildStdin,
-    value: &Value,
-    sink: Arc<dyn AdapterEventSink>,
-) -> Result<(), AdapterError> {
+fn server_response(value: &Value, sink: Arc<dyn AdapterEventSink>) -> Result<Value, AdapterError> {
     let id = value
         .get("id")
         .cloned()
@@ -806,25 +396,40 @@ async fn answer_server_request(
         "item/tool/requestUserInput" => json!({"id": id, "result": {"answers": {}}}),
         _ => json!({
             "id": id,
-            "error": {
-                "code": -32000,
-                "message": format!(
-                    "ECorp does not permit interactive app-server request {method}"
-                )
-            }
+            "error": { "code": -32000, "message": format!("ECorp does not permit interactive app-server request {method}") }
         }),
     };
     sink.emit(AdapterEvent::Output {
         stream: "control".to_owned(),
         text: format!("Denied unsupervised Codex server request: {method}"),
     });
-    send_rpc(stdin, response).await
+    Ok(response)
+}
+
+fn active_notification(value: &Value, parsed: &ParsedRun) -> bool {
+    let (Some(thread_id), Some(turn_id)) = (parsed.thread_id.as_deref(), parsed.turn_id.as_deref())
+    else {
+        return false;
+    };
+    value.pointer("/params/threadId").and_then(Value::as_str) == Some(thread_id)
+        && value
+            .pointer("/params/turnId")
+            .or_else(|| value.pointer("/params/turn/id"))
+            .and_then(Value::as_str)
+            == Some(turn_id)
 }
 
 fn handle_notification(value: &Value, parsed: &mut ParsedRun, sink: Arc<dyn AdapterEventSink>) {
     let Some(method) = value.get("method").and_then(Value::as_str) else {
         return;
     };
+    if (method.starts_with("turn/")
+        || method.starts_with("item/")
+        || method == "thread/tokenUsage/updated")
+        && !active_notification(value, parsed)
+    {
+        return;
+    }
     let params = value.get("params").unwrap_or(&Value::Null);
     match method {
         "turn/started" => sink.emit(AdapterEvent::Status {
@@ -961,13 +566,22 @@ fn handle_completed_item(item: &Value, parsed: &mut ParsedRun, sink: Arc<dyn Ada
 }
 
 fn record_usage(params: &Value, parsed: &mut ParsedRun) -> Option<UsageSnapshot> {
-    if params.get("turnId").and_then(Value::as_str) != parsed.turn_id.as_deref() {
+    let (Some(thread_id), Some(turn_id)) = (parsed.thread_id.as_deref(), parsed.turn_id.as_deref())
+    else {
+        return None;
+    };
+    if params.get("threadId").and_then(Value::as_str) != Some(thread_id)
+        || params.get("turnId").and_then(Value::as_str) != Some(turn_id)
+    {
         return None;
     }
     let total_tokens = params
         .pointer("/tokenUsage/total/totalTokens")
         .and_then(Value::as_u64)?;
-    if parsed.last_usage_total == Some(total_tokens) {
+    if parsed
+        .last_usage_total
+        .is_some_and(|previous| total_tokens <= previous)
+    {
         return None;
     }
     // App-server reports `last` for the latest model API call and `total` cumulatively for the
@@ -1054,6 +668,7 @@ async fn git_output(workspace: &Path, args: &[&str]) -> Result<Vec<u8>, AdapterE
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
+        .kill_on_drop(true)
         .output()
         .await?;
     if output.status.success() {
@@ -1660,10 +1275,12 @@ mod tests {
     #[test]
     fn usage_notifications_are_deduplicated_and_scoped_to_the_active_turn() {
         let mut parsed = ParsedRun {
+            thread_id: Some("thread-1".to_owned()),
             turn_id: Some("turn-1".to_owned()),
             ..ParsedRun::default()
         };
         let notification = json!({
+            "threadId": "thread-1",
             "turnId": "turn-1",
             "tokenUsage": {
                 "total": {"totalTokens": 12},
@@ -1676,6 +1293,7 @@ mod tests {
         assert!(record_usage(&notification, &mut parsed).is_none());
         let second = record_usage(
             &json!({
+                "threadId": "thread-1",
                 "turnId": "turn-1",
                 "tokenUsage": {
                     "total": {"totalTokens": 20},
@@ -1690,6 +1308,7 @@ mod tests {
         assert!(
             record_usage(
                 &json!({
+                    "threadId": "thread-1",
                     "turnId": "other",
                     "tokenUsage": {
                         "total": {"totalTokens": 20},

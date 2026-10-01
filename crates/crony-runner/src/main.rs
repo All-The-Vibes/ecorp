@@ -285,6 +285,15 @@ struct ActiveRunControl {
 }
 
 impl ActiveRunControl {
+    fn apply_stop(&self, reason: String) -> bool {
+        if !self.hard_boundary_checkpoint.request() {
+            return false;
+        }
+        // Verification remains cancellable after the provider receiver closes.
+        let _ = self.control.send(AdapterControl::Stop { reason });
+        true
+    }
+
     fn apply_circuit_breaker(&self, stage: String, reason: String) -> bool {
         let hard = matches!(stage.as_str(), "suspend" | "stop");
         if hard {
@@ -928,6 +937,7 @@ async fn run_connection(
         };
         let command: ServerToRunner =
             serde_json::from_str(text.as_str()).context("decode server command")?;
+        let command_received_at = chrono::Utc::now().to_rfc3339();
         match command {
             ServerToRunner::WorkspaceSetup { command } => {
                 if !registration_accepted
@@ -1744,6 +1754,7 @@ async fn run_connection(
                     connection_epoch,
                     command_id,
                     applied,
+                    runner_received_at: Some(command_received_at.clone()),
                     detail: if duplicate {
                         format!("control message {message_id} was already applied")
                     } else if applied {
@@ -1760,7 +1771,7 @@ async fn run_connection(
             }
             ServerToRunner::StopRun { run_id, reason, .. } => {
                 if let Some(active) = active_runs.get(&run_id) {
-                    let _ = active.control.send(AdapterControl::Stop { reason });
+                    active.apply_stop(reason);
                 } else {
                     warn!(%run_id, "stop command arrived for inactive run");
                 }
@@ -1796,6 +1807,7 @@ async fn run_connection(
                     connection_epoch,
                     command_id,
                     applied,
+                    runner_received_at: Some(command_received_at.clone()),
                     detail: if duplicate {
                         "approval decision was already applied".to_owned()
                     } else if applied {
@@ -1824,6 +1836,7 @@ async fn run_connection(
                     connection_epoch,
                     command_id,
                     applied,
+                    runner_received_at: Some(command_received_at.clone()),
                     detail: if duplicate {
                         "circuit-breaker command was already applied".to_owned()
                     } else if applied {
@@ -2008,6 +2021,14 @@ impl AdapterEventSink for RunnerEventSink {
                     }),
                 ),
             },
+            AdapterEvent::ControlObservation {
+                phase,
+                observed_at,
+                detail,
+            } => (
+                "run.control_observed",
+                json!({ "adapter": self.assignment.adapter, "phase": phase, "observed_at": observed_at, "detail": detail }),
+            ),
             AdapterEvent::Usage(usage) => (
                 "run.usage",
                 json!({
@@ -3868,6 +3889,7 @@ fn send_command_ack(
         command_id,
         applied,
         detail: detail.to_owned(),
+        runner_received_at: None,
     });
 }
 

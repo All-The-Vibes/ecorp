@@ -804,6 +804,41 @@ artifact, produced no completion or retry, removed the clean worktree, and rende
 failed state in desktop and mobile Chromium. See
 `docs/evidence/2026-09-02-real-provider-budget-stop.md`.
 
+The issue #87 regression lane measures the current implementation separately from that historical
+run and the September 3, 2026 incident. Rust regressions cover delayed output, cumulative replay,
+blocked stdin, startup and turn correlation, deadline-preserving escalation, teardown races,
+database cutoff under lock contention, offline/repeated emergency stop, authenticated command
+receipts, and hard-stop artifact/verification fences. These are retrospective tests, not a
+reproduction of the incident or evidence of historical development order.
+
+`tools/e2e_codex_stop.ps1` owns a fresh PostgreSQL instance, synthetic Git source, server, runner,
+and browser web server per invocation. It requires matching prebuilt server/runner binaries and
+locked web dependencies. Run its separate scenarios with a fresh output directory each time:
+
+```powershell
+./tools/e2e_codex_stop.ps1 -PostgresBin C:/tools/pgsql/bin -QaParent C:/owned-qa `
+  -OutputRoot C:/evidence/unique-fixture-suspend -PlaywrightModule C:/tools/node_modules/playwright `
+  -Scenario fixture-suspend
+```
+
+`fixture-suspend` exercises rolling-budget constrain and suspend with delayed, replayed usage;
+`fixture-stop` exercises the browser's emergency-stop path. Both require the two-second native
+interrupt deadline because their deterministic transport acknowledges interrupt but withholds
+terminal status. `provider-stop` additionally requires `-CodexCommand` pointing to the existing
+authenticated native executable. It observes a real provider shell marker followed by a bounded
+wait in the isolated worktree, then stops that run through the browser. Failure to observe the
+native operation is unavailable or failed provider acceptance, never a passed fixture substitute.
+`fixture-lifecycle` runs the existing start/steer/interrupt/stop/resume lifecycle driver separately.
+
+The browser lanes retain screenshots, actual HTTP statuses, assertion counts, run/event receipts,
+independent dispatch/receipt/interrupt/termination/usage times, charged totals, and termination
+scope. Their supervisor records source manifests, executable hashes, native exit, source
+preservation, and process cleanup. Windows control-to-termination acceptance allows ten seconds
+including protocol, teardown, and scheduling; uncertain process cleanup fails acceptance. These
+receipts prove only their exact source and owned local stack. Record the installed Codex version
+alongside its hash; no repository-enforced Codex version pin or production guarantee is implied.
+Preserve failed attempts and distinguish observed passes, failures, and unavailable lanes.
+
 On a Windows runner, `tools/e2e_external_adapters.mjs` runs one common sample
 through Claude Code and OpenCode normalization, verifying session, usage, signed
 artifact, and completion evidence. Linux/macOS instead must return the native

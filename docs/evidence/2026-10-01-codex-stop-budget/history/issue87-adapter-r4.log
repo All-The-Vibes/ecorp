@@ -1,0 +1,56 @@
+   Compiling crony-protocol v0.1.0 (<reviewed-worktree>\crates\crony-protocol)
+   Compiling crony-runner v0.1.0 (<reviewed-worktree>\crates\crony-runner)
+    Finished `test` profile [unoptimized] target(s) in 33.10s
+     Running unittests src\bin\crony-evidence-paths.rs (target\debug\deps\crony_evidence_paths-eefad51ac185f636.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.00s
+
+     Running unittests src\main.rs (target\debug\deps\crony_runner-02b0585a373d56cb.exe)
+
+running 20 tests
+test adapter::codex::stop_tests::issue87_buffered_usage_cannot_extend_the_interrupt_deadline ... ok
+test adapter::codex::stop_tests::issue87_completion_racing_stop_remains_cancelled ... ok
+test adapter::codex::stop_tests::issue87_cumulative_regressions_cannot_charge_again ... ok
+test adapter::codex::stop_tests::issue87_early_completion_waits_for_the_correlated_turn_response ... FAILED
+test adapter::codex::stop_tests::issue87_eof_does_not_wait_forever_for_a_live_child ... ok
+test adapter::codex::stop_tests::issue87_foreign_terminal_cannot_complete_the_active_turn ... ok
+test adapter::codex::stop_tests::issue87_foreign_thread_usage_cannot_consume_the_current_budget ... ok
+test adapter::codex::stop_tests::issue87_native_eof_fixture ... ok
+test adapter::codex::stop_tests::issue87_same_thread_notification_cannot_replace_the_requested_turn ... FAILED
+test adapter::codex::stop_tests::issue87_stop_during_thread_start_never_starts_a_turn ... ok
+test adapter::codex::stop_tests::issue87_stop_is_received_while_stdin_is_blocked ... ok
+test adapter::codex::tests::evidence_preserves_native_windows_long_paths ... ok
+test adapter::codex::tests::executes_streams_usage_and_writes_evidence ... ok
+test adapter::codex::tests::failed_turn_returns_failed_exit_with_evidence ... ok
+test adapter::codex::tests::forwards_live_steering_to_the_active_turn ... ok
+test adapter::codex::tests::installed_codex_reports_full_capabilities ... ok
+test adapter::codex::tests::interrupts_then_resumes_the_same_session_and_workspace ... ok
+test adapter::codex::tests::stop_is_graceful_and_evidenced ... ok
+test adapter::codex::tests::unavailable_codex_reports_explicit_capabilities ... ok
+test adapter::codex::tests::usage_notifications_are_deduplicated_and_scoped_to_the_active_turn ... ok
+
+failures:
+
+---- adapter::codex::stop_tests::issue87_early_completion_waits_for_the_correlated_turn_response stdout ----
+
+thread 'adapter::codex::stop_tests::issue87_early_completion_waits_for_the_correlated_turn_response' (15372) panicked at crates\crony-runner\src\adapter\codex_stop_tests.rs:263:5:
+assertion failed: workspace.join("turn-response-written.txt").is_file()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- adapter::codex::stop_tests::issue87_same_thread_notification_cannot_replace_the_requested_turn stdout ----
+
+thread 'adapter::codex::stop_tests::issue87_same_thread_notification_cannot_replace_the_requested_turn' (22800) panicked at crates\crony-runner\src\adapter\codex_stop_tests.rs:252:5:
+assertion `left == right` failed: only the correlated turn was interrupted
+  left: Completed
+ right: Cancelled
+
+
+failures:
+    adapter::codex::stop_tests::issue87_early_completion_waits_for_the_correlated_turn_response
+    adapter::codex::stop_tests::issue87_same_thread_notification_cannot_replace_the_requested_turn
+
+test result: FAILED. 18 passed; 2 failed; 0 ignored; 0 measured; 277 filtered out; finished in 27.27s
+
+error: test failed, to rerun pass `-p crony-runner --bin crony-runner`

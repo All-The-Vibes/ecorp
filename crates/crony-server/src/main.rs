@@ -17,6 +17,7 @@ mod factory_readiness;
 #[cfg(test)]
 mod factory_source_audit_tests;
 mod planning;
+mod runner_control_observations;
 mod secrets;
 mod staffing;
 mod startup;
@@ -6188,18 +6189,12 @@ async fn emergency_stop(
         }
         Err(error) => return Err(ApiError::conflict(error)),
     };
-    let runner = state
-        .runners
-        .get(&outcome.runner_id)
-        .ok_or_else(|| ApiError::conflict("run's runner is disconnected"))?;
-    runner
-        .tx
-        .send(ServerToRunner::StopRun {
-            run_id: outcome.run_id,
-            reason: request.reason,
-        })
-        .map_err(|_| ApiError::conflict("runner disconnected before stop delivery"))?;
     publish(&state, outcome.event);
+    // Persistence owns the hard boundary. An offline runner receives the same
+    // durable stop on reconnect; a transient dispatch failure cannot undo it.
+    if let Err(error) = dispatch_pending_runner_commands(&state, &outcome.runner_id).await {
+        warn!(%error, run_id = %outcome.run_id, "persisted stop awaits runner dispatch");
+    }
     Ok(Json(EmergencyStopResponse {
         run_id: outcome.run_id,
         requested: true,
@@ -6471,15 +6466,10 @@ async fn runner_websocket(
 }
 
 async fn runner_socket(socket: WebSocket, state: AppState) {
-    let (mut sender, mut receiver) = socket.split();
-    let (command_tx, mut command_rx) = mpsc::unbounded_channel::<ServerToRunner>();
-    let writer = tokio::spawn(async move {
-        while let Some(command) = command_rx.recv().await {
-            if send_json(&mut sender, &command).await.is_err() {
-                break;
-            }
-        }
-    });
+    let (sender, mut receiver) = socket.split();
+    let (command_tx, command_rx) = mpsc::unbounded_channel::<ServerToRunner>();
+    let (socket_identity, writer) =
+        runner_control_observations::spawn_writer(sender, command_rx, state.clone());
 
     let mut registered: Option<(String, Uuid, Uuid)> = None;
     while let Some(message) = receiver.next().await {
@@ -6728,6 +6718,7 @@ async fn runner_socket(socket: WebSocket, state: AppState) {
                     });
                 }
                 registered = Some((runner_id.clone(), corp_id, connection_epoch));
+                socket_identity.send_replace(registered.clone());
                 let _ = command_tx.send(ServerToRunner::Registered {
                     runner_id: runner_id.clone(),
                     credential: next_credential,
@@ -6939,6 +6930,7 @@ async fn runner_socket(socket: WebSocket, state: AppState) {
                 command_id,
                 applied,
                 detail,
+                runner_received_at,
             } => {
                 let registered_current =
                     registered
@@ -6954,11 +6946,19 @@ async fn runner_socket(socket: WebSocket, state: AppState) {
                     warn!(%runner_id, %command_id, "command ack came from a stale runner socket");
                     continue;
                 }
+                let Some((_, corp_id, _)) = registered.as_ref() else {
+                    continue;
+                };
+                let receipt = Some(crony_store::RunnerCommandReceipt {
+                    corp_id: *corp_id,
+                    connection_epoch,
+                    runner_received_at,
+                });
                 if !applied {
-                    warn!(%runner_id, %command_id, %detail, "runner could not apply durable command");
+                    warn!(%runner_id, %command_id, "runner could not apply durable command");
                     match state
                         .store
-                        .fail_runner_command(command_id, &runner_id, &detail)
+                        .fail_runner_command_with_receipt(command_id, &runner_id, &detail, receipt)
                         .await
                     {
                         Ok(Some(event)) => publish(&state, event),
@@ -6971,12 +6971,14 @@ async fn runner_socket(socket: WebSocket, state: AppState) {
                 }
                 match state
                     .store
-                    .acknowledge_runner_command(command_id, &runner_id)
+                    .acknowledge_runner_command_with_receipt(
+                        command_id, &runner_id, &detail, receipt,
+                    )
                     .await
                 {
                     Ok(Some(event)) => {
                         publish(&state, event);
-                        info!(%runner_id, %command_id, %detail, "durable runner command acknowledged");
+                        info!(%runner_id, %command_id, "durable runner command acknowledged");
                     }
                     Ok(None) => {
                         tracing::debug!(%runner_id, %command_id, "runner command ack was duplicate")

@@ -841,6 +841,24 @@ The Codex adapter:
 - disables user-configured MCP servers, apps, and hooks for supervised runs
 - fingerprints tracked and untracked changed files in the evidence artifact
 
+Codex hard controls use the native `turn/interrupt` request with a two-second deadline measured
+from the first adapter receipt. A later `stop` can strengthen a pending `suspend` but cannot extend
+that deadline. An interrupt response acknowledges the request; it does not establish process
+termination. Transport writes are cancellation-safe and bounded, pending steering is discarded on
+hard control, and early notifications are bounded until the correlated `turn/start` response
+establishes the active turn. Every protocol exit, including malformed output and closed pipes,
+retains ownership through process teardown.
+
+The control journal distinguishes durable command creation, server socket send, authenticated
+runner receipt, adapter receipt, native interrupt write/response, process termination, and final
+usage observation. Runner observation times are diagnostic; database admission time controls
+accounting. Neither a socket-send receipt nor a runner acknowledgment claims provider termination.
+Repeated emergency stops reuse the first durable incident and command, including while the runner
+is disconnected. Accounting admits reports only before the first hard boundary plus five seconds
+and before terminal run state. Later reports remain idempotent, noncharging observations. Native
+cumulative usage replay never implies new provider work: the adapter records whether a report
+advanced its cumulative counters and never claims to know the provider's token-generation time.
+
 Claude Code and OpenCode use a shared normalized external-CLI adapter. Provider-specific launch
 flags are isolated at the boundary, while JSONL output, sessions, usage, cancellation, and
 provider-neutral evidence map into the same lifecycle. Batch-mode steering limitations are

@@ -306,9 +306,13 @@ mod tests {
             )?;
             self.ready.notify_one();
             let control = controls.recv().await.expect("native control");
-            assert!(matches!(control, AdapterControl::CircuitBreaker { .. }));
-            if matches!(&control, AdapterControl::CircuitBreaker { stage, .. }
-                if matches!(stage.as_str(), "suspend" | "stop"))
+            assert!(matches!(
+                &control,
+                AdapterControl::CircuitBreaker { .. } | AdapterControl::Stop { .. }
+            ));
+            if matches!(&control, AdapterControl::Stop { .. })
+                || matches!(&control, AdapterControl::CircuitBreaker { stage, .. }
+                    if matches!(stage.as_str(), "suspend" | "stop"))
             {
                 // Real adapters can emit their final local transcript even
                 // after native interruption. It must not become a late upload.
@@ -357,6 +361,27 @@ mod tests {
     }
 
     async fn terminal_case(stage: &str, exit: Exit, uncertain: bool, pinned: bool) {
+        terminal_control_case(
+            AdapterControl::CircuitBreaker {
+                stage: stage.to_owned(),
+                reason: "native boundary".to_owned(),
+            },
+            exit,
+            uncertain,
+            pinned,
+        )
+        .await;
+    }
+
+    async fn terminal_control_case(
+        directive: AdapterControl,
+        exit: Exit,
+        uncertain: bool,
+        pinned: bool,
+    ) {
+        let hard = matches!(&directive, AdapterControl::Stop { .. })
+            || matches!(&directive, AdapterControl::CircuitBreaker { stage, .. }
+                if matches!(stage.as_str(), "suspend" | "stop"));
         let (root, workspaces, workspace, mut assignment) = fixture().await;
         if !pinned {
             assignment.source_repository = None;
@@ -401,16 +426,18 @@ mod tests {
         tokio::time::timeout(Duration::from_secs(10), ready.notified())
             .await
             .unwrap();
-        assert!(
-            native_control.apply_circuit_breaker(stage.to_owned(), "native boundary".to_owned())
-        );
+        assert!(match directive {
+            AdapterControl::Stop { reason } => native_control.apply_stop(reason),
+            AdapterControl::CircuitBreaker { stage, reason } =>
+                native_control.apply_circuit_breaker(stage, reason),
+            _ => panic!("fixture requires a stop or breaker directive"),
+        });
         let result = tokio::time::timeout(Duration::from_secs(20), execution)
             .await
             .unwrap()
             .unwrap();
         assert_eq!(result.is_err(), matches!(exit, Exit::RuntimeError));
         let recorded = events(&outbound);
-        let hard = matches!(stage, "suspend" | "stop");
         let expected_proof = hard && pinned && !uncertain && !matches!(exit, Exit::RuntimeError);
         let checkpoints = recorded
             .iter()
@@ -463,6 +490,10 @@ mod tests {
             assert!(terminated < index && index < terminal);
         }
         if hard {
+            assert_eq!(
+                std::fs::read(workspace.path.join(".crony/provider-evidence.txt")).unwrap(),
+                b"stopped provider transcript\n"
+            );
             assert!(!recorded.iter().any(|(kind, _)| {
                 matches!(
                     kind.as_str(),
@@ -487,6 +518,19 @@ mod tests {
         );
         assert!(!root.join("source/result.md").exists());
         remove_fixture(root);
+    }
+
+    #[tokio::test]
+    async fn issue87_ordinary_stop_blocks_late_artifacts_and_provider_completion() {
+        terminal_control_case(
+            AdapterControl::Stop {
+                reason: "ordinary operator stop".to_owned(),
+            },
+            Exit::Completed,
+            false,
+            true,
+        )
+        .await;
     }
 
     #[tokio::test]

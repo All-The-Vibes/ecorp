@@ -1,0 +1,45 @@
+{
+  "issue": 87,
+  "lane": "prerequisite-regression",
+  "revision": "r2",
+  "status": "passed",
+  "started_at_utc": "2026-10-01T11:20:06.9345497+00:00",
+  "worktree": "<reviewed-worktree>",
+  "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "source_files": 7156,
+  "source_before_matches_canonical_r1": true,
+  "python_executable": "<local-user>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+  "python_sha256": "372c2eae555b344520bf147be0096e009069aeca4e7f78d6aecea6d53158056a",
+  "environment_changes": [
+    "Prepend selected Python directory to process-local PATH",
+    "Set PYTHON to selected runtime",
+    "Clear process-local PYTHONHOME and PYTHONPATH"
+  ],
+  "log": "<run-evidence>\\issue87-prerequisite-regression-python-r2.log",
+  "native_exit_code": 0,
+  "product_source_changes": false,
+  "selected_python": "<local-user>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+  "python_version": "Python 3.12.14",
+  "command": [
+    "node",
+    "--test",
+    "--test-concurrency=1",
+    "--test-timeout=180000",
+    "--test-reporter=tap",
+    "scenarios/repo-steward/teams-host.test.mjs",
+    "tools/check_evidence_launch.test.mjs",
+    "tools/check_evidence_native_build.test.mjs",
+    "tools/check_evidence_personal_paths.test.mjs",
+    "tools/startup_validation_harness.test.mjs"
+  ],
+  "counts": {
+    "tests": 32,
+    "pass": 32,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "source_after_matches_canonical_r1": true,
+  "finished_at_utc": "2026-10-01T11:23:50.3910133+00:00"
+}

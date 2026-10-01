@@ -1,0 +1,2476 @@
+{
+  "schema_version": 1,
+  "scenario": "fixture-stop",
+  "started_at": "2026-10-01T10:34:59.520Z",
+  "status": "passed",
+  "historical_incident_reproduced": false,
+  "assertions": [
+    {
+      "name": "Browser launch reached the real server",
+      "passed": true
+    },
+    {
+      "name": "Runner uses an isolated worktree",
+      "passed": true
+    },
+    {
+      "name": "Browser stop reached the role-gated server endpoint",
+      "passed": true
+    },
+    {
+      "name": "Server accepted the stop request",
+      "passed": true
+    },
+    {
+      "name": "Hard control cancels the run and preserves its source",
+      "passed": true
+    },
+    {
+      "name": "Hard control never accepts an artifact or completion",
+      "passed": true
+    },
+    {
+      "name": "Native process termination is a separate persisted receipt",
+      "passed": true
+    },
+    {
+      "name": "Runner observation clocks stay distinct from server recording clocks",
+      "passed": true
+    },
+    {
+      "name": "Control-to-termination stays within native cleanup allowance",
+      "passed": true
+    },
+    {
+      "name": "Missing native terminal forces the fixed interrupt deadline",
+      "passed": true
+    },
+    {
+      "name": "Durable stop dispatch and authenticated acknowledgment",
+      "passed": true
+    },
+    {
+      "name": "Usage observations never claim provider generation time",
+      "passed": true
+    },
+    {
+      "name": "Charged usage respects the database cutoff",
+      "passed": true
+    },
+    {
+      "name": "Late transport reports remain observable after the directive",
+      "passed": true
+    },
+    {
+      "name": "Browser has no page errors",
+      "passed": true
+    }
+  ],
+  "http_results": [
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "method": "POST",
+      "status": 200,
+      "expected": 200
+    }
+  ],
+  "server": "http://127.0.0.1:53580",
+  "web": "http://127.0.0.1:53581",
+  "corp_id": "00000000-0000-4000-8000-000000000001",
+  "runner_id": "issue87-1ed6066f816049a7a37c06953d197e84",
+  "assurance": "Explicit deterministic Codex transport fixture in the real browser/server/runner stack; no provider inference.",
+  "title": "Codex stop acceptance fixture-stop 5c887f59-4bb0-407d-b461-0cfc32af593a",
+  "mission_id": "8489e126-4940-485a-8f2f-b0f418946347",
+  "browser_launch_at": "2026-10-01T10:35:03.061Z",
+  "run_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+  "agent_id": "616306e7-dcb9-4dfd-9538-08120b53d09b",
+  "provider_session_id": "stop-fixture-thread",
+  "workspace_path": "<local-user>\\qa\\issue87-stack-20261001T103436305-5435776c\\runner\\worktrees\\356292448f5c45e98ec5090074477bdf\\eec17dca1de54a4dbea9afe946531f34",
+  "browser_stop_at": "2026-10-01T10:35:05.058Z",
+  "stop_response": {
+    "run_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+    "requested": true
+  },
+  "adapter_to_termination_ms": 2480,
+  "run": {
+    "id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "task_id": "35629244-8f5c-45e9-8ec5-090074477bdf",
+    "agent_id": "616306e7-dcb9-4dfd-9538-08120b53d09b",
+    "runner_id": "issue87-1ed6066f816049a7a37c06953d197e84",
+    "provider_session_id": "stop-fixture-thread",
+    "resumed_from_run_id": null,
+    "workspace_run_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+    "model": null,
+    "reasoning_effort": null,
+    "input_tokens": 180,
+    "output_tokens": 36,
+    "cost_microusd": 0,
+    "budget_tokens_limit": 100000,
+    "budget_cost_microusd_limit": 10000000,
+    "breaker_stage": "stop",
+    "no_progress_events": 0,
+    "repeated_tool_count": 0,
+    "source_repository": "All-The-Vibes/ecorp",
+    "source_base_ref": "main",
+    "source_base_commit": "6128254f9ec0cc5807a04e3ba648cad232615082",
+    "workspace_path": "<local-user>\\qa\\issue87-stack-20261001T103436305-5435776c\\runner\\worktrees\\356292448f5c45e98ec5090074477bdf\\eec17dca1de54a4dbea9afe946531f34",
+    "workspace_branch": "crony/task-356292448f5c45e98ec5090074477bdf/run-eec17dca1de54a4dbea9afe946531f34",
+    "workspace_base_ref": "main",
+    "workspace_base_commit": "6128254f9ec0cc5807a04e3ba648cad232615082",
+    "workspace_disposition": "preserved",
+    "workspace_detail": "Stopped source retained with exact checkpoint evidence; recovery is not yet authorized.",
+    "workspace_fingerprint": "3cf48e07a91c248be8cd59275c7723885ab47ad6a6a775e966cc4bf40f6b23ad",
+    "execution_mode": "provider",
+    "verification_status": "pending",
+    "verification_summary": null,
+    "verification_sha256": null,
+    "deliverable_sha256": null,
+    "status": "cancelled",
+    "summary": "Circuit breaker stop checkpoint: Owned fixture-stop regression; stop the exact test run.",
+    "artifact_id": null,
+    "artifact_uri": null,
+    "artifact_media_type": null,
+    "artifact_signature": null,
+    "artifact_sha256": null,
+    "created_at": "2026-10-01T10:35:03.102083Z",
+    "updated_at": "2026-10-01T10:35:08.790362Z"
+  },
+  "events": [
+    {
+      "seq": 9,
+      "id": "76ab71eb-e185-4c1e-8d1b-2a0f406f0f62",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": "00000000-0000-4000-8000-000000000011",
+      "type": "run.requested",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "run:eec17dca-1de5-4a4d-bea9-afe946531f34:requested",
+      "visibility": "corp",
+      "payload": {
+        "agent_id": "616306e7-dcb9-4dfd-9538-08120b53d09b",
+        "attempt": 1,
+        "max_attempts": 2,
+        "mission_launch": true,
+        "model": null,
+        "reasoning_effort": null,
+        "runner_id": "issue87-1ed6066f816049a7a37c06953d197e84",
+        "status": "starting",
+        "task_id": "35629244-8f5c-45e9-8ec5-090074477bdf"
+      },
+      "created_at": "2026-10-01T10:35:03.102083Z"
+    },
+    {
+      "seq": 10,
+      "id": "0f05907f-2e00-4934-b4c7-4f1fa63ee75e",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.started",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:0f05907f-2e00-4934-b4c7-4f1fa63ee75e",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "mission_id": "8489e126-4940-485a-8f2f-b0f418946347",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "task_id": "35629244-8f5c-45e9-8ec5-090074477bdf",
+        "workspace": "<local-user>\\qa\\issue87-stack-20261001T103436305-5435776c\\runner\\worktrees\\356292448f5c45e98ec5090074477bdf\\eec17dca1de54a4dbea9afe946531f34",
+        "workspace_base_commit": "6128254f9ec0cc5807a04e3ba648cad232615082",
+        "workspace_base_ref": "main",
+        "workspace_branch": "crony/task-356292448f5c45e98ec5090074477bdf/run-eec17dca1de54a4dbea9afe946531f34"
+      },
+      "created_at": "2026-10-01T10:35:04.004589Z"
+    },
+    {
+      "seq": 11,
+      "id": "6b813e81-1923-4342-847e-760c7e75f62a",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:6b813e81-1923-4342-847e-760c7e75f62a",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "stop-fixture:thread-pending"
+      },
+      "created_at": "2026-10-01T10:35:04.093260Z"
+    },
+    {
+      "seq": 12,
+      "id": "84711220-e242-4ae9-800f-1ca1cdd906a1",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.session",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:84711220-e242-4ae9-800f-1ca1cdd906a1",
+      "visibility": "corp",
+      "payload": {
+        "session_id": "stop-fixture-thread"
+      },
+      "created_at": "2026-10-01T10:35:04.098336Z"
+    },
+    {
+      "seq": 13,
+      "id": "319f7168-0014-4c16-b341-0fe9b493c390",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:319f7168-0014-4c16-b341-0fe9b493c390",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "stop-fixture:turn-running"
+      },
+      "created_at": "2026-10-01T10:35:04.103772Z"
+    },
+    {
+      "seq": 14,
+      "id": "09af4871-88f4-4339-a03f-3d718c84a35e",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.status",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:09af4871-88f4-4339-a03f-3d718c84a35e",
+      "visibility": "corp",
+      "payload": {
+        "message": "Codex turn started",
+        "station": "briefing",
+        "status": "working"
+      },
+      "created_at": "2026-10-01T10:35:04.106826Z"
+    },
+    {
+      "seq": 15,
+      "id": "90e5c047-3f79-4054-be60-32166e437fd4",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": "00000000-0000-4000-8000-000000000011",
+      "type": "run.stop_requested",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "run-stop:eec17dca-1de5-4a4d-bea9-afe946531f34:372cae26-1c91-413b-b9df-113b9dbadf0b",
+      "visibility": "corp",
+      "payload": {
+        "agent_id": "616306e7-dcb9-4dfd-9538-08120b53d09b",
+        "command_id": "f7037e6d-92c3-4ec2-bfac-d2a6d5a6d41b",
+        "previous_stage": "healthy",
+        "reason": "Owned fixture-stop regression; stop the exact test run.",
+        "stage": "stop"
+      },
+      "created_at": "2026-10-01T10:35:05.107430Z"
+    },
+    {
+      "seq": 16,
+      "id": "bad24000-b696-4c29-9a5d-8b1fdaf3fdc3",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "runner.command_socket_sent",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner-command-send:f7037e6d-92c3-4ec2-bfac-d2a6d5a6d41b:2ef09791-2145-4f17-9e9d-e9ac295a7f46",
+      "visibility": "corp",
+      "payload": {
+        "command_id": "f7037e6d-92c3-4ec2-bfac-d2a6d5a6d41b",
+        "connection_epoch": "2ef09791-2145-4f17-9e9d-e9ac295a7f46",
+        "runner_id": "issue87-1ed6066f816049a7a37c06953d197e84",
+        "runner_receipt_confirmed": false,
+        "socket_sent_at": "2026-10-01T10:35:05.125459100Z",
+        "source": "server_socket",
+        "stage": "stop"
+      },
+      "created_at": "2026-10-01T10:35:05.125789Z"
+    },
+    {
+      "seq": 17,
+      "id": "7bfe4ea3-5284-4ae2-89c0-9f36a11abf4d",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "runner.command_acknowledged",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner-command-ack:f7037e6d-92c3-4ec2-bfac-d2a6d5a6d41b",
+      "visibility": "corp",
+      "payload": {
+        "command_id": "f7037e6d-92c3-4ec2-bfac-d2a6d5a6d41b",
+        "command_kind": "circuit_breaker",
+        "message_id": null,
+        "receipt": {
+          "connection_epoch": "2ef09791-2145-4f17-9e9d-e9ac295a7f46",
+          "detail": "circuit-breaker command delivered to the active provider",
+          "provider_termination_confirmed": false,
+          "runner_received_at": "2026-10-01T10:35:05.125720300Z",
+          "runner_timestamp_valid": true,
+          "server_acknowledged_at": "2026-10-01T10:35:05.128198Z"
+        },
+        "runner_id": "issue87-1ed6066f816049a7a37c06953d197e84",
+        "stage": "stop"
+      },
+      "created_at": "2026-10-01T10:35:05.126476Z"
+    },
+    {
+      "seq": 18,
+      "id": "914bc4d6-de80-4715-94a5-468bb6a26bcd",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:914bc4d6-de80-4715-94a5-468bb6a26bcd",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "deadline_extended": false,
+          "directive": "stop",
+          "escalation": false,
+          "interrupt_grace_ms": 2000
+        },
+        "observed_at": "2026-10-01T10:35:05.126548800Z",
+        "phase": "adapter_received",
+        "server_recorded_at": "2026-10-01T10:35:05.133619Z"
+      },
+      "created_at": "2026-10-01T10:35:05.132094Z"
+    },
+    {
+      "seq": 19,
+      "id": "9c8e85ac-fcd9-4d39-b127-8928d68cc059",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:9c8e85ac-fcd9-4d39-b127-8928d68cc059",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "request_id": 10,
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:05.126638800Z",
+        "phase": "interrupt_queued",
+        "server_recorded_at": "2026-10-01T10:35:05.137571Z"
+      },
+      "created_at": "2026-10-01T10:35:05.135476Z"
+    },
+    {
+      "seq": 20,
+      "id": "794ad96b-5e2c-453d-8af7-4bbb72956c9f",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:794ad96b-5e2c-453d-8af7-4bbb72956c9f",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "request_id": 10
+        },
+        "observed_at": "2026-10-01T10:35:05.126743500Z",
+        "phase": "interrupt_written",
+        "server_recorded_at": "2026-10-01T10:35:05.142780Z"
+      },
+      "created_at": "2026-10-01T10:35:05.140659Z"
+    },
+    {
+      "seq": 21,
+      "id": "124bdbf6-bae7-41f0-ac88-1a73f28a4519",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:124bdbf6-bae7-41f0-ac88-1a73f28a4519",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "request_id": 10,
+          "succeeded": true
+        },
+        "observed_at": "2026-10-01T10:35:05.127380800Z",
+        "phase": "interrupt_responded",
+        "server_recorded_at": "2026-10-01T10:35:05.160780Z"
+      },
+      "created_at": "2026-10-01T10:35:05.158699Z"
+    },
+    {
+      "seq": 22,
+      "id": "802b7166-1232-4fd9-861e-71af6842bf22",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:802b7166-1232-4fd9-861e-71af6842bf22",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:05.239775Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:05.237175Z"
+    },
+    {
+      "seq": 23,
+      "id": "487bce46-f82b-407e-bd0e-5c2be64a5e42",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:487bce46-f82b-407e-bd0e-5c2be64a5e42",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:05.236368Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:05.246329Z"
+      },
+      "created_at": "2026-10-01T10:35:05.245077Z"
+    },
+    {
+      "seq": 24,
+      "id": "7097d1c4-920f-4dac-9177-416f78741e64",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:7097d1c4-920f-4dac-9177-416f78741e64",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:05.352347Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:05.349480Z"
+    },
+    {
+      "seq": 25,
+      "id": "451ed6a5-ae13-4813-af4b-8154feef4475",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:451ed6a5-ae13-4813-af4b-8154feef4475",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 20,
+            "output_tokens": 4,
+            "total_tokens": 24
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:05.348541600Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:05.358859Z"
+      },
+      "created_at": "2026-10-01T10:35:05.357169Z"
+    },
+    {
+      "seq": 26,
+      "id": "6acbd02e-b03c-43fb-94e0-3fc7e79867e9",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:6acbd02e-b03c-43fb-94e0-3fc7e79867e9",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:05.461823Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:05.459789Z"
+    },
+    {
+      "seq": 27,
+      "id": "c72a3849-cf1a-4d22-8f06-6b8260854a3b",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:c72a3849-cf1a-4d22-8f06-6b8260854a3b",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 30,
+            "output_tokens": 6,
+            "total_tokens": 36
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:05.458905700Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:05.468138Z"
+      },
+      "created_at": "2026-10-01T10:35:05.466905Z"
+    },
+    {
+      "seq": 28,
+      "id": "e7008af1-c3a7-4b22-8d83-be3837f1bdbc",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:e7008af1-c3a7-4b22-8d83-be3837f1bdbc",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:05.577154Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:05.575171Z"
+    },
+    {
+      "seq": 29,
+      "id": "549e9f5f-a6b0-4cdd-8e7e-6d2517559e11",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:549e9f5f-a6b0-4cdd-8e7e-6d2517559e11",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 40,
+            "output_tokens": 8,
+            "total_tokens": 48
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:05.574303800Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:05.582802Z"
+      },
+      "created_at": "2026-10-01T10:35:05.581223Z"
+    },
+    {
+      "seq": 30,
+      "id": "33bc9a7c-8874-4521-966e-9bccb0b5c054",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:33bc9a7c-8874-4521-966e-9bccb0b5c054",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:05.680625Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:05.678550Z"
+    },
+    {
+      "seq": 31,
+      "id": "1cf61fa8-a665-46aa-a550-dc71daeeed8c",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:1cf61fa8-a665-46aa-a550-dc71daeeed8c",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 50,
+            "output_tokens": 10,
+            "total_tokens": 60
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:05.677773300Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:05.685819Z"
+      },
+      "created_at": "2026-10-01T10:35:05.684801Z"
+    },
+    {
+      "seq": 32,
+      "id": "65f96850-fc1a-42d1-ad87-4054d85cddf8",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:65f96850-fc1a-42d1-ad87-4054d85cddf8",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:05.789721Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:05.787908Z"
+    },
+    {
+      "seq": 33,
+      "id": "80ed14c5-4c1b-4696-9efd-c3ab348cc2d7",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:80ed14c5-4c1b-4696-9efd-c3ab348cc2d7",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 60,
+            "output_tokens": 12,
+            "total_tokens": 72
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:05.786852Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:05.797395Z"
+      },
+      "created_at": "2026-10-01T10:35:05.794969Z"
+    },
+    {
+      "seq": 34,
+      "id": "bea154fa-e25d-40cd-a253-4052156f0236",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:bea154fa-e25d-40cd-a253-4052156f0236",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:05.893328Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:05.891088Z"
+    },
+    {
+      "seq": 35,
+      "id": "c493abce-cdd2-431d-882e-a897e3d3d702",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:c493abce-cdd2-431d-882e-a897e3d3d702",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 70,
+            "output_tokens": 14,
+            "total_tokens": 84
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:05.889912600Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:05.898649Z"
+      },
+      "created_at": "2026-10-01T10:35:05.897360Z"
+    },
+    {
+      "seq": 36,
+      "id": "c366585f-1fdb-4519-9148-18c86b03eb60",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:c366585f-1fdb-4519-9148-18c86b03eb60",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:06.003043Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:06.000808Z"
+    },
+    {
+      "seq": 37,
+      "id": "f88a6bb6-d506-461f-9d68-2ae4f6693f76",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:f88a6bb6-d506-461f-9d68-2ae4f6693f76",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 80,
+            "output_tokens": 16,
+            "total_tokens": 96
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:05.999969400Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:06.008676Z"
+      },
+      "created_at": "2026-10-01T10:35:06.007510Z"
+    },
+    {
+      "seq": 38,
+      "id": "f5ef44c7-45dd-46b8-a377-780fd39a05f4",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:f5ef44c7-45dd-46b8-a377-780fd39a05f4",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:06.106195Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:06.104845Z"
+    },
+    {
+      "seq": 39,
+      "id": "71d37e5d-ae2a-4288-aff3-42de784fe915",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:71d37e5d-ae2a-4288-aff3-42de784fe915",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 90,
+            "output_tokens": 18,
+            "total_tokens": 108
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:06.104062Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:06.110325Z"
+      },
+      "created_at": "2026-10-01T10:35:06.109427Z"
+    },
+    {
+      "seq": 40,
+      "id": "a3c1948b-f46a-48cf-a86e-06748009c617",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:a3c1948b-f46a-48cf-a86e-06748009c617",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:06.212243Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:06.211049Z"
+    },
+    {
+      "seq": 41,
+      "id": "185f268d-b195-41e2-bcb3-668a9f07a9a9",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:185f268d-b195-41e2-bcb3-668a9f07a9a9",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "total_tokens": 120
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:06.210324100Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:06.216184Z"
+      },
+      "created_at": "2026-10-01T10:35:06.215438Z"
+    },
+    {
+      "seq": 42,
+      "id": "50ae6a44-df72-41c8-8b30-c00a02809c72",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:50ae6a44-df72-41c8-8b30-c00a02809c72",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:06.319500Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:06.317752Z"
+    },
+    {
+      "seq": 43,
+      "id": "68ab9c0d-4e2a-470f-8755-a591b85b5a6e",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:68ab9c0d-4e2a-470f-8755-a591b85b5a6e",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 110,
+            "output_tokens": 22,
+            "total_tokens": 132
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:06.316872600Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:06.324209Z"
+      },
+      "created_at": "2026-10-01T10:35:06.323435Z"
+    },
+    {
+      "seq": 44,
+      "id": "c43747d9-04e8-4c9b-83ab-41da09574388",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:c43747d9-04e8-4c9b-83ab-41da09574388",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:06.422071Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:06.420565Z"
+    },
+    {
+      "seq": 45,
+      "id": "b5825f28-b100-4009-be5a-c317806f9719",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:b5825f28-b100-4009-be5a-c317806f9719",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 120,
+            "output_tokens": 24,
+            "total_tokens": 144
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:06.418934800Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:06.426754Z"
+      },
+      "created_at": "2026-10-01T10:35:06.425851Z"
+    },
+    {
+      "seq": 46,
+      "id": "9e57fe18-44ed-40de-a56c-65c89e78bb6b",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:9e57fe18-44ed-40de-a56c-65c89e78bb6b",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:06.528886Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:06.526926Z"
+    },
+    {
+      "seq": 47,
+      "id": "54e30dff-a991-4911-ab98-4b0793f5cdbe",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:54e30dff-a991-4911-ab98-4b0793f5cdbe",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 130,
+            "output_tokens": 26,
+            "total_tokens": 156
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:06.525856100Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:06.533996Z"
+      },
+      "created_at": "2026-10-01T10:35:06.533026Z"
+    },
+    {
+      "seq": 48,
+      "id": "202e2032-5d0e-4fb8-9e51-5b0f48a12f15",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:202e2032-5d0e-4fb8-9e51-5b0f48a12f15",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:06.638011Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:06.636445Z"
+    },
+    {
+      "seq": 49,
+      "id": "09acde4b-041a-4a39-9e8a-dc016a4e9dad",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:09acde4b-041a-4a39-9e8a-dc016a4e9dad",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 140,
+            "output_tokens": 28,
+            "total_tokens": 168
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:06.635453100Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:06.642811Z"
+      },
+      "created_at": "2026-10-01T10:35:06.641882Z"
+    },
+    {
+      "seq": 50,
+      "id": "9e7aa607-2689-4eb2-80d3-ffd32c8fbd51",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:9e7aa607-2689-4eb2-80d3-ffd32c8fbd51",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:06.744721Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:06.743090Z"
+    },
+    {
+      "seq": 51,
+      "id": "1d574f22-69f3-4a6d-8e7e-f45b72cce34c",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:1d574f22-69f3-4a6d-8e7e-f45b72cce34c",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 150,
+            "output_tokens": 30,
+            "total_tokens": 180
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:06.742161500Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:06.748959Z"
+      },
+      "created_at": "2026-10-01T10:35:06.748158Z"
+    },
+    {
+      "seq": 52,
+      "id": "abb6cd41-01f7-49b7-b651-0338e3f590ec",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:abb6cd41-01f7-49b7-b651-0338e3f590ec",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:06.852653Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:06.851483Z"
+    },
+    {
+      "seq": 53,
+      "id": "eee2fb7d-f923-49df-aabb-bc2d0a970bbf",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:eee2fb7d-f923-49df-aabb-bc2d0a970bbf",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 160,
+            "output_tokens": 32,
+            "total_tokens": 192
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:06.850512300Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:06.857025Z"
+      },
+      "created_at": "2026-10-01T10:35:06.855844Z"
+    },
+    {
+      "seq": 54,
+      "id": "d389890d-ee5e-4e36-a773-7a5af9e5a1c3",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:d389890d-ee5e-4e36-a773-7a5af9e5a1c3",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:06.964175Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:06.962773Z"
+    },
+    {
+      "seq": 55,
+      "id": "175b89b3-dc74-46dd-bc74-5c34220b8591",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:175b89b3-dc74-46dd-bc74-5c34220b8591",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 170,
+            "output_tokens": 34,
+            "total_tokens": 204
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:06.961855100Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:06.969286Z"
+      },
+      "created_at": "2026-10-01T10:35:06.968348Z"
+    },
+    {
+      "seq": 56,
+      "id": "8cbbfb53-0c3a-4ed3-b10b-96a90a7723e4",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.usage",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:8cbbfb53-0c3a-4ed3-b10b-96a90a7723e4",
+      "visibility": "corp",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T10:35:07.067158Z",
+          "charged": true,
+          "cutoff_at": "2026-10-01T10:35:10.114544Z",
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": "2026-10-01T10:35:05.114544Z",
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 10,
+        "output_tokens": 2
+      },
+      "created_at": "2026-10-01T10:35:07.065471Z"
+    },
+    {
+      "seq": 57,
+      "id": "2ddc6f82-f3a8-4345-8fc2-39023de419d2",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:2ddc6f82-f3a8-4345-8fc2-39023de419d2",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "total_tokens": 12
+          },
+          "native_total": {
+            "input_tokens": 180,
+            "output_tokens": 36,
+            "total_tokens": 216
+          },
+          "thread_id": "stop-fixture-thread",
+          "turn_id": "stop-fixture-turn"
+        },
+        "observed_at": "2026-10-01T10:35:07.064140400Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T10:35:07.074156Z"
+      },
+      "created_at": "2026-10-01T10:35:07.071752Z"
+    },
+    {
+      "seq": 58,
+      "id": "b58cc7e0-50eb-402b-b800-1bbeadef31de",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:b58cc7e0-50eb-402b-b800-1bbeadef31de",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "interrupt_request_id": 10
+        },
+        "observed_at": "2026-10-01T10:35:07.142028900Z",
+        "phase": "interrupt_deadline",
+        "server_recorded_at": "2026-10-01T10:35:07.144013Z"
+      },
+      "created_at": "2026-10-01T10:35:07.143116Z"
+    },
+    {
+      "seq": 59,
+      "id": "fea14975-50a7-4ac1-b194-f7c05eb7505e",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:fea14975-50a7-4ac1-b194-f7c05eb7505e",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "node:events:505"
+      },
+      "created_at": "2026-10-01T10:35:07.277006Z"
+    },
+    {
+      "seq": 60,
+      "id": "ef36eb1f-f6e0-47ac-b79e-0580a13b0c62",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:ef36eb1f-f6e0-47ac-b79e-0580a13b0c62",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "    throw er; // Unhandled 'error' event"
+      },
+      "created_at": "2026-10-01T10:35:07.278936Z"
+    },
+    {
+      "seq": 61,
+      "id": "cb511229-fe33-4285-8dd2-73c87af6c3f4",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:cb511229-fe33-4285-8dd2-73c87af6c3f4",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "    ^"
+      },
+      "created_at": "2026-10-01T10:35:07.280917Z"
+    },
+    {
+      "seq": 62,
+      "id": "080f1733-31c4-4b5a-836f-e26bbdbd2562",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:080f1733-31c4-4b5a-836f-e26bbdbd2562",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": ""
+      },
+      "created_at": "2026-10-01T10:35:07.282852Z"
+    },
+    {
+      "seq": 63,
+      "id": "592a5d5f-28ae-40fa-9059-ec77c2b3b086",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:592a5d5f-28ae-40fa-9059-ec77c2b3b086",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "Error: EPIPE: broken pipe, write"
+      },
+      "created_at": "2026-10-01T10:35:07.284645Z"
+    },
+    {
+      "seq": 64,
+      "id": "3c5ccb69-0ec4-4366-98c2-8a87d775a25a",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:3c5ccb69-0ec4-4366-98c2-8a87d775a25a",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "    at Socket._write (node:internal/net:75:18)"
+      },
+      "created_at": "2026-10-01T10:35:07.286418Z"
+    },
+    {
+      "seq": 65,
+      "id": "95d1108e-6d56-45df-9a48-fc184fd90318",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:95d1108e-6d56-45df-9a48-fc184fd90318",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "    at writeOrBuffer (node:internal/streams/writable:574:12)"
+      },
+      "created_at": "2026-10-01T10:35:07.288405Z"
+    },
+    {
+      "seq": 66,
+      "id": "e8e0090c-2405-4eb3-b908-15a4b8906d84",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:e8e0090c-2405-4eb3-b908-15a4b8906d84",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "    at _write (node:internal/streams/writable:503:10)"
+      },
+      "created_at": "2026-10-01T10:35:07.290306Z"
+    },
+    {
+      "seq": 67,
+      "id": "4b639ede-f761-456f-8cad-3777fa462c3d",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:4b639ede-f761-456f-8cad-3777fa462c3d",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "    at Writable.write (node:internal/streams/writable:512:10)"
+      },
+      "created_at": "2026-10-01T10:35:07.292211Z"
+    },
+    {
+      "seq": 68,
+      "id": "85613ad4-2cc9-469f-b9aa-50a4a55ee225",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:85613ad4-2cc9-469f-b9aa-50a4a55ee225",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "    at send (file:///<reviewed-worktree>/scripts/fake-codex-stop-app-server.mjs:21:38)"
+      },
+      "created_at": "2026-10-01T10:35:07.294270Z"
+    },
+    {
+      "seq": 69,
+      "id": "0f15ad53-4235-4aa8-8d1c-47c759469c6d",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:0f15ad53-4235-4aa8-8d1c-47c759469c6d",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "    at notify (file:///<reviewed-worktree>/scripts/fake-codex-stop-app-server.mjs:22:36)"
+      },
+      "created_at": "2026-10-01T10:35:07.295936Z"
+    },
+    {
+      "seq": 70,
+      "id": "a845a0f2-4977-4d2b-a652-e810b3df6eeb",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:a845a0f2-4977-4d2b-a652-e810b3df6eeb",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "    at usage (file:///<reviewed-worktree>/scripts/fake-codex-stop-app-server.mjs:26:26)"
+      },
+      "created_at": "2026-10-01T10:35:07.297675Z"
+    },
+    {
+      "seq": 71,
+      "id": "5f1d1c5c-917f-4dcf-b2be-cdd31d79fd2b",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:5f1d1c5c-917f-4dcf-b2be-cdd31d79fd2b",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "    at Timeout._onTimeout (file:///<reviewed-worktree>/scripts/fake-codex-stop-app-server.mjs:130:9)"
+      },
+      "created_at": "2026-10-01T10:35:07.299806Z"
+    },
+    {
+      "seq": 72,
+      "id": "01118d79-c1dc-40b6-904c-7ee68a8125c5",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:01118d79-c1dc-40b6-904c-7ee68a8125c5",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "    at listOnTimeout (node:internal/timers:685:17)"
+      },
+      "created_at": "2026-10-01T10:35:07.301614Z"
+    },
+    {
+      "seq": 73,
+      "id": "311366c0-a91f-4154-8577-8e22a4457c2e",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:311366c0-a91f-4154-8577-8e22a4457c2e",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "    at process.processTimers (node:internal/timers:618:7)"
+      },
+      "created_at": "2026-10-01T10:35:07.304109Z"
+    },
+    {
+      "seq": 74,
+      "id": "9873c8c4-d5d0-4e59-87f3-d0093d54fc5e",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:9873c8c4-d5d0-4e59-87f3-d0093d54fc5e",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "Emitted 'error' event on Socket instance at:"
+      },
+      "created_at": "2026-10-01T10:35:07.306282Z"
+    },
+    {
+      "seq": 75,
+      "id": "06552b38-7306-4858-adcc-ee35bafed834",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:06552b38-7306-4858-adcc-ee35bafed834",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "    at emitErrorNT (node:internal/streams/destroy:170:8)"
+      },
+      "created_at": "2026-10-01T10:35:07.308373Z"
+    },
+    {
+      "seq": 76,
+      "id": "2b066f19-fde9-4ec1-a352-7f3ee461f5e8",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:2b066f19-fde9-4ec1-a352-7f3ee461f5e8",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "    at emitErrorCloseNT (node:internal/streams/destroy:129:3)"
+      },
+      "created_at": "2026-10-01T10:35:07.310240Z"
+    },
+    {
+      "seq": 77,
+      "id": "299aa2a7-b331-47dc-97fe-edba18865ec9",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:299aa2a7-b331-47dc-97fe-edba18865ec9",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {"
+      },
+      "created_at": "2026-10-01T10:35:07.313928Z"
+    },
+    {
+      "seq": 78,
+      "id": "42faecda-d974-4b5f-ac06-54444117a43b",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:42faecda-d974-4b5f-ac06-54444117a43b",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "  errno: -4047,"
+      },
+      "created_at": "2026-10-01T10:35:07.315959Z"
+    },
+    {
+      "seq": 79,
+      "id": "7e67767e-0c6b-4e2b-ab97-e72a95296d28",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:7e67767e-0c6b-4e2b-ab97-e72a95296d28",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "  syscall: 'write',"
+      },
+      "created_at": "2026-10-01T10:35:07.317683Z"
+    },
+    {
+      "seq": 80,
+      "id": "67aa89a0-7f22-4f3e-806b-ea65542ccf4a",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:67aa89a0-7f22-4f3e-806b-ea65542ccf4a",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "  code: 'EPIPE'"
+      },
+      "created_at": "2026-10-01T10:35:07.319622Z"
+    },
+    {
+      "seq": 81,
+      "id": "7ada9249-49f7-485d-9468-2abf24046d58",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:7ada9249-49f7-485d-9468-2abf24046d58",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "}"
+      },
+      "created_at": "2026-10-01T10:35:07.321631Z"
+    },
+    {
+      "seq": 82,
+      "id": "d8dd3991-ec87-49d0-9275-fea6edc93f85",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:d8dd3991-ec87-49d0-9275-fea6edc93f85",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": ""
+      },
+      "created_at": "2026-10-01T10:35:07.323300Z"
+    },
+    {
+      "seq": 83,
+      "id": "029584e5-f046-49e7-81a9-0fa9437dfb95",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.output",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:029584e5-f046-49e7-81a9-0fa9437dfb95",
+      "visibility": "corp",
+      "payload": {
+        "stream": "stderr",
+        "text": "Node.js v24.21.0"
+      },
+      "created_at": "2026-10-01T10:35:07.325134Z"
+    },
+    {
+      "seq": 84,
+      "id": "1e51bc24-5306-4af6-bb11-1fa42f18adc6",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.control_observed",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:1e51bc24-5306-4af6-bb11-1fa42f18adc6",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "adapter_input_tokens": 180,
+          "adapter_output_tokens": 36,
+          "exit_status": "exit code: 1",
+          "last_usage_observed_at": "2026-10-01T10:35:07.064140400+00:00",
+          "scope": "windows_job_object"
+        },
+        "observed_at": "2026-10-01T10:35:07.606896200Z",
+        "phase": "process_terminated",
+        "server_recorded_at": "2026-10-01T10:35:07.618796Z"
+      },
+      "created_at": "2026-10-01T10:35:07.617575Z"
+    },
+    {
+      "seq": 85,
+      "id": "c1c85b8e-1286-4405-b16b-64f3cfb1a206",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.session_terminated",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:c1c85b8e-1286-4405-b16b-64f3cfb1a206",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "codex",
+        "message": "Provider session stopped; no idle agent process remains.",
+        "outcome": "cancelled",
+        "provider_process_alive": false
+      },
+      "created_at": "2026-10-01T10:35:08.008804Z"
+    },
+    {
+      "seq": 86,
+      "id": "d445b94f-4e6f-467c-a8c5-cdca7901252c",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.workspace_preserved",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:d445b94f-4e6f-467c-a8c5-cdca7901252c",
+      "visibility": "corp",
+      "payload": {
+        "branch_deleted": false,
+        "commits_ahead": null,
+        "detail": "Stopped source retained with exact checkpoint evidence; recovery is not yet authorized.",
+        "dirty": null,
+        "head_commit": "6128254f9ec0cc5807a04e3ba648cad232615082",
+        "source_checkpoint": {
+          "agent_id": "616306e7-dcb9-4dfd-9538-08120b53d09b",
+          "branch": "crony/task-356292448f5c45e98ec5090074477bdf/run-eec17dca1de54a4dbea9afe946531f34",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "deliverable_policy_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "head_commit": "6128254f9ec0cc5807a04e3ba648cad232615082",
+          "mission_id": "8489e126-4940-485a-8f2f-b0f418946347",
+          "run_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+          "runner_id": "issue87-1ed6066f816049a7a37c06953d197e84",
+          "schema_version": 1,
+          "source_base_commit": "6128254f9ec0cc5807a04e3ba648cad232615082",
+          "source_base_ref": "main",
+          "source_repository": "All-The-Vibes/ecorp",
+          "task_id": "35629244-8f5c-45e9-8ec5-090074477bdf",
+          "verification_policy_sha256": "d3e1c23d47dd3042fcce1ec10a5bde9bf4aa5a97e2fd6f4f5b4f35e1ab0cd6dc",
+          "workspace_base_commit": "6128254f9ec0cc5807a04e3ba648cad232615082",
+          "workspace_fingerprint": "3cf48e07a91c248be8cd59275c7723885ab47ad6a6a775e966cc4bf40f6b23ad",
+          "workspace_run_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+          "write_scope_sha256": "1078c140b996b711424671640de5d8a0fed342fc5d0027e16717b7016384f8fd"
+        },
+        "workspace": "<local-user>\\qa\\issue87-stack-20261001T103436305-5435776c\\runner\\worktrees\\356292448f5c45e98ec5090074477bdf\\eec17dca1de54a4dbea9afe946531f34",
+        "workspace_base_commit": "6128254f9ec0cc5807a04e3ba648cad232615082",
+        "workspace_base_ref": "main",
+        "workspace_branch": "crony/task-356292448f5c45e98ec5090074477bdf/run-eec17dca1de54a4dbea9afe946531f34",
+        "workspace_fingerprint": "3cf48e07a91c248be8cd59275c7723885ab47ad6a6a775e966cc4bf40f6b23ad"
+      },
+      "created_at": "2026-10-01T10:35:08.786920Z"
+    },
+    {
+      "seq": 87,
+      "id": "301b7d83-85ab-4b6a-933f-ab1541084c6f",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.cancelled",
+      "aggregate_type": "run",
+      "aggregate_id": "eec17dca-1de5-4a4d-bea9-afe946531f34",
+      "aggregate_version": 1,
+      "correlation_id": "8489e126-4940-485a-8f2f-b0f418946347",
+      "causation_id": null,
+      "idempotency_key": "runner:issue87-1ed6066f816049a7a37c06953d197e84:event:301b7d83-85ab-4b6a-933f-ab1541084c6f",
+      "visibility": "corp",
+      "payload": {
+        "reason": "Circuit breaker stop checkpoint: Owned fixture-stop regression; stop the exact test run."
+      },
+      "created_at": "2026-10-01T10:35:08.790362Z"
+    }
+  ],
+  "final_usage": {
+    "input_tokens": 180,
+    "output_tokens": 36,
+    "last_observed_at": "2026-10-01T10:35:07.064140400+00:00"
+  },
+  "settled_observed_at": "2026-10-01T10:35:08.790362Z",
+  "finished_at": "2026-10-01T10:35:09.623Z",
+  "counts": {
+    "passed": 15,
+    "failed": 0
+  }
+}

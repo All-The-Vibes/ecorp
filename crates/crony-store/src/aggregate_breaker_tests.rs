@@ -245,12 +245,12 @@ async fn issue56_sibling_accounting_serializes_after_expiry(pool: PgPool) {
     expiry_and_sibling_accounting(pool, false).await;
 }
 
-const CORP: Uuid = Uuid::from_u128(5601);
-const OWNER: Uuid = Uuid::from_u128(5602);
+pub(super) const CORP: Uuid = Uuid::from_u128(5601);
+pub(super) const OWNER: Uuid = Uuid::from_u128(5602);
 const ROOM: Uuid = Uuid::from_u128(5603);
-const MISSION: Uuid = Uuid::from_u128(5604);
+pub(super) const MISSION: Uuid = Uuid::from_u128(5604);
 
-async fn fixture(pool: PgPool) -> PgStore {
+pub(super) async fn fixture(pool: PgPool) -> PgStore {
     sqlx::query("INSERT INTO corps(id,slug,name) VALUES($1,'aggregate56','Aggregate breaker')")
         .bind(CORP)
         .execute(&pool)
@@ -553,7 +553,7 @@ async fn issue56_mission_hard_budget_fences_all_active_runs(pool: PgPool) {
     assert_eq!(commands, 2);
 }
 
-fn event(index: u128, kind: &str, payload: Value) -> RunnerEventInput {
+pub(super) fn event(index: u128, kind: &str, payload: Value) -> RunnerEventInput {
     RunnerEventInput {
         event_id: Uuid::new_v4(),
         runner_id: format!("issue56-runner-{index}"),
@@ -1626,7 +1626,7 @@ async fn issue56_interrupt_waits_for_run_without_holding_lease(pool: PgPool) {
     );
 }
 
-fn artifact(index: u128, input: &RunnerEventInput) -> StoredArtifact {
+pub(super) fn artifact(index: u128, input: &RunnerEventInput) -> StoredArtifact {
     StoredArtifact {
         id: input.event_id,
         corp_id: CORP,

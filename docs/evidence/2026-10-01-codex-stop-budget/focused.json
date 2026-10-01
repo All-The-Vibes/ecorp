@@ -1,0 +1,150 @@
+[
+  {
+    "issue": 87,
+    "stage": "adapter",
+    "historical_incident_reproduced": false,
+    "started_at_utc": "2026-10-01T14:40:55.3353961+00:00",
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "worktree": "<reviewed-worktree>",
+    "command": "cargo test --locked -p crony-runner adapter::codex -- --test-threads=1",
+    "profile": {
+      "test_debug": "0",
+      "incremental": "0",
+      "dev_debug": "0",
+      "jobs": "2"
+    },
+    "target": "<reviewed-worktree>\\target",
+    "provider": "No provider inference; deterministic fixtures only",
+    "status": "passed",
+    "log": "<run-evidence>\\issue87-adapter-r6.log",
+    "native_exit_code": 0,
+    "source_unchanged": true,
+    "finished_at_utc": "2026-10-01T14:41:58.7447710+00:00",
+    "test_results": [
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.00s",
+      "test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 278 filtered out; finished in 42.88s"
+    ],
+    "original_receipt_sha256": "f131a2ed18c0b9a6db5bf8fa99f63adef1fa0376a2c40253d6ffe13d3eb73538",
+    "source_files": 273,
+    "scoped_manifest_sha256": "ba65a276df3db06258e25830a3e352e0e2ff41d34b72050a1cc22d7fcf0f875d",
+    "matches_canonical_source": true
+  },
+  {
+    "issue": 87,
+    "stage": "boundary",
+    "historical_incident_reproduced": false,
+    "started_at_utc": "2026-10-01T14:42:20.2924291+00:00",
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "worktree": "<reviewed-worktree>",
+    "command": "cargo test --locked -p crony-runner source_checkpoint::tests -- --test-threads=1",
+    "profile": {
+      "jobs": "2",
+      "test_debug": "0",
+      "incremental": "0",
+      "dev_debug": "0"
+    },
+    "target": "<reviewed-worktree>\\target",
+    "provider": "No provider inference; deterministic fixtures only",
+    "status": "passed",
+    "log": "<run-evidence>\\issue87-boundary-r2.log",
+    "native_exit_code": 0,
+    "source_unchanged": true,
+    "finished_at_utc": "2026-10-01T14:43:14.8400405+00:00",
+    "test_results": [
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.00s",
+      "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 287 filtered out; finished in 52.30s"
+    ],
+    "original_receipt_sha256": "b793f53e528f3236c5262c422802b40dc61c6259d14e8643ac342fd4d8a5da6b",
+    "source_files": 273,
+    "scoped_manifest_sha256": "ba65a276df3db06258e25830a3e352e0e2ff41d34b72050a1cc22d7fcf0f875d",
+    "matches_canonical_source": true
+  },
+  {
+    "issue": 87,
+    "stage": "receipt-clock",
+    "historical_incident_reproduced": false,
+    "started_at_utc": "2026-10-01T14:44:46.5265910+00:00",
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "worktree": "<reviewed-worktree>",
+    "command": "cargo test --locked -p crony-store control_receipts::tests::issue87_invalid_and_absent_runner_clocks_are_not_invented -- --test-threads=1",
+    "profile": {
+      "dev_debug": "0",
+      "test_debug": "0",
+      "jobs": "2",
+      "incremental": "0"
+    },
+    "target": "<reviewed-worktree>\\target",
+    "provider": "No provider inference; deterministic fixtures only",
+    "status": "passed",
+    "log": "<run-evidence>\\issue87-receipt-clock-r2.log",
+    "native_exit_code": 0,
+    "source_unchanged": true,
+    "finished_at_utc": "2026-10-01T14:44:58.5782457+00:00",
+    "test_results": [
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 564 filtered out; finished in 0.00s"
+    ],
+    "original_receipt_sha256": "946d857ca9daa508af28364d2c002cb40a82c618b9af66697148f90e40fed7f8",
+    "source_files": 273,
+    "scoped_manifest_sha256": "ba65a276df3db06258e25830a3e352e0e2ff41d34b72050a1cc22d7fcf0f875d",
+    "matches_canonical_source": true
+  },
+  {
+    "issue": 87,
+    "stage": "protocol-receipt",
+    "historical_incident_reproduced": false,
+    "started_at_utc": "2026-10-01T14:45:22.4372561+00:00",
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "worktree": "<reviewed-worktree>",
+    "command": "cargo test --locked -p crony-protocol tests::issue87_command_receipts_preserve_legacy_omission_and_observed_time -- --test-threads=1",
+    "profile": {
+      "incremental": "0",
+      "jobs": "2",
+      "test_debug": "0",
+      "dev_debug": "0"
+    },
+    "target": "<reviewed-worktree>\\target",
+    "provider": "No provider inference; deterministic fixtures only",
+    "status": "passed",
+    "log": "<run-evidence>\\issue87-protocol-receipt-r2.log",
+    "native_exit_code": 0,
+    "source_unchanged": true,
+    "finished_at_utc": "2026-10-01T14:45:24.3980893+00:00",
+    "test_results": [
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s"
+    ],
+    "original_receipt_sha256": "b0ab16d0b1f47fe6565afe581b30b7a6fc4580fd1983775bbf894d4c7ae86dd1",
+    "source_files": 273,
+    "scoped_manifest_sha256": "ba65a276df3db06258e25830a3e352e0e2ff41d34b72050a1cc22d7fcf0f875d",
+    "matches_canonical_source": true
+  },
+  {
+    "issue": 87,
+    "command": "cargo test --locked -p crony-store issue87_ -- --ignored --nocapture --test-threads=1",
+    "started_at_utc": "2026-10-01T14:45:35.4412632+00:00",
+    "worktree": "<reviewed-worktree>",
+    "qa_root": "<local-user>\\qa\\issue87-sqlx-20261001T144533171",
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "evidence_kind": "Retrospective native PostgreSQL migrations, accounting and command-scope regressions; synthetic provider observations; not real-provider acceptance",
+    "historical_incident_reproduced": false,
+    "profile": {
+      "dev_debug": "0",
+      "jobs": "2",
+      "test_debug": "0",
+      "incremental": "0"
+    },
+    "status": "passed",
+    "log": "<run-evidence>\\issue87-store-r4.log",
+    "exit_code": 0,
+    "database_stop_exit_code": 0,
+    "database_stopped": true,
+    "source_unchanged": true,
+    "finished_at_utc": "2026-10-01T14:46:37.1167690+00:00",
+    "test_results": [
+      "test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 552 filtered out; finished in 42.78s"
+    ],
+    "original_receipt_sha256": "9f1689206cc5d7739a47e5d4eb232ae04fd649870c4d5555b77d20cd75398949",
+    "source_files": 273,
+    "scoped_manifest_sha256": "ba65a276df3db06258e25830a3e352e0e2ff41d34b72050a1cc22d7fcf0f875d",
+    "matches_canonical_source": true
+  }
+]
