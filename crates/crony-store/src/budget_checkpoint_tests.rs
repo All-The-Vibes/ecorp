@@ -1396,9 +1396,17 @@ async fn ready_export_fixture_with_publication(
         publication_authorized,
     )
     .await;
+    ready_export_fixture_from_store(store).await
+}
+
+/// Export an already initialized fixture without changing its original budgets,
+/// contracts or attempts. Callers establish their authority before usage.
+async fn ready_export_fixture_from_store(
+    store: PgStore,
+) -> (PgStore, PendingRunnerCommand, StoredArtifact) {
     sqlx::query(
         "INSERT INTO runner_nodes(id,corp_id,hostname,os,connection_epoch,status)
-         VALUES($1,$2,'sqlx-retention-fixture','fixture',$3,'connected')",
+         VALUES($1,$2,'sqlx-retention-fixture','fixture',$3,'connected') ON CONFLICT (id) DO NOTHING",
     )
     .bind(RUNNER)
     .bind(CORP)

@@ -10,6 +10,9 @@ use crony_domain::{
 #[path = "factory_base_refresh_tests.rs"]
 mod base_refresh;
 
+#[path = "factory_review_revision_tests.rs"]
+mod review_revision;
+
 const CONNECTION: Uuid = Uuid::from_u128(216);
 const SESSION: &str = "00000000-0000-0000-0000-000000000217";
 

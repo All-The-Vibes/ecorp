@@ -125,6 +125,7 @@ impl PgStore {
         run_id: Uuid,
         assignment_token: Uuid,
         runner_id: &str,
+        review_revision: Option<&ReviewRevisionDispatch>,
         dispatch: F,
     ) -> Result<RunBudgetDispatchOutcome<T>>
     where
@@ -145,6 +146,12 @@ impl PgStore {
         .await?
         .context("native budget dispatch does not match a pending assignment")?;
         ensure_run_not_hard_blocked_tx(&mut tx, corp_id, run_id, &stage, "native dispatch").await?;
+        let current_revision =
+            factory_review_revision::dispatch_tx(&mut tx, corp_id, run_id).await?;
+        anyhow::ensure!(
+            current_revision.as_ref() == review_revision,
+            "publication correction source or authority changed during preparation"
+        );
         // Native enqueue must precede any subsequent fence command, not merely
         // pass a check before asynchronous dependency/secret preparation.
         // Preserve the native transport result, including a verifier-policy

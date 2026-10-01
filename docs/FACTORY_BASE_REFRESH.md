@@ -6,6 +6,10 @@ Publication continues to require an exact remote base. Refresh creates new
 verification evidence without rewriting the original deliverable or publishing
 anything by itself.
 
+For source defects discovered after publication, use
+[governed review revisions](FACTORY_REVIEW_REVISIONS.md). That flow preserves the
+published base and creates a separately reviewed correction and superseding PR.
+
 ## Requirements
 
 - The Factory item is `verified`, with one ready commit/branch deliverable from

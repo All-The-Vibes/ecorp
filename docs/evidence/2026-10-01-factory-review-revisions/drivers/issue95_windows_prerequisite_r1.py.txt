@@ -1,0 +1,116 @@
+"""Preserve issue 95 work and integrate the reviewed, exact PR 382 head locally."""
+import datetime
+import hashlib
+import json
+import pathlib
+import shutil
+import subprocess
+
+WT = pathlib.Path(r"<ISOLATED_CHECKOUT>")
+SOURCE = pathlib.Path(r"<CONFIGURED_SOURCE>")
+EV = SOURCE / "output/issue-completion/20261001T000632Z"
+BACKUP = EV / "issue95-windows-prerequisite-r1"
+PARENT = "7e65f46a0c0f991460eeb4c5b60723d2e0dff1f9"
+INCOMING = "6f2375e06546806003a9a1d1a340bdc1a4ce4b8c"
+MAIN = "878a1774774b0630c904cbaf4b05e1b346777817"
+
+
+def git(*args, root=WT, check=True):
+    return subprocess.run(["git", "-C", str(root), *args], capture_output=True, check=check)
+
+
+def out(*args, root=WT):
+    return git(*args, root=root).stdout.decode("utf-8").strip()
+
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def utc():
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+inventory = json.loads((EV / "queue-inventory-r20.json").read_text(encoding="utf-8-sig"))
+assert inventory["status"] == "complete" and inventory["actor"] == "shyamsridhar123"
+assert inventory["main_before"] == inventory["main_after"] == MAIN
+for number, expected in [(382, INCOMING), (390, PARENT)]:
+    pr = next(row["pr"] for row in inventory["pr_details"] if row["pr"]["number"] == number)
+    assert pr["head"]["sha"] == expected and pr["state"] == "open"
+assert out("rev-parse", "HEAD") == PARENT
+assert out("branch", "--show-current") == "codex/issue95-governed-review-revision"
+assert out("diff", "--cached", "--name-only") == ""
+assert not pathlib.Path(out("rev-parse", "--path-format=absolute", "--git-path", "MERGE_HEAD")).exists()
+assert out("merge-base", PARENT, INCOMING) == MAIN
+incoming_files = set(out("diff", "--name-only", MAIN, INCOMING).splitlines())
+parent_files = set(out("diff", "--name-only", MAIN, PARENT).splitlines())
+dirty_files = set(out("ls-files", "--modified", "--others", "--exclude-standard").splitlines())
+assert len(incoming_files) == 51 and len(dirty_files) == 59
+assert not incoming_files.intersection(parent_files)
+assert not incoming_files.intersection(dirty_files)
+assert not BACKUP.exists(), "Never overwrite retained work or a prior integration receipt"
+for path in EV.glob("*.json"):
+    try:
+        value = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (ValueError, UnicodeError):
+        continue
+    assert not (isinstance(value, dict) and value.get("status") == "running"), path
+
+BACKUP.mkdir()
+source_status = git("status", "--porcelain=v1", "-z", root=SOURCE).stdout
+record = {
+    "started_at_utc": utc(), "status": "preserving",
+    "worktree": str(WT), "source_checkout": str(SOURCE),
+    "branch": out("branch", "--show-current"), "main": MAIN,
+    "first_parent": PARENT, "incoming_pr": 382, "incoming_head": INCOMING,
+    "inventory": "queue-inventory-r20.json", "original_index_empty": True,
+    "incoming_files": sorted(incoming_files), "dirty_files": [],
+    "rationale": "Apply PR 382's reviewed native Windows contributor scheduling contract without changing production deadlines, assertions, workspace membership or any required gate. This does not diagnose or close issue 213.",
+    "remote_mutations": [], "validation": "Pending on combined source; prior receipts retain their exact original scope",
+}
+receipt = BACKUP / "integration.json"
+def save():
+    receipt.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+save()
+(BACKUP / "original-status.bin").write_bytes(git("status", "--porcelain=v1", "-z").stdout)
+(BACKUP / "original-source-status.bin").write_bytes(source_status)
+(BACKUP / "issue95-original.patch").write_bytes(git("diff", "--binary", "HEAD").stdout)
+index = pathlib.Path(out("rev-parse", "--path-format=absolute", "--git-path", "index"))
+shutil.copy2(index, BACKUP / "original-index")
+for name in sorted(dirty_files):
+    candidate = (WT / name).resolve()
+    assert candidate.is_relative_to(WT.resolve()) and candidate.is_file(), name
+    data = candidate.read_bytes()
+    backup = BACKUP / "dirty-source" / name
+    backup.parent.mkdir(parents=True, exist_ok=True)
+    backup.write_bytes(data)
+    assert digest(backup.read_bytes()) == digest(data)
+    record["dirty_files"].append({"path": name, "sha256": digest(data)})
+record["status"] = "preserved"
+save()
+result = git("merge", "--no-commit", "--no-ff", INCOMING, check=False)
+(BACKUP / "git-merge.stdout.log").write_bytes(result.stdout)
+(BACKUP / "git-merge.stderr.log").write_bytes(result.stderr)
+record["merge_exit_code"] = result.returncode
+record["status"] = "merge_command_finished"
+save()
+assert result.returncode == 0, "Inspect retained work and logs; do not force-reset or discard"
+assert out("rev-parse", "HEAD") == PARENT
+assert out("rev-parse", "MERGE_HEAD") == INCOMING
+assert not out("diff", "--name-only", "--diff-filter=U")
+assert set(out("diff", "--cached", "--name-only").splitlines()) == incoming_files
+for item in record["dirty_files"]:
+    assert digest((WT / item["path"]).read_bytes()) == item["sha256"], item["path"]
+for name in sorted(incoming_files):
+    actual = git("hash-object", "--path=" + name, str(WT / name)).stdout.decode().strip()
+    assert actual == out("rev-parse", INCOMING + ":" + name), name
+assert git("status", "--porcelain=v1", "-z", root=SOURCE).stdout == source_status
+record.update({
+    "finished_at_utc": utc(), "status": "integrated_uncommitted",
+    "conflicts": [], "dirty_work_verified_unchanged": True,
+    "incoming_files_match_exact_commit": True, "source_checkout_status_unchanged": True,
+    "expected_eventual_parents": [PARENT, INCOMING],
+    "issue95_publication_guard_r2": "Invalid: requires old failed canonical R2 and single parent; prepare and review a new helper after passing combined-source evidence",
+})
+save()
+print(json.dumps({"status": record["status"], "receipt": str(receipt), "dirty_files_preserved": len(record["dirty_files"]), "incoming_files": len(incoming_files), "expected_parents": record["expected_eventual_parents"]}))

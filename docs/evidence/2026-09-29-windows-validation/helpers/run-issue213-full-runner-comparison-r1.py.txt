@@ -1,0 +1,212 @@
+"""One instrumented build and matched bounded native Windows fixture runs.
+
+Temporary diagnostics are test-only and restored from exact original bytes. No
+assertion, timeout, production permission, Git environment or concurrency limiter
+is changed. Scheduling is the sole difference between the two behavioral lanes.
+"""
+from datetime import datetime, timezone
+import difflib
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import tempfile
+
+EV = Path(__file__).resolve().parent
+ROOT = Path(r"<USERPROFILE>\.codex\worktrees\issue136-browser-docs\ecorp")
+RECEIPT = EV / "issue213-full-runner-comparison-r1.json"
+BACKUP = EV / "issue213-full-runner-source-r1"
+NODE = Path(r"<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe")
+BASE = "878a1774774b0630c904cbaf4b05e1b346777817"
+assert not RECEIPT.exists() and not BACKUP.exists()
+assert json.loads((EV / "issue219-canonical-invocation-r2.json").read_text(encoding="utf-8-sig"))["status"] == "passed", "Preserve the active canonical run."
+ENV = {k: v for k, v in os.environ.items()
+       if not re.match(r"^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|GIT_)", k, re.I)
+       and k.upper() not in {"DATABASE_URL", "TEST_DATABASE_URL", "OPENAI_API_KEY", "ANTHROPIC_API_KEY",
+                              "COPILOT_GITHUB_TOKEN", "NODE_OPTIONS", "RUST_TEST_THREADS", "RUSTUP_TOOLCHAIN", "CARGO_TARGET_DIR"}}
+ENV.update(GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="Never", CARGO_BUILD_JOBS="2", CARGO_NET_OFFLINE="true")
+ENV["PATH"] = str(NODE.parent) + os.pathsep + ENV["PATH"]
+HELPER_PATH = EV / "issue213-owned-windows-process-r1.py"
+helper_spec = importlib.util.spec_from_file_location("issue213_owned_process", HELPER_PATH)
+helper = importlib.util.module_from_spec(helper_spec)
+helper_spec.loader.exec_module(helper)
+
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def git(*args):
+    return subprocess.check_output(["git", "-C", str(ROOT), *args], env=ENV,
+                                   creationflags=subprocess.CREATE_NO_WINDOW, timeout=60)
+
+
+with helper.target_mutex(ROOT / "target") as mutex_name:
+    assert git("rev-parse", "HEAD").decode().strip() == BASE
+    assert git("branch", "--show-current").decode().strip() == "codex/issue213-windows-validation"
+    original_diff = git("diff", "--binary", "--no-ext-diff", "--no-textconv", "HEAD")
+    original_status = git("status", "--porcelain", "-z")
+    changed = set(git("diff", "--name-only", "HEAD").decode().splitlines())
+    assert changed == {"CONTRIBUTING.md", "docs/VALIDATION.md", "tests/readiness/cli.test.js",
+                       "tools/check_docs.mjs", "tools/readiness_contract.test.mjs", "tools/run_checks.mjs"}
+    assert not git("ls-files", "--others", "--exclude-standard").strip()
+    names = ["crates/crony-runner/src/" + name for name in ["main.rs", "deliverable.rs", "workspace.rs", "source_checkpoint.rs"]]
+    originals = {name: (ROOT / name).read_bytes() for name in names}
+    module = ROOT / "crates/crony-runner/src/issue213_diagnostic.rs"
+    assert not module.exists()
+    patched = {}
+    record = {"issue": 213, "status": "preparing", "head": BASE,
+              "started_at_utc": datetime.now(timezone.utc).isoformat(), "lanes": [],
+              "original_diff_sha256": sha(original_diff), "source_restored": False,
+              "scope": "One complete current runner comparison, native default versus supported serial scheduling, on the same instrumented binary. Not reconstruction of September 9/18 chronology or a parallel stability claim.",
+              "declared_plan_sha256": sha((EV / "issue213-full-runner-plan-r1.json").read_bytes()),
+              "target_mutex": mutex_name, "process_ownership_helper_sha256": sha(HELPER_PATH.read_bytes()),
+              "owned_fixture_roots": [],
+              "limits": {"build_jobs": 2, "native_default_scheduling": True, "host_logical_processors": os.cpu_count(), "serial_threads": 1,
+                         "behavioral_invocations": 2, "real_provider_calls": 0, "database_use": False},
+              "observer_limits": "Passive stderr span timing adds overhead. Scope end includes successful, error and dropped futures; it is not itself a success result. Hashed paths and allowlisted verbs only; no command arguments, environment values or event payloads are recorded."}
+
+
+    def save():
+        RECEIPT.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+
+
+    def replace(name, old, new):
+        raw = patched.get(name, originals[name])
+        newline = b"\r\n" if b"\r\n" in raw else b"\n"
+        before = old.encode().replace(b"\n", newline)
+        after = new.encode().replace(b"\n", newline)
+        assert raw.count(before) == 1, (name, old)
+        patched[name] = raw.replace(before, after, 1)
+
+
+    def command(label, args, *, env=ENV, timeout=1800):
+        log = EV / ("issue213-full-runner-r1-" + label + ".log")
+        assert not log.exists()
+        started = datetime.now(timezone.utc).isoformat()
+        process, ownership = helper.run_owned(args, cwd=ROOT, env=env, timeout=timeout)
+        assert ownership["all_owned_processes_stopped"]
+        raw = process.stdout + process.stderr
+        log.write_bytes(raw)
+        return process, {"name": label, "arguments": [str(a) for a in args], "exit_code": process.returncode,
+                         "started_at_utc": started, "finished_at_utc": datetime.now(timezone.utc).isoformat(),
+                         "log": str(log), "sha256": sha(raw), "process_ownership": ownership}
+
+
+    save()
+    try:
+        main, deliverable, workspace, checkpoint = names
+        replace(main, "mod deliverable;", "mod deliverable;\n#[cfg(test)]\nmod issue213_diagnostic;")
+        for old, new in [
+            ("    pub async fn export(&self, report: &VerificationReport) -> Result<ExportedDeliverable> {",
+             "    pub async fn export(&self, report: &VerificationReport) -> Result<ExportedDeliverable> {\n        #[cfg(test)]\n        let _diagnostic = crate::issue213_diagnostic::start(\"phase\", \"prepared-export\", Some(&self.workspace_root));"),
+            (") -> Result<ExportedDeliverable> {\n    let spec = &prepared.spec;",
+             ") -> Result<ExportedDeliverable> {\n    #[cfg(test)]\n    let _diagnostic = crate::issue213_diagnostic::start(\"phase\", \"export-prepared\", Some(&prepared.workspace_root));\n    let spec = &prepared.spec;"),
+            (") -> Result<Vec<u8>> {\n    let branch_ref = format!(\"refs/heads/{branch}\");",
+             ") -> Result<Vec<u8>> {\n    #[cfg(test)]\n    let _diagnostic = crate::issue213_diagnostic::start(\"phase\", \"create-git-bundle\", Some(workspace));\n    let branch_ref = format!(\"refs/heads/{branch}\");"),
+            ("    env: &[(&str, &str)],\n) -> Result<String> {\n    let mut command = Command::new(\"git\");",
+             "    env: &[(&str, &str)],\n) -> Result<String> {\n    #[cfg(test)]\n    let _diagnostic = crate::issue213_diagnostic::start(\"git\", crate::issue213_diagnostic::verb(args), Some(workspace));\n    let mut command = Command::new(\"git\");"),
+            ("async fn git_output(workspace: &Path, index: &Path, args: &[OsString]) -> Result<Output> {",
+             "async fn git_output(workspace: &Path, index: &Path, args: &[OsString]) -> Result<Output> {\n    #[cfg(test)]\n    let _diagnostic = crate::issue213_diagnostic::start(\"git\", crate::issue213_diagnostic::verb(args), Some(workspace));"),
+        ]:
+            replace(deliverable, old, new)
+        replace(workspace, "async fn run_git(cwd: &Path, args: &[OsString]) -> Result<Output> {",
+                "async fn run_git(cwd: &Path, args: &[OsString]) -> Result<Output> {\n    #[cfg(test)]\n    let _diagnostic = crate::issue213_diagnostic::start(\"git\", crate::issue213_diagnostic::verb(args), Some(cwd));")
+        replace(checkpoint, "    async fn late_stop_case(hold_upload: bool) {",
+                "    async fn late_stop_case(hold_upload: bool) {\n        let _diagnostic = crate::issue213_diagnostic::start(\"phase\", if hold_upload { \"held-ack-case\" } else { \"running-verifier-case\" }, None);")
+        replace(checkpoint, '                        let uploading = event_type == "run.deliverable_upload";',
+                '                        crate::issue213_diagnostic::event(&event_type, &workspace.path);\n                        let uploading = event_type == "run.deliverable_upload";')
+        BACKUP.mkdir()
+        for name, raw in originals.items():
+            (BACKUP / Path(name).name).write_bytes(raw)
+        (BACKUP / "implementation-before.patch").write_bytes(original_diff)
+        module_raw = (EV / "issue213-passive-diagnostics-r1.rs.txt").read_bytes()
+        for name, raw in patched.items():
+            assert (ROOT / name).read_bytes() == originals[name]
+            (ROOT / name).write_bytes(raw)
+        module.write_bytes(module_raw)
+        diagnostic_diff = git("diff", "--binary", "--no-ext-diff", "--no-textconv", "HEAD", "--", *names)
+        (BACKUP / "temporary-diagnostics.patch").write_bytes(diagnostic_diff)
+        record.update(status="building", original_files={name: sha(raw) for name, raw in originals.items()},
+                      diagnostic_files={name: sha(raw) for name, raw in patched.items()},
+                      diagnostic_module_sha256=sha(module_raw), diagnostic_patch_sha256=sha(diagnostic_diff))
+        save()
+        process, build = command("build", ["cargo", "test", "--offline", "--locked", "-p", "crony-runner",
+                                          "--bin", "crony-runner", "--no-run", "--message-format=json"], timeout=2400)
+        record["build"] = build
+        save()
+        assert process.returncode == 0, "Diagnostic compilation failed; do not describe it as a behavioral result."
+        artifacts = [json.loads(line) for line in process.stdout.decode().splitlines() if line.startswith("{")]
+        binaries = [Path(item["executable"]).resolve() for item in artifacts if item.get("reason") == "compiler-artifact"
+                    and item.get("executable") and item.get("target", {}).get("name") == "crony-runner"
+                    and item.get("profile", {}).get("test")]
+        assert len(binaries) == 1 and binaries[0].is_relative_to((ROOT / "target").resolve())
+        binary = binaries[0]
+        record.update(binary=str(binary), binary_sha256=sha(binary.read_bytes()))
+        filters = []  # Full native runner discovery, including its unchanged ignored-case declarations.
+        listing, listing_receipt = command("list", [binary, *filters, "--list"], timeout=60)
+        assert listing.returncode == 0
+        selected = [line[:-6] for line in listing.stdout.decode().splitlines() if line.endswith(": test")]
+        assert len(selected) == 286 and any("held_ack" in name for name in selected)
+        record.update(selected_tests=selected, test_listing=listing_receipt)
+        save()
+        for label, threads in [("native-default", None), ("serial-1", 1)]:
+            owned = Path(tempfile.mkdtemp(prefix="i213-" + label[0] + "-", dir="C:\\")).resolve()
+            assert owned.parent == Path("C:\\") and owned.name.startswith("i213-") and len(str(owned)) < 32
+            outside, outside_ownership = helper.run_owned(["git", "rev-parse", "--show-toplevel"],
+                                                         cwd=owned, env=ENV, timeout=30)
+            assert not outside_ownership["timed_out"] and outside_ownership["all_owned_processes_stopped"]
+            assert outside.returncode != 0
+            (owned / "ownership.json").write_text(json.dumps({"issue": 213, "receipt": str(RECEIPT), "lane": label,
+                                                               "head": BASE, "binary_sha256": record["binary_sha256"]}) + "\n")
+            lane_env = dict(ENV, TEMP=str(owned), TMP=str(owned), ECORP_ISSUE213_DIAGNOSTICS="1")
+            record["owned_fixture_roots"].append({"path": str(owned), "lane": label,
+                                                   "ambient_git_check": outside_ownership})
+            record.update(status="running", running_lane=label)
+            save()
+            arguments = [binary, *filters, *([] if threads is None else ["--test-threads=" + str(threads)]), "--nocapture"]
+            result, lane = command(label, arguments, env=lane_env)
+            raw = result.stdout + result.stderr
+            counts = re.findall(rb"test result: (?:ok|FAILED)\. (\d+) passed; (\d+) failed; (\d+) ignored; (\d+) measured; (\d+) filtered out;", raw)
+            lane.update(threads=threads, fixture_root=str(owned), outside_ambient_git=True,
+                        counts=(dict(zip(["passed", "failed", "ignored", "measured", "filtered_out"], map(int, counts[0])))
+                                if len(counts) == 1 else None),
+                        result_complete=len(counts) == 1 and not lane["process_ownership"]["timed_out"])
+            # An observed bounded parallel failure does not prevent the one serial control.
+            # Missing native result summaries remain missing evidence, never zero failures.
+            spans = [json.loads(line.split("ECORP_ISSUE213_DIAGNOSTIC ", 1)[1])
+                     for line in raw.decode(errors="replace").splitlines() if "ECORP_ISSUE213_DIAGNOSTIC " in line]
+            span_path = EV / ("issue213-full-runner-r1-" + label + "-spans.json")
+            span_path.write_text(json.dumps(spans, indent=2) + "\n")
+            lane.update(spans=str(span_path), spans_sha256=sha(span_path.read_bytes()), span_events=len(spans),
+                        max_observed_active_git=max((item["active_git"] for item in spans), default=0),
+                        retained_fixture_entries=len(list(owned.iterdir())))
+            record["lanes"].append(lane)
+            assert sha(binary.read_bytes()) == record["binary_sha256"]
+            assert all((ROOT / name).read_bytes() == raw for name, raw in patched.items())
+            save()
+        assert len(record["lanes"]) == 2
+        record.update(status="observed", running_lane=None, one_binary_used_for_both_lanes=True)
+    except Exception as error:
+        record.update(status="failed", failure=str(error))
+        raise
+    finally:
+        restored = []
+        for name, expected in patched.items():
+            path = ROOT / name
+            if path.read_bytes() == expected:
+                path.write_bytes(originals[name])
+                restored.append(name)
+            elif path.read_bytes() == originals[name]:
+                restored.append(name)
+        if module.exists() and module.read_bytes() == (EV / "issue213-passive-diagnostics-r1.rs.txt").read_bytes():
+            module.unlink()
+        record["source_restored"] = (len(restored) == len(patched) and not module.exists()
+                                     and git("diff", "--binary", "--no-ext-diff", "--no-textconv", "HEAD") == original_diff
+                                     and git("status", "--porcelain", "-z") == original_status)
+        record["finished_at_utc"] = datetime.now(timezone.utc).isoformat()
+        save()
+        print(json.dumps({key: record.get(key) for key in ["issue", "status", "running_lane", "source_restored", "failure"]}))

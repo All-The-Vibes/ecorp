@@ -12,22 +12,32 @@ pub(crate) async fn adopted_source_contains_run_tx(
     run: Uuid,
 ) -> Result<bool> {
     sqlx::query_scalar(
-        r#"WITH RECURSIVE adopted AS (
+        r#"WITH RECURSIVE links AS (
+            SELECT id,corp_id,factory_work_item_id,mission_id,run_id,result_deliverable_id,result_commit,
+                   source_mission_id,source_task_id,source_run_id,source_deliverable_id,source_head_commit,
+                   source_policy,source_contract,source_verification_policy,
+                   source_policy||jsonb_build_object('source_base_commit',refreshed_base_commit) AS result_policy
+            FROM factory_base_refreshes WHERE corp_id=$1 AND factory_work_item_id=$2 AND state='adopted'
+            UNION ALL
+            SELECT id,corp_id,factory_work_item_id,mission_id,result_run_id,result_deliverable_id,result_commit,
+                   source_mission_id,source_task_id,source_run_id,source_deliverable_id,source_head_commit,
+                   source_policy,source_contract,source_verification_policy,source_policy
+            FROM factory_review_revisions WHERE corp_id=$1 AND factory_work_item_id=$2 AND state='adopted'
+        ), adopted AS (
             SELECT refresh.*, 1 AS depth, ARRAY[refresh.id] AS visited
             FROM factory_work_items item
-            JOIN factory_base_refreshes refresh ON refresh.corp_id=item.corp_id
+            JOIN links refresh ON refresh.corp_id=item.corp_id
               AND refresh.factory_work_item_id=item.id AND refresh.mission_id=item.mission_id
-            WHERE item.corp_id=$1 AND item.id=$2 AND refresh.state='adopted'
-              AND item.policy=refresh.source_policy||jsonb_build_object('source_base_commit',refresh.refreshed_base_commit)
+            WHERE item.corp_id=$1 AND item.id=$2 AND item.policy=refresh.result_policy
             UNION ALL
             SELECT parent.*, child.depth+1, child.visited||parent.id
-            FROM adopted child JOIN factory_base_refreshes parent
+            FROM adopted child JOIN links parent
               ON parent.corp_id=child.corp_id AND parent.factory_work_item_id=child.factory_work_item_id
               AND parent.mission_id=child.source_mission_id AND parent.run_id=child.source_run_id
               AND parent.result_deliverable_id=child.source_deliverable_id
               AND parent.result_commit=child.source_head_commit
-            WHERE parent.state='adopted' AND child.depth<$4 AND NOT parent.id=ANY(child.visited)
-              AND child.source_policy=parent.source_policy||jsonb_build_object('source_base_commit',parent.refreshed_base_commit)
+            WHERE child.depth<$4 AND NOT parent.id=ANY(child.visited)
+              AND child.source_policy=parent.result_policy
         ), lineage AS (
             SELECT source.id,source.resumed_from_run_id,source.task_id,source.agent_id,
                    source.runner_id,source.workspace_run_id,source.source_repository,
@@ -51,7 +61,8 @@ pub(crate) async fn adopted_source_contains_run_tx(
               AND parent.source_base_commit IS NOT DISTINCT FROM child.source_base_commit
             WHERE child.depth<64 AND NOT parent.id=ANY(child.visited)
         ) SELECT EXISTS(SELECT 1 FROM lineage WHERE id=$3)"#,
-    ).bind(corp).bind(item).bind(run).bind(MAX_BASE_REFRESH_ATTEMPTS)
+    ).bind(corp).bind(item).bind(run)
+        .bind(MAX_BASE_REFRESH_ATTEMPTS + i64::try_from(crony_domain::MAX_REVIEW_REVISIONS)?)
         .fetch_one(&mut **tx).await.map_err(Into::into)
 }
 

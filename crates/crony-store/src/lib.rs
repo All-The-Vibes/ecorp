@@ -44,6 +44,8 @@ mod contract_revision;
 mod factory_attempt_policy;
 mod factory_authority;
 mod factory_base_refresh;
+mod factory_review_revision;
+pub use factory_review_revision::ReviewRevisionDispatch;
 mod factory_controller;
 mod factory_run_failure;
 mod mission_context;
@@ -453,6 +455,8 @@ pub struct PullRequestPublicationOutcome {
 pub struct FactoryPublicationContext {
     pub work_item: FactoryWorkItem,
     pub publication: Option<PullRequestPublication>,
+    pub publication_history: Vec<PullRequestPublication>,
+    pub review_revisions: Vec<crony_domain::FactoryReviewRevision>,
     pub source_deliverables: Vec<SourceDeliverable>,
 }
 
@@ -521,6 +525,7 @@ pub struct LaunchRecord {
 #[derive(Debug, Clone)]
 pub struct SchedulableTask {
     pub task_id: Uuid,
+    pub requires_review_revision: bool,
     pub requires_dependency_files: bool,
     pub requires_canonical_source: bool,
     pub required_adapter: String,
@@ -787,7 +792,7 @@ pub struct ArtifactContext {
     pub room_id: Uuid,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StoredArtifact {
     pub id: Uuid,
     pub corp_id: Uuid,
@@ -1885,7 +1890,7 @@ impl PgStore {
         let pull_request_publications = sqlx::query(
             r#"
             SELECT publication.id, publication.corp_id, publication.factory_work_item_id,
-                   publication.mission_id, publication.source_deliverable_id,
+                   publication.mission_id, publication.source_deliverable_id, publication.supersedes_publication_id,
                    publication.artifact_id, publication.task_id, publication.run_id,
                    publication.source_issue_number, publication.source_issue_url,
                    publication.target_repository, publication.base_ref, publication.branch,
@@ -4362,6 +4367,7 @@ impl PgStore {
                 | FactoryWorkItemState::MissionCreated
                 | FactoryWorkItemState::Publishing
                 | FactoryWorkItemState::Published
+                | FactoryWorkItemState::ReviewRevision
         ) {
             return Err(anyhow!(
                 "claim, materialization, and publication states require their dedicated operations"
@@ -4868,6 +4874,21 @@ impl PgStore {
         let mut tx = self.pool.begin().await?;
         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
         lock_factory_keys_tx(&mut tx, &lock_keys).await?;
+
+        let correction_source: bool = sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM factory_review_revisions revision
+             JOIN runs run ON run.corp_id=revision.corp_id AND run.task_id=revision.task_id
+             WHERE run.corp_id=$1 AND run.id=$2)",
+        )
+        .bind(input.corp_id)
+        .bind(input.source_run_id)
+        .fetch_one(&mut *tx)
+        .await?;
+        if correction_source {
+            return Err(anyhow!(
+                "published correction workspaces require their native run resume; external recovery layouts are unsupported"
+            ));
+        }
 
         if let Some((recovery, stored_request)) =
             factory_verification_recovery_by_key_tx(&mut tx, input.corp_id, input.idempotency_key)
@@ -6292,6 +6313,8 @@ impl PgStore {
         sqlx::query(
             r#"
             SELECT t.id AS task_id,
+                   EXISTS (SELECT 1 FROM factory_review_revisions r
+                     WHERE r.corp_id=t.corp_id AND r.task_id=t.id) AS requires_review_revision,
                    EXISTS (
                        SELECT 1 FROM task_dependencies d
                        JOIN tasks p ON p.id = d.depends_on_task_id
@@ -6345,6 +6368,7 @@ impl PgStore {
         .map(|row| {
             Ok(SchedulableTask {
                 task_id: row.get("task_id"),
+                requires_review_revision: row.get("requires_review_revision"),
                 verification_policy: row.get("verification_policy"),
                 requires_dependency_files: row.get("requires_dependency_files"),
                 requires_canonical_source: row.get("requires_canonical_source"),
@@ -6371,6 +6395,7 @@ impl PgStore {
         let mut tx = self.pool.begin().await?;
         factory_base_refresh::ensure_ordinary_mission_tx(&mut tx, corp_id, mission_id).await?;
         aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
+        factory_review_revision::validate_task_tx(&mut tx, corp_id, task_id).await?;
         if let Some(actor_id) = requested_by {
             assert_mission_operator_tx(&mut tx, corp_id, actor_id).await?;
         }
@@ -6691,6 +6716,7 @@ impl PgStore {
         let room_id: Uuid = row.get("room_id");
         factory_base_refresh::ensure_ordinary_mission_tx(&mut tx, corp_id, row.get("mission_id"))
             .await?;
+        factory_review_revision::validate_task_tx(&mut tx, corp_id, row.get("task_id")).await?;
         assert_room_membership_tx(&mut tx, corp_id, room_id, requested_by).await?;
         ensure_generic_resume_is_not_factory_recovery(
             row.get("factory_linked"),
@@ -9201,6 +9227,15 @@ impl PgStore {
                         "workspace fingerprint cannot change after it is recorded"
                     ));
                 }
+                factory_review_revision::checkpoint_tx(
+                    &mut tx,
+                    corp_id,
+                    run_id,
+                    disposition,
+                    workspace_fingerprint,
+                    &payload,
+                )
+                .await?;
                 sqlx::query(
                     r#"
                     UPDATE runs
@@ -10277,6 +10312,14 @@ impl PgStore {
             }
         }
         factory_base_refresh::validate_reviewer_tx(
+            &mut tx,
+            corp_id,
+            run_id,
+            actor_id,
+            decision_key,
+        )
+        .await?;
+        factory_review_revision::validate_reviewer_tx(
             &mut tx,
             corp_id,
             run_id,
@@ -11801,10 +11844,44 @@ async fn create_mission_in_room_tx(
     plan: &TaskGraphPlan,
     room_id: Uuid,
 ) -> Result<(MissionPlanIds, Vec<DomainEvent>)> {
+    create_attributed_mission_in_room_tx(
+        tx,
+        corp_id,
+        (requested_by, requested_by),
+        title,
+        description,
+        plan,
+        room_id,
+    )
+    .await
+}
+
+/// The budget owner can differ from the operator authorizing a correction.
+/// Events and staffing always name the actual authenticated operator.
+async fn create_attributed_mission_in_room_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    corp_id: Uuid,
+    actors: (Uuid, Uuid),
+    title: &str,
+    description: &str,
+    plan: &TaskGraphPlan,
+    room_id: Uuid,
+) -> Result<(MissionPlanIds, Vec<DomainEvent>)> {
+    let (requested_by, authorizing_actor) = actors;
     let title = normalize_mission_title(title)?;
     let description = normalize_mission_description(description)?;
     assert_mission_operator_tx(tx, corp_id, requested_by).await?;
     assert_room_membership_tx(tx, corp_id, room_id, requested_by).await?;
+    assert_mission_operator_tx(tx, corp_id, authorizing_actor).await?;
+    assert_room_membership_tx(tx, corp_id, room_id, authorizing_actor).await?;
+    if workspace_connections::plan_room_tx(tx, corp_id, authorizing_actor, plan)
+        .await?
+        .is_some_and(|planned_room| planned_room != room_id)
+    {
+        return Err(anyhow!(
+            "authorizing actor has no access to the mission source room"
+        ));
+    }
     staffing::validate_staffing(plan)?;
     if workspace_connections::plan_room_tx(tx, corp_id, requested_by, plan)
         .await?
@@ -11843,7 +11920,7 @@ async fn create_mission_in_room_tx(
             correlation_id: Some(mission_id),
             ..NewEvent::new(
                 corp_id,
-                Some(requested_by),
+                Some(authorizing_actor),
                 "mission.created",
                 "mission",
                 mission_id,
@@ -11872,7 +11949,8 @@ async fn create_mission_in_room_tx(
     }
     let mut events = vec![mission_event.clone()];
     events.extend(
-        staffing::persist_staffing_tx(tx, corp_id, mission_id, room_id, requested_by, plan).await?,
+        staffing::persist_staffing_tx(tx, corp_id, mission_id, room_id, authorizing_actor, plan)
+            .await?,
     );
     for task in &plan.tasks {
         let task_id = *task_ids
@@ -11948,7 +12026,7 @@ async fn create_mission_in_room_tx(
                 causation_id: Some(mission_event.id),
                 ..NewEvent::new(
                     corp_id,
-                    Some(requested_by),
+                    Some(authorizing_actor),
                     "task.created",
                     "task",
                     task_id,
@@ -12001,7 +12079,7 @@ async fn create_mission_in_room_tx(
             causation_id: Some(mission_event.id),
             ..NewEvent::new(
                 corp_id,
-                Some(requested_by),
+                Some(authorizing_actor),
                 "mission.planned",
                 "mission",
                 mission_id,
@@ -13773,6 +13851,7 @@ fn factory_transition_allowed(from: FactoryWorkItemState, to: FactoryWorkItemSta
                 | FactoryWorkItemState::Cancelled
         ),
         FactoryWorkItemState::Published
+        | FactoryWorkItemState::ReviewRevision
         | FactoryWorkItemState::Failed
         | FactoryWorkItemState::Cancelled => false,
     }
@@ -15457,6 +15536,7 @@ fn map_pull_request_publication(row: sqlx::postgres::PgRow) -> Result<PullReques
         factory_work_item_id: row.get("factory_work_item_id"),
         mission_id: row.get("mission_id"),
         source_deliverable_id: row.get("source_deliverable_id"),
+        supersedes_publication_id: row.get("supersedes_publication_id"),
         artifact_id: row.get("artifact_id"),
         task_id: row.get("task_id"),
         run_id: row.get("run_id"),
@@ -15719,6 +15799,7 @@ fn parse_factory_work_item_state(value: &str) -> Result<FactoryWorkItemState> {
         "verified" => Ok(FactoryWorkItemState::Verified),
         "publishing" => Ok(FactoryWorkItemState::Publishing),
         "published" => Ok(FactoryWorkItemState::Published),
+        "review_revision" => Ok(FactoryWorkItemState::ReviewRevision),
         "failed" => Ok(FactoryWorkItemState::Failed),
         "cancelled" => Ok(FactoryWorkItemState::Cancelled),
         other => Err(anyhow!("unknown factory work-item state {other}")),
@@ -15885,6 +15966,7 @@ async fn ensure_run_not_hard_blocked_tx(
 ) -> Result<()> {
     ensure_breaker_allows_human_progress(stage, action)?;
     factory_base_refresh::validate_progress_tx(tx, corp_id, run_id).await?;
+    factory_review_revision::validate_progress_tx(tx, corp_id, run_id).await?;
     if hard_breaker_reached_tx(tx, corp_id, run_id).await? {
         return Err(anyhow!(
             "{action} is blocked because current budget or loop metrics require a hard breaker"

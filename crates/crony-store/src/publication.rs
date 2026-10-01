@@ -2,7 +2,7 @@ use super::*;
 
 const PUBLICATION_SELECT: &str = r#"
     SELECT publication.id, publication.corp_id, publication.factory_work_item_id,
-           publication.mission_id, publication.source_deliverable_id,
+           publication.mission_id, publication.source_deliverable_id, publication.supersedes_publication_id,
            publication.artifact_id, publication.task_id, publication.run_id,
            publication.source_issue_number, publication.source_issue_url,
            publication.target_repository, publication.base_ref, publication.branch,
@@ -81,6 +81,14 @@ struct PublicationPrerequisiteRequest<'a> {
     body: &'a str,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum PublicationSourceMode {
+    New,
+    InProgress,
+    // Reachable only through an exact completed durable publication below.
+    Published,
+}
+
 struct ActivePublicationControl<'a> {
     actor_id: Uuid,
     publisher_id: &'a str,
@@ -97,6 +105,9 @@ impl PgStore {
         work_item_id: Uuid,
     ) -> Result<Option<FactoryPublicationContext>> {
         let mut tx = self.pool.begin().await?;
+        sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
+            .execute(&mut *tx)
+            .await?;
         assert_actor_scope_tx(&mut tx, corp_id, viewer_actor_id).await?;
         let work_item = sqlx::query(
             r#"
@@ -111,8 +122,9 @@ impl PgStore {
               AND EXISTS (
                   SELECT 1
                   FROM missions mission
+                  JOIN rooms room ON room.id = mission.room_id AND room.corp_id = mission.corp_id
                   JOIN room_memberships membership
-                    ON membership.room_id = mission.room_id
+                    ON membership.room_id = room.id
                   WHERE mission.id = factory_work_items.mission_id
                     AND mission.corp_id = factory_work_items.corp_id
                     AND membership.actor_id = $3
@@ -144,8 +156,51 @@ impl PgStore {
                 .await?
                 .map(|(publication, _)| publication);
 
-        let source_deliverables = if let Some(mission_id) = work_item.mission_id {
-            sqlx::query(
+        // Read one consistent snapshot and authorize every included mission.
+        // Never infer historical access from the current selected room.
+        let publication_history = sqlx::query(&format!(
+            "{PUBLICATION_SELECT} WHERE publication.corp_id=$1 AND publication.factory_work_item_id=$2 ORDER BY publication.created_at,publication.id LIMIT 5"
+        )).bind(corp_id).bind(work_item_id).fetch_all(&mut *tx).await?
+            .into_iter().map(map_pull_request_publication).collect::<Result<Vec<_>>>()?;
+        let review_revisions: Vec<crony_domain::FactoryReviewRevision> = sqlx::query_scalar::<_, Value>(
+            "SELECT to_jsonb(r) FROM factory_review_revisions r WHERE corp_id=$1 AND factory_work_item_id=$2 ORDER BY created_at,id LIMIT 4"
+        ).bind(corp_id).bind(work_item_id).fetch_all(&mut *tx).await?
+            .into_iter().map(serde_json::from_value).collect::<std::result::Result<_, _>>()?;
+        anyhow::ensure!(
+            publication_history.len() <= crony_domain::MAX_REVIEW_REVISIONS + 1
+                && review_revisions.len() <= crony_domain::MAX_REVIEW_REVISIONS,
+            "publication history bound exceeded"
+        );
+
+        let mut mission_ids = std::collections::BTreeSet::new();
+        let mut output_mission_ids = std::collections::BTreeSet::new();
+        let mut deliverable_ids = std::collections::BTreeSet::new();
+        mission_ids.extend(work_item.mission_id);
+        output_mission_ids.extend(work_item.mission_id);
+        for p in &publication_history {
+            mission_ids.insert(p.mission_id);
+            deliverable_ids.insert(p.source_deliverable_id);
+        }
+        for r in &review_revisions {
+            mission_ids.extend([r.source_mission_id, r.mission_id]);
+            output_mission_ids.insert(r.mission_id);
+            deliverable_ids.insert(r.source_deliverable_id);
+            deliverable_ids.extend(r.result_deliverable_id);
+        }
+        let authorized: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM missions mission
+             JOIN rooms room ON room.id=mission.room_id AND room.corp_id=mission.corp_id
+             JOIN room_memberships membership ON membership.room_id=room.id AND membership.actor_id=$2
+             JOIN actors viewer ON viewer.id=membership.actor_id AND viewer.corp_id=mission.corp_id
+               AND viewer.kind='human' AND viewer.role IN ('owner','admin','manager','member')
+             WHERE mission.corp_id=$1 AND mission.id=ANY($3)",
+        ).bind(corp_id).bind(viewer_actor_id).bind(mission_ids.iter().copied().collect::<Vec<_>>())
+            .fetch_one(&mut *tx).await?;
+        if authorized as usize != mission_ids.len() {
+            tx.commit().await?;
+            return Ok(None);
+        }
+        let source_deliverables = sqlx::query(
                 r#"
                 SELECT deliverable.id, deliverable.corp_id, deliverable.task_id,
                        deliverable.run_id, deliverable.artifact_id, deliverable.form,
@@ -157,32 +212,69 @@ impl PgStore {
                        deliverable.created_at
                 FROM source_deliverables deliverable
                 JOIN artifacts artifact
-                  ON artifact.id = deliverable.artifact_id AND artifact.status = 'ready'
-                JOIN tasks task ON task.id = deliverable.task_id
-                JOIN missions mission ON mission.id = task.mission_id
-                JOIN room_memberships membership ON membership.room_id = mission.room_id
+                  ON artifact.id = deliverable.artifact_id AND artifact.corp_id = deliverable.corp_id
+                 AND artifact.task_id = deliverable.task_id AND artifact.run_id = deliverable.run_id
+                 AND artifact.status = 'ready'
+                JOIN runs run ON run.id = deliverable.run_id AND run.corp_id = deliverable.corp_id
+                  AND run.task_id = deliverable.task_id
+                JOIN tasks task ON task.id = deliverable.task_id AND task.corp_id = deliverable.corp_id
+                JOIN missions mission ON mission.id = task.mission_id AND mission.corp_id = task.corp_id
+                JOIN rooms room ON room.id = mission.room_id AND room.corp_id = mission.corp_id
+                JOIN room_memberships membership ON membership.room_id = room.id
                 WHERE deliverable.corp_id = $1
-                  AND task.mission_id = $2
+                  AND (task.mission_id = ANY($2) OR deliverable.id = ANY($4))
                   AND membership.actor_id = $3
                 ORDER BY deliverable.created_at DESC, deliverable.id
                 "#,
             )
             .bind(corp_id)
-            .bind(mission_id)
+            .bind(output_mission_ids.into_iter().collect::<Vec<_>>())
             .bind(viewer_actor_id)
+            .bind(deliverable_ids.into_iter().collect::<Vec<_>>())
             .fetch_all(&mut *tx)
             .await?
             .into_iter()
             .map(map_source_deliverable)
-            .collect::<Result<Vec<_>>>()?
-        } else {
-            Vec::new()
-        };
+            .collect::<Result<Vec<_>>>()?;
+        for p in &publication_history {
+            anyhow::ensure!(
+                source_deliverables
+                    .iter()
+                    .any(|d| d.id == p.source_deliverable_id
+                        && d.task_id == p.task_id
+                        && d.run_id == p.run_id
+                        && d.artifact_id == p.artifact_id
+                        && d.head_commit.as_deref() == Some(p.commit_sha.as_str())),
+                "publication history lost its exact source deliverable"
+            );
+        }
+        for r in &review_revisions {
+            anyhow::ensure!(
+                publication_history.iter().any(|p| p.id == r.publication_id
+                    && p.mission_id == r.source_mission_id
+                    && p.task_id == r.source_task_id
+                    && p.run_id == r.source_run_id
+                    && p.source_deliverable_id == r.source_deliverable_id
+                    && p.commit_sha == r.source_head_commit),
+                "review history lost its exact published source"
+            );
+            if let Some(id) = r.result_deliverable_id {
+                anyhow::ensure!(
+                    source_deliverables.iter().any(|d| d.id == id
+                        && d.task_id == r.task_id
+                        && Some(d.run_id) == r.result_run_id
+                        && d.head_commit == r.result_commit),
+                    "review history lost its exact correction deliverable"
+                );
+            }
+        }
 
         tx.commit().await?;
         Ok(Some(FactoryPublicationContext {
             work_item,
             publication,
+            publication_history,
+            review_revisions,
             source_deliverables,
         }))
     }
@@ -468,6 +560,12 @@ impl PgStore {
         let publication_id = Uuid::new_v4();
         let publisher_token = Uuid::new_v4();
         let authorization = publication_authorization(&normalized, now);
+        let succession = review_succession_tx(
+            &mut tx,
+            &PublicationPrerequisiteRequest::from_start(&normalized),
+            &prerequisites,
+        )
+        .await?;
         let provenance = json!({
             "schema_version": if prerequisites.checkpoint.is_some() { 3 } else { 2 },
             "source_issue": {
@@ -485,6 +583,7 @@ impl PgStore {
             "verification_evidence_ids": prerequisites.evidence_ids,
             "verification_sha256": prerequisites.verification_sha256,
             "checkpoint": prerequisites.checkpoint.as_ref().map(|checkpoint| checkpoint.provenance()),
+            "review_revision": succession.as_ref().map(|(_, provenance)| provenance),
             "deliverable": {
                 "id": normalized.source_deliverable_id,
                 "artifact_id": prerequisites.artifact_id,
@@ -525,11 +624,11 @@ impl PgStore {
                  state, version, attempt_count, publisher_id, publisher_token,
                  publisher_lease_expires_at, project_owner, project_number,
                  project_item_id, project_status_before, auto_merge_enabled,
-                 merge_authorized, deployment_authorized, provenance)
+                 merge_authorized, deployment_authorized, provenance, supersedes_publication_id)
             VALUES
                 ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
                  $14, $15, $16, $17, $18, $19, $20, $21, 'publishing', 1, 1,
-                 $22, $23, $24, $25, $26, $27, $28, FALSE, FALSE, FALSE, $29)
+                 $22, $23, $24, $25, $26, $27, $28, FALSE, FALSE, FALSE, $29, $30)
             RETURNING {}
             "#,
             publication_returning_columns()
@@ -563,6 +662,7 @@ impl PgStore {
         .bind(&prerequisites.work_item.source_project_item_id)
         .bind(&prerequisites.project_status_before)
         .bind(&provenance)
+        .bind(succession.as_ref().map(|(id, _)| *id))
         .fetch_one(&mut *tx)
         .await?;
         let publication = map_pull_request_publication(row)?;
@@ -1631,6 +1731,106 @@ impl<'a> PublicationPrerequisiteRequest<'a> {
     }
 }
 
+/// Succession is additive provenance: schema 3 retains its checkpoint meaning.
+/// Root publications remain compatible with records predating this field.
+async fn review_succession_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    request: &PublicationPrerequisiteRequest<'_>,
+    source: &PublicationPrerequisites,
+) -> Result<Option<(Uuid, Value)>> {
+    let Some(revision) = factory_review_revision::successor_tx(
+        tx,
+        request.corp_id,
+        request.work_item_id,
+        source.mission_id,
+    )
+    .await?
+    else {
+        return Ok(None);
+    };
+    let (predecessor, _) = publication_by_id_tx(tx, request.corp_id, revision.publication_id, true)
+        .await?
+        .context("review revision predecessor publication missing")?;
+    let prefix = source
+        .work_item
+        .policy
+        .pointer("/publication/branch_prefix")
+        .and_then(Value::as_str)
+        .unwrap_or("ecorp/");
+    let expected_branch = crony_domain::review_revision_branch(
+        prefix,
+        source.work_item.source_issue_number,
+        revision.id,
+    );
+    let predecessor_url = predecessor
+        .pull_request_url
+        .as_deref()
+        .context("review revision predecessor PR URL missing")?;
+    anyhow::ensure!(
+        revision.result_run_id == Some(source.run_id)
+            && revision.result_deliverable_id == Some(request.source_deliverable_id)
+            && revision.result_commit.as_deref() == Some(source.commit_sha.as_str())
+            && revision.review_decision_id.is_some()
+            && predecessor.factory_work_item_id == request.work_item_id
+            && predecessor.mission_id == revision.source_mission_id
+            && predecessor.task_id == revision.source_task_id
+            && predecessor.run_id == revision.source_run_id
+            && predecessor.source_deliverable_id == revision.source_deliverable_id
+            && predecessor.commit_sha == revision.source_head_commit
+            && predecessor.state == PullRequestPublicationState::Published
+            && predecessor.pull_request_head_sha.as_deref()
+                == Some(predecessor.commit_sha.as_str())
+            && predecessor.target_repository == request.target_repository
+            && predecessor.base_ref == request.base_ref
+            && predecessor.branch != request.branch
+            && request.branch == expected_branch
+            && request.body.contains(predecessor_url),
+        "publication must explicitly supersede the exact reviewed predecessor on its authorized correction branch"
+    );
+    Ok(Some((
+        predecessor.id,
+        json!({
+            "id": revision.id,
+            "authorized_by": revision.authorized_by,
+            "supersedes_publication_id": predecessor.id,
+            "source_mission_id": revision.source_mission_id,
+            "source_run_id": revision.source_run_id,
+            "source_deliverable_id": revision.source_deliverable_id,
+            "source_head_commit": revision.source_head_commit,
+            "source_pull_request": {
+                "number": predecessor.pull_request_number,
+                "url": predecessor_url,
+                "repository": predecessor.target_repository,
+                "base_ref": predecessor.base_ref,
+                "branch": predecessor.branch,
+                "head_sha": predecessor.commit_sha,
+            },
+            "mission_id": revision.mission_id,
+            "task_id": revision.task_id,
+            "result_run_id": revision.result_run_id,
+            "result_deliverable_id": revision.result_deliverable_id,
+            "result_commit": revision.result_commit,
+            "review_decision_id": revision.review_decision_id,
+        }),
+    )))
+}
+
+fn ensure_review_succession_matches(
+    publication: &PullRequestPublication,
+    succession: Option<&(Uuid, Value)>,
+) -> Result<()> {
+    anyhow::ensure!(
+        publication.supersedes_publication_id == succession.map(|(id, _)| *id)
+            && publication
+                .provenance
+                .get("review_revision")
+                .unwrap_or(&Value::Null)
+                == succession.map(|(_, value)| value).unwrap_or(&Value::Null),
+        "publication no longer matches its immutable correction provenance"
+    );
+    Ok(())
+}
+
 async fn revalidate_publication_authority_tx(
     tx: &mut Transaction<'_, Postgres>,
     publication: &PullRequestPublication,
@@ -1662,6 +1862,13 @@ async fn revalidate_publication_authority_tx(
     )
     .await?;
     assert_room_membership_tx(tx, publication.corp_id, prerequisites.room_id, actor_id).await?;
+    let succession = review_succession_tx(
+        tx,
+        &PublicationPrerequisiteRequest::from_publication(publication),
+        &prerequisites,
+    )
+    .await?;
+    ensure_review_succession_matches(publication, succession.as_ref())?;
     let provenance_deliverable_sha = publication
         .provenance
         .pointer("/deliverable/sha256")
@@ -1745,8 +1952,14 @@ async fn validate_publication_prerequisites(
         .await?
         .context("factory work item not found")?;
     factory_base_refresh::ensure_no_pending_tx(tx, request.corp_id, work_item.id).await?;
-    let result = validate_publication_source_tx(tx, request, work_item, existing).await?;
-    factory_base_refresh::validate_adopted_lineage_tx(tx, &result.work_item, result.run_id).await?;
+    let mode = if existing {
+        PublicationSourceMode::InProgress
+    } else {
+        PublicationSourceMode::New
+    };
+    let result = validate_publication_source_tx(tx, request, work_item, mode).await?;
+    factory_review_revision::validate_publication_lineage_tx(tx, &result.work_item, result.run_id)
+        .await?;
     Ok(result)
 }
 
@@ -1783,22 +1996,110 @@ pub(super) async fn validate_refresh_source_tx(
         branch: &branch,
         body: &body,
     };
-    validate_publication_source_tx(tx, &request, item, false).await
+    validate_publication_source_tx(tx, &request, item, PublicationSourceMode::New).await
+}
+
+/// Read a completed publication's immutable result for correction admission or
+/// ancestry validation. This does not grant a publisher lease or new execution.
+pub(super) async fn validate_published_source_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    mut item: FactoryWorkItem,
+    publication: &PullRequestPublication,
+) -> Result<PublicationPrerequisites> {
+    let (saved, _) = publication_by_id_tx(tx, item.corp_id, publication.id, true)
+        .await?
+        .context("published source not found")?;
+    anyhow::ensure!(
+        saved.factory_work_item_id == item.id
+            && item.mission_id == Some(saved.mission_id)
+            && saved.state == PullRequestPublicationState::Published
+            && saved.pull_request_head_sha.as_deref() == Some(saved.commit_sha.as_str())
+            && saved
+                .pull_request_base_ref
+                .as_deref()
+                .is_some_and(|base| publication_base_matches(&saved.base_ref, base))
+            && saved.pull_request_number.is_some(),
+        "source is not an exact completed publication"
+    );
+    item.state = FactoryWorkItemState::Published;
+    let source = validate_publication_source_tx(
+        tx,
+        &PublicationPrerequisiteRequest::from_publication(&saved),
+        item,
+        PublicationSourceMode::Published,
+    )
+    .await?;
+    anyhow::ensure!(
+        source.mission_id == saved.mission_id
+            && source.task_id == saved.task_id
+            && source.run_id == saved.run_id
+            && source.artifact_id == saved.artifact_id
+            && source.commit_sha == saved.commit_sha
+            && saved
+                .provenance
+                .pointer("/deliverable/id")
+                .and_then(Value::as_str)
+                == Some(saved.source_deliverable_id.to_string().as_str())
+            && saved
+                .provenance
+                .pointer("/deliverable/sha256")
+                .and_then(Value::as_str)
+                == Some(source.deliverable_sha256.as_str())
+            && saved
+                .provenance
+                .pointer("/deliverable/base_commit")
+                .and_then(Value::as_str)
+                == Some(source.base_commit.as_str())
+            && saved
+                .provenance
+                .pointer("/deliverable/head_commit")
+                .and_then(Value::as_str)
+                == Some(source.commit_sha.as_str())
+            && saved
+                .provenance
+                .get("verification_sha256")
+                .and_then(Value::as_str)
+                == Some(source.verification_sha256.as_str())
+            && publication_source_provenance_state(
+                &saved.provenance,
+                &source.work_item.source_revision,
+                &source.effective_source_revision,
+                source.source_recovery_id
+            )? != PublicationSourceProvenanceState::Invalid,
+        "completed publication no longer matches its exact verified source"
+    );
+    // The common checkpoint validator rejects a changed seal. Legacy records
+    // may be read after current validation, but their stored history is untouched.
+    checkpoint_publication::revalidated_provenance(
+        &saved.provenance,
+        source
+            .checkpoint
+            .as_ref()
+            .map(|checkpoint| checkpoint.provenance()),
+    )?;
+    let succession = review_succession_tx(
+        tx,
+        &PublicationPrerequisiteRequest::from_publication(&saved),
+        &source,
+    )
+    .await?;
+    ensure_review_succession_matches(&saved, succession.as_ref())?;
+    Ok(source)
 }
 
 async fn validate_publication_source_tx(
     tx: &mut Transaction<'_, Postgres>,
     request: &PublicationPrerequisiteRequest<'_>,
     work_item: FactoryWorkItem,
-    existing: bool,
+    mode: PublicationSourceMode,
 ) -> Result<PublicationPrerequisites> {
-    let allowed_state = if existing {
-        matches!(
+    let allowed_state = match mode {
+        PublicationSourceMode::InProgress => matches!(
             work_item.state,
             FactoryWorkItemState::Publishing | FactoryWorkItemState::Verified
-        )
-    } else {
-        work_item.state == FactoryWorkItemState::Verified
+        ),
+        PublicationSourceMode::New => work_item.state == FactoryWorkItemState::Verified,
+        PublicationSourceMode::Published => work_item.state == FactoryWorkItemState::Published,
     };
     if !allowed_state {
         return Err(anyhow!(
@@ -1944,7 +2245,12 @@ async fn validate_publication_source_tx(
     validate_factory_base_commit(&commit_sha)?;
     let base_commit: String = row.get::<String, _>("base_commit").to_ascii_lowercase();
     if form != "commit_branch"
-        || row.get::<String, _>("integration_state") != "ready_for_review"
+        || row.get::<String, _>("integration_state")
+            != if mode == PublicationSourceMode::Published {
+                "published"
+            } else {
+                "ready_for_review"
+            }
         || base_commit != expected_base_commit
         || commit_sha == base_commit
     {
@@ -2096,6 +2402,17 @@ async fn validate_publication_source_tx(
     if let Some((revision, recovery)) =
         factory_base_refresh::source_revision_tx(tx, request.corp_id, work_item.id, selected_run_id)
             .await?
+    {
+        effective_source_revision = revision;
+        source_recovery_id = recovery;
+    }
+    if let Some((revision, recovery)) = factory_review_revision::source_revision_tx(
+        tx,
+        request.corp_id,
+        work_item.id,
+        selected_run_id,
+    )
+    .await?
     {
         effective_source_revision = revision;
         source_recovery_id = recovery;
@@ -2512,13 +2829,7 @@ fn validate_pull_request_identity(
             "pull request head branch must differ from its resolved base branch"
         ));
     }
-    if publication.base_ref == "HEAD" {
-        if base_ref == "HEAD" || base_ref.starts_with("refs/") {
-            return Err(anyhow!(
-                "symbolic publication base HEAD must resolve to an explicit GitHub branch name"
-            ));
-        }
-    } else if base_ref != publication.base_ref.trim_start_matches("refs/heads/") {
+    if !publication_base_matches(&publication.base_ref, base_ref) {
         return Err(anyhow!(
             "pull request base does not match the authorized publication target"
         ));
@@ -2542,6 +2853,14 @@ fn validate_pull_request_identity(
         ));
     }
     Ok(())
+}
+
+fn publication_base_matches(authorized: &str, observed: &str) -> bool {
+    if authorized == "HEAD" {
+        !observed.is_empty() && observed != "HEAD" && !observed.starts_with("refs/")
+    } else {
+        observed == authorized.trim_start_matches("refs/heads/")
+    }
 }
 
 fn github_pull_request_url_matches(url: &str, target_repository: &str, number: i64) -> bool {
@@ -2790,7 +3109,7 @@ fn replayable_publication_token(
 
 fn publication_returning_columns() -> &'static str {
     r#"
-        id, corp_id, factory_work_item_id, mission_id, source_deliverable_id,
+        id, corp_id, factory_work_item_id, mission_id, source_deliverable_id, supersedes_publication_id,
         artifact_id, task_id, run_id, source_issue_number, source_issue_url,
         target_repository, base_ref, branch, commit_sha, title, body,
         actor_id, authorization_id, authorization_snapshot, effect_key, idempotency_key,
@@ -2805,7 +3124,7 @@ fn publication_returning_columns() -> &'static str {
     "#
 }
 
-async fn publication_by_id_tx(
+pub(super) async fn publication_by_id_tx(
     tx: &mut Transaction<'_, Postgres>,
     corp_id: Uuid,
     publication_id: Uuid,
@@ -2827,8 +3146,13 @@ async fn publication_for_work_item_viewer_tx(
     let query = format!(
         r#"
         {PUBLICATION_SELECT}
-        JOIN missions mission ON mission.id = publication.mission_id
-        JOIN room_memberships membership ON membership.room_id = mission.room_id
+        JOIN missions mission ON mission.id = publication.mission_id AND mission.corp_id = publication.corp_id
+        JOIN rooms room ON room.id = mission.room_id AND room.corp_id = mission.corp_id
+        JOIN room_memberships membership ON membership.room_id = room.id
+        JOIN actors viewer ON viewer.id = membership.actor_id AND viewer.corp_id = mission.corp_id
+          AND viewer.kind = 'human' AND viewer.role IN ('owner','admin','manager','member')
+        JOIN factory_work_items item ON item.id=publication.factory_work_item_id
+          AND item.corp_id=publication.corp_id AND item.mission_id=publication.mission_id
         WHERE publication.factory_work_item_id = $1
           AND publication.corp_id = $2
           AND membership.actor_id = $3
@@ -2887,7 +3211,9 @@ async fn publication_collision_tx(
         {PUBLICATION_SELECT}
         WHERE publication.corp_id = $1
           AND (
-              publication.factory_work_item_id = $2
+              (publication.factory_work_item_id = $2 AND publication.mission_id = (
+                  SELECT mission_id FROM factory_work_items WHERE id=$2 AND corp_id=$1
+              ))
               OR publication.effect_key = $3
               OR (
                   publication.target_repository = $4

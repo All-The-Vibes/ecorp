@@ -1,0 +1,614 @@
+TAP version 13
+# Subtest: issue50 exact ordinary budget suspension retains native provider resume beside optional checkpoint verification
+ok 1 - issue50 exact ordinary budget suspension retains native provider resume beside optional checkpoint verification
+  ---
+  duration_ms: 3.1695
+  type: 'test'
+  ...
+# Subtest: issue210 only the explicit server flag adds correction to a native checkpoint
+ok 2 - issue210 only the explicit server flag adds correction to a native checkpoint
+  ---
+  duration_ms: 0.7086
+  type: 'test'
+  ...
+# Subtest: issue210 verifier availability is independent of correction and missing availability preserves legacy behavior
+ok 3 - issue210 verifier availability is independent of correction and missing availability preserves legacy behavior
+  ---
+  duration_ms: 1.4721
+  type: 'test'
+  ...
+# Subtest: issue210 revision source is the exact server-selected verifier, with no cross-item fallback
+ok 4 - issue210 revision source is the exact server-selected verifier, with no cross-item fallback
+  ---
+  duration_ms: 0.6262
+  type: 'test'
+  ...
+# Subtest: only native proof plus its cancellation marker exposes source-only checkpoint verification
+ok 5 - only native proof plus its cancellation marker exposes source-only checkpoint verification
+  ---
+  duration_ms: 0.4781
+  type: 'test'
+  ...
+# Subtest: a running checkpoint needs no cancellation repair, and ordinary verification failure stays compatible
+ok 6 - a running checkpoint needs no cancellation repair, and ordinary verification failure stays compatible
+  ---
+  duration_ms: 0.3393
+  type: 'test'
+  ...
+# Subtest: missing/tampered source, checkpoint, head, active recovery or terminal outcome offers no new recovery
+ok 7 - missing/tampered source, checkpoint, head, active recovery or terminal outcome offers no new recovery
+  ---
+  duration_ms: 0.5827
+  type: 'test'
+  ...
+# Subtest: context requests are not recovery grants and never depend on inferred mission spend/status
+ok 8 - context requests are not recovery grants and never depend on inferred mission spend/status
+  ---
+  duration_ms: 0.3503
+  type: 'test'
+  ...
+# Subtest: copied command binding retains the saved connection and never falls back on malformed metadata
+ok 9 - copied command binding retains the saved connection and never falls back on malformed metadata
+  ---
+  duration_ms: 0.458
+  type: 'test'
+  ...
+# Subtest: published lineage retires the actual prepublication recovery scope without changing native resume
+ok 10 - published lineage retires the actual prepublication recovery scope without changing native resume
+  ---
+  duration_ms: 91.3311
+  type: 'test'
+  ...
+# Subtest: issue50 actual recovery scope invalidates old responses on budget proposals and decisions without a Factory version change
+ok 11 - issue50 actual recovery scope invalidates old responses on budget proposals and decisions without a Factory version change
+  ---
+  duration_ms: 54.3385
+  type: 'test'
+  ...
+# Subtest: issue50 actual App budget controls require a fresh approved context and explicitly POST the same suspended source
+ok 12 - issue50 actual App budget controls require a fresh approved context and explicitly POST the same suspended source
+  ---
+  duration_ms: 430.0368
+  type: 'test'
+  ...
+# Subtest: actual presentation selects the endpoint source, not the newest visible run or mission cancellation
+ok 13 - actual presentation selects the endpoint source, not the newest visible run or mission cancellation
+  ---
+  duration_ms: 30.1433
+  type: 'test'
+  ...
+# Subtest: issue210 presentation separates provider-free verification from a budgeted same-session fix
+ok 14 - issue210 presentation separates provider-free verification from a budgeted same-session fix
+  ---
+  duration_ms: 17.4629
+  type: 'test'
+  ...
+# Subtest: issue210 source-only and unavailable checkpoint presentations never suggest generic recovery
+ok 15 - issue210 source-only and unavailable checkpoint presentations never suggest generic recovery
+  ---
+  duration_ms: 24.0451
+  type: 'test'
+  ...
+# Subtest: actual context loader is GET-only and admits the exact item/version/mission checkpoint
+ok 16 - actual context loader is GET-only and admits the exact item/version/mission checkpoint
+  ---
+  duration_ms: 26.9767
+  type: 'test'
+  ...
+# Subtest: actual context loader rejects stale/cross-scope and malformed flags without snapshot fallback
+ok 17 - actual context loader rejects stale/cross-scope and malformed flags without snapshot fallback
+  ---
+  duration_ms: 136.3434
+  type: 'test'
+  ...
+# Subtest: issue210 actual loader accepts boolean correction flags and defaults missing legacy authority closed
+ok 18 - issue210 actual loader accepts boolean correction flags and defaults missing legacy authority closed
+  ---
+  duration_ms: 36.7096
+  type: 'test'
+  ...
+# Subtest: issue210 exact loader retains true, false and missing checkpoint availability without granting another mode
+ok 19 - issue210 exact loader retains true, false and missing checkpoint availability without granting another mode
+  ---
+  duration_ms: 39.2776
+  type: 'test'
+  ...
+# Subtest: actual UI action copies only explicit checkpoint verification with the original scope/connection
+ok 20 - actual UI action copies only explicit checkpoint verification with the original scope/connection
+  ---
+  duration_ms: 134.1359
+  type: 'test'
+  ...
+# Subtest: issue210 actual correction action retains the original CLI route, source and connection
+ok 21 - issue210 actual correction action retains the original CLI route, source and connection
+  ---
+  duration_ms: 242.7221
+  type: 'test'
+  ...
+# Subtest: issue210 actual card drops correction authority immediately when item, version or actor changes
+ok 22 - issue210 actual card drops correction authority immediately when item, version or actor changes
+  ---
+  duration_ms: 232.1596
+  type: 'test'
+  ...
+# Subtest: issue210 actual contract submission uses the scoped verifier, not its provider ancestor
+ok 23 - issue210 actual contract submission uses the scoped verifier, not its provider ancestor
+  ---
+  duration_ms: 33.9136
+  type: 'test'
+  ...
+# Subtest: issue210 editor loading, errors, stale context and denied correction cannot fall back or submit
+ok 24 - issue210 editor loading, errors, stale context and denied correction cannot fall back or submit
+  ---
+  duration_ms: 204.7053
+  type: 'test'
+  ...
+# Subtest: issue210 ordinary contract resume, redispatch and requester/role boundaries stay intact
+ok 25 - issue210 ordinary contract resume, redispatch and requester/role boundaries stay intact
+  ---
+  duration_ms: 57.4521
+  type: 'test'
+  ...
+# Subtest: issue210 actual source-only context copies correction and revises the exact verifier; no-mode context does neither
+ok 26 - issue210 actual source-only context copies correction and revises the exact verifier; no-mode context does neither
+  ---
+  duration_ms: 133.8704
+  type: 'test'
+  ...
+# Subtest: actual resume handler and rendered provider control respect native recovery blocking
+ok 27 - actual resume handler and rendered provider control respect native recovery blocking
+  ---
+  duration_ms: 5.9049
+  type: 'test'
+  ...
+# Subtest: actual App Resume control survives an ineligible ordinary Factory recovery lookup and uses the native actor-bound POST
+ok 28 - actual App Resume control survives an ineligible ordinary Factory recovery lookup and uses the native actor-bound POST
+  ---
+  duration_ms: 168.8929
+  type: 'test'
+  ...
+# Subtest: issue221 explicit provider-correction permission permits null head without granting checkpoint or generic resume
+ok 29 - issue221 explicit provider-correction permission permits null head without granting checkpoint or generic resume
+  ---
+  duration_ms: 0.8843
+  type: 'test'
+  ...
+# Subtest: issue221 actual context reader retains null head/current provider proof and malformed heads remain non-actionable
+ok 30 - issue221 actual context reader retains null head/current provider proof and malformed heads remain non-actionable
+  ---
+  duration_ms: 278.4453
+  type: 'test'
+  ...
+# Subtest: issue221 actual copy/revision actions use only source correction for the latest failed provider with null head
+ok 31 - issue221 actual copy/revision actions use only source correction for the latest failed provider with null head
+  ---
+  duration_ms: 210.27
+  type: 'test'
+  ...
+# Subtest: scope requires every explicit identity and repository and freezes the view generation
+ok 32 - scope requires every explicit identity and repository and freezes the view generation
+  ---
+  duration_ms: 2.4628
+  type: 'test'
+  ...
+# Subtest: the exact scope object, not equal IDs or a prior A -> B -> A view, selects the load
+ok 33 - the exact scope object, not equal IDs or a prior A -> B -> A view, selects the load
+  ---
+  duration_ms: 0.4782
+  type: 'test'
+  ...
+# Subtest: one encoded GET is uncached, abortable and body/header/credential free
+ok 34 - one encoded GET is uncached, abortable and body/header/credential free
+  ---
+  duration_ms: 8.1866
+  type: 'test'
+  ...
+# Subtest: published DTO retains only bound result metadata and leaves raw input untouched
+ok 35 - published DTO retains only bound result metadata and leaves raw input untouched
+  ---
+  duration_ms: 1.542
+  type: 'test'
+  ...
+# Subtest: only explicit null publication in a correctly scoped response is known absence
+ok 36 - only explicit null publication in a correctly scoped response is known absence
+  ---
+  duration_ms: 2.2025
+  type: 'test'
+  ...
+# Subtest: item and publication scope mismatches never expose links or known absence
+ok 37 - item and publication scope mismatches never expose links or known absence
+  ---
+  duration_ms: 5.9758
+  type: 'test'
+  ...
+# Subtest: publication source issue matches the work item without equating authorizer, revisions or checkpoint generations
+ok 38 - publication source issue matches the work item without equating authorizer, revisions or checkpoint generations
+  ---
+  duration_ms: 1.0833
+  type: 'test'
+  ...
+# Subtest: publication and artifact identity tuples plus full digests must all match
+ok 39 - publication and artifact identity tuples plus full digests must all match
+  ---
+  duration_ms: 3.7704
+  type: 'test'
+  ...
+# Subtest: missing, duplicate and unrelated-first deliverables cannot substitute a result
+ok 40 - missing, duplicate and unrelated-first deliverables cannot substitute a result
+  ---
+  duration_ms: 1.5204
+  type: 'test'
+  ...
+# Subtest: native provenance identity, source/target branches and digests are checked without retaining authority
+ok 41 - native provenance identity, source/target branches and digests are checked without retaining authority
+  ---
+  duration_ms: 3.1324
+  type: 'test'
+  ...
+# Subtest: raw GitHub PR URLs allow native slash suffixes but retain exact repository and number checks
+ok 42 - raw GitHub PR URLs allow native slash suffixes but retain exact repository and number checks
+  ---
+  duration_ms: 3.5192
+  type: 'test'
+  ...
+# Subtest: owner/repository display case is preserved while full hex values compare by bytes
+ok 43 - owner/repository display case is preserved while full hex values compare by bytes
+  ---
+  duration_ms: 0.5507
+  type: 'test'
+  ...
+# Subtest: PR state, exact head, owner, recorded metadata and phase cannot contradict each other
+ok 44 - PR state, exact head, owner, recorded metadata and phase cannot contradict each other
+  ---
+  duration_ms: 2.7998
+  type: 'test'
+  ...
+# Subtest: download metadata rejects controls, external/native paths, malformed hashes and invalid sizes
+ok 45 - download metadata rejects controls, external/native paths, malformed hashes and invalid sizes
+  ---
+  duration_ms: 10.3697
+  type: 'test'
+  ...
+# Subtest: pending, PR-created, published and failed publication are distinct without claiming a live app
+ok 46 - pending, PR-created, published and failed publication are distinct without claiming a live app
+  ---
+  duration_ms: 1.8788
+  type: 'test'
+  ...
+# Subtest: only a different valid pinned run is a mismatch; same-run contradictions stay unavailable
+ok 47 - only a different valid pinned run is a mismatch; same-run contradictions stay unavailable
+  ---
+  duration_ms: 0.654
+  type: 'test'
+  ...
+# Subtest: loading, denied and stale contexts cannot become a result or known absence
+ok 48 - loading, denied and stale contexts cannot become a result or known absence
+  ---
+  duration_ms: 0.6487
+  type: 'test'
+  ...
+# Subtest: denials, missing endpoints and sync/async transport failures stay unavailable without raw errors
+ok 49 - denials, missing endpoints and sync/async transport failures stay unavailable without raw errors
+  ---
+  duration_ms: 1.0346
+  type: 'test'
+  ...
+# Subtest: timeout aborts and suppresses late successes and failures without retries
+ok 50 - timeout aborts and suppresses late successes and failures without retries
+  ---
+  duration_ms: 0.632
+  type: 'test'
+  ...
+# Subtest: queued timeout callbacks cannot overwrite a settled success, absence or denial
+ok 51 - queued timeout callbacks cannot overwrite a settled success, absence or denial
+  ---
+  duration_ms: 0.6447
+  type: 'test'
+  ...
+# Subtest: cancellation before start issues no GET; in-flight cancellation publishes no late data
+ok 52 - cancellation before start issues no GET; in-flight cancellation publishes no late data
+  ---
+  duration_ms: 0.6027
+  type: 'test'
+  ...
+# Subtest: new same-ID generation remains unavailable after denial despite a prior response completing later
+ok 53 - new same-ID generation remains unavailable after denial despite a prior response completing later
+  ---
+  duration_ms: 1.0699
+  type: 'test'
+  ...
+# Subtest: legacy result reads cannot enable revision mutations; partial history shapes fail closed
+ok 54 - legacy result reads cannot enable revision mutations; partial history shapes fail closed
+  ---
+  duration_ms: 1.0761
+  type: 'test'
+  ...
+# Subtest: pending revision preserves the selected original and shows an explicitly unadopted export
+ok 55 - pending revision preserves the selected original and shows an explicitly unadopted export
+  ---
+  duration_ms: 2.0751
+  type: 'test'
+  ...
+# Subtest: adopted correction awaits publication while the original remains independently viewable
+ok 56 - adopted correction awaits publication while the original remains independently viewable
+  ---
+  duration_ms: 0.9307
+  type: 'test'
+  ...
+# Subtest: superseding publication has one bound chain and never replaces a pinned historical result
+ok 57 - superseding publication has one bound chain and never replaces a pinned historical result
+  ---
+  duration_ms: 1.2325
+  type: 'test'
+  ...
+# Subtest: correction history validates the exact source and adopted tuples across every identity
+ok 58 - correction history validates the exact source and adopted tuples across every identity
+  ---
+  duration_ms: 4.9919
+  type: 'test'
+  ...
+# Subtest: duplicate, disconnected, cyclic or unbound publication history is unavailable
+ok 59 - duplicate, disconnected, cyclic or unbound publication history is unavailable
+  ---
+  duration_ms: 3.2191
+  type: 'test'
+  ...
+# Subtest: pending exports are not arbitrarily selected and abandoned corrections retain history
+ok 60 - pending exports are not arbitrarily selected and abandoned corrections retain history
+  ---
+  duration_ms: 0.7963
+  type: 'test'
+  ...
+# Subtest: superseding publication binds every predecessor pull-request field
+ok 61 - superseding publication binds every predecessor pull-request field
+  ---
+  duration_ms: 2.1394
+  type: 'test'
+  ...
+# Subtest: findings reject credential-bearing links, traversal and invalid types without retaining raw errors
+ok 62 - findings reject credential-bearing links, traversal and invalid types without retaining raw errors
+  ---
+  duration_ms: 3.0629
+  type: 'test'
+  ...
+# Subtest: commands bind current actor, exact publication, source revision and Factory version
+ok 63 - commands bind current actor, exact publication, source revision and Factory version
+  ---
+  duration_ms: 16.5066
+  type: 'test'
+  ...
+# Subtest: finding validation rejects unbounded, malformed and credential-bearing inputs
+ok 64 - finding validation rejects unbounded, malformed and credential-bearing inputs
+  ---
+  duration_ms: 1.5895
+  type: 'test'
+  ...
+# Subtest: mutation confirmation binds every source identity and authenticated decision
+ok 65 - mutation confirmation binds every source identity and authenticated decision
+  ---
+  duration_ms: 6.5141
+  type: 'test'
+  ...
+# Subtest: an initial unfinished publication never appears as published or enables correction
+ok 66 - an initial unfinished publication never appears as published or enables correction
+  ---
+  duration_ms: 9.2709
+  type: 'test'
+  ...
+# Subtest: an unfinished successor retains the previous published head and adopted correction history
+ok 67 - an unfinished successor retains the previous published head and adopted correction history
+  ---
+  duration_ms: 8.3297
+  type: 'test'
+  ...
+# Subtest: authorization is explicit and double submit before rerender sends one bounded request
+ok 68 - authorization is explicit and double submit before rerender sends one bounded request
+  ---
+  duration_ms: 10.2333
+  type: 'test'
+  ...
+# Subtest: unconfirmed transport or malformed responses retain the App key for an unchanged retry
+ok 69 - unconfirmed transport or malformed responses retain the App key for an unchanged retry
+  ---
+  duration_ms: 22.5829
+  type: 'test'
+  ...
+# Subtest: timeout completes even when transport ignores abort and its late response cannot clear a retry
+ok 70 - timeout completes even when transport ignores abort and its late response cannot clear a retry
+  ---
+  duration_ms: 20.3734
+  type: 'test'
+  ...
+# Subtest: A to B to A navigation cannot revive old callbacks or clear a newer operation
+ok 71 - A to B to A navigation cannot revive old callbacks or clear a newer operation
+  ---
+  duration_ms: 23.7817
+  type: 'test'
+  ...
+# Subtest: role, API, server, scope generation and unmount retire pending correction requests
+ok 72 - role, API, server, scope generation and unmount retire pending correction requests
+  ---
+  duration_ms: 47.0078
+  type: 'test'
+  ...
+# Subtest: missing durable browser storage prevents a decision request
+ok 73 - missing durable browser storage prevents a decision request
+  ---
+  duration_ms: 8.3463
+  type: 'test'
+  ...
+# Subtest: adoption and abandonment use exact correction identities, saved source revision and a reason
+ok 74 - adoption and abandonment use exact correction identities, saved source revision and a reason
+  ---
+  duration_ms: 28.5406
+  type: 'test'
+  ...
+# Subtest: settlement cannot infer acceptance from multiple exports or an absent reason
+ok 75 - settlement cannot infer acceptance from multiple exports or an absent reason
+  ---
+  duration_ms: 15.1724
+  type: 'test'
+  ...
+# Subtest: history navigates and downloads the exact correction run without snapshot membership
+not ok 76 - history navigates and downloads the exact correction run without snapshot membership
+  ---
+  duration_ms: 5.0211
+  type: 'test'
+  location: '<USER_HOME>\\.codex\\worktrees\\issue95-review-revision\\ecorp\\apps\\web\\src\\reviewRevisionPanel.test.mjs:500:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    one button matching /^Download unadopted source$/
+
+    0 !== 1
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    one (file:///<ISOLATED_CHECKOUT>/apps/web/src/reviewRevisionPanel.test.mjs:88:10)
+    TestContext.<anonymous> (file:///<ISOLATED_CHECKOUT>/apps/web/src/reviewRevisionPanel.test.mjs:504:3)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: read-only and adopted views expose evidence while withholding decision forms
+ok 77 - read-only and adopted views expose evidence while withholding decision forms
+  ---
+  duration_ms: 8.3657
+  type: 'test'
+  ...
+# Subtest: removing a finding preserves the remaining input and moves focus to its actual label target
+not ok 78 - removing a finding preserves the remaining input and moves focus to its actual label target
+  ---
+  duration_ms: 12.284
+  type: 'test'
+  location: '<USER_HOME>\\.codex\\worktrees\\issue95-review-revision\\ecorp\\apps\\web\\src\\reviewRevisionPanel.test.mjs:522:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    one button matching /^Remove finding 1$/
+
+    0 !== 1
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    one (file:///<ISOLATED_CHECKOUT>/apps/web/src/reviewRevisionPanel.test.mjs:88:10)
+    TestContext.<anonymous> (file:///<ISOLATED_CHECKOUT>/apps/web/src/reviewRevisionPanel.test.mjs:528:3)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: WorkResultCard exposes its status and supplied content with metadata collapsed by default
+ok 79 - WorkResultCard exposes its status and supplied content with metadata collapsed by default
+  ---
+  duration_ms: 12.5866
+  type: 'test'
+  ...
+# Subtest: ready PR retains its exact URL and only an explicit download invokes the matching callback
+ok 80 - ready PR retains its exact URL and only an explicit download invokes the matching callback
+  ---
+  duration_ms: 13.2794
+  type: 'test'
+  ...
+# Subtest: loading, unavailable and no-publication states do not fabricate a PR or perform actions
+ok 81 - loading, unavailable and no-publication states do not fabricate a PR or perform actions
+  ---
+  duration_ms: 7.9852
+  type: 'test'
+  ...
+# Subtest: a historical review mismatch changes selection only through explicit Go to delivered result
+ok 82 - a historical review mismatch changes selection only through explicit Go to delivered result
+  ---
+  duration_ms: 3.4243
+  type: 'test'
+  ...
+# Subtest: an unavailable delivered-run target preserves the historical selection and only offers refresh
+ok 83 - an unavailable delivered-run target preserves the historical selection and only offers refresh
+  ---
+  duration_ms: 195.7701
+  type: 'test'
+  ...
+# Subtest: a failed publication with a recorded PR remains inspectable without being labeled Published
+ok 84 - a failed publication with a recorded PR remains inspectable without being labeled Published
+  ---
+  duration_ms: 9.2117
+  type: 'test'
+  ...
+# Subtest: Published is not merged or deployed and its collapsed details never invent a running preview
+ok 85 - Published is not merged or deployed and its collapsed details never invent a running preview
+  ---
+  duration_ms: 12.4833
+  type: 'test'
+  ...
+# Subtest: expired artifact retention does not hide an existing PR or replace server download validation
+ok 86 - expired artifact retention does not hide an existing PR or replace server download validation
+  ---
+  duration_ms: 9.1761
+  type: 'test'
+  ...
+# Subtest: actual hook hides prior result before cleanup and aborts on each exact scope change
+ok 87 - actual hook hides prior result before cleanup and aborts on each exact scope change
+  ---
+  duration_ms: 50.915
+  type: 'test'
+  ...
+# Subtest: actual hook fences late success and failure before cleanup and after replacement
+ok 88 - actual hook fences late success and failure before cleanup and after replacement
+  ---
+  duration_ms: 22.2263
+  type: 'test'
+  ...
+# Subtest: actual hook close and reopen with identical IDs cannot revive old ready or pending data
+ok 89 - actual hook close and reopen with identical IDs cannot revive old ready or pending data
+  ---
+  duration_ms: 17.7812
+  type: 'test'
+  ...
+# Subtest: actual hook treats positive revision as one refresh hint and never retries failure on render
+ok 90 - actual hook treats positive revision as one refresh hint and never retries failure on render
+  ---
+  duration_ms: 51.8159
+  type: 'test'
+  ...
+# Subtest: actual App origin-unavailable branch offers manual Refresh work context with no PR CTA
+ok 91 - actual App origin-unavailable branch offers manual Refresh work context with no PR CTA
+  ---
+  duration_ms: 10.8499
+  type: 'test'
+  ...
+# Subtest: actual App first-hop retry exposes the authorized result without moving pinned evidence
+ok 92 - actual App first-hop retry exposes the authorized result without moving pinned evidence
+  ---
+  duration_ms: 27.4683
+  type: 'test'
+  ...
+# Subtest: actual App fallback reports unavailable review details for an unresolved run or request
+ok 93 - actual App fallback reports unavailable review details for an unresolved run or request
+  ---
+  duration_ms: 11.9978
+  type: 'test'
+  ...
+# Subtest: actual work pickers retain a deep-linked historical mission outside the recent eight
+ok 94 - actual work pickers retain a deep-linked historical mission outside the recent eight
+  ---
+  duration_ms: 60.7779
+  type: 'test'
+  ...
+# Subtest: actual work pickers do not duplicate a recent selection or invent an absent mission
+ok 95 - actual work pickers do not duplicate a recent selection or invent an absent mission
+  ---
+  duration_ms: 58.9647
+  type: 'test'
+  ...
+1..95
+# tests 95
+# suites 0
+# pass 93
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3965.5051

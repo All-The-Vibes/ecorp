@@ -1,0 +1,152 @@
+"""Verify the completed R7 receipts and record the actual saved-image self-review."""
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import struct
+import subprocess
+
+EV = Path(__file__).resolve().parent
+ROOT = Path(r"<ISOLATED_CHECKOUT>")
+PARENT = "7e65f46a0c0f991460eeb4c5b60723d2e0dff1f9"
+MERGE = "6f2375e06546806003a9a1d1a340bdc1a4ce4b8c"
+ACCEPTANCE = EV / "issue95-acceptance-r7"
+
+def load(path):
+    return json.loads(Path(path).read_text(encoding="utf-8-sig"))
+
+def digest(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+def pairs(rows):
+    result = sorted((row["path"], row["sha256"].lower()) for row in rows)
+    assert len(result) == len(dict(result))
+    return result
+
+def git(*args):
+    result = subprocess.run(["git", "--no-optional-locks", "-C", str(ROOT), *args],
+                            capture_output=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW)
+    return result.stdout.decode().strip()
+
+def write(path, value):
+    with path.open("x", encoding="utf-8", newline="\n") as stream:
+        stream.write(json.dumps(value, indent=2, ensure_ascii=False) + "\n")
+
+recorded = datetime.now(timezone.utc).isoformat()
+assert git("rev-parse", "HEAD") == PARENT
+assert git("rev-parse", "MERGE_HEAD") == MERGE
+assert git("branch", "--show-current") == "codex/issue95-governed-review-revision"
+assert not git("ls-files", "--unmerged")
+acceptance = load(ACCEPTANCE / "acceptance.json")
+driver = load(ACCEPTANCE / "driver.json")
+preflight = load(EV / "issue95-acceptance-r7-preflight.json")
+canonical = load(EV / "issue95-canonical-r3.json")
+native = load(EV / "issue95-native-build-r1.json")
+fixture = load(ACCEPTANCE / "owned-fixture.json")
+observed = load(EV / "issue95-acceptance-r7-session-exit.json")
+assert observed["session_id"] == 14518 and observed["exit_code"] == 0
+assert observed["tool_return"]["exit_code"] == 0 and observed["chunk_id"] == "9f0909"
+assert acceptance["passed"] and acceptance["source_unchanged"] and acceptance["publisher_credential_revoked"]
+assert acceptance["product_head"] == PARENT and acceptance["finished_at"]
+assert acceptance["browser_errors"] == acceptance["external_requests"] == []
+assert len(acceptance["scenarios"]) == 15 and all(s["passed"] is True for s in acceptance["scenarios"])
+assert driver["status"] == "passed" and driver["database_stop_exit_code"] == 0
+assert set(driver["stopped"]) == {"web", "server", "runner", "postgres", "acceptance"}
+assert all(driver["stopped"].values())
+assert acceptance["qa_root"] == driver["qa_root"] == fixture["qa_root"]
+assert Path(driver["qa_root"]).is_relative_to(Path(r"<OWNED_QA_PARENT>"))
+assert acceptance["product_root"] == driver["product_root"] == str(ROOT)
+assert preflight["status"] == "passed" and preflight["head"] == PARENT and preflight["pending_merge_head"] == MERGE
+assert preflight["native_source_files"] == 289 and preflight["native_source_exact_match"]
+assert preflight["combined_source_files"] == 7397 and preflight["combined_source_exact_match"]
+physical = pairs(acceptance["source_files"])
+assert len(physical) == 7397 and physical == pairs(canonical["source_files"])
+mapping = dict(physical)
+for name, expected in physical:
+    assert digest(ROOT / name) == expected, name
+native_files = pairs(native["source_files"])
+assert native["status"] == "passed" and native["exit_code"] == 0 and native["source_unchanged"]
+assert len(native_files) == 289 and all(mapping.get(name) == expected for name, expected in native_files)
+for item in preflight["binaries"]:
+    assert digest(ROOT / item["path"]) == item["sha256"], item["path"]
+identities = {}
+for role in ["server", "web"]:
+    identity = load(ACCEPTANCE / (role + "-native-identity.json"))
+    process = fixture["processes"][role]
+    assert identity["test_owned"] and identity["platform"] == "win32"
+    assert identity["workspace"] == fixture["qa_root"] and identity["server_state"] == "running"
+    assert identity["server"] == process["pid"]
+    assert identity["server_executable"] == process["executable"]
+    assert identity["server_creation"] == process["started_utc"]
+    assert identity["server_identity"]["port_owned"] is True
+    identities[role] = {"pid": identity["server"], "native_creation_ticks": identity["server_identity"]["native_creation_ticks"],
+                        "identity_receipt_sha256": digest(ACCEPTANCE / (role + "-native-identity.json"))}
+observations = {
+    "correction-awaiting-review.png": [
+        "The correction remains pending with all three saved checks passed and fresh independent review still required.",
+        "The original publication and head, attributed finding, correction mission/run navigation and unadopted source remain visible.",
+        "The Bob member fixture sees review controls and the role explanation for settling corrections."
+    ],
+    "correction-published-history.png": [
+        "The adopted replacement and independent fixture review record are visible alongside the original and latest recorded review heads.",
+        "Expanded publication history distinguishes original PR 950001 from superseding PR 950002 with separate commit and run navigation.",
+        "The original mission remains accessible with its original published result."
+    ],
+    "correction-mobile.png": [
+        "At 390 CSS pixels, correction details, action controls and finding inputs stack without apparent horizontal clipping.",
+        "Long source and review identifiers wrap; the correction mission shows superseding PR 950002 and the adopted replacement.",
+        "The recorded document scroll width equals the viewport width of 390. Native select labels truncate within their controls."
+    ]
+}
+expected_sizes = {"correction-awaiting-review.png": (1440, 3940),
+                  "correction-published-history.png": (1440, 4228), "correction-mobile.png": (390, 6548)}
+captures = []
+for name, notes in observations.items():
+    raw = (ACCEPTANCE / name).read_bytes()
+    assert raw[:8] == b"\x89PNG\r\n\x1a\n" and raw[12:16] == b"IHDR"
+    width, height = struct.unpack(">II", raw[16:24])
+    assert (width, height) == expected_sizes[name]
+    captures.append({"file": name, "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw),
+                     "width": width, "height": height, "visually_inspected": True, "observations": notes})
+dimensions = acceptance["scenarios"][11]["receipt"]["dimensions"]
+assert dimensions == {"width": 390, "scroll": 390}
+review = {
+    "schema_version": 1, "issue": 95, "acceptance_revision": "R7", "recorded_at_utc": recorded,
+    "reviewer": "Codex implementation assistant",
+    "review_kind": "Implementation self-review of saved browser captures",
+    "tool": "view_image(detail=high) for all three; additional view_image(detail=original) for mobile",
+    "product_head": PARENT, "pending_merge_head": MERGE,
+    "acceptance_receipt_sha256": digest(ACCEPTANCE / "acceptance.json"),
+    "source_manifest_file_count": len(physical), "screenshots": captures, "dimensions": dimensions,
+    "material_ui_defects_observed": [],
+    "limitations": [
+        "This is not an independent or human approval.",
+        "Captures use development principals, a fake-process provider and fake GitHub boundary.",
+        "Desktop captures were displayed at 749x2048 and 698x2048; mobile was additionally displayed at 357x6000 from 390x6548. Observations are limited to the displayed captures.",
+        "No exhaustive accessibility or other-browser/viewport assessment is claimed."
+    ],
+    "original_capture_bytes_unchanged": True
+}
+write(EV / "issue95-acceptance-r7-screenshot-review.json", review)
+verification = {
+    "schema_version": 1, "issue": 95, "status": "passed", "recorded_at_utc": recorded,
+    "product_head": PARENT, "pending_merge_head": MERGE,
+    "source_files": len(physical), "matches_canonical_r3_manifest": True, "current_files_exact_match": True,
+    "unchanged_native_build_source_files": len(native_files), "native_build_reused": True,
+    "binaries_match_preflight": True, "native_identities": identities,
+    "observed_native_session": 14518, "observed_native_exit": 0,
+    "scenarios": [{"name": s["name"], "passed": s["passed"]} for s in acceptance["scenarios"]],
+    "services_stopped_as_recorded": driver["stopped"], "database_stop_exit_code": driver["database_stop_exit_code"],
+    "publisher_credential_revoked": acceptance["publisher_credential_revoked"], "browser_errors": [], "external_requests": [],
+    "receipts": {name: digest(EV / name) for name in [
+        "issue95-acceptance-r7-session-exit.json", "issue95-acceptance-r7-preflight.json",
+        "issue95-acceptance-r7-screenshot-review.json", "issue95-acceptance-r7/acceptance.json",
+        "issue95-acceptance-r7/driver.json", "issue95-acceptance-r7/owned-fixture.json"
+    ]},
+    "qualification": "Fresh local combined-source acceptance with fake-process provider, fake GitHub, development principals and an owned bare remote. No live inference, external publication, real human review or merge is claimed."
+}
+write(EV / "issue95-acceptance-r7-verification.json", verification)
+print(json.dumps({"status": "passed", "scenarios": len(acceptance["scenarios"]), "source_files": len(physical),
+                  "native_files_unchanged": len(native_files), "screenshots_inspected": len(captures),
+                  "processes_stopped": driver["stopped"], "publisher_credential_revoked": True}))

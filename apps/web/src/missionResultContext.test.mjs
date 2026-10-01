@@ -1,3 +1,4 @@
+import { missionResultFixture, reviewRevisionFixture } from './missionResultFixtures.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
@@ -16,63 +17,7 @@ const headCommit = 'd'.repeat(40)
 const flush = () => new Promise((resolve) => setImmediate(resolve))
 
 // Owned synthetic DTOs matching the public store/protocol shape, not native evidence.
-function contextFor(selected = scope, phase = 'published') {
-  const artifactId = 'artifact-a', runId = 'run-a', taskId = 'task-a', deliverableId = 'deliverable-a'
-  const [owner, name] = selected.sourceRepository.split('/')
-  const hasPr = ['pull_request_created', 'published'].includes(phase)
-  const pr = hasPr ? {
-    number: 17, node_id: 'PR_fixture', url: `https://github.com/${owner}/${name}/pull/17`,
-    state: 'OPEN', draft: true, base_ref: 'main', head_sha: headCommit,
-    head_repository_owner: owner, is_cross_repository: false, auto_merge: false,
-    title: 'Private title is not result metadata', body: 'Private body is not result metadata',
-  } : null
-  return {
-    work_item: {
-      id: selected.workItemId, corp_id: selected.corpId, mission_id: selected.missionId,
-      version: 9, source_repository_owner: owner, source_repository_name: name,
-      source_issue_number: 71, source_issue_url: `https://github.com/${owner}/${name}/issues/71`,
-      policy: { secret: 'not-for-result-state' },
-    },
-    publication: {
-      id: 'publication-a', corp_id: selected.corpId, mission_id: selected.missionId,
-      factory_work_item_id: selected.workItemId, source_deliverable_id: deliverableId,
-      artifact_id: artifactId, task_id: taskId, run_id: runId,
-      source_issue_number: 71, source_issue_url: `https://github.com/${owner}/${name}/issues/71`,
-      state: phase, version: 4, target_repository: `${owner}/${name}`,
-      base_ref: 'HEAD', branch: 'ecorp/result', commit_sha: headCommit,
-      failure_detail: null, pull_request_number: pr?.number ?? null,
-      pull_request_url: pr?.url ?? null, pull_request_state: pr?.state ?? null,
-      pull_request_draft: pr?.draft ?? null, pull_request_base_ref: pr?.base_ref ?? null,
-      pull_request_head_sha: pr?.head_sha ?? null,
-      pull_request_head_repository_owner: pr?.head_repository_owner ?? null,
-      pull_request_is_cross_repository: pr?.is_cross_repository ?? null,
-      provenance: {
-        schema_version: 3, factory_work_item_id: selected.workItemId, mission_id: selected.missionId,
-        task_ids: ['task-handoff', taskId], run_ids: ['run-history', runId],
-        verification_sha256: verification,
-        deliverable: {
-          id: deliverableId, artifact_id: artifactId, sha256: digest,
-          base_commit: baseCommit, head_commit: headCommit, source_branch: 'crony/source',
-        },
-        target: { repository: `${owner}/${name}`, base_ref: 'HEAD', branch: 'ecorp/result', commit: headCommit },
-        pull_request: pr,
-        authorization_snapshot: { token: 'never-retain' },
-      },
-      publisher_token: 'never-retain', authorization_snapshot: { reason: 'Private authority' },
-    },
-    source_deliverables: [{
-      id: deliverableId, corp_id: selected.corpId, task_id: taskId, run_id: runId,
-      artifact_id: artifactId, form: 'commit_branch', file_name: 'result.bundle',
-      uri: `/api/corps/${encodeURIComponent(selected.corpId)}/artifacts/${artifactId}`,
-      sha256: digest, media_type: 'application/octet-stream', bytes: 1234,
-      provenance_signature: 'e'.repeat(64), verification_sha256: verification,
-      base_commit: baseCommit, head_commit: headCommit, branch: 'crony/source',
-      integration_state: phase === 'published' ? 'published' : 'ready_for_review',
-      retention_until: '2030-01-01T00:00:00Z',
-      workspace_path: 'private-native-path', arbitrary_url: 'https://untrusted.invalid/',
-    }],
-  }
-}
+function contextFor(selected = scope, phase = 'published') { return missionResultFixture(selected, phase) }
 
 function deferred() {
   let resolve, reject
@@ -580,4 +525,142 @@ test('new same-ID generation remains unavailable after denial despite a prior re
   unavailable(next.loads.at(-1), nextScope)
   assert.equal(missionResultPresentation(nextScope, next.loads.at(-1)).state, 'unavailable')
   next.stop()
+})
+
+function revisionContext(stage = 'pending') { return reviewRevisionFixture(scope, stage) }
+
+test('legacy result reads cannot enable revision mutations; partial history shapes fail closed', async () => {
+  assert.equal((await readResult(contextFor())).context.lineage_supported, false)
+  for (const field of ['publication_history', 'review_revisions']) {
+    const value = revisionContext()
+    delete value[field]
+    unavailable(await readResult(value))
+  }
+})
+
+test('pending revision preserves the selected original and shows an explicitly unadopted export', async () => {
+  const value = revisionContext()
+  const before = structuredClone(value)
+  const { context } = await readResult(value)
+  assert.equal(context.lineage_supported, true)
+  assert.equal(context.selected_mission_id, scope.missionId)
+  assert.equal(context.publication.id, 'publication-a')
+  const r = context.review_revisions[0]
+  assert.equal(r.state, 'pending')
+  assert.equal(r.result_deliverable_id, null)
+  assert.equal(r.replacement.id, 'correction-deliverable')
+  assert.equal(r.replacement_count, 1)
+  assert.equal(r.authorized_by, 'authorizer')
+  assert.match(r.findings[0].summary, /\n/)
+  assert.doesNotMatch(JSON.stringify(context), /never-retain|authority_snapshot|private-native-path|authorization_snapshot/)
+  assert.deepEqual(value, before)
+  const correction = missionResultScope({ ...ids, missionId: 'correction-a' })
+  const view = await readResult(value, correction)
+  assert.equal(view.status, 'ready')
+  assert.equal(view.context.publication, null, 'original result cannot impersonate a correction result')
+  assert.equal(view.context.current_publication_id, 'publication-a')
+})
+
+test('adopted correction awaits publication while the original remains independently viewable', async () => {
+  const value = revisionContext('adopted')
+  const original = await readResult(value)
+  assert.equal(original.context.publication.id, 'publication-a')
+  assert.equal(original.context.selected_mission_id, 'correction-a')
+  assert.equal(original.context.current_publication_id, null)
+  assert.equal(original.context.review_revisions[0].review_decision_id, 'fresh-review')
+  const correction = missionResultScope({ ...ids, missionId: 'correction-a' })
+  const view = await readResult(value, correction)
+  assert.equal(view.context.publication, null)
+  assert.equal(view.context.review_revisions[0].replacement.head_commit, 'f'.repeat(40))
+})
+
+test('superseding publication has one bound chain and never replaces a pinned historical result', async () => {
+  const value = revisionContext('published')
+  const historic = await readResult(value)
+  assert.equal(historic.status, 'ready')
+  assert.equal(historic.context.publication.id, 'publication-a')
+  assert.equal(historic.context.current_publication_id, 'publication-b')
+  const correction = missionResultScope({ ...ids, missionId: 'correction-a' })
+  const current = await readResult(value, correction)
+  assert.equal(current.context.publication.id, 'publication-b')
+  assert.equal(current.context.publication.supersedes_publication_id, 'publication-a')
+  assert.equal(current.context.publication_history.length, 2)
+  assert.equal(missionResultPresentation(scope, historic, { id: 'correction-run' }).state, 'mismatch')
+  const unrelated = missionResultScope({ ...ids, missionId: 'unrelated' })
+  unavailable(await readResult(value, unrelated), unrelated)
+})
+
+test('correction history validates the exact source and adopted tuples across every identity', async () => {
+  for (const field of ['corp_id', 'factory_work_item_id', 'publication_id', 'source_mission_id', 'source_task_id',
+    'source_run_id', 'source_deliverable_id', 'source_head_commit', 'result_run_id', 'result_deliverable_id', 'result_commit']) {
+    const value = revisionContext('adopted')
+    value.review_revisions[0][field] = 'foreign'
+    unavailable(await readResult(value))
+  }
+  for (const field of ['review_decision_id', 'settled_by', 'authorized_by', 'created_at']) {
+    const value = revisionContext('adopted')
+    value.review_revisions[0][field] = null
+    unavailable(await readResult(value))
+  }
+  const premature = revisionContext()
+  premature.review_revisions[0].review_decision_id = 'claimed-approval'
+  unavailable(await readResult(premature))
+})
+
+test('duplicate, disconnected, cyclic or unbound publication history is unavailable', async () => {
+  for (const corrupt of [
+    (v) => { v.publication_history.push(v.publication_history[0]) },
+    (v) => { v.review_revisions.push(v.review_revisions[0]) },
+    (v) => { v.publication.supersedes_publication_id = null },
+    (v) => { v.publication_history[0].supersedes_publication_id = v.publication.id },
+    (v) => { v.publication.provenance.review_revision.review_decision_id = 'old-review' },
+    (v) => { v.publication.provenance.review_revision.source_head_commit = '0'.repeat(40) },
+    (v) => { v.work_item.mission_id = scope.missionId; v.publication = v.publication_history[0] },
+    (v) => { v.publication = null },
+    (v) => { v.review_revisions[0].state = 'pending' },
+  ]) {
+    const value = revisionContext('published')
+    corrupt(value)
+    unavailable(await readResult(value))
+  }
+  const missing = revisionContext()
+  missing.publication_history = []
+  unavailable(await readResult(missing))
+})
+
+test('pending exports are not arbitrarily selected and abandoned corrections retain history', async () => {
+  const value = revisionContext()
+  value.source_deliverables.push({ ...value.source_deliverables[1], id: 'another-export', run_id: 'other-run' })
+  const r = (await readResult(value)).context.review_revisions[0]
+  assert.equal(r.replacement, null)
+  assert.equal(r.replacement_count, 2)
+  const abandoned = (await readResult(revisionContext('abandoned'))).context
+  assert.equal(abandoned.publication.id, 'publication-a')
+  assert.equal(abandoned.review_revisions[0].state, 'abandoned')
+  assert.equal(abandoned.review_revisions[0].settled_by, 'manager')
+})
+
+test('superseding publication binds every predecessor pull-request field', async () => {
+  for (const field of ['number', 'url', 'repository', 'base_ref', 'branch', 'head_sha']) {
+    const value = revisionContext('published')
+    value.publication.provenance.review_revision.source_pull_request[field] = 'foreign'
+    unavailable(await readResult(value))
+  }
+  const missing = revisionContext('published')
+  delete missing.publication.provenance.review_revision.source_pull_request
+  unavailable(await readResult(missing))
+})
+
+test('findings reject credential-bearing links, traversal and invalid types without retaining raw errors', async () => {
+  for (const [field, invalid] of [
+    ['source_url', 'https://user:password@github.com/owner/repo/pull/17'],
+    ['source_url', 'https://'], ['source_url', 'javascript:alert(1)'], ['source_url', 'https://example.org/\n'],
+    ['path', '../secrets'], ['path', 'src//auth.rs'], ['path', 'C:\\private'], ['path', '/root/file'],
+    ['path', 'src/./auth.rs'], ['line', -1], ['line', 0x1_0000_0000],
+    ['kind', 'permission'], ['summary', '💻'.repeat(501)], ['summary', '\0'],
+  ]) {
+    const value = revisionContext()
+    value.review_revisions[0].findings[0][field] = invalid
+    unavailable(await readResult(value))
+  }
 })

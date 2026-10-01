@@ -1,0 +1,272 @@
+#requires -Version 7.5
+$ErrorActionPreference='Stop'
+$taskEvidence=$PSScriptRoot
+$repo='<ISOLATED_CHECKOUT>'
+$main='878a1774774b0630c904cbaf4b05e1b346777817'
+$parent='7e65f46a0c0f991460eeb4c5b60723d2e0dff1f9'
+$secondParent='6f2375e06546806003a9a1d1a340bdc1a4ce4b8c'
+$parents=@($parent,$secondParent)
+$branch='codex/issue95-governed-review-revision'
+$baseBranch='codex/issue84-base-refresh'
+$title='Add governed corrections for published Factory results'
+$packet=Join-Path $repo 'docs\evidence\2026-10-01-factory-review-revisions'
+$receiptPath=Join-Path $taskEvidence 'issue95-github-publication-r1.json'
+function Read-Json([string]$Path) { Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json }
+function Hash([string]$Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
+function Json($Value) { ConvertTo-Json -InputObject $Value -Depth 95 -Compress }
+function Git-Text([string[]]$Arguments) {
+    $output=@(& git --no-optional-locks -C $repo @Arguments 2>&1)
+    if ($LASTEXITCODE -ne 0) { throw "Git $($Arguments[0]) failed; preserve the checkout." }
+    ($output -join [Environment]::NewLine).Trim()
+}
+$commitPath=Join-Path $taskEvidence 'issue95-publication-commit-r3.json'
+$scanPath=Join-Path $taskEvidence 'issue95-publication-committed-scan-r3.json'
+$validationPath=Join-Path $taskEvidence 'issue95-publication-validation-r6.json'
+$sourcePath=Join-Path $taskEvidence 'issue95-publication-source-r3.json'
+$contextPath=Join-Path $taskEvidence 'queue-inventory-r21.json'
+$canonicalPath=Join-Path $taskEvidence 'issue95-canonical-r3.json'
+$commit=Read-Json $commitPath
+$scan=Read-Json $scanPath
+$validation=Read-Json $validationPath
+$source=Read-Json $sourcePath
+$context=Read-Json $contextPath
+$canonical=Read-Json $canonicalPath
+$review=Read-Json (Join-Path $packet 'implementation-self-review.json')
+$summary=Read-Json (Join-Path $packet 'summary.json')
+$head=$commit.head
+if ($head -cnotmatch '^[0-9a-f]{40}$' -or $commit.main -cne $main -or $commit.branch -cne $branch -or ($commit.parents -join '|') -cne ($parents -join '|')) { throw 'Unexpected implementation identity.' }
+if ($commit.status -cne 'committed-and-verified' -or !$commit.worktree_clean -or !$commit.ordinary_two_parent_commit -or !$commit.prerequisite_head_preserved_as_parent) { throw 'Implementation commit is not verified.' }
+if ($scan.status -cne 'passed' -or $scan.head -cne $head -or $scan.tree -cne $commit.publication_tree -or $scan.exit_code -ne 0 -or $scan.finding_count -ne 0 -or !$scan.worktree_unchanged -or $scan.history_log_options -cne "-m $main..$head") { throw 'Committed blob and introduced-history scans are incomplete.' }
+if ($commit.validation_sha256 -cne (Hash $validationPath) -or $commit.source_receipt_sha256 -cne (Hash $sourcePath)) { throw 'Publication receipt binding changed.' }
+if ($validation.status -cne 'passed' -or !$validation.full_plan_unchanged -or !$validation.original_physical_files_unchanged -or !$validation.canonical_and_acceptance_same_complete_physical_source -or !$validation.published_core_validation_verified -or !$validation.core_packet_unchanged -or $validation.tested_tree -cne $commit.tested_tree -or $validation.publication_tree -cne $commit.publication_tree) { throw 'Evidence publication is not verified.' }
+if ($source.source_file_count -ne 7397 -or $source.physical_files_sha256 -cne $commit.physical_files_sha256 -or $source.canonical_receipt_sha256 -cne (Hash $canonicalPath) -or $source.main -cne $main -or ($source.parents -join '|') -cne ($parents -join '|')) { throw 'Tested-source identity changed.' }
+if ($review.tested_tree -cne $commit.tested_tree -or $review.main -cne $main -or ($review.parents -join '|') -cne ($parents -join '|') -or @($review.unresolved_confirmed_defects).Count -ne 0 -or $review.independent_review_performed -or @($review.acceptance_mapping).Count -ne 9) { throw 'Implementation self-review is incomplete.' }
+if ($canonical.status -cne 'passed' -or $canonical.exit_code -ne 0 -or !$canonical.source_unchanged -or !$canonical.finished_at_utc -or $null -ne $canonical.rust_test_threads) { throw 'Canonical validation is incomplete.' }
+$nativePath=Join-Path $repo 'output\readiness\2026-10-01T06-03-58-183Z-fixture reference 6f5ca9a30c765e54-full.json'
+$gates=Read-Json $nativePath
+if ($source.canonical_report_sha256 -cne (Hash $nativePath) -or $gates.status -cne 'passed' -or !$gates.finishedAt -or ($gates.checks.name -join '|') -cne 'migrations|state-audit-compatibility|state-audit-evm|docs|repository-docs|node-tests|format|clippy|rust-tests|web-build|web-lint' -or @($gates.checks | Where-Object {!$_.passed -or $_.exitCode -ne 0 -or $_.errorCode}).Count -or $gates.notRun.Count -or $gates.sourceChangedDuringValidation) { throw 'The complete current canonical plan did not pass.' }
+foreach ($name in @('canonical-r3','publication-validation-r5','publication-validation-r6','publication-committed-scan-r3')) {
+    $nativeExit=Read-Json (Join-Path $taskEvidence ("issue95-"+$name+"-session-exit.json"))
+    if ($nativeExit.exit_code -ne 0 -or $nativeExit.observation -cnotin @('write_stdin returned process exit','exec_command returned process exit') -or !($nativeExit.observed_at_utc -or $nativeExit.recorded_at_utc)) { throw "Native completion not observed: $name" }
+    if ($name -ceq 'canonical-r3' -and $nativeExit.session_id -ne 52398) { throw 'Unexpected canonical process.' }
+}
+if ((@($gates.checks | Where-Object name -CEQ 'rust-tests')[0].argv -join '|') -cne 'cargo|test|--workspace|--locked|--|--test-threads=1') { throw 'The reviewed Windows scheduling contract changed.' }
+$node=@($gates.checks | Where-Object name -CEQ 'node-tests')[0].counts.node
+$rust=@($gates.checks | Where-Object name -CEQ 'rust-tests')[0].counts.rust
+if ($summary.tested_tree -cne $commit.tested_tree -or $summary.canonical.revision -ne 3 -or $summary.acceptance.revision -ne 7 -or !$summary.acceptance.passed -or $summary.acceptance.scenario_count -ne 15 -or $summary.issue_completed -or $summary.pr_merge_performed -or $summary.hosted_checks_available) { throw 'Unexpected acceptance or readiness claim.' }
+$acceptanceVerificationPath=Join-Path $taskEvidence 'issue95-acceptance-r7-verification.json'
+$acceptanceVerification=Read-Json $acceptanceVerificationPath
+if ($source.acceptance_verification_sha256 -cne (Hash $acceptanceVerificationPath) -or $acceptanceVerification.status -cne 'passed' -or $acceptanceVerification.source_files -ne 7397 -or $acceptanceVerification.product_head -cne $parent -or $acceptanceVerification.pending_merge_head -cne $secondParent -or !$acceptanceVerification.matches_canonical_r3_manifest -or !$acceptanceVerification.binaries_match_preflight -or $acceptanceVerification.observed_native_session -ne 14518 -or $acceptanceVerification.observed_native_exit -ne 0) { throw 'Combined-source acceptance is not verified.' }
+foreach ($helperName in @('issue95_publication_r3.py','publish-issue95-r2.ps1','issue95_publication_r4.py','publish-issue95-r3.ps1','issue95_publication_r5.py','publish-issue95-r4.ps1')) {
+    $artifact=@($summary.artifacts | Where-Object {$_.source -ceq $helperName -and $_.source_root -ceq 'run_evidence'})
+    if ($artifact.Count -ne 1 -or $artifact[0].original_sha256 -cne (Hash (Join-Path $taskEvidence $helperName))) { throw 'A frozen publication helper changed.' }
+}
+if ($context.status -cne 'complete' -or $context.actor -cne 'shyamsridhar123' -or $context.main_before -cne $main -or $context.main_after -cne $main) { throw 'Unreviewed inventory.' }
+$knownIssue=@($context.issues | Where-Object number -EQ 95)
+$knownIssueDetails=@($context.issue_details | Where-Object number -EQ 95)
+$knownParent=@($context.pr_details | Where-Object {$_.pr.number -eq 390})
+$knownSecondParent=@($context.pr_details | Where-Object {$_.pr.number -eq 382})
+if ($knownIssue.Count -ne 1 -or $knownIssueDetails.Count -ne 1 -or $knownParent.Count -ne 1 -or $knownSecondParent.Count -ne 1) { throw 'Missing issue or prerequisite context.' }
+$evidenceUrl="https://github.com/All-The-Vibes/ecorp/blob/$head/docs/evidence/2026-10-01-factory-review-revisions/README.md"
+$operatorUrl="https://github.com/All-The-Vibes/ecorp/blob/$head/docs/FACTORY_REVIEW_REVISIONS.md"
+$body=@"
+## Description
+
+Implements #95 on prerequisite draft PR #390 at $parent, with the reviewed Windows validation prerequisite #382 at $secondParent. Both exact heads are retained as parents of the ordinary local integration commit. This draft is stacked on $baseBranch.
+
+A published Factory result can enter an explicit correction state with typed, actor-attributed review findings. A separate mission reconstructs the exact signed published source in an isolated workspace, inherits the original authority and verifier policy, uses only residual budgets and attempts, and requires fresh independent review before explicit adoption. The accepted original stays immutable. Separately authorized publication creates one superseding PR with retained lineage; predecessor PR/native branch drift is rejected even during completed replay.
+
+The change reuses pinned Copilot SDK 1.0.11 and CLI 1.0.79 through existing adapters. It adds migration 0059 without changing applied SQL and requires updated server/runner binaries. The App displays original publication, findings, correction, review, adoption, abandonment and recorded heads. [Operator and reproduction instructions]($operatorUrl).
+
+## Type of change
+
+- [x] New feature
+- [x] Documentation update
+
+## How Has This Been Tested?
+
+Reviewed head: $head. Tested implementation tree: $($commit.tested_tree).
+
+- All eleven canonical pnpm check gates passed using locked dependencies: migrations, state-audit compatibility, native EVM, both documentation gates, full Node discovery, Rust formatting/clippy/workspace tests, web build and lint. Node: $($node.tests) total / $($node.passed) passed / $($node.failed) failed / $($node.skipped) skipped / $($node.cancelled) cancelled / $($node.todo) todo. Rust: $($rust.passed) passed / $($rust.failed) failed / $($rust.ignored) ignored across $($rust.summaries) summaries. The separate EVM gate passed one case.
+- Full-stack acceptance R7 passed all 15 scenarios through real Chrome/App, server, PostgreSQL, runner and Git. It covers authorization and residual budgets, idempotent correction, isolated signed-source reconstruction, saved verification, independent-review denial/adoption, explicit supersession, drift rejection, retry and abandonment. All five owned processes stopped; PostgreSQL shutdown exited zero. The native build was reused after verifying its unchanged 289-file source and binary hashes.
+- Acceptance uses a fake-process provider, fake GitHub, development principals and an owned bare remote. Three fake PRs/create calls, two Project updates and five effects were observed across two items. It does not demonstrate live inference, external publication or real human signoff.
+- Focused Node prerequisites/parity passed 103 cases on the earlier 7,352-file manifest; native deliverable/correction parity passed 36 and 9 on unchanged 289-file subsets. Windows-policy tests passed 35 cases on the current complete source. Exact differences and prior or partial manifests are retained. Counts overlap and must not be added to canonical results.
+- The first publication scan failed on 96 synthetic fixture UUID aliases. Each was traced to its original fixture UUID; public copies now label these as fixture references. The original packet, redacted findings and classification remain preserved. No product source, original receipt or security policy changed.
+- Separate evidence validation passed documentation, personal-path, whitespace and native Gitleaks checks. Native Gitleaks found zero secrets in the committed changes and introduced history under unchanged policy. The actual core pass is published with its logs; the extended packet was validated separately.
+
+Canonical R3 and acceptance R7 match all 7,397 physical source files, manifest SHA-256 $($commit.physical_files_sha256). The commit was created afterward and adds separately validated evidence. Source binding reconstructs every tested Git blob, allowing only CRLF-to-LF normalization. Original screenshots, logs, all nine acceptance mappings, actual failures, skipped/ignored cases and source scopes are retained in the [evidence packet]($evidenceUrl).
+
+Actual runtime: Windows, Node 24.21.0, pnpm 11.19.0 and Rust 1.98.1. The repository declares Node 24.19.0; pinned-Node execution is not claimed. R3 uses #382's native Windows Cargo serial flag; all assertions, deadlines, workspace members and eleven gates remain. Linux/macOS retain native defaults.
+
+Failed canonical R1 (15 Node failures) remains preserved with the working-Python/locked-Teams prerequisites and two reviewed regression corrections. R2 passed Node but stopped at 646 Rust passes / 1 failure / 9 ignored during an existing pre-stop setup wait; later web gates did not complete. A focused rerun passed, and temporary diagnostics recorded two setup failures before exact source restoration. These results and #382 do not establish the cause or repair of #213's historical parallel failures. Historical Cargo advisory debt remains; no clean historical audit is claimed.
+
+## Checklist
+
+- [x] Implementation self-review completed; nine acceptance criteria mapped to code and evidence
+- [x] Regression tests, operator documentation and original browser screenshots included
+- [x] Complete local contributor validation passed
+- [x] Existing applied SQL and contribution history preserved
+- [ ] Prerequisite #390 merged into main
+- [ ] Prerequisite #382 merged into main
+- [ ] Required hosted CI, CodeQL, code-quality and security checks available and passing
+- [ ] Independent GitHub review, merge and issue completion verified
+
+This is assistant implementation self-review, not independent GitHub approval. Actions remains disabled, so required hosted checks are unavailable. This PR stays draft and issue #95 stays open pending the prerequisite, required checks and verified merge.
+"@
+$marker="<!-- ecorp-issue-completion:95:review-revision:$head -->"
+$issueBody=@"
+Implemented the nine governed review-revision criteria at $($head), stacked on #390 with #382 retained as the second parent: typed attributed findings, isolated correction from signed published source, inherited bounded authority, saved verification, fresh independent review, explicit adoption/supersession, idempotent recovery, visible lineage and fail-closed predecessor drift.
+
+All eleven canonical pnpm check gates passed: Node $($node.passed) passed / $($node.skipped) skipped; Rust $($rust.passed) passed / $($rust.ignored) ignored; zero failures. All 15 full-stack acceptance scenarios passed using real App/server/PostgreSQL/runner/Git with explicitly simulated provider and GitHub boundaries. [Source-bound logs, original screenshots, nine-criterion mapping, prior failures and limitations]($evidenceUrl).
+
+The linked implementation PR remains draft while #390, #382 and required hosted CI, CodeQL, code-quality and security checks are pending. Actions remains disabled. Issue #95 remains open; no independent approval, merge or issue completion is claimed.
+
+$marker
+"@
+if ($body -match '(?i)\b(?:close[sd]?|fix(?:es|ed)?|resolve[sd]?)\s+#\d+' -or $issueBody -match '(?i)\b(?:close[sd]?|fix(?:es|ed)?|resolve[sd]?)\s+#\d+') { throw 'Draft publication must not automatically close an issue.' }
+foreach ($item in @(@{name='issue95-pr-body-r1.md';text=$body},@{name='issue95-issue-comment-r1.md';text=$issueBody})) {
+    $path=Join-Path $taskEvidence $item.name
+    if (Test-Path -LiteralPath $path) {
+        if ((Get-Content -LiteralPath $path -Raw).TrimEnd() -cne $item.text.TrimEnd()) { throw 'Preserve differing prepared text.' }
+    } else { $item.text | Set-Content -LiteralPath $path -Encoding utf8 }
+}
+function Assert-Local {
+    if ((Git-Text @('rev-parse','HEAD')) -cne $head -or (Git-Text @('branch','--show-current')) -cne $branch -or (Git-Text @('rev-parse','HEAD^{tree}')) -cne $commit.publication_tree -or (Git-Text @('show','-s','--format=%P','HEAD')) -cne ($parents -join ' ')) { throw 'Local source changed.' }
+    if (Git-Text @('status','--porcelain=v1','--untracked-files=all')) { throw 'Publication checkout is no longer clean.' }
+    if ((Git-Text @('remote','get-url','origin')) -cnotin @('https://github.com/All-The-Vibes/ecorp.git','https://github.com/All-The-Vibes/ecorp')) { throw 'Unexpected Git remote.' }
+    $null=Git-Text @('merge-base','--is-ancestor',$main,$head)
+    $null=Git-Text @('merge-base','--is-ancestor',$secondParent,$head)
+}
+Assert-Local
+$record=if (Test-Path -LiteralPath $receiptPath) {
+    $existing=Get-Content -LiteralPath $receiptPath -Raw | ConvertFrom-Json -AsHashtable
+    if ($existing.head -cne $head -or $existing.body -cne $body -or $existing.issue_body -cne $issueBody) { throw 'Preserve differing publication attempt.' }
+    $existing
+} else {
+    [ordered]@{repository='All-The-Vibes/ecorp';issue=95;status='prepared';started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');head=$head;parents=$parents;main=$main;branch=$branch;base_branch=$baseBranch;title=$title;body=$body;issue_body=$issueBody;settings_mutations=0;merge_attempts=0;issue_closed=$false;self_approval_submitted=$false;pagination=@();commit_sha256=(Hash $commitPath);scan_sha256=(Hash $scanPath);validation_sha256=(Hash $validationPath);context_sha256=(Hash $contextPath)}
+}
+function Save-Receipt { $record | ConvertTo-Json -Depth 95 | Set-Content -LiteralPath $receiptPath -Encoding utf8 }
+Save-Receipt
+try {
+    & '<CONFIGURED_SOURCE>\output\pr-completion\20260922T123548Z\github-session.ps1' -Operation {
+        if ($automationIdentity.login -cne 'shyamsridhar123') { throw 'Unexpected authenticated actor.' }
+        $record.actor=$automationIdentity.login
+        $prefix='/repos/All-The-Vibes/ecorp'
+        function Read-Pages([string]$Path,[string]$Field='') {
+            $all=[Collections.Generic.List[object]]::new()
+            for ($page=1; $page -le 1000; $page++) {
+                $separator=if ($Path.Contains('?')) {'&'} else {'?'}
+                $response=Invoke-EcorpGitHub -Path ($Path+$separator+"per_page=100&page=$page")
+                $value=if ($Field) {$response.$Field} else {$response}
+                $items=if ($null -eq $value) {@()} else {@($value)}
+                $record.pagination+=@{path=$Path;page=$page;count=$items.Count}
+                foreach ($item in $items) { if ($item -is [Array]) { throw 'Unexpected nested API page.' }; $all.Add($item) }
+                if ($items.Count -lt 100) { return $all.ToArray() }
+            }
+            throw 'Pagination did not terminate.'
+        }
+        function Assert-Requirements {
+            $current=Invoke-EcorpGitHub -Path "$prefix/issues/95"
+            $comments=@(Read-Pages "$prefix/issues/95/comments")
+            $others=@($comments | Where-Object {!($_.user.login -ceq 'shyamsridhar123' -and $_.body.Contains($marker))})
+            if ($current.state -cne 'open' -or $current.body -cne $knownIssue[0].body -or $current.title -cne $knownIssue[0].title -or (Json @($current.labels.name | Sort-Object)) -cne (Json @($knownIssue[0].labels.name | Sort-Object)) -or (Json @($others | Select-Object id,body)) -cne (Json @($knownIssueDetails[0].comments | Select-Object id,body))) { throw 'Issue requirements or feedback changed.' }
+            if ((Invoke-EcorpGitHub -Path "$prefix/branches/main").commit.sha -cne $main) { throw 'Main changed; reconcile before publication.' }
+            $pr390=Invoke-EcorpGitHub -Path "$prefix/pulls/390"
+            if ($pr390.state -cne 'open' -or !$pr390.draft -or $pr390.head.sha -cne $parent -or $pr390.head.ref -cne $baseBranch -or $pr390.base.ref -cne 'main' -or $pr390.base.sha -cne $main -or $pr390.body -cne $knownParent[0].pr.body) { throw 'Prerequisite identity or readiness changed.' }
+            $pr382=Invoke-EcorpGitHub -Path "$prefix/pulls/382"
+            if ($pr382.state -cne 'open' -or $pr382.draft -ne $knownSecondParent[0].pr.draft -or $pr382.head.sha -cne $secondParent -or $pr382.head.ref -cne $knownSecondParent[0].pr.head.ref -or $pr382.base.ref -cne 'main' -or $pr382.base.sha -cne $main -or $pr382.body -cne $knownSecondParent[0].pr.body) { throw 'Windows prerequisite identity or readiness changed.' }
+            foreach ($known in @($knownParent[0],$knownSecondParent[0])) {
+                $prNumber=$known.pr.number
+                foreach ($lane in @(@{path="$prefix/issues/$prNumber/comments";known=$known.comments},@{path="$prefix/pulls/$prNumber/reviews";known=$known.reviews},@{path="$prefix/pulls/$prNumber/comments";known=$known.review_comments})) {
+                    $fresh=@(Read-Pages $lane.path)
+                    if ((Json @($fresh | Select-Object id,body,state,commit_id,path,line)) -cne (Json @($lane.known | Select-Object id,body,state,commit_id,path,line))) { throw 'Substantive prerequisite feedback changed; reconcile.' }
+                }
+            }
+            if ((Invoke-EcorpGitHub -Path "$prefix/actions/permissions").enabled -ne $false) { throw 'Hosted-check availability changed; reassess the draft description.' }
+            if ($record.Contains('rules_before')) {
+                $currentRules=@(Read-Pages "$prefix/rules/branches/main")
+                if ((Json $currentRules) -cne (Json $record.rules_before)) { throw 'Repository policy changed concurrently; preserve it and reconcile.' }
+            }
+        }
+        function Assert-Pr($Pr) {
+            if ($Pr.state -cne 'open' -or !$Pr.draft -or $Pr.merged -or $Pr.head.sha -cne $head -or $Pr.head.ref -cne $branch -or $Pr.head.repo.full_name -cne 'All-The-Vibes/ecorp' -or $Pr.base.ref -cne $baseBranch -or $Pr.base.sha -cne $parent -or $Pr.user.login -cne 'shyamsridhar123' -or $Pr.title -cne $title -or $Pr.body.TrimEnd() -cne $body.TrimEnd()) { throw 'PR identity or readiness changed; preserve concurrent work.' }
+        }
+        Assert-Requirements
+        $repository=Invoke-EcorpGitHub -Path $prefix
+        if (!$repository.permissions.push -or $repository.archived -or $repository.full_name -cne 'All-The-Vibes/ecorp') { throw 'Required repository permission unavailable.' }
+        $record.actions_before=Invoke-EcorpGitHub -Path "$prefix/actions/permissions"
+        $record.rules_before=@(Read-Pages "$prefix/rules/branches/main")
+        $record.open_issues_before=@(Read-Pages "$prefix/issues?state=open&sort=created&direction=asc" | Where-Object {-not $_.pull_request})
+        $record.open_pulls_before=@(Read-Pages "$prefix/pulls?state=open&sort=created&direction=asc")
+        $related=@($record.open_pulls_before | Where-Object {$_.head.ref -cne $branch -and ($_.body -match '(?<!\d)#95(?!\d)' -or $_.body -match '/issues/95(?:\D|$)')})
+        if ($related.Count -gt 0) { throw 'Another linked PR needs reconciliation before duplicate work.' }
+        $filter="$prefix/pulls?state=all&head=All-The-Vibes%3Acodex%2Fissue95-governed-review-revision"
+        $existing=@(Read-Pages $filter)
+        if ($existing.Count -gt 1) { throw 'Multiple matching PRs need reconciliation.' }
+        if ($existing.Count -eq 1) { $fresh=Invoke-EcorpGitHub -Path "$prefix/pulls/$($existing[0].number)"; Assert-Pr $fresh; $record.pr=$fresh.number; $record.reused_exact_pr=$true }
+        Save-Receipt
+        Assert-Local
+        $refs=@(& git -C $repo ls-remote --heads origin "refs/heads/$branch")
+        if ($LASTEXITCODE -ne 0 -or $refs.Count -gt 1) { throw 'Cannot verify the remote branch.' }
+        $remoteHead=if ($refs.Count) {($refs[0] -split '\s+')[0]} else {$null}
+        if ($remoteHead -and $remoteHead -cne $head) { throw 'Preserve concurrent branch work.' }
+        Assert-Requirements
+        if (!$remoteHead) {
+            $pushLog=Join-Path $taskEvidence 'issue95-push-r1.log'
+            if (Test-Path -LiteralPath $pushLog) { throw 'Preserve prior push attempt and reconcile its result.' }
+            $record.status='push-requested'; Save-Receipt
+            & git -C $repo push origin ($head+":refs/heads/$branch") *> $pushLog
+            if ($LASTEXITCODE -ne 0) { throw 'Non-force push failed; inspect retained log and remote state.' }
+            $record.push=@{non_force=$true;previous_head=$null;head=$head;log_sha256=(Hash $pushLog)}
+        } else { $record.reused_exact_published_head=$true }
+        $refs=@(& git -C $repo ls-remote --heads origin "refs/heads/$branch")
+        if ($LASTEXITCODE -ne 0 -or $refs.Count -ne 1 -or ($refs[0] -split '\s+')[0] -cne $head) { throw 'Remote branch differs from reviewed commit.' }
+        $record.status='verified-push'; Save-Receipt
+        Assert-Requirements
+        $existing=@(Read-Pages $filter)
+        if ($existing.Count -gt 1) { throw 'Multiple matching PRs need reconciliation.' }
+        if ($existing.Count -eq 0) {
+            $record.status='draft-pr-requested'; Save-Receipt
+            $created=Invoke-EcorpGitHub -Path "$prefix/pulls" -Method Post -Body @{title=$title;head=$branch;base=$baseBranch;body=$body;draft=$true;maintainer_can_modify=$true}
+            $record.pr=$created.number; $record.pr_url=$created.html_url; Save-Receipt
+        } else { $record.pr=$existing[0].number; $record.reused_exact_pr=$true }
+        $number=$record.pr
+        $publishedIssueBody="Implementation PR: #$number.`n`n"+$issueBody
+        $record.published_issue_body=$publishedIssueBody
+        $fresh=Invoke-EcorpGitHub -Path "$prefix/pulls/$number"
+        Assert-Pr $fresh
+        $record.pr_url=$fresh.html_url; $record.pr_after=$fresh
+        $record.status='verified-draft-pr'; Save-Receipt
+        $issueComments=@(Read-Pages "$prefix/issues/95/comments")
+        $matches=@($issueComments | Where-Object {$_.body.Contains($marker)})
+        if ($matches.Count -gt 1) { throw 'Duplicate issue evidence detected.' }
+        if ($matches.Count -eq 0) {
+            Assert-Requirements
+            $record.status='issue-evidence-requested'; Save-Receipt
+            $posted=Invoke-EcorpGitHub -Path "$prefix/issues/95/comments" -Method Post -Body @{body=$publishedIssueBody}
+            $record.issue_comment_id=$posted.id
+        } else { $record.issue_comment_id=$matches[0].id }
+        $verifiedComment=Invoke-EcorpGitHub -Path "$prefix/issues/comments/$($record.issue_comment_id)"
+        if ($verifiedComment.user.login -cne 'shyamsridhar123' -or $verifiedComment.body.TrimEnd() -cne $publishedIssueBody.TrimEnd()) { throw 'Issue evidence verification failed.' }
+        $record.issue_comment=@{id=$verifiedComment.id;url=$verifiedComment.html_url;body=$verifiedComment.body;verified=$true}
+        $record.pr_after=Invoke-EcorpGitHub -Path "$prefix/pulls/$number"
+        Assert-Pr $record.pr_after
+        $record.check_runs=@(Read-Pages "$prefix/commits/$head/check-runs" 'check_runs')
+        $record.statuses=@(Read-Pages "$prefix/commits/$head/statuses")
+        $record.reviews=@(Read-Pages "$prefix/pulls/$number/reviews")
+        $record.review_comments=@(Read-Pages "$prefix/pulls/$number/comments")
+        $record.pr_comments=@(Read-Pages "$prefix/issues/$number/comments")
+        $record.actions_after=Invoke-EcorpGitHub -Path "$prefix/actions/permissions"
+        $record.rules_after=@(Read-Pages "$prefix/rules/branches/main")
+        $record.policy_unchanged=(Json $record.rules_before) -ceq (Json $record.rules_after)
+        if (!$record.policy_unchanged) { throw 'Repository policy changed concurrently; no policy mutation was attempted.' }
+        $record.main_after=(Invoke-EcorpGitHub -Path "$prefix/branches/main").commit.sha
+        $record.issue_state=(Invoke-EcorpGitHub -Path "$prefix/issues/95").state
+        Assert-Requirements
+        Assert-Local
+        $record.status='verified-draft-implementation-published'
+        if ($record.Contains('failure')) { $record.Remove('failure') }
+    }
+} catch { $record.failure=$_.Exception.Message; throw }
+finally { $record.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o'); Save-Receipt }
+[ordered]@{status=$record.status;issue=95;pr=$record.pr;url=$record.pr_url;head=$head;draft=$record.pr_after.draft;issue_state=$record.issue_state;actions_enabled=$record.actions_after.enabled;policy_unchanged=$record.policy_unchanged;failure=$record.failure} | ConvertTo-Json -Depth 6

@@ -1,0 +1,236 @@
+"""Prepare a new publication attempt; preserve the failed packet and frozen helpers."""
+from collections import Counter
+from datetime import datetime, timezone
+import ast
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import re
+import sys
+
+assert __debug__
+sys.dont_write_bytecode = True
+EV = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location("issue95_frozen_publication_r3", EV / "issue95_publication_r3.py")
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+stamp = lambda: datetime.now(timezone.utc).isoformat()
+m.pending_source()
+binding = m.load(EV / "issue95-publication-source-r1.json")
+assembly = m.load(EV / "issue95-publication-assembly-r1.json")
+failure = m.load(EV / "issue95-publication-validation-r1.json")
+native = m.load(EV / "issue95-publication-validation-r1-session-exit.json")
+assert native["exit_code"] == 1 and native["session_id"] == 90536
+assert failure["status"] == "failed" and failure["failure"] == "Triage retained secret findings"
+assert len(failure["secret_scans"]) == 1 and failure["secret_scans"][0]["finding_count"] == 96
+assert failure["secret_scans"][0]["exit_code"] == 42
+assert failure["policy_sha256"] == m.policy_state()
+physical = binding["physical_files"]
+assert physical == m.pairs(m.load(EV / "issue95-canonical-r3.json")["source_files"])
+assert len(physical) == 7397
+m.verify_files(physical)
+assert m.index_digest() == binding["original_index_sha256"] == assembly["original_index_sha256"]
+assert m.packet_files() == assembly["packet_files"] == failure["files"]
+summary = m.load(m.PACKET / "summary.json")
+for name in ["issue95_publication_r3.py", "publish-issue95-r2.ps1"]:
+    artifact = [a for a in summary["artifacts"] if a["source"] == name and a["source_root"] == "run_evidence"]
+    assert len(artifact) == 1 and artifact[0]["original_sha256"] == m.sha(m.guarded_bytes(EV / name, EV))
+report_path = Path(failure["secret_scans"][0]["report"])
+assert m.sha(m.guarded_bytes(report_path, EV)) == failure["secret_scans"][0]["report_sha256"]
+findings = m.load(report_path)
+fields = {"idempotency_key", "decision_key", "retry_key", "settlement_key"}
+uuid = re.compile(r"^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$", re.I)
+originals = {}
+rows = []
+for finding in findings:
+    path = Path(finding["File"]).resolve(strict=True)
+    assert path.is_relative_to(m.PACKET) and finding["RuleID"] == "generic-api-key"
+    relative = path.relative_to(m.PACKET).as_posix()
+    if relative not in originals:
+        artifacts = [a for a in summary["artifacts"] if a["file"] == relative]
+        assert len(artifacts) == 1 and artifacts[0]["source_root"] == "run_evidence"
+        artifact = artifacts[0]
+        source = EV / artifact["source"]
+        raw = m.guarded_bytes(source, EV)
+        assert m.sha(raw) == artifact["original_sha256"]
+        aliases = set()
+        def walk(value):
+            if isinstance(value, dict):
+                for key, child in value.items():
+                    if key in fields and isinstance(child, str) and uuid.fullmatch(child):
+                        aliases.add((key, "fixture-id-" + m.sha(child.lower().encode())[:16]))
+                    walk(child)
+            elif isinstance(value, list):
+                for child in value:
+                    walk(child)
+        walk(json.loads(raw.decode("utf-8-sig")))
+        originals[relative] = aliases
+    lines = m.guarded_bytes(path, m.ROOT).decode("utf-8").splitlines()
+    entry = json.loads("{" + lines[finding["StartLine"] - 1].strip().rstrip(",") + "}")
+    assert len(entry) == 1
+    key, value = next(iter(entry.items()))
+    assert (key, value) in originals[relative], "Unclassified finding must not be repackaged"
+    assert key in fields and re.fullmatch(r"fixture-id-[0-9a-f]{16}", value)
+    rows.append({"file": relative, "line": finding["StartLine"], "field": key,
+                 "rule": finding["RuleID"], "classification": "Synthetic alias of an observed fixture UUID"})
+assert len(rows) == 96
+triage_name = "issue95-publication-fixture-alias-triage-r1.json"
+triage = {
+    "issue": 95, "recorded_at_utc": stamp(), "status": "classified",
+    "source_report": report_path.name, "source_report_sha256": m.sha(m.guarded_bytes(report_path, EV)),
+    "findings": rows, "counts_by_field": dict(sorted(Counter(r["field"] for r in rows).items())),
+    "all_aliases_matched_original_fixture_uuid_in_same_named_field": True,
+    "value_disclosure": "Neither original UUID values nor authority-bearing strings are copied into this triage record.",
+    "generator": "tools/e2e_factory_review_revision.mjs uses randomUUID() for these fixture idempotency, decision, retry and settlement values.",
+    "correction": "Public UUID aliases become explicit 'fixture reference ' labels with the same digest suffix. Equality and original/published hashes remain; original receipts and screenshots do not change.",
+    "security_policy_changed": False, "secret_findings_suppressed": False,
+    "remaining_validation": "Run the complete unchanged native evidence and committed-history scanners on the replacement packet."
+}
+helper = (EV / "issue95_publication_r3.py").read_text(encoding="utf-8")
+publisher = (EV / "publish-issue95-r2.ps1").read_text(encoding="utf-8-sig")
+before_ast = ast.parse(helper)
+replacements = {
+    '"""R3 publication binding: combined-source R3/R7, retained failures, two parents."""':
+        '"""R4 publication binding: same tested source, labeled fixture references, retained failed packet."""',
+    '"issue95-publication-source-r1.json"': '"issue95-publication-source-r2.json"',
+    '"issue95-publication-assembly-r1.json"': '"issue95-publication-assembly-r3.json"',
+    '"issue95-publication-assembly-r2.json"': '"issue95-publication-assembly-r4.json"',
+    '"issue95-publication-commit-r1.json"': '"issue95-publication-commit-r2.json"',
+    '"issue95-publication-commit-r1.log"': '"issue95-publication-commit-r2.log"',
+    '"issue95-publication-committed-scan-r1.json"': '"issue95-publication-committed-scan-r2.json"',
+    '"issue95-publication-committed-scan-r1"': '"issue95-publication-committed-scan-r2"',
+    '"issue95-publication-validation-r1-session-exit.json"': '"issue95-publication-validation-r3-session-exit.json"',
+    '"issue95-publication-validation-r2-session-exit.json"': '"issue95-publication-validation-r4-session-exit.json"',
+    "validation_receipt(1)": "validation_receipt(3)",
+    "validation_receipt(2)": "validation_receipt(4)",
+    "assert revision in {1, 2}": "assert revision in {3, 4}",
+    "if revision == 1:": "if revision == 3:",
+    "if revision == 2:": "if revision == 4:",
+    "lambda: validate(1)": "lambda: validate(3)",
+    "lambda: validate(2)": "lambda: validate(4)",
+    '"publication/evidence-validation-r1.json"': '"publication/evidence-validation-r3.json"',
+    "The subsequent R2 validation": "The subsequent R4 validation",
+    "additions require separate R2 validation.": "additions require separate R4 validation.",
+    'lambda m: "fixture-id-" + sha(m[0].lower().encode())[:16]':
+        'lambda m: "fixture reference " + sha(m[0].lower().encode())[:16]',
+    "stable synthetic UUID aliases": "stable explicitly labeled fixture UUID references",
+}
+counts = {}
+for old, new in replacements.items():
+    count = helper.count(old)
+    assert count > 0, "Missing expected replacement: " + old
+    counts[old] = count
+    helper = helper.replace(old, new)
+history = '''
+        (EV / "issue95-publication-validation-r1.json", "history/publication-validation-failed-r1/receipt.json"),
+        (EV / "issue95-publication-validation-r1-session-exit.json", "history/publication-validation-failed-r1/session-exit.json"),
+        (EV / "issue95-publication-validation-r1-packet-redacted.json", "history/publication-validation-failed-r1/redacted-findings.json"),
+        (EV / "issue95-publication-validation-r1-packet.log", "history/publication-validation-failed-r1/gitleaks.log"),
+        (EV / "issue95-publication-validation-r1-docs.log", "history/publication-validation-failed-r1/docs.log"),
+        (EV / "issue95-publication-validation-r1-repository-docs.log", "history/publication-validation-failed-r1/repository-docs.log"),
+        (EV / "issue95-publication-validation-r1-personal-paths.log", "history/publication-validation-failed-r1/personal-paths.log"),
+        (EV / "issue95-publication-assembly-r1.json", "history/publication-validation-failed-r1/original-assembly.json"),
+        (EV / "issue95-publication-fixture-alias-triage-r1.json", "history/publication-validation-failed-r1/triage.json"),
+        (EV / "issue95-publication-validation-failed-r1/preservation.json", "history/publication-validation-failed-r1/preservation.json"),
+'''
+needle = '    copies = [\n'
+assert helper.count(needle) == 1
+helper = helper.replace(needle, needle + history, 1)
+needle = '                 "issue95_publication_r3.py", "issue95_publication_r3_pre_cargo_guard.py",'
+assert helper.count(needle) == 1
+helper = helper.replace(needle, '                 "issue95_publication_r4.py", "publish-issue95-r3.ps1",\n'
+                               '                 "prepare-issue95-publication-r4.py",\n' + needle, 1)
+needle = '        "Personal paths and authority-bearing strings are redacted.'
+assert helper.count(needle) == 1
+helper = helper.replace(needle,
+    '        "The first core evidence scan exited 42 on 96 synthetic fixture UUID aliases in idempotency, decision, retry and settlement fields. Each finding was mapped back to the original fixture UUID in the same named field. The complete failed packet and redacted scanner receipt are retained. Replacement public copies use explicit fixture-reference labels with the same digest suffix. No original receipt, product source, secret rule or ignore policy was changed; security scans are required again.",\n' + needle)
+needle = "retain original bytes. Publication validation is separate from product execution."
+assert helper.count(needle) == 1
+helper = helper.replace(needle, needle +
+    "\nThe first publication scan failed on 96 synthetic UUID aliases; its redacted\n"
+    "findings and exact classification are retained under history. These non-secret\n"
+    "fixture identifiers now use explicit fixture-reference labels. The secret\n"
+    "scanner and repository policy remain unchanged.")
+after_ast = ast.parse(helper)
+def functions(tree):
+    return {n.name: ast.dump(n, include_attributes=False) for n in tree.body
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+before_functions, after_functions = functions(before_ast), functions(after_ast)
+assert before_functions.keys() == after_functions.keys()
+changed_functions = [name for name in before_functions if before_functions[name] != after_functions[name]]
+expected_functions = {"sanitize_text", "original_receipts", "make_public_copies", "assemble", "validate", "extend", "commit", "scan_committed"}
+assert set(changed_functions) <= expected_functions, changed_functions
+for old, new in {
+    "issue95-publication-commit-r1.json": "issue95-publication-commit-r2.json",
+    "issue95-publication-committed-scan-r1.json": "issue95-publication-committed-scan-r2.json",
+    "issue95-publication-validation-r2.json": "issue95-publication-validation-r4.json",
+    "issue95-publication-source-r1.json": "issue95-publication-source-r2.json",
+    "'publication-validation-r1'": "'publication-validation-r3'",
+    "'publication-validation-r2'": "'publication-validation-r4'",
+    "'publication-committed-scan-r1'": "'publication-committed-scan-r2'",
+    "@('issue95_publication_r3.py','publish-issue95-r2.ps1')":
+        "@('issue95_publication_r3.py','publish-issue95-r2.ps1','issue95_publication_r4.py','publish-issue95-r3.ps1')",
+}.items():
+    assert old in publisher, old
+    publisher = publisher.replace(old, new)
+needle = "- Separate evidence validation passed documentation, personal-path, whitespace and native Gitleaks checks."
+assert needle in publisher
+publisher = publisher.replace(needle,
+    "- The first publication scan failed on 96 synthetic fixture UUID aliases. Each was traced to its original fixture UUID; public copies now label these as fixture references. The original packet, redacted findings and classification remain preserved. No product source, original receipt or security policy changed.\n" + needle)
+assert not (EV / "issue95_publication_r4.py").exists()
+assert not (EV / "publish-issue95-r3.ps1").exists()
+assert not (EV / triage_name).exists()
+packet = m.reader.directory_root(m.PACKET)
+evidence_root = m.reader.directory_root(EV)
+destination = EV / "issue95-publication-validation-failed-r1"
+assert packet == m.ROOT / m.PACKET_REL and packet.is_relative_to(m.ROOT)
+assert destination.parent == evidence_root and not destination.exists()
+assert not any(name.startswith(m.PACKET_REL + "/") for name, _ in physical)
+files = m.packet_files()
+assert files == assembly["packet_files"]
+destination.mkdir()
+record = {
+    "issue": 95, "status": "preserving", "started_at_utc": stamp(),
+    "original_packet": m.PACKET_REL, "packet_files": files, "source_receipt": "issue95-publication-source-r1.json",
+    "source_receipt_sha256": m.sha(m.guarded_bytes(EV / "issue95-publication-source-r1.json", EV)),
+    "failed_validation_sha256": m.sha(m.guarded_bytes(EV / "issue95-publication-validation-r1.json", EV)),
+    "original_index_sha256": m.index_digest(), "tested_tree": binding["tested_tree"],
+    "method": "Verified same-volume directory rename within this run's owned paths; no deletion.",
+    "security_policy_sha256": m.policy_state(), "replacement_counts": counts,
+    "changed_helper_functions": changed_functions,
+}
+record_path = destination / "preservation.json"
+def save():
+    record_path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+save()
+try:
+    assert destination.resolve(strict=True).parent == evidence_root
+    packet.rename(destination / "packet")
+    for item in files:
+        relative = Path(item["path"]).relative_to(m.PACKET_REL)
+        assert m.sha(m.guarded_bytes(destination / "packet" / relative, EV)) == item["sha256"]
+    m.write(EV / triage_name, triage)
+    for path, content in [(EV / "issue95_publication_r4.py", helper), (EV / "publish-issue95-r3.ps1", publisher)]:
+        with path.open("x", encoding="utf-8", newline="\n") as stream:
+            stream.write(content)
+    m.verify_files(physical)
+    m.pending_source()
+    assert m.index_digest() == record["original_index_sha256"]
+    assert m.policy_state() == record["security_policy_sha256"]
+    assert m.source_inventory() == set(dict(physical))
+    record.update(status="preserved_and_replacement_prepared", product_files_unchanged=True,
+                  product_files=7397, original_index_unchanged=True, pending_merge_preserved=True,
+                  deletion_performed=False, frozen_helpers_unchanged=True,
+                  helper_r4_sha256=m.sha((EV / "issue95_publication_r4.py").read_bytes()),
+                  publisher_r3_sha256=m.sha((EV / "publish-issue95-r3.ps1").read_bytes()),
+                  triage_sha256=m.sha((EV / triage_name).read_bytes()))
+except Exception as error:
+    record.update(status="failed", failure_type=type(error).__name__, failure=str(error))
+    raise
+finally:
+    record["finished_at_utc"] = stamp()
+    save()
+    print(json.dumps({key: record.get(key) for key in [
+        "status", "product_files", "product_files_unchanged", "original_index_unchanged",
+        "pending_merge_preserved", "changed_helper_functions"]}))

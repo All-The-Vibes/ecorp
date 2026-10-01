@@ -1,0 +1,710 @@
+{
+  "issue": 213,
+  "recorded_at_utc": "2026-09-28T12:46:35.900378+00:00",
+  "source_receipt": "issue213-export-diagnostics-r2.json",
+  "source_sha256": "538b7dbad8c50de539acde4924b993116709a1abd9e52af4a34bd7f8060a70f6",
+  "lanes": [
+    {
+      "lane": "parallel-8",
+      "counts": {
+        "passed": 51,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 235
+      },
+      "span_events": 1874,
+      "max_observed_active_git": 6,
+      "phases": [
+        {
+          "operation": "prepared-export",
+          "count": 35,
+          "median_ms": 664.417,
+          "max_ms": 1673.424
+        },
+        {
+          "operation": "export-prepared",
+          "count": 24,
+          "median_ms": 1169.369,
+          "max_ms": 1495.882
+        },
+        {
+          "operation": "create-git-bundle",
+          "count": 17,
+          "median_ms": 583.185,
+          "max_ms": 653.236
+        },
+        {
+          "operation": "held-ack-case",
+          "count": 1,
+          "median_ms": 10253.149,
+          "max_ms": 10253.149
+        }
+      ],
+      "slowest_git": [
+        {
+          "active_git": 5,
+          "at_us": 42471183,
+          "elapsed_us": 533655,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "worktree",
+          "span": 786,
+          "thread": "source_checkpoint::tests::issue190_uncertain_teardown_retains_without_checkpoint_proof",
+          "workspace_sha256_prefix": "f650e72500ceda41"
+        },
+        {
+          "active_git": 5,
+          "at_us": 42344568,
+          "elapsed_us": 356538,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "rev-parse",
+          "span": 789,
+          "thread": "deliverable::canonical_tests::canonical_migration_checks_cover_conversion_selection_and_clean_runner_commits",
+          "workspace_sha256_prefix": "aeec5e964fe23008"
+        },
+        {
+          "active_git": 5,
+          "at_us": 42336567,
+          "elapsed_us": 325967,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "other",
+          "span": 790,
+          "thread": "source_checkpoint::tests::issue190_suspend_wins_over_provider_completion_and_seals_source",
+          "workspace_sha256_prefix": "309fc40c93472461"
+        },
+        {
+          "active_git": 5,
+          "at_us": 42404594,
+          "elapsed_us": 325469,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "other",
+          "span": 792,
+          "thread": "source_checkpoint::tests::issue190_stop_wins_over_provider_completion_and_seals_source",
+          "workspace_sha256_prefix": "385567a978cd799c"
+        },
+        {
+          "active_git": 5,
+          "at_us": 42385917,
+          "elapsed_us": 312364,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "other",
+          "span": 791,
+          "thread": "source_checkpoint::tests::issue190_unpinned_legacy_source_retains_without_checkpoint_proof",
+          "workspace_sha256_prefix": "a43f4240616b0924"
+        },
+        {
+          "active_git": 4,
+          "at_us": 39221482,
+          "elapsed_us": 306052,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "worktree",
+          "span": 693,
+          "thread": "source_checkpoint::tests::issue190_quarantine_never_mints_or_downgrades_a_checkpoint",
+          "workspace_sha256_prefix": "98eb2731343f1733"
+        },
+        {
+          "active_git": 5,
+          "at_us": 40781706,
+          "elapsed_us": 305419,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "worktree",
+          "span": 738,
+          "thread": "source_checkpoint::tests::issue190_soft_directive_keeps_normal_verification",
+          "workspace_sha256_prefix": "9716ed41db047912"
+        },
+        {
+          "active_git": 5,
+          "at_us": 33659055,
+          "elapsed_us": 301914,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "worktree",
+          "span": 474,
+          "thread": "source_checkpoint::tests::issue190_cancelled_exit_checkpoints_before_terminal_event",
+          "workspace_sha256_prefix": "3680aaf5bb99b957"
+        },
+        {
+          "active_git": 5,
+          "at_us": 36205173,
+          "elapsed_us": 297064,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "worktree",
+          "span": 571,
+          "thread": "source_checkpoint::tests::issue190_checkpoint_rejects_detached_or_replaced_branch_and_source_base",
+          "workspace_sha256_prefix": "967697200c1fda49"
+        },
+        {
+          "active_git": 5,
+          "at_us": 40784620,
+          "elapsed_us": 296223,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "worktree",
+          "span": 739,
+          "thread": "source_checkpoint::tests::issue190_stop_wins_over_provider_completion_and_seals_source",
+          "workspace_sha256_prefix": "0616abd269947be3"
+        }
+      ],
+      "held_ack_events": [
+        {
+          "active_git": 2,
+          "at_us": 37147622,
+          "elapsed_us": 17,
+          "event": "started",
+          "kind": "phase",
+          "operation": "held-ack-case",
+          "span": 620,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": null
+        },
+        {
+          "active_git": 5,
+          "at_us": 38834976,
+          "elapsed_us": 47,
+          "event": "started",
+          "kind": "event",
+          "operation": "other-event",
+          "span": 686,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "bd769a6153549f40"
+        },
+        {
+          "active_git": 5,
+          "at_us": 38835967,
+          "elapsed_us": 1038,
+          "event": "scope-ended",
+          "kind": "event",
+          "operation": "other-event",
+          "span": 686,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "bd769a6153549f40"
+        },
+        {
+          "active_git": 5,
+          "at_us": 38836707,
+          "elapsed_us": 31,
+          "event": "started",
+          "kind": "event",
+          "operation": "run.session_terminated",
+          "span": 687,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "bd769a6153549f40"
+        },
+        {
+          "active_git": 5,
+          "at_us": 38837145,
+          "elapsed_us": 468,
+          "event": "scope-ended",
+          "kind": "event",
+          "operation": "run.session_terminated",
+          "span": 687,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "bd769a6153549f40"
+        },
+        {
+          "active_git": 5,
+          "at_us": 38837457,
+          "elapsed_us": 28,
+          "event": "started",
+          "kind": "event",
+          "operation": "run.verification_started",
+          "span": 688,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "bd769a6153549f40"
+        },
+        {
+          "active_git": 5,
+          "at_us": 38837798,
+          "elapsed_us": 369,
+          "event": "scope-ended",
+          "kind": "event",
+          "operation": "run.verification_started",
+          "span": 688,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "bd769a6153549f40"
+        },
+        {
+          "active_git": 0,
+          "at_us": 46165225,
+          "elapsed_us": 17,
+          "event": "started",
+          "kind": "phase",
+          "operation": "prepared-export",
+          "span": 834,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "7fd17b8ffac6cec2"
+        },
+        {
+          "active_git": 1,
+          "at_us": 46174398,
+          "elapsed_us": 35,
+          "event": "started",
+          "kind": "event",
+          "operation": "run.verification_evidence",
+          "span": 836,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "bd769a6153549f40"
+        },
+        {
+          "active_git": 1,
+          "at_us": 46174614,
+          "elapsed_us": 251,
+          "event": "scope-ended",
+          "kind": "event",
+          "operation": "run.verification_evidence",
+          "span": 836,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "bd769a6153549f40"
+        },
+        {
+          "active_git": 0,
+          "at_us": 46316605,
+          "elapsed_us": 34,
+          "event": "started",
+          "kind": "phase",
+          "operation": "export-prepared",
+          "span": 838,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "7fd17b8ffac6cec2"
+        },
+        {
+          "active_git": 0,
+          "at_us": 46741753,
+          "elapsed_us": 35,
+          "event": "started",
+          "kind": "phase",
+          "operation": "create-git-bundle",
+          "span": 843,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "7fd17b8ffac6cec2"
+        },
+        {
+          "active_git": 0,
+          "at_us": 47220047,
+          "elapsed_us": 478328,
+          "event": "scope-ended",
+          "kind": "phase",
+          "operation": "create-git-bundle",
+          "span": 843,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "7fd17b8ffac6cec2"
+        },
+        {
+          "active_git": 0,
+          "at_us": 47375568,
+          "elapsed_us": 1058997,
+          "event": "scope-ended",
+          "kind": "phase",
+          "operation": "export-prepared",
+          "span": 838,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "7fd17b8ffac6cec2"
+        },
+        {
+          "active_git": 0,
+          "at_us": 47376252,
+          "elapsed_us": 1211043,
+          "event": "scope-ended",
+          "kind": "phase",
+          "operation": "prepared-export",
+          "span": 834,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "7fd17b8ffac6cec2"
+        },
+        {
+          "active_git": 0,
+          "at_us": 47377029,
+          "elapsed_us": 19,
+          "event": "started",
+          "kind": "event",
+          "operation": "run.deliverable_upload",
+          "span": 851,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "bd769a6153549f40"
+        },
+        {
+          "active_git": 0,
+          "at_us": 47377579,
+          "elapsed_us": 568,
+          "event": "scope-ended",
+          "kind": "event",
+          "operation": "run.deliverable_upload",
+          "span": 851,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "bd769a6153549f40"
+        },
+        {
+          "active_git": 0,
+          "at_us": 47400754,
+          "elapsed_us": 10253149,
+          "event": "scope-ended",
+          "kind": "phase",
+          "operation": "held-ack-case",
+          "span": 620,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": null
+        }
+      ]
+    },
+    {
+      "lane": "serial-1",
+      "counts": {
+        "passed": 51,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 235
+      },
+      "span_events": 1874,
+      "max_observed_active_git": 1,
+      "phases": [
+        {
+          "operation": "prepared-export",
+          "count": 35,
+          "median_ms": 537.694,
+          "max_ms": 1380.22
+        },
+        {
+          "operation": "export-prepared",
+          "count": 24,
+          "median_ms": 1013.809,
+          "max_ms": 1217.705
+        },
+        {
+          "operation": "create-git-bundle",
+          "count": 17,
+          "median_ms": 459.947,
+          "max_ms": 485.884
+        },
+        {
+          "operation": "held-ack-case",
+          "count": 1,
+          "median_ms": 8687.874,
+          "max_ms": 8687.874
+        }
+      ],
+      "slowest_git": [
+        {
+          "active_git": 1,
+          "at_us": 137818271,
+          "elapsed_us": 227894,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "other",
+          "span": 210,
+          "thread": "deliverable::canonical_tests::canonical_materialization_ignores_smudge_ident_and_archive_attributes_after_selection",
+          "workspace_sha256_prefix": "4f891536f0a3df46"
+        },
+        {
+          "active_git": 1,
+          "at_us": 332292279,
+          "elapsed_us": 214430,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "worktree",
+          "span": 734,
+          "thread": "source_checkpoint::tests::issue190_cleanup_commit_rejects_a_late_retention_acknowledgment",
+          "workspace_sha256_prefix": "51ccc84dead2a292"
+        },
+        {
+          "active_git": 1,
+          "at_us": 345914346,
+          "elapsed_us": 210518,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "worktree",
+          "span": 817,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_running_verifier_without_post_verifier_seal",
+          "workspace_sha256_prefix": "dfab42935e015e7c"
+        },
+        {
+          "active_git": 1,
+          "at_us": 355364312,
+          "elapsed_us": 207589,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "worktree",
+          "span": 890,
+          "thread": "source_checkpoint::tests::issue190_suspend_wins_over_provider_completion_and_seals_source",
+          "workspace_sha256_prefix": "2ad17adbd1ec3a8a"
+        },
+        {
+          "active_git": 1,
+          "at_us": 358921487,
+          "elapsed_us": 206874,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "worktree",
+          "span": 920,
+          "thread": "source_checkpoint::tests::issue190_unpinned_legacy_source_retains_without_checkpoint_proof",
+          "workspace_sha256_prefix": "bcc6d29da790c486"
+        },
+        {
+          "active_git": 1,
+          "at_us": 357448321,
+          "elapsed_us": 206524,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "worktree",
+          "span": 909,
+          "thread": "source_checkpoint::tests::issue190_uncertain_teardown_retains_without_checkpoint_proof",
+          "workspace_sha256_prefix": "55b4ae25b4aa0e9a"
+        },
+        {
+          "active_git": 1,
+          "at_us": 354274486,
+          "elapsed_us": 206521,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "worktree",
+          "span": 882,
+          "thread": "source_checkpoint::tests::issue190_stopped_artifact_callback_cannot_fail_an_unreadable_local_artifact",
+          "workspace_sha256_prefix": "88d92028775a0642"
+        },
+        {
+          "active_git": 1,
+          "at_us": 337198809,
+          "elapsed_us": 206092,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "worktree",
+          "span": 775,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "674c90b4a98b4969"
+        },
+        {
+          "active_git": 1,
+          "at_us": 330413268,
+          "elapsed_us": 205829,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "worktree",
+          "span": 722,
+          "thread": "source_checkpoint::tests::issue190_checkpoint_rejects_detached_or_replaced_branch_and_source_base",
+          "workspace_sha256_prefix": "35aab224c1f365e7"
+        },
+        {
+          "active_git": 1,
+          "at_us": 326368666,
+          "elapsed_us": 205033,
+          "event": "scope-ended",
+          "kind": "git",
+          "operation": "worktree",
+          "span": 682,
+          "thread": "source_checkpoint::tests::issue190_checkpoint_binds_changed_policy_and_untracked_bytes",
+          "workspace_sha256_prefix": "1e359ea6f3ecd5fc"
+        }
+      ],
+      "held_ack_events": [
+        {
+          "active_git": 0,
+          "at_us": 336373343,
+          "elapsed_us": 15,
+          "event": "started",
+          "kind": "phase",
+          "operation": "held-ack-case",
+          "span": 770,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": null
+        },
+        {
+          "active_git": 0,
+          "at_us": 337668387,
+          "elapsed_us": 34,
+          "event": "started",
+          "kind": "event",
+          "operation": "other-event",
+          "span": 782,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "403dd4f1b68bfd3d"
+        },
+        {
+          "active_git": 0,
+          "at_us": 337668586,
+          "elapsed_us": 234,
+          "event": "scope-ended",
+          "kind": "event",
+          "operation": "other-event",
+          "span": 782,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "403dd4f1b68bfd3d"
+        },
+        {
+          "active_git": 0,
+          "at_us": 337668914,
+          "elapsed_us": 20,
+          "event": "started",
+          "kind": "event",
+          "operation": "run.session_terminated",
+          "span": 783,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "403dd4f1b68bfd3d"
+        },
+        {
+          "active_git": 0,
+          "at_us": 337669109,
+          "elapsed_us": 215,
+          "event": "scope-ended",
+          "kind": "event",
+          "operation": "run.session_terminated",
+          "span": 783,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "403dd4f1b68bfd3d"
+        },
+        {
+          "active_git": 0,
+          "at_us": 337669378,
+          "elapsed_us": 16,
+          "event": "started",
+          "kind": "event",
+          "operation": "run.verification_started",
+          "span": 784,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "403dd4f1b68bfd3d"
+        },
+        {
+          "active_git": 0,
+          "at_us": 337669555,
+          "elapsed_us": 192,
+          "event": "scope-ended",
+          "kind": "event",
+          "operation": "run.verification_started",
+          "span": 784,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "403dd4f1b68bfd3d"
+        },
+        {
+          "active_git": 0,
+          "at_us": 343828847,
+          "elapsed_us": 17,
+          "event": "started",
+          "kind": "phase",
+          "operation": "prepared-export",
+          "span": 794,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "b4b2f79624d20cd7"
+        },
+        {
+          "active_git": 1,
+          "at_us": 343838940,
+          "elapsed_us": 29,
+          "event": "started",
+          "kind": "event",
+          "operation": "run.verification_evidence",
+          "span": 796,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "403dd4f1b68bfd3d"
+        },
+        {
+          "active_git": 1,
+          "at_us": 343839176,
+          "elapsed_us": 265,
+          "event": "scope-ended",
+          "kind": "event",
+          "operation": "run.verification_evidence",
+          "span": 796,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "403dd4f1b68bfd3d"
+        },
+        {
+          "active_git": 0,
+          "at_us": 343984802,
+          "elapsed_us": 36,
+          "event": "started",
+          "kind": "phase",
+          "operation": "export-prepared",
+          "span": 798,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "b4b2f79624d20cd7"
+        },
+        {
+          "active_git": 0,
+          "at_us": 344399969,
+          "elapsed_us": 35,
+          "event": "started",
+          "kind": "phase",
+          "operation": "create-git-bundle",
+          "span": 803,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "b4b2f79624d20cd7"
+        },
+        {
+          "active_git": 0,
+          "at_us": 344873673,
+          "elapsed_us": 473740,
+          "event": "scope-ended",
+          "kind": "phase",
+          "operation": "create-git-bundle",
+          "span": 803,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "b4b2f79624d20cd7"
+        },
+        {
+          "active_git": 0,
+          "at_us": 345037271,
+          "elapsed_us": 1052504,
+          "event": "scope-ended",
+          "kind": "phase",
+          "operation": "export-prepared",
+          "span": 798,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "b4b2f79624d20cd7"
+        },
+        {
+          "active_git": 0,
+          "at_us": 345037461,
+          "elapsed_us": 1208630,
+          "event": "scope-ended",
+          "kind": "phase",
+          "operation": "prepared-export",
+          "span": 794,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "b4b2f79624d20cd7"
+        },
+        {
+          "active_git": 0,
+          "at_us": 345037911,
+          "elapsed_us": 20,
+          "event": "started",
+          "kind": "event",
+          "operation": "run.deliverable_upload",
+          "span": 811,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "403dd4f1b68bfd3d"
+        },
+        {
+          "active_git": 0,
+          "at_us": 345038116,
+          "elapsed_us": 225,
+          "event": "scope-ended",
+          "kind": "event",
+          "operation": "run.deliverable_upload",
+          "span": 811,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": "403dd4f1b68bfd3d"
+        },
+        {
+          "active_git": 0,
+          "at_us": 345061203,
+          "elapsed_us": 8687874,
+          "event": "scope-ended",
+          "kind": "phase",
+          "operation": "held-ack-case",
+          "span": 770,
+          "thread": "source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal",
+          "workspace_sha256_prefix": null
+        }
+      ]
+    }
+  ],
+  "interpretation": "Both selected cohorts passed. The held-ACK case reached upload in both. No historical failure was reproduced and no contention or product-defect cause is established. Span ends include error and cancellation paths; durations are observations, not success evidence.",
+  "limits": "The parallel lane used eight threads and 51 selected tests; it did not exercise the complete current runner cohort under native default scheduling."
+}

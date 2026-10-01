@@ -4,14 +4,18 @@ param(
     [Parameter(Mandatory)][string]$PostgresBin,
     [Parameter(Mandatory)][string]$QaParent,
     [Parameter(Mandatory)][string]$OutputRoot,
-    [Parameter(Mandatory)][string]$PlaywrightModule
+    [Parameter(Mandatory)][string]$PlaywrightModule,
+    [ValidateSet('base-refresh','review-revision')][string]$Scenario = 'base-refresh'
 )
 $ErrorActionPreference = 'Stop'
+$taskIssue = if ($Scenario -eq 'review-revision') { '95' } else { '84' }
+$taskDriver = if ($Scenario -eq 'review-revision') { 'e2e_factory_review_revision.mjs' } else { 'e2e_factory_base_refresh.mjs' }
+$taskOptIn = if ($Scenario -eq 'review-revision') { 'CRONY_REVIEW_REVISION' } else { 'CRONY_BASE_REFRESH' }
 $taskProduct = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $taskPg = (Resolve-Path -LiteralPath $PostgresBin).Path
 $taskQaParent = (Resolve-Path -LiteralPath $QaParent).Path
 $taskOutput = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputRoot)
-$taskQa = Join-Path $taskQaParent ('issue84-stack-' + [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfff') + '-' + [guid]::NewGuid().ToString('N').Substring(0,8))
+$taskQa = Join-Path $taskQaParent ("issue$taskIssue-stack-" + [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfff') + '-' + [guid]::NewGuid().ToString('N').Substring(0,8))
 if ((Test-Path -LiteralPath $taskQa) -or (Test-Path -LiteralPath $taskOutput)) { throw 'Fresh paths required; preserve existing validation.' }
 if ($taskQa.StartsWith($taskProduct + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Fixture source must be outside the product checkout.' }
 $taskNode = (Get-Command node.exe -ErrorAction Stop).Source
@@ -36,7 +40,7 @@ function Wait-FixtureHttp {
     } while ([DateTime]::UtcNow -lt $deadline)
     throw 'Owned HTTP process did not become ready; preserve its logs.'
 }
-$taskState = @{schema_version=2;workspace=$taskQa;purpose='issue84-full-stack';test_owned=$true;processes=@{}}
+$taskState = @{schema_version=2;workspace=$taskQa;purpose="issue$taskIssue-full-stack";test_owned=$true;processes=@{}}
 $taskReceipt = [ordered]@{started_at=[DateTimeOffset]::UtcNow.ToString('o');status='starting';qa_root=$taskQa;product_root=$taskProduct;output=$taskOutput;stopped=@{}}
 $taskCode = 1
 $taskSecretPaths = @()
@@ -58,13 +62,14 @@ try {
     if ($LASTEXITCODE) { throw 'Cannot initialize owned local publication remote.' }
     Invoke-FixtureGit @('push',(Join-Path $taskQa 'publication.git'),'main:main')
     $taskDbPort = New-FixturePort
-    & (Join-Path $taskPg 'initdb.exe') -D (Join-Path $taskQa 'database') -U issue84_acceptance --auth=trust --encoding=UTF8 --locale=C *> (Join-Path $taskQa 'initdb.log')
+    $taskDbUser = "issue${taskIssue}_acceptance"
+    & (Join-Path $taskPg 'initdb.exe') -D (Join-Path $taskQa 'database') -U $taskDbUser --auth=trust --encoding=UTF8 --locale=C *> (Join-Path $taskQa 'initdb.log')
     if ($LASTEXITCODE) { throw 'Owned PostgreSQL initialization failed.' }
     $taskState.processes.postgres = Start-LocalOwnedProcess -Role postgres -Workspace $taskQa -FilePath (Join-Path $taskPg 'postgres.exe') -ArgumentList @('-D',(Join-Path $taskQa 'database'),'-h','127.0.0.1','-p',"$taskDbPort") -WorkingDirectory $taskQa -LogDirectory (Join-Path $taskQa 'logs')
     Save-LocalStackState -Path (Join-Path $taskQa 'ownership.json') -State $taskState -Workspace $taskQa
     $taskDeadline = [DateTime]::UtcNow.AddSeconds(30)
     do {
-        & (Join-Path $taskPg 'pg_isready.exe') -h 127.0.0.1 -p $taskDbPort -U issue84_acceptance -d postgres *> $null
+        & (Join-Path $taskPg 'pg_isready.exe') -h 127.0.0.1 -p $taskDbPort -U $taskDbUser -d postgres *> $null
         if ($LASTEXITCODE -eq 0) { break }
         Start-Sleep -Milliseconds 200
     } while ([DateTime]::UtcNow -lt $taskDeadline)
@@ -73,7 +78,7 @@ try {
     $taskWebPort = New-FixturePort
     $taskServerUrl = "http://127.0.0.1:$taskServerPort"
     $taskWebUrl = "http://127.0.0.1:$taskWebPort"
-    $taskDatabaseUrl = "postgres://issue84_acceptance@127.0.0.1:$taskDbPort/postgres"
+    $taskDatabaseUrl = "postgres://${taskDbUser}@127.0.0.1:$taskDbPort/postgres"
     $taskState.processes.server = Start-LocalOwnedProcess -Role server -Workspace $taskQa -FilePath $taskServer -WorkingDirectory $taskProduct -LogDirectory (Join-Path $taskQa 'logs') -Environment @{
         DATABASE_URL=$taskDatabaseUrl;CRONY_BIND="127.0.0.1:$taskServerPort";CRONY_CORS_ORIGINS=$taskWebUrl
         CRONY_OBJECT_STORE_LOCAL_ROOT=(Join-Path $taskQa 'objects')
@@ -81,7 +86,7 @@ try {
     Save-LocalStackState -Path (Join-Path $taskQa 'ownership.json') -State $taskState -Workspace $taskQa
     Wait-FixtureHttp "$taskServerUrl/health"
     $taskDemo = Invoke-RestMethod -Uri "$taskServerUrl/api/demo/bootstrap?seed_crew=true" -Method Post -ContentType 'application/json' -Body '{}'
-    $taskRunnerId = 'issue84-' + [guid]::NewGuid().ToString('N')
+    $taskRunnerId = "issue$taskIssue-" + [guid]::NewGuid().ToString('N')
     $taskEnrollment = Invoke-RestMethod -Uri "$taskServerUrl/api/corps/$($taskDemo.corp_id)/runners/enroll" -Method Post -ContentType 'application/json' -Body (@{actor_id=$taskDemo.alice_actor_id;runner_id=$taskRunnerId;expires_in_seconds=3600} | ConvertTo-Json -Compress)
     $taskTokenPath = Join-Path $taskQa 'runner-enrollment.token'
     $taskCredentialPath = Join-Path $taskQa 'runner/credential.json'
@@ -111,9 +116,10 @@ try {
     $taskManifest | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $taskFixturePath -Encoding utf8
     $taskReceipt.status='running'
     $taskReceipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $taskOutput 'driver.json') -Encoding utf8
-    $taskState.processes.acceptance = Start-LocalOwnedProcess -Role acceptance -Workspace $taskQa -FilePath $taskNode -ArgumentList @((Join-Path $PSScriptRoot 'e2e_factory_base_refresh.mjs')) -WorkingDirectory $taskProduct -LogDirectory $taskOutput -Environment @{
-        CRONY_BASE_REFRESH_TEST='1';CRONY_BASE_REFRESH_FIXTURE=$taskFixturePath;CRONY_PLAYWRIGHT_MODULE=$PlaywrightModule
-    }
+    $taskAcceptanceEnvironment = @{CRONY_PLAYWRIGHT_MODULE=$PlaywrightModule}
+    $taskAcceptanceEnvironment[$taskOptIn + '_TEST'] = '1'
+    $taskAcceptanceEnvironment[$taskOptIn + '_FIXTURE'] = $taskFixturePath
+    $taskState.processes.acceptance = Start-LocalOwnedProcess -Role acceptance -Workspace $taskQa -FilePath $taskNode -ArgumentList @((Join-Path $PSScriptRoot $taskDriver)) -WorkingDirectory $taskProduct -LogDirectory $taskOutput -Environment $taskAcceptanceEnvironment
     Save-LocalStackState -Path (Join-Path $taskQa 'ownership.json') -State $taskState -Workspace $taskQa
     $taskAcceptance = Get-Process -Id $taskState.processes.acceptance.pid -ErrorAction Stop
     try {

@@ -1,0 +1,2792 @@
+{
+  "issue": 95,
+  "status": "failed",
+  "revision": 5,
+  "started_at_utc": "2026-10-01T07:44:05.913789+00:00",
+  "checks": [
+    {
+      "name": "docs",
+      "arguments": [
+        "<USER_HOME>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "tools/check_docs.mjs"
+      ],
+      "started_at_utc": "2026-10-01T07:45:41.769667+00:00",
+      "finished_at_utc": "2026-10-01T07:45:41.889082+00:00",
+      "exit_code": 0,
+      "log": "<RUN_EVIDENCE>\\issue95-publication-validation-r5-docs.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "repository-docs",
+      "arguments": [
+        "<USER_HOME>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "tools/check_documentation.mjs"
+      ],
+      "started_at_utc": "2026-10-01T07:45:41.891094+00:00",
+      "finished_at_utc": "2026-10-01T07:45:42.030433+00:00",
+      "exit_code": 0,
+      "log": "<RUN_EVIDENCE>\\issue95-publication-validation-r5-repository-docs.log",
+      "log_sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d"
+    },
+    {
+      "name": "personal-paths",
+      "arguments": [
+        "<USER_HOME>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "tools/check_evidence_personal_paths.mjs",
+        "<ISOLATED_CHECKOUT>\\docs\\evidence\\2026-10-01-factory-review-revisions"
+      ],
+      "started_at_utc": "2026-10-01T07:45:42.033992+00:00",
+      "finished_at_utc": "2026-10-01T07:46:03.105092+00:00",
+      "exit_code": 0,
+      "log": "<RUN_EVIDENCE>\\issue95-publication-validation-r5-personal-paths.log",
+      "log_sha256": "7eb5fcc984d90e0ebcb02fadf8bc0f4128ac8bd0d3333f4b954ab0890e9c57fc"
+    },
+    {
+      "name": "diff-check",
+      "arguments": [
+        "git",
+        "--no-optional-locks",
+        "diff",
+        "--check",
+        "7e65f46a0c0f991460eeb4c5b60723d2e0dff1f9",
+        "63eea005a99fcb18eb04ea08151b75c1ebd5d06e"
+      ],
+      "started_at_utc": "2026-10-01T07:47:03.687442+00:00",
+      "finished_at_utc": "2026-10-01T07:47:04.058398+00:00",
+      "exit_code": 2,
+      "log": "<RUN_EVIDENCE>\\issue95-publication-validation-r5-diff-check.log",
+      "log_sha256": "2a898444c2a3ec70a36c51d250fc339a3c7898ef1fcfb3b2ba4270d39390530b"
+    }
+  ],
+  "secret_scans": {
+    "redacted": "sha256",
+    "digest": "fd97a5004cdf57a7461f8c7a2331140e064b42f950a1ab70f0475a7301802d1f"
+  },
+  "issue_completed": false,
+  "pr_merge_performed": false,
+  "scope": "Publication boundaries, complete product source, canonical argv and discovery, plus evidence-only additions.",
+  "main": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parents": [
+    "7e65f46a0c0f991460eeb4c5b60723d2e0dff1f9",
+    "6f2375e06546806003a9a1d1a340bdc1a4ce4b8c"
+  ],
+  "branch": "codex/issue95-governed-review-revision",
+  "tested_tree": "d25ef2100f7bec0ecc65772f61308c111d8df3fd",
+  "publication_tree": "63eea005a99fcb18eb04ea08151b75c1ebd5d06e",
+  "source_receipt_sha256": "b8167e20c87ac8e6bfdba0c372edf3dd2450b1ca888b4a1db19b78edcac31a5d",
+  "physical_files_sha256": "e91923c7ac52a703ffe4f2164eaf71d004b10bc1135ed42e04167a126c0e07f0",
+  "original_index_sha256": "b22d703f5ffde7b8af251438168338bc014b7a638e78df9a8c4b8ef09018b9e4",
+  "files": [
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/acceptance-20261001T061529503-2036506cdb8249cca699941979a20108.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/acceptance-20261001T061529503-2036506cdb8249cca699941979a20108.stdout.log",
+      "sha256": "9dc7f5036ca50d8ac7f6839f93637f35f9376c953adf0968ce46633995a975b1",
+      "bytes": 1234
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/acceptance.json",
+      "sha256": "a33c5ed70303c65a50dd51606f573fd227fa5cce74eeab81a3c1629163215c7b",
+      "bytes": 142379
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/correction-awaiting-review.png",
+      "sha256": "490b8c6ae50c76daaa567ebdc3c6e5036a4212cb87bc2f0242556385ded2d810",
+      "bytes": 354677
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/correction-mobile.png",
+      "sha256": "adcdff9c2dc0004e52449321db70f3b70da6000f7f4ad66612f291fbdb18494b",
+      "bytes": 356161
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/correction-published-history.png",
+      "sha256": "c204ab57c8bfa728a9485d130beb124f8a91465a8ccba6fbbfa6fd3ebed5bee4",
+      "bytes": 380957
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/driver.json",
+      "sha256": "e1acff29f3cf427d48b5be86e4bf6f75a42712cfec294a36402f4b8878167d98",
+      "bytes": 457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/owned-fixture.json",
+      "sha256": "10d6934a66c1b846bf9eb4cd3dd89f478c70b3ec27e56428f0c3d1f17b33d54d",
+      "bytes": 3393
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/preflight.json",
+      "sha256": "a43d692c201e849dd9de51098a44149b4fecac1c2fa48232b247103dc2d605a6",
+      "bytes": 1383
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/screenshot-review.json",
+      "sha256": "bf55115a24113fa1703f3bac32f2039d729a0f8c772060bf1d0e8c632180894f",
+      "bytes": 3164
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/server-native-identity.json",
+      "sha256": "46e319d77507d6b424629b2f48e36fb8ac1257da4b43f6236db9b44a574db08d",
+      "bytes": 616
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/session-exit.json",
+      "sha256": "7d9af4bca4adb89bcf7956be3e5374ee100e4aac19125a1c0352a78e54913ecf",
+      "bytes": 1367
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/verification.json",
+      "sha256": "2454c54b0ed6de5568eaefe80bbbed62fbc664ee47c8eed592f8db1d1a61b013",
+      "bytes": 4036
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/web-native-identity.json",
+      "sha256": "7181c038ff8bbf8b546ab30a050b964f0a80f3e3920e9a7f8fb4204bbfdf69ec",
+      "bytes": 678
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/canonical/driver.json",
+      "sha256": "e013b88723007f53c36d7c21550ce0d309b69fbf5fe157895515c83b957ba236",
+      "bytes": 5184
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/canonical/pnpm-check.log",
+      "sha256": "dbe50fd60175ad8c4a97ad6071f2a42b2c94fd24e2b4c69d9bda22b9f995fa6a",
+      "bytes": 9732
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/canonical/report.json",
+      "sha256": "45932c3181716cb4904a91da03390d7cdf1dad7f040fbf7e2457f0488b9ad089",
+      "bytes": 13626
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/canonical/session-exit.json",
+      "sha256": "55517498091bd81b11734fd1ea46b6f4607e21f62df219ea1a5907627918a03c",
+      "bytes": 8820
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_acceptance_r7_preflight.py.txt",
+      "sha256": "629add90b469a28285bfb227831bce8db457885afaa31e6b2b2fdcc1d86314ce",
+      "bytes": 3075
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r1.py.txt",
+      "sha256": "185d4cc04d80665d1369dfb4c9b07ae3edc00e838c2b0fb946a615cc83ffc01e",
+      "bytes": 63413
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r2.py.txt",
+      "sha256": "6a0226c82c88b46b77d6a698d4fbb5ca8a143df9bad9da5e91ddcf61849b9a0b",
+      "bytes": 70532
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r3.py.txt",
+      "sha256": "155a8cb681afc18e693a7150bc1e0b3e6b932fa5b6de159c9c49c67f22bf6615",
+      "bytes": 85559
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r3_pre_bytecode.py.txt",
+      "sha256": "57c691ea50db1b2bed8155188167cb2c4d65a53d5d2048c05c300aabbb92ddcb",
+      "bytes": 85211
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r3_pre_cargo_guard.py.txt",
+      "sha256": "21ef44893a9d7b713391248cda5f5c69e10cb914acdd28ce0495f628a532d1ad",
+      "bytes": 80238
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r3_pre_install_scope.py.txt",
+      "sha256": "7c1db057bb1d6905e166f08658dbd77ba13305df18b63b461d0b343d03aae894",
+      "bytes": 82460
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r3_pre_projection.py.txt",
+      "sha256": "ea4437c1251005bd52c005aacd4fca08e06a2bc1c16db94e1556cc5d55c86303",
+      "bytes": 84225
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r4.py.txt",
+      "sha256": "86bd1e5af0403f38956b9e95200d31dc136d7508c082f962af2061cbc4e030c1",
+      "bytes": 87967
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r5.py.txt",
+      "sha256": "423f03a5909a4c924a739cb77249a0759005f12bf829335b2c3e81ed77777253",
+      "bytes": 88978
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_windows_prerequisite_r1.py.txt",
+      "sha256": "49191c0c448b88bac5c0a69dbf86075e9e259d9ad81f41701fe391500c726e48",
+      "bytes": 5965
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/prepare-issue95-publication-r4.py.txt",
+      "sha256": "da8b811650a9860d5479d3141eea5f23fbdbec8c5d6b8702a9f0cca9c775b407",
+      "bytes": 15516
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/prepare-issue95-publication-r5.py.txt",
+      "sha256": "0539fe4bd86584787c1fd51384d455c465e9ac7af79407a8f4593fa017f8655a",
+      "bytes": 15655
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/prepare-issue95-publication-r6.py.txt",
+      "sha256": "889e44618fa4b06cd144bb7b2a6f369335a55a42bdff967bc6861bc6a9390a65",
+      "bytes": 12742
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/preserve-issue95-failed-assembly-r2.py.txt",
+      "sha256": "bdea9935275ffe1e75966015aba4c44edfe72149cf230029bd275525489cb0d8",
+      "bytes": 3319
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/publish-issue95-r2.ps1.txt",
+      "sha256": "ceb2342b4a0720f53491e5b7b86fa9cd5de71d8abb35b1da11c4442fbbeaf338",
+      "bytes": 27845
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/publish-issue95-r3.ps1.txt",
+      "sha256": "bd3ef416d7efd29a83d5736370d960f8238df1f02c703e1e822ae0ff29a06d56",
+      "bytes": 28211
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/publish-issue95-r4.ps1.txt",
+      "sha256": "314bbb4e908653eaf4f814154afd1867e9ea808aa1468e483458e022dbe2e380",
+      "bytes": 28264
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/run-issue95-acceptance-r7.ps1.txt",
+      "sha256": "919a12bf3ef4b625a2f3a9946053a9326974740e7f760427fc245d489ac737c1",
+      "bytes": 1580
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/run-issue95-evidence.ps1.txt",
+      "sha256": "5df1674b459996766d3ed995af7d2db6f548201cd05f21625324b486cec05236",
+      "bytes": 2569
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/run-issue95-native-evidence.ps1.txt",
+      "sha256": "c899cd9231444511ea176521d24f7bc76ba5da5aca429d5f4439ed486856cb99",
+      "bytes": 2655
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/run-issue95-store.ps1.txt",
+      "sha256": "7bc5c777f6aaa218fe9bc59ed84feae5e7de1b46acb95f69adb463a10e4d0608",
+      "bytes": 5851
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/verify-issue95-acceptance-r7.py.txt",
+      "sha256": "561990e8f7bb6e23d74b2301d16e35cbea5a3b327eb4a2c5aac6a941142736e8",
+      "bytes": 9440
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/verify-issue95-cargo-guard-r1.py.txt",
+      "sha256": "c7aab93b829cc7bfd5e41b0876f78c55fe20304b30040aebb2a278079593974c",
+      "bytes": 3841
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/verify-issue95-cargo-guard-r2.py.txt",
+      "sha256": "cbe0f0762d7661ca5c8c8d64826b851e01b8047756eea3c3531a75ab62e9e5ee",
+      "bytes": 5768
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/verify-issue95-publication-projection-r1.py.txt",
+      "sha256": "48bea981b82a8165c7e2385b8f6929a8f440075f238c55546cc48bdec4de45e8",
+      "bytes": 3800
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/domain-runner-r6.json",
+      "sha256": "67f5ded6bdec8a92001d82696e9d71bf2730113f9ebfcf3cb9b2357c90e37f12",
+      "bytes": 6093
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/domain-runner-r6.log",
+      "sha256": "bf9fc2a4b90e3d22aa04ecace529742e676a8f5c731334214949f1eaf3ceb923",
+      "bytes": 3280
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/frozen-install-r1.json",
+      "sha256": "7f52c4e5d3814b866cdf8611f5d519c1d49cc2c7f2c892ee7a174b4e94fa5972",
+      "bytes": 5791
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/frozen-install-r1.log",
+      "sha256": "e2b98d98f8aba76fb2b0d52032463e771dc9f30d0aeb21ac843d6d2ad039429f",
+      "bytes": 85
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/late-stop-focused-r1-session-exit.json",
+      "sha256": "1f68c01a8f02ee1639c6c41a191bc42bc31d908da2eafcc892a5d962c6892237",
+      "bytes": 147
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/late-stop-focused-r1.json",
+      "sha256": "cfbd704da732a1a77164cbcbd5325a2f7ca069acc7e42847a6bd6950c048a906",
+      "bytes": 577225
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/late-stop-focused-r1.log",
+      "sha256": "c81236839c972e3e1db54018f3faa687d41f4c14e78d93dd6d899cc782547143",
+      "bytes": 392
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-build-r1.json",
+      "sha256": "3fb90e5efc6455e7bb70487ea02a0d8711c702ed1b04153514a9cecdf057b485",
+      "bytes": 576986
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-build-r1.log",
+      "sha256": "ce78909944495788dbaa8c9370184f94b0e0829d72efb608a4d1565c1e0aaf24",
+      "bytes": 616
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-correction-parity-r2-session-exit.json",
+      "sha256": "f91a162ed065b8ac2da8e8725fb7b384f6005d7792b0dde90cf2e41949b8bb33",
+      "bytes": 213
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-correction-parity-r2.json",
+      "sha256": "dd9ff521a80bec6b2dd7a35e1afd8322d8b4a47a259b4d595e5164fd88c56d05",
+      "bytes": 577202
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-correction-parity-r2.log",
+      "sha256": "df487d354e5f234cc53a161b4dd3820f0e90228d99843e5b101267d8144de558",
+      "bytes": 2537
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-deliverable-parity-r2-session-exit.json",
+      "sha256": "6b7673f2849a45dafcb5895f4db683be407b2c9b8a9f7eb6c3038c8570ae60c9",
+      "bytes": 214
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-deliverable-parity-r2.json",
+      "sha256": "400ed7108cd1f132434a67fd971a70e8c7c2ed2b7d08a22fa5d82119c7606705",
+      "bytes": 577201
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-deliverable-parity-r2.log",
+      "sha256": "5a0946f8016b26c8c519fde8ce424c64a9b2dacbd420aebdf6797375c0fa33fc",
+      "bytes": 21848
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/node-prerequisites-parity-r2-session-exit.json",
+      "sha256": "f5520419f23b2e0cfe2c383bdfd9b88758dcbc2a7851b553ad7e01f524da83c5",
+      "bytes": 214
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/node-prerequisites-parity-r2.json",
+      "sha256": "9cc5604c6823043060785e15962ebe037fa1c0908ab407b20e88aff545271c3a",
+      "bytes": 5764
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/node-prerequisites-parity-r2.log",
+      "sha256": "c1b18b3d8056635a18ac50e8ec9a269ce2a79447fdff0ff655e1cb14c907e5d6",
+      "bytes": 10039
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/store-r4.json",
+      "sha256": "82a30adde6b4b97f508bf330ad984a0893c674e68dfa69816e788998da1689b0",
+      "bytes": 577225
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/store-r4.log",
+      "sha256": "00043c7834b9028e8607d99318849c70acc3833a854920ba002939ff031117fe",
+      "bytes": 1249
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/web-build-r2.json",
+      "sha256": "2a10a0bd276691d1aaad400cd5039fc015a727ae719a6819839c71ca54df1781",
+      "bytes": 5655
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/web-build-r2.log",
+      "sha256": "0d14cc3d338967f2a7ede06a8aecb2753a26c933326cc33ceb5c2e857e2241cd",
+      "bytes": 920
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/web-lint-r2.json",
+      "sha256": "d2e8e13eace1782b7c50fffe9fa6fced7c9d264a6f47b80134a8aa175306d14b",
+      "bytes": 5653
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/web-lint-r2.log",
+      "sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928",
+      "bytes": 36
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/web-regressions-r2.json",
+      "sha256": "61e0f0bc34a73f2224524e5614b687daa8bf2c0c5967e82f57773886d24905cc",
+      "bytes": 6010
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/web-regressions-r2.log",
+      "sha256": "de4ff61167126a701bd7925801b636de1d9383e742e999a6ce344940d9f10b0a",
+      "bytes": 23813
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/windows-policy-r1-session-exit.json",
+      "sha256": "ce5ff011f282fb915cd059c5a4854457e66995ebd52db529f17bdf71f0a5ca0c",
+      "bytes": 156
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/windows-policy-r1.json",
+      "sha256": "5bcd6da17ad2341823a4a4878dad572b7f6cea10881a8dd5dd91200f353148cd",
+      "bytes": 1100
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/windows-policy-r1.log",
+      "sha256": "b674d130a6de8bca92870e1c042b22c8bae5dd23ebc40c589925c25dab9c59e7",
+      "bytes": 7860
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r1/acceptance.json",
+      "sha256": "08eb2c535c1ab70f3678e052844ba1f6d564f3723f1453939bfde9c801db54ae",
+      "bytes": 38209
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r1/driver.json",
+      "sha256": "49828405e5c3806f05a4ddc8ebc85f05ec2c3ef2ecfb1a63441fcee2c12f6ab0",
+      "bytes": 457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r2/acceptance.json",
+      "sha256": "969f5e67ba5bba9bcd690dacebc3637dd3db57dcd90252684d32f13dbb289369",
+      "bytes": 54882
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r2/driver.json",
+      "sha256": "30eb55248d67da32cd5d56f507c49605b4ac774eb445337ed10932a6ede432db",
+      "bytes": 457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r3/acceptance.json",
+      "sha256": "d197a722e7825de9bf5c2d21a8d73365a442e21a5ec47b1f4b32dc1654eb0be9",
+      "bytes": 73032
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r3/driver.json",
+      "sha256": "10bbc820d9ed1595c9bff9163c42ae7831d2e6ff9389c658b22130fddccf8e28",
+      "bytes": 457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r4/acceptance.json",
+      "sha256": "cc27e104ae77c2e73745924eafadefe69100cbddc6064a33b684770f66de4fe6",
+      "bytes": 146870
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r4/driver.json",
+      "sha256": "aa638749dbe51c9fa8a15c19f1b7e901f2e35c8f50726a1c2f25d96b8892aaf2",
+      "bytes": 457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r5/acceptance.json",
+      "sha256": "9525b7c2aaa8cd107f27d81226a04fe2fa9b86687e436bb12262992f1442edca",
+      "bytes": 146890
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r5/driver.json",
+      "sha256": "6786a1d2f2963bf9e56068230111c442cdebadbd20a40667662b54a7a00f60e8",
+      "bytes": 457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/acceptance-20261001T045207947-365a1fee8de141afb01dff37a5c32f16.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/acceptance-20261001T045207947-365a1fee8de141afb01dff37a5c32f16.stdout.log",
+      "sha256": "3fa76259856d5d7b34759e9901806ed2d35c248bef618d3c7f9a4c23dd58ac72",
+      "bytes": 1234
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/acceptance.json",
+      "sha256": "725c26c0250ce3e09e5fd6d158b40d52a07919afffbaadd43fbab99fead1dd1d",
+      "bytes": 146790
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/correction-awaiting-review.png",
+      "sha256": "57fbe5acdb5cd58e0f9c1bc7c3d956c7fc51cfb62dd210afd0b35e40b6d0c360",
+      "bytes": 355856
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/correction-mobile.png",
+      "sha256": "8085bcfb02d90a3d887ce4ab36653c7fcc606fcce326d814125665ebe9810cde",
+      "bytes": 355418
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/correction-published-history.png",
+      "sha256": "c9ae33928462f9192c12f0cc128922f9b770e53d1d0d81292aa04a77f023b1e8",
+      "bytes": 381365
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/driver.json",
+      "sha256": "32394defa05a03b147277be57dfd2e01dc6d989a7f6db924289d10e0624bec83",
+      "bytes": 457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/screenshot-review.json",
+      "sha256": "610e96ac241623a9e60807896336decdb0cdd7b823bedc03a4fbce9847657bb4",
+      "bytes": 3016
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/session-exit.json",
+      "sha256": "49e17d14cb23a44c7959f898bbbf917f9689e75804fc446ba596fb20ab53380e",
+      "bytes": 504
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r1/driver.json",
+      "sha256": "34b1bf627f91dd74356739ea4676addcd998e24b0d8833367583fa9e8fdaa345",
+      "bytes": 5540
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r1/pnpm-check.log",
+      "sha256": "b1ad7910ab6ac99c9d930a259e1c3e4e77746e4a0cd30bece208b41d03b03b4d",
+      "bytes": 762573
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r1/report.json",
+      "sha256": "27096c9cbc49b8b7f4c6b2ac7847c072da23cfabdd0e4eac667712190be8b55f",
+      "bytes": 599144
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r1/session-exit.json",
+      "sha256": "c9ad418b3ef84e5256858c3f4256cbfb21d7a341ac390e32392d2ca5f634ade7",
+      "bytes": 482
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r2/driver.json",
+      "sha256": "d1e5a6eceb1b39d7faccf9d7fd10ae09be82f8e32405c14f9149b52037c2c063",
+      "bytes": 8569
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r2/pnpm-check.log",
+      "sha256": "d79bc20f70adb29fbab7e62dd893dd8962c3bb3c7900aa6179d800b1417f1c50",
+      "bytes": 79533
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r2/report.json",
+      "sha256": "448f96bd0af647834721b360423063e96b8fb12a26ff746f44f28ad7221fb1e4",
+      "bytes": 600161
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r2/session-exit.json",
+      "sha256": "54218c24161b0dca100d4f3cf9780d57925f108b9cfbed965dff6534a561069a",
+      "bytes": 147
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/cargo-binary-guard-r1-session-exit.json",
+      "sha256": "2187247407b3a914c87751e19f8704f8480903f0cccefd5adfa2c28e99fb2db8",
+      "bytes": 946
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/cargo-binary-guard-r1.json",
+      "sha256": "a8a82c6a75b84bd64921f71bcf3d13d55aaa959a1a3548078825a60d1e8d4116",
+      "bytes": 1574
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/cargo-binary-guard-r1.md",
+      "sha256": "25573df0b0597a3f492aa1294aa99c84545e40474de43fec71c2c9f556403026",
+      "bytes": 1927
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/cargo-binary-guard-r2-session-exit.json",
+      "sha256": "bebd5324ff84beef6b2dab7fabc735917decb22ddfe55036d16e4cb93bed09a9",
+      "bytes": 555
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/cargo-binary-guard-r2.json",
+      "sha256": "d047de91934794c6793554dca1497ea1764a4d38b8d3fdc805bd8444aa20db52",
+      "bytes": 9477
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/design-r1.md",
+      "sha256": "ade8de7afe0a4f125fb821900f945ebb2a74af8846414955a2e593759663762b",
+      "bytes": 3974
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/late-stop-diagnostic/driver.json",
+      "sha256": "7fe1872d66d3353507ddd50e91a96baba5d86f9028982457376a2e0a29e9081f",
+      "bytes": 577176
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/late-stop-diagnostic/restoration.json",
+      "sha256": "e5b99fd86e8add2be293c894e8a60b168530b08fe496bd68a454822874dc100c",
+      "bytes": 261
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/late-stop-diagnostic/runner.log",
+      "sha256": "3ab86d52ad88468a60918a5c1a3a76b8a5a836cd052d1b7550ae4323a0543eb0",
+      "bytes": 52571
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/late-stop-diagnostic/session-exit.json",
+      "sha256": "276cf85f5802b9fe9742330c810014c4ee2c7a245902e234aa6299b86f7ac7f0",
+      "bytes": 805
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/late-stop-diagnostic/source.json",
+      "sha256": "db9f52dd8ca5ab502e799674d0b98a5f1ec75f5cb12c3018d7d567e3ca530f3f",
+      "bytes": 982
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/node-recurrence-red-r1.json",
+      "sha256": "d68cd6e245b2a771580ac0ff0bf62ff9d433402e79417b3c3d58964730c516ee",
+      "bytes": 5552
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/node-recurrence-red-r1.log",
+      "sha256": "c83ef30287ac65c0e80a140b4014a795cae2843ceee7e1b212d83c5bc29a84a1",
+      "bytes": 847
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-failed-r1.json",
+      "sha256": "01c83f487c6b2749d4a4d1ca8ee823e67bbdfea6604324c1d1fc49a2d8c75e50",
+      "bytes": 1429
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-failed-r2-preservation.json",
+      "sha256": "177adcf3ddf3acef14361ce593f478b409758eefedfd6f177b18665cdb700f0d",
+      "bytes": 6223
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-failed-r2.json",
+      "sha256": "2056633c34c73f2f19a4aa3d2c086c85a51e2625c5a7dc4b0378863e000034c8",
+      "bytes": 1408
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-failed-r3-preservation.json",
+      "sha256": "80346f2aafa5e4a9e1939502653ba039f9da64d7078b5c83c1bf08e5f0855448",
+      "bytes": 666
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-failed-r3.json",
+      "sha256": "8a5a9cbb39d38c1686d8cec8f33acc0c33b843eafc72586c1ebfe79b3e4419e0",
+      "bytes": 756
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-r3-failed/preservation.json",
+      "sha256": "9bcaa6af8956ef57d3df6d792ca1b1594a7764c02e1839d30d8a72df88736a7c",
+      "bytes": 4721
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-r3-failed/projection-regression.json",
+      "sha256": "b32b2ad42bbd94f1bb897194c52516055049d516d26b0d08d41caf6b050592a6",
+      "bytes": 862
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-r3-failed/session-exit.json",
+      "sha256": "2ee408c4928085f5e8dcae521b8b7e1768c38b7a7281b4d7b72b2acb7374bee5",
+      "bytes": 1172
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-prepare-failed-r4/session-exit.json",
+      "sha256": "b399194fa2891d28f5052edd33acc0db7a0d6587a52b12cb2aac7dc602d43b4b",
+      "bytes": 738
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-projection-r1-session-exit.json",
+      "sha256": "bbf9c5c736d48810907aa3bdc5d0cd67fb8107a3dbdb97fa5b797cd568ab9416",
+      "bytes": 479
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-projection-r1.json",
+      "sha256": "c61c611007ee6e0ce4175fc2062c88814400dfa8cebc6d64f8e0a888a377ac0b",
+      "bytes": 1001
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-scope-correction-r2.md",
+      "sha256": "0380f77c49359212365992c4ff231d2b28f3a5c4f35899858b5dfa985d841bb9",
+      "bytes": 2439
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/docs.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/gitleaks.log",
+      "sha256": "eb71ad1df7f8df51596d590d95cbf39ce6e8baee1d10b7f18b32f62817492b0e",
+      "bytes": 82
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/original-assembly.json",
+      "sha256": "7d70c66a3b815cfc5ad49184682b3f9b4bd8e55fe4f49dd44337569fa2ba1a11",
+      "bytes": 29636
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/personal-paths.log",
+      "sha256": "7eb5fcc984d90e0ebcb02fadf8bc0f4128ac8bd0d3333f4b954ab0890e9c57fc",
+      "bytes": 40
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/preservation.json",
+      "sha256": "c12257d959d2ad45149e80707e0cf275f555cb691b7d0be370b87a56fd37e894",
+      "bytes": 31812
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/receipt.json",
+      "sha256": "942315004a685e9a1e8ce69030ec241090be6cf9a457e63a96484431f8e5e5c1",
+      "bytes": 48472
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/redacted-findings.json",
+      "sha256": "cc58595bdfb06b394354ec1d6b01f1abef4c807dde6415129e99c55167e499bc",
+      "bytes": 82088
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/repository-docs.log",
+      "sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "bytes": 276
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/session-exit.json",
+      "sha256": "bfcea2c1e0fe0d77ad4e67473c3706ba4c86d15504a690cca89b87557b580310",
+      "bytes": 1510
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/triage.json",
+      "sha256": "e3d731e1b3cbe885fcbbf22bdb88b31153f29a55882caa8dbc58e0d72bf35a87",
+      "bytes": 22555
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/selection-parity-r2.md",
+      "sha256": "10a894a5be8cdb08a8a5899f25a045152b214de93ec2eb01683b3c4fd34d2c17",
+      "bytes": 4363
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/steward-install-r1.json",
+      "sha256": "de57747c4a80e4f9707956079f40d48a3d51b9faa2b87a34977a78f2e03ceebf",
+      "bytes": 692
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/steward-install-r1.log",
+      "sha256": "2a0348d86c37f64db915eac12d0f7ffb12d3b34edd6a5008e93f660f0ac6c1c9",
+      "bytes": 77
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/store-r1.json",
+      "sha256": "aa4538516a0e74aa779068bfc29e264dd4db7a6023799aecd8dafdc1fbc76374",
+      "bytes": 577457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/store-r1.log",
+      "sha256": "74b156b542343146ee5612a70f08773ca13adc48caa6c7c30f7f7c4c36e7489e",
+      "bytes": 6205
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/store-r2.json",
+      "sha256": "84563dd7873b0d91500326d0951dbd7ab2d060c86a8ee2d36285876e56dc80f2",
+      "bytes": 577457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/store-r2.log",
+      "sha256": "9274760c3cb31f57941281fda41cdda8129589013e012d913a1cc81217f5db8a",
+      "bytes": 2050
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/store-r3.json",
+      "sha256": "589da8168e5cedcabb1af4ef0577f52f9e5abf3e35c53b17048d4f564e4b36d9",
+      "bytes": 577386
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/store-r3.log",
+      "sha256": "f97fc6af9c3e76b2d1f16ca02caa3c27a73361b20eede022105bbfc2ac762e9d",
+      "bytes": 1095
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/web-regressions-r1.json",
+      "sha256": "f67347561c25f109384507c51bd09107ee2806f561dd819965febe3b4d60d6e3",
+      "bytes": 6118
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/web-regressions-r1.log",
+      "sha256": "dea4678ec189fdb8141521ad4b2c1752157778ea90d08e26cf32a9c576ef4ab2",
+      "bytes": 25181
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/windows-prerequisite/integration.json",
+      "sha256": "c361b026caf1306d07f4c0b01b3b7fc85971f6cb27bae30d30a7e5eed49347f3",
+      "bytes": 14773
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/windows-prerequisite/session-exit.json",
+      "sha256": "e7486feb17ec2dcb31abc6780ce07c149037eb6166e1aff1055cedfe794319c5",
+      "bytes": 272
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/implementation-self-review.json",
+      "sha256": "035b512d045c95b4405fd808f0830850694721767c716aed32b1fd17acacceb9",
+      "bytes": 18258
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/README.md",
+      "sha256": "018def3b3b8bf6f7a3848835a867aab0d07237141d9f4fec58cff27a4c08016a",
+      "bytes": 3676
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/source-binding.json",
+      "sha256": "b8167e20c87ac8e6bfdba0c372edf3dd2450b1ca888b4a1db19b78edcac31a5d",
+      "bytes": 4222218
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/summary.json",
+      "sha256": "99ac3c017406726a3ba162fc9e313ffa31a71d139d8de9b2831cc6008e74919d",
+      "bytes": 102591
+    }
+  ],
+  "original_physical_files_unchanged": true,
+  "canonical_and_acceptance_same_complete_physical_source": true,
+  "evidence_added_after_product_execution": true,
+  "full_plan_unchanged": true,
+  "final_plan": {
+    "plan": [
+      {
+        "name": "migrations",
+        "argv": [
+          "node",
+          "tools/check_migrations.mjs"
+        ]
+      },
+      {
+        "name": "state-audit-compatibility",
+        "argv": [
+          "node",
+          "tools/check_state_audit_compatibility.mjs"
+        ]
+      },
+      {
+        "name": "state-audit-evm",
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "crony-audit",
+          "--test",
+          "ethereum_local_chain"
+        ]
+      },
+      {
+        "name": "docs",
+        "argv": [
+          "node",
+          "tools/check_docs.mjs"
+        ]
+      },
+      {
+        "name": "repository-docs",
+        "argv": [
+          "node",
+          "tools/check_documentation.mjs"
+        ]
+      },
+      {
+        "name": "node-tests",
+        "argv": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "--test-timeout=180000",
+          "--test-reporter=tap",
+          ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+          ".github/skills/code-review/tests/executor-state.test.mjs",
+          ".github/skills/code-review/tests/package.test.mjs",
+          "apps/web/src/AgentPinControl.test.mjs",
+          "apps/web/src/DelegatedPanel.test.mjs",
+          "apps/web/src/VerificationPolicyEditor.test.mjs",
+          "apps/web/src/agentPinOperation.test.mjs",
+          "apps/web/src/evidenceNavigation.test.mjs",
+          "apps/web/src/evidenceSelection.test.mjs",
+          "apps/web/src/factoryAuthority.test.mjs",
+          "apps/web/src/factoryAuthorityConnection.test.mjs",
+          "apps/web/src/factoryCheckpointRecovery.test.mjs",
+          "apps/web/src/factoryControllerSelection.test.mjs",
+          "apps/web/src/factoryPolling.test.mjs",
+          "apps/web/src/formText.test.mjs",
+          "apps/web/src/missionCollaboration.test.mjs",
+          "apps/web/src/missionComposer.test.mjs",
+          "apps/web/src/missionOriginContext.test.mjs",
+          "apps/web/src/missionPreview.test.mjs",
+          "apps/web/src/missionProjection.test.mjs",
+          "apps/web/src/missionResultContext.test.mjs",
+          "apps/web/src/missionReviewSummary.test.mjs",
+          "apps/web/src/missionRuntime.test.mjs",
+          "apps/web/src/office/characterAssets.test.mjs",
+          "apps/web/src/office/officeModel.test.mjs",
+          "apps/web/src/reviewRevisionPanel.test.mjs",
+          "apps/web/src/runActivity.test.mjs",
+          "apps/web/src/snapshotRefresh.test.mjs",
+          "apps/web/src/verificationDecisionOperation.test.mjs",
+          "apps/web/src/verificationPolicy.test.mjs",
+          "apps/web/src/workResultCard.test.mjs",
+          "apps/web/src/workflowContext.test.mjs",
+          "apps/web/src/workspaceConnections.test.mjs",
+          "scenarios/repo-steward/actions.test.mjs",
+          "scenarios/repo-steward/feedback-cli.test.mjs",
+          "scenarios/repo-steward/feedback.test.mjs",
+          "scenarios/repo-steward/maintenance.test.mjs",
+          "scenarios/repo-steward/recurring-audit.test.mjs",
+          "scenarios/repo-steward/steward.test.mjs",
+          "scenarios/repo-steward/teams-host.test.mjs",
+          "tests/readiness/cli.test.js",
+          "tools/budget_fixture.test.mjs",
+          "tools/check_deliverable_diff.test.mjs",
+          "tools/check_documentation.test.mjs",
+          "tools/check_evidence_launch.test.mjs",
+          "tools/check_evidence_native_build.test.mjs",
+          "tools/check_evidence_personal_paths.test.mjs",
+          "tools/check_migrations.test.mjs",
+          "tools/check_replay_source.test.mjs",
+          "tools/checkpoint_application_fixture.test.mjs",
+          "tools/ci_external_adapters_windows.test.mjs",
+          "tools/ci_factory_repository.test.mjs",
+          "tools/ci_maintenance.test.mjs",
+          "tools/ci_owned_test_server.test.mjs",
+          "tools/ci_runner_tests.test.mjs",
+          "tools/consume_operation_receipt.test.mjs",
+          "tools/controlled_runner_fixture.test.mjs",
+          "tools/copilot_fs_wire_observer.test.mjs",
+          "tools/copilot_fs_wire_process.test.mjs",
+          "tools/copilot_probe_boundaries.test.mjs",
+          "tools/copilot_probe_environment.test.mjs",
+          "tools/copilot_probe_native_read.test.mjs",
+          "tools/copilot_probe_process.test.mjs",
+          "tools/coverage_web_models.test.mjs",
+          "tools/delegated_lifecycle.test.mjs",
+          "tools/delegated_qa_root.test.mjs",
+          "tools/e2e_agent_pinning.test.mjs",
+          "tools/e2e_checkpoint_verification.test.mjs",
+          "tools/e2e_evidence_selection.test.mjs",
+          "tools/e2e_external_adapters.test.mjs",
+          "tools/e2e_external_adapters_http.test.mjs",
+          "tools/e2e_factory_budget_recovery.test.mjs",
+          "tools/e2e_late_termination.test.mjs",
+          "tools/e2e_predispatch_failure.test.mjs",
+          "tools/e2e_stopped_source_checkpoint.test.mjs",
+          "tools/e2e_verifier_browser_retention.test.mjs",
+          "tools/e2e_verifier_browser_scope.test.mjs",
+          "tools/factory_budget_fixture_config.test.mjs",
+          "tools/factory_budget_git.test.mjs",
+          "tools/factory_budget_process.test.mjs",
+          "tools/factory_budget_provenance.test.mjs",
+          "tools/factory_budget_start.test.mjs",
+          "tools/fake_codex_budget_stream.test.mjs",
+          "tools/fake_github_quota.test.mjs",
+          "tools/fixture_source_identity.test.mjs",
+          "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+          "tools/identity_fixture.test.mjs",
+          "tools/import_operation_behavior.test.mjs",
+          "tools/issue161/qa-api-provenance.test.mjs",
+          "tools/issue161/qa-plan.test.mjs",
+          "tools/local_source_commit.test.mjs",
+          "tools/local_stack_lifecycle.test.mjs",
+          "tools/local_stack_operation.test.mjs",
+          "tools/native_qualification_attempt.test.mjs",
+          "tools/native_qualification_finality.test.mjs",
+          "tools/native_qualification_trust.test.mjs",
+          "tools/office_model.test.mjs",
+          "tools/operation_feedback.test.mjs",
+          "tools/operation_receipt.test.mjs",
+          "tools/owned_test_stack.test.mjs",
+          "tools/probe_mcp.test.mjs",
+          "tools/qa_multiplayer_object_sources.test.mjs",
+          "tools/readiness_contract.test.mjs",
+          "tools/readiness_replay_contract.test.mjs",
+          "tools/redact_evidence_capabilities.test.mjs",
+          "tools/research_handoff_adversarial.test.mjs",
+          "tools/research_handoff_browser.test.mjs",
+          "tools/research_handoff_native.test.mjs",
+          "tools/runner_ack_fault_relay.test.mjs",
+          "tools/secret_scan.test.mjs",
+          "tools/secret_scan_native.test.mjs",
+          "tools/security_fixtures.test.mjs",
+          "tools/startup_validation_harness.test.mjs",
+          "tools/task_graph_fixture.test.mjs",
+          "tools/verifier_browser.test.mjs",
+          "tools/verify_toolchain.test.mjs"
+        ]
+      },
+      {
+        "name": "format",
+        "argv": [
+          "cargo",
+          "fmt",
+          "--check"
+        ]
+      },
+      {
+        "name": "clippy",
+        "argv": [
+          "cargo",
+          "clippy",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--",
+          "-D",
+          "warnings"
+        ]
+      },
+      {
+        "name": "rust-tests",
+        "argv": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--locked",
+          "--",
+          "--test-threads=1"
+        ]
+      },
+      {
+        "name": "web-build",
+        "argv": [
+          "pnpm",
+          "build:web"
+        ]
+      },
+      {
+        "name": "web-lint",
+        "argv": [
+          "pnpm",
+          "lint:web"
+        ]
+      }
+    ],
+    "node": [
+      ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+      ".github/skills/code-review/tests/executor-state.test.mjs",
+      ".github/skills/code-review/tests/package.test.mjs",
+      "apps/web/src/AgentPinControl.test.mjs",
+      "apps/web/src/DelegatedPanel.test.mjs",
+      "apps/web/src/VerificationPolicyEditor.test.mjs",
+      "apps/web/src/agentPinOperation.test.mjs",
+      "apps/web/src/evidenceNavigation.test.mjs",
+      "apps/web/src/evidenceSelection.test.mjs",
+      "apps/web/src/factoryAuthority.test.mjs",
+      "apps/web/src/factoryAuthorityConnection.test.mjs",
+      "apps/web/src/factoryCheckpointRecovery.test.mjs",
+      "apps/web/src/factoryControllerSelection.test.mjs",
+      "apps/web/src/factoryPolling.test.mjs",
+      "apps/web/src/formText.test.mjs",
+      "apps/web/src/missionCollaboration.test.mjs",
+      "apps/web/src/missionComposer.test.mjs",
+      "apps/web/src/missionOriginContext.test.mjs",
+      "apps/web/src/missionPreview.test.mjs",
+      "apps/web/src/missionProjection.test.mjs",
+      "apps/web/src/missionResultContext.test.mjs",
+      "apps/web/src/missionReviewSummary.test.mjs",
+      "apps/web/src/missionRuntime.test.mjs",
+      "apps/web/src/office/characterAssets.test.mjs",
+      "apps/web/src/office/officeModel.test.mjs",
+      "apps/web/src/reviewRevisionPanel.test.mjs",
+      "apps/web/src/runActivity.test.mjs",
+      "apps/web/src/snapshotRefresh.test.mjs",
+      "apps/web/src/verificationDecisionOperation.test.mjs",
+      "apps/web/src/verificationPolicy.test.mjs",
+      "apps/web/src/workResultCard.test.mjs",
+      "apps/web/src/workflowContext.test.mjs",
+      "apps/web/src/workspaceConnections.test.mjs",
+      "scenarios/repo-steward/actions.test.mjs",
+      "scenarios/repo-steward/feedback-cli.test.mjs",
+      "scenarios/repo-steward/feedback.test.mjs",
+      "scenarios/repo-steward/maintenance.test.mjs",
+      "scenarios/repo-steward/recurring-audit.test.mjs",
+      "scenarios/repo-steward/steward.test.mjs",
+      "scenarios/repo-steward/teams-host.test.mjs",
+      "tests/readiness/cli.test.js",
+      "tools/budget_fixture.test.mjs",
+      "tools/check_deliverable_diff.test.mjs",
+      "tools/check_documentation.test.mjs",
+      "tools/check_evidence_launch.test.mjs",
+      "tools/check_evidence_native_build.test.mjs",
+      "tools/check_evidence_personal_paths.test.mjs",
+      "tools/check_migrations.test.mjs",
+      "tools/check_replay_source.test.mjs",
+      "tools/checkpoint_application_fixture.test.mjs",
+      "tools/ci_external_adapters_windows.test.mjs",
+      "tools/ci_factory_repository.test.mjs",
+      "tools/ci_maintenance.test.mjs",
+      "tools/ci_owned_test_server.test.mjs",
+      "tools/ci_runner_tests.test.mjs",
+      "tools/consume_operation_receipt.test.mjs",
+      "tools/controlled_runner_fixture.test.mjs",
+      "tools/copilot_fs_wire_observer.test.mjs",
+      "tools/copilot_fs_wire_process.test.mjs",
+      "tools/copilot_probe_boundaries.test.mjs",
+      "tools/copilot_probe_environment.test.mjs",
+      "tools/copilot_probe_native_read.test.mjs",
+      "tools/copilot_probe_process.test.mjs",
+      "tools/coverage_web_models.test.mjs",
+      "tools/delegated_lifecycle.test.mjs",
+      "tools/delegated_qa_root.test.mjs",
+      "tools/e2e_agent_pinning.test.mjs",
+      "tools/e2e_checkpoint_verification.test.mjs",
+      "tools/e2e_evidence_selection.test.mjs",
+      "tools/e2e_external_adapters.test.mjs",
+      "tools/e2e_external_adapters_http.test.mjs",
+      "tools/e2e_factory_budget_recovery.test.mjs",
+      "tools/e2e_late_termination.test.mjs",
+      "tools/e2e_predispatch_failure.test.mjs",
+      "tools/e2e_stopped_source_checkpoint.test.mjs",
+      "tools/e2e_verifier_browser_retention.test.mjs",
+      "tools/e2e_verifier_browser_scope.test.mjs",
+      "tools/factory_budget_fixture_config.test.mjs",
+      "tools/factory_budget_git.test.mjs",
+      "tools/factory_budget_process.test.mjs",
+      "tools/factory_budget_provenance.test.mjs",
+      "tools/factory_budget_start.test.mjs",
+      "tools/fake_codex_budget_stream.test.mjs",
+      "tools/fake_github_quota.test.mjs",
+      "tools/fixture_source_identity.test.mjs",
+      "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+      "tools/identity_fixture.test.mjs",
+      "tools/import_operation_behavior.test.mjs",
+      "tools/issue161/qa-api-provenance.test.mjs",
+      "tools/issue161/qa-plan.test.mjs",
+      "tools/local_source_commit.test.mjs",
+      "tools/local_stack_lifecycle.test.mjs",
+      "tools/local_stack_operation.test.mjs",
+      "tools/native_qualification_attempt.test.mjs",
+      "tools/native_qualification_finality.test.mjs",
+      "tools/native_qualification_trust.test.mjs",
+      "tools/office_model.test.mjs",
+      "tools/operation_feedback.test.mjs",
+      "tools/operation_receipt.test.mjs",
+      "tools/owned_test_stack.test.mjs",
+      "tools/probe_mcp.test.mjs",
+      "tools/qa_multiplayer_object_sources.test.mjs",
+      "tools/readiness_contract.test.mjs",
+      "tools/readiness_replay_contract.test.mjs",
+      "tools/redact_evidence_capabilities.test.mjs",
+      "tools/research_handoff_adversarial.test.mjs",
+      "tools/research_handoff_browser.test.mjs",
+      "tools/research_handoff_native.test.mjs",
+      "tools/runner_ack_fault_relay.test.mjs",
+      "tools/secret_scan.test.mjs",
+      "tools/secret_scan_native.test.mjs",
+      "tools/security_fixtures.test.mjs",
+      "tools/startup_validation_harness.test.mjs",
+      "tools/task_graph_fixture.test.mjs",
+      "tools/verifier_browser.test.mjs",
+      "tools/verify_toolchain.test.mjs"
+    ]
+  },
+  "explicit_ignored_publication_paths": [
+    "docs/evidence/2026-10-01-factory-review-revisions/acceptance/acceptance-20261001T061529503-2036506cdb8249cca699941979a20108.stderr.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/acceptance/acceptance-20261001T061529503-2036506cdb8249cca699941979a20108.stdout.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/canonical/pnpm-check.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/focused/domain-runner-r6.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/focused/frozen-install-r1.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/focused/late-stop-focused-r1.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/focused/native-build-r1.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/focused/native-correction-parity-r2.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/focused/native-deliverable-parity-r2.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/focused/node-prerequisites-parity-r2.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/focused/store-r4.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/focused/web-build-r2.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/focused/web-lint-r2.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/focused/web-regressions-r2.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/focused/windows-policy-r1.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/acceptance-20261001T045207947-365a1fee8de141afb01dff37a5c32f16.stderr.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/acceptance-20261001T045207947-365a1fee8de141afb01dff37a5c32f16.stdout.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r1/pnpm-check.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r2/pnpm-check.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/history/late-stop-diagnostic/runner.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/history/node-recurrence-red-r1.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/docs.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/gitleaks.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/personal-paths.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/repository-docs.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/history/steward-install-r1.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/history/store-r1.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/history/store-r2.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/history/store-r3.log",
+    "docs/evidence/2026-10-01-factory-review-revisions/history/web-regressions-r1.log"
+  ],
+  "policy_sha256": {
+    ".gitleaksignore": "a8d6e15fa76e0c88f4266bca6d12f909f494a0ff646ef8699e88b8d9daec0ada",
+    ".gitleaks.toml": null
+  },
+  "scanned_blobs": [
+    {
+      "path": "CONTRIBUTING.md",
+      "git_blob": "9b64754000c761f57fdabe0221ccc470731f1683",
+      "sha256": "5ff9e8ba582c8d66339807ba6276ca140bd8409747e5d3849da2669490aea3e7",
+      "bytes": 23191
+    },
+    {
+      "path": "Cargo.lock",
+      "git_blob": "e6ca2d2f1ff0783b5ad772639c5ee4c1535d869e",
+      "sha256": "5e96581ddab6ec70538f7587e5fd5359275982cc059b5525827974dd286695f7",
+      "bytes": 180080
+    },
+    {
+      "path": "apps/web/src/App.tsx",
+      "git_blob": "d205d8a7d7e9373e371155dd3a1e09b38a3ef487",
+      "sha256": "f9106eabc3b60ecc8c372433d6038ebcfb3c0506db807faa2117158b6bb0f532",
+      "bytes": 313731
+    },
+    {
+      "path": "apps/web/src/ReviewRevisionPanel.css",
+      "git_blob": "b429c584a8fa02c3d0c0ff3348a5e4440bbf0781",
+      "sha256": "3c868bf44e39b3a1b622094b6e207386269e1bfd2d038d7fe2cd68f9c179c687",
+      "bytes": 1409
+    },
+    {
+      "path": "apps/web/src/ReviewRevisionPanel.tsx",
+      "git_blob": "50d60e573c7afabed083954cf83e3a415f508b29",
+      "sha256": "b204d9caf47a91d82a77692647d3415a312debf9109d08c69c91158b3a2de96b",
+      "bytes": 16411
+    },
+    {
+      "path": "apps/web/src/factoryCheckpointRecovery.test.mjs",
+      "git_blob": "1cbfe0368f0ad939c4f16ced8c20d665924f9f67",
+      "sha256": "ea87c1f1f91ae2dee01abc5d79ab48d51e70b2082dae2073e71f33bb2af916b0",
+      "bytes": 58491
+    },
+    {
+      "path": "apps/web/src/missionResultContext.test.mjs",
+      "git_blob": "6d5e54e4b6fd0beae9b8f3be8dea0438872c3d8e",
+      "sha256": "f2a6d6e358cf7e23d245101c573c907391bbd7e101a67089b07526014917ab36",
+      "bytes": 31240
+    },
+    {
+      "path": "apps/web/src/missionResultContext.ts",
+      "git_blob": "25cb65589ecd0eb5a58db0941e60a71ce5bdeca1",
+      "sha256": "421e94d103491993c9b107b710c98feac7c8fbfac7e54249412a1841303cf897",
+      "bytes": 30675
+    },
+    {
+      "path": "apps/web/src/missionResultFixtures.mjs",
+      "git_blob": "61644f10193bc64442e695fbbab1388b67d25cd2",
+      "sha256": "7876aeb317b207f7529588b2bef6ea565b20e0252481736c0397873258a4b1d3",
+      "bytes": 7265
+    },
+    {
+      "path": "apps/web/src/reviewRevisionOperations.ts",
+      "git_blob": "eed919b9ba48af8797c87d98a63b56c3d1447e7a",
+      "sha256": "f62bc0a4a815ec202d83599e2348aa978cb0647e8c19459767917c8d9d914da8",
+      "bytes": 6795
+    },
+    {
+      "path": "apps/web/src/reviewRevisionPanel.test.mjs",
+      "git_blob": "efdc1a66c28eb9cda76c9c977e7baaca714d4e82",
+      "sha256": "c555f14a119be9102ba5a0e16b0d536d3688057deff8f702ece2e3980525be15",
+      "bytes": 28333
+    },
+    {
+      "path": "apps/web/src/workResultCard.test.mjs",
+      "git_blob": "9019fed658788f7ad4d46ab0f87e78785cf61248",
+      "sha256": "3e728da0d417880d856523748e8fe351b9ae131412162dd572c966f6b6ff2ac7",
+      "bytes": 48246
+    },
+    {
+      "path": "crates/crony-cli/src/publish.rs",
+      "git_blob": "e018943dd42bc69b713a3a098cc5b69e5eef2825",
+      "sha256": "3316ebaafd12aee0ead19f3820670b4b8074926260faa02de12f75db989f88be",
+      "bytes": 90832
+    },
+    {
+      "path": "crates/crony-cli/src/publish_review_revision.rs",
+      "git_blob": "c0d1fb88c4cb79b16830fa81ada5bc59cf7882e1",
+      "sha256": "9489387b2cce854d082d3461b6ebcbf415aa381864c7219890ca0787248ad25c",
+      "bytes": 6194
+    },
+    {
+      "path": "crates/crony-domain/Cargo.toml",
+      "git_blob": "ead9b4c3a7a14b0e258514eaccc248e27f0d6c7b",
+      "sha256": "003ac834eb2d02e5c941887850bebf829b43f28c2fdb411b5d9020c911ed9082",
+      "bytes": 299
+    },
+    {
+      "path": "crates/crony-domain/src/factory_review_revision.rs",
+      "git_blob": "511adefeea4f9f4c6a1a4c14c6a66c7e353032c3",
+      "sha256": "a0f6a4d9d4baf252111702aa7ab9fd5ba530993c36c0709d6a41ad92f0ebbca6",
+      "bytes": 7955
+    },
+    {
+      "path": "crates/crony-domain/src/lib.rs",
+      "git_blob": "e350a2c9f377309b2be6bce166f55d09251b1eac",
+      "sha256": "c4ae04ddb1cb5b7efae7745b2acedd679cd0808dd910a2328d142cb3fcdf5793",
+      "bytes": 41640
+    },
+    {
+      "path": "crates/crony-protocol/src/lib.rs",
+      "git_blob": "c8adc9e2afa813b72bb0a8143388a3c48294c483",
+      "sha256": "df2f242f9f00723be9d9dfbbc0967de19c28e0a562b8b3b808c42953c58ff0ef",
+      "bytes": 52711
+    },
+    {
+      "path": "crates/crony-runner/src/base_refresh.rs",
+      "git_blob": "fed301b6b77846fea04df58aa591b1e5ecab7f78",
+      "sha256": "9cb50a31694bb9e816049d18970fbdd554d2a625a3d063297c3a0f091f2372d3",
+      "bytes": 6231
+    },
+    {
+      "path": "crates/crony-runner/src/base_refresh_tests.rs",
+      "git_blob": "287b8248d27c8bd2e051f3dc25290a68861aaaa0",
+      "sha256": "a2f07fbd863644da972a2e234093cc2981d7243231d43934d27c9d07ca2f5e54",
+      "bytes": 16719
+    },
+    {
+      "path": "crates/crony-runner/src/deliverable.rs",
+      "git_blob": "6bd35a7d788bec78987392f8b814b91bc83ab785",
+      "sha256": "924242e22248561618386ec8f7c8ecb6d913e7f216170a1338e88ce039ee96a3",
+      "bytes": 80045
+    },
+    {
+      "path": "crates/crony-runner/src/issue297_native_fixtures.rs",
+      "git_blob": "37fd89e99f1f0a1967d2d1ecff8bb5d2ebaa52d7",
+      "sha256": "dd3fa5bc1558a6a37e74f7a3a4167f1d1c0fe8130409b98ac9c091270af3e6fb",
+      "bytes": 37486
+    },
+    {
+      "path": "crates/crony-runner/src/main.rs",
+      "git_blob": "a92490268dcaaebb14a8214774b3d75b8e5192a0",
+      "sha256": "64705efe0700a4b15905eeb1004b0319c15b24f283302a8bd417468d920d75e0",
+      "bytes": 234119
+    },
+    {
+      "path": "crates/crony-runner/src/publication_source.rs",
+      "git_blob": "55516ec2810925d448dbc8c095456a3ef5786bbb",
+      "sha256": "436130f6f10901fdec046ace1b06efb9ad46607601230649a7202a3e97eec0d2",
+      "bytes": 2834
+    },
+    {
+      "path": "crates/crony-runner/src/review_revision.rs",
+      "git_blob": "604e2f4c31e2d88d36bdfc3b10998b4fdd719f1d",
+      "sha256": "6253a26fb7e33279f09a05e840d645503e62014202fa30bf59be56aa13c30af8",
+      "bytes": 15402
+    },
+    {
+      "path": "crates/crony-runner/src/review_revision_tests.rs",
+      "git_blob": "f94a6fb83fb3a6d5a14a860c20dc962804df1746",
+      "sha256": "7bd5811c6df7f06be27ba0653d8eb828fd59a719962d536965443e50e18db6ae",
+      "bytes": 20367
+    },
+    {
+      "path": "crates/crony-runner/src/source_checkpoint.rs",
+      "git_blob": "951cc0f3491e7324bab1238f49602c969595e390",
+      "sha256": "11ef09c595a50203336ac7bd0a1c5ffbd3c11db61354f319e48d7f272bb201e3",
+      "bytes": 35245
+    },
+    {
+      "path": "crates/crony-server/src/factory_base_refresh.rs",
+      "git_blob": "12a107f1d75c12669842c3cbfd41470cf2be336f",
+      "sha256": "188de3f49f8606feb2d2c039bf2f9d94ec0642f00df47bdb5d58ba9c83fcfcfb",
+      "bytes": 9138
+    },
+    {
+      "path": "crates/crony-server/src/factory_review_revision.rs",
+      "git_blob": "b1255bd7272552199dedcc20a47225f73201c311",
+      "sha256": "eaa36093e1667ede5aa155854658e9c037299a4813d0b79130947a1c8be15283",
+      "bytes": 4394
+    },
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "git_blob": "00a52c1e2f1a4bf0a3d94c3bdef6aaf041b754b5",
+      "sha256": "e50095e6e121fc3dd6a1ed026a3e233620b92f47be5ad52b917a3a59074097e0",
+      "bytes": 393217
+    },
+    {
+      "path": "crates/crony-store/Cargo.toml",
+      "git_blob": "c13a8ac599848ee8b7a3529c8ab5d99d3d3f0886",
+      "sha256": "b9013c7d6a99c14d5a6c0a8bb2b12fa46b80f1297c61afd3e2fe22f7dd027b40",
+      "bytes": 749
+    },
+    {
+      "path": "crates/crony-store/src/aggregate_breaker.rs",
+      "git_blob": "88cfbc257a15484ddb0305c037827babda33f065",
+      "sha256": "160bae1d55f148ad794de8f795ba97bd1340d4207b1854d4c19080fb3ef2809e",
+      "bytes": 21150
+    },
+    {
+      "path": "crates/crony-store/src/aggregate_breaker_tests.rs",
+      "git_blob": "6c8db0046be4688812b4779be3466a536d53892b",
+      "sha256": "57648a60f19d286a77ad22e9845146191123b9313721f8b72967e9455a185ddf",
+      "bytes": 68952
+    },
+    {
+      "path": "crates/crony-store/src/budget_checkpoint_tests.rs",
+      "git_blob": "968e6aa4f0ed44d13066184a322be7d7721b7bd5",
+      "sha256": "ebfdc57b2cb0e41a6958f0833d1a7de8336be67d3ed0c019a9290da7150fc0b0",
+      "bytes": 114883
+    },
+    {
+      "path": "crates/crony-store/src/budget_revision.rs",
+      "git_blob": "1e74a19b089623fd2ecce160f4f093335936f0e8",
+      "sha256": "b1048fde4e45eaff24862935c69187922feadadd8dd58d70179ece2abf45a47c",
+      "bytes": 46289
+    },
+    {
+      "path": "crates/crony-store/src/checkpoint_correction_publication_tests.rs",
+      "git_blob": "41757a4d2808805cc7007ef495e8616792cb2d69",
+      "sha256": "b3eb6a69b5216951e2df52f9dbad0e7943a64497ba2732a25d13c7573a196f2c",
+      "bytes": 100091
+    },
+    {
+      "path": "crates/crony-store/src/contract_revision.rs",
+      "git_blob": "1e2ab5630be98e19d0c65dc325df0bee1ad9e769",
+      "sha256": "2d584f926a11c190bb09960f16b11311b97aded638311d2eb26431044fda4782",
+      "bytes": 35466
+    },
+    {
+      "path": "crates/crony-store/src/factory_base_refresh/lifecycle.rs",
+      "git_blob": "5f50f37bcf733db6b62ec99aced59b45803b1d5a",
+      "sha256": "00901a1e64fc7960f213ee1e1a454712312f769b8289b217cf9829dfe5147baf",
+      "bytes": 20865
+    },
+    {
+      "path": "crates/crony-store/src/factory_review_revision.rs",
+      "git_blob": "e7d1a7cc16ae969e59ffc85ac4c6e03a26e46664",
+      "sha256": "197f5ad8f0e0514ae7a91de1c82950e651dbe33b0f67fb9bf33b9015e0713b83",
+      "bytes": 21003
+    },
+    {
+      "path": "crates/crony-store/src/factory_review_revision/dispatch.rs",
+      "git_blob": "033b9c2810d4cf7e304ccb09d1420c8f235363c0",
+      "sha256": "ca9abbd016ebf413e7c9f61067b003d584f7e1f8ed437d433078f2ce56a5825a",
+      "bytes": 10628
+    },
+    {
+      "path": "crates/crony-store/src/factory_review_revision/lifecycle.rs",
+      "git_blob": "97209576ec349e090dacbf321e312b9fda3173d5",
+      "sha256": "c50bc9762231b4eb404882f5a87638423b1b8dd38bc7c0a9759041824dc3caac",
+      "bytes": 9564
+    },
+    {
+      "path": "crates/crony-store/src/factory_review_revision/settlement.rs",
+      "git_blob": "d06533e1d5bb150b6ba596e93ec1e051d978fd99",
+      "sha256": "b07b1a7fda70c5da20920cb45e4c85d78d00b2196e2f16f1510fae0b29e96cdc",
+      "bytes": 10476
+    },
+    {
+      "path": "crates/crony-store/src/factory_review_revision_tests.rs",
+      "git_blob": "a6fbd64149bda26e9b9bd5a0d3e09d24d455c2e3",
+      "sha256": "3c499dbe2505ff14655a957d1b1ec038c488bd6dca8bce53627e574619bec054",
+      "bytes": 29033
+    },
+    {
+      "path": "crates/crony-store/src/lib.rs",
+      "git_blob": "3944339f3ff2b0a86fc531d1c3801e0671d1f5c3",
+      "sha256": "df99de50887d51b1ff9509910b8f5192f9cecfb7ec1a24f4d676c4a69ee561e7",
+      "bytes": 693014
+    },
+    {
+      "path": "crates/crony-store/src/mission_context.rs",
+      "git_blob": "03a045f380c5b7306b148b20ba680a9c018fc68a",
+      "sha256": "9d95bb8509d300a4f13cfed09b8e9dd63daa3f645371f9bfd1b9870b21890158",
+      "bytes": 4346
+    },
+    {
+      "path": "crates/crony-store/src/publication.rs",
+      "git_blob": "c4cf3bb0ae788f6b3e444316b24f8faa1372451c",
+      "sha256": "58af89b513f05d4901c88c4b34b9bb5737c3500b4723b0cdd209e33de47f7afb",
+      "bytes": 141162
+    },
+    {
+      "path": "crates/crony-store/src/state_audit.rs",
+      "git_blob": "2e1bbe74c15defcb2e8ccff3fb7efe6941f5ce32",
+      "sha256": "30cd983bd35b67e45827ef04f4180671ba3977a8f3afb4cc49c1ec846068b19f",
+      "bytes": 88261
+    },
+    {
+      "path": "db/migrations/0059_factory_review_revisions.sql",
+      "git_blob": "7eb1897afdf736df4576d3fcfdd37ca6f7ae99b1",
+      "sha256": "448dfadcf0b8c2ecc031129d2d5d113287a041861fa3ee783f86dbb22e170fbe",
+      "bytes": 9254
+    },
+    {
+      "path": "db/migrations/manifest.json",
+      "git_blob": "5cd0b3fd34cfee3bc372eec7ca0b79a932deccd4",
+      "sha256": "b2e59ca0abc8d077c0fdad72c574e265bec95a455bd9f81a59d2755c80cd2f60",
+      "bytes": 11538
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "git_blob": "8a31a2e2d28076d2ee2be49ab9a1565da2f74bea",
+      "sha256": "da478cba97703d8e9c5d128d7ac2ef067b2e5c2b1d2606dac40656f9d1c1a5f8",
+      "bytes": 90165
+    },
+    {
+      "path": "docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md",
+      "git_blob": "9190833b99a49728e05c4ef6f3c6c4280cb66167",
+      "sha256": "7e9be9f8872e96d5ffdbe2d78e07672a52b9185704a181e7bfd9453364cbc2ea",
+      "bytes": 61034
+    },
+    {
+      "path": "docs/EVALS.md",
+      "git_blob": "72ba436c080ece569f47bb0e75b660d2a4c45663",
+      "sha256": "97fabc925e86e64add91dce5b826b39e0c1aa4212066a8998aef80bdf16b90d0",
+      "bytes": 99812
+    },
+    {
+      "path": "docs/FACTORY_BASE_REFRESH.md",
+      "git_blob": "fbe6fe3f89ffaa08331528a066ab59f8e5023f00",
+      "sha256": "163b8da47ee60d3e3d1485f46f79ac1b95317df2001c7b21bfc35864bf7d00f1",
+      "bytes": 7830
+    },
+    {
+      "path": "docs/FACTORY_REVIEW_REVISIONS.md",
+      "git_blob": "47508c391f85a598bb3e134f6490cb3536360bdd",
+      "sha256": "d937095444de3f2cef20d18dae7d34d7058faa0f9c739236429c4fc0899812cb",
+      "bytes": 8736
+    },
+    {
+      "path": "docs/SECURITY.md",
+      "git_blob": "ccb451c47571a2e5113e93bad7b5a7237bbcbd46",
+      "sha256": "57e12ddd550a1a44c15ad084c8ce64a7bb7b755f5849354b9f278291627e8b5b",
+      "bytes": 51809
+    },
+    {
+      "path": "docs/VALIDATION.md",
+      "git_blob": "55c5d5c0a0f781bb3ab23b181a139bfad6920a07",
+      "sha256": "9da2be82e98b42446f05fc5d344f2b40dd5cf9be52a4689a19f2e61ad4702262",
+      "bytes": 7233
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/README.md",
+      "git_blob": "4c93103902d2e2ff0259ff48882994e65f182684",
+      "sha256": "a579491b99bdab1fe6d5f9f430c4e4ba72c2dc33d68cc8cd0b6d08e51529faaf",
+      "bytes": 4940
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/canonical-driver.json",
+      "git_blob": "8658d0bc77c16b398f0e5a020a287dc446fe58ec",
+      "sha256": "4f4dc232fbed933bd94fab59e6cdd2bca657a86f763d77eebb8b521e57017b6d",
+      "bytes": 595289
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/canonical-install-root.log",
+      "git_blob": "44d697d2db1db3120892476b0c538a0942a8814b",
+      "sha256": "62ac20a837d95d9511818796b68a1d6ba8b28df8585fe053b3af720e63951f1b",
+      "bytes": 84
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/canonical-install-steward.log",
+      "git_blob": "2661f6732aee106165385e30ada0bc08bbd86701",
+      "sha256": "52995698c9c366ce4723898c79ca26b45e8d26d73587d12fc1135e85227c8915",
+      "bytes": 27
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/canonical-install-web.log",
+      "git_blob": "b48b847041881428b403632bfa491b42b2c31e71",
+      "sha256": "8f27abefac8829749b23f27fd255b80f9a728ebf38794cf98606aed9afc15fb3",
+      "bytes": 85
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/canonical-pnpm-check.log",
+      "git_blob": "a9e6222a0c9752fff8e492a7978d385adc9d77cb",
+      "sha256": "0d17909009a2f8867e0fd17179a84a38f2272f9597e2311db8350e21c131e078",
+      "bytes": 9492
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/canonical-report.json",
+      "git_blob": "9ae9a5b1b503fae4525e69556b1d81560d3d1eda",
+      "sha256": "e79561ed834736a1e92461138e98abf82b75871de2570d7ecde05ad914b26287",
+      "bytes": 577565
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/canonical-source-binding.json",
+      "git_blob": "efb8145a237aee167bf98411205405f3b62fff59",
+      "sha256": "41649cdf210ce5dfbdbcad9bc23ea0dea7e3ba4f7aaef72f10243416ffacfcac",
+      "bytes": 2737679
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostic-r2-build.log",
+      "git_blob": "2e949711bac0b9035d45e120d64b04ebf225a77f",
+      "sha256": "d2eb9d84b5587880f10e5a81c118e19278f78013134a0ad6b5d9c9c37077a29d",
+      "bytes": 268090
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostic-r2-list.log",
+      "git_blob": "9e1e85fe4be1b1aa765101992361ac85029bbccb",
+      "sha256": "6aec7808e87e302c1b586b1d5a82bee7427fd4388023388eb781261cd2dc5586",
+      "bytes": 4823
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostic-r2-parallel-8-spans.json",
+      "git_blob": "079229129a90b63df0a8cb08691c28b78fdfe43a",
+      "sha256": "41ece7a439ce6cffcd77bb994fa9c53a35a9c002f2a119eba6e001f5c7ff0321",
+      "bytes": 613652
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostic-r2-parallel-8.log",
+      "git_blob": "b595b1a08010e96c19d30170ddae0c140e260997",
+      "sha256": "69d1a9379b6b63d0b3cb041d20c443d9b9155e4c21d2e9e82a3c23e1de72d2c0",
+      "bytes": 571838
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostic-r2-serial-1-spans.json",
+      "git_blob": "fe19aa9869cfdd4bce45b19026cf7ceba0cf22c4",
+      "sha256": "3556661bfd70015e08b35174136055ac2e06a4500c2a14294d0fa150cfc0fe7d",
+      "bytes": 615086
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostic-r2-serial-1.log",
+      "git_blob": "84776d9e51d83abf5bd423d27a7a956e1109f5c5",
+      "sha256": "7dee03b3683964ac55f11cc82c7afa55cc5610f6f47aa3622b4ae5dd76e11f1d",
+      "bytes": 573121
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostic-source-r2.patch.json",
+      "git_blob": "a3d33f5c1baa4c99e4c8928c7e6c66caff6484ff",
+      "sha256": "0d092982edef994998935a2f83a659bb174cda3f5b1812178682c5627b3685f1",
+      "bytes": 4511
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-export-diagnostics-r2.json",
+      "git_blob": "f2e3e0c9db07cd07e96779212c6ab5194066b672",
+      "sha256": "e3dcc57029c28b42a12810d67415adb01fafa9c6fb7a044a6a76171878ef2b21",
+      "bytes": 15870
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-comparison-r1.json",
+      "git_blob": "7be0c7c69f2950550385ff84ffb9df4b3a721c40",
+      "sha256": "138d9092475cf5a589a5619f612b20c494dd1dfcf2c50284c32777365128b599",
+      "bytes": 36719
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-r1-build.log",
+      "git_blob": "4d010fa36ce1a8ca5f644889ebe9c0e9ec5042eb",
+      "sha256": "12e8c3f476261a059a54c1826e7a87c3177c763d6618307c9be00d175834f714",
+      "bytes": 268090
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-r1-list.log",
+      "git_blob": "67b6fc6555d061c75d561530e7d4e1526539bca3",
+      "sha256": "65846dd9f20f47747a1a936233064f5c4472d0b5063f02fc918c2669ea5d255d",
+      "bytes": 26147
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-r1-native-default-spans.json",
+      "git_blob": "70b0aca4522b2955309e3fbbda36ccb40fcc0d07",
+      "sha256": "bfa66e7fbf96fcd7032902a97dbfd7b9556df0b1d3cb93f9ec08bc5d747b3827",
+      "bytes": 1465078
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-r1-native-default.log",
+      "git_blob": "cc892e6f8bbc97e4c9a2da9f3fd3a32c84699594",
+      "sha256": "46f52a82b55dc90f7a9d6c33a65bc581b38254fd2bd9371edf5fb148d3fe1876",
+      "bytes": 1358517
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-r1-serial-1-spans.json",
+      "git_blob": "02b83953c06b4942ebe1f9cd1291b797fa64ea5e",
+      "sha256": "01749497cb69d780c22482a7c479b4ebcc40b660d7fbfcf145ac5e82141c4e42",
+      "bytes": 1467474
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-r1-serial-1.log",
+      "git_blob": "90028edb41ad31cdd3d75ee49158dea38d143c9e",
+      "sha256": "dcd1fa9d10d171383c9c60c1f19add8a02d20808c5567339a3a0f8ecca8185ee",
+      "bytes": 1360612
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/diagnostics/issue213-full-runner-source-r1.patch.json",
+      "git_blob": "a3d33f5c1baa4c99e4c8928c7e6c66caff6484ff",
+      "sha256": "0d092982edef994998935a2f83a659bb174cda3f5b1812178682c5627b3685f1",
+      "bytes": 4511
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/helpers/issue213-owned-windows-process-r1.py.txt",
+      "git_blob": "31edb93423547418560f14e975331180f089f5fa",
+      "sha256": "8f7cd362fa5678c0ae43567f79787aaab30c5a84567468e2176d7c72ef741c9e",
+      "bytes": 7796
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/helpers/issue213-passive-diagnostics-r1.rs.txt.txt",
+      "git_blob": "c68fc2a22701c94cf34ddcdb13d3b03a7e925357",
+      "sha256": "57f6272b22a3e8b36c8a3a7fb331f5f85f5f4b5952c503ba1780915fb06f9c23",
+      "bytes": 3528
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/helpers/prepare-issue213-full-runner-r1.py.txt",
+      "git_blob": "e1a09274b20ca12af06e13cc1c79ffab58625527",
+      "sha256": "23f159124ef11a8d4b89b5ae64003142fe2e37897a12d528928604ef051482d0",
+      "bytes": 7234
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/helpers/run-issue213-canonical-bound-r2.ps1.txt",
+      "git_blob": "0ed9f72f22305aea69ef19f7ce0a8f4064ade6ac",
+      "sha256": "cb9e8cbaf25649e9020da790970ba64cdd211c97a7d902fe86c3604a3a15904a",
+      "bytes": 7909
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/helpers/run-issue213-canonical-plan-r1.ps1.txt",
+      "git_blob": "b17c681430944e7a30d9391e0c74c7b070e78ffa",
+      "sha256": "b4323c9430f1b25ce01acd6432cf0295b9b69fc762cf96f952e4ac8bb1b8b62f",
+      "bytes": 4645
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/helpers/run-issue213-export-diagnostics-r2.py.txt",
+      "git_blob": "90f6f7e485a53977a65f82c09caa30e1c76ba83d",
+      "sha256": "0332a237c201aabfd6b135084b77cf185d6f5e02ad3509368837107d3ebcee09",
+      "bytes": 15148
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/helpers/run-issue213-full-runner-comparison-r1.py.txt",
+      "git_blob": "e87b304e270ccde3440163d784d241cfb617c0bb",
+      "sha256": "56f002654d29ca26d6fe50d24c9a48d418dcf7c60552a4d16b3e9977e019a21c",
+      "bytes": 15239
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/helpers/run-issue213-plan-regressions-r1.py.txt",
+      "git_blob": "1697bd8257b303cb561d644ed51f5c093cddad40",
+      "sha256": "bf2ad5645222191f2686d3c51e62cd872df9131c92d55582ff78a55edf3ba443",
+      "bytes": 4903
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/historical-observations.json",
+      "git_blob": "277de58d8233de6cc00ecb85c8062cd87a699e78",
+      "sha256": "eb4e9013cfb129120907089c18cdfd2ad55062fac72322169c9df0844202e058",
+      "bytes": 15499
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/history/canonical-wait-r1.json",
+      "git_blob": "03fa2d0b7ec888016b2ce54029d10580f85cf0c1",
+      "sha256": "ad5d80e4faca7857818239c9211f6ecff1e0d4d8703a7999c04855cb16236960",
+      "bytes": 1369382
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/issue213-doc-generation-r1-preview.json",
+      "git_blob": "219c8cb8a2be2fb35c008a05226980638a2eeeb0",
+      "sha256": "326351f16b2d22ed99123000804d648a66ce06419accba303af0ac81baff0890",
+      "bytes": 2461
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/issue213-doc-generation-r1.json",
+      "git_blob": "3303b9fe8355023c98f3366cb577c81b515e03d5",
+      "sha256": "0448e4566d1d857b2729237cc97794dd88820783c375603ee7e6697a9cdae5c0",
+      "bytes": 403
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/issue213-export-diagnostic-analysis-r2.json",
+      "git_blob": "da3358c8ab14a91a55b43d7604e43262175e99f0",
+      "sha256": "ca8590aa1058661fca6b40ecb970bf3cb45bb2bdced09af94d73fc1c981ced37",
+      "bytes": 25419
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/issue213-full-runner-plan-r1.json",
+      "git_blob": "2b632873135d45521b92a7bb465ba37e2f910aeb",
+      "sha256": "dfe4671ad2c8760679f56810e90a57dd611963314d931da350bdbcd516a1219a",
+      "bytes": 1907
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/issue213-plan-green-r1.log",
+      "git_blob": "051d0a7ba2b818a3d3b7d964c649d1d3c1d28292",
+      "sha256": "002747b7bfb49e8ab1bcd5f3f4614b9110374942c032636d942015f8f35efe95",
+      "bytes": 7861
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/issue213-plan-red-r1.log",
+      "git_blob": "783a2e618288899b78f43a173a27db0d0094d09d",
+      "sha256": "a535786a87a440282e5ea600032d9d1ea0da220eb40f01d636e0ac1f1b8e276f",
+      "bytes": 3527
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/policy-green.json",
+      "git_blob": "312bf311bbf803dcf4d72eb688fe333358e4b17a",
+      "sha256": "aec3c8c0cbfc57039ce162a940b54f58cfac1444bb521492573b5075b5f556a7",
+      "bytes": 2691
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/policy-red.json",
+      "git_blob": "8703c60dab3567f8de03926e8faf85ba99d2a142",
+      "sha256": "3be6f5dcbaba2d83ed7d319694ef38d1996acf81e7982da5a29169a54f8c8452",
+      "bytes": 2800
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/reviewed-code.patch.json",
+      "git_blob": "65cfe73bf6099a5acbf0307c9218ad7669ffc756",
+      "sha256": "ea6fa3578dc3d349de2b6a756a3d808e8c7d13250a37ebf7618983e85fe868a4",
+      "bytes": 10403
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/source-equivalence.json",
+      "git_blob": "8b60c6c0170da7702cc7325ea3207963abcb2c93",
+      "sha256": "ecb223bcbf6b0ff9a0132ddee02562a9681f5ca8aaca3c2b46ade3c15567ba5d",
+      "bytes": 1183617
+    },
+    {
+      "path": "docs/evidence/2026-09-29-windows-validation/summary.json",
+      "git_blob": "73c915c5672127ed1a6436231ee7fab14c244fa3",
+      "sha256": "3e17a2dd4c34557356eadda663917f921ae577a95db2a8d5b33123c643fc9461",
+      "bytes": 31936
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/README.md",
+      "git_blob": "8588c71bf7fda6f5b41589fcfd4a57e97de6276a",
+      "sha256": "018def3b3b8bf6f7a3848835a867aab0d07237141d9f4fec58cff27a4c08016a",
+      "bytes": 3676
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/acceptance-20261001T061529503-2036506cdb8249cca699941979a20108.stderr.log",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/acceptance-20261001T061529503-2036506cdb8249cca699941979a20108.stdout.log",
+      "git_blob": "0a60e3b5ea066da6062362144a569cbb505d94fc",
+      "sha256": "9dc7f5036ca50d8ac7f6839f93637f35f9376c953adf0968ce46633995a975b1",
+      "bytes": 1234
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/acceptance.json",
+      "git_blob": "864e7aab3424836d33631914fd241c34d7c4b54a",
+      "sha256": "a33c5ed70303c65a50dd51606f573fd227fa5cce74eeab81a3c1629163215c7b",
+      "bytes": 142379
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/correction-awaiting-review.png",
+      "git_blob": "ad018ca41ae3cfc940f1c3bb5017891ada405f4b",
+      "sha256": "490b8c6ae50c76daaa567ebdc3c6e5036a4212cb87bc2f0242556385ded2d810",
+      "bytes": 354677
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/correction-mobile.png",
+      "git_blob": "4b6288ae550ff222570fee078bdcdd577f6f3de3",
+      "sha256": "adcdff9c2dc0004e52449321db70f3b70da6000f7f4ad66612f291fbdb18494b",
+      "bytes": 356161
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/correction-published-history.png",
+      "git_blob": "256e5f711720d9638656c4e2ee96b4493fb88d41",
+      "sha256": "c204ab57c8bfa728a9485d130beb124f8a91465a8ccba6fbbfa6fd3ebed5bee4",
+      "bytes": 380957
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/driver.json",
+      "git_blob": "44d4cca5af2f211c368d8d733c666f3ec162016e",
+      "sha256": "e1acff29f3cf427d48b5be86e4bf6f75a42712cfec294a36402f4b8878167d98",
+      "bytes": 457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/owned-fixture.json",
+      "git_blob": "3c8985f3a6abb99cc7563b74d4b117343520bf3d",
+      "sha256": "10d6934a66c1b846bf9eb4cd3dd89f478c70b3ec27e56428f0c3d1f17b33d54d",
+      "bytes": 3393
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/preflight.json",
+      "git_blob": "d08189518d1958d529ee5d5ea512b74381598cae",
+      "sha256": "a43d692c201e849dd9de51098a44149b4fecac1c2fa48232b247103dc2d605a6",
+      "bytes": 1383
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/screenshot-review.json",
+      "git_blob": "3e9a56df886799ae74a3f0819b915735faa8eeac",
+      "sha256": "bf55115a24113fa1703f3bac32f2039d729a0f8c772060bf1d0e8c632180894f",
+      "bytes": 3164
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/server-native-identity.json",
+      "git_blob": "bc61120f527b17ba73dedbb75be4821fd5cf8cf4",
+      "sha256": "46e319d77507d6b424629b2f48e36fb8ac1257da4b43f6236db9b44a574db08d",
+      "bytes": 616
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/session-exit.json",
+      "git_blob": "6190a602dc8ef6a104afbb88813ca29a42c0a4fb",
+      "sha256": "7d9af4bca4adb89bcf7956be3e5374ee100e4aac19125a1c0352a78e54913ecf",
+      "bytes": 1367
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/verification.json",
+      "git_blob": "039ae6945a8d96a6d54575413a79f3af0980581c",
+      "sha256": "2454c54b0ed6de5568eaefe80bbbed62fbc664ee47c8eed592f8db1d1a61b013",
+      "bytes": 4036
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/acceptance/web-native-identity.json",
+      "git_blob": "1cefd57a06cb94be8263461841fb56949b86d69d",
+      "sha256": "7181c038ff8bbf8b546ab30a050b964f0a80f3e3920e9a7f8fb4204bbfdf69ec",
+      "bytes": 678
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/canonical/driver.json",
+      "git_blob": "203d9ffd229a3a8fb33135c5a264583c290e6db7",
+      "sha256": "e013b88723007f53c36d7c21550ce0d309b69fbf5fe157895515c83b957ba236",
+      "bytes": 5184
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/canonical/pnpm-check.log",
+      "git_blob": "2542d01eae131a906dfd8585fa4a6d92aa984143",
+      "sha256": "dbe50fd60175ad8c4a97ad6071f2a42b2c94fd24e2b4c69d9bda22b9f995fa6a",
+      "bytes": 9732
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/canonical/report.json",
+      "git_blob": "947d94c0320d0fd7db528c2eae63b939437fadfd",
+      "sha256": "45932c3181716cb4904a91da03390d7cdf1dad7f040fbf7e2457f0488b9ad089",
+      "bytes": 13626
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/canonical/session-exit.json",
+      "git_blob": "37cce591a9deb61f376b79c279e2f2f01df456b2",
+      "sha256": "55517498091bd81b11734fd1ea46b6f4607e21f62df219ea1a5907627918a03c",
+      "bytes": 8820
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_acceptance_r7_preflight.py.txt",
+      "git_blob": "cd7a02447c6c77ab2a55c0046e5931f0f2033417",
+      "sha256": "629add90b469a28285bfb227831bce8db457885afaa31e6b2b2fdcc1d86314ce",
+      "bytes": 3075
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r1.py.txt",
+      "git_blob": "6c1314b3ededf25f5c59f6a849415f56f2b56e70",
+      "sha256": "185d4cc04d80665d1369dfb4c9b07ae3edc00e838c2b0fb946a615cc83ffc01e",
+      "bytes": 63413
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r2.py.txt",
+      "git_blob": "61c95495862f6d3f64b32eb658a04b028b1e6745",
+      "sha256": "6a0226c82c88b46b77d6a698d4fbb5ca8a143df9bad9da5e91ddcf61849b9a0b",
+      "bytes": 70532
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r3.py.txt",
+      "git_blob": "4dea29ce3b1e70edd7d6a102155765b2f5d81ed1",
+      "sha256": "155a8cb681afc18e693a7150bc1e0b3e6b932fa5b6de159c9c49c67f22bf6615",
+      "bytes": 85559
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r3_pre_bytecode.py.txt",
+      "git_blob": "0c682c98f920888417ba2646d3f2092d7df764a3",
+      "sha256": "57c691ea50db1b2bed8155188167cb2c4d65a53d5d2048c05c300aabbb92ddcb",
+      "bytes": 85211
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r3_pre_cargo_guard.py.txt",
+      "git_blob": "7f91484257629b4aa074c89e2cb33b39887508b0",
+      "sha256": "21ef44893a9d7b713391248cda5f5c69e10cb914acdd28ce0495f628a532d1ad",
+      "bytes": 80238
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r3_pre_install_scope.py.txt",
+      "git_blob": "8d81733970d50de24c994c0371d330761bcb393f",
+      "sha256": "7c1db057bb1d6905e166f08658dbd77ba13305df18b63b461d0b343d03aae894",
+      "bytes": 82460
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r3_pre_projection.py.txt",
+      "git_blob": "393872007522464b067e5b398dd9bd1f23b56a13",
+      "sha256": "ea4437c1251005bd52c005aacd4fca08e06a2bc1c16db94e1556cc5d55c86303",
+      "bytes": 84225
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r4.py.txt",
+      "git_blob": "73a97eb7736ca91208e70321331ba9f0e730804a",
+      "sha256": "86bd1e5af0403f38956b9e95200d31dc136d7508c082f962af2061cbc4e030c1",
+      "bytes": 87967
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_publication_r5.py.txt",
+      "git_blob": "6816534a5bc71cf1b629fe5f28260fbd0c9ed9cc",
+      "sha256": "423f03a5909a4c924a739cb77249a0759005f12bf829335b2c3e81ed77777253",
+      "bytes": 88978
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/issue95_windows_prerequisite_r1.py.txt",
+      "git_blob": "6b0d72980bc82e411888dc59b08dacbc3b734c69",
+      "sha256": "49191c0c448b88bac5c0a69dbf86075e9e259d9ad81f41701fe391500c726e48",
+      "bytes": 5965
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/prepare-issue95-publication-r4.py.txt",
+      "git_blob": "8296b01ce2435d7f80bfd23c02cca833f785c012",
+      "sha256": "da8b811650a9860d5479d3141eea5f23fbdbec8c5d6b8702a9f0cca9c775b407",
+      "bytes": 15516
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/prepare-issue95-publication-r5.py.txt",
+      "git_blob": "47f7defe28a774ff3ce6a0c17272b87d381c67f6",
+      "sha256": "0539fe4bd86584787c1fd51384d455c465e9ac7af79407a8f4593fa017f8655a",
+      "bytes": 15655
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/prepare-issue95-publication-r6.py.txt",
+      "git_blob": "2a29435758fe8c7ed80a16a1da513448d5c77183",
+      "sha256": "889e44618fa4b06cd144bb7b2a6f369335a55a42bdff967bc6861bc6a9390a65",
+      "bytes": 12742
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/preserve-issue95-failed-assembly-r2.py.txt",
+      "git_blob": "138ac5e824003f981696ecd5e2917378b6510209",
+      "sha256": "bdea9935275ffe1e75966015aba4c44edfe72149cf230029bd275525489cb0d8",
+      "bytes": 3319
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/publish-issue95-r2.ps1.txt",
+      "git_blob": "aaafe77a82b346952b341fe9ed113f8cb3a72c86",
+      "sha256": "ceb2342b4a0720f53491e5b7b86fa9cd5de71d8abb35b1da11c4442fbbeaf338",
+      "bytes": 27845
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/publish-issue95-r3.ps1.txt",
+      "git_blob": "1d53699157b46500671daef554e32a96e86d0fd6",
+      "sha256": "bd3ef416d7efd29a83d5736370d960f8238df1f02c703e1e822ae0ff29a06d56",
+      "bytes": 28211
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/publish-issue95-r4.ps1.txt",
+      "git_blob": "876c7f2edc6388c7996696fbd1b494ed24f29b8c",
+      "sha256": "314bbb4e908653eaf4f814154afd1867e9ea808aa1468e483458e022dbe2e380",
+      "bytes": 28264
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/run-issue95-acceptance-r7.ps1.txt",
+      "git_blob": "fc36cfeae49086cb18bcd6f5b14d4f54809eda40",
+      "sha256": "919a12bf3ef4b625a2f3a9946053a9326974740e7f760427fc245d489ac737c1",
+      "bytes": 1580
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/run-issue95-evidence.ps1.txt",
+      "git_blob": "d6e607bde828159e8a5a5887d50ad60f03bb27db",
+      "sha256": "5df1674b459996766d3ed995af7d2db6f548201cd05f21625324b486cec05236",
+      "bytes": 2569
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/run-issue95-native-evidence.ps1.txt",
+      "git_blob": "6d050183ab015a8288685c0a4cd71bcaa05bb328",
+      "sha256": "c899cd9231444511ea176521d24f7bc76ba5da5aca429d5f4439ed486856cb99",
+      "bytes": 2655
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/run-issue95-store.ps1.txt",
+      "git_blob": "c46ac4fcdb35df9cc9a0b48c251a7ca357a1c3b1",
+      "sha256": "7bc5c777f6aaa218fe9bc59ed84feae5e7de1b46acb95f69adb463a10e4d0608",
+      "bytes": 5851
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/verify-issue95-acceptance-r7.py.txt",
+      "git_blob": "a0611545c9c2dde4b8fa56c0533b653d51ebea9a",
+      "sha256": "561990e8f7bb6e23d74b2301d16e35cbea5a3b327eb4a2c5aac6a941142736e8",
+      "bytes": 9440
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/verify-issue95-cargo-guard-r1.py.txt",
+      "git_blob": "1434d093d2ebf31128890aacc7cde90ceb83cd6b",
+      "sha256": "c7aab93b829cc7bfd5e41b0876f78c55fe20304b30040aebb2a278079593974c",
+      "bytes": 3841
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/verify-issue95-cargo-guard-r2.py.txt",
+      "git_blob": "5e9171ac74c2797c882d544586b93cceea575f7b",
+      "sha256": "cbe0f0762d7661ca5c8c8d64826b851e01b8047756eea3c3531a75ab62e9e5ee",
+      "bytes": 5768
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/drivers/verify-issue95-publication-projection-r1.py.txt",
+      "git_blob": "70e3c50e4e4de1c5f389699de53f9efbb1b77346",
+      "sha256": "48bea981b82a8165c7e2385b8f6929a8f440075f238c55546cc48bdec4de45e8",
+      "bytes": 3800
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/domain-runner-r6.json",
+      "git_blob": "355f73030daa9102d724f5a791c4ed786901ac80",
+      "sha256": "67f5ded6bdec8a92001d82696e9d71bf2730113f9ebfcf3cb9b2357c90e37f12",
+      "bytes": 6093
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/domain-runner-r6.log",
+      "git_blob": "5c5eab410ca20231e035060e4c3f70624ef6a8bb",
+      "sha256": "bf9fc2a4b90e3d22aa04ecace529742e676a8f5c731334214949f1eaf3ceb923",
+      "bytes": 3280
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/frozen-install-r1.json",
+      "git_blob": "d6fe05b754db76373130f6cd1c931a04bf560068",
+      "sha256": "7f52c4e5d3814b866cdf8611f5d519c1d49cc2c7f2c892ee7a174b4e94fa5972",
+      "bytes": 5791
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/frozen-install-r1.log",
+      "git_blob": "8a271fcbbb6161c6ac712e8b9a1ea46b9c031b55",
+      "sha256": "e2b98d98f8aba76fb2b0d52032463e771dc9f30d0aeb21ac843d6d2ad039429f",
+      "bytes": 85
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/late-stop-focused-r1-session-exit.json",
+      "git_blob": "d37c8dab9a289f3e00729ddd1605d3c62cdecd71",
+      "sha256": "1f68c01a8f02ee1639c6c41a191bc42bc31d908da2eafcc892a5d962c6892237",
+      "bytes": 147
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/late-stop-focused-r1.json",
+      "git_blob": "2342a50b17fde8a472056bf53effdd555868ca54",
+      "sha256": "cfbd704da732a1a77164cbcbd5325a2f7ca069acc7e42847a6bd6950c048a906",
+      "bytes": 577225
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/late-stop-focused-r1.log",
+      "git_blob": "89ff3716cacd129b43ba7edfd91a785be01c9cdc",
+      "sha256": "c81236839c972e3e1db54018f3faa687d41f4c14e78d93dd6d899cc782547143",
+      "bytes": 392
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-build-r1.json",
+      "git_blob": "9b9e0c89bc4f7f7adcff2df3b4e4ba1ed3d3cf9a",
+      "sha256": "3fb90e5efc6455e7bb70487ea02a0d8711c702ed1b04153514a9cecdf057b485",
+      "bytes": 576986
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-build-r1.log",
+      "git_blob": "f42ec9856e86fd0fa1f26733a05da83c120b3000",
+      "sha256": "ce78909944495788dbaa8c9370184f94b0e0829d72efb608a4d1565c1e0aaf24",
+      "bytes": 616
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-correction-parity-r2-session-exit.json",
+      "git_blob": "851cffdb7522d79020448372ddedc10e136387af",
+      "sha256": "f91a162ed065b8ac2da8e8725fb7b384f6005d7792b0dde90cf2e41949b8bb33",
+      "bytes": 213
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-correction-parity-r2.json",
+      "git_blob": "25ab5a1cea0c494acf4330aa7d285d3f7e5eb6aa",
+      "sha256": "dd9ff521a80bec6b2dd7a35e1afd8322d8b4a47a259b4d595e5164fd88c56d05",
+      "bytes": 577202
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-correction-parity-r2.log",
+      "git_blob": "4291c07fdce62a8aa6db4686102bf34f6ecbf70d",
+      "sha256": "df487d354e5f234cc53a161b4dd3820f0e90228d99843e5b101267d8144de558",
+      "bytes": 2537
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-deliverable-parity-r2-session-exit.json",
+      "git_blob": "ebaea79cdebd4277ef5069d015adc5bf0b09cab6",
+      "sha256": "6b7673f2849a45dafcb5895f4db683be407b2c9b8a9f7eb6c3038c8570ae60c9",
+      "bytes": 214
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-deliverable-parity-r2.json",
+      "git_blob": "9414861d01825fd03c2a002f76d5a90a9de0e311",
+      "sha256": "400ed7108cd1f132434a67fd971a70e8c7c2ed2b7d08a22fa5d82119c7606705",
+      "bytes": 577201
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/native-deliverable-parity-r2.log",
+      "git_blob": "b112eb1409c3baf126ca5c64812493829d5683b7",
+      "sha256": "5a0946f8016b26c8c519fde8ce424c64a9b2dacbd420aebdf6797375c0fa33fc",
+      "bytes": 21848
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/node-prerequisites-parity-r2-session-exit.json",
+      "git_blob": "f75d1c9e24639c2851ab834275bf23a4e6e64a6f",
+      "sha256": "f5520419f23b2e0cfe2c383bdfd9b88758dcbc2a7851b553ad7e01f524da83c5",
+      "bytes": 214
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/node-prerequisites-parity-r2.json",
+      "git_blob": "f19f0a8258c142f5a70bf6ca75bc0dcbcda19504",
+      "sha256": "9cc5604c6823043060785e15962ebe037fa1c0908ab407b20e88aff545271c3a",
+      "bytes": 5764
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/node-prerequisites-parity-r2.log",
+      "git_blob": "5262e1bbb37a8a7803d2a26a89fe69a815879ef7",
+      "sha256": "c1b18b3d8056635a18ac50e8ec9a269ce2a79447fdff0ff655e1cb14c907e5d6",
+      "bytes": 10039
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/store-r4.json",
+      "git_blob": "1fab6a1ed697747078769359ad54006d0f41d8e0",
+      "sha256": "82a30adde6b4b97f508bf330ad984a0893c674e68dfa69816e788998da1689b0",
+      "bytes": 577225
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/store-r4.log",
+      "git_blob": "dec836ff5f09a3ec85755cf3084eb34a4764503f",
+      "sha256": "00043c7834b9028e8607d99318849c70acc3833a854920ba002939ff031117fe",
+      "bytes": 1249
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/web-build-r2.json",
+      "git_blob": "e6db1f03c7a364ad0d8a1a40aa69bd2f4bf7f06c",
+      "sha256": "2a10a0bd276691d1aaad400cd5039fc015a727ae719a6819839c71ca54df1781",
+      "bytes": 5655
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/web-build-r2.log",
+      "git_blob": "dc31fdead2ed648b2e624e0d0c74ac7a11b19eef",
+      "sha256": "0d14cc3d338967f2a7ede06a8aecb2753a26c933326cc33ceb5c2e857e2241cd",
+      "bytes": 920
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/web-lint-r2.json",
+      "git_blob": "7480d136a5edc53589048071c3f11c663a1e5a19",
+      "sha256": "d2e8e13eace1782b7c50fffe9fa6fced7c9d264a6f47b80134a8aa175306d14b",
+      "bytes": 5653
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/web-lint-r2.log",
+      "git_blob": "4396e0416b027cff7c6d5cb814ecff0fb176ca4b",
+      "sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928",
+      "bytes": 36
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/web-regressions-r2.json",
+      "git_blob": "07b547be304510079e18039019e18d6e1b44d9b5",
+      "sha256": "61e0f0bc34a73f2224524e5614b687daa8bf2c0c5967e82f57773886d24905cc",
+      "bytes": 6010
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/web-regressions-r2.log",
+      "git_blob": "1db3960fbbea8499576d6dbdfc5e4973b3b16e1b",
+      "sha256": "de4ff61167126a701bd7925801b636de1d9383e742e999a6ce344940d9f10b0a",
+      "bytes": 23813
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/windows-policy-r1-session-exit.json",
+      "git_blob": "38a7d9b4c2564dc637958a591d66987defffd430",
+      "sha256": "ce5ff011f282fb915cd059c5a4854457e66995ebd52db529f17bdf71f0a5ca0c",
+      "bytes": 156
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/windows-policy-r1.json",
+      "git_blob": "678a2436554f55a11a68095112e4288ce46e69fc",
+      "sha256": "5bcd6da17ad2341823a4a4878dad572b7f6cea10881a8dd5dd91200f353148cd",
+      "bytes": 1100
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/focused/windows-policy-r1.log",
+      "git_blob": "2802b31f1658d840079837d5637db64026702d80",
+      "sha256": "b674d130a6de8bca92870e1c042b22c8bae5dd23ebc40c589925c25dab9c59e7",
+      "bytes": 7860
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r1/acceptance.json",
+      "git_blob": "f7281f338bcb82c59986cdcad2f6de43331141b4",
+      "sha256": "08eb2c535c1ab70f3678e052844ba1f6d564f3723f1453939bfde9c801db54ae",
+      "bytes": 38209
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r1/driver.json",
+      "git_blob": "ae49e59d6545057ca5b7c2192bb5af9d875024fb",
+      "sha256": "49828405e5c3806f05a4ddc8ebc85f05ec2c3ef2ecfb1a63441fcee2c12f6ab0",
+      "bytes": 457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r2/acceptance.json",
+      "git_blob": "8b202e39673d80764af28f20d1f211533811ec91",
+      "sha256": "969f5e67ba5bba9bcd690dacebc3637dd3db57dcd90252684d32f13dbb289369",
+      "bytes": 54882
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r2/driver.json",
+      "git_blob": "00e62b3e83b30ea8f48ed7097f66283483856665",
+      "sha256": "30eb55248d67da32cd5d56f507c49605b4ac774eb445337ed10932a6ede432db",
+      "bytes": 457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r3/acceptance.json",
+      "git_blob": "1a76b8956d215e3ce91ec723ab539c013d632a5d",
+      "sha256": "d197a722e7825de9bf5c2d21a8d73365a442e21a5ec47b1f4b32dc1654eb0be9",
+      "bytes": 73032
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r3/driver.json",
+      "git_blob": "c5594cf5c27f7b51acc43b2cb4fd4b50d9ffc949",
+      "sha256": "10bbc820d9ed1595c9bff9163c42ae7831d2e6ff9389c658b22130fddccf8e28",
+      "bytes": 457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r4/acceptance.json",
+      "git_blob": "f446b0de473fb517667f59312838b71738f477f1",
+      "sha256": "cc27e104ae77c2e73745924eafadefe69100cbddc6064a33b684770f66de4fe6",
+      "bytes": 146870
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r4/driver.json",
+      "git_blob": "c8c9d15fd4c60121b999189285c47fa287f0638d",
+      "sha256": "aa638749dbe51c9fa8a15c19f1b7e901f2e35c8f50726a1c2f25d96b8892aaf2",
+      "bytes": 457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r5/acceptance.json",
+      "git_blob": "3b05584440c0a36842cf2e1689fcb4a233b6c091",
+      "sha256": "9525b7c2aaa8cd107f27d81226a04fe2fa9b86687e436bb12262992f1442edca",
+      "bytes": 146890
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r5/driver.json",
+      "git_blob": "5b9fbd3cad5f490fd8dd9c94e6567b1ef231ebfb",
+      "sha256": "6786a1d2f2963bf9e56068230111c442cdebadbd20a40667662b54a7a00f60e8",
+      "bytes": 457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/acceptance-20261001T045207947-365a1fee8de141afb01dff37a5c32f16.stderr.log",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/acceptance-20261001T045207947-365a1fee8de141afb01dff37a5c32f16.stdout.log",
+      "git_blob": "6d1482de1b6875d0f2bbe773304bc7d5eb6301c1",
+      "sha256": "3fa76259856d5d7b34759e9901806ed2d35c248bef618d3c7f9a4c23dd58ac72",
+      "bytes": 1234
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/acceptance.json",
+      "git_blob": "efea2cd84893befbd682c7d95a17079f82995596",
+      "sha256": "725c26c0250ce3e09e5fd6d158b40d52a07919afffbaadd43fbab99fead1dd1d",
+      "bytes": 146790
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/correction-awaiting-review.png",
+      "git_blob": "377977a18b143d3416f622c754354c83cbeb631b",
+      "sha256": "57fbe5acdb5cd58e0f9c1bc7c3d956c7fc51cfb62dd210afd0b35e40b6d0c360",
+      "bytes": 355856
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/correction-mobile.png",
+      "git_blob": "0fc44e2a741a373e33397d6dbf36b80b4356aa36",
+      "sha256": "8085bcfb02d90a3d887ce4ab36653c7fcc606fcce326d814125665ebe9810cde",
+      "bytes": 355418
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/correction-published-history.png",
+      "git_blob": "b38e193b90f4d3b83516b411348ff033d5140fea",
+      "sha256": "c9ae33928462f9192c12f0cc128922f9b770e53d1d0d81292aa04a77f023b1e8",
+      "bytes": 381365
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/driver.json",
+      "git_blob": "346afa4e0c9bf95280968d697ab36afc78689d92",
+      "sha256": "32394defa05a03b147277be57dfd2e01dc6d989a7f6db924289d10e0624bec83",
+      "bytes": 457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/screenshot-review.json",
+      "git_blob": "d7e671c9951a45fc12e71280743509888e65ba87",
+      "sha256": "610e96ac241623a9e60807896336decdb0cdd7b823bedc03a4fbce9847657bb4",
+      "bytes": 3016
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/acceptance-r6/session-exit.json",
+      "git_blob": "331046bc15e62472cf55258770cbc1d0f8fca118",
+      "sha256": "49e17d14cb23a44c7959f898bbbf917f9689e75804fc446ba596fb20ab53380e",
+      "bytes": 504
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r1/driver.json",
+      "git_blob": "dec23301c0d82408e4b75e80f8264c93e7836321",
+      "sha256": "34b1bf627f91dd74356739ea4676addcd998e24b0d8833367583fa9e8fdaa345",
+      "bytes": 5540
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r1/pnpm-check.log",
+      "git_blob": "27272cfed5601f44199e037eee861ce09b152417",
+      "sha256": "b1ad7910ab6ac99c9d930a259e1c3e4e77746e4a0cd30bece208b41d03b03b4d",
+      "bytes": 762573
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r1/report.json",
+      "git_blob": "6cc79649fdd038f3bf74f930e9ba138b0e7934eb",
+      "sha256": "27096c9cbc49b8b7f4c6b2ac7847c072da23cfabdd0e4eac667712190be8b55f",
+      "bytes": 599144
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r1/session-exit.json",
+      "git_blob": "651c7e3354a14a439729fc406a4a271932199d75",
+      "sha256": "c9ad418b3ef84e5256858c3f4256cbfb21d7a341ac390e32392d2ca5f634ade7",
+      "bytes": 482
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r2/driver.json",
+      "git_blob": "37e4fe26c19a8a384896b5531dbe3a417a815c76",
+      "sha256": "d1e5a6eceb1b39d7faccf9d7fd10ae09be82f8e32405c14f9149b52037c2c063",
+      "bytes": 8569
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r2/pnpm-check.log",
+      "git_blob": "60a62a956462e56a1e0d842f235431573f64ceb9",
+      "sha256": "d79bc20f70adb29fbab7e62dd893dd8962c3bb3c7900aa6179d800b1417f1c50",
+      "bytes": 79533
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r2/report.json",
+      "git_blob": "11ead924961fb96c105ba2674438285a38d8ee73",
+      "sha256": "448f96bd0af647834721b360423063e96b8fb12a26ff746f44f28ad7221fb1e4",
+      "bytes": 600161
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/canonical-r2/session-exit.json",
+      "git_blob": "26f0b146ee21460282bb095a611b87712c6cd3ff",
+      "sha256": "54218c24161b0dca100d4f3cf9780d57925f108b9cfbed965dff6534a561069a",
+      "bytes": 147
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/cargo-binary-guard-r1-session-exit.json",
+      "git_blob": "17cec5244a23214457a7bd203e0c0347e925ed06",
+      "sha256": "2187247407b3a914c87751e19f8704f8480903f0cccefd5adfa2c28e99fb2db8",
+      "bytes": 946
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/cargo-binary-guard-r1.json",
+      "git_blob": "5396c6c8329cd0f0db65d09ab8c23944cb9bc627",
+      "sha256": "a8a82c6a75b84bd64921f71bcf3d13d55aaa959a1a3548078825a60d1e8d4116",
+      "bytes": 1574
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/cargo-binary-guard-r1.md",
+      "git_blob": "8bc2c0a653811f65c7dc52f7eadea7ef41b28491",
+      "sha256": "25573df0b0597a3f492aa1294aa99c84545e40474de43fec71c2c9f556403026",
+      "bytes": 1927
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/cargo-binary-guard-r2-session-exit.json",
+      "git_blob": "e0a3210c3e7f1163e114f7dd8daa6fb56f9d887a",
+      "sha256": "bebd5324ff84beef6b2dab7fabc735917decb22ddfe55036d16e4cb93bed09a9",
+      "bytes": 555
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/cargo-binary-guard-r2.json",
+      "git_blob": "13f79f01f1838dfe8af0f3a3bcec236f97dee86f",
+      "sha256": "d047de91934794c6793554dca1497ea1764a4d38b8d3fdc805bd8444aa20db52",
+      "bytes": 9477
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/design-r1.md",
+      "git_blob": "6749079867c77540c7571dd620f87b638c91236a",
+      "sha256": "ade8de7afe0a4f125fb821900f945ebb2a74af8846414955a2e593759663762b",
+      "bytes": 3974
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/late-stop-diagnostic/driver.json",
+      "git_blob": "61376fc3e1ab9e2de2e0d120450453d99404d418",
+      "sha256": "7fe1872d66d3353507ddd50e91a96baba5d86f9028982457376a2e0a29e9081f",
+      "bytes": 577176
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/late-stop-diagnostic/restoration.json",
+      "git_blob": "7ee2f5b27484eed0670ca32781ce8bed9daef5af",
+      "sha256": "e5b99fd86e8add2be293c894e8a60b168530b08fe496bd68a454822874dc100c",
+      "bytes": 261
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/late-stop-diagnostic/runner.log",
+      "git_blob": "3aa2a6eb40f9dc6bbead7edfe097b901acecf57b",
+      "sha256": "3ab86d52ad88468a60918a5c1a3a76b8a5a836cd052d1b7550ae4323a0543eb0",
+      "bytes": 52571
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/late-stop-diagnostic/session-exit.json",
+      "git_blob": "a775ea03e454d6daaefb0b545482d8de4499018e",
+      "sha256": "276cf85f5802b9fe9742330c810014c4ee2c7a245902e234aa6299b86f7ac7f0",
+      "bytes": 805
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/late-stop-diagnostic/source.json",
+      "git_blob": "c56a3e947756bff2ac36d4bf665aae9ecddb1578",
+      "sha256": "db9f52dd8ca5ab502e799674d0b98a5f1ec75f5cb12c3018d7d567e3ca530f3f",
+      "bytes": 982
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/node-recurrence-red-r1.json",
+      "git_blob": "383313889c4344174274bb74ea5623f11aa38bb1",
+      "sha256": "d68cd6e245b2a771580ac0ff0bf62ff9d433402e79417b3c3d58964730c516ee",
+      "bytes": 5552
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/node-recurrence-red-r1.log",
+      "git_blob": "674ca9685b9652c18a7e056a5e52f573e4aa51e3",
+      "sha256": "c83ef30287ac65c0e80a140b4014a795cae2843ceee7e1b212d83c5bc29a84a1",
+      "bytes": 847
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-failed-r1.json",
+      "git_blob": "93cf491618c0f7bd8a73b61f296758f32ca99635",
+      "sha256": "01c83f487c6b2749d4a4d1ca8ee823e67bbdfea6604324c1d1fc49a2d8c75e50",
+      "bytes": 1429
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-failed-r2-preservation.json",
+      "git_blob": "eea3100df65c7c49ba5de96fa35968bc63f5c253",
+      "sha256": "177adcf3ddf3acef14361ce593f478b409758eefedfd6f177b18665cdb700f0d",
+      "bytes": 6223
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-failed-r2.json",
+      "git_blob": "69c2858289825ae7f9c743d65db69e2b452722f1",
+      "sha256": "2056633c34c73f2f19a4aa3d2c086c85a51e2625c5a7dc4b0378863e000034c8",
+      "bytes": 1408
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-failed-r3-preservation.json",
+      "git_blob": "51fca98f6fccf06859bfab184eda489e0bf97a75",
+      "sha256": "80346f2aafa5e4a9e1939502653ba039f9da64d7078b5c83c1bf08e5f0855448",
+      "bytes": 666
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-failed-r3.json",
+      "git_blob": "45a8b10d8c3d93de6b99c8c23bc2d470615589fe",
+      "sha256": "8a5a9cbb39d38c1686d8cec8f33acc0c33b843eafc72586c1ebfe79b3e4419e0",
+      "bytes": 756
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-r3-failed/preservation.json",
+      "git_blob": "af21e731ace8d53f4b1f43a86fe882dfd3b40820",
+      "sha256": "9bcaa6af8956ef57d3df6d792ca1b1594a7764c02e1839d30d8a72df88736a7c",
+      "bytes": 4721
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-r3-failed/projection-regression.json",
+      "git_blob": "09acd56914ae690b220105ebcd9b907cc17e721a",
+      "sha256": "b32b2ad42bbd94f1bb897194c52516055049d516d26b0d08d41caf6b050592a6",
+      "bytes": 862
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-assembly-r3-failed/session-exit.json",
+      "git_blob": "15d8bb59327aa7c31cbe1d0422d95a2d85e86714",
+      "sha256": "2ee408c4928085f5e8dcae521b8b7e1768c38b7a7281b4d7b72b2acb7374bee5",
+      "bytes": 1172
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-prepare-failed-r4/session-exit.json",
+      "git_blob": "590b23372c3aa98d1d2076aad05192c9c734bd04",
+      "sha256": "b399194fa2891d28f5052edd33acc0db7a0d6587a52b12cb2aac7dc602d43b4b",
+      "bytes": 738
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-projection-r1-session-exit.json",
+      "git_blob": "bacd4ac02af2dcff988afdf091e0a24cdab31c90",
+      "sha256": "bbf9c5c736d48810907aa3bdc5d0cd67fb8107a3dbdb97fa5b797cd568ab9416",
+      "bytes": 479
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-projection-r1.json",
+      "git_blob": "01e98fc8aabeab59aaaee06521c3ba09afd43466",
+      "sha256": "c61c611007ee6e0ce4175fc2062c88814400dfa8cebc6d64f8e0a888a377ac0b",
+      "bytes": 1001
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-scope-correction-r2.md",
+      "git_blob": "cef8968846581da5ed85969b64940d4fb9e21b94",
+      "sha256": "0380f77c49359212365992c4ff231d2b28f3a5c4f35899858b5dfa985d841bb9",
+      "bytes": 2439
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/docs.log",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/gitleaks.log",
+      "git_blob": "32154d527e4491ae813ce8e8d18f8efb251b603b",
+      "sha256": "eb71ad1df7f8df51596d590d95cbf39ce6e8baee1d10b7f18b32f62817492b0e",
+      "bytes": 82
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/original-assembly.json",
+      "git_blob": "fbaebd96b052cfdc849736df71ea27ce93a9167b",
+      "sha256": "7d70c66a3b815cfc5ad49184682b3f9b4bd8e55fe4f49dd44337569fa2ba1a11",
+      "bytes": 29636
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/personal-paths.log",
+      "git_blob": "fc10fc5cb95afe62b2e6edb11fd167e78cde6f2b",
+      "sha256": "7eb5fcc984d90e0ebcb02fadf8bc0f4128ac8bd0d3333f4b954ab0890e9c57fc",
+      "bytes": 40
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/preservation.json",
+      "git_blob": "eec6bff656bbfb3d8db4c0becb71db1f0416d035",
+      "sha256": "c12257d959d2ad45149e80707e0cf275f555cb691b7d0be370b87a56fd37e894",
+      "bytes": 31812
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/receipt.json",
+      "git_blob": "9f4f01ded06c078da62f1b11f09065b6e6175643",
+      "sha256": "942315004a685e9a1e8ce69030ec241090be6cf9a457e63a96484431f8e5e5c1",
+      "bytes": 48472
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/redacted-findings.json",
+      "git_blob": "66f58cadc5a0f50954bf7a7e212f3fe18e0f86a9",
+      "sha256": "cc58595bdfb06b394354ec1d6b01f1abef4c807dde6415129e99c55167e499bc",
+      "bytes": 82088
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/repository-docs.log",
+      "git_blob": "b384b36a9814b0c0e8952e9ee62a8a05c139afd5",
+      "sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "bytes": 276
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/session-exit.json",
+      "git_blob": "2b73556b188c42ec570e3b1dac7502556bfba46c",
+      "sha256": "bfcea2c1e0fe0d77ad4e67473c3706ba4c86d15504a690cca89b87557b580310",
+      "bytes": 1510
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/publication-validation-failed-r1/triage.json",
+      "git_blob": "c1f90891de56cb046e10d7e381595bbd24fbeb31",
+      "sha256": "e3d731e1b3cbe885fcbbf22bdb88b31153f29a55882caa8dbc58e0d72bf35a87",
+      "bytes": 22555
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/selection-parity-r2.md",
+      "git_blob": "97539688d6a453a3664cc9c633809086a7210eb1",
+      "sha256": "10a894a5be8cdb08a8a5899f25a045152b214de93ec2eb01683b3c4fd34d2c17",
+      "bytes": 4363
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/steward-install-r1.json",
+      "git_blob": "dfe763de9b646b579174ec32b726e1f652c178b0",
+      "sha256": "de57747c4a80e4f9707956079f40d48a3d51b9faa2b87a34977a78f2e03ceebf",
+      "bytes": 692
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/steward-install-r1.log",
+      "git_blob": "d77a66453959f916dcf1d580b87271205db36102",
+      "sha256": "2a0348d86c37f64db915eac12d0f7ffb12d3b34edd6a5008e93f660f0ac6c1c9",
+      "bytes": 77
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/store-r1.json",
+      "git_blob": "077ea25421a07d2601ed581231fc155ec016ebb3",
+      "sha256": "aa4538516a0e74aa779068bfc29e264dd4db7a6023799aecd8dafdc1fbc76374",
+      "bytes": 577457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/store-r1.log",
+      "git_blob": "1fe1c424f9c1035850c782bbbcf1dbe9b5c1089d",
+      "sha256": "74b156b542343146ee5612a70f08773ca13adc48caa6c7c30f7f7c4c36e7489e",
+      "bytes": 6205
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/store-r2.json",
+      "git_blob": "9a7306a30a6b877c913092869f39be28f4dfd4fe",
+      "sha256": "84563dd7873b0d91500326d0951dbd7ab2d060c86a8ee2d36285876e56dc80f2",
+      "bytes": 577457
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/store-r2.log",
+      "git_blob": "f9f0118ff66b4f418b2413a8cb6cf8c6974b6828",
+      "sha256": "9274760c3cb31f57941281fda41cdda8129589013e012d913a1cc81217f5db8a",
+      "bytes": 2050
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/store-r3.json",
+      "git_blob": "e330b315244e1063755c704cf71b8611252b8c63",
+      "sha256": "589da8168e5cedcabb1af4ef0577f52f9e5abf3e35c53b17048d4f564e4b36d9",
+      "bytes": 577386
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/store-r3.log",
+      "git_blob": "9bd643c3eb5e7aa752ef9f041181e324e9ea3242",
+      "sha256": "f97fc6af9c3e76b2d1f16ca02caa3c27a73361b20eede022105bbfc2ac762e9d",
+      "bytes": 1095
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/web-regressions-r1.json",
+      "git_blob": "fbffe4945fe822b1a777805a68f6c228d8931824",
+      "sha256": "f67347561c25f109384507c51bd09107ee2806f561dd819965febe3b4d60d6e3",
+      "bytes": 6118
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/web-regressions-r1.log",
+      "git_blob": "7b4978e03f545e7e9239151a50f5c7b8c4e41ee1",
+      "sha256": "dea4678ec189fdb8141521ad4b2c1752157778ea90d08e26cf32a9c576ef4ab2",
+      "bytes": 25181
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/windows-prerequisite/integration.json",
+      "git_blob": "893fc93f8b64878e63440b51f5697d4bd0a3b6f8",
+      "sha256": "c361b026caf1306d07f4c0b01b3b7fc85971f6cb27bae30d30a7e5eed49347f3",
+      "bytes": 14773
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/history/windows-prerequisite/session-exit.json",
+      "git_blob": "2c4f6d717b9b4f055b6e12dfc4cbcb94a99cd582",
+      "sha256": "e7486feb17ec2dcb31abc6780ce07c149037eb6166e1aff1055cedfe794319c5",
+      "bytes": 272
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/implementation-self-review.json",
+      "git_blob": "211171546487a22146313544cd2da84f38dc83c3",
+      "sha256": "035b512d045c95b4405fd808f0830850694721767c716aed32b1fd17acacceb9",
+      "bytes": 18258
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/source-binding.json",
+      "git_blob": "536962fc301edead95d702ebd004fdc56c1d0327",
+      "sha256": "b8167e20c87ac8e6bfdba0c372edf3dd2450b1ca888b4a1db19b78edcac31a5d",
+      "bytes": 4222218
+    },
+    {
+      "path": "docs/evidence/2026-10-01-factory-review-revisions/summary.json",
+      "git_blob": "204b124ce85b3c796d0c38f70b7e667259e69ff7",
+      "sha256": "99ac3c017406726a3ba162fc9e313ffa31a71d139d8de9b2831cc6008e74919d",
+      "bytes": 102591
+    },
+    {
+      "path": "scenarios/repo-steward/maintenance.test.mjs",
+      "git_blob": "836b5d9f2da7f0d8663905934ad0379438be1e07",
+      "sha256": "5977dd5ee49041224e03fe23652359ab815b1b45883d80d14ed677b64811aad6",
+      "bytes": 13457
+    },
+    {
+      "path": "tests/readiness/cli.test.js",
+      "git_blob": "443235d1c5e8496aa86ad9447546aeb4ce0e5639",
+      "sha256": "3918778492b5721d7f14c59856cd36e56c341d81e7792227a2eaf265dbf34a40",
+      "bytes": 29294
+    },
+    {
+      "path": "tools/check_deliverable_diff.test.mjs",
+      "git_blob": "cbc5d22a42e358cbae93d31b2da90029f5348897",
+      "sha256": "c8fdcbbf064f1396002c9f08bbf537f4a44772892228ac124f63e0f086df3ac9",
+      "bytes": 41197
+    },
+    {
+      "path": "tools/check_docs.mjs",
+      "git_blob": "29cb12b8a4c13f5c426ebdac49dc16a462873e2c",
+      "sha256": "4ec019a39ceaecd517233d6fb90963fb8555731573330d15d52e9a5bbc41b434",
+      "bytes": 4071
+    },
+    {
+      "path": "tools/e2e_factory_base_refresh.ps1",
+      "git_blob": "b6ead1eb316d5f73b28da3d748ed375a88530f91",
+      "sha256": "0c2dda72fb9583f6ca33e92232239324a5da326fe5758231b6826ebdf9129bd3",
+      "bytes": 12561
+    },
+    {
+      "path": "tools/e2e_factory_review_revision.mjs",
+      "git_blob": "7060b56d20cca2a1b40ee40818bec9a3490ed96c",
+      "sha256": "f59a2c43088f85ba6a60d645d9acd4d65ccbbe404908edc408839a95f8cfaad9",
+      "bytes": 44320
+    },
+    {
+      "path": "tools/e2e_factory_review_revision.ps1",
+      "git_blob": "ba9816e340823cc753ac725e33a64c1557622336",
+      "sha256": "b2f4bd849afc4bddada2d9490cad044b56586e1b2d47e9b4af9888975ce09bae",
+      "bytes": 428
+    },
+    {
+      "path": "tools/readiness_contract.test.mjs",
+      "git_blob": "ac30a7257b6dbf30a19c3e79257c7aabe6894702",
+      "sha256": "3660b7d91ff3b092ad9d663af8f9a785b4024e62fb93cc5e42d83653b69fcc8f",
+      "bytes": 7842
+    },
+    {
+      "path": "tools/run_checks.mjs",
+      "git_blob": "5df8e8d1381d50f4b3144a8b142b65421a4af673",
+      "sha256": "88c6c90342470317a533a3f7dd14a844af9d3ad6d1d117d4d87a03125f16560d",
+      "bytes": 13039
+    }
+  ],
+  "failure": "diff-check failed; inspect retained log",
+  "failure_type": "AssertionError",
+  "finished_at_utc": "2026-10-01T07:47:04.072040+00:00"
+}

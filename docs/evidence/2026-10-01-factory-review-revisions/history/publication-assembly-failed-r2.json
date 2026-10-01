@@ -1,0 +1,16 @@
+{
+  "session_id": 5583,
+  "exit_code": 1,
+  "observation": "write_stdin returned process exit",
+  "tool_return": {
+    "chunk_id": "00b1f4",
+    "wall_time_seconds": 9.9e-06,
+    "exit_code": 1,
+    "original_token_count": {
+      "redacted": "sha256",
+      "digest": "377adeb4cd4096adc7ca64b533938cffc6294a9b3534f883b2336a26252cda9a"
+    },
+    "output": "Traceback (most recent call last):\n  File \"<RUN_EVIDENCE>\\issue95_publication_r3.py\", line 1284, in <module>\n    commands[sys.argv[1]]()\n  File \"<RUN_EVIDENCE>\\issue95_publication_r3.py\", line 689, in assemble\n    artifacts = make_public_copies(copies, physical, PACKET)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<RUN_EVIDENCE>\\issue95_publication_r3.py\", line 584, in make_public_copies\n    projected = projected_receipt(original, physical)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<RUN_EVIDENCE>\\issue95_publication_r3.py\", line 387, in projected_receipt\n    manifest = pairs(result.pop(\"source_files\"))\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<RUN_EVIDENCE>\\issue95_publication_r3.py\", line 165, in pairs\n    values = [[row[\"path\"], row[\"sha256\"].lower()] for row in rows]\n                                                              ^^^^\nTypeError: 'int' object is not iterable\n"
+  },
+  "recorded_at_utc": "2026-10-01T07:15:31.157795+00:00"
+}

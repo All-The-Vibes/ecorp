@@ -33,7 +33,7 @@ export function invocationFor(command, argv, platform = process.platform, pnpmPa
   return /\.exe$/iu.test(pnpmPath) ? { program: pnpmPath, args: argv } : { program: process.execPath, args: [pnpmPath, ...argv] }
 }
 
-export function checkPlan(group, files) {
+export function checkPlan(group, files, platform = process.platform) {
   const tests = selectNodeTests(files)
   if (!tests.length) throw new Error('No Node test files discovered; refusing a false-green suite')
   if (JSON.stringify(config.rustCommand) !== JSON.stringify(['cargo', 'test', '--workspace', '--locked'])) {
@@ -48,7 +48,8 @@ export function checkPlan(group, files) {
     'node-tests': ['node', '--test', '--test-concurrency=1', '--test-timeout=180000', '--test-reporter=tap', ...tests],
     format: ['cargo', 'fmt', '--check'],
     clippy: ['cargo', 'clippy', '--workspace', '--all-targets', '--locked', '--', '-D', 'warnings'],
-    'rust-tests': config.rustCommand,
+    // Match the supported Windows CI lane through Rust's native test harness.
+    'rust-tests': [...config.rustCommand, ...(platform === 'win32' ? ['--', '--test-threads=1'] : [])],
     'web-build': ['pnpm', 'build:web'],
     'web-lint': ['pnpm', 'lint:web'],
   }

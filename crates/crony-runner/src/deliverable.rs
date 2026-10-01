@@ -60,6 +60,7 @@ pub struct PreparedDeliverable {
     tree: String,
     original_head: String,
     preserve_head_commit: Option<String>,
+    correction_parent: Option<String>,
     changes: Vec<(String, String)>,
     provider_artifacts: Vec<AdapterArtifact>,
     verified_report_sha256: Option<String>,
@@ -195,6 +196,7 @@ pub async fn prepare(
         write_scope,
         preserve_head_commit,
         None,
+        None,
     )
     .await
 }
@@ -208,7 +210,45 @@ pub(crate) async fn prepare_tree(
     write_scope: &[String],
     tree: &str,
 ) -> Result<PreparedDeliverable> {
-    prepare_inner(run_id, spec, workspace, &[], write_scope, None, Some(tree)).await
+    prepare_inner(
+        run_id,
+        spec,
+        workspace,
+        &[],
+        write_scope,
+        None,
+        Some(tree),
+        None,
+    )
+    .await
+}
+
+/// A governed correction retains the original base as its delta/scope root,
+/// but every exported commit descends from the exact published predecessor.
+pub(crate) async fn prepare_revision(
+    run_id: Uuid,
+    spec: &DeliverableSpec,
+    workspace: &WorkspaceLease,
+    provider_artifacts: &[AdapterArtifact],
+    write_scope: &[String],
+    published_head: &str,
+) -> Result<PreparedDeliverable> {
+    crate::publication_source::object_id(published_head)?;
+    anyhow::ensure!(
+        spec.form == DeliverableForm::CommitBranch,
+        "published correction requires the original commit/branch deliverable"
+    );
+    prepare_inner(
+        run_id,
+        spec,
+        workspace,
+        provider_artifacts,
+        write_scope,
+        None,
+        None,
+        Some(published_head),
+    )
+    .await
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -220,6 +260,7 @@ async fn prepare_inner(
     write_scope: &[String],
     preserve_head_commit: Option<&str>,
     canonical_tree: Option<&str>,
+    correction_parent: Option<&str>,
 ) -> Result<PreparedDeliverable> {
     let workspace_root = tokio::fs::canonicalize(&workspace.path)
         .await
@@ -256,6 +297,7 @@ async fn prepare_inner(
         tree: String::new(),
         original_head: String::new(),
         preserve_head_commit: preserve_head_commit.map(str::to_owned),
+        correction_parent: correction_parent.map(str::to_owned),
         changes: Vec::new(),
         provider_artifacts: provider_artifacts.to_vec(),
         verified_report_sha256: None,
@@ -266,6 +308,25 @@ async fn prepare_inner(
         &["rev-parse".into(), "HEAD^{commit}".into()],
     )
     .await?;
+    if let Some(parent) = correction_parent {
+        for (base, head) in [
+            (workspace.base_commit.as_str(), parent),
+            (parent, prepared.original_head.as_str()),
+        ] {
+            git_success(
+                &prepared.workspace_root,
+                &prepared.index,
+                &[
+                    "merge-base".into(),
+                    "--is-ancestor".into(),
+                    base.into(),
+                    head.into(),
+                ],
+            )
+            .await
+            .context("correction workspace lost its published ancestry")?;
+        }
+    }
     prepared.changes = if let Some(tree) = canonical_tree {
         if !matches!(tree.len(), 40 | 64) || !tree.bytes().all(|b| b.is_ascii_hexdigit()) {
             return Err(anyhow!("invalid refresh tree identity"));
@@ -303,7 +364,7 @@ async fn prepare_inner(
             &prepared.workspace_root,
             provider_artifacts,
             write_scope,
-            preserve_head_commit,
+            correction_parent.or(preserve_head_commit.filter(|_| cfg!(windows))),
             &prepared.index,
         )
         .await?
@@ -324,17 +385,13 @@ async fn select_index(
     workspace_root: &Path,
     provider_artifacts: &[AdapterArtifact],
     write_scope: &[String],
-    preserve_head_commit: Option<&str>,
+    index_head_commit: Option<&str>,
     index: &Path,
 ) -> Result<Vec<(String, String)>> {
     for path in &spec.paths {
         validate_relative(path)?;
     }
-    let index_base = if cfg!(windows) {
-        preserve_head_commit.unwrap_or(&workspace.base_commit)
-    } else {
-        &workspace.base_commit
-    };
+    let index_base = index_head_commit.unwrap_or(&workspace.base_commit);
     git_success(
         workspace_root,
         index,
@@ -342,10 +399,9 @@ async fn select_index(
     )
     .await?;
 
-    #[cfg(windows)]
-    if preserve_head_commit.is_some() && !spec.paths.is_empty() {
-        // Windows cannot reconstruct executable bits from physical permissions. Seed them from
-        // the verification-linked head, but restore every unselected path to the immutable base.
+    if index_head_commit.is_some() && !spec.paths.is_empty() {
+        // Preserve selected published files and executable modes, while restoring
+        // every unselected path to the original immutable delta root.
         let mut reset_args = vec![
             OsString::from("reset"),
             OsString::from("-q"),
@@ -846,7 +902,21 @@ async fn commit_prepared(
         }
         return Ok(Some(expected_head.to_owned()));
     }
-    let commit = if tree == &base_tree {
+    let mut reset_paths = changes
+        .iter()
+        .map(|(_, path)| path.clone())
+        .collect::<std::collections::BTreeSet<_>>();
+    if prepared.correction_parent.is_some() {
+        // Reverting a published path to its original bytes removes it from the
+        // base delta, but its native index entry still needs the verified tree.
+        reset_paths.extend(
+            changed_paths(workspace, index, old_head)
+                .await?
+                .into_iter()
+                .map(|(_, path)| path),
+        );
+    }
+    let commit = if tree == &base_tree && prepared.correction_parent.is_none() {
         lease.base_commit.clone()
     } else {
         let message =
@@ -858,7 +928,12 @@ async fn commit_prepared(
                 OsString::from("commit-tree"),
                 OsString::from(tree),
                 OsString::from("-p"),
-                OsString::from(&lease.base_commit),
+                OsString::from(
+                    prepared
+                        .correction_parent
+                        .as_deref()
+                        .unwrap_or(&lease.base_commit),
+                ),
                 OsString::from("-m"),
                 OsString::from(message),
             ],
@@ -882,14 +957,14 @@ async fn commit_prepared(
         ],
     )
     .await?;
-    if !changes.is_empty() {
+    if !reset_paths.is_empty() {
         let mut command = Command::new("git");
         verification::clear_git_environment(&mut command);
         #[cfg(windows)]
         command.args(["-c", "core.longpaths=true"]);
         command
             .args(["reset", "--mixed", "HEAD", "--"])
-            .args(changes.iter().map(|(_, path)| path))
+            .args(&reset_paths)
             .current_dir(workspace)
             .env("GIT_LITERAL_PATHSPECS", "1")
             .stdin(Stdio::null())

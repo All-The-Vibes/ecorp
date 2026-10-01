@@ -259,10 +259,12 @@ test('native source-selection recipe is pinned; drift requires an explicit parit
   const start = nativeSource.indexOf('    for path in &spec.paths {')
   const end = nativeSource.indexOf('    let changes = changed_paths(', start)
   assert.ok(start >= 0 && end > start)
-  // #82 extracts the unchanged selection sequence into select_index and freezes
-  // its tree before checking. cfg!(windows) preserves the same platform-specific
-  // index bases while keeping preserve_head_commit referenced on Linux.
-  assert.equal(hash(nativeSource.slice(start, end)), '22a8887f0f2c84779ac0ae875683da62643eb1358c066a3e4777015050988e10')
+  // #95 moves the ordinary Windows-only preserved-head choice to the caller.
+  // The ordinary nativeCandidate oracle below still applies on both platforms.
+  // Corrections seed the published parent on every platform; the native
+  // review_revision tests cover their modes, ancestry, reverts and scope.
+  assert.match(nativeSource, /correction_parent\.or\(preserve_head_commit\.filter\(\|_\| cfg!\(windows\)\)\)/)
+  assert.equal(hash(nativeSource.slice(start, end)), '5e2be3fe67abb81d410d4012b2cf38d8ba1209ef4825bd0dacf9e8a23df93d65')
   const output = nativeSource.slice(nativeSource.indexOf('async fn git_output('))
   assert.match(output, /verification::clear_git_environment\(&mut command\)/)
   assert.match(output, /\.env\(\s*"GIT_INDEX_FILE",\s*crate::workspace::normalize_path\(index\.to_path_buf\(\)\),\s*\)/)

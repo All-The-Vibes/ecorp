@@ -1,0 +1,83 @@
+// Temporary cfg(test)-only observation. Never publish as a product implementation.
+use std::{
+    ffi::OsString,
+    path::Path,
+    sync::{OnceLock, atomic::{AtomicU64, AtomicUsize, Ordering}},
+    time::Instant,
+};
+use sha2::{Digest, Sha256};
+
+static EPOCH: OnceLock<Instant> = OnceLock::new();
+static ENABLED: OnceLock<bool> = OnceLock::new();
+static NEXT: AtomicU64 = AtomicU64::new(1);
+static ACTIVE_GIT: AtomicUsize = AtomicUsize::new(0);
+
+pub(crate) struct Span {
+    id: u64,
+    kind: &'static str,
+    operation: &'static str,
+    started: Instant,
+    workspace: Option<String>,
+    thread: String,
+}
+
+fn enabled() -> bool {
+    *ENABLED.get_or_init(|| std::env::var_os("ECORP_ISSUE213_DIAGNOSTICS").is_some_and(|v| v == "1"))
+}
+
+impl Span {
+    fn emit(&self, event: &'static str) {
+        eprintln!("ECORP_ISSUE213_DIAGNOSTIC {}", serde_json::json!({
+            "span": self.id, "kind": self.kind, "operation": self.operation,
+            "event": event, "elapsed_us": self.started.elapsed().as_micros(),
+            "at_us": EPOCH.get_or_init(Instant::now).elapsed().as_micros(),
+            "active_git": ACTIVE_GIT.load(Ordering::SeqCst),
+            "workspace_sha256_prefix": self.workspace, "thread": self.thread,
+        }));
+    }
+}
+
+impl Drop for Span {
+    fn drop(&mut self) {
+        self.emit("scope-ended");
+        if self.kind == "git" { ACTIVE_GIT.fetch_sub(1, Ordering::SeqCst); }
+    }
+}
+
+pub(crate) fn start(kind: &'static str, operation: &'static str, workspace: Option<&Path>) -> Option<Span> {
+    if !enabled() { return None; }
+    EPOCH.get_or_init(Instant::now);
+    if kind == "git" { ACTIVE_GIT.fetch_add(1, Ordering::SeqCst); }
+    let span = Span {
+        id: NEXT.fetch_add(1, Ordering::SeqCst), kind, operation, started: Instant::now(),
+        workspace: workspace.map(|path| hex::encode(Sha256::digest(path.to_string_lossy().as_bytes()))[..16].to_owned()),
+        thread: std::thread::current().name().unwrap_or("unnamed").to_owned(),
+    };
+    span.emit("started");
+    Some(span)
+}
+
+pub(crate) fn verb(args: &[OsString]) -> &'static str {
+    match args.first().and_then(|value| value.to_str()) {
+        Some("add") => "add", Some("bundle") => "bundle", Some("cat-file") => "cat-file",
+        Some("checkout") => "checkout", Some("commit") => "commit", Some("commit-tree") => "commit-tree",
+        Some("config") => "config", Some("diff") => "diff", Some("diff-tree") => "diff-tree",
+        Some("for-each-ref") => "for-each-ref", Some("hash-object") => "hash-object", Some("init") => "init",
+        Some("ls-files") => "ls-files", Some("ls-tree") => "ls-tree", Some("merge-base") => "merge-base",
+        Some("read-tree") => "read-tree", Some("rev-list") => "rev-list", Some("rev-parse") => "rev-parse",
+        Some("show") => "show", Some("status") => "status", Some("update-ref") => "update-ref",
+        Some("worktree") => "worktree", Some("write-tree") => "write-tree", _ => "other",
+    }
+}
+
+pub(crate) fn event(kind: &str, workspace: &Path) {
+    let allowed = match kind {
+        "run.session_terminated" => "run.session_terminated",
+        "run.verification_started" => "run.verification_started",
+        "run.verification_evidence" => "run.verification_evidence",
+        "run.verification_failed" => "run.verification_failed",
+        "run.deliverable_upload" => "run.deliverable_upload",
+        "run.failed" => "run.failed", "run.cancelled" => "run.cancelled", _ => "other-event",
+    };
+    let _event = start("event", allowed, Some(workspace));
+}

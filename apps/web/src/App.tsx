@@ -45,6 +45,7 @@ import { useMissionResultContext } from './useMissionResultContext'
 import { missionResultPresentation } from './missionResultContext'
 import { WorkResultCard } from './WorkResultCard'
 import { PublishedResultCard } from './PublishedResultCard'
+import { ReviewRevisionPanel } from './ReviewRevisionPanel'
 import { RunActivityDetails } from './RunActivityDetails'
 import { presentRunActivity, selectActivityRun } from './runActivity'
 import {
@@ -435,6 +436,7 @@ type FactoryWorkItem = {
     | 'verified'
     | 'publishing'
     | 'published'
+    | 'review_revision'
     | 'failed'
     | 'cancelled'
   version: number
@@ -1178,6 +1180,8 @@ function FactoryPanel({
   onClaimLease,
   onSteer,
   onOpenMission,
+  onOpenMissionId,
+  onChanged,
   onDiscussMission,
   onNewMission,
   onDownloadDeliverable,
@@ -1224,6 +1228,8 @@ function FactoryPanel({
     idempotencyKey: string,
   ) => Promise<boolean>
   onOpenMission: (mission: Mission, runId?: string) => void
+  onOpenMissionId: (missionId: string, runId?: string) => void
+  onChanged: () => Promise<unknown>
   onDiscussMission: (mission: Mission) => void
   onNewMission: () => void
   onDownloadDeliverable: (deliverable: SourceDeliverable) => Promise<void>
@@ -1243,7 +1249,7 @@ function FactoryPanel({
     if (['blocked', 'verification_failed', 'failed', 'cancelled'].includes(state)) {
       return 'failed'
     }
-    if (['running', 'awaiting_approval', 'publishing'].includes(state)) return 'running'
+    if (['running', 'awaiting_approval', 'publishing', 'review_revision'].includes(state)) return 'running'
     return 'ready'
   }
   const active = items.filter(
@@ -1285,7 +1291,7 @@ function FactoryPanel({
     }).kind === 'unknown',
   )
   const publicationHint = publications.find(
-    (candidate) => candidate.factory_work_item_id === selected?.id,
+    (candidate) => candidate.factory_work_item_id === selected?.id && candidate.mission_id === selected?.mission_id,
   )
   const resultRead = useMissionResultContext({
     corpId: scope.corpId, actorId: selectedActor.id, actorRole: selectedActor.role,
@@ -1556,6 +1562,11 @@ function FactoryPanel({
                       {runActivity ? <RunActivityDetails key={runActivity.runId} view={runActivity} /> : null}
                     </WorkResultCard>
                   )}
+                  <ReviewRevisionPanel scope={resultRead.scope} load={resultRead.current}
+                    server={API_URL} actorRole={selectedActor.role} actors={actors} api={api} busy={busy}
+                    operationKey={browserOperationKey} clearOperation={clearBrowserOperation}
+                    onRefresh={resultRead.refresh} onChanged={onChanged} onOpenMission={onOpenMissionId}
+                    onDownload={(deliverable) => void onDownloadDeliverable(deliverable)} />
                   {selectedMission ? (
                     <nav className="work-context-actions" aria-label="This work item">
                       <button type="button" className="button button-secondary"
@@ -3000,6 +3011,8 @@ function MissionCard({
   onDiscuss,
   onViewAgents,
   onOpenFactory,
+  onOpenMissionId,
+  onChanged,
   collaborationInput,
   discussion,
   onViewAgent,
@@ -3048,6 +3061,8 @@ function MissionCard({
   onDiscuss: (mission: Mission) => void
   onViewAgents: (mission: Mission) => void
   onOpenFactory: () => void
+  onOpenMissionId: (missionId: string, runId?: string) => void
+  onChanged: () => Promise<unknown>
   collaborationInput?: CollaborationInput
   discussion?: ReactNode
   onViewAgent?: (agentId: string) => void
@@ -3073,18 +3088,6 @@ function MissionCard({
     mission.budget_tokens, mission.budget_cost_microusd,
     revisions.map((revision) => [revision.id, revision.version, revision.status]),
   ])
-  const recoveryScope = useMemo<FactoryRecoveryContextScope | null>(() =>
-    recoveryItemId && recoveryItemVersion !== undefined && needsFactoryRecoveryContext(recoveryItemState)
-      ? { corpId, actorId, missionId: mission.id, itemId: recoveryItemId, version: recoveryItemVersion,
-        budgetRevision: recoveryBudgetRevision, reload: recoveryReload }
-      : null,
-  [corpId, actorId, mission.id, recoveryItemId, recoveryItemVersion, recoveryItemState, recoveryBudgetRevision, recoveryReload])
-  useEffect(() => {
-    if (!recoveryScope) return
-    return requestFactoryRecoveryContext(recoveryScope, setRecoveryContextLoad)
-  }, [recoveryScope])
-  const scopedRecoveryLoad = currentFactoryRecoveryLoad(recoveryScope, recoveryContextLoad)
-  const recoveryContext = scopedRecoveryLoad?.status === 'ready' ? scopedRecoveryLoad.data : null
   const orderedTasks = tasks.toSorted((left, right) =>
     left.depth - right.depth || left.plan_key.localeCompare(right.plan_key),
   )
@@ -3173,6 +3176,22 @@ function MissionCard({
     revision: `${publicationRevision}:${factoryItem?.version ?? ''}:${runDeliverable?.integration_state ?? ''}`,
     api,
   })
+  // Published and historical correction missions use their governed revision
+  // lineage, never the prepublication checkpoint-recovery authorization path.
+  const hasPublishedLineage = resultRead.current?.status === 'ready' &&
+    resultRead.current.context.publication_history.length > 0
+  const recoveryScope = useMemo<FactoryRecoveryContextScope | null>(() =>
+    !hasPublishedLineage && recoveryItemId && recoveryItemVersion !== undefined && needsFactoryRecoveryContext(recoveryItemState)
+      ? { corpId, actorId, missionId: mission.id, itemId: recoveryItemId, version: recoveryItemVersion,
+        budgetRevision: recoveryBudgetRevision, reload: recoveryReload }
+      : null,
+  [corpId, actorId, mission.id, recoveryItemId, recoveryItemVersion, recoveryItemState, recoveryBudgetRevision, recoveryReload, hasPublishedLineage])
+  useEffect(() => {
+    if (!recoveryScope) return
+    return requestFactoryRecoveryContext(recoveryScope, setRecoveryContextLoad)
+  }, [recoveryScope])
+  const scopedRecoveryLoad = currentFactoryRecoveryLoad(recoveryScope, recoveryContextLoad)
+  const recoveryContext = scopedRecoveryLoad?.status === 'ready' ? scopedRecoveryLoad.data : null
   const deliveredResult = missionResultPresentation(
     resultRead.scope, resultRead.current,
     evidenceRun ?? (selectedEvidenceRunId !== null ? { id: selectedEvidenceRunId } : undefined),
@@ -3405,6 +3424,11 @@ function MissionCard({
           ) : null}
         </WorkResultCard>
       )}
+      <ReviewRevisionPanel scope={resultRead.scope} load={resultRead.current}
+        server={API_URL} actorRole={actorRole} actors={actors} api={api} busy={busy}
+        operationKey={browserOperationKey} clearOperation={clearBrowserOperation}
+        onRefresh={resultRead.refresh} onChanged={onChanged} onOpenMission={onOpenMissionId}
+        onDownload={(deliverable) => void onDownloadDeliverable(deliverable)} />
       </div>
       <div className="mission-work-context">
         <MissionOriginText current={originRead.current} pending={originRead.pending} fallback={origin}
@@ -6234,6 +6258,8 @@ function App() {
             }
           }}
           onOpenMission={(mission, runId) => navigateToWorkspaceEntity(runId ? 'run' : 'mission', runId ?? mission.id)}
+          onOpenMissionId={(missionId, runId) => navigateToWorkspaceEntity(runId ? 'run' : 'mission', runId ?? missionId)}
+          onChanged={() => refresh(bootstrap.corp_id, selectedActor.id)}
           onDiscussMission={(mission) => {
             selectDiscussionMission(mission.id)
             activateWorkspaceView('room')
@@ -7110,6 +7136,8 @@ function App() {
                   actorRole={selectedActor.role}
                   busy={busy}
                   onLaunch={launchMission}
+                  onOpenMissionId={(missionId, runId) => navigateToWorkspaceEntity(runId ? 'run' : 'mission', runId ?? missionId)}
+                  onChanged={() => refresh(bootstrap.corp_id, selectedActor.id)}
                   onResume={resumeAgentRun}
                   onDownloadArtifact={downloadArtifact}
                   onDownloadDeliverable={downloadDeliverable}

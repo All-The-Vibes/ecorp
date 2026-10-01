@@ -1,0 +1,117 @@
+TAP version 13
+# Subtest: native CLI preview states its platform Rust policy despite ambient parallelism
+not ok 1 - native CLI preview states its platform Rust policy despite ambient parallelism
+  ---
+  duration_ms: 771.8018
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue136-browser-docs\\ecorp\\tests\\readiness\\cli.test.js:71:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+      [
+        'cargo',
+        'test',
+        '--workspace',
+        '--locked',
+    -   '--',
+    -   '--test-threads=1'
+      ]
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'cargo'
+    1: 'test'
+    2: '--workspace'
+    3: '--locked'
+    4: '--'
+    5: '--test-threads=1'
+  actual:
+    0: 'cargo'
+    1: 'test'
+    2: '--workspace'
+    3: '--locked'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (<USERPROFILE>\.codex\worktrees\issue136-browser-docs\ecorp\tests\readiness\cli.test.js:82:12)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.start (node:internal/test_runner/test:1262:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+  ...
+# Subtest: Windows workspace gates enforce the native serial harness without excluding tests
+not ok 2 - Windows workspace gates enforce the native serial harness without excluding tests
+  ---
+  duration_ms: 3.7077
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue136-browser-docs\\ecorp\\tools\\readiness_contract.test.mjs:59:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+      [
+        'cargo',
+        'test',
+        '--workspace',
+        '--locked',
+    -   '--',
+    -   '--test-threads=1'
+      ]
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'cargo'
+    1: 'test'
+    2: '--workspace'
+    3: '--locked'
+    4: '--'
+    5: '--test-threads=1'
+  actual:
+    0: 'cargo'
+    1: 'test'
+    2: '--workspace'
+    3: '--locked'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue136-browser-docs/ecorp/tools/readiness_contract.test.mjs:64:12)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.start (node:internal/test_runner/test:1262:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+  ...
+# Subtest: generated docs follow canonical command and version changes
+not ok 3 - generated docs follow canonical command and version changes
+  ---
+  duration_ms: 4.2778
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue136-browser-docs\\ecorp\\tools\\readiness_contract.test.mjs:88:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+
+      assert.ok(rendered.includes('Rust suite (Linux/macOS): `cargo test`.'))
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue136-browser-docs/ecorp/tools/readiness_contract.test.mjs:92:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 0
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1073.1499

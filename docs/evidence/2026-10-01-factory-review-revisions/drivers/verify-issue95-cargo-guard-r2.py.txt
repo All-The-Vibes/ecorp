@@ -1,0 +1,106 @@
+"""Verify Cargo output guards and qualify the historical frozen-install scope."""
+import ast
+from datetime import datetime, timezone
+import importlib.util
+import json
+import os
+from pathlib import Path
+
+EV = Path(__file__).resolve().parent
+target = EV / "issue95_publication_r3.py"
+previous = EV / "issue95_publication_r3_pre_cargo_guard.py"
+failed_helper = EV / "issue95_publication_r3_pre_install_scope.py"
+spec = importlib.util.spec_from_file_location("issue95_publication_guard_verification_r2", target)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+assert __debug__
+
+
+def function_text(path, name):
+    text = path.read_text(encoding="utf-8")
+    tree = ast.parse(text)
+    node = next(item for item in tree.body if isinstance(item, ast.FunctionDef) and item.name == name)
+    return ast.get_source_segment(text, node)
+
+
+record = {"issue": 95, "status": "running", "revision": 2,
+          "started_at_utc": datetime.now(timezone.utc).isoformat(),
+          "original_helper_sha256": module.sha(previous.read_bytes()),
+          "failed_r1_helper_sha256": module.sha(failed_helper.read_bytes()),
+          "updated_helper_sha256": module.sha(target.read_bytes()),
+          "binaries": [], "product_changes": 0, "canonical_rerun": False,
+          "scope": "Publication helper guards and historical evidence applicability only."}
+receipt = EV / "issue95-cargo-binary-guard-r2.json"
+assert not receipt.exists()
+
+
+def save():
+    receipt.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+
+
+save()
+try:
+    assert record["original_helper_sha256"] == "9d366d5f2c298b0aeebca7bda8099b4560044f3c5d15c819a101b81a9a252aaf"
+    assert record["failed_r1_helper_sha256"] == "e01af3bfda08daa4a2f8d0e85f2ea3a8724c9c34c6f2deb7054e63fdbd056d3f"
+    failed = module.load(EV / "issue95-cargo-binary-guard-r1.json")
+    assert failed["status"] == "failed" and failed["updated_helper_sha256"] == record["failed_r1_helper_sha256"]
+    assert module.load(EV / "issue95-cargo-binary-guard-r1-session-exit.json")["exit_code"] == 1
+    assert function_text(previous, "guarded_bytes") == function_text(target, "guarded_bytes")
+    assert function_text(failed_helper, "guarded_cargo_binary") == function_text(target, "guarded_cargo_binary")
+    record["source_and_evidence_guard_unchanged"] = True
+    record["cargo_guard_unchanged_since_failed_r1"] = True
+    preflight = module.load(EV / "issue95-acceptance-r7-preflight.json")
+    for item in preflight["binaries"]:
+        path = module.ROOT / item["path"]
+        peer = path.parent / "deps" / path.name.replace("-", "_")
+        digest = module.sha(module.guarded_cargo_binary(path))
+        assert digest == item["sha256"]
+        assert os.path.samefile(path, peer) and path.stat().st_nlink == peer.stat().st_nlink == 2
+        record["binaries"].append({"path": item["path"], "peer": peer.relative_to(module.ROOT).as_posix(),
+                                   "sha256": digest, "matches_acceptance_r7_preflight": True,
+                                   "link_count": 2, "same_file": True})
+    try:
+        module.guarded_cargo_binary(module.ROOT / "Cargo.toml")
+    except AssertionError as error:
+        assert "Unexpected native build output" in str(error)
+        record["other_paths_rejected_by_cargo_guard"] = True
+    else:
+        raise AssertionError("Native guard accepted an unrelated source path")
+    try:
+        module.guarded_bytes(module.ROOT / preflight["binaries"][0]["path"], module.ROOT)
+    except AssertionError as error:
+        assert "hard-linked evidence entry" in str(error)
+        record["ordinary_evidence_guard_still_rejects_hardlinks"] = True
+    else:
+        raise AssertionError("Evidence guard unexpectedly allowed a hard link")
+    verified = module.completed_inputs()
+    install = verified["focused"]["frozen-install-r1"]
+    assert not install["complete_manifest_match"] and not install["all_recorded_files_match"]
+    assert install["source_file_count"] == 7349 and len(install["differing_recorded_paths"]) == 17
+    assert len(install["current_paths_not_recorded"]) == 48
+    mapping = dict(verified["physical"])
+    old_mapping = dict(module.pairs(install["value"]["source_files"]))
+    record["frozen_install_scope"] = {
+        "source_receipt": install["path"].name, "source_receipt_sha256": module.sha(install["path"].read_bytes()),
+        "recorded_files": 7349, "complete_source_match": False,
+        "differing_recorded_paths": install["differing_recorded_paths"],
+        "current_paths_not_recorded": install["current_paths_not_recorded"],
+        "unchanged_javascript_dependency_inputs": [
+            {"path": name, "sha256": mapping[name]}
+            for name in install["unchanged_javascript_dependency_inputs"]],
+        "applicability": "Frozen pnpm dependency installation only; not current full-source validation.",
+        "cargo_lock_at_install_sha256": old_mapping["Cargo.lock"],
+        "cargo_lock_at_canonical_r3_sha256": mapping["Cargo.lock"],
+        "current_cargo_validation": "Canonical R3 executed current workspace tests with --locked; the pnpm install is not Cargo validation."
+    }
+    record.update(status="passed", complete_source_files=len(verified["physical"]),
+                  complete_source_manifest_sha256=verified["physical_sha256"],
+                  canonical_and_acceptance_inputs_verified=True)
+except Exception as error:
+    record.update(status="failed", failure_type=type(error).__name__, failure=str(error))
+    raise
+finally:
+    record["finished_at_utc"] = datetime.now(timezone.utc).isoformat()
+    save()
+    print(json.dumps({key: record.get(key) for key in
+                      ["status", "complete_source_files", "canonical_and_acceptance_inputs_verified", "failure"]}))

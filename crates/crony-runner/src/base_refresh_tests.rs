@@ -1,6 +1,15 @@
 //! Retrospective native Git tests, with synthetic stored authority and no provider.
 
-use std::{fs, path::PathBuf, process::Command};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    process::Command,
+};
+
+use crate::decode_verification_artifact;
+use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
+use serde_json::Value;
+use sha2::{Digest, Sha256};
 
 use crony_domain::{DeliverableForm, DeliverableSpec, VerificationPolicy, VerifierCheck};
 use crony_protocol::VerificationArtifactReference;

@@ -15,6 +15,7 @@ mod factory_base_refresh;
 #[cfg(test)]
 mod factory_connection_tests;
 mod factory_readiness;
+mod factory_review_revision;
 #[cfg(test)]
 mod factory_source_audit_tests;
 mod planning;
@@ -685,6 +686,14 @@ async fn run_server() -> anyhow::Result<()> {
         .route(
             "/api/corps/{corp_id}/factory/work-items/{work_item_id}/base-refreshes",
             get(factory_base_refresh::list).post(factory_base_refresh::authorize),
+        )
+        .route(
+            "/api/corps/{corp_id}/factory/work-items/{work_item_id}/review-revisions",
+            get(factory_review_revision::list).post(factory_review_revision::authorize),
+        )
+        .route(
+            "/api/corps/{corp_id}/factory/work-items/{work_item_id}/review-revisions/{revision_id}/{action}",
+            post(factory_review_revision::settle),
         )
         .route(
             "/api/corps/{corp_id}/factory/work-items/{work_item_id}/base-refreshes/{refresh_id}/{action}",
@@ -1617,11 +1626,15 @@ enum RunnerDispatchError {
     UnsupportedDependencyFiles,
     UnsupportedCanonicalSource,
     UnsupportedBaseRefresh,
+    UnsupportedReviewRevision,
 }
 
 impl RunnerDispatchError {
     fn detail(&self) -> &'static str {
         match self {
+            Self::UnsupportedReviewRevision => {
+                "runner requires publication-review-revision-v1, artifact transfer and canonical verification support"
+            }
             Self::UnsupportedBaseRefresh => {
                 "runner requires governed base-refresh, durable control, artifact transfer and canonical verification support"
             }
@@ -1701,6 +1714,19 @@ fn send_command_to_current_runner(
     {
         return Err(RunnerDispatchError::UnsupportedDependencyFiles);
     }
+    if matches!(
+        &command,
+        ServerToRunner::StartRun {
+            review_revision: Some(_),
+            ..
+        } | ServerToRunner::ResumeRun {
+            review_revision: Some(_),
+            ..
+        }
+    ) && !factory_review_revision::supported(&connection.capabilities)
+    {
+        return Err(RunnerDispatchError::UnsupportedReviewRevision);
+    }
     let policy = match &command {
         ServerToRunner::StartRun {
             verification_policy,
@@ -1738,6 +1764,7 @@ fn send_command_to_current_runner(
         return Err(RunnerDispatchError::UnsupportedCanonicalSource);
     }
     if let ServerToRunner::StartRun {
+        review_revision,
         dependency_files,
         corp_id,
         workspace_connection_id,
@@ -1755,6 +1782,7 @@ fn send_command_to_current_runner(
             &connection,
             *corp_id,
             &RunnerRequirements {
+                review_revision: review_revision.is_some(),
                 dependency_files: !dependency_files.is_empty(),
                 adapter,
                 model: model.as_deref(),
@@ -2158,6 +2186,7 @@ async fn decode_recovery_runner_command(
                         return Ok(None);
                     }
                     Ok(Some(ServerToRunner::ResumeRun {
+                        review_revision: None,
                         dependency_files: dependencies.files,
                         workspace_connection_id: payload.workspace_connection_id,
                         command_id: Some(command.id),
@@ -2961,6 +2990,7 @@ async fn plan_mission(
                     state,
                     corp_id,
                     &RunnerRequirements {
+                        review_revision: false,
                         dependency_files: false,
                         adapter,
                         model: preferred_model,
@@ -4467,6 +4497,8 @@ async fn get_factory_publication_context(
     Ok(Json(FactoryPublicationContextResponse {
         work_item: context.work_item,
         publication: context.publication,
+        publication_history: context.publication_history,
+        review_revisions: context.review_revisions,
         source_deliverables: context.source_deliverables,
     }))
 }
@@ -4965,6 +4997,7 @@ async fn schedule_ready_tasks(
                 }
             };
         let requirements = RunnerRequirements {
+            review_revision: candidate.requires_review_revision,
             dependency_files: candidate.requires_dependency_files,
             canonical_source: candidate.requires_canonical_source,
             adapter: &candidate.required_adapter,
@@ -5077,6 +5110,17 @@ async fn schedule_ready_tasks(
                 continue;
             }
         };
+        let (revision_grant, review_revision) =
+            match factory_review_revision::prepare(state, corp_id, record.run_id).await {
+                Ok(prepared) => prepared,
+                Err(error) => {
+                    outcome.failures.push(format!(
+                        "task {} correction source failed: {error}",
+                        candidate.task_id
+                    ));
+                    continue;
+                }
+            };
         let dispatch = state
             .store
             .with_run_budget_dispatch(
@@ -5084,12 +5128,14 @@ async fn schedule_ready_tasks(
                 record.run_id,
                 record.assignment_token,
                 &runner_id,
+                revision_grant.as_ref(),
                 || {
                     send_command_to_current_runner(
                         &state.runners,
                         &runner_id,
                         connection_epoch,
                         ServerToRunner::StartRun {
+                            review_revision,
                             dependency_files: dependency_context.files,
                             workspace_connection_id: record.workspace_connection_id,
                             corp_id: record.corp_id,
@@ -5539,6 +5585,7 @@ fn runner_requirement_mismatch(
 }
 
 struct RunnerRequirements<'a> {
+    review_revision: bool,
     dependency_files: bool,
     canonical_source: bool,
     adapter: &'a str,
@@ -5554,6 +5601,7 @@ struct RunnerRequirements<'a> {
 impl<'a> RunnerRequirements<'a> {
     fn for_planned_task(task: &'a crony_domain::PlannedTask, plan: &TaskGraphPlan) -> Self {
         Self {
+            review_revision: false,
             canonical_source: task.contract.deliverable.is_some(),
             dependency_files: plan.tasks.iter().any(|parent| {
                 task.depends_on.contains(&parent.key)
@@ -5586,6 +5634,8 @@ fn runner_satisfies_requirements(
         .collect::<Vec<_>>();
     connection.dispatch_ready
         && connection.corp_id == corp_id
+        && (!requirements.review_revision
+            || factory_review_revision::supported(&connection.capabilities))
         && (!requirements.dependency_files || supports_dependency_files(&connection.capabilities))
         && (!requirements.canonical_source
             || runner_supports_canonical_source(&connection.capabilities))
@@ -5935,6 +5985,10 @@ async fn resume_run(
             ));
         }
     };
+    let (revision_grant, review_revision) =
+        factory_review_revision::prepare(&state, corp_id, record.run_id)
+            .await
+            .map_err(map_store_error)?;
     let dispatch = state
         .store
         .with_run_budget_dispatch(
@@ -5942,12 +5996,14 @@ async fn resume_run(
             record.run_id,
             record.assignment_token,
             &record.runner_id,
+            revision_grant.as_ref(),
             || {
                 send_command_to_current_runner(
                     &state.runners,
                     &record.runner_id,
                     connection_epoch,
                     ServerToRunner::ResumeRun {
+                        review_revision,
                         dependency_files: dependencies.files,
                         workspace_connection_id: record.workspace_connection_id,
                         command_id: None,
@@ -5968,8 +6024,12 @@ async fn resume_run(
                         source_base_ref: record.source_base_ref,
                         source_base_commit: record.source_base_commit,
                         workspace_base_commit: Some(record.workspace_base_commit),
-                        expected_workspace_fingerprint: None,
-                        expected_head_commit: None,
+                        expected_workspace_fingerprint: revision_grant
+                            .as_ref()
+                            .and_then(|grant| grant.expected_workspace_fingerprint.clone()),
+                        expected_head_commit: revision_grant
+                            .as_ref()
+                            .and_then(|grant| grant.expected_head_commit.clone()),
                         verification_policy: record.verification_policy,
                         write_scope: record.write_scope,
                         deliverable: record.deliverable,
@@ -8358,6 +8418,7 @@ mod tests {
         });
         runners.insert("runner".to_owned(), connection);
         let mut requirements = RunnerRequirements {
+            review_revision: false,
             requires_cache_suppression: false,
             canonical_source: false,
             dependency_files: true,
@@ -9074,6 +9135,7 @@ mod tests {
         let corp_id = connection.corp_id;
         runners.insert("runner".to_owned(), connection);
         let requirements = RunnerRequirements {
+            review_revision: false,
             requires_cache_suppression: false,
             canonical_source: false,
             workspace_connection_id: None,
@@ -9403,6 +9465,7 @@ mod tests {
             let runners = Arc::new(DashMap::new());
             runners.insert("runner".to_owned(), connection);
             let requirements = RunnerRequirements {
+                review_revision: false,
                 dependency_files: false,
                 canonical_source: false,
                 requires_cache_suppression: false,
@@ -9417,6 +9480,7 @@ mod tests {
             let (runner_id, selected_epoch) =
                 select_ready_runner(&runners, corp_id, &requirements).unwrap();
             let command = ServerToRunner::StartRun {
+                review_revision: None,
                 dependency_files: Vec::new(),
                 workspace_connection_id: workspace,
                 corp_id,
@@ -10118,6 +10182,7 @@ mod cache_admission_tests {
         let (runner, _rx) = connection(epoch, vec![capability("fake-process")]);
         runners.insert("runner".to_owned(), runner);
         let mut requirements = RunnerRequirements {
+            review_revision: false,
             dependency_files: false,
             canonical_source: true,
             adapter: "fake-process",
@@ -10235,6 +10300,7 @@ mod cache_admission_tests {
         let (runner, _rx) = connection(epoch, vec![capability("fake-process")]);
         runners.insert("runner".to_owned(), runner);
         let mut requirements = RunnerRequirements {
+            review_revision: false,
             dependency_files: false,
             canonical_source: false,
             adapter: "fake-process",

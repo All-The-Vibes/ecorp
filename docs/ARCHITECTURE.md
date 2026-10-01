@@ -1176,6 +1176,20 @@ Pending refreshes fence publication, and adoption revalidates the full bounded
 source lineage before switching the Factory selection. Both missions participate
 in enabled state-audit coverage; existing publication authority cannot be replaced.
 
+[Factory review revisions](FACTORY_REVIEW_REVISIONS.md) add a bounded correction
+chain after publication. `factory_review_revisions` binds typed actor-attributed
+findings, immutable source authority and residual task/mission allocation to a
+separate native mission. The original item selection stays authoritative in
+`review_revision` until explicit adoption; the accepted source records remain
+unchanged. Native dispatch restores the signed published source in private Git
+storage, retains every saved verifier check and requires fresh independent
+review. Adoption binds one exact completed run, deliverable, commit and decision.
+A subsequent ordinary publisher operation records `supersedes_publication_id`
+and creates a distinct branch/PR while preserving all predecessors. Exact-context
+reads expose the bounded publication and correction history; enabled state-audit
+digests cover both linked missions without changing unrelated historical
+fingerprints. Execution, sessions and permissions remain native harness features.
+
 Publication is a dedicated durable aggregate rather than a generic factory state transition. It
 links one verified factory work item and one ready commit/branch deliverable to an immutable target
 repository, base ref, branch, commit, pull-request title/body, source issue, explicit human

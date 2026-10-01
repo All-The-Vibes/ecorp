@@ -1192,6 +1192,34 @@ not replace required hosted CI, security or code-quality checks. Failed attempts
 and retained fixture workspaces remain available for diagnosis. See
 [the operator guide](FACTORY_BASE_REFRESH.md) for the production workflow.
 
+## Factory review revisions
+
+`tools/e2e_factory_review_revision.ps1` reuses the owned base-refresh stack
+lifecycle with `-PostgresBin`, `-QaParent`, `-OutputRoot` and `-PlaywrightModule`.
+It invokes the standalone `tools/e2e_factory_review_revision.mjs` driver against
+a fresh PostgreSQL/server/runner/web stack, private source and local bare remote.
+The driver requires explicit opt-in and verified process ownership. Do not run
+it through unit discovery or point it at shared services.
+
+The lane exercises original fake-process execution and native publication, then
+uses Chrome and the actual App to authorize findings, explicitly launch a
+correction, record a fresh independent fixture decision, adopt and abandon work.
+Assertions require unchanged original records, exact seed ancestry, retained
+contracts and checks, residual budgets/attempts, durable request replay and one
+superseding branch/PR without a duplicate Project transition. Negative cases
+cover stale authority, replacement policy fields, premature adoption, requester
+review, pending publication and drifted predecessor PR/native branch heads.
+Publication history and exact run navigation are checked after reload and at a
+390-pixel viewport. Failed attempts and all source/runtime fixtures are retained.
+
+The deterministic provider and fake GitHub boundary are labeled explicitly.
+Alice/Bob are development principals, not human signoff. Local Git effects,
+source hashes, persisted checks/decisions and browser screenshots establish only
+their recorded scope; they do not establish real-provider inference, production
+authentication or required hosted CI/security/code-quality checks. Native store
+regressions require a separate owned database receipt, and skipped/ignored cases
+are not passes. See [the operator guide](FACTORY_REVIEW_REVISIONS.md).
+
 ## Factory publication
 
 `tools/e2e_factory_publication.mjs` uses a real server, runner, isolated worktrees, portable Git

@@ -1,0 +1,16 @@
+{
+  "session_id": null,
+  "exit_code": 1,
+  "recorded_at_utc": "2026-10-01T07:05:08Z",
+  "observation": "exec_command returned process exit",
+  "tool_return": {
+    "chunk_id": "2fe039",
+    "wall_time_seconds": 2.0865965,
+    "exit_code": 1,
+    "original_token_count": {
+      "redacted": "sha256",
+      "digest": "88820462180e5c893eff2ed73f4ec33e205d1cd5acc4d17fa7b2bca2495d3448"
+    },
+    "output": "Traceback (most recent call last):\n  File \"<RUN_EVIDENCE>\\issue95_publication_r3.py\", line 1233, in <module>\n    commands[sys.argv[1]]()\n  File \"<RUN_EVIDENCE>\\issue95_publication_r3.py\", line 600, in assemble\n    x = completed_inputs()\n        ^^^^^^^^^^^^^^^^^^\n  File \"<RUN_EVIDENCE>\\issue95_publication_r3.py\", line 209, in completed_inputs\n    assert sha(guarded_bytes(ROOT / binary[\"path\"], ROOT)) == binary[\"sha256\"]\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<RUN_EVIDENCE>\\issue95_publication_r3.py\", line 113, in guarded_bytes\n    resolved = reader.regular_file(resolved_root, relative)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<ISOLATED_CHECKOUT>\\docs\\evidence\\pr362-combined-20260921\\verify_public.py\", line 62, in regular_file\n    assert info.st_nlink == 1, ('hard-linked evidence entry', str(relative))\n           ^^^^^^^^^^^^^^^^^^\nAssertionError: ('hard-linked evidence entry', 'target/debug/crony-server.exe')\n"
+  }
+}

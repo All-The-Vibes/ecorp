@@ -1,0 +1,47 @@
+param(
+    [Parameter(Mandatory=$true)][string]$Name,
+    [Parameter(Mandatory=$true)][string]$Executable,
+    [string[]]$Arguments = @()
+)
+$ErrorActionPreference = 'Stop'
+$taskRoot = '<ISOLATED_CHECKOUT>'
+$taskEvidence = $PSScriptRoot
+$taskLog = Join-Path $taskEvidence ($Name + '.log')
+$taskReceipt = Join-Path $taskEvidence ($Name + '.json')
+if ((Test-Path -LiteralPath $taskLog) -or (Test-Path -LiteralPath $taskReceipt)) { throw 'Evidence already exists; select a new revision.' }
+function Get-SourceIdentity {
+    @(& git -C $taskRoot ls-files --cached --others --exclude-standard -- Cargo.toml Cargo.lock crates db | Sort-Object -Unique | ForEach-Object {
+        $taskFile = Join-Path $taskRoot $_
+        if (Test-Path -LiteralPath $taskFile -PathType Leaf) {
+            [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath $taskFile -Algorithm SHA256).Hash.ToLowerInvariant()}
+        }
+    })
+}
+$taskBefore = Get-SourceIdentity
+$taskResult = [ordered]@{
+    command=@($Executable)+$Arguments;started_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+    worktree=$taskRoot;head=(& git -C $taskRoot rev-parse HEAD);source_files=$taskBefore
+    node=(& node --version);pnpm=(& pnpm --version);rust=(& rustc --version)
+    source_scope='Cargo.toml, Cargo.lock, crates, db';status='running';log=$taskLog
+}
+$taskResult | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+$taskExit = 1
+Push-Location $taskRoot
+try {
+    & $Executable @Arguments *> $taskLog
+    $taskExit=$LASTEXITCODE
+    $taskResult.exit_code=$taskExit
+    $taskResult.status=if ($taskExit -eq 0) {'passed'} else {'failed'}
+} catch {
+    $taskResult.status='failed';$taskResult.error=$_.Exception.Message
+} finally {
+    Pop-Location
+    $taskResult.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+    $taskAfter=Get-SourceIdentity
+    $taskResult.source_unchanged=(ConvertTo-Json -InputObject $taskBefore -Depth 5 -Compress) -ceq (ConvertTo-Json -InputObject $taskAfter -Depth 5 -Compress)
+    if (Test-Path -LiteralPath $taskLog) { $taskResult.test_summaries=@(Select-String -LiteralPath $taskLog -Pattern '^test result:|^# (tests|suites|pass|fail|cancelled|skipped|todo)|^[ℹ] (tests|suites|pass|fail|cancelled|skipped|todo)' | ForEach-Object Line) }
+    $taskResult | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+}
+[ordered]@{status=$taskResult.status;exit_code=$taskExit;source_unchanged=$taskResult.source_unchanged;receipt=$taskReceipt;test_summaries=$taskResult.test_summaries} | ConvertTo-Json -Depth 5
+if (Test-Path -LiteralPath $taskLog) { Get-Content -LiteralPath $taskLog -Tail 55 }
+exit $taskExit

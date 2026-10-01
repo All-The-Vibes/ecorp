@@ -11,6 +11,8 @@ mod factory_authority;
 pub use factory_authority::{FactoryAuthority, factory_claim_authority_id};
 mod factory_base_refresh;
 pub use factory_base_refresh::*;
+mod factory_review_revision;
+pub use factory_review_revision::*;
 mod planned_attempts;
 pub use planned_attempts::{MAX_TASK_ATTEMPTS, factory_max_task_attempts};
 mod planning_cost;
@@ -168,6 +170,7 @@ pub enum FactoryWorkItemState {
     Verified,
     Publishing,
     Published,
+    ReviewRevision,
     Failed,
     Cancelled,
 }
@@ -184,6 +187,7 @@ impl FactoryWorkItemState {
             Self::Verified => "verified",
             Self::Publishing => "publishing",
             Self::Published => "published",
+            Self::ReviewRevision => "review_revision",
             Self::Failed => "failed",
             Self::Cancelled => "cancelled",
         }
@@ -1015,6 +1019,8 @@ pub struct PullRequestPublication {
     pub id: Uuid,
     pub corp_id: Uuid,
     pub factory_work_item_id: Uuid,
+    #[serde(default)]
+    pub supersedes_publication_id: Option<Uuid>,
     pub mission_id: Uuid,
     pub source_deliverable_id: Uuid,
     pub artifact_id: Uuid,

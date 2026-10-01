@@ -1,17 +1,16 @@
 //! Reconstruct an authorized publication delta using native Git only.
 //! The server chooses immutable source IDs; this path starts no provider session.
 
-use std::{path::Path, sync::Arc};
+use std::sync::Arc;
 
 use anyhow::{Context, Result, bail};
-use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use crony_protocol::BaseRefreshSource;
-use serde_json::{Value, json};
-use sha2::{Digest, Sha256};
+use serde_json::json;
 
 use crate::{
-    Assignment, decode_verification_artifact,
-    deliverable::verification::{materialize_tree, private_git, transfer_objects},
+    Assignment,
+    deliverable::verification::{materialize_tree, transfer_objects},
+    publication_source::{self, PublishedSource, git, object_id},
     workspace::{WorkspaceLease, WorkspaceManager},
 };
 
@@ -21,64 +20,15 @@ pub(crate) struct Reconstructed {
     pub tree: String,
 }
 
-fn object_id(value: &str) -> Result<()> {
-    if !matches!(value.len(), 40 | 64)
-        || !value
-            .bytes()
-            .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase())
-    {
-        bail!("refresh requires a full lowercase immutable Git object ID");
-    }
-    Ok(())
-}
-
 fn source_bundle(source: &BaseRefreshSource) -> Result<(Vec<u8>, String)> {
-    object_id(&source.old_base_commit)?;
-    object_id(&source.source_head_commit)?;
-    let bytes = decode_verification_artifact(&source.artifact)?;
-    let document: Value = serde_json::from_slice(&bytes).context("decode source deliverable")?;
-    if document["schema_version"] != 1 || document["form"] != "commit_branch" {
-        bail!("refresh requires a portable commit/branch source deliverable");
-    }
-    for (field, expected) in [
-        ("base_commit", &source.old_base_commit),
-        ("head_commit", &source.source_head_commit),
-        ("branch", &source.source_branch),
-        ("verification_sha256", &source.verification_sha256),
-        ("git_bundle_sha256", &source.git_bundle_sha256),
-    ] {
-        if document[field].as_str() != Some(expected.as_str()) {
-            bail!("source deliverable {field} does not match stored refresh authority");
-        }
-    }
-    let tree = document["verified_tree"]
-        .as_str()
-        .context("source omitted verified tree")?;
-    object_id(tree)?;
-    let bundle = BASE64
-        .decode(
-            document["git_bundle_base64"]
-                .as_str()
-                .context("source deliverable omitted portable bundle")?,
-        )
-        .context("decode source Git bundle")?;
-    if bundle.is_empty() || hex::encode(Sha256::digest(&bundle)) != source.git_bundle_sha256 {
-        bail!("source Git bundle digest mismatch");
-    }
-    Ok((bundle, tree.to_owned()))
-}
-
-async fn git(root: &Path, args: &[&str]) -> Result<String> {
-    String::from_utf8(
-        private_git(
-            root,
-            &args.iter().map(|arg| (*arg).into()).collect::<Vec<_>>(),
-            &[],
-        )
-        .await?,
-    )
-    .context("native Git returned non-UTF-8 output")
-    .map(|output| output.trim().to_owned())
+    publication_source::source_bundle(PublishedSource {
+        artifact: &source.artifact,
+        base_commit: &source.old_base_commit,
+        head_commit: &source.source_head_commit,
+        branch: &source.source_branch,
+        verification_sha256: &source.verification_sha256,
+        git_bundle_sha256: &source.git_bundle_sha256,
+    })
 }
 
 pub(crate) async fn reconstruct(

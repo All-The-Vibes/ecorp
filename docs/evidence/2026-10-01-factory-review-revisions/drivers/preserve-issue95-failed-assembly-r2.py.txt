@@ -1,0 +1,68 @@
+"""Preserve this run's failed partial evidence packet without touching product source."""
+from datetime import datetime, timezone
+import importlib.util
+import json
+from pathlib import Path
+
+EV = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location("issue95_preserve_failed_packet", EV / "issue95_publication_r3.py")
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+assert __debug__
+m.pending_source()
+canonical = m.load(EV / "issue95-canonical-r3.json")
+physical = m.pairs(canonical["source_files"])
+source = EV / "issue95-publication-source-r1.json"
+binding = m.load(source)
+assert binding["physical_files"] == physical and binding["source_file_count"] == 7397
+assert not (EV / "issue95-publication-assembly-r1.json").exists()
+assert m.load(EV / "issue95-publication-assembly-failed-r2-session-exit.json")["exit_code"] == 1
+m.verify_files(physical)
+initial_index = m.index_digest()
+assert initial_index == binding["original_index_sha256"]
+packet = m.reader.directory_root(m.PACKET)
+assert packet == m.ROOT / m.PACKET_REL and packet.is_relative_to(m.ROOT)
+evidence_root = m.reader.directory_root(EV)
+assert evidence_root == EV
+destination = EV / "issue95-publication-assembly-failed-r2"
+assert destination.parent == evidence_root and not destination.exists()
+assert not any(p.startswith(m.PACKET_REL + "/") for p, _ in physical)
+files = m.packet_files()
+assert files and all(p["path"].startswith(m.PACKET_REL + "/") for p in files)
+source_hash = m.sha(m.guarded_bytes(source, EV))
+destination.mkdir()
+record_path = destination / "preservation.json"
+record = {"issue": 95, "status": "preserving", "started_at_utc": datetime.now(timezone.utc).isoformat(),
+          "original_packet": m.PACKET_REL, "original_source_receipt": source.name,
+          "source_receipt_sha256": source_hash, "partial_files": files,
+          "owned_by_run": str(EV), "method": "Same-volume rename into the run evidence directory; no deletion.",
+          "original_index_sha256": initial_index, "product_files": 7397}
+
+
+def save():
+    record_path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+
+
+save()
+try:
+    assert destination.resolve(strict=True).parent == evidence_root
+    packet.rename(destination / "packet")
+    source.rename(destination / "original-source-receipt.json")
+    for item in files:
+        relative = Path(item["path"]).relative_to(m.PACKET_REL)
+        assert m.sha(m.guarded_bytes(destination / "packet" / relative, EV)) == item["sha256"]
+    assert m.sha(m.guarded_bytes(destination / "original-source-receipt.json", EV)) == source_hash
+    m.verify_files(physical)
+    m.pending_source()
+    assert m.index_digest() == initial_index
+    assert not m.PACKET.exists() and not source.exists()
+    record.update(status="preserved", product_files_unchanged=True, original_index_unchanged=True,
+                  pending_merge_preserved=True, deletion_performed=False)
+except Exception as error:
+    record.update(status="failed", failure_type=type(error).__name__, failure=str(error))
+    raise
+finally:
+    record["finished_at_utc"] = datetime.now(timezone.utc).isoformat()
+    save()
+    print(json.dumps({"status": record["status"], "partial_files": len(files),
+                      "product_files_unchanged": record.get("product_files_unchanged")}))
