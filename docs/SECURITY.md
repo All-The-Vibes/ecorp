@@ -327,6 +327,15 @@ when the operating system has not confirmed it. Unix Codex currently supervises 
 root and explicitly records `root_only`; it provides no descendant-termination assurance.
 No Codex hard stop may upload an artifact, run accepted verification, or emit accepted completion.
 
+Clean-source removal additionally requires a positive server receipt for the exact committed
+completion event and current Corp/connection/run/assignment scope. Enqueuing a terminal event is
+not cleanup authority. Until that receipt arrives, a hard directive can still be acknowledged and
+cancel the local assignment. A lost or rejected completion receipt, manual gate, failed run or
+recovery retains source; the 30-second receipt timeout cannot authorize an automatic retry in a
+new worktree or reverse a completion already committed by the server. Existing Git cleanup checks
+still apply after acknowledgment. Receipt capability is requested per completion so older runners
+do not receive an unknown server message.
+
 Mission descriptions, task contracts, and verifier policies are authority-bearing records.
 Creation validates their bounds before persistence, and every revision stores both prior and
 replacement values rather than rewriting history invisibly. Revision idempotency is scoped by Corp

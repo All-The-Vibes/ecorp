@@ -31,8 +31,8 @@ use crony_domain::{
     DeliverableSpec, RetainedProviderReceiptGrant, RunFailureKind, VerificationPolicy,
 };
 use crony_protocol::{
-    ActiveRunClaim, MAX_VERIFICATION_ARTIFACT_BYTES, ResolvedSecret, RunnerCapability, RunnerModel,
-    RunnerToServer, ServerToRunner, VerificationArtifactReference,
+    ActiveRunClaim, MAX_VERIFICATION_ARTIFACT_BYTES, ResolvedSecret, RunCompletionReceipt,
+    RunnerCapability, RunnerModel, RunnerToServer, ServerToRunner, VerificationArtifactReference,
 };
 use dashmap::DashMap;
 use futures_util::{SinkExt, StreamExt};
@@ -221,6 +221,7 @@ impl Assignment {
 struct HardBoundaryControl {
     phase: AtomicU8,
     cancellation: watch::Sender<bool>,
+    completion: watch::Sender<Option<(Uuid, bool)>>,
 }
 
 impl Default for HardBoundaryControl {
@@ -228,6 +229,7 @@ impl Default for HardBoundaryControl {
         Self {
             phase: AtomicU8::new(Self::OPEN),
             cancellation: watch::channel(false).0,
+            completion: watch::channel(None).0,
         }
     }
 }
@@ -266,6 +268,42 @@ impl HardBoundaryControl {
             )
             .is_ok()
     }
+
+    fn expect_completion(&self, event_id: Uuid) {
+        self.completion.send_replace(Some((event_id, false)));
+    }
+
+    fn accept_completion(&self, event_id: Uuid) -> bool {
+        let mut matched = false;
+        self.completion.send_if_modified(|state| {
+            if let Some((expected, accepted)) = state
+                && *expected == event_id
+            {
+                matched = true;
+                let changed = !*accepted;
+                *accepted = true;
+                return changed;
+            }
+            false
+        });
+        matched
+    }
+}
+
+fn apply_completion_receipt(
+    active_runs: &ActiveRuns,
+    corp_id: Uuid,
+    connection_epoch: Uuid,
+    receipt: &RunCompletionReceipt,
+) -> bool {
+    receipt.corp_id == corp_id
+        && receipt.connection_epoch == connection_epoch
+        && active_runs.get(&receipt.run_id).is_some_and(|active| {
+            active.assignment_token == receipt.assignment_token
+                && active
+                    .hard_boundary_checkpoint
+                    .accept_completion(receipt.event_id)
+        })
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -1082,6 +1120,16 @@ async fn run_connection(
             }
             ServerToRunner::RegistrationRejected { reason } => {
                 return Err(anyhow!("runner registration rejected: {reason}"));
+            }
+            ServerToRunner::RunCompletionAccepted { receipt } => {
+                if registration_accepted {
+                    apply_completion_receipt(
+                        &active_runs,
+                        args.corp_id,
+                        connection_epoch,
+                        &receipt,
+                    );
+                }
             }
             ServerToRunner::ArtifactStored {
                 run_id,
@@ -2352,10 +2400,12 @@ async fn execute_assignment(
     } else {
         adapter.execute(request, controls, sink).await
     };
-    let mut preserve_workspace =
-        execution.is_err() || assignment.resume_workspace_base_commit.is_some();
+    // Only persisted completion may permit cleanup. Failure, cancellation,
+    // manual approval and uncertain delivery all retain the exact source.
+    let mut preserve_workspace = true;
     let mut workspace_quarantined = false;
     let mut checkpoint_reported = false;
+    let mut cancellation_reported = false;
     let mut verification_started = false;
     let provider_outcome = match &execution {
         Ok(AdapterExit::Completed) => "completed",
@@ -2434,9 +2484,15 @@ async fn execute_assignment(
                     Some(&mut cancellation),
                 )
                 .await;
-                preserve_workspace |= verification != VerificationRunOutcome::Finished;
+                preserve_workspace = verification
+                    != VerificationRunOutcome::Verified(CompletionStatus::Accepted)
+                    || assignment.resume_workspace_base_commit.is_some();
                 workspace_quarantined |= verification == VerificationRunOutcome::IntegrityFailed;
-                if verification == VerificationRunOutcome::Cancelled {
+                if matches!(
+                    verification,
+                    VerificationRunOutcome::Cancelled
+                        | VerificationRunOutcome::Verified(CompletionStatus::Cancelled)
+                ) {
                     send_run_event(
                         &outbound,
                         &runner_id,
@@ -2444,6 +2500,7 @@ async fn execute_assignment(
                         "run.cancelled",
                         json!({"reason": "Hard circuit breaker cancelled verification; source retained without a pre-verification checkpoint."}),
                     );
+                    cancellation_reported = true;
                 }
             }
             BufferedTerminal::Failed(error) => {
@@ -2464,12 +2521,22 @@ async fn execute_assignment(
                     "run.cancelled",
                     json!({"reason": reason}),
                 );
+                cancellation_reported = true;
             }
         }
     }
-    if !checkpoint_reported && !assignment.hard_boundary_checkpoint.begin_finalization() {
-        // Atomically choose retention or ordinary finalization before either
-        // path awaits. A subsequently delivered hard directive cannot race removal.
+    if !checkpoint_reported && assignment.hard_boundary_requested() {
+        // Completion receipt waiting keeps the assignment cancellable until the
+        // server commits. A hard stop that wins there must also terminate locally.
+        if !cancellation_reported {
+            send_run_event(
+                &outbound,
+                &runner_id,
+                &assignment,
+                "run.cancelled",
+                json!({"reason": "Hard circuit breaker reached before accepted completion; source retained."}),
+            );
+        }
         source_checkpoint::report(
             &outbound,
             &runner_id,
@@ -2496,7 +2563,7 @@ async fn execute_assignment(
             &runner_id,
             &assignment,
             &workspace,
-            "provider recovery, failure, or teardown requires the exact worktree to be retained",
+            "recovery, failure, pending approval or unconfirmed completion requires the exact worktree to be retained",
             fingerprint.as_deref(),
             workspace_quarantined,
         );
@@ -2784,7 +2851,7 @@ async fn execute_verification_assignment(
     .await;
 
     let mut failures = Vec::new();
-    let finished = matches!(&result, Ok((VerificationRunOutcome::Finished, _)));
+    let finished = matches!(&result, Ok((VerificationRunOutcome::Verified(_), _)));
     if !finished {
         if let Some(baseline) = verification_baseline.as_mut()
             && let Err(error) = cleanup_verification_snapshots(
@@ -2808,8 +2875,8 @@ async fn execute_verification_assignment(
             failures.push(format!("verifier-only source is quarantined: {error:#}"));
         }
     }
-    // Finished means cleanup and the last checkpoint check preceded the synchronous success
-    // event batch. Never perform another fallible integrity check after accepted completion.
+    // Verified means snapshot cleanup and the last checkpoint check preceded
+    // completion delivery. A missing receipt must not rerun those fallible steps.
     workspace_quarantined |= matches!(&result, Ok((VerificationRunOutcome::IntegrityFailed, _)));
     // Artifact/check failures may retain the exact admitted checkpoint for a later retry.
     // Integrity rejection is sticky: even if the source changes back, never mint a new checkpoint.
@@ -2821,7 +2888,11 @@ async fn execute_verification_assignment(
         };
     match result {
         Err(error) => failures.push(format!("verifier-only recovery failed: {error:#}")),
-        Ok((VerificationRunOutcome::Cancelled, interruption)) if failures.is_empty() => {
+        Ok((
+            VerificationRunOutcome::Cancelled
+            | VerificationRunOutcome::Verified(CompletionStatus::Cancelled),
+            interruption,
+        )) if failures.is_empty() => {
             match interruption.unwrap_or_else(|| {
                 Err("verifier-only execution cancelled without a control reason".to_owned())
             }) {
@@ -3129,10 +3200,53 @@ enum IsolatedVerificationOutcome {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum VerificationRunOutcome {
-    Finished,
+    Verified(CompletionStatus),
     Failed,
     IntegrityFailed,
     Cancelled,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CompletionStatus {
+    Accepted,
+    AwaitingApproval,
+    Cancelled,
+    Unconfirmed,
+}
+
+const COMPLETION_RECEIPT_TIMEOUT: Duration = Duration::from_secs(30);
+
+async fn wait_for_completion_receipt(
+    boundary: &HardBoundaryControl,
+    cancellation: &mut watch::Receiver<bool>,
+    timeout: Duration,
+) -> CompletionStatus {
+    let mut completion = boundary.completion.subscribe();
+    let accepted = async {
+        loop {
+            if completion
+                .borrow_and_update()
+                .is_some_and(|(_, accepted)| accepted)
+            {
+                return;
+            }
+            if completion.changed().await.is_err() {
+                std::future::pending::<()>().await;
+            }
+        }
+    };
+    tokio::select! {
+        biased;
+        _ = cancellation.wait_for(|cancelled| *cancelled) => CompletionStatus::Cancelled,
+        () = accepted => {
+            if boundary.begin_finalization() {
+                CompletionStatus::Accepted
+            } else {
+                CompletionStatus::Cancelled
+            }
+        }
+        () = tokio::time::sleep(timeout) => CompletionStatus::Unconfirmed,
+    }
 }
 
 async fn verify_isolated_recovery_checks(
@@ -3699,7 +3813,7 @@ async fn send_verification_events(
     } else {
         None
     };
-    // This is the last awaited operation before the synchronous success-event batch.
+    // This is the last integrity check before the synchronous success-event batch.
     // In particular, an uploaded artifact must never make a drifted workspace acceptable.
     if let Err(error) = verify_preserved_workspace_checkpoint(
         workspaces,
@@ -3755,16 +3869,36 @@ async fn send_verification_events(
                 "completion_summary": completion_summary,
             }),
         );
+        VerificationRunOutcome::Verified(CompletionStatus::AwaitingApproval)
     } else {
         send_run_event(
             outbound,
             runner_id,
             assignment,
             "run.completed",
-            json!({"summary": completion_summary}),
+            json!({"summary": completion_summary, "completion_receipt_requested": true}),
         );
+        let mut default_cancellation = assignment.hard_boundary_checkpoint.cancellation.subscribe();
+        let completion = wait_for_completion_receipt(
+            &assignment.hard_boundary_checkpoint,
+            cancellation.unwrap_or(&mut default_cancellation),
+            COMPLETION_RECEIPT_TIMEOUT,
+        )
+        .await;
+        if completion == CompletionStatus::Unconfirmed {
+            send_run_event(
+                outbound,
+                runner_id,
+                assignment,
+                "run.failed",
+                json!({
+                    "error": "Server did not confirm persisted completion; retain the exact workspace for reconciliation.",
+                    "failure_kind": RunFailureKind::CompletionUnconfirmed,
+                }),
+            );
+        }
+        VerificationRunOutcome::Verified(completion)
     }
-    VerificationRunOutcome::Finished
 }
 
 fn send_workspace_cleanup_event(
@@ -3855,8 +3989,15 @@ fn send_run_event(
     event_type: &str,
     payload: Value,
 ) {
+    let event_id = Uuid::new_v4();
+    if event_type == "run.completed" {
+        // Register before sending so even an immediate server receipt matches.
+        assignment
+            .hard_boundary_checkpoint
+            .expect_completion(event_id);
+    }
     let message = RunnerToServer::RunEvent {
-        event_id: Uuid::new_v4(),
+        event_id,
         runner_id: runner_id.to_owned(),
         corp_id: assignment.corp_id,
         connection_epoch: assignment.connection_epoch,
@@ -3938,6 +4079,111 @@ mod tests {
     use tokio::sync::Notify;
 
     use super::*;
+
+    // Simulated receipt for isolated verifier tests; real persistence and socket
+    // ordering are exercised separately by native DB and complete-stack fixtures.
+    pub(super) async fn accept_fixture_completion(assignment: &Assignment) {
+        let mut completion = assignment.hard_boundary_checkpoint.completion.subscribe();
+        let event_id = tokio::time::timeout(Duration::from_secs(15), async {
+            completion
+                .wait_for(Option::is_some)
+                .await
+                .unwrap()
+                .unwrap()
+                .0
+        })
+        .await
+        .expect("fixture must queue completion before acknowledging it");
+        assert!(
+            assignment
+                .hard_boundary_checkpoint
+                .accept_completion(event_id)
+        );
+    }
+
+    #[tokio::test]
+    async fn issue87_completion_receipt_rejects_foreign_scope_and_accepts_exact_replay() {
+        let boundary = Arc::new(HardBoundaryControl::default());
+        let receipt = RunCompletionReceipt {
+            corp_id: Uuid::new_v4(),
+            connection_epoch: Uuid::new_v4(),
+            run_id: Uuid::new_v4(),
+            assignment_token: Uuid::new_v4(),
+            event_id: Uuid::new_v4(),
+        };
+        let (control, _controls) = mpsc::unbounded_channel();
+        let (artifact_ack, _acks) = mpsc::unbounded_channel();
+        let active_runs = Arc::new(DashMap::new());
+        active_runs.insert(
+            receipt.run_id,
+            ActiveRunControl {
+                assignment_token: receipt.assignment_token,
+                control,
+                artifact_ack,
+                hard_boundary_checkpoint: boundary.clone(),
+            },
+        );
+        let apply = |value: &RunCompletionReceipt| {
+            apply_completion_receipt(
+                &active_runs,
+                receipt.corp_id,
+                receipt.connection_epoch,
+                value,
+            )
+        };
+        assert!(
+            !apply(&receipt),
+            "unsolicited receipt cannot authorize cleanup"
+        );
+        boundary.expect_completion(receipt.event_id);
+        for field in 0..5 {
+            let mut foreign = receipt.clone();
+            let value = Uuid::new_v4();
+            match field {
+                0 => foreign.corp_id = value,
+                1 => foreign.connection_epoch = value,
+                2 => foreign.run_id = value,
+                3 => foreign.assignment_token = value,
+                _ => foreign.event_id = value,
+            }
+            assert!(!apply(&foreign));
+            assert_eq!(
+                *boundary.completion.borrow(),
+                Some((receipt.event_id, false))
+            );
+        }
+        assert!(apply(&receipt));
+        assert!(apply(&receipt));
+        let mut cancellation = boundary.cancellation.subscribe();
+        assert_eq!(
+            wait_for_completion_receipt(&boundary, &mut cancellation, Duration::from_secs(1)).await,
+            CompletionStatus::Accepted
+        );
+        assert!(
+            !boundary.request(),
+            "server-accepted completion fences removal"
+        );
+    }
+
+    #[tokio::test]
+    async fn issue87_completion_receipt_wait_is_bounded_and_stop_remains_applicable() {
+        let boundary = HardBoundaryControl::default();
+        let event_id = Uuid::new_v4();
+        boundary.expect_completion(event_id);
+        let mut cancellation = boundary.cancellation.subscribe();
+        assert_eq!(
+            wait_for_completion_receipt(&boundary, &mut cancellation, Duration::from_millis(10))
+                .await,
+            CompletionStatus::Unconfirmed
+        );
+        assert!(boundary.request());
+        assert!(boundary.accept_completion(event_id));
+        assert_eq!(
+            wait_for_completion_receipt(&boundary, &mut cancellation, Duration::from_secs(1)).await,
+            CompletionStatus::Cancelled
+        );
+        assert!(boundary.requested());
+    }
 
     #[test]
     fn workspace_setup_capability_requires_storage_and_native_process_ownership() {
@@ -4573,18 +4819,20 @@ mod tests {
         let outbound = OutboundBus::default();
         let (_control_tx, controls) = mpsc::unbounded_channel();
         let (_ack_tx, artifact_acks) = mpsc::unbounded_channel();
-        execute_verification_assignment(
-            workspaces.clone(),
-            "runner-test".to_owned(),
-            assignment.clone(),
-            outbound.clone(),
-            AssignmentChannels {
-                controls,
-                artifact_acks,
-            },
-        )
-        .await
-        .unwrap();
+        let (result, ()) = tokio::join!(
+            execute_verification_assignment(
+                workspaces.clone(),
+                "runner-test".to_owned(),
+                assignment.clone(),
+                outbound.clone(),
+                AssignmentChannels {
+                    controls,
+                    artifact_acks,
+                },
+            ),
+            accept_fixture_completion(&assignment)
+        );
+        result.unwrap();
         let events = recorded_run_events(&outbound);
         assert_eq!(
             events
@@ -4802,6 +5050,7 @@ mod tests {
         tokio::time::timeout(Duration::from_secs(45), async {
             while let Some(message) = received.recv().await {
                 if let RunnerToServer::RunEvent {
+                    event_id,
                     event_type,
                     payload,
                     ..
@@ -4875,6 +5124,13 @@ mod tests {
                                 })
                                 .unwrap();
                         }
+                    }
+                    if event_type == "run.completed" {
+                        assert!(
+                            assignment
+                                .hard_boundary_checkpoint
+                                .accept_completion(event_id)
+                        );
                     }
                     let finished = event_type == "run.workspace_preserved";
                     events.push((event_type, payload));
@@ -5093,6 +5349,9 @@ mod tests {
                     sha256: upload_sha,
                 })
                 .expect("release held upload ACK");
+        }
+        if change == HeldUploadChange::None && !manual_gate {
+            accept_fixture_completion(&assignment).await;
         }
         tokio::time::timeout(Duration::from_secs(15), task)
             .await

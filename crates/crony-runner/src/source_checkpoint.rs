@@ -432,6 +432,9 @@ mod tests {
                 native_control.apply_circuit_breaker(stage, reason),
             _ => panic!("fixture requires a stop or breaker directive"),
         });
+        if !hard {
+            super::super::tests::accept_fixture_completion(&assignment).await;
+        }
         let result = tokio::time::timeout(Duration::from_secs(20), execution)
             .await
             .unwrap()
@@ -867,8 +870,41 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn issue190_cleanup_commit_rejects_a_late_retention_acknowledgment() {
+    async fn issue87_server_stop_wins_before_completion_receipt() {
+        completion_case(CompletionCase::Stop).await;
+    }
+
+    #[tokio::test]
+    async fn issue87_accepted_completion_allows_clean_workspace_removal() {
+        completion_case(CompletionCase::Accepted).await;
+    }
+
+    #[tokio::test]
+    async fn issue87_missing_completion_receipt_retains_source_without_retry() {
+        completion_case(CompletionCase::Missing).await;
+    }
+
+    #[tokio::test]
+    async fn issue87_manual_verification_gate_retains_clean_workspace() {
+        completion_case(CompletionCase::Manual).await;
+    }
+
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum CompletionCase {
+        Stop,
+        Accepted,
+        Missing,
+        Manual,
+    }
+
+    async fn completion_case(case: CompletionCase) {
         let (root, workspaces, workspace, mut assignment) = fixture().await;
+        if case == CompletionCase::Manual {
+            assignment.verification_policy.manual_gate =
+                Some(crony_domain::ManualVerificationGate::HumanApproval {
+                    roles: vec!["owner".to_owned()],
+                });
+        }
         assignment.verification_policy.checks = vec![crony_domain::VerifierCheck::Command {
             program: "node".to_owned(),
             args: vec![
@@ -894,6 +930,7 @@ mod tests {
             artifact_ack,
             hard_boundary_checkpoint: assignment.hard_boundary_checkpoint.clone(),
         };
+        let observed_assignment = assignment.clone();
         let run_id = assignment.run_id;
         let execution = tokio::spawn(execute_assignment(
             workspaces.clone(),
@@ -911,17 +948,28 @@ mod tests {
             .await
             .unwrap();
         // Native prepare has finished. Hold the real workspace-operation lock
-        // so finalize cannot complete until after the late directive is tested.
+        // to put the stop after local completion is queued but before removal.
+        // The server has not accepted any queued event, so it can still commit
+        // a hard stop and reject the pending completion.
         let held_finalize = workspaces.hold_operations_for_test().await;
         assert!(
             native_control.apply_circuit_breaker("constrain".to_owned(), "continue".to_owned())
         );
         tokio::time::timeout(Duration::from_secs(10), async {
-            while native_control
-                .hard_boundary_checkpoint
-                .phase
-                .load(Ordering::Acquire)
-                != HardBoundaryControl::FINALIZING
+            while !outbound
+                .state
+                .lock()
+                .unwrap()
+                .pending
+                .iter()
+                .any(|message| {
+                    matches!(message, RunnerToServer::RunEvent { event_type, .. }
+                    if event_type == if case == CompletionCase::Manual {
+                        "run.verification_waiting"
+                    } else {
+                        "run.completed"
+                    })
+                })
             {
                 tokio::time::sleep(Duration::from_millis(10)).await;
             }
@@ -929,46 +977,71 @@ mod tests {
         .await
         .unwrap();
         assert!(workspace.path.exists());
-        let active_runs = Arc::new(DashMap::new());
-        active_runs.insert(run_id, native_control.clone());
-        let seen_commands = DashMap::new();
-        let command_id = Uuid::new_v4();
-        for _ in 0..2 {
-            assert_eq!(
-                apply_circuit_breaker_command(
-                    &seen_commands,
-                    &active_runs,
-                    command_id,
-                    run_id,
-                    "stop".to_owned(),
-                    "too late".to_owned(),
-                ),
-                (false, false),
-            );
+        if case == CompletionCase::Stop {
+            let active_runs = Arc::new(DashMap::new());
+            active_runs.insert(run_id, native_control.clone());
+            let seen_commands = DashMap::new();
+            let command_id = Uuid::new_v4();
+            for duplicate in [false, true] {
+                assert_eq!(
+                    apply_circuit_breaker_command(
+                        &seen_commands,
+                        &active_runs,
+                        command_id,
+                        run_id,
+                        "stop".to_owned(),
+                        "authoritative stop committed before completion".to_owned(),
+                    ),
+                    (true, duplicate),
+                );
+            }
+            assert!(seen_commands.contains_key(&command_id));
+            assert!(native_control.hard_boundary_checkpoint.requested());
+        } else if case == CompletionCase::Accepted {
+            super::super::tests::accept_fixture_completion(&observed_assignment).await;
         }
-        assert!(
-            seen_commands.is_empty(),
-            "negative ACKs must not be cached as applied"
-        );
-        assert!(!native_control.hard_boundary_checkpoint.requested());
         drop(held_finalize);
-        tokio::time::timeout(Duration::from_secs(10), execution)
+        tokio::time::timeout(Duration::from_secs(40), execution)
             .await
             .unwrap()
             .unwrap()
             .unwrap();
         let recorded = events(&outbound);
-        assert!(
+        assert_eq!(
+            recorded.iter().any(|(kind, _)| kind == "run.cancelled"),
+            case == CompletionCase::Stop,
+        );
+        assert_eq!(
             recorded
                 .iter()
-                .any(|(kind, _)| kind == "run.workspace_removed")
+                .any(|(kind, _)| kind == "run.workspace_preserved"),
+            case != CompletionCase::Accepted,
         );
+        assert_eq!(
+            recorded
+                .iter()
+                .any(|(kind, _)| kind == "run.workspace_removed"),
+            case == CompletionCase::Accepted,
+        );
+        let failures = recorded
+            .iter()
+            .filter(|(kind, _)| kind == "run.failed")
+            .collect::<Vec<_>>();
+        if case == CompletionCase::Missing {
+            assert_eq!(failures.len(), 1);
+            assert_eq!(failures[0].1["failure_kind"], "completion_unconfirmed");
+        } else {
+            assert!(failures.is_empty());
+        }
+        if case == CompletionCase::Accepted {
+            assert!(!native_control.apply_stop("after accepted completion".to_owned()));
+        }
         assert!(
             !recorded
                 .iter()
                 .any(|(_, payload)| payload.get("source_checkpoint").is_some())
         );
-        assert!(!workspace.path.exists());
+        assert_eq!(workspace.path.exists(), case != CompletionCase::Accepted);
         assert!(root.join("source/sentinel.txt").exists());
         remove_fixture(root);
     }

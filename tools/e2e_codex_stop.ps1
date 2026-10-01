@@ -5,7 +5,7 @@ param(
     [Parameter(Mandatory)][string]$QaParent,
     [Parameter(Mandatory)][string]$OutputRoot,
     [Parameter(Mandatory)][string]$PlaywrightModule,
-    [Parameter(Mandatory)][ValidateSet('fixture-suspend','fixture-stop','provider-stop','fixture-lifecycle')][string]$Scenario,
+    [Parameter(Mandatory)][ValidateSet('fixture-suspend','fixture-stop','provider-stop','fixture-lifecycle','fixture-completion-stop','fixture-completion-accepted','fixture-completion-lost','fixture-completion-legacy')][string]$Scenario,
     [string]$CodexCommand
 )
 $ErrorActionPreference = 'Stop'
@@ -20,15 +20,16 @@ $taskNode = (Get-Command node.exe -ErrorAction Stop).Source
 $taskServer = (Resolve-Path -LiteralPath (Join-Path $taskProduct 'target/debug/crony-server.exe')).Path
 $taskRunner = (Resolve-Path -LiteralPath (Join-Path $taskProduct 'target/debug/crony-runner.exe')).Path
 $taskVite = (Resolve-Path -LiteralPath (Join-Path $taskProduct 'apps/web/node_modules/vite/bin/vite.js')).Path
+$taskCompletion = $Scenario.StartsWith('fixture-completion-', [StringComparison]::Ordinal)
 if ($Scenario -eq 'provider-stop') {
     if (!$CodexCommand) { throw 'Real-provider acceptance requires an explicit authenticated native Codex executable.' }
     $taskCodex = (Resolve-Path -LiteralPath $CodexCommand).Path
     $taskCodexArgs = ''
 } else {
     $taskCodex = $taskNode
-    $taskFixture = if ($Scenario -eq 'fixture-lifecycle') { 'fake-codex-app-server.mjs' } else { 'fake-codex-stop-app-server.mjs' }
+    $taskFixture = if ($Scenario -eq 'fixture-lifecycle' -or $taskCompletion) { 'fake-codex-app-server.mjs' } else { 'fake-codex-stop-app-server.mjs' }
     $taskCodexArgs = Join-Path $taskProduct ('scripts/' + $taskFixture)
-    if ($Scenario -ne 'fixture-lifecycle') {
+    if ($Scenario -ne 'fixture-lifecycle' -and !$taskCompletion) {
         $taskCodexArgs += ';--scenario=' + $(if ($Scenario -eq 'fixture-suspend') { 'budget-delayed-output' } else { 'delayed-output' })
     }
 }
@@ -83,6 +84,15 @@ try {
     Invoke-FixtureGit -Arguments @('remote','add','origin','https://github.com/All-The-Vibes/ecorp.git')
     [IO.File]::WriteAllText((Join-Path $taskQa 'source/README.md'), "Owned Codex stop acceptance source. No remote Git operations.`n")
     Invoke-FixtureGit -Arguments @('add','--','README.md')
+    if ($taskCompletion) {
+        # The ordinary fake writes these exact bytes. A clean worktree makes
+        # premature removal observable without changing provider or verifier code.
+        # Pin its checkout bytes too: Windows autocrlf can otherwise turn the
+        # baseline into CRLF before the fake rewrites it with LF.
+        [IO.File]::WriteAllText((Join-Path $taskQa 'source/.gitattributes'), "base.txt text eol=lf`n")
+        [IO.File]::WriteAllText((Join-Path $taskQa 'source/base.txt'), "base`n")
+        Invoke-FixtureGit -Arguments @('add','--','.gitattributes','base.txt')
+    }
     Invoke-FixtureGit -Arguments @('commit','-m','Initialize explicitly owned stop acceptance source')
     $taskSourceHead = & git -C (Join-Path $taskQa 'source') rev-parse HEAD
     if ($LASTEXITCODE) { throw 'Cannot identify fixture source.' }
@@ -118,11 +128,24 @@ try {
     $taskSecretPaths = @($taskTokenPath,$taskCredentialPath)
     [IO.File]::WriteAllText($taskTokenPath, $taskEnrollment.enrollment_token)
     $taskEnrollment = $null
+    $taskRunnerWs = "ws://127.0.0.1:$taskServerPort/ws/runner"
+    $taskGateUrl = $null
+    if ($taskCompletion) {
+        $taskGatePort = New-FixturePort
+        $taskGateUrl = "http://127.0.0.1:$taskGatePort"
+        $taskState.processes.gate = Start-LocalOwnedProcess -Role gate -Workspace $taskQa -FilePath $taskNode -ArgumentList @((Join-Path $PSScriptRoot 'e2e_codex_completion_gate.mjs')) -WorkingDirectory $taskProduct -LogDirectory (Join-Path $taskQa 'logs') -Environment @{
+            CRONY_CODEX_STOP_TEST='1';CRONY_COMPLETION_GATE_PORT="$taskGatePort"
+            CRONY_COMPLETION_GATE_UPSTREAM=$taskRunnerWs;CRONY_COMPLETION_GATE_SCENARIO=$Scenario
+        }
+        Save-LocalStackState -Path (Join-Path $taskQa 'ownership.json') -State $taskState -Workspace $taskQa
+        Wait-FixtureHttp "$taskGateUrl/state"
+        $taskRunnerWs = "ws://127.0.0.1:$taskGatePort/ws/runner"
+    }
     $taskState.processes.runner = Start-LocalOwnedProcess -Role runner -Workspace $taskQa -FilePath $taskRunner -WorkingDirectory $taskProduct -LogDirectory (Join-Path $taskQa 'logs') -Environment @{
         CRONY_RUNNER_ENROLLMENT_TOKEN_FILE=$taskTokenPath;CRONY_RUNNER_CREDENTIAL_FILE=$taskCredentialPath
         CRONY_RUNNER_WORKSPACE=(Join-Path $taskQa 'runner');CRONY_SOURCE_REPOSITORY=(Join-Path $taskQa 'source');CRONY_SOURCE_BASE_REF='main'
         CRONY_FAKE_AGENT_SCRIPT=(Join-Path $taskProduct 'scripts/fake-agent.mjs');CRONY_CORP_ID=$taskDemo.corp_id;CRONY_RUNNER_ID=$taskRunnerId
-        CRONY_SERVER_WS="ws://127.0.0.1:$taskServerPort/ws/runner"
+        CRONY_SERVER_WS=$taskRunnerWs
         CRONY_CODEX_COMMAND=$taskCodex;CRONY_CODEX_COMMAND_ARGS=$taskCodexArgs
         CRONY_CLAUDE_COMMAND=(Join-Path $taskQa 'absent-claude.exe');CRONY_OPENCODE_COMMAND=(Join-Path $taskQa 'absent-opencode.exe')
         CRONY_COPILOT_CLI_PATH=(Join-Path $taskQa 'absent-copilot.exe')
@@ -160,12 +183,12 @@ try {
         Start-Sleep -Milliseconds 250
     } while ([DateTime]::UtcNow -lt $taskDeadline)
     if ($taskAdmissionStatus -ne 200) { throw 'Owned runner did not become admission-ready; inspect admission_readiness and runner logs.' }
-    $taskManifest = @{test_owned=$true;scenario=$Scenario;qa_root=$taskQa;product_root=$taskProduct;output=$taskOutput;source=(Join-Path $taskQa 'source');source_head=$taskSourceHead;server_url=$taskServerUrl;web_url=$taskWebUrl;runner_id=$taskRunnerId;processes=$taskState.processes;demo=$taskDemo}
+    $taskManifest = @{test_owned=$true;scenario=$Scenario;qa_root=$taskQa;product_root=$taskProduct;output=$taskOutput;source=(Join-Path $taskQa 'source');source_head=$taskSourceHead;server_url=$taskServerUrl;web_url=$taskWebUrl;gate_url=$taskGateUrl;runner_id=$taskRunnerId;processes=$taskState.processes;demo=$taskDemo}
     $taskFixturePath = Join-Path $taskOutput 'owned-fixture.json'
     $taskManifest | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $taskFixturePath -Encoding utf8
     $taskReceipt.status='running'
     $taskReceipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $taskOutput 'driver.json') -Encoding utf8
-    $taskDriver = if ($Scenario -eq 'fixture-lifecycle') { 'e2e_codex.mjs' } else { 'e2e_codex_stop_browser.mjs' }
+    $taskDriver = if ($taskCompletion) { 'e2e_codex_completion_browser.mjs' } elseif ($Scenario -eq 'fixture-lifecycle') { 'e2e_codex.mjs' } else { 'e2e_codex_stop_browser.mjs' }
     $taskState.processes.acceptance = Start-LocalOwnedProcess -Role acceptance -Workspace $taskQa -FilePath $taskNode -ArgumentList @((Join-Path $PSScriptRoot $taskDriver)) -WorkingDirectory $taskProduct -LogDirectory $taskOutput -Environment @{
         CRONY_PLAYWRIGHT_MODULE=$PlaywrightModule;CRONY_CODEX_STOP_TEST='1';CRONY_CODEX_STOP_FIXTURE=$taskFixturePath
         CRONY_SERVER_HTTP=$taskServerUrl;CRONY_CODEX_E2E_OUTPUT=(Join-Path $taskOutput 'lifecycle.json')
@@ -186,7 +209,7 @@ try {
     $taskReceipt.status='failed';$taskReceipt.failure=$_.Exception.Message;$taskCode=1
 } finally {
     $taskReceipt.cleanup_errors=@()
-    foreach ($role in @('acceptance','web','runner','server')) {
+    foreach ($role in @('acceptance','web','runner','gate','server')) {
         if ($taskState.processes[$role]) {
             try {
                 $record = $taskState.processes[$role]

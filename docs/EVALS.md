@@ -830,6 +830,29 @@ wait in the isolated worktree, then stops that run through the browser. Failure 
 native operation is unavailable or failed provider acceptance, never a passed fixture substitute.
 `fixture-lifecycle` runs the existing start/steer/interrupt/stop/resume lifecycle driver separately.
 
+The completion-ordering scenarios use the ordinary deterministic Codex transport and a clean
+tracked source. A separate owned loopback WebSocket gate holds the real runner completion until
+the browser driver releases it. `fixture-completion-stop` commits the browser's emergency stop
+first and requires cancellation, an applied durable acknowledgment and retained source without
+accepted completion or retry. `fixture-completion-accepted` requires an exact committed event,
+matching real server receipt and subsequent clean-worktree removal. `fixture-completion-lost`
+withholds that actual receipt and requires bounded timeout, retained source and unchanged
+authoritative completed state. `fixture-completion-legacy` removes only the receipt-request flag
+to verify that the server sends no unfamiliar message; it does not simulate an entire old binary.
+The latter two cases retain the new runner's typed timeout observation without accepting a late
+failure or retry. Native PostgreSQL tests separately force both transaction orders by observing
+real database lock contention.
+
+The stop lane also requires the browser's active-run reference and Emergency stop control after
+artifact finalization. Native PostgreSQL regressions check that artifact finalization and its
+idempotent replay retain the reference during verification, and cancellation or accepted
+completion clears it only at the terminal transition.
+
+The gate forwards credentials and assignment capabilities only in process memory. Its output
+contains bounded event IDs, timestamps and scope-match booleans, never raw socket traffic or
+credential values. It is an opt-in test process with a loopback-only control endpoint and the same
+owned process cleanup as the rest of the fixture; no product execution or permission hook is added.
+
 The browser lanes retain screenshots, actual HTTP statuses, assertion counts, run/event receipts,
 independent dispatch/receipt/interrupt/termination/usage times, charged totals, and termination
 scope. Their supervisor records source manifests, executable hashes, native exit, source

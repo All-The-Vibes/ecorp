@@ -483,6 +483,289 @@ async fn issue87_historical_operator_stop_fences_artifacts_and_completion(pool: 
     assert_eq!(accepted, 0);
 }
 
+async fn artifact_control_until_terminal(pool: PgPool, stop: bool) {
+    let store = fixture(pool).await;
+    let upload = event(0, "run.artifact_upload", json!({}));
+    let agent_id = upload.agent_id;
+    let staged = artifact(0, &upload);
+    store
+        .prepare_artifact_upload(
+            upload,
+            staged.clone(),
+            &format!("staging/corps/{CORP}/{}", staged.id),
+        )
+        .await
+        .unwrap();
+    assert!(
+        store
+            .finalize_artifact_upload(CORP, staged.id)
+            .await
+            .unwrap()
+            .is_some()
+    );
+    assert!(
+        store
+            .finalize_artifact_upload(CORP, staged.id)
+            .await
+            .unwrap()
+            .is_none(),
+        "artifact finalization replay remains idempotent"
+    );
+    let active: (String, String, Option<Uuid>) = sqlx::query_as(
+        "SELECT r.status,a.status,a.current_run_id FROM runs r
+         JOIN agents a ON a.id=r.agent_id AND a.corp_id=r.corp_id
+         WHERE r.id=$1 AND r.corp_id=$2",
+    )
+    .bind(run_id(0))
+    .bind(CORP)
+    .fetch_one(&store.pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        active,
+        ("verifying".into(), "reviewing".into(), Some(run_id(0))),
+        "the office must retain its live-run controls during artifact verification"
+    );
+    if stop {
+        let requested = store
+            .request_emergency_stop(CORP, agent_id, OWNER, "stop during artifact verification")
+            .await
+            .unwrap();
+        assert_eq!(requested.event.aggregate_id, run_id(0));
+        store
+            .apply_runner_event(event(0, "run.cancelled", json!({"reason":"operator stop"})))
+            .await
+            .unwrap();
+    } else {
+        for kind in [
+            "run.verification_started",
+            "run.verification_passed",
+            "run.completed",
+        ] {
+            store
+                .apply_runner_event(event(0, kind, json!({"summary":"verified artifact"})))
+                .await
+                .unwrap();
+        }
+    }
+    let terminal: (String, Option<Uuid>) = sqlx::query_as(
+        "SELECT r.status,a.current_run_id FROM runs r
+         JOIN agents a ON a.id=r.agent_id AND a.corp_id=r.corp_id
+         WHERE r.id=$1 AND r.corp_id=$2",
+    )
+    .bind(run_id(0))
+    .bind(CORP)
+    .fetch_one(&store.pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        terminal,
+        (if stop { "cancelled" } else { "completed" }.into(), None)
+    );
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires an explicitly owned disposable PostgreSQL database"]
+async fn issue87_artifact_verification_keeps_stop_visible_until_cancelled(pool: PgPool) {
+    artifact_control_until_terminal(pool, true).await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires an explicitly owned disposable PostgreSQL database"]
+async fn issue87_artifact_verification_keeps_run_visible_until_completed(pool: PgPool) {
+    artifact_control_until_terminal(pool, false).await;
+}
+
+async fn verified_completion_fixture(pool: PgPool) -> PgStore {
+    let store = fixture(pool).await;
+    // Admit real verifier events against the fixture's persisted empty policy;
+    // never manufacture completed state with a direct SQL update.
+    for kind in ["run.verification_started", "run.verification_passed"] {
+        store
+            .apply_runner_event(event(
+                0,
+                kind,
+                json!({"summary":"owned fixture verification"}),
+            ))
+            .await
+            .unwrap();
+    }
+    store
+}
+
+async fn completion_stop_ordering(pool: PgPool, stop_first: bool) {
+    let store = verified_completion_fixture(pool).await;
+    let mut barrier = store.pool.begin().await.unwrap();
+    let blocker: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+        .fetch_one(&mut *barrier)
+        .await
+        .unwrap();
+    sqlx::query("SELECT id FROM runs WHERE id=$1 FOR UPDATE")
+        .bind(run_id(0))
+        .fetch_one(&mut *barrier)
+        .await
+        .unwrap();
+    let completion = event(
+        0,
+        "run.completed",
+        json!({"summary":"verified fixture completion"}),
+    );
+    let completion_id = completion.event_id;
+    let stop = {
+        let other = store.clone();
+        async move {
+            other
+                .request_emergency_stop(
+                    CORP,
+                    Uuid::from_u128(run_id(0).as_u128() + 1),
+                    OWNER,
+                    "completion race fixture",
+                )
+                .await
+        }
+    };
+    let complete = {
+        let other = store.clone();
+        async move { other.apply_runner_event(completion).await }
+    };
+    let (stopping, completing) = if stop_first {
+        let stopping = tokio::spawn(stop);
+        wait_for_database_blocker(&store, blocker).await;
+        let first_pid: i32 = sqlx::query_scalar(
+            "SELECT pid FROM pg_stat_activity WHERE datname=current_database() AND $1=ANY(pg_blocking_pids(pid))",
+        ).bind(blocker).fetch_one(&store.pool).await.unwrap();
+        let completing = tokio::spawn(complete);
+        wait_for_database_blocker(&store, first_pid).await;
+        (stopping, completing)
+    } else {
+        let completing = tokio::spawn(complete);
+        wait_for_database_blocker(&store, blocker).await;
+        let first_pid: i32 = sqlx::query_scalar(
+            "SELECT pid FROM pg_stat_activity WHERE datname=current_database() AND $1=ANY(pg_blocking_pids(pid))",
+        ).bind(blocker).fetch_one(&store.pool).await.unwrap();
+        let stopping = tokio::spawn(stop);
+        wait_for_database_blocker(&store, first_pid).await;
+        (stopping, completing)
+    };
+    // Both transactions are now demonstrably contending, with the first holding
+    // the Corp lock and waiting on the run row. Release only this test's barrier.
+    barrier.commit().await.unwrap();
+    let (stopped, completed) = tokio::time::timeout(std::time::Duration::from_secs(10), async {
+        tokio::join!(stopping, completing)
+    })
+    .await
+    .unwrap();
+    let stopped = stopped.unwrap();
+    let completed = completed.unwrap();
+    if stop_first {
+        let stopped = stopped.unwrap();
+        assert!(completed.is_err());
+        let commands = store
+            .pending_runner_commands("issue56-runner-0")
+            .await
+            .unwrap();
+        assert_eq!(commands.len(), 1);
+        assert_eq!(json!(commands[0].id), stopped.event.payload["command_id"]);
+        assert_eq!(commands[0].payload["stage"], "stop");
+        store
+            .apply_runner_event(event(
+                0,
+                "run.cancelled",
+                json!({"reason":"authoritative stop won"}),
+            ))
+            .await
+            .unwrap();
+    } else {
+        assert!(
+            stopped
+                .unwrap_err()
+                .to_string()
+                .contains("no active run to stop")
+        );
+        let committed = completed.unwrap().event.unwrap();
+        assert_eq!(committed.id, completion_id);
+        assert_eq!(committed.event_type, "run.completed");
+        // A new connection observes the exact event and final state before a
+        // receipt may authorize runner cleanup.
+        let persisted: Uuid = sqlx::query_scalar(
+            "SELECT id FROM events WHERE id=$1 AND corp_id=$2 AND aggregate_id=$3 AND type='run.completed'",
+        ).bind(completion_id).bind(CORP).bind(run_id(0)).fetch_one(&store.pool).await.unwrap();
+        assert_eq!(persisted, completion_id);
+        assert!(
+            store
+                .pending_runner_commands("issue56-runner-0")
+                .await
+                .unwrap()
+                .is_empty()
+        );
+        assert!(store.apply_runner_event(event(0, "run.failed", json!({
+            "error":"receipt lost after commit", "failure_kind":"completion_unconfirmed",
+        }))).await.is_err(), "a lost receipt cannot undo accepted work");
+    }
+    let state: (String, String, i32, i64, i64) = sqlx::query_as(
+        "SELECT r.status,t.status,t.attempt_count,
+         (SELECT count(*) FROM runs WHERE task_id=t.id),
+         (SELECT count(*) FROM events WHERE aggregate_id=r.id AND type='run.completed')
+         FROM runs r JOIN tasks t ON t.id=r.task_id WHERE r.id=$1",
+    )
+    .bind(run_id(0))
+    .fetch_one(&store.pool)
+    .await
+    .unwrap();
+    let expected = if stop_first { "cancelled" } else { "completed" };
+    assert_eq!(
+        state,
+        (
+            expected.into(),
+            expected.into(),
+            1,
+            1,
+            i64::from(!stop_first)
+        )
+    );
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires an explicitly owned disposable PostgreSQL database"]
+async fn issue87_stop_commits_before_contending_completion(pool: PgPool) {
+    completion_stop_ordering(pool, true).await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires an explicitly owned disposable PostgreSQL database"]
+async fn issue87_completion_commits_before_contending_stop(pool: PgPool) {
+    completion_stop_ordering(pool, false).await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires an explicitly owned disposable PostgreSQL database"]
+async fn issue87_unconfirmed_completion_persists_failure_without_retry(pool: PgPool) {
+    let store = verified_completion_fixture(pool).await;
+    let failed = store
+        .apply_runner_event(event(
+            0,
+            "run.failed",
+            json!({
+                "error":"completion was not confirmed", "failure_kind":"completion_unconfirmed",
+            }),
+        ))
+        .await
+        .unwrap()
+        .event
+        .unwrap();
+    assert_eq!(failed.payload["failure_kind"], "completion_unconfirmed");
+    let state: (String, String, i32, i32, i64) = sqlx::query_as(
+        "SELECT r.status,t.status,t.attempt_count,t.max_attempts,
+         (SELECT count(*) FROM runs WHERE task_id=t.id)
+         FROM runs r JOIN tasks t ON t.id=r.task_id WHERE r.id=$1",
+    )
+    .bind(run_id(0))
+    .fetch_one(&store.pool)
+    .await
+    .unwrap();
+    assert_eq!(state, ("failed".into(), "failed".into(), 1, 2, 1));
+}
+
 #[sqlx::test(migrations = "../../db/migrations")]
 #[ignore = "requires an explicitly owned disposable PostgreSQL database"]
 async fn issue87_emergency_stop_is_durable_offline_and_reuses_its_first_command(pool: PgPool) {

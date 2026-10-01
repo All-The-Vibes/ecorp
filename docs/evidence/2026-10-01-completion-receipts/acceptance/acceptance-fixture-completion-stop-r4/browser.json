@@ -1,0 +1,213 @@
+{
+  "agent_id": "0289837e-84c5-4df7-9a87-5085a4783444",
+  "assertions": [
+    {
+      "name": "Browser launched the mission through the real server",
+      "passed": true
+    },
+    {
+      "name": "Completion is held after persisted verification while source stays clean and present",
+      "passed": true
+    },
+    {
+      "name": "Browser stop committed through the role-gated server endpoint",
+      "passed": true
+    },
+    {
+      "name": "Authoritative run and task states converge without a fresh-workspace retry",
+      "passed": true
+    },
+    {
+      "name": "Committed stop rejects completion and has an applied durable runner acknowledgment",
+      "passed": true
+    },
+    {
+      "name": "Clean retained source remains at the original commit",
+      "passed": true
+    },
+    {
+      "name": "Browser has no page errors",
+      "passed": true
+    }
+  ],
+  "assurance": "Deterministic Codex transport in the real owned browser/server/runner/PostgreSQL stack; no provider inference or mixed-version binary claim.",
+  "counts": {
+    "failed": 0,
+    "passed": 7
+  },
+  "events": [
+    {
+      "aggregate_id": "75c77194-6aa3-44e6-af48-5bf8f7e81503",
+      "id": "244dbc5d-9651-4ec7-910e-e616c338fcc5",
+      "type": "run.verification_passed"
+    },
+    {
+      "aggregate_id": "75c77194-6aa3-44e6-af48-5bf8f7e81503",
+      "id": "aa602374-6f3c-48f4-82d3-96a381b3f5ec",
+      "type": "runner.command_acknowledged"
+    },
+    {
+      "aggregate_id": "75c77194-6aa3-44e6-af48-5bf8f7e81503",
+      "id": "398da9ac-77dd-4b2a-9c32-4ce53953fd88",
+      "type": "run.cancelled"
+    },
+    {
+      "aggregate_id": "75c77194-6aa3-44e6-af48-5bf8f7e81503",
+      "id": "10cb9562-d1b4-4678-95b9-e309d610b746",
+      "type": "run.workspace_preserved"
+    }
+  ],
+  "finished_at": "2026-10-01T16:34:24.287Z",
+  "gate": {
+    "acknowledgment": {
+      "applied": true,
+      "command_id": "4865ddf2-88d2-493b-8229-9a8f628b0e59",
+      "observed_at": "2026-10-01T16:34:21.905Z"
+    },
+    "completion": {
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "event_id": "7db214a9-971c-4888-8786-c86d17aa7967",
+      "forwarded_at": "2026-10-01T16:34:22.110Z",
+      "received_at": "2026-10-01T16:34:20.624Z",
+      "request_forwarded": true,
+      "requested": true,
+      "run_id": "75c77194-6aa3-44e6-af48-5bf8f7e81503"
+    },
+    "connections": 1,
+    "failure": null,
+    "hard_stop": {
+      "command_id": "4865ddf2-88d2-493b-8229-9a8f628b0e59",
+      "forwarded_at": "2026-10-01T16:34:21.904Z",
+      "run_id": "75c77194-6aa3-44e6-af48-5bf8f7e81503"
+    },
+    "receipt": null,
+    "scenario": "fixture-completion-stop",
+    "unconfirmed_failure": null
+  },
+  "historical_incident_reproduced": false,
+  "http_results": [
+    {
+      "method": "POST",
+      "origin": "http://127.0.0.1:53425",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "origin": "http://127.0.0.1:53437",
+      "route": "/release",
+      "status": 200
+    }
+  ],
+  "last_observation": {
+    "events": [
+      {
+        "id": "c52128fc-9796-492c-a47b-427585097f17",
+        "type": "run.requested"
+      },
+      {
+        "id": "95357e5b-1881-41c9-a318-66929f7eac29",
+        "type": "run.started"
+      },
+      {
+        "id": "9614f861-ae8d-4c8d-8465-fa1859985675",
+        "type": "run.session"
+      },
+      {
+        "id": "bf4b545d-509c-453c-a7bb-e02f7820f839",
+        "type": "run.status"
+      },
+      {
+        "id": "26d6c039-11bf-42c8-8b65-63f54714868f",
+        "type": "run.status"
+      },
+      {
+        "id": "d86cf30a-8264-4e85-b333-6c383bd26704",
+        "type": "run.output"
+      },
+      {
+        "id": "302d0fbe-b15d-4a2e-9432-0d3b21bc9945",
+        "type": "run.usage"
+      },
+      {
+        "id": "4bf9d7a9-a320-41c9-83a7-f781b0c01edd",
+        "type": "run.control_observed"
+      },
+      {
+        "id": "29ee56ea-5e5c-40e0-a282-84e6582ae98b",
+        "type": "run.status"
+      },
+      {
+        "id": "bfeadf9a-b5cb-4d47-bb40-a7cb72cc68a4",
+        "type": "run.output"
+      },
+      {
+        "id": "46cfae16-718b-487a-869b-201129c0cbf2",
+        "type": "run.control_observed"
+      },
+      {
+        "id": "cc5b0362-9628-4138-80f0-50ab9924bf0d",
+        "type": "run.control_observed"
+      },
+      {
+        "id": "272f9d5c-183a-42a3-a356-cc129bc7b8eb",
+        "type": "run.artifact"
+      },
+      {
+        "id": "ec0883a7-aae1-4ba6-8ece-cb2366712d80",
+        "type": "run.session_terminated"
+      },
+      {
+        "id": "c7b53c77-b81f-4fa8-80ea-0d48cafed4c3",
+        "type": "run.verification_started"
+      },
+      {
+        "id": "a18b6a31-25c8-4c86-ad88-a7d17c66d9df",
+        "type": "run.verification_evidence"
+      },
+      {
+        "id": "244dbc5d-9651-4ec7-910e-e616c338fcc5",
+        "type": "run.verification_passed"
+      },
+      {
+        "id": "4f83644a-bb18-4140-bacd-ae2ac985b5da",
+        "type": "run.stop_requested"
+      },
+      {
+        "id": "a5ad8f16-5ca8-4be2-b2e9-b92fcfb1b27b",
+        "type": "runner.command_socket_sent"
+      },
+      {
+        "id": "aa602374-6f3c-48f4-82d3-96a381b3f5ec",
+        "type": "runner.command_acknowledged"
+      },
+      {
+        "id": "398da9ac-77dd-4b2a-9c32-4ce53953fd88",
+        "type": "run.cancelled"
+      },
+      {
+        "id": "10cb9562-d1b4-4678-95b9-e309d610b746",
+        "type": "run.workspace_preserved"
+      }
+    ],
+    "status": "cancelled",
+    "workspace_disposition": "preserved"
+  },
+  "mission_id": "f81e78ad-e39c-4ec8-bab4-2a76b7d102fc",
+  "run": {
+    "breaker_stage": "stop",
+    "id": "75c77194-6aa3-44e6-af48-5bf8f7e81503",
+    "status": "cancelled",
+    "task_id": "d1228479-42a5-4502-9066-f28be9ab278b",
+    "workspace_disposition": "preserved"
+  },
+  "run_id": "75c77194-6aa3-44e6-af48-5bf8f7e81503",
+  "scenario": "fixture-completion-stop",
+  "schema_version": 1,
+  "started_at": "2026-10-01T16:34:14.610Z",
+  "status": "passed",
+  "title": "Completion receipt fixture-completion-stop 6aacbba6-1773-47c6-859d-afad299daf9a",
+  "verification_event_id": "244dbc5d-9651-4ec7-910e-e616c338fcc5",
+  "verification_observed_at": "2026-10-01T16:34:20.946Z",
+  "workspace_path": "<local-user>\\qa\\issue87-stack-20261001T163344606-7594c5ad\\runner\\worktrees\\d122847942a545029066f28be9ab278b\\75c771946aa344e6af485bf8f7e81503"
+}

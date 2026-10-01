@@ -152,6 +152,9 @@ impl RunStatus {
 #[serde(rename_all = "snake_case")]
 pub enum RunFailureKind {
     DeliverableExport,
+    /// Completion delivery is uncertain; reconcile the retained source instead
+    /// of silently allocating a fresh worktree and repeating execution.
+    CompletionUnconfirmed,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

@@ -1,0 +1,14 @@
+   Compiling crony-domain v0.1.0 (<reviewed-worktree>\crates\crony-domain)
+   Compiling crony-protocol v0.1.0 (<reviewed-worktree>\crates\crony-protocol)
+   Compiling crony-store v0.1.0 (<reviewed-worktree>\crates\crony-store)
+   Compiling crony-runner v0.1.0 (<reviewed-worktree>\crates\crony-runner)
+   Compiling crony-server v0.1.0 (<reviewed-worktree>\crates\crony-server)
+error[E0433]: cannot find type `Value` in this scope
+    --> crates\crony-server\src\main.rs:7029:77
+     |
+7029 |                     && payload.get("completion_receipt_requested") == Some(&Value::Bool(true));
+     |                                                                             ^^^^^ use of undeclared type `Value`
+
+For more information about this error, try `rustc --explain E0433`.
+error: could not compile `crony-server` (bin "crony-server") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

@@ -1,0 +1,763 @@
+{
+  "adapter_to_termination_ms": 742,
+  "agent_id": "c07f2f3c-caa8-4b6f-a221-d3142ffdb76e",
+  "assertions": [
+    {
+      "name": "Browser launch reached the real server",
+      "passed": true
+    },
+    {
+      "name": "Runner uses an isolated worktree",
+      "passed": true
+    },
+    {
+      "name": "Real provider executed the bounded native shell operation",
+      "passed": true
+    },
+    {
+      "name": "Real provider reported usage before the stop",
+      "passed": true
+    },
+    {
+      "name": "Browser stop reached the role-gated server endpoint",
+      "passed": true
+    },
+    {
+      "name": "Server accepted the stop request",
+      "passed": true
+    },
+    {
+      "name": "Hard control cancels the run and preserves its source",
+      "passed": true
+    },
+    {
+      "name": "Hard control never accepts an artifact or completion",
+      "passed": true
+    },
+    {
+      "name": "Native process termination is a separate persisted receipt",
+      "passed": true
+    },
+    {
+      "name": "Runner observation clocks stay distinct from server recording clocks",
+      "passed": true
+    },
+    {
+      "name": "Control-to-termination stays within native cleanup allowance",
+      "passed": true
+    },
+    {
+      "name": "Durable stop dispatch and authenticated acknowledgment",
+      "passed": true
+    },
+    {
+      "name": "Usage observations never claim provider generation time",
+      "passed": true
+    },
+    {
+      "name": "Charged usage respects the database cutoff",
+      "passed": true
+    },
+    {
+      "name": "Browser has no page errors",
+      "passed": true
+    }
+  ],
+  "assurance": "Real Codex app-server in a fresh local development stack and owned synthetic source; no historical incident or production claim.",
+  "browser_launch_at": "2026-10-01T16:42:36.945Z",
+  "browser_stop_at": "2026-10-01T16:42:56.508Z",
+  "corp_id": "00000000-0000-4000-8000-000000000001",
+  "counts": {
+    "failed": 0,
+    "passed": 15
+  },
+  "events": [
+    {
+      "actor_id": "00000000-0000-4000-8000-000000000011",
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:36.980709Z",
+      "id": "a0c27813-f563-4fcb-a29a-0cf1ad170321",
+      "idempotency_key": "run:61aa6314-0666-4567-8cdf-610f9bde4e8f:requested",
+      "payload": {
+        "agent_id": "c07f2f3c-caa8-4b6f-a221-d3142ffdb76e",
+        "attempt": 1,
+        "max_attempts": 2,
+        "mission_launch": true,
+        "model": null,
+        "reasoning_effort": null,
+        "runner_id": "issue87-f637d2bdbdf041069717796bd3f7f655",
+        "status": "starting",
+        "task_id": "5ae191b2-7094-47b6-9d95-6e16145bcfb4"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 9,
+      "type": "run.requested",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:37.825708Z",
+      "id": "6127ada2-7e01-4ec1-a033-d0720d1833b7",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:6127ada2-7e01-4ec1-a033-d0720d1833b7",
+      "payload": {
+        "adapter": "codex",
+        "mission_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "task_id": "5ae191b2-7094-47b6-9d95-6e16145bcfb4",
+        "workspace": "<local-user>\\qa\\issue87-stack-20261001T164206562-d25d74fd\\runner\\worktrees\\5ae191b2709447b69d956e16145bcfb4\\61aa6314066645678cdf610f9bde4e8f",
+        "workspace_base_commit": "45c259499ddf47e6116b4de8ee3658d80ee9e248",
+        "workspace_base_ref": "main",
+        "workspace_branch": "crony/task-5ae191b2709447b69d956e16145bcfb4/run-61aa6314066645678cdf610f9bde4e8f"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 10,
+      "type": "run.started",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:38.964562Z",
+      "id": "2fae6417-b0e4-407e-b130-6973dac7f5e7",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:2fae6417-b0e4-407e-b130-6973dac7f5e7",
+      "payload": {
+        "session_id": "01a0f858-b541-7c91-8dbd-655f78a319e3"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 11,
+      "type": "run.session",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:39.449639Z",
+      "id": "7ba4037f-56e9-4e13-bcf1-be76501e3c11",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:7ba4037f-56e9-4e13-bcf1-be76501e3c11",
+      "payload": {
+        "message": "Codex turn started",
+        "station": "briefing",
+        "status": "working"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 12,
+      "type": "run.status",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:42.170864Z",
+      "id": "a0420040-0470-4421-962c-a0284b6dafae",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:a0420040-0470-4421-962c-a0284b6dafae",
+      "payload": {
+        "message": "Codex is reporting results",
+        "station": "reporting",
+        "status": "working"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 13,
+      "type": "run.status",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:42.776985Z",
+      "id": "55686ba5-d283-4438-9c3c-13b2a14dce69",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:55686ba5-d283-4438-9c3c-13b2a14dce69",
+      "payload": {
+        "stream": "agent",
+        "text": "I’ll write `stop-ready.txt` containing `ready`, then immediately wait 45 seconds in the same PowerShell command."
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 14,
+      "type": "run.output",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:45.422388Z",
+      "id": "00c3308e-0f49-428b-8d88-3039946cded2",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:00c3308e-0f49-428b-8d88-3039946cded2",
+      "payload": {
+        "message": "\"C:\\\\Program Files\\\\PowerShell\\\\7\\\\pwsh.exe\" -Command \"Set-Content -LiteralPath 'stop-ready.txt' -Value 'ready' -NoNewline -ErrorAction Stop\nStart-Sleep -Seconds 45\"",
+        "station": "terminal",
+        "status": "working"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 15,
+      "type": "run.status",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:55.672239Z",
+      "id": "233f04f8-4fe3-456b-a8c5-5d8b79a8c2f8",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:233f04f8-4fe3-456b-a8c5-5d8b79a8c2f8",
+      "payload": {
+        "accounting": {
+          "admitted_at": "2026-10-01T16:42:55.675057Z",
+          "charged": true,
+          "cutoff_at": null,
+          "generation_time_known": false,
+          "grace_seconds": 5,
+          "hard_boundary_at": null,
+          "policy": "hard_control_grace_v1",
+          "reason": null
+        },
+        "cost_microusd": 0,
+        "input_tokens": 21832,
+        "output_tokens": 174
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 16,
+      "type": "run.usage",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:55.679784Z",
+      "id": "46ec4f19-32e2-4348-bf9d-79eb29581a46",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:46ec4f19-32e2-4348-bf9d-79eb29581a46",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": false,
+          "generation_time_known": false,
+          "monotonic_report": true,
+          "native_last": {
+            "input_tokens": 21832,
+            "output_tokens": 174,
+            "total_tokens": 22006
+          },
+          "native_total": {
+            "input_tokens": 21832,
+            "output_tokens": 174,
+            "total_tokens": 22006
+          },
+          "thread_id": "01a0f858-b541-7c91-8dbd-655f78a319e3",
+          "turn_id": "01a0f858-b7f7-74b2-b442-0a4830d3a2be"
+        },
+        "observed_at": "2026-10-01T16:42:55.670952100Z",
+        "phase": "usage_observed",
+        "server_recorded_at": "2026-10-01T16:42:55.681785Z"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 17,
+      "type": "run.control_observed",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": "00000000-0000-4000-8000-000000000011",
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:56.560715Z",
+      "id": "ece203cd-ac3d-49de-8f69-2a2e3277c1ad",
+      "idempotency_key": "run-stop:61aa6314-0666-4567-8cdf-610f9bde4e8f:d9b216df-e556-460c-9ec2-e71afc80a122",
+      "payload": {
+        "agent_id": "c07f2f3c-caa8-4b6f-a221-d3142ffdb76e",
+        "command_id": "0ac9a9d7-d632-4e04-9a46-ef142e249610",
+        "previous_stage": "healthy",
+        "reason": "Owned provider-stop regression; stop the exact test run.",
+        "stage": "stop"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 18,
+      "type": "run.stop_requested",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:56.573393Z",
+      "id": "a9b87962-1384-4be9-b3e6-c50b18fd3e95",
+      "idempotency_key": "runner-command-send:0ac9a9d7-d632-4e04-9a46-ef142e249610:1887ff41-397d-41f8-b2c2-c88fc265004b",
+      "payload": {
+        "command_id": "0ac9a9d7-d632-4e04-9a46-ef142e249610",
+        "connection_epoch": "1887ff41-397d-41f8-b2c2-c88fc265004b",
+        "runner_id": "issue87-f637d2bdbdf041069717796bd3f7f655",
+        "runner_receipt_confirmed": false,
+        "socket_sent_at": "2026-10-01T16:42:56.573050200Z",
+        "source": "server_socket",
+        "stage": "stop"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 19,
+      "type": "runner.command_socket_sent",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:56.574135Z",
+      "id": "2b66ce33-f96a-43bd-a0f3-b7cc7b78ec44",
+      "idempotency_key": "runner-command-ack:0ac9a9d7-d632-4e04-9a46-ef142e249610",
+      "payload": {
+        "command_id": "0ac9a9d7-d632-4e04-9a46-ef142e249610",
+        "command_kind": "circuit_breaker",
+        "message_id": null,
+        "receipt": {
+          "connection_epoch": "1887ff41-397d-41f8-b2c2-c88fc265004b",
+          "detail": "circuit-breaker command delivered to the active provider",
+          "provider_termination_confirmed": false,
+          "runner_received_at": "2026-10-01T16:42:56.573266900Z",
+          "runner_timestamp_valid": true,
+          "server_acknowledged_at": "2026-10-01T16:42:56.575369Z"
+        },
+        "runner_id": "issue87-f637d2bdbdf041069717796bd3f7f655",
+        "stage": "stop"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 20,
+      "type": "runner.command_acknowledged",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:56.580393Z",
+      "id": "5dec55e6-ab9b-4a2e-80e4-8c264f11070b",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:5dec55e6-ab9b-4a2e-80e4-8c264f11070b",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "deadline_extended": false,
+          "directive": "stop",
+          "escalation": false,
+          "interrupt_grace_ms": 2000
+        },
+        "observed_at": "2026-10-01T16:42:56.573449600Z",
+        "phase": "adapter_received",
+        "server_recorded_at": "2026-10-01T16:42:56.582450Z"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 21,
+      "type": "run.control_observed",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:56.591986Z",
+      "id": "29fd57e9-5c4e-4bad-9bf4-a1c23fec29a3",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:29fd57e9-5c4e-4bad-9bf4-a1c23fec29a3",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "request_id": 10,
+          "thread_id": "01a0f858-b541-7c91-8dbd-655f78a319e3",
+          "turn_id": "01a0f858-b7f7-74b2-b442-0a4830d3a2be"
+        },
+        "observed_at": "2026-10-01T16:42:56.573533900Z",
+        "phase": "interrupt_queued",
+        "server_recorded_at": "2026-10-01T16:42:56.593890Z"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 22,
+      "type": "run.control_observed",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:56.595551Z",
+      "id": "73ca46f3-9e91-4ca7-b29b-61c3b2fb9d6b",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:73ca46f3-9e91-4ca7-b29b-61c3b2fb9d6b",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "request_id": 10
+        },
+        "observed_at": "2026-10-01T16:42:56.573751600Z",
+        "phase": "interrupt_written",
+        "server_recorded_at": "2026-10-01T16:42:56.597008Z"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 23,
+      "type": "run.control_observed",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:56.864507Z",
+      "id": "f933c525-0c44-4562-a67d-c3ef0145c67c",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:f933c525-0c44-4562-a67d-c3ef0145c67c",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "request_id": 10,
+          "succeeded": true
+        },
+        "observed_at": "2026-10-01T16:42:56.863638300Z",
+        "phase": "interrupt_responded",
+        "server_recorded_at": "2026-10-01T16:42:56.866329Z"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 24,
+      "type": "run.control_observed",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:56.867935Z",
+      "id": "8016bb2a-5010-4e7f-960f-2c38908bf447",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:8016bb2a-5010-4e7f-960f-2c38908bf447",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "after_adapter_control": true,
+          "status": "interrupted",
+          "thread_id": "01a0f858-b541-7c91-8dbd-655f78a319e3",
+          "turn_id": "01a0f858-b7f7-74b2-b442-0a4830d3a2be"
+        },
+        "observed_at": "2026-10-01T16:42:56.863923Z",
+        "phase": "native_terminal",
+        "server_recorded_at": "2026-10-01T16:42:56.869709Z"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 25,
+      "type": "run.control_observed",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:57.032018Z",
+      "id": "673fd539-fb6d-41c9-9f53-9c655e25c1cd",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:673fd539-fb6d-41c9-9f53-9c655e25c1cd",
+      "payload": {
+        "stream": "stderr",
+        "text": "2026-10-01T16:42:57.030818Z ERROR codex_core::session: failed to record rollout items: thread 01a0f858-b541-7c91-8dbd-655f78a319e3 not found"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 26,
+      "type": "run.output",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:57.328298Z",
+      "id": "6247df98-d35d-4051-8358-1a5e86b20a02",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:6247df98-d35d-4051-8358-1a5e86b20a02",
+      "payload": {
+        "adapter": "codex",
+        "clock_authority": "runner_observation_only",
+        "detail": {
+          "adapter_input_tokens": 21832,
+          "adapter_output_tokens": 174,
+          "exit_status": "exit code: 0",
+          "last_usage_observed_at": "2026-10-01T16:42:55.670952100+00:00",
+          "scope": "windows_job_object"
+        },
+        "observed_at": "2026-10-01T16:42:57.315233900Z",
+        "phase": "process_terminated",
+        "server_recorded_at": "2026-10-01T16:42:57.329824Z"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 27,
+      "type": "run.control_observed",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:57.796001Z",
+      "id": "0f5e384d-af0e-413b-8f14-3a374cb4756d",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:0f5e384d-af0e-413b-8f14-3a374cb4756d",
+      "payload": {
+        "adapter": "codex",
+        "message": "Provider session stopped; no idle agent process remains.",
+        "outcome": "cancelled",
+        "provider_process_alive": false
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 28,
+      "type": "run.session_terminated",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:58.508358Z",
+      "id": "bd29d13d-f2b6-4792-9076-c06018cb8770",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:bd29d13d-f2b6-4792-9076-c06018cb8770",
+      "payload": {
+        "branch_deleted": false,
+        "commits_ahead": null,
+        "detail": "Stopped source retained with exact checkpoint evidence; recovery is not yet authorized.",
+        "dirty": null,
+        "head_commit": "45c259499ddf47e6116b4de8ee3658d80ee9e248",
+        "source_checkpoint": {
+          "agent_id": "c07f2f3c-caa8-4b6f-a221-d3142ffdb76e",
+          "branch": "crony/task-5ae191b2709447b69d956e16145bcfb4/run-61aa6314066645678cdf610f9bde4e8f",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "deliverable_policy_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "head_commit": "45c259499ddf47e6116b4de8ee3658d80ee9e248",
+          "mission_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+          "run_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+          "runner_id": "issue87-f637d2bdbdf041069717796bd3f7f655",
+          "schema_version": 1,
+          "source_base_commit": "45c259499ddf47e6116b4de8ee3658d80ee9e248",
+          "source_base_ref": "main",
+          "source_repository": "All-The-Vibes/ecorp",
+          "task_id": "5ae191b2-7094-47b6-9d95-6e16145bcfb4",
+          "verification_policy_sha256": "d3e1c23d47dd3042fcce1ec10a5bde9bf4aa5a97e2fd6f4f5b4f35e1ab0cd6dc",
+          "workspace_base_commit": "45c259499ddf47e6116b4de8ee3658d80ee9e248",
+          "workspace_fingerprint": "546e47d880fd2c8a4a098ba6ac2ec06d6519118df0e2359904076e60b571e80e",
+          "workspace_run_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+          "write_scope_sha256": "1078c140b996b711424671640de5d8a0fed342fc5d0027e16717b7016384f8fd"
+        },
+        "workspace": "<local-user>\\qa\\issue87-stack-20261001T164206562-d25d74fd\\runner\\worktrees\\5ae191b2709447b69d956e16145bcfb4\\61aa6314066645678cdf610f9bde4e8f",
+        "workspace_base_commit": "45c259499ddf47e6116b4de8ee3658d80ee9e248",
+        "workspace_base_ref": "main",
+        "workspace_branch": "crony/task-5ae191b2709447b69d956e16145bcfb4/run-61aa6314066645678cdf610f9bde4e8f",
+        "workspace_fingerprint": "546e47d880fd2c8a4a098ba6ac2ec06d6519118df0e2359904076e60b571e80e"
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 29,
+      "type": "run.workspace_preserved",
+      "visibility": "corp"
+    },
+    {
+      "actor_id": null,
+      "aggregate_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+      "aggregate_type": "run",
+      "aggregate_version": 1,
+      "causation_id": null,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "correlation_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+      "created_at": "2026-10-01T16:42:58.513070Z",
+      "id": "0ed8c39e-46c6-4aa3-9253-71ca22f7d3b0",
+      "idempotency_key": "runner:issue87-f637d2bdbdf041069717796bd3f7f655:event:0ed8c39e-46c6-4aa3-9253-71ca22f7d3b0",
+      "payload": {
+        "reason": "Circuit breaker stop checkpoint: Owned provider-stop regression; stop the exact test run."
+      },
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "schema_version": 1,
+      "seq": 30,
+      "type": "run.cancelled",
+      "visibility": "corp"
+    }
+  ],
+  "final_usage": {
+    "input_tokens": 21832,
+    "last_observed_at": "2026-10-01T16:42:55.670952100+00:00",
+    "output_tokens": 174
+  },
+  "finished_at": "2026-10-01T16:42:59.403Z",
+  "historical_incident_reproduced": false,
+  "http_results": [
+    {
+      "expected": 200,
+      "method": "POST",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "status": 200
+    }
+  ],
+  "mission_id": "1412f621-8132-4c4f-8502-15a8eebeb373",
+  "provider_session_id": "01a0f858-b541-7c91-8dbd-655f78a319e3",
+  "provider_tool_observed_at": "2026-10-01T16:42:45.928Z",
+  "provider_usage_baseline": {
+    "input_tokens": 21832,
+    "observed_at": "2026-10-01T16:42:55.757Z",
+    "output_tokens": 174
+  },
+  "run": {
+    "agent_id": "c07f2f3c-caa8-4b6f-a221-d3142ffdb76e",
+    "artifact_id": null,
+    "artifact_media_type": null,
+    "artifact_sha256": null,
+    "artifact_signature": null,
+    "artifact_uri": null,
+    "breaker_stage": "stop",
+    "budget_cost_microusd_limit": 10000000,
+    "budget_tokens_limit": 100000,
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "cost_microusd": 0,
+    "created_at": "2026-10-01T16:42:36.980709Z",
+    "deliverable_sha256": null,
+    "execution_mode": "provider",
+    "id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+    "input_tokens": 21832,
+    "model": null,
+    "no_progress_events": 0,
+    "output_tokens": 174,
+    "provider_session_id": "01a0f858-b541-7c91-8dbd-655f78a319e3",
+    "reasoning_effort": null,
+    "repeated_tool_count": 0,
+    "resumed_from_run_id": null,
+    "runner_id": "issue87-f637d2bdbdf041069717796bd3f7f655",
+    "source_base_commit": "45c259499ddf47e6116b4de8ee3658d80ee9e248",
+    "source_base_ref": "main",
+    "source_repository": "All-The-Vibes/ecorp",
+    "status": "cancelled",
+    "summary": "Circuit breaker stop checkpoint: Owned provider-stop regression; stop the exact test run.",
+    "task_id": "5ae191b2-7094-47b6-9d95-6e16145bcfb4",
+    "updated_at": "2026-10-01T16:42:58.513070Z",
+    "verification_sha256": null,
+    "verification_status": "pending",
+    "verification_summary": null,
+    "workspace_base_commit": "45c259499ddf47e6116b4de8ee3658d80ee9e248",
+    "workspace_base_ref": "main",
+    "workspace_branch": "crony/task-5ae191b2709447b69d956e16145bcfb4/run-61aa6314066645678cdf610f9bde4e8f",
+    "workspace_detail": "Stopped source retained with exact checkpoint evidence; recovery is not yet authorized.",
+    "workspace_disposition": "preserved",
+    "workspace_fingerprint": "546e47d880fd2c8a4a098ba6ac2ec06d6519118df0e2359904076e60b571e80e",
+    "workspace_path": "<local-user>\\qa\\issue87-stack-20261001T164206562-d25d74fd\\runner\\worktrees\\5ae191b2709447b69d956e16145bcfb4\\61aa6314066645678cdf610f9bde4e8f",
+    "workspace_run_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f"
+  },
+  "run_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f",
+  "runner_id": "issue87-f637d2bdbdf041069717796bd3f7f655",
+  "scenario": "provider-stop",
+  "schema_version": 1,
+  "server": "http://127.0.0.1:58986",
+  "settled_observed_at": "2026-10-01T16:42:58.513070Z",
+  "started_at": "2026-10-01T16:42:33.079Z",
+  "status": "passed",
+  "stop_response": {
+    "requested": true,
+    "run_id": "61aa6314-0666-4567-8cdf-610f9bde4e8f"
+  },
+  "title": "Codex stop acceptance provider-stop 436988e8-b836-4e47-9b9e-71f7d3546c7e",
+  "web": "http://127.0.0.1:58987",
+  "workspace_path": "<local-user>\\qa\\issue87-stack-20261001T164206562-d25d74fd\\runner\\worktrees\\5ae191b2709447b69d956e16145bcfb4\\61aa6314066645678cdf610f9bde4e8f"
+}

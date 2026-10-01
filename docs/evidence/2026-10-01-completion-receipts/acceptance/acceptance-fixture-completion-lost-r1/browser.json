@@ -1,0 +1,199 @@
+{
+  "agent_id": "e72a5948-536d-49c3-ae42-9bf3a1a8c50c",
+  "assertions": [
+    {
+      "name": "Browser launched the mission through the real server",
+      "passed": true
+    },
+    {
+      "name": "Completion is held after persisted verification while source stays clean and present",
+      "passed": true
+    },
+    {
+      "name": "Authoritative run and task states converge without a fresh-workspace retry",
+      "passed": true
+    },
+    {
+      "name": "Real server receipt matches the exact committed event and every assignment fence",
+      "passed": true
+    },
+    {
+      "name": "Clean retained source remains at the original commit",
+      "passed": true
+    },
+    {
+      "name": "Missing receipt is bounded and cannot undo committed completion",
+      "passed": true
+    },
+    {
+      "name": "Browser has no page errors",
+      "passed": true
+    }
+  ],
+  "assurance": "Deterministic Codex transport in the real owned browser/server/runner/PostgreSQL stack; no provider inference or mixed-version binary claim.",
+  "counts": {
+    "failed": 0,
+    "passed": 7
+  },
+  "events": [
+    {
+      "aggregate_id": "762aea84-dd39-4ed1-b4cc-f64dd73aa622",
+      "id": "df3a9c01-7d2e-4143-9f8e-d08804681e68",
+      "type": "run.verification_passed"
+    },
+    {
+      "aggregate_id": "762aea84-dd39-4ed1-b4cc-f64dd73aa622",
+      "id": "caf990f0-d181-47e2-887f-7441f5b3626b",
+      "type": "run.completed"
+    },
+    {
+      "aggregate_id": "762aea84-dd39-4ed1-b4cc-f64dd73aa622",
+      "id": "b1dfdfa3-40ec-4ad9-91ed-7cfaf65e7729",
+      "type": "run.workspace_preserved"
+    }
+  ],
+  "finished_at": "2026-10-01T16:36:50.067Z",
+  "gate": {
+    "acknowledgment": null,
+    "completion": {
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "event_id": "caf990f0-d181-47e2-887f-7441f5b3626b",
+      "forwarded_at": "2026-10-01T16:36:18.709Z",
+      "received_at": "2026-10-01T16:36:17.826Z",
+      "request_forwarded": true,
+      "requested": true,
+      "run_id": "762aea84-dd39-4ed1-b4cc-f64dd73aa622"
+    },
+    "connections": 1,
+    "failure": null,
+    "hard_stop": null,
+    "receipt": {
+      "event_id": "caf990f0-d181-47e2-887f-7441f5b3626b",
+      "observed_at": "2026-10-01T16:36:18.749Z",
+      "run_id": "762aea84-dd39-4ed1-b4cc-f64dd73aa622",
+      "scope_matches": true,
+      "withheld": true
+    },
+    "scenario": "fixture-completion-lost",
+    "unconfirmed_failure": {
+      "kind": "completion_unconfirmed",
+      "observed_at": "2026-10-01T16:36:47.829Z",
+      "run_id": "762aea84-dd39-4ed1-b4cc-f64dd73aa622"
+    }
+  },
+  "historical_incident_reproduced": false,
+  "http_results": [
+    {
+      "method": "POST",
+      "origin": "http://127.0.0.1:64737",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "origin": "http://127.0.0.1:64749",
+      "route": "/release",
+      "status": 200
+    }
+  ],
+  "last_observation": {
+    "events": [
+      {
+        "id": "fbd598be-7305-488c-9856-09152e8ca064",
+        "type": "run.requested"
+      },
+      {
+        "id": "40543450-3e7b-4fac-ae4a-37dce52ac668",
+        "type": "run.started"
+      },
+      {
+        "id": "df900a6d-ff05-40ec-8212-243c86aed856",
+        "type": "run.session"
+      },
+      {
+        "id": "05f57261-32f5-4f0c-ad47-ca41a8a1843a",
+        "type": "run.status"
+      },
+      {
+        "id": "6bbc40eb-640e-409a-8117-df4418496e43",
+        "type": "run.status"
+      },
+      {
+        "id": "d72dd70f-6e41-4988-843a-e7de31ace79f",
+        "type": "run.output"
+      },
+      {
+        "id": "471d5733-64a7-4091-9403-d4cfd300bf65",
+        "type": "run.usage"
+      },
+      {
+        "id": "4ed73f9c-c47c-4873-b972-c8d97808285c",
+        "type": "run.control_observed"
+      },
+      {
+        "id": "3dfe0869-defd-45f9-b4a2-3c38a42fd2e1",
+        "type": "run.status"
+      },
+      {
+        "id": "265d2d39-9c87-4a0d-bca3-a1162c7221d4",
+        "type": "run.output"
+      },
+      {
+        "id": "0b3b406b-2e1d-4f51-8da5-3bf796ab6e3c",
+        "type": "run.control_observed"
+      },
+      {
+        "id": "38a44e90-7603-49cf-b0a1-bf9564f496ff",
+        "type": "run.control_observed"
+      },
+      {
+        "id": "2bfa0890-2eaa-4cc6-9f9e-6545d1d92dc6",
+        "type": "run.artifact"
+      },
+      {
+        "id": "cb1c3b90-5ded-48d4-b2bc-c39f35e008f7",
+        "type": "run.session_terminated"
+      },
+      {
+        "id": "765534a9-61d1-4a24-8cb9-5f0025fa91c9",
+        "type": "run.verification_started"
+      },
+      {
+        "id": "580292db-3f95-445b-bd3a-4c5790a99d2a",
+        "type": "run.verification_evidence"
+      },
+      {
+        "id": "df3a9c01-7d2e-4143-9f8e-d08804681e68",
+        "type": "run.verification_passed"
+      },
+      {
+        "id": "caf990f0-d181-47e2-887f-7441f5b3626b",
+        "type": "run.completed"
+      },
+      {
+        "id": "b1dfdfa3-40ec-4ad9-91ed-7cfaf65e7729",
+        "type": "run.workspace_preserved"
+      }
+    ],
+    "status": "completed",
+    "workspace_disposition": "preserved"
+  },
+  "mission_id": "9c35ed8c-cfed-4eaf-b2a4-3d4e5082faea",
+  "receipt_timeout_ms": 30003,
+  "run": {
+    "breaker_stage": "healthy",
+    "id": "762aea84-dd39-4ed1-b4cc-f64dd73aa622",
+    "status": "completed",
+    "task_id": "72bcd8d5-b106-4c59-bb0b-ee692c27ba12",
+    "workspace_disposition": "preserved"
+  },
+  "run_id": "762aea84-dd39-4ed1-b4cc-f64dd73aa622",
+  "scenario": "fixture-completion-lost",
+  "schema_version": 1,
+  "started_at": "2026-10-01T16:36:11.286Z",
+  "status": "passed",
+  "title": "Completion receipt fixture-completion-lost 52cdcbe6-228f-450c-99be-13f23b46cb83",
+  "verification_event_id": "df3a9c01-7d2e-4143-9f8e-d08804681e68",
+  "verification_observed_at": "2026-10-01T16:36:18.154Z",
+  "workspace_path": "<local-user>\\qa\\issue87-stack-20261001T163543183-3ee8ac58\\runner\\worktrees\\72bcd8d5b1064c59bb0bee692c27ba12\\762aea84dd394ed1b4ccf64dd73aa622"
+}

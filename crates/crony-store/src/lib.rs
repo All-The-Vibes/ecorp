@@ -7823,12 +7823,12 @@ impl PgStore {
                 .bind(artifact.task_id)
                 .execute(&mut *tx)
                 .await?;
-            sqlx::query(
-                "UPDATE agents SET status = 'reviewing', station = 'review', current_run_id = NULL WHERE id = $1",
-            )
-            .bind(agent_id)
-            .execute(&mut *tx)
-            .await?;
+            // Verification still owns this assignment. Keep the active run
+            // visible to operator controls until a terminal transition clears it.
+            sqlx::query("UPDATE agents SET status = 'reviewing', station = 'review' WHERE id = $1")
+                .bind(agent_id)
+                .execute(&mut *tx)
+                .await?;
         }
         tx.commit().await?;
         Ok(Some(event))
@@ -17324,6 +17324,20 @@ mod tests {
                     should_retry_runner_failure(stage, attempt, 3, None),
                     attempt < 3 && !matches!(stage, "suspend" | "stop"),
                 );
+            }
+        }
+    }
+
+    #[test]
+    fn issue87_unconfirmed_completion_never_retries_in_a_fresh_workspace() {
+        for stage in ["healthy", "steer", "constrain", "suspend", "stop"] {
+            for attempt in 1..=3 {
+                assert!(!should_retry_runner_failure(
+                    stage,
+                    attempt,
+                    3,
+                    Some(crony_domain::RunFailureKind::CompletionUnconfirmed),
+                ));
             }
         }
     }

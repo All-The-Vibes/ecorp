@@ -7023,6 +7023,11 @@ async fn runner_socket(socket: WebSocket, state: AppState) {
                 }
                 let retained_receipt_upload = event_type == "run.artifact_upload"
                     && payload.get("retained_provider_receipt").is_some();
+                // Older runners reject unknown server messages. Only runners
+                // requesting this receipt understand its cleanup authority.
+                let completion_receipt_requested = event_type == "run.completed"
+                    && payload.get("completion_receipt_requested")
+                        == Some(&serde_json::Value::Bool(true));
                 let artifact_ack = artifact_upload_ack(&event_type, &payload);
                 let input = RunnerEventInput {
                     event_id,
@@ -7073,6 +7078,23 @@ async fn runner_socket(socket: WebSocket, state: AppState) {
                             breaker_commands,
                         } = outcome;
                         if let Some(event) = event {
+                            // apply_runner_event returns only after its transaction
+                            // commits. Queued, rejected or duplicate events cannot
+                            // grant workspace cleanup authority.
+                            if completion_receipt_requested
+                                && event.event_type == "run.completed"
+                                && event.id == event_id
+                            {
+                                let _ = command_tx.send(ServerToRunner::RunCompletionAccepted {
+                                    receipt: crony_protocol::RunCompletionReceipt {
+                                        corp_id,
+                                        connection_epoch,
+                                        run_id,
+                                        assignment_token,
+                                        event_id,
+                                    },
+                                });
+                            }
                             if (event.event_type == "run.deliverable"
                                 || (retained_receipt_upload && event.event_type == "run.artifact"))
                                 && let (Some(artifact_id), Some(artifact_role), Some(sha256)) = (

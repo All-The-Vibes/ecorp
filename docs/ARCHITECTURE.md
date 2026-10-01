@@ -683,6 +683,27 @@ The runner buffers an adapter's completion signal, emits one evidence record per
 `run.completed` only after every automated check passes. The server rejects completion events that
 arrive before complete passing evidence or while a manual gate is required.
 
+Artifact storage moves the active assignment to verification without clearing the agent's
+`current_run_id`. The office keeps its live-run controls, including Emergency stop, available
+through verification and pending approval; the terminal run transition clears that reference.
+
+Automated success does not by itself authorize workspace removal. The runner requests a
+`run_completion_accepted` receipt and remains cancellable until the server commits that exact
+completion event. The receipt must match Corp, live connection epoch, run, assignment token and
+event ID. Completion and emergency stop serialize on the same Corp lock: a committed stop rejects
+completion; an already committed completion leaves no active run for a later stop. Only a matching
+receipt permits the runner to enter finalization, after which ordinary Git safety checks still
+preserve dirty, committed or unverifiable worktrees.
+
+Receipt waiting is bounded to 30 seconds. Cancellation, pending manual approval, recovery and
+unconfirmed completion retain the exact source. A missing receipt emits the typed
+`completion_unconfirmed` failure, which cannot automatically retry in a fresh workspace. If
+completion already committed, the server rejects that late failure and preserves completed state.
+There is no replay-based cleanup permission: reconcile retained source explicitly. New servers
+send the receipt only when the completion payload requests it, preserving older runners' wire
+compatibility. New runners against older servers retain source on timeout, but an old server may
+also reject the unfamiliar failure kind; mixed-version authoritative convergence is not promised.
+
 Failed verification sets the run to failed, the task to `verification_failed`, and the mission to
 failed. When the mission belongs to a factory item, the same transaction also moves that item to
 `verification_failed`, stores bounded failure detail, and appends the factory event. A successful
