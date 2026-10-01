@@ -1,0 +1,1094 @@
+{
+  "issue": 84,
+  "pr": 390,
+  "review_comments": [
+    4149881329,
+    4149881373
+  ],
+  "status": "locally-validated-awaiting-required-hosted-checks",
+  "issue_completed": false,
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parent": "31337c258360b7df2421e605e54d9a6f31753628",
+  "tested_tree": "e19869b13b8a4a59231a2d9babece644f2b9e43c",
+  "physical_files_sha256": "db1161f52fd2ace790c0fecf494d165b2030d776fb37ac457fb1fce01c110a8b",
+  "source_file_count": 7239,
+  "code_paths": [
+    "crates/crony-store/src/factory_base_refresh_authority_tests.rs",
+    "crates/crony-store/src/factory_base_refresh_lock_tests.rs",
+    "crates/crony-store/src/state_audit.rs"
+  ],
+  "canonical_native_same_complete_physical_source": true,
+  "evidence_added_after_code_execution": true,
+  "checks": [
+    {
+      "name": "migrations",
+      "argv": [
+        "node",
+        "tools/check_migrations.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-compatibility",
+      "argv": [
+        "node",
+        "tools/check_state_audit_compatibility.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-evm",
+      "argv": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "crony-audit",
+        "--test",
+        "ethereum_local_chain"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "docs",
+      "argv": [
+        "node",
+        "tools/check_docs.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "repository-docs",
+      "argv": [
+        "node",
+        "tools/check_documentation.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "node-tests",
+      "argv": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-timeout=180000",
+        "--test-reporter=tap",
+        ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+        ".github/skills/code-review/tests/executor-state.test.mjs",
+        ".github/skills/code-review/tests/package.test.mjs",
+        "apps/web/src/AgentPinControl.test.mjs",
+        "apps/web/src/DelegatedPanel.test.mjs",
+        "apps/web/src/VerificationPolicyEditor.test.mjs",
+        "apps/web/src/agentPinOperation.test.mjs",
+        "apps/web/src/evidenceNavigation.test.mjs",
+        "apps/web/src/evidenceSelection.test.mjs",
+        "apps/web/src/factoryAuthority.test.mjs",
+        "apps/web/src/factoryAuthorityConnection.test.mjs",
+        "apps/web/src/factoryCheckpointRecovery.test.mjs",
+        "apps/web/src/factoryControllerSelection.test.mjs",
+        "apps/web/src/factoryPolling.test.mjs",
+        "apps/web/src/formText.test.mjs",
+        "apps/web/src/missionCollaboration.test.mjs",
+        "apps/web/src/missionComposer.test.mjs",
+        "apps/web/src/missionOriginContext.test.mjs",
+        "apps/web/src/missionPreview.test.mjs",
+        "apps/web/src/missionProjection.test.mjs",
+        "apps/web/src/missionResultContext.test.mjs",
+        "apps/web/src/missionReviewSummary.test.mjs",
+        "apps/web/src/missionRuntime.test.mjs",
+        "apps/web/src/office/characterAssets.test.mjs",
+        "apps/web/src/office/officeModel.test.mjs",
+        "apps/web/src/runActivity.test.mjs",
+        "apps/web/src/snapshotRefresh.test.mjs",
+        "apps/web/src/verificationDecisionOperation.test.mjs",
+        "apps/web/src/verificationPolicy.test.mjs",
+        "apps/web/src/workResultCard.test.mjs",
+        "apps/web/src/workflowContext.test.mjs",
+        "apps/web/src/workspaceConnections.test.mjs",
+        "scenarios/repo-steward/actions.test.mjs",
+        "scenarios/repo-steward/feedback-cli.test.mjs",
+        "scenarios/repo-steward/feedback.test.mjs",
+        "scenarios/repo-steward/maintenance.test.mjs",
+        "scenarios/repo-steward/recurring-audit.test.mjs",
+        "scenarios/repo-steward/steward.test.mjs",
+        "scenarios/repo-steward/teams-host.test.mjs",
+        "tests/readiness/cli.test.js",
+        "tools/budget_fixture.test.mjs",
+        "tools/check_deliverable_diff.test.mjs",
+        "tools/check_documentation.test.mjs",
+        "tools/check_evidence_launch.test.mjs",
+        "tools/check_evidence_native_build.test.mjs",
+        "tools/check_evidence_personal_paths.test.mjs",
+        "tools/check_migrations.test.mjs",
+        "tools/check_replay_source.test.mjs",
+        "tools/checkpoint_application_fixture.test.mjs",
+        "tools/ci_external_adapters_windows.test.mjs",
+        "tools/ci_factory_repository.test.mjs",
+        "tools/ci_maintenance.test.mjs",
+        "tools/ci_owned_test_server.test.mjs",
+        "tools/ci_runner_tests.test.mjs",
+        "tools/consume_operation_receipt.test.mjs",
+        "tools/controlled_runner_fixture.test.mjs",
+        "tools/copilot_fs_wire_observer.test.mjs",
+        "tools/copilot_fs_wire_process.test.mjs",
+        "tools/copilot_probe_boundaries.test.mjs",
+        "tools/copilot_probe_environment.test.mjs",
+        "tools/copilot_probe_native_read.test.mjs",
+        "tools/copilot_probe_process.test.mjs",
+        "tools/coverage_web_models.test.mjs",
+        "tools/delegated_lifecycle.test.mjs",
+        "tools/delegated_qa_root.test.mjs",
+        "tools/e2e_agent_pinning.test.mjs",
+        "tools/e2e_checkpoint_verification.test.mjs",
+        "tools/e2e_evidence_selection.test.mjs",
+        "tools/e2e_external_adapters.test.mjs",
+        "tools/e2e_external_adapters_http.test.mjs",
+        "tools/e2e_factory_budget_recovery.test.mjs",
+        "tools/e2e_late_termination.test.mjs",
+        "tools/e2e_predispatch_failure.test.mjs",
+        "tools/e2e_stopped_source_checkpoint.test.mjs",
+        "tools/e2e_verifier_browser_retention.test.mjs",
+        "tools/e2e_verifier_browser_scope.test.mjs",
+        "tools/factory_budget_fixture_config.test.mjs",
+        "tools/factory_budget_git.test.mjs",
+        "tools/factory_budget_process.test.mjs",
+        "tools/factory_budget_provenance.test.mjs",
+        "tools/factory_budget_start.test.mjs",
+        "tools/fake_codex_budget_stream.test.mjs",
+        "tools/fake_github_quota.test.mjs",
+        "tools/fixture_source_identity.test.mjs",
+        "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+        "tools/identity_fixture.test.mjs",
+        "tools/import_operation_behavior.test.mjs",
+        "tools/issue161/qa-api-provenance.test.mjs",
+        "tools/issue161/qa-plan.test.mjs",
+        "tools/local_source_commit.test.mjs",
+        "tools/local_stack_lifecycle.test.mjs",
+        "tools/local_stack_operation.test.mjs",
+        "tools/native_qualification_attempt.test.mjs",
+        "tools/native_qualification_finality.test.mjs",
+        "tools/native_qualification_trust.test.mjs",
+        "tools/office_model.test.mjs",
+        "tools/operation_feedback.test.mjs",
+        "tools/operation_receipt.test.mjs",
+        "tools/owned_test_stack.test.mjs",
+        "tools/probe_mcp.test.mjs",
+        "tools/qa_multiplayer_object_sources.test.mjs",
+        "tools/readiness_contract.test.mjs",
+        "tools/readiness_replay_contract.test.mjs",
+        "tools/redact_evidence_capabilities.test.mjs",
+        "tools/research_handoff_adversarial.test.mjs",
+        "tools/research_handoff_browser.test.mjs",
+        "tools/research_handoff_native.test.mjs",
+        "tools/runner_ack_fault_relay.test.mjs",
+        "tools/secret_scan.test.mjs",
+        "tools/secret_scan_native.test.mjs",
+        "tools/security_fixtures.test.mjs",
+        "tools/startup_validation_harness.test.mjs",
+        "tools/task_graph_fixture.test.mjs",
+        "tools/verifier_browser.test.mjs",
+        "tools/verify_toolchain.test.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3109,
+          "passed": 3044,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      }
+    },
+    {
+      "name": "format",
+      "argv": [
+        "cargo",
+        "fmt",
+        "--check"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "clippy",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "rust-tests",
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 900,
+          "failed": 0,
+          "ignored": 588,
+          "summaries": 41
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "web-build",
+      "argv": [
+        "pnpm",
+        "build:web"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "web-lint",
+      "argv": [
+        "pnpm",
+        "lint:web"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    }
+  ],
+  "red_regression_results": [
+    "test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 572 filtered out; finished in 16.13s"
+  ],
+  "green_regression_results": [
+    "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 572 filtered out; finished in 14.92s"
+  ],
+  "base_refresh_store_results": [
+    "test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 551 filtered out; finished in 134.15s"
+  ],
+  "source_guard": {
+    "passed": 22,
+    "failed": 0,
+    "skipped": 0
+  },
+  "native_scenarios": [
+    {
+      "name": "Original provider run and canonical export",
+      "passed": true
+    },
+    {
+      "name": "Stale publication rejected before durable effects",
+      "passed": true
+    },
+    {
+      "name": "Changed issue authority and replacement checks rejected",
+      "passed": true
+    },
+    {
+      "name": "Authorization retry converges on one governed run",
+      "passed": true
+    },
+    {
+      "name": "Saved verification checks run without a provider allocation",
+      "passed": true
+    },
+    {
+      "name": "Pending refresh fences publication and adoption; requester cannot review",
+      "passed": true
+    },
+    {
+      "name": "Actual App independent review persists across reload",
+      "passed": true
+    },
+    {
+      "name": "Adoption and retry preserve immutable result lineage",
+      "passed": true
+    },
+    {
+      "name": "Publish exact refreshed commit with one branch and pull request",
+      "passed": true
+    },
+    {
+      "name": "Conflicting base fails safely and can be explicitly abandoned",
+      "passed": true
+    }
+  ],
+  "original_screenshot_count": 2,
+  "actual_human_reviews": 0,
+  "owned_services_stopped": {
+    "runner": true,
+    "postgres": true,
+    "web": true,
+    "server": true,
+    "acceptance": true
+  },
+  "historical_passing_publication_scope": {
+    "tested_tree": "52867f5d35cb30be622fe9a550cec7e07322c8e6",
+    "publication_tree": "a5c854eaf73333092f32ead0e5e00c96b1133009",
+    "finished_at_utc": "2026-09-30T22:06:12.090746+00:00",
+    "validates_new_lock_correction": false
+  },
+  "qualifications": [
+    "The three lock tests are included in the 24-test native base-refresh store filter; counts overlap.",
+    "Core publication R1 failed when Gitleaks flagged five fixture UUID operation/decision fields. That failed receipt and packet are preserved. R3 extends stable aliases to these fixture fields, retaining equality and unchanged secret-scanning policy; it is a new validation attempt, not a rewritten R1 pass.",
+    "Initial evidence assembly rejected an unsanitized personal path in a JSON object key. The failed partial packet is preserved locally; the retry redacts keys and values and rejects key collisions without changing the validated product source.",
+    "Canonical ignored SQLx tests are reported separately; the focused native lane invokes the owned-database base-refresh tests explicitly.",
+    "First lock-regression attempt failed during prerequisite setup; the corrected R2 reproduced three real deadlocks; R3 passed. All attempts are retained.",
+    "Browser/provider and GitHub boundaries use deterministic fixtures; no live external provider or GitHub publication is claimed by acceptance.",
+    "Source metadata is checked at fresh boundaries; no historical metadata or continuous operating-system lock is claimed.",
+    "Actual Node runtime 24.21.0 differs from the repository declaration 24.19.0.",
+    "No hosted CI, CodeQL, independent approval, issue completion or clean historical Cargo advisory audit is claimed."
+  ],
+  "artifacts": [
+    {
+      "file": "source-equivalence.json",
+      "source_name": "issue84-lock-publication-source-r1.json",
+      "original_sha256": "793b7ee317cdc1a7b1d66a1f149201cba786b31faddf0f7c93fd18ba0787eea3",
+      "published_sha256": "793b7ee317cdc1a7b1d66a1f149201cba786b31faddf0f7c93fd18ba0787eea3",
+      "bytes": 1202606,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "implementation-self-review.json",
+      "source_name": "issue84-lock-publication-self-review-r1.json",
+      "original_sha256": "4ade470d3b33c6f272af3abebb93c9a17f4d5f2216bcd504cb70f8568d1775ce",
+      "published_sha256": "4ade470d3b33c6f272af3abebb93c9a17f4d5f2216bcd504cb70f8568d1775ce",
+      "bytes": 2591,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "canonical-report.json",
+      "source_name": "2026-09-30T22-59-01-211Z-9c1a7d78-98ce-409d-ac61-088ae71cbb54-full.json",
+      "original_sha256": "9560562eda1c0847287d46da3f4d32ec299eea90ef5ab74520e47bfd2b5bff59",
+      "published_sha256": "9560562eda1c0847287d46da3f4d32ec299eea90ef5ab74520e47bfd2b5bff59",
+      "bytes": 585761,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "native/acceptance.json",
+      "source_name": "acceptance.json",
+      "original_sha256": "23c494fc243ba04635346bcecd1eb4246a15d84ebbbdde1612c7f703d8b6ed96",
+      "published_sha256": "02655cd0ff50f1c0495c5c83cabb16cd7656c74702143a0979ac17667efe0c4d",
+      "bytes": 1390077,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "native/driver.json",
+      "source_name": "driver.json",
+      "original_sha256": "943d2bbbe8d1a58f8ce43b5d1e5063ea95ff9c37555a3c0141eda4991dc660f5",
+      "published_sha256": "aeda1c061ad85e1871d882bdb6560f7b56fcb075248153b5ab1a4d95072af2d5",
+      "bytes": 560,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "dependencies/setup.json",
+      "source_name": "issue84-validation-environment-r3.json",
+      "original_sha256": "4a7d2ab8e919a2ae470a0345ef318105f56e18e7b9bf9b29a066bda06467dfb7",
+      "published_sha256": "ff4bbd5e178269aba0f786afb3dadb7824584c03e0c03c36a5ee0c7be3bf0f18",
+      "bytes": 2095,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/store-driver.json",
+      "source_name": "issue84-lock-store-r1.json",
+      "original_sha256": "c161b7f0c91750cbe3c0e0e5785fec8dc5816f8aff855a83cf11cf6f03cc632f",
+      "published_sha256": "eb61daabf6a98d2f37112e27967345d5f2cd207a57f8d4cfc4dcaaa533939957",
+      "bytes": 3963,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/store.log",
+      "source_name": "issue84-lock-store-r1.log",
+      "original_sha256": "1fe82ea21cfc5d4ddc8ee918eb09de5038dd6ca6535b70b5e2d91f15405f23a2",
+      "published_sha256": "0f3f7bc3148021ba9c8ede8270dd268508fdb8688d429d4875f0f343571a3a4b",
+      "bytes": 4936,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/store-session-exit.json",
+      "source_name": "issue84-lock-store-r1-session-exit.json",
+      "original_sha256": "b427fce65bbcc5922363d4a2cb88e9e0cace726e2b05c4d7b8af9dc34052a841",
+      "published_sha256": "c2f0e86c5e3eaa77217d356482b7f2d50dbf8d8b948dbb97805ac51b4b1b7870",
+      "bytes": 207,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/store-native-driver.json",
+      "source_name": "issue84-store-r12.json",
+      "original_sha256": "aff9c6c8add7b09ee2db3929942e3e1cc28e38e8ee1b7580ee8276ff24f53783",
+      "published_sha256": "015809887c2ec3a88e0fd239d6711fbfb79ecbb56f8416ebce04597e9016531a",
+      "bytes": 44575,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/store-native.log",
+      "source_name": "issue84-store-r12.log",
+      "original_sha256": "321a1300f67176e70cf28e952a5ffa4182d6b0705b22fc2729596af3a62321e1",
+      "published_sha256": "5acff4c30419eef07a0299717614045cd20f39ec940d59e52ab2a8804f501a26",
+      "bytes": 4582,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/build-driver.json",
+      "source_name": "issue84-lock-build-r1.json",
+      "original_sha256": "d4952c8e53235bca18f552c6231af64ab3a05097b72b2359676adbb159b513b5",
+      "published_sha256": "d0482fb36d37b8e1f64a43fada2bcb3b84c787b1487416f4660d05ae666a91ec",
+      "bytes": 4331,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/build.log",
+      "source_name": "issue84-lock-build-r1.log",
+      "original_sha256": "19bc8ea2e7c2dcdae9c355951300a71a5a7c162d5c7ac5f15fca4815b4355376",
+      "published_sha256": "8c3cc8c585624cb660a88eca9a1ab6fa63348ace4d4c72d3e9e93413ec4050a1",
+      "bytes": 94606,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/build-session-exit.json",
+      "source_name": "issue84-lock-build-r1-session-exit.json",
+      "original_sha256": "bbc81a7168b2d3af24e2407b1c133df332fe90f310f514310697e53c8639e6b8",
+      "published_sha256": "d13f8bf951f702ac932bfc7a6f1308535357516a772fa84bbc93de9b52a14ff9",
+      "bytes": 175,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/build-native-driver.json",
+      "source_name": "issue84-runtime-build-r3.json",
+      "original_sha256": "cbc072f40784aa0827f2cda13fe5f43629c2077047a357865d4fb2b4cb2f83b3",
+      "published_sha256": "27a0c2697034d2c694aef2cfa35fab3c662cc805a15c7bbc3c9ce35da8c96025",
+      "bytes": 44740,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/build-native.log",
+      "source_name": "issue84-runtime-build-r3.log",
+      "original_sha256": "cd35a394119d08e492cd1ad9fd182e38887dec4a4c4907c07e795195e1726dc6",
+      "published_sha256": "cf947e6c845967e5b6f70b8b3ea0153b3db579c00b337655d756c41a8fb03472",
+      "bytes": 410,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/native-driver.json",
+      "source_name": "issue84-lock-native-r1.json",
+      "original_sha256": "24b637ee93e9b8f8e6eda290913602461d9abe4fcfad153b09f2bb827a1151f8",
+      "published_sha256": "bdca3ea4d50c127d8d066ea193ea5c9f96e95aaf276cf2c373670da3eb229716",
+      "bytes": 6600,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/native.log",
+      "source_name": "issue84-lock-native-r1.log",
+      "original_sha256": "943d2bbbe8d1a58f8ce43b5d1e5063ea95ff9c37555a3c0141eda4991dc660f5",
+      "published_sha256": "aeda1c061ad85e1871d882bdb6560f7b56fcb075248153b5ab1a4d95072af2d5",
+      "bytes": 560,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/native-session-exit.json",
+      "source_name": "issue84-lock-native-r1-session-exit.json",
+      "original_sha256": "8b7570bbdfc7aafb736edc928f7f1faee8a9a2b79b94d00c9c392295e92bee4b",
+      "published_sha256": "3a13d5e5f304931da5e2ec600b57074bebede67499ed1080e1b8cb0614a87c7f",
+      "bytes": 167,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/check-driver.json",
+      "source_name": "issue84-lock-check-r1.json",
+      "original_sha256": "69fea5be88b0f45b4dcced1056898cafa4afc377a4a8c15eda3c71a02297a2cc",
+      "published_sha256": "6dba5b4012a269abb2d3c0613a4bf6fd1e20175f6e45b33c705f0d3d1c5925f3",
+      "bytes": 13284,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/check.log",
+      "source_name": "issue84-lock-check-r1.log",
+      "original_sha256": "1fe57d61459573df21e5f4b19f443b8b207403e1f7281a1e05be4ed6a22f9172",
+      "published_sha256": "5a9ebd8481aa09402076254aef46f5f5cf3db68d369ade1b7071a7106a00f5ae",
+      "bytes": 9960,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "lanes/check-session-exit.json",
+      "source_name": "issue84-lock-check-r1-session-exit.json",
+      "original_sha256": "cdc805cb0c3a4319deef361fd50f93519c633b6633f456eb06eef5510e4fd61b",
+      "published_sha256": "af88d12d548a0061715cf52b6ddbe3620598ddabe06ac78f9d8e9667bef0ed45",
+      "bytes": 167,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "dependencies/issue84-dependencies-r3.log",
+      "source_name": "issue84-dependencies-r3.log",
+      "original_sha256": "2ca3a7fe610ee2a216ba0186ae371dd5c3388c2cb096aa977c8ea8762d2c554f",
+      "published_sha256": "f6c75d2d25a2bb05ddf5392e23367b5232cb72a25bbf3294084cc9df99f30896",
+      "bytes": 85,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "dependencies/issue84-steward-dependencies-r1.log",
+      "source_name": "issue84-steward-dependencies-r1.log",
+      "original_sha256": "72bb19153990ca3f99f55373182212816b1321a6009655e0c3c51e94e5c67020",
+      "published_sha256": "8eadbbee213b945206c578d442dc63d627dbac0cb64941ddd6526991596aba1b",
+      "bytes": 26,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "regression/issue84-lock-order-r1.json",
+      "source_name": "issue84-lock-order-r1.json",
+      "original_sha256": "95e90579f7b603a4f5f0d7ca84d3f8277d6894febd93f3a6f571cea510826e69",
+      "published_sha256": "7d474576334abd70f315177921cc811c0c6320c8ea2b6d3e87d5da02d1d80b97",
+      "bytes": 44606,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "regression/issue84-lock-order-r1.log",
+      "source_name": "issue84-lock-order-r1.log",
+      "original_sha256": "fd698085aee806d0d18be48e596c05af538becbcdd9dae1b531184016c66b739",
+      "published_sha256": "874fddcc916ee933917ca62babf7570dfebc7a8b9cb3c4a9f5ba577b0b6f6f8a",
+      "bytes": 3552,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "regression/issue84-lock-order-r1-session-exit.json",
+      "source_name": "issue84-lock-order-r1-session-exit.json",
+      "original_sha256": "be559423046d466147ea9a385cf80aefd0fd24f10414d4ba7b6ea1e38260b356",
+      "published_sha256": "1904c9f20db1556ffcca11943ee03e4decd7d823fb70e1501ed72d653d952354",
+      "bytes": 491,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "regression/issue84-lock-order-r2.json",
+      "source_name": "issue84-lock-order-r2.json",
+      "original_sha256": "1e9d31a12a9e0523fca624315ca035d316f2bfcd534110e565096868fd4bf9dd",
+      "published_sha256": "5b2d8f004f641bb8edd5d963be9372cbeae7999d48f6693717cde3592b9afcc6",
+      "bytes": 44606,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "regression/issue84-lock-order-r2.log",
+      "source_name": "issue84-lock-order-r2.log",
+      "original_sha256": "c735f9702fabbed134bfebab34bebfbc56300d06fd4f4366cd2a7cf9bd16165f",
+      "published_sha256": "087cabd8439bc42de71299521f3fc2f4acabf1453594e9cd422f318618e3456b",
+      "bytes": 3483,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "regression/issue84-lock-order-r2-session-exit.json",
+      "source_name": "issue84-lock-order-r2-session-exit.json",
+      "original_sha256": "270853e36c1ae6e165260dbeadd9daeacd74d431813981e98bd4c4204a944e6d",
+      "published_sha256": "4fa4951ac1d43696aa1e1c7f678c895c0c383a63d1ecbc9b3e87757f0dd5424c",
+      "bytes": 512,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "regression/issue84-lock-order-r3.json",
+      "source_name": "issue84-lock-order-r3.json",
+      "original_sha256": "2736e99ab13b0435914835a1f157a80cd9b5f62968505f0f84437e415b1a7daa",
+      "published_sha256": "5a02b650a7f406960d45da65baedb7c86225daa2858aa12d2759bc827fff136a",
+      "bytes": 44600,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "regression/issue84-lock-order-r3.log",
+      "source_name": "issue84-lock-order-r3.log",
+      "original_sha256": "c92e4dc64df402ab46f28327d2fd07f7064202299606c45979a8a8fabdddb1e4",
+      "published_sha256": "dbe9600ee1abf7777bd6b3d72f2d78b8bd4aecf4cbc30dd0080c84ca15d0989e",
+      "bytes": 1568,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "regression/issue84-lock-order-r3-session-exit.json",
+      "source_name": "issue84-lock-order-r3-session-exit.json",
+      "original_sha256": "38c2a2758a78dc61b30cdaecda71e4b5ae80a0e245497d78b448420ba69fcda1",
+      "published_sha256": "f19da7b0900012f08a33cb7913604ca187ed517a5732690ddec5a2e86cf08d0f",
+      "bytes": 455,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "regression/first-attempt-diagnosis.json",
+      "source_name": "issue84-lock-order-r1-diagnosis.json",
+      "original_sha256": "8325b356a1972e58ae65b5c1e798ead5ad84eb7e9ebac50cd316c5836e15ed6f",
+      "published_sha256": "3e8944a5d3922b26c42defee7dd36d143c45bec46bef1d42e8453e8dfaa3dee8",
+      "bytes": 726,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "guard/native-regressions.json",
+      "source_name": "issue84-lock-source-guard-r1.json",
+      "original_sha256": "fbf0b504f241e0e6f328c93309ae0f628f61dd32c9338f4039930991d226d2e3",
+      "published_sha256": "a42b91afea19cfa986815e6682e5e7d61639df589838c2c5e450e7b6c54ebf1b",
+      "bytes": 5441,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/native-wrapper-schema-correction.json",
+      "source_name": "issue84-lock-native-wrapper-schema-r1.json",
+      "original_sha256": "3f8851d49faed9798e026dbafafbc015c1008d9daf8912caf36e7a12144ddaa5",
+      "published_sha256": "12ca3b998b4f9cbfe031071e7308e6568667406b5b4f955bcb6aafa925d04c57",
+      "bytes": 1808,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/passing-publication/issue84-publication-evidence-validation-r3.json",
+      "source_name": "issue84-publication-evidence-validation-r3.json",
+      "original_sha256": "c4a35b0d0f49694c0cde8ca207fec1f265708fe769664fa185fdb0df72909f55",
+      "published_sha256": "c645edd3b3c32301cb5b5a6444a3775e213d41656fe183bccc6cf9a8ec2ecd93",
+      "bytes": 29311,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/passing-publication/issue84-publication-validation-r3-session-exit.json",
+      "source_name": "issue84-publication-validation-r3-session-exit.json",
+      "original_sha256": "f5293c0db79735ad513279dfd4ee940611f7eed5b9834c9cec10936803ed9143",
+      "published_sha256": "f5293c0db79735ad513279dfd4ee940611f7eed5b9834c9cec10936803ed9143",
+      "bytes": 494,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/passing-publication/issue84-publication-validation-r4-session-exit.json",
+      "source_name": "issue84-publication-validation-r4-session-exit.json",
+      "original_sha256": "aaf65881b2fe1e6ddbcb0a2aeecb59f3afb7ffc696d2b938c3d0ad76fd535b9b",
+      "published_sha256": "87f6e5bc5a9d9ef3d29529b29177175863f757ffc9fefea6ae4b5c14a63ba6de",
+      "bytes": 308,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/passing-publication/issue84-publication-validation-r3-docs.log",
+      "source_name": "issue84-publication-validation-r3-docs.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "bytes": 1,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/passing-publication/issue84-publication-validation-r3-repository-docs.log",
+      "source_name": "issue84-publication-validation-r3-repository-docs.log",
+      "original_sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "published_sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "bytes": 276,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/passing-publication/issue84-publication-validation-r3-personal-paths.log",
+      "source_name": "issue84-publication-validation-r3-personal-paths.log",
+      "original_sha256": "7eb5fcc984d90e0ebcb02fadf8bc0f4128ac8bd0d3333f4b954ab0890e9c57fc",
+      "published_sha256": "7eb5fcc984d90e0ebcb02fadf8bc0f4128ac8bd0d3333f4b954ab0890e9c57fc",
+      "bytes": 40,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/passing-publication/issue84-publication-validation-r3-diff-check.log",
+      "source_name": "issue84-publication-validation-r3-diff-check.log",
+      "original_sha256": "d725c56240465b862849b5aa573cfce237126c93b643d7941c2d4710491fc8fe",
+      "published_sha256": "d725c56240465b862849b5aa573cfce237126c93b643d7941c2d4710491fc8fe",
+      "bytes": 4077,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/passing-publication/issue84-publication-validation-r3-gitleaks.log",
+      "source_name": "issue84-publication-validation-r3-gitleaks.log",
+      "original_sha256": "4b5d111ff5f2493fd29303eec766ccedec7316903d289fc146797121d85cb94a",
+      "published_sha256": "4b5d111ff5f2493fd29303eec766ccedec7316903d289fc146797121d85cb94a",
+      "bytes": 79,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/assembly-r1-session-exit.json",
+      "source_name": "issue84-lock-publication-assembly-r1-session-exit.json",
+      "original_sha256": "ec547cd4bc044d8fe2987780b3dcd7df37f445080d1278215a56095a2bacad90",
+      "published_sha256": "36e4b41eb2f93b28374c6122eeb6d5e54aec2ffeb317d54036d1923cca6d93e7",
+      "bytes": 305,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/assembly-r1-diagnosis.json",
+      "source_name": "issue84-lock-publication-assembly-r1-diagnosis.json",
+      "original_sha256": "36b86bd36f60a83dcda8b201fd2cc35e9b7b25281f153ce117b78f44002efd8e",
+      "published_sha256": "36b86bd36f60a83dcda8b201fd2cc35e9b7b25281f153ce117b78f44002efd8e",
+      "bytes": 2574,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/failed-lock-publication-r1/issue84-lock-publication-evidence-validation-r1.json",
+      "source_name": "issue84-lock-publication-evidence-validation-r1.json",
+      "original_sha256": "bc4b3de618703ab05f890874a28ad0b8c8e58206c26cfbf15503da61e63805f2",
+      "published_sha256": "f06b76ef218271e47c3bcbea1e7f24c8bd49b0b1c659e3c3a80835fff415f06b",
+      "bytes": 30717,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/failed-lock-publication-r1/issue84-lock-publication-validation-r1-session-exit.json",
+      "source_name": "issue84-lock-publication-validation-r1-session-exit.json",
+      "original_sha256": "6698be18fb4a30c671358eeffc402421154061c2f27ac6869bab8b6ab3b706ed",
+      "published_sha256": "3a80084df9a82f791fba568f99e98f850b8739889b6e095cc9a44d9394bcca7e",
+      "bytes": 232,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/failed-lock-publication-r1/issue84-lock-publication-validation-r1-diagnosis.json",
+      "source_name": "issue84-lock-publication-validation-r1-diagnosis.json",
+      "original_sha256": "644406078bf55c9517e4adc265a1554aa0fe322f80b97c9a1d159586ea6eb71d",
+      "published_sha256": "644406078bf55c9517e4adc265a1554aa0fe322f80b97c9a1d159586ea6eb71d",
+      "bytes": 16232,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/failed-lock-publication-r1/issue84-lock-publication-validation-r1-docs.log",
+      "source_name": "issue84-lock-publication-validation-r1-docs.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "bytes": 1,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/failed-lock-publication-r1/issue84-lock-publication-validation-r1-repository-docs.log",
+      "source_name": "issue84-lock-publication-validation-r1-repository-docs.log",
+      "original_sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "published_sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "bytes": 276,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/failed-lock-publication-r1/issue84-lock-publication-validation-r1-personal-paths.log",
+      "source_name": "issue84-lock-publication-validation-r1-personal-paths.log",
+      "original_sha256": "7eb5fcc984d90e0ebcb02fadf8bc0f4128ac8bd0d3333f4b954ab0890e9c57fc",
+      "published_sha256": "7eb5fcc984d90e0ebcb02fadf8bc0f4128ac8bd0d3333f4b954ab0890e9c57fc",
+      "bytes": 40,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "history/failed-lock-publication-r1/issue84-lock-publication-validation-r1-gitleaks.log",
+      "source_name": "issue84-lock-publication-validation-r1-gitleaks.log",
+      "original_sha256": "86c1626092462302c644276811ea3acff14182bf2ed9061fdfcc329bf4fda0ec",
+      "published_sha256": "86c1626092462302c644276811ea3acff14182bf2ed9061fdfcc329bf4fda0ec",
+      "bytes": 79,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "native/refresh-awaiting-review.png",
+      "source_name": "refresh-awaiting-review.png",
+      "original_sha256": "548f08d27e933ee84e8eb554f5ac12a7bcd433a10036135e0488932256081a65",
+      "published_sha256": "548f08d27e933ee84e8eb554f5ac12a7bcd433a10036135e0488932256081a65",
+      "bytes": 277809,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "native/refresh-reviewed-reload.png",
+      "source_name": "refresh-reviewed-reload.png",
+      "original_sha256": "b66450fa17019fd7bce9f791bc19eedae3fedffa55a241f8c15147a30748f9ba",
+      "published_sha256": "b66450fa17019fd7bce9f791bc19eedae3fedffa55a241f8c15147a30748f9ba",
+      "bytes": 259322,
+      "transform": "none; original screenshot bytes"
+    },
+    {
+      "file": "native/acceptance-20260930T230715187-b6890455bc404db68702e57d843610da.stderr.log",
+      "source_name": "acceptance-20260930T230715187-b6890455bc404db68702e57d843610da.stderr.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "bytes": 1,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "native/acceptance-20260930T230715187-b6890455bc404db68702e57d843610da.stdout.log",
+      "source_name": "acceptance-20260930T230715187-b6890455bc404db68702e57d843610da.stdout.log",
+      "original_sha256": "b72a631f553e3794fe312c37247e827c6f9d2e03db4d0af555ec60ea68b9eaee",
+      "published_sha256": "0cfc49946328e483975b363f18b3f4546f7d7f1f06ceabde4e43d4e71ea20972",
+      "bytes": 801,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "native/fixture-ownership.json",
+      "source_name": "ownership.json",
+      "original_sha256": "77aeddfe9093e0f50760b65ae7b72ff11c09190c5f26c27d87044384c3b1a8ef",
+      "published_sha256": "3565b5a3cd1f6f997ab653e766f156189a1374e7f628a91f2bd605355be9786a",
+      "bytes": 3517,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/e2e_factory_base_refresh.ps1.txt",
+      "source_name": "e2e_factory_base_refresh.ps1",
+      "original_sha256": "3d066f8be3bb42efe7193a095a983093b2e1b8b3ffd2498b635882c9aad57bf2",
+      "published_sha256": "3d066f8be3bb42efe7193a095a983093b2e1b8b3ffd2498b635882c9aad57bf2",
+      "bytes": 12021,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/assemble-issue84-lock-publication-r1.py.txt",
+      "source_name": "assemble-issue84-lock-publication-r1.py",
+      "original_sha256": "808fc741a704a0cb1a6527a256b57d51128207a40c963af4f0d12ef6e28434ce",
+      "published_sha256": "659b677ba5afcf75ab298f6c8d99a884c35d8d6923dc3c1cbc21bfac3efde86f",
+      "bytes": 19407,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/assemble-issue84-lock-publication-r2.py.txt",
+      "source_name": "assemble-issue84-lock-publication-r2.py",
+      "original_sha256": "7c95112beeafc1cae235250d7e288ce0ce66e5b4ac2635ba80c25a4c246033e5",
+      "published_sha256": "54211729ecba387a865b174b815679f4eda9c598b0bf24e25049b51b1265f3ee",
+      "bytes": 20203,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/assemble-issue84-lock-publication-r3.py.txt",
+      "source_name": "assemble-issue84-lock-publication-r3.py",
+      "original_sha256": "ff58226065d7e83e0b7e000e5c6da1f584d9213b2710b806c1d13b3481de1ec1",
+      "published_sha256": "2342ba630b9c0e707ad74b608eabec5f090d1b5fa96f10fd179ae7b43f3f2c79",
+      "bytes": 21744,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/capture-issue84-lock-source-r1.py.txt",
+      "source_name": "capture-issue84-lock-source-r1.py",
+      "original_sha256": "b46f24a1419e51c88bd3996602fef2075b8c5f3ed6093c33cff446cba3a57747",
+      "published_sha256": "b46f24a1419e51c88bd3996602fef2075b8c5f3ed6093c33cff446cba3a57747",
+      "bytes": 4179,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/commit-issue84-lock-publication-r1.py.txt",
+      "source_name": "commit-issue84-lock-publication-r1.py",
+      "original_sha256": "d975f93551eda5ec02d8c5e5398abb95d4aa2d8a27cecd4760a52cebe17419be",
+      "published_sha256": "d975f93551eda5ec02d8c5e5398abb95d4aa2d8a27cecd4760a52cebe17419be",
+      "bytes": 5264,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/issue84_lock_publication_r1.py.txt",
+      "source_name": "issue84_lock_publication_r1.py",
+      "original_sha256": "3be57aeb6f834efecd160b34ad41cc653599dd8a5ae3eb29901e243ec1d9a360",
+      "published_sha256": "8b788a549c0a53b92bb594e63d3eb16671d2c29ef8c8a73eac180271426ace0f",
+      "bytes": 13288,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/issue84_lock_source_guard_r1.py.txt",
+      "source_name": "issue84_lock_source_guard_r1.py",
+      "original_sha256": "a4489392ff29b6350b930517f127b58252c41ca9bdf1844406745db1224acc1d",
+      "published_sha256": "a7bf86c6efacd22bd77113b068427e9eb1feb50fec70a82b6267cb5e58fa5524",
+      "bytes": 3637,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/prepare-issue84-lock-assembly-retry-r2.py.txt",
+      "source_name": "prepare-issue84-lock-assembly-retry-r2.py",
+      "original_sha256": "9a9b9b276d5f3da093441ac5a2dfb65e408cc1cd41d0eb5b11d60465a566c8ea",
+      "published_sha256": "9a9b9b276d5f3da093441ac5a2dfb65e408cc1cd41d0eb5b11d60465a566c8ea",
+      "bytes": 7591,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/prepare-issue84-lock-publication-retry-r3.py.txt",
+      "source_name": "prepare-issue84-lock-publication-retry-r3.py",
+      "original_sha256": "de8c16e2ee2c1a6591f495a8efdb0458bb8e34593077086a8ae9ed870ee91eb8",
+      "published_sha256": "de8c16e2ee2c1a6591f495a8efdb0458bb8e34593077086a8ae9ed870ee91eb8",
+      "bytes": 12247,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/run-issue84-build.ps1.txt",
+      "source_name": "run-issue84-build.ps1",
+      "original_sha256": "46db8776faf638d223fbedcae05ba2ff516cf3b4da798449f4688947e61f8f7d",
+      "published_sha256": "504eed3926016a56cc04f0f1a648ea7bcbdab3eec555050081ca1d620bcf6dc8",
+      "bytes": 2551,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/run-issue84-lock-validation-r1.py.txt",
+      "source_name": "run-issue84-lock-validation-r1.py",
+      "original_sha256": "1e68bc42e068d613dbf0e5b04f6d7c5d077f7629bbe2be2b7d98427fbd395308",
+      "published_sha256": "9cb656bf7458f224a6f1325d74d9d7a7778161cff5be4ea90fd72a70f69c38f2",
+      "bytes": 11011,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/run-issue84-lock-validation-r2.py.txt",
+      "source_name": "run-issue84-lock-validation-r2.py",
+      "original_sha256": "99ad19bf72012436bdd4a0a56ce85b1e443850a58567850ba600d6e9bec934c1",
+      "published_sha256": "20f11f0733c1e9ebe4723b5d76a717aefdeaf8038cc3210e6d378a07c6cb6899",
+      "bytes": 11463,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/run-issue84-store.ps1.txt",
+      "source_name": "run-issue84-store.ps1",
+      "original_sha256": "178be54b52ea9b9c94c29c2b7b4c3d017e926714508e08f31621e4e273e511fd",
+      "published_sha256": "31137e5f7f50a769478f19078abd75b2a5da30bdc8fc40cd270494e1de0c8c65",
+      "bytes": 5883,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/scan-issue84-lock-publication-r1.py.txt",
+      "source_name": "scan-issue84-lock-publication-r1.py",
+      "original_sha256": "822deb19cbbaae0dd68cd66b8c97cecf26fbeb61be5407ae5f6f7833f7353ffe",
+      "published_sha256": "822deb19cbbaae0dd68cd66b8c97cecf26fbeb61be5407ae5f6f7833f7353ffe",
+      "bytes": 6008,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/validate-issue84-lock-publication-r1.py.txt",
+      "source_name": "validate-issue84-lock-publication-r1.py",
+      "original_sha256": "16b7f2060d15913b9757f1009f5d9610c2299e27e74609fb5c469bf6c0d16be0",
+      "published_sha256": "16b7f2060d15913b9757f1009f5d9610c2299e27e74609fb5c469bf6c0d16be0",
+      "bytes": 9461,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/validate-issue84-lock-publication-r3.py.txt",
+      "source_name": "validate-issue84-lock-publication-r3.py",
+      "original_sha256": "8841a6d6ace05286cad7ce664e6f78db60aa0708d67ef7cb95d83a725649813c",
+      "published_sha256": "8841a6d6ace05286cad7ce664e6f78db60aa0708d67ef7cb95d83a725649813c",
+      "bytes": 9461,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    },
+    {
+      "file": "drivers/verify-issue84-lock-source-guard-r1.py.txt",
+      "source_name": "verify-issue84-lock-source-guard-r1.py",
+      "original_sha256": "33dd927b74282e4fa55c5cf8ba8d2d04e39d4129c302d68473be435714eda5f3",
+      "published_sha256": "33dd927b74282e4fa55c5cf8ba8d2d04e39d4129c302d68473be435714eda5f3",
+      "bytes": 6273,
+      "transform": "UTF-8/LF and whitespace normalization; personal paths and discovered credentials redacted; fixture operation/idempotency strings replaced with stable aliases; JSON reserialized"
+    }
+  ],
+  "redactions": [
+    {
+      "file": "native/acceptance.json",
+      "json_path": "$.scenarios[3].receipt.refresh.idempotency_key",
+      "treatment": "stable fixture operation/idempotency alias",
+      "alias": "<fixture-operation-001>"
+    },
+    {
+      "file": "native/acceptance.json",
+      "json_path": "$.scenarios[3].receipt.operation_key",
+      "treatment": "stable fixture operation/idempotency alias",
+      "alias": "<fixture-operation-001>"
+    },
+    {
+      "file": "native/acceptance.json",
+      "json_path": "$.scenarios[6].receipt.request.decision_key",
+      "treatment": "stable fixture operation/idempotency alias",
+      "alias": "<fixture-operation-002>"
+    },
+    {
+      "file": "native/acceptance.json",
+      "json_path": "$.scenarios[7].receipt.refresh.idempotency_key",
+      "treatment": "stable fixture operation/idempotency alias",
+      "alias": "<fixture-operation-001>"
+    },
+    {
+      "file": "native/acceptance.json",
+      "json_path": "$.scenarios[7].receipt.refresh.settlement_key",
+      "treatment": "stable fixture operation/idempotency alias",
+      "alias": "<fixture-operation-003>"
+    },
+    {
+      "file": "native/acceptance.json",
+      "json_path": "$.scenarios[7].receipt.operation_key",
+      "treatment": "stable fixture operation/idempotency alias",
+      "alias": "<fixture-operation-003>"
+    },
+    {
+      "file": "native/acceptance.json",
+      "json_path": "$.scenarios[8].receipt.publication.idempotency_key",
+      "treatment": "stable fixture operation/idempotency alias",
+      "alias": "<fixture-operation-004>"
+    },
+    {
+      "file": "native/acceptance.json",
+      "json_path": "$.scenarios[8].receipt.first_response.idempotency_key",
+      "treatment": "stable fixture operation/idempotency alias",
+      "alias": "<fixture-operation-004>"
+    },
+    {
+      "file": "native/acceptance.json",
+      "json_path": "$.scenarios[8].receipt.first_response.publication.idempotency_key",
+      "treatment": "stable fixture operation/idempotency alias",
+      "alias": "<fixture-operation-004>"
+    },
+    {
+      "file": "native/acceptance.json",
+      "json_path": "$.scenarios[8].receipt.replay_response.idempotency_key",
+      "treatment": "stable fixture operation/idempotency alias",
+      "alias": "<fixture-operation-004>"
+    },
+    {
+      "file": "native/acceptance.json",
+      "json_path": "$.scenarios[8].receipt.replay_response.publication.idempotency_key",
+      "treatment": "stable fixture operation/idempotency alias",
+      "alias": "<fixture-operation-004>"
+    },
+    {
+      "file": "native/acceptance.json",
+      "json_path": "$.scenarios[9].receipt.refresh.idempotency_key",
+      "treatment": "stable fixture operation/idempotency alias",
+      "alias": "<fixture-operation-005>"
+    },
+    {
+      "file": "native/acceptance.json",
+      "json_path": "$.scenarios[9].receipt.refresh.settlement_key",
+      "treatment": "stable fixture operation/idempotency alias",
+      "alias": "<fixture-operation-006>"
+    },
+    {
+      "file": "native/acceptance.json",
+      "json_path": "$.scenarios[9].receipt.operation_key",
+      "treatment": "stable fixture operation/idempotency alias",
+      "alias": "<fixture-operation-006>"
+    }
+  ]
+}

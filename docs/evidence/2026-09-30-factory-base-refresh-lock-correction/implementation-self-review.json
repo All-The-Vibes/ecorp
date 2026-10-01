@@ -1,0 +1,43 @@
+{
+  "issue": 84,
+  "pr": 390,
+  "reviewed_at_utc": "2026-10-01T00:14:18.236443+00:00",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parent": "31337c258360b7df2421e605e54d9a6f31753628",
+  "tested_tree": "e19869b13b8a4a59231a2d9babece644f2b9e43c",
+  "code_paths": [
+    "crates/crony-store/src/factory_base_refresh_authority_tests.rs",
+    "crates/crony-store/src/factory_base_refresh_lock_tests.rs",
+    "crates/crony-store/src/state_audit.rs"
+  ],
+  "review_kind": "Implementation self-review; no independent or human review claimed",
+  "findings": [
+    {
+      "review_comment": 4149881329,
+      "cause": "base_refresh operations acquired the native Corp advisory lock before the audit ledger row, inverting ordinary audited transactions.",
+      "resolution": "audited_inner now calls existing lock_ledger before existing aggregate_breaker::lock_corp_tx.",
+      "location": "crates/crony-store/src/state_audit.rs:1347",
+      "evidence": "Three native PostgreSQL tests observe a ledger waiter and then request the Corp lock. All three deadlock on the old order and pass on the corrected order. Adoption and abandonment enable coverage only for the replacement mission."
+    },
+    {
+      "review_comment": 4149881373,
+      "cause": "The original packet retained failed publication attempts but omitted the eventual passing publication receipt and logs.",
+      "resolution": "This separate packet includes the unchanged original successful receipt, observed process exits and logs with explicit historical tree scope.",
+      "evidence": "Historical receipt tested tree 52867f5d35cb30be622fe9a550cec7e07322c8e6, publication tree a5c854eaf73333092f32ead0e5e00c96b1133009; this is not validation of the later lock-order correction."
+    }
+  ],
+  "surrounding_code_reviewed": [
+    "audited_inner transaction boundaries and primary coverage",
+    "lock_ledger optional-ledger behavior and SELECT FOR UPDATE",
+    "aggregate_breaker::lock_corp_tx native advisory lock",
+    "refresh_secondary_tx and independently covered replacement missions",
+    "public authorize_factory_base_refresh and settle_factory_base_refresh flows"
+  ],
+  "invariants": [
+    "The correction reuses existing transaction and lock helpers.",
+    "Authorization, tenant/Corp scope, idempotency, verification and budget contracts are preserved.",
+    "No migration SQL, pinned harness, provider permissions or execution mechanism changes.",
+    "Owned SQLx and browser fixtures do not write to the configured source checkout.",
+    "The original evidence packet remains byte-for-byte unchanged."
+  ]
+}

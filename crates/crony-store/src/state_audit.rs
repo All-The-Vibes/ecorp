@@ -1345,8 +1345,8 @@ impl PgStore {
         // Refreshes affect two missions. The replacement may be independently
         // covered even when the original is not; serialize before native locks.
         if op.name.starts_with("base_refresh_") {
-            aggregate_breaker::lock_corp_tx(&mut tx, op.corp).await?;
             lock_ledger(&mut tx, op.corp).await?;
+            aggregate_breaker::lock_corp_tx(&mut tx, op.corp).await?;
         }
         let covered: bool = sqlx::query_scalar(
             "SELECT EXISTS(SELECT 1 FROM state_audit_coverage WHERE corp_id=$1 AND mission_id=$2)",

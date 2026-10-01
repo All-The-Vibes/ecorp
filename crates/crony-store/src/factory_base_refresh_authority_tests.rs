@@ -2,6 +2,9 @@
 //! metadata. They do not claim native transport or independent human review.
 use super::*;
 
+#[path = "factory_base_refresh_lock_tests.rs"]
+mod lock_order;
+
 async fn assert_dispatch_denied(
     f: &PublicationFixture,
     command: &PendingRunnerCommand,

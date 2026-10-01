@@ -1,0 +1,81 @@
+#requires -Version 7.5
+param([Parameter(Mandatory)][ValidatePattern('^r[0-9]+$')][string]$Revision)
+$ErrorActionPreference = 'Stop'
+$taskProduct = '<USERPROFILE>\.codex\worktrees\issue84-base-refresh\ecorp'
+$taskPg = '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\postgresql-17.10\pgsql\bin'
+$taskQa = '<USERPROFILE>\qa\issue84-sqlx-' + [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfff')
+$taskPort = 15584
+$taskLog = Join-Path $PSScriptRoot "issue84-store-$Revision.log"
+$taskReceipt = Join-Path $PSScriptRoot "issue84-store-$Revision.json"
+if ((Test-Path -LiteralPath $taskQa) -or (Test-Path -LiteralPath $taskLog) -or (Test-Path -LiteralPath $taskReceipt)) { throw 'Preserve existing validation resources.' }
+if (Get-NetTCPConnection -State Listen -ErrorAction Stop | Where-Object LocalPort -eq $taskPort) { throw 'Test port is occupied.' }
+Import-Module (Join-Path $taskProduct 'tools/local_stack.psm1') -Force
+function Get-SourceIdentity {
+    Push-Location $taskProduct
+    try {
+        @(& git ls-files --cached --others --exclude-standard -- Cargo.toml Cargo.lock crates db | Sort-Object -Unique | ForEach-Object {
+            @{path=$_;sha256=(Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash.ToLowerInvariant()}
+        })
+    } finally { Pop-Location }
+}
+$taskState = @{schema_version=2;workspace=$taskQa;purpose='issue84-sqlx';test_owned=$true;processes=@{}}
+$taskResult = [ordered]@{
+    command='cargo test --locked -p crony-store budget_checkpoint_tests::correction_publication::base_refresh -- --ignored --nocapture --test-threads=1'
+    started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');worktree=$taskProduct;qa_root=$taskQa
+    head=(& git -C $taskProduct rev-parse HEAD);source_files=(Get-SourceIdentity)
+    evidence_kind='Real PostgreSQL migrations and store transitions with explicitly synthetic provider/export/review metadata; not runtime acceptance'
+    status='starting';log=$taskLog
+}
+$taskPriorDatabase = $env:DATABASE_URL
+$taskPriorThreads = $env:RUST_TEST_THREADS
+$taskCode = 1
+try {
+    New-Item -ItemType Directory -Path $taskQa | Out-Null
+    $taskSid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+    & icacls.exe $taskQa /inheritance:r /grant:r "*${taskSid}:(OI)(CI)F" '*S-1-5-18:(OI)(CI)F' | Out-Null
+    if ($LASTEXITCODE) { throw 'Cannot make fixture root private.' }
+    & (Join-Path $taskPg 'initdb.exe') -D (Join-Path $taskQa 'database') -U issue84_sqlx --auth=trust --encoding=UTF8 --locale=C *> (Join-Path $taskQa 'initdb.log')
+    if ($LASTEXITCODE) { throw 'Fresh PostgreSQL initialization failed; preserve the fixture.' }
+    $taskState.processes.postgres = Start-LocalOwnedProcess -Role postgres -Workspace $taskQa -FilePath (Join-Path $taskPg 'postgres.exe') -ArgumentList @('-D',(Join-Path $taskQa 'database'),'-h','127.0.0.1','-p',"$taskPort") -WorkingDirectory $taskQa -LogDirectory (Join-Path $taskQa 'logs')
+    Save-LocalStackState -Path (Join-Path $taskQa 'ownership.json') -State $taskState -Workspace $taskQa
+    $taskDeadline = [DateTime]::UtcNow.AddSeconds(30)
+    do {
+        & (Join-Path $taskPg 'pg_isready.exe') -h 127.0.0.1 -p $taskPort -U issue84_sqlx *> $null
+        if ($LASTEXITCODE -eq 0) { break }
+        Start-Sleep -Milliseconds 200
+    } while ([DateTime]::UtcNow -lt $taskDeadline)
+    if ($LASTEXITCODE) { throw 'Owned PostgreSQL did not become ready.' }
+    $env:DATABASE_URL = "postgres://issue84_sqlx@127.0.0.1:$taskPort/postgres"
+    $env:RUST_TEST_THREADS = '1'
+    $taskResult.status = 'running'
+    $taskResult | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+    Push-Location $taskProduct
+    try {
+        & cargo test --locked -p crony-store budget_checkpoint_tests::correction_publication::base_refresh -- --ignored --nocapture --test-threads=1 *> $taskLog
+        $taskCode = $LASTEXITCODE
+    } finally { Pop-Location }
+    $taskResult.exit_code = $taskCode
+    $taskResult.status = if ($taskCode -eq 0) {'passed'} else {'failed'}
+} catch {
+    $taskResult.status = 'failed'; $taskResult.failure = $_.Exception.Message
+} finally {
+    $env:DATABASE_URL = $taskPriorDatabase; $taskPriorDatabase = $null
+    $env:RUST_TEST_THREADS = $taskPriorThreads
+    if ($taskState.processes.postgres) {
+        if (Test-LocalOwnedProcess -Record $taskState.processes.postgres -Workspace $taskQa) {
+            & (Join-Path $taskPg 'pg_ctl.exe') -D (Join-Path $taskQa 'database') -m fast -w -t 30 stop *> (Join-Path $taskQa 'shutdown.log')
+            $taskResult.database_stop_exit_code = $LASTEXITCODE
+        }
+        $taskResult.database_stopped = !(Test-LocalOwnedProcess -Record $taskState.processes.postgres -Workspace $taskQa)
+        if (!$taskResult.database_stopped) { $taskResult.status='failed'; $taskResult.failure='Owned database shutdown unverified'; $taskCode=1 }
+        $taskState.stopped_at_utc = [DateTimeOffset]::UtcNow.ToString('o')
+        Save-LocalStackState -Path (Join-Path $taskQa 'ownership.json') -State $taskState -Workspace $taskQa
+    }
+    $taskResult.source_unchanged = (ConvertTo-Json -InputObject $taskResult.source_files -Depth 5 -Compress) -ceq (ConvertTo-Json -InputObject (Get-SourceIdentity) -Depth 5 -Compress)
+    $taskResult.finished_at_utc = [DateTimeOffset]::UtcNow.ToString('o')
+    if (Test-Path -LiteralPath $taskLog) { $taskResult.test_results = @(Select-String -LiteralPath $taskLog -Pattern '^test result:' | ForEach-Object Line) }
+    $taskResult | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+}
+[ordered]@{status=$taskResult.status;exit_code=$taskCode;source_unchanged=$taskResult.source_unchanged;database_stopped=$taskResult.database_stopped;results=$taskResult.test_results;failure=$taskResult.failure;receipt=$taskReceipt} | ConvertTo-Json -Depth 5
+if (Test-Path -LiteralPath $taskLog) { Get-Content -LiteralPath $taskLog -Tail 65 }
+exit $taskCode

@@ -1,0 +1,56 @@
+   Compiling crony-store v0.1.0 (<USERPROFILE>\.codex\worktrees\issue84-base-refresh\ecorp\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 58s
+     Running unittests src\lib.rs (target\debug\deps\crony_store-6a2535fa07039b57.exe)
+
+running 3 tests
+Observed refresh PID 39904 waiting behind ledger holder 19408: SELECT ledger_id FROM state_audit_ledgers WHERE corp_id=$1 FOR UPDATE
+Audit ledger holder's native Corp lock result: Ok(Ok(()))
+Refresh result after release: Err(error returned from database: deadlock detected
+
+Caused by:
+    deadlock detected)
+
+thread 'budget_checkpoint_tests::correction_publication::base_refresh::authority::lock_order::issue84_abandonment_locks_secondary_ledger_before_corp' (20348) panicked at crates\crony-store\src\factory_base_refresh_lock_tests.rs:70:14:
+refresh must complete without becoming a deadlock victim: error returned from database: deadlock detected
+
+Caused by:
+    deadlock detected
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::lock_order::issue84_abandonment_locks_secondary_ledger_before_corp ... FAILED
+Observed refresh PID 13572 waiting behind ledger holder 9784: SELECT ledger_id FROM state_audit_ledgers WHERE corp_id=$1 FOR UPDATE
+Audit ledger holder's native Corp lock result: Ok(Ok(()))
+Refresh result after release: Err(error returned from database: deadlock detected
+
+Caused by:
+    deadlock detected)
+
+thread 'budget_checkpoint_tests::correction_publication::base_refresh::authority::lock_order::issue84_adoption_locks_secondary_ledger_before_corp' (19376) panicked at crates\crony-store\src\factory_base_refresh_lock_tests.rs:70:14:
+refresh must complete without becoming a deadlock victim: error returned from database: deadlock detected
+
+Caused by:
+    deadlock detected
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::lock_order::issue84_adoption_locks_secondary_ledger_before_corp ... FAILED
+Observed refresh PID 13824 waiting behind ledger holder 30388: SELECT ledger_id FROM state_audit_ledgers WHERE corp_id=$1 FOR UPDATE
+Audit ledger holder's native Corp lock result: Ok(Err(error returned from database: deadlock detected
+
+Caused by:
+    deadlock detected))
+Refresh result after release: Ok(("pending", false))
+
+thread 'budget_checkpoint_tests::correction_publication::base_refresh::authority::lock_order::issue84_authorization_locks_ledger_before_corp' (19296) panicked at crates\crony-store\src\factory_base_refresh_lock_tests.rs:69:10:
+audit ledger holder must not deadlock with refresh: error returned from database: deadlock detected
+
+Caused by:
+    deadlock detected
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::lock_order::issue84_authorization_locks_ledger_before_corp ... FAILED
+
+failures:
+
+failures:
+    budget_checkpoint_tests::correction_publication::base_refresh::authority::lock_order::issue84_abandonment_locks_secondary_ledger_before_corp
+    budget_checkpoint_tests::correction_publication::base_refresh::authority::lock_order::issue84_adoption_locks_secondary_ledger_before_corp
+    budget_checkpoint_tests::correction_publication::base_refresh::authority::lock_order::issue84_authorization_locks_ledger_before_corp
+
+test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 572 filtered out; finished in 16.13s
+
+error: test failed, to rerun pass `-p crony-store --lib`

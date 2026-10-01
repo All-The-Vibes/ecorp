@@ -1,0 +1,19 @@
+   Compiling crony-store v0.1.0 (<USERPROFILE>\.codex\worktrees\issue84-base-refresh\ecorp\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 35s
+     Running unittests src\lib.rs (target\debug\deps\crony_store-6a2535fa07039b57.exe)
+
+running 3 tests
+Observed refresh PID 31056 waiting behind ledger holder 3156: SELECT ledger_id FROM state_audit_ledgers WHERE corp_id=$1 FOR UPDATE
+Audit ledger holder's native Corp lock result: Ok(Ok(()))
+Refresh result after release: Ok(("abandoned", false))
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::lock_order::issue84_abandonment_locks_secondary_ledger_before_corp ... ok
+Observed refresh PID 38872 waiting behind ledger holder 31144: SELECT ledger_id FROM state_audit_ledgers WHERE corp_id=$1 FOR UPDATE
+Audit ledger holder's native Corp lock result: Ok(Ok(()))
+Refresh result after release: Ok(("adopted", false))
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::lock_order::issue84_adoption_locks_secondary_ledger_before_corp ... ok
+Observed refresh PID 38968 waiting behind ledger holder 31516: SELECT ledger_id FROM state_audit_ledgers WHERE corp_id=$1 FOR UPDATE
+Audit ledger holder's native Corp lock result: Ok(Ok(()))
+Refresh result after release: Ok(("pending", false))
+test budget_checkpoint_tests::correction_publication::base_refresh::authority::lock_order::issue84_authorization_locks_ledger_before_corp ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 572 filtered out; finished in 14.92s
