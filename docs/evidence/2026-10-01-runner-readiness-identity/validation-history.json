@@ -1,0 +1,117 @@
+{
+  "failed_canonical": {
+    "node": {
+      "tests": 3107,
+      "passed": 3039,
+      "failed": 3,
+      "skipped": 65,
+      "todo": 0,
+      "cancelled": 0
+    },
+    "not_run": [
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ]
+  },
+  "diagnostics": {
+    "teams-install": [
+      {
+        "attempt": 1,
+        "command": "npm ci --ignore-scripts --no-fund --workspaces=false",
+        "exit_code": 0
+      }
+    ],
+    "teams-tests": [
+      {
+        "attempt": 1,
+        "command": "node --test --test-concurrency=1 scenarios/repo-steward/teams-host.test.mjs",
+        "exit_code": 0,
+        "counts_from_log": {
+          "tests": 18,
+          "suites": 0,
+          "pass": 18,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        }
+      }
+    ],
+    "f02-diagnostic": [
+      {
+        "attempt": 1,
+        "command": "node --test --test-concurrency=1 --test-name-pattern=^F02 native filter repeated delimiters \\(349354\\) tools/check_deliverable_diff.test.mjs",
+        "exit_code": 0,
+        "counts_from_log": {
+          "tests": 1,
+          "suites": 0,
+          "pass": 1,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        }
+      },
+      {
+        "attempt": 2,
+        "command": "node --test --test-concurrency=1 --test-name-pattern=^F02 native filter repeated delimiters \\(349354\\) tools/check_deliverable_diff.test.mjs",
+        "exit_code": 0,
+        "counts_from_log": {
+          "tests": 1,
+          "suites": 0,
+          "pass": 1,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        }
+      },
+      {
+        "attempt": 3,
+        "command": "node --test --test-concurrency=1 --test-name-pattern=^F02 native filter repeated delimiters \\(349354\\) tools/check_deliverable_diff.test.mjs",
+        "exit_code": 0,
+        "counts_from_log": {
+          "tests": 1,
+          "suites": 0,
+          "pass": 1,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        }
+      }
+    ]
+  },
+  "f02_timeout_root_cause": "not established",
+  "failed_native_probe": {
+    "status": 128,
+    "errorCode": null,
+    "elapsedMs": 315.90179999999236,
+    "stderrBytes": 8385017,
+    "stderrSha256": "cd0435807c62b5a20ea8de50927500f9fab37c219ea693ea30c757ffaccc3051",
+    "hostilePrefix": true,
+    "fatalTail": true
+  },
+  "failed_cli": {
+    "status": 2,
+    "errorCode": null,
+    "elapsedMs": 1274.82190000001,
+    "watchdogMs": 5000,
+    "scratch": [],
+    "reported_error": {
+      "error": "deliverable-diff-check",
+      "original": {
+        "operation": "read-tree",
+        "category": "timeout",
+        "code": "ETIMEDOUT",
+        "status": null,
+        "signal": "SIGTERM"
+      },
+      "cleanup": [],
+      "details": "Untrusted error details suppressed"
+    }
+  }
+}

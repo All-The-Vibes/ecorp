@@ -1,0 +1,75 @@
+✖ base and multiple saved connections keep distinct identities and authoritative readiness (2.58ms)
+✖ refresh, reorder and retest update status without replacing connection identity (0.5305ms)
+✖ omitted and null connection scope identify the same base installation (6.3709ms)
+✔ provider remains part of identity within the same saved connection (0.9242ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 1
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1312.6029
+
+✖ failing tests:
+
+test at apps\web\src\runnerReadiness.test.mjs:41:1
+✖ base and multiple saved connections keep distinct identities and authoritative readiness (2.58ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  1 !== 3
+
+      at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue198-readiness/ecorp/apps/web/src/runnerReadiness.test.mjs:48:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\web\src\runnerReadiness.test.mjs:61:1
+✖ refresh, reorder and retest update status without replacing connection identity (0.5305ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  1 !== 3
+
+      at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue198-readiness/ecorp/apps/web/src/runnerReadiness.test.mjs:64:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\web\src\runnerReadiness.test.mjs:77:1
+✖ omitted and null connection scope identify the same base installation (6.3709ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Base installation/. Input:
+
+  '<li><span>GitHub Copilot</span><strong>Ready</strong><small>1 selectable models</small></li>'
+
+      at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue198-readiness/ecorp/apps/web/src/runnerReadiness.test.mjs:81:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '<li><span>GitHub Copilot</span><strong>Ready</strong><small>1 selectable models</small></li>',
+    expected: /Base installation/,
+    operator: 'match',
+    diff: 'simple'
+  }

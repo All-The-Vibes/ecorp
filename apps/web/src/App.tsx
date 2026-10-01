@@ -6148,9 +6148,14 @@ function App() {
                         {runner.capabilities
                           .filter((capability) => capability.name !== 'workspace-isolation')
                           .map((capability) => (
-                            <li key={capability.name}>
+                            <li key={JSON.stringify([capability.name, capability.workspace_connection_id ?? null])}>
                               <span>{adapterLabel(capability.name)}</span>
                               <strong>{capability.available ? 'Ready' : 'Unavailable'}</strong>
+                              <small>
+                                {capability.workspace_connection_id
+                                  ? `Saved connection ${capability.workspace_connection_id}`
+                                  : 'Base installation'}
+                              </small>
                               {capability.models.length ? (
                                 <small>
                                   {capability.models.filter((model) => model.policy_state !== 'disabled').length} selectable models
