@@ -55,6 +55,10 @@ const DETERMINISTIC_HARNESS_STRATEGIES = [
 export const STUDIO_STRATEGY = 'studio-swarm'
 export const STUDIO_STRATEGY_LABEL = 'Studio team · 3 Copilot agents'
 
+export function isMissionRuntime(name: string): boolean {
+  return MISSION_RUNTIMES.includes(name)
+}
+
 export function usesDeterministicHarness(strategy: string): boolean {
   return DETERMINISTIC_HARNESS_STRATEGIES.includes(strategy)
 }
@@ -104,7 +108,7 @@ export function availableRunnerAdapters(
     connectedRunners
       .flatMap((runner) => runner.capabilities)
       .filter(
-        (capability) => capability.available && MISSION_RUNTIMES.includes(capability.name) &&
+        (capability) => capability.available && isMissionRuntime(capability.name) &&
           (!target || (target.workspaceConnectionId
             ? capability.workspace_connection_id === target.workspaceConnectionId
             : !capability.workspace_connection_id)),

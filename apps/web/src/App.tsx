@@ -23,7 +23,7 @@ import type { FactoryRecoveryCommandMode } from './factoryCheckpointRecovery'
 import { currentOfficeAgents, operatingOfficeAgents, selectOfficeAgent } from './office/officeModel'
 import type { OfficeAgent } from './office/officeModel'
 import {
-  availableRunnerAdapters, missionRuntimeError, selectMissionAdapter,
+  availableRunnerAdapters, isMissionRuntime, missionRuntimeError, selectMissionAdapter,
   STUDIO_STRATEGY, STUDIO_STRATEGY_LABEL, usesDeterministicHarness, workspaceCapability,
 } from './missionRuntime'
 import type { RepositoryTarget, RunnerCapability, RunnerNode } from './missionRuntime'
@@ -6154,7 +6154,7 @@ function App() {
                               <small>
                                 {capability.workspace_connection_id
                                   ? `Saved connection ${capability.workspace_connection_id}`
-                                  : 'Base installation'}
+                                  : isMissionRuntime(capability.name) ? 'Base installation' : 'Runner feature'}
                               </small>
                               {capability.models.length ? (
                                 <small>

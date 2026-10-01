@@ -4,6 +4,7 @@ import test from 'node:test'
 import * as jsxRuntime from 'react/jsx-runtime'
 import { renderToStaticMarkup } from 'react-dom/server'
 import ts from 'typescript'
+import { isMissionRuntime } from './missionRuntime.ts'
 
 // Execute the production list without mounting the unrelated application state.
 const source = await readFile(new URL('./App.tsx', import.meta.url), 'utf8')
@@ -23,10 +24,10 @@ const compiled = ts.transpileModule(`${adapterLabel}\nexport function render(run
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
 }).outputText
 const exported = {}
-new Function('require', 'exports', compiled)((name) => {
+new Function('require', 'exports', 'isMissionRuntime', compiled)((name) => {
   assert.equal(name, 'react/jsx-runtime')
   return jsxRuntime
-}, exported)
+}, exported, isMissionRuntime)
 const rows = (capabilities) => exported.render({ capabilities }).props.children
 const capability = (workspace_connection_id, overrides = {}) => ({
   name: 'github-copilot', available: true, workspace_connection_id,
@@ -87,4 +88,41 @@ test('provider remains part of identity within the same saved connection', () =>
   assert.notEqual(rendered[0].key, rendered[1].key)
   assert.match(renderToStaticMarkup(rendered[0]), /GitHub Copilot/)
   assert.match(renderToStaticMarkup(rendered[1]), /OpenAI Codex/)
+})
+
+test('mixed provider and protocol rows describe their actual scope without losing readiness', () => {
+  const providers = ['github-copilot', 'codex', 'claude-code', 'opencode', 'fake-process']
+  const features = [
+    'durable-control-v1', 'verification-artifact-transfer-v1', 'verifier-cache-suppression-v1',
+    'checkpoint-verification-v1', 'canonical-source-verification-v1', 'retained-provider-receipt-v1',
+    'secret-delivery', 'workspace-setup-v1', 'verified-dependency-files-v1', 'future-runner-feature',
+  ]
+  const entries = [
+    ...providers.map((name) => capability(null, { name })),
+    capability(firstId), capability(secondId),
+    ...features.map((name, index) => capability(index % 2 ? undefined : null, {
+      name, available: index % 2 === 0, models: [],
+    })),
+    capability(firstId, { name: 'workspace-setup-v1', models: [] }),
+  ]
+  const rendered = rows(entries)
+  assert.equal(rendered.length, entries.length)
+  assert.equal(new Set(rendered.map((row) => row.key)).size, entries.length)
+  for (const [index, entry] of entries.entries()) {
+    const html = renderToStaticMarkup(rendered[index])
+    assert.match(html, new RegExp(`<strong>${entry.available ? 'Ready' : 'Unavailable'}</strong>`))
+    if (entry.workspace_connection_id) {
+      assert.match(html, new RegExp(`Saved connection ${entry.workspace_connection_id}`))
+      assert.doesNotMatch(html, /Base installation|Runner feature/)
+    } else if (providers.includes(entry.name)) {
+      assert.match(html, /Base installation/)
+      assert.doesNotMatch(html, /Runner feature|Saved connection/)
+    } else {
+      assert.match(html, /Runner feature/)
+      assert.doesNotMatch(html, /Base installation|Saved connection/)
+    }
+    if (entry.models.length) assert.match(html, /1 selectable models/)
+    else assert.doesNotMatch(html, /selectable models/)
+  }
+  assert.deepEqual(rows([...entries].reverse()).map((row) => row.key), rendered.map((row) => row.key).reverse())
 })

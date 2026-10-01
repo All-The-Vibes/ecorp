@@ -1,5 +1,22 @@
 # Runner readiness identities — October 1, 2026
 
+## Current protocol-label correction
+
+The [protocol correction](protocol-correction.md) addresses review comment
+4160606480 and records the current product source. Full canonical validation
+passed all 11 gates; the complete local stack passed **60 assertions**.
+See the [source-bound results](protocol-correction-r1/summary.json) and
+[canonical report](protocol-correction-r1/canonical-report.json). The focused regression
+passed 19/19 after its observed red result. These results supersede the
+older product-validation counts below.
+
+![R4 desktop readiness labels](protocol-correction-r1/acceptance/readiness-desktop.png)
+
+![R4 readiness at 390 pixels](protocol-correction-r1/acceptance/readiness-narrow.png)
+
+The narrow capture retains a focused skip-link overlay. The sections below
+preserve earlier evidence chronology, including the source-claim correction.
+
 ## Current review correction
 
 The [review correction](review-correction.md) supersedes the historical R2
