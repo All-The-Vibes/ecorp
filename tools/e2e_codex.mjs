@@ -248,11 +248,20 @@ async function stopScenario() {
     isSettled,
   )
   assert.equal(terminal.run.status, 'cancelled')
-  const artifact = await assertArtifact(demo, terminal.run)
+  assert.equal(terminal.run.breaker_stage, 'stop')
+  assert.equal(terminal.run.artifact_id, null)
+  assert.equal(terminal.run.workspace_disposition, 'preserved')
+  assert.ok(terminal.run.workspace_path, 'emergency stop omitted retained source')
+  assert.ok(!terminal.state.snapshot.events.some(event =>
+    event.aggregate_id === launch.run_id &&
+    ['run.artifact', 'run.artifact_upload', 'run.verification_started',
+      'run.verification_passed', 'run.completed'].includes(event.type),
+  ))
   return {
     run_id: launch.run_id,
     status: terminal.run.status,
-    artifact,
+    accepted_artifact: terminal.run.artifact_id,
+    workspace_disposition: terminal.run.workspace_disposition,
   }
 }
 
@@ -370,7 +379,7 @@ const report = {
 }
 
 await writeFile(
-  path.join(root, 'output', 'e2e-codex.json'),
+  process.env.CRONY_CODEX_E2E_OUTPUT ?? path.join(root, 'output', 'e2e-codex.json'),
   `${JSON.stringify(report, null, 2)}\n`,
 )
 console.log(JSON.stringify(report, null, 2))

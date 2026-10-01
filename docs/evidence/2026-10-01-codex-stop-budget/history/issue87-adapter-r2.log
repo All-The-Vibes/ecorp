@@ -1,0 +1,52 @@
+   Compiling crony-runner v0.1.0 (<reviewed-worktree>\crates\crony-runner)
+    Finished `test` profile [unoptimized] target(s) in 29.10s
+     Running unittests src\bin\crony-evidence-paths.rs (target\debug\deps\crony_evidence_paths-eefad51ac185f636.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.00s
+
+     Running unittests src\main.rs (target\debug\deps\crony_runner-02b0585a373d56cb.exe)
+
+running 17 tests
+test adapter::codex::stop_tests::issue87_buffered_usage_cannot_extend_the_interrupt_deadline ... ok
+test adapter::codex::stop_tests::issue87_completion_racing_stop_remains_cancelled ... ok
+test adapter::codex::stop_tests::issue87_cumulative_regressions_cannot_charge_again ... ok
+test adapter::codex::stop_tests::issue87_eof_does_not_wait_forever_for_a_live_child ... FAILED
+test adapter::codex::stop_tests::issue87_foreign_terminal_cannot_complete_the_active_turn ... ok
+test adapter::codex::stop_tests::issue87_foreign_thread_usage_cannot_consume_the_current_budget ... ok
+test adapter::codex::stop_tests::issue87_stop_during_thread_start_never_starts_a_turn ... ok
+test adapter::codex::stop_tests::issue87_stop_is_received_while_stdin_is_blocked ... ok
+test adapter::codex::tests::evidence_preserves_native_windows_long_paths ... ok
+test adapter::codex::tests::executes_streams_usage_and_writes_evidence ... ok
+test adapter::codex::tests::failed_turn_returns_failed_exit_with_evidence ... ok
+test adapter::codex::tests::forwards_live_steering_to_the_active_turn ... FAILED
+test adapter::codex::tests::installed_codex_reports_full_capabilities ... ok
+test adapter::codex::tests::interrupts_then_resumes_the_same_session_and_workspace ... ok
+test adapter::codex::tests::stop_is_graceful_and_evidenced ... ok
+test adapter::codex::tests::unavailable_codex_reports_explicit_capabilities ... ok
+test adapter::codex::tests::usage_notifications_are_deduplicated_and_scoped_to_the_active_turn ... ok
+
+failures:
+
+---- adapter::codex::stop_tests::issue87_eof_does_not_wait_forever_for_a_live_child stdout ----
+
+thread 'adapter::codex::stop_tests::issue87_eof_does_not_wait_forever_for_a_live_child' (35340) panicked at crates\crony-runner\src\adapter\codex_stop_tests.rs:93:9:
+termination exceeded 9 seconds; fixture retained at <local-user>\AppData\Local\Temp\ecorp-issue87-tests\d0e68481-1137-43b1-a1f8-ddcabe966df9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- adapter::codex::tests::forwards_live_steering_to_the_active_turn stdout ----
+
+thread 'adapter::codex::tests::forwards_live_steering_to_the_active_turn' (34696) panicked at crates\crony-runner\src\adapter\codex.rs:1157:9:
+assertion failed: sink.events.lock().expect("recording lock").iter().any(|event|
+        matches!(event, AdapterEvent::Output { stream, text } if stream ==
+            "control" && text.contains("Forwarded live direction")))
+
+
+failures:
+    adapter::codex::stop_tests::issue87_eof_does_not_wait_forever_for_a_live_child
+    adapter::codex::tests::forwards_live_steering_to_the_active_turn
+
+test result: FAILED. 15 passed; 2 failed; 0 ignored; 0 measured; 277 filtered out; finished in 33.36s
+
+error: test failed, to rerun pass `-p crony-runner --bin crony-runner`

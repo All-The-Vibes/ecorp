@@ -80,6 +80,10 @@ pub enum RunnerToServer {
         command_id: Uuid,
         applied: bool,
         detail: String,
+        /// Observational runner clock, captured when the socket command is decoded.
+        /// It never controls accounting or establishes provider termination.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        runner_received_at: Option<String>,
     },
     RunEvent {
         event_id: Uuid,
@@ -94,9 +98,23 @@ pub enum RunnerToServer {
     },
 }
 
+/// Positive receipt issued only after the exact completion event is committed.
+/// Socket and assignment scope prevent an old receipt from authorizing cleanup.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RunCompletionReceipt {
+    pub corp_id: Uuid,
+    pub connection_epoch: Uuid,
+    pub run_id: Uuid,
+    pub assignment_token: Uuid,
+    pub event_id: Uuid,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ServerToRunner {
+    RunCompletionAccepted {
+        receipt: RunCompletionReceipt,
+    },
     WorkspaceSetup {
         command: crony_domain::WorkspaceSetupCommand,
     },
@@ -1222,6 +1240,34 @@ pub struct SetBudgetPolicyRequest {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn issue87_command_receipts_preserve_legacy_omission_and_observed_time() {
+        let legacy = serde_json::json!({
+            "type": "command_ack",
+            "runner_id": "fixture-runner",
+            "connection_epoch": uuid::Uuid::from_u128(1),
+            "command_id": uuid::Uuid::from_u128(2),
+            "applied": true,
+            "detail": "control queued"
+        });
+        for observed_at in [None, Some("2026-10-01T09:00:00.123Z")] {
+            let mut wire = legacy.clone();
+            if let Some(observed_at) = observed_at {
+                wire["runner_received_at"] = serde_json::json!(observed_at);
+            }
+            let decoded: super::RunnerToServer = serde_json::from_value(wire.clone()).unwrap();
+            match &decoded {
+                super::RunnerToServer::CommandAck {
+                    runner_received_at, ..
+                } => {
+                    assert_eq!(runner_received_at.as_deref(), observed_at);
+                }
+                _ => panic!("command acknowledgment changed message kind"),
+            }
+            assert_eq!(serde_json::to_value(decoded).unwrap(), wire);
+        }
+    }
+
     fn assert_issue224_attempt_policy_roundtrip<T>(legacy: serde_json::Value)
     where
         T: serde::de::DeserializeOwned + serde::Serialize,
@@ -1513,6 +1559,42 @@ mod tests {
     }
 
     use super::{ServerToRunner, VerificationArtifactReference};
+
+    #[test]
+    fn issue87_completion_receipt_requires_all_persistence_and_assignment_fences() {
+        let receipt = super::RunCompletionReceipt {
+            corp_id: uuid::Uuid::new_v4(),
+            connection_epoch: uuid::Uuid::new_v4(),
+            run_id: uuid::Uuid::new_v4(),
+            assignment_token: uuid::Uuid::new_v4(),
+            event_id: uuid::Uuid::new_v4(),
+        };
+        let expected = serde_json::json!({
+            "type": "run_completion_accepted",
+            "receipt": {
+                "corp_id": receipt.corp_id,
+                "connection_epoch": receipt.connection_epoch,
+                "run_id": receipt.run_id,
+                "assignment_token": receipt.assignment_token,
+                "event_id": receipt.event_id,
+            },
+        });
+        let message = ServerToRunner::RunCompletionAccepted { receipt };
+        assert_eq!(serde_json::to_value(message).unwrap(), expected);
+        let decoded: ServerToRunner = serde_json::from_value(expected.clone()).unwrap();
+        assert_eq!(serde_json::to_value(decoded).unwrap(), expected);
+        for key in [
+            "corp_id",
+            "connection_epoch",
+            "run_id",
+            "assignment_token",
+            "event_id",
+        ] {
+            let mut incomplete = expected.clone();
+            incomplete["receipt"].as_object_mut().unwrap().remove(key);
+            assert!(serde_json::from_value::<ServerToRunner>(incomplete).is_err());
+        }
+    }
 
     #[test]
     fn verifier_artifact_reference_preserves_metadata_only_wire_compatibility() {

@@ -1,0 +1,26 @@
+   Compiling crony-runner v0.1.0 (<reviewed-worktree>\crates\crony-runner)
+error[E0277]: `?` couldn't convert the error to `adapter::AdapterError`
+   --> crates\crony-runner\src\adapter\codex_runtime.rs:25:51
+    |
+ 25 |         let mut bytes = serde_json::to_vec(&value)?;
+    |                         --------------------------^ the trait `From<serde_json::Error>` is not implemented for `adapter::AdapterError`
+    |                         |
+    |                         this can't be annotated with `?` because it has type `Result<_, serde_json::Error>`
+    |
+note: `adapter::AdapterError` needs to implement `From<serde_json::Error>`
+   --> crates\crony-runner\src\adapter\mod.rs:245:1
+    |
+245 | pub enum AdapterError {
+    | ^^^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+help: `adapter::AdapterError` implements trait `From<T>`
+   --> crates\crony-runner\src\adapter\mod.rs:253:10
+    |
+253 |     Io(#[from] std::io::Error),
+    |          ^^^^ `From<std::io::Error>`
+254 |     #[error(transparent)]
+255 |     Runtime(#[from] anyhow::Error),
+    |               ^^^^ `From<anyhow::Error>`
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `crony-runner` (bin "crony-runner" test) due to 1 previous error

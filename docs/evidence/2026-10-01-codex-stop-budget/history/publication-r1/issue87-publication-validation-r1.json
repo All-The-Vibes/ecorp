@@ -1,0 +1,1110 @@
+{
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "branch": "codex/issue87-bounded-codex-stop",
+  "checks": [
+    {
+      "arguments": [
+        "node",
+        "tools/check_docs.mjs"
+      ],
+      "exit_code": 0,
+      "failure": null,
+      "finished_at_utc": "2026-10-01T15:08:09.280360+00:00",
+      "log": "<run-evidence>\\issue87-publication-validation-r1-docs.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "name": "docs",
+      "started_at_utc": "2026-10-01T15:08:09.114458+00:00"
+    },
+    {
+      "arguments": [
+        "node",
+        "tools/check_documentation.mjs"
+      ],
+      "exit_code": 0,
+      "failure": null,
+      "finished_at_utc": "2026-10-01T15:08:09.455284+00:00",
+      "log": "<run-evidence>\\issue87-publication-validation-r1-repository-docs.log",
+      "log_sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "name": "repository-docs",
+      "started_at_utc": "2026-10-01T15:08:09.283402+00:00"
+    },
+    {
+      "arguments": [
+        "git",
+        "--no-optional-locks",
+        "diff",
+        "--check",
+        "878a1774774b0630c904cbaf4b05e1b346777817",
+        "2a37afaddcd0c73d98630f8cf149e07079091cd5"
+      ],
+      "exit_code": 2,
+      "failure": null,
+      "finished_at_utc": "2026-10-01T15:08:09.705659+00:00",
+      "log": "<run-evidence>\\issue87-publication-validation-r1-diff-check.log",
+      "log_sha256": "52775c4597c827e17f9df21fe780d6e4588a34b671b2587a16279773e305358b",
+      "name": "diff-check",
+      "started_at_utc": "2026-10-01T15:08:09.458282+00:00"
+    }
+  ],
+  "evidence_added_after_product_execution": true,
+  "explicit_ignored_publication_paths": [
+    "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-build-r1.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-build-r2.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-check-python-r4.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-install-r1.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-native-secret-fixtures-r1.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-prerequisite-regression-python-r2.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-validation-prerequisites-r1.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/f02/attempt-1/node.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/f02/attempt-2/node.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/f02/attempt-3/node.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r1.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r2.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r3.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r4.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r5.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-check-r1.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-check-r2.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-check-r3.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-eof-isolation-r2.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-eof-serial-diagnostic-r1.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-store-r1.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-store-r2.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-store-r3.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/logs/canonical.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/logs/issue87-adapter-r6.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/logs/issue87-boundary-r2.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/logs/issue87-protocol-receipt-r2.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/logs/issue87-receipt-clock-r2.log",
+    "docs/evidence/2026-10-01-codex-stop-budget/logs/issue87-store-r4.log"
+  ],
+  "failure": "diff-check failed; inspect its retained log.",
+  "failure_type": "RuntimeError",
+  "files": [
+    {
+      "bytes": 695,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/acceptance-exits/acceptance-fixture-lifecycle-r2/cleanup-verification-r2.json",
+      "sha256": "6e01e4c0ce62c0d931533c6f00f47b9fbd1bf3a8d2f3944ac4a64f05e21b22d3"
+    },
+    {
+      "bytes": 143,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/acceptance-exits/acceptance-fixture-lifecycle-r2/session-exit.json",
+      "sha256": "54d6d4aafbffa0d12be5ae40cbe7340340430dc482ef71ce7512cf76e2b3fa69"
+    },
+    {
+      "bytes": 601,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/acceptance-exits/acceptance-fixture-stop-r5/cleanup-verification-r2.json",
+      "sha256": "b1f7353eea326d1e80b26eeb3c311f37622d3237c4be5e8392d979c08e2324db"
+    },
+    {
+      "bytes": 143,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/acceptance-exits/acceptance-fixture-stop-r5/session-exit.json",
+      "sha256": "e4e500d3a3ed4af3184bb7ddbe243abe83e235ac37ece9e01a775bcd4276ca14"
+    },
+    {
+      "bytes": 601,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/acceptance-exits/acceptance-fixture-suspend-r3/cleanup-verification-r2.json",
+      "sha256": "6945c8239c32947786a6cf4238696ee993c7e2b3fffd1c590b870636f7ce07a8"
+    },
+    {
+      "bytes": 156,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/acceptance-exits/acceptance-fixture-suspend-r3/session-exit.json",
+      "sha256": "c1327efe18b293c0750b3c889b8c7b50b4298d9d3aff403460d4493a0a02ea39"
+    },
+    {
+      "bytes": 695,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/acceptance-exits/acceptance-provider-stop-r3/cleanup-verification-r2.json",
+      "sha256": "e54b8ed380c11705ba289ad885dbcf1018737eb84d4e5477c398a5371904eb99"
+    },
+    {
+      "bytes": 142,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/acceptance-exits/acceptance-provider-stop-r3/session-exit.json",
+      "sha256": "4c62dd589bc902315bde9856dcc07276a6c8f7c2a1e0dc357b9d0a2e41074871"
+    },
+    {
+      "bytes": 253934,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/acceptance.json",
+      "sha256": "4f4c2fd982d8bb9f6786a4e294953b8c9829cbfaf29c3930ba2bbc4d209b3d16"
+    },
+    {
+      "bytes": 162,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/canonical-session-exit.json",
+      "sha256": "a8f18d27105792676a407fba0aa6263e982a4b600a17e00f507ac6ed101f00c5"
+    },
+    {
+      "bytes": 602724,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/canonical.json",
+      "sha256": "def0a30a6deb88fe5e766c5b15a24e71e10c7ff8208b746397568fa6c8793d0b"
+    },
+    {
+      "bytes": 1638,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-build-r1.json",
+      "sha256": "067c63a890f0c506e559fd7c065d2ffbbf897a36b5c457ae04c77df1932087e5"
+    },
+    {
+      "bytes": 6184,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-build-r1.log",
+      "sha256": "2f4217e69bc439ffa3d7f708e367ca70d647ceabc75b964449f89e4bb01221c7"
+    },
+    {
+      "bytes": 162,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-build-r2-session-exit.json",
+      "sha256": "96d45a2778c2c23054ed78ff466477951ea5a9ee24459b35937b6f49b13246ae"
+    },
+    {
+      "bytes": 1634,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-build-r2.json",
+      "sha256": "a63d143117436233e771a630050b8100be3a1e91744a2c6a548ec3099b20ad08"
+    },
+    {
+      "bytes": 137,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-build-r2.log",
+      "sha256": "dbcc69ad2d2539e8f67e03e34a5b4f2a480cd5511b10d203d13c439e0dece837"
+    },
+    {
+      "bytes": 1223,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-check-python-r4.json",
+      "sha256": "3ae837198ed8efe1d9027096e05713c6d4297d6483969b617c30ee31d57b8d45"
+    },
+    {
+      "bytes": 4168,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-check-python-r4.log",
+      "sha256": "d5ceace6928beb8bc755195a61409b4f44451411638a6950feddb5cc59cd3ca2"
+    },
+    {
+      "bytes": 829,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-check-retained-r4.json",
+      "sha256": "20010926629b372a7a6b24fe8f67001c2b4989b72789ce3df1b33f5e15bba4cd"
+    },
+    {
+      "bytes": 1258,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-install-r1.json",
+      "sha256": "a4941a0633b0bfb0c62ac63b7b727c7eb55c512720ba63447b64ef38785dd66b"
+    },
+    {
+      "bytes": 714,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-install-r1.log",
+      "sha256": "60e0c30c266eecf57eed2183d7dc7222c35ee9df218379aeb72938e881744f5f"
+    },
+    {
+      "bytes": 161,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-native-secret-fixtures-r1-session-exit.json",
+      "sha256": "54d7f2d177e38ad67642c042cd9e415dcd4911dae677e65c2cd40ec808a9c366"
+    },
+    {
+      "bytes": 997,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-native-secret-fixtures-r1.json",
+      "sha256": "ad4d7378779c8b33d08872a5ec4ee44b33cf9b8b4ccb75e285171ff5e356f195"
+    },
+    {
+      "bytes": 1893,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-native-secret-fixtures-r1.log",
+      "sha256": "a76e7335d5da25d888b5f65836496b52e88c2ccdb35b4f951e8d51ee94780697"
+    },
+    {
+      "bytes": 277,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-prerequisite-regression-python-r1-session-exit.json",
+      "sha256": "b028a952513cbf71e82e7c5804f510dc97a538e6e512b28da95696c2452c5aba"
+    },
+    {
+      "bytes": 1335,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-prerequisite-regression-python-r1.json",
+      "sha256": "0a1bb34a89318663951ad7e62f0732b36273604a9009ee50838ef3f9c75adb6b"
+    },
+    {
+      "bytes": 256,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-prerequisite-regression-python-r2-session-exit.json",
+      "sha256": "d5dc6b3e6997c262c9319c6e5a5d96f31ff39d99ff5dc04d8a34181346b9db72"
+    },
+    {
+      "bytes": 1638,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-prerequisite-regression-python-r2.json",
+      "sha256": "f4347c6fd2c7819da079c68a2265401a6e119247f57690f7b5ebf739bd55bbe4"
+    },
+    {
+      "bytes": 7408,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-prerequisite-regression-python-r2.log",
+      "sha256": "7786ae2102d92876d34cc21575dc2b97b77f43e4fb2ab49584ebb54877b03e4c"
+    },
+    {
+      "bytes": 1047,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-source-r3.json",
+      "sha256": "88435804d2530a7da94686d0c25c828a2adf1b72c8cc2c607fc696e8538005f5"
+    },
+    {
+      "bytes": 221,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-validation-prerequisites-r1-session-exit.json",
+      "sha256": "f96a1581f7deadd297738b83d6c4c7dc0564e713e14cde07a5fb1e3bee5c540b"
+    },
+    {
+      "bytes": 900,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-validation-prerequisites-r1.json",
+      "sha256": "4e434fafd0d97091ca7387fab93617ddc2673698ceb8f48b3c03c92df34a76dd"
+    },
+    {
+      "bytes": 81,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/environment/issue87-validation-prerequisites-r1.log",
+      "sha256": "e7329e9bb3c37bed8619eb4912ad1d4d548a3618e6c4a94de06cdf9f2a64fbd9"
+    },
+    {
+      "bytes": 162,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/focused-exits/issue87-adapter-r6-session-exit.json",
+      "sha256": "4a56f914ea3685706dcd8488f6c8663a48f57ab714106b3d842699cc3165e450"
+    },
+    {
+      "bytes": 149,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/focused-exits/issue87-boundary-r2-session-exit.json",
+      "sha256": "0372432d3f87e42139196888ffa1f9d16413511415a87d9b18d79e770acca38d"
+    },
+    {
+      "bytes": 162,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/focused-exits/issue87-protocol-receipt-r2-session-exit.json",
+      "sha256": "1381c3b0547de5b4dc06c749df2848eb52e83020891abdff71c3d4cf8edd9f51"
+    },
+    {
+      "bytes": 161,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/focused-exits/issue87-receipt-clock-r2-session-exit.json",
+      "sha256": "df145e764424945c5e3f18d28d6f646132aeec72ed86f3b43479e1f68e8d2e01"
+    },
+    {
+      "bytes": 162,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/focused-exits/issue87-store-r4-session-exit.json",
+      "sha256": "3269fe4f9e154634f259af3fd5e03edede05a8f610cbb93c7f2b5202aed13aee"
+    },
+    {
+      "bytes": 6488,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/focused.json",
+      "sha256": "7b5babb7b91f8435a12e3708953d96c72dd449bdaaa4f052ceb001ec4008825b"
+    },
+    {
+      "bytes": 2703,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/acceptance-fixture-lifecycle-r1/driver.json",
+      "sha256": "1dc54757618eec89bfccbb525e3cc2dbc2bde9f57bb5caf9b865288cd2a3f057"
+    },
+    {
+      "bytes": 2205,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/acceptance-fixture-lifecycle-r1/lifecycle.json",
+      "sha256": "60123a81bc898f1f5ace136247ab7d9c58cbfc7e5ebc7645808783d680f1db09"
+    },
+    {
+      "bytes": 1003,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/acceptance-fixture-stop-r1/browser.json",
+      "sha256": "8828aebfc959db802bb4aa99566287e9d7a9a2ceacd5c98084ff2f0381829315"
+    },
+    {
+      "bytes": 1775,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/acceptance-fixture-stop-r1/driver.json",
+      "sha256": "b2f7b3563e1800f4a2d57272d7e4656a48e7d77c899abffbb30188319a69a408"
+    },
+    {
+      "bytes": 1117,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/acceptance-fixture-stop-r2/browser.json",
+      "sha256": "814778bb2468b0657687663d67df540cfd0e9955b058e9fea010369debcf261c"
+    },
+    {
+      "bytes": 1775,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/acceptance-fixture-stop-r2/driver.json",
+      "sha256": "579ac7e92de7b66a99b14fd81c8cb6fd3bfc8df189a4b7c0f3cf0fa25be9f788"
+    },
+    {
+      "bytes": 95525,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/acceptance-fixture-stop-r4/browser.json",
+      "sha256": "6eb803b107b839e8fdee64c762b8ac6d38a490591dc76ae27030731873021910"
+    },
+    {
+      "bytes": 2693,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/acceptance-fixture-stop-r4/driver.json",
+      "sha256": "06c8586d10be5f3a95ce762ed9b99230db5537745cc98d5cdc24538c3ee00032"
+    },
+    {
+      "bytes": 92796,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/acceptance-fixture-suspend-r2/browser.json",
+      "sha256": "8bafeb5f8cfad685bc4d0405365f274469d041307854fe584beba6023467d1bb"
+    },
+    {
+      "bytes": 2507,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/acceptance-fixture-suspend-r2/driver.json",
+      "sha256": "af13b90ccebdbc196cc42677050b294b8594a206dd8edefdf8526d4c475518ac"
+    },
+    {
+      "bytes": 29114,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/acceptance-provider-stop-r1/browser.json",
+      "sha256": "b22914d3a3a170071981aa07a76608b323a5514e688f484c3c9597f333e45025"
+    },
+    {
+      "bytes": 2455,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/acceptance-provider-stop-r1/driver.json",
+      "sha256": "5c244fe885c9bd13a777ab59c9dd3f7c498d5c4db97e2c7d66560c0789746f6d"
+    },
+    {
+      "bytes": 31341,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/acceptance-provider-stop-r2/browser.json",
+      "sha256": "4b58550d4bc420bb94102a54aa21fbd6046be3d426833cd673f69580736a40a9"
+    },
+    {
+      "bytes": 2455,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/acceptance-provider-stop-r2/driver.json",
+      "sha256": "a1cc44000dcb48685ce347d90b6eef857e6d8171f0c369aa9f75a283ce886eab"
+    },
+    {
+      "bytes": 585472,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/canonical-r1-readiness.json",
+      "sha256": "296812e767c9b2683a0a3e4f2c7c73bce79abf6b90fba06ab265a548a42ae565"
+    },
+    {
+      "bytes": 586545,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/canonical-r2-readiness.json",
+      "sha256": "99578d4acadfe4729bd6859bcecd26cbf86f2376f31cd235097f011e3e2b8f25"
+    },
+    {
+      "bytes": 585469,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/canonical-r3-readiness.json",
+      "sha256": "8c0882091e025b26900af4b7b4773727b499173193ac15488412100bb05fe3df"
+    },
+    {
+      "bytes": 1821,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/f02/attempt-1/cli-1.json",
+      "sha256": "ca988f3eff6bf4177c1a7a07f750deb7937dca9bd017d9ef74c8341f89f1c3d7"
+    },
+    {
+      "bytes": 260,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/f02/attempt-1/cli-1.stderr",
+      "sha256": "7feb54aaa190380d49bfccfe62b0a4d805fa043004c7cf3a4e70e97d3bb0f4e6"
+    },
+    {
+      "bytes": 1838,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/f02/attempt-1/native-probe.json",
+      "sha256": "4cd26150bb58882ad8089144ce154a2157c49e812251b1aed1b2b8f5be02729e"
+    },
+    {
+      "bytes": 220,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/f02/attempt-1/node.log",
+      "sha256": "a72a28f39901105950d0d6c29bbfd9ceddcff70e1d9917542ed8c8f1a76448e1"
+    },
+    {
+      "bytes": 1821,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/f02/attempt-2/cli-1.json",
+      "sha256": "7d700b65a7b7139b398ae22c42b4f2ae62c41ed9530b5783c81c4c377e28f715"
+    },
+    {
+      "bytes": 260,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/f02/attempt-2/cli-1.stderr",
+      "sha256": "7feb54aaa190380d49bfccfe62b0a4d805fa043004c7cf3a4e70e97d3bb0f4e6"
+    },
+    {
+      "bytes": 1838,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/f02/attempt-2/native-probe.json",
+      "sha256": "a349148840ffe0d10a57a63ef095f85b872e29562d86c2e2377f3394e2d0ba70"
+    },
+    {
+      "bytes": 220,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/f02/attempt-2/node.log",
+      "sha256": "9e71e2b6cbe0b6d9365bdd7e09f865dbc2928754af253c43ddf80d8a42ee9b94"
+    },
+    {
+      "bytes": 1821,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/f02/attempt-3/cli-1.json",
+      "sha256": "4d354c36547b5f051cfd3d6f9db6c7a59298bf684e503e0389a0e984c0f89dec"
+    },
+    {
+      "bytes": 260,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/f02/attempt-3/cli-1.stderr",
+      "sha256": "7feb54aaa190380d49bfccfe62b0a4d805fa043004c7cf3a4e70e97d3bb0f4e6"
+    },
+    {
+      "bytes": 1828,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/f02/attempt-3/native-probe.json",
+      "sha256": "ed09fb58b84e04eda8328dd9977f7570e1b038f0e5fe7c09573bb8bf30aea537"
+    },
+    {
+      "bytes": 218,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/f02/attempt-3/node.log",
+      "sha256": "33bb81531d39a64a73ec18173f6fa254b854d79f11b282a611bd268efc4722f6"
+    },
+    {
+      "bytes": 1850,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/f02/summary.json",
+      "sha256": "3e7bdafed33962789fb1a1a1a414e51ee1d9b0187aef47c3fd627880feaa317e"
+    },
+    {
+      "bytes": 4044,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/interpretation.json",
+      "sha256": "80112ed812b902bc10b243c0e9a5135825a4987d8ef259ba4c11146e51c7a366"
+    },
+    {
+      "bytes": 2328,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r1.json",
+      "sha256": "b37bacc92b7264dcb68bdbc220580a30b2324e76d447060f94d212a66c843f6e"
+    },
+    {
+      "bytes": 1382,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r1.log",
+      "sha256": "b72c879067c0bdb6404c796f8b2978468cb8131372ce50b24a51e699b8c56bdd"
+    },
+    {
+      "bytes": 3805,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r2-session-exit.json",
+      "sha256": "a22c49a137b7133ac6bcb06e3ed8500aa8fa86c51ce35e4826177c0a2a25ffef"
+    },
+    {
+      "bytes": 2328,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r2.json",
+      "sha256": "83a9ba98d9238d68a3987555f451dea79c4d92549f90db20c54096ddc61c3132"
+    },
+    {
+      "bytes": 3306,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r2.log",
+      "sha256": "c3eed501b232c4a3e87bedbda64319186a80546c0d48f861f5465a7ec63d51fe"
+    },
+    {
+      "bytes": 350,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r3-session-exit.json",
+      "sha256": "d027c308b5f4fe95debae5422a1ca0d8ee8a4550ff1edbe800d0a8632c7e4ad9"
+    },
+    {
+      "bytes": 2326,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r3.json",
+      "sha256": "399e2bdd464dcc722a5502e0b85423f365840a03ad5b8c58cb0cff75cd8d9a4f"
+    },
+    {
+      "bytes": 2160,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r3.log",
+      "sha256": "b9f1416834369611b322be0fe57959d699e263e1bdf737138bf11551ad135c1d"
+    },
+    {
+      "bytes": 639,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r4-session-exit.json",
+      "sha256": "5a61a5c55c8187944a97d86642fbc2cd7c6b234b032709461513a9df7743e70f"
+    },
+    {
+      "bytes": 1527,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r4.json",
+      "sha256": "16596c893872ab56ab6ae41e0a6f90763a08fe6c14ff29401808109e6dffe40a"
+    },
+    {
+      "bytes": 3624,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r4.log",
+      "sha256": "62ae49d6e3896f3e15759ce2108acf6d22a85b4c1f5dac61c1225a6f151e9b69"
+    },
+    {
+      "bytes": 405,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r5-session-exit-correction.json",
+      "sha256": "2d41470cce56297b4ce7bc72fc84246bbdad1f91ab52bdda12613efd6a38e8e5"
+    },
+    {
+      "bytes": 488,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r5-session-exit.json",
+      "sha256": "7c3ecd6eaa59e990c3b4dc696999e1f18a69da709da44ab5486de81859719288"
+    },
+    {
+      "bytes": 1521,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r5.json",
+      "sha256": "a6422e0413948cbadb831e5996b11c9d4058f5c2fc4875dad6896325ece10ba9"
+    },
+    {
+      "bytes": 3108,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-adapter-r5.log",
+      "sha256": "f5dd71b18ff18cbc88a252c7e240bf6239b3336658e0c4bbf5bf4d71d3e91439"
+    },
+    {
+      "bytes": 1216,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-check-python-r2.json",
+      "sha256": "51801b867efb3bc4a071a68465f161526f3ae15585a6ac68a2b78c4a2a150754"
+    },
+    {
+      "bytes": 1223,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-check-python-r3.json",
+      "sha256": "60d5f2475cc79f1a9d1809794ef2cc2375b7bf4113f8e33746c4502dac6bd058"
+    },
+    {
+      "bytes": 449,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-check-r1-session-exit.json",
+      "sha256": "72f467bb180552a471b5065e709eda0b11e88b0fce0ca2dc13980651329178e1"
+    },
+    {
+      "bytes": 1234,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-check-r1.json",
+      "sha256": "e06649ac980d0a0e783847319f160cd68566ee482929ab6cfdbdf4e004018bab"
+    },
+    {
+      "bytes": 772509,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-check-r1.log",
+      "sha256": "754f54122772a923ac3d4066147b98362ca4ce4ee00b78a293d1958d91dcd79e"
+    },
+    {
+      "bytes": 149,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-check-r2-session-exit.json",
+      "sha256": "6938033e3d643307945a49943bdb5d7295f70e868c2ec3796cc820793ea2a59e"
+    },
+    {
+      "bytes": 1234,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-check-r2.json",
+      "sha256": "f7bb454d887ed571b0f74ddcfab4c2809115f48a0d25562a74d39b82f9cbc9fa"
+    },
+    {
+      "bytes": 87069,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-check-r2.log",
+      "sha256": "f87cfead6c6dedb58645d8cf9582303f5f1dfb76f0dc8188e7071ea63e306a66"
+    },
+    {
+      "bytes": 162,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-check-r3-session-exit.json",
+      "sha256": "b66809e08e51154ceb3e7aad97f2f50ea5562d2ee0d516e690a59bc4d845e334"
+    },
+    {
+      "bytes": 597,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-check-r3-startup-failure-r1.json",
+      "sha256": "c0353a0f89217360a4e3f5787e9b5f6519ddad8dcd26c30244e572fa084fbce4"
+    },
+    {
+      "bytes": 1230,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-check-r3.json",
+      "sha256": "4dbbf98957f163e424fef31278c5a84e54fb40f6343e61255b1e93cc7af3b35e"
+    },
+    {
+      "bytes": 752071,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-check-r3.log",
+      "sha256": "563c919f624062f63afa90c54cdba37f8e20f01aae87358ca6d98f5b296d24c8"
+    },
+    {
+      "bytes": 529,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-cleanup-verification-r1-failure.json",
+      "sha256": "3959070f835feff70d942d84c9e895f78161267ae19b992b6c9a27f2472ce863"
+    },
+    {
+      "bytes": 149,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-eof-isolation-r2-session-exit.json",
+      "sha256": "a4816d91ea1dfeb11fcb3e849dd4c1689a502152bcec35d7bf6e926232d2db2a"
+    },
+    {
+      "bytes": 1593,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-eof-isolation-r2.json",
+      "sha256": "7af6d8c2e04d7c1d89874979d3d514279f675f5e2d88b52b176a14cab7f339d6"
+    },
+    {
+      "bytes": 677,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-eof-isolation-r2.log",
+      "sha256": "7bb58da059bbb2d8a9a58bd032d5e4bc0f57f6b2f606dbc0a76f9682381325a6"
+    },
+    {
+      "bytes": 710,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-eof-serial-diagnostic-r1.json",
+      "sha256": "34421adf5ceb963dae113346de3bb1228b4e68b1f0f90d2acac9606e2a9f73e6"
+    },
+    {
+      "bytes": 638,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-eof-serial-diagnostic-r1.log",
+      "sha256": "319876cadb1936670c9259a815dfa6b35ba40b3445fa868bd35df414a18a2063"
+    },
+    {
+      "bytes": 1083,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-eof-stdio-diagnostic-r1.json",
+      "sha256": "e12c759fc0dddd23baaef8d654c6fda9a2a21916c1fe4e01c1a61abb5d2f3bc8"
+    },
+    {
+      "bytes": 262,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-f02-diagnostic-r1-session-exit.json",
+      "sha256": "f9bcbf1691b72ccea3d80a4c830fb8b228ad9f876de73780abafaaddfb3a3d96"
+    },
+    {
+      "bytes": 2176,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-f02-diagnostic-r1.json",
+      "sha256": "1f184b81687baf687b827b5c93f3f26a2410cadd708c66f8f6100271b6aa0bb9"
+    },
+    {
+      "bytes": 3050,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-manifest-order-diagnostic-r1.json",
+      "sha256": "2cd609a1760dabfbe6742b4a7a2dde8896814e2bdf0060d2486f705eb49458fe"
+    },
+    {
+      "bytes": 371,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-packet-preparation-r4-failure.json",
+      "sha256": "c6178f27feef35b3950afab151cda67694bcc7a7dc1d7c40ce1039b4aed64bdc"
+    },
+    {
+      "bytes": 323,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-store-r1-session-exit.json",
+      "sha256": "3ae09c4db8c4f5489e374dfbed27d4443dde8bf99182f688954b7dc18145ba0f"
+    },
+    {
+      "bytes": 1335,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-store-r1.json",
+      "sha256": "be2fe9eb5b2e1e380e637c117661d02e465c38391c5799a00dbfbff61afbd0e8"
+    },
+    {
+      "bytes": 7201,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-store-r1.log",
+      "sha256": "d569e9d56afc781015f86e19d88bdc6909c5d6e5e49b68ea1f06d74a4b315376"
+    },
+    {
+      "bytes": 444,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-store-r2-session-exit.json",
+      "sha256": "9f7a92f0e065d3e2b99cbb833505aca97dfa9109fcb19553d58a477f14b40514"
+    },
+    {
+      "bytes": 1341,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-store-r2.json",
+      "sha256": "74ec8adbede5de55dbe4c093aed13d0bd6b9fc59304301a2afa65a935e254fa2"
+    },
+    {
+      "bytes": 2259,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-store-r2.log",
+      "sha256": "420d14e9de1fc7a21f48010b45800dedbf1746c78edf9848622dee5086ca7116"
+    },
+    {
+      "bytes": 585,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-store-r3-session-exit-correction.json",
+      "sha256": "bd14707937e3e1ef3d0a365f012dfcab673885df5200ecdf648c733b00424a25"
+    },
+    {
+      "bytes": 279,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-store-r3-session-exit.json",
+      "sha256": "670c061eecda84c3d890e6fcb9a909b8507dd61b2f748b6b41c1eeca9b925a0d"
+    },
+    {
+      "bytes": 1335,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-store-r3.json",
+      "sha256": "00f188b421c524bc056775e740e52f4913b71860aba72b115ed2743fc070a7b6"
+    },
+    {
+      "bytes": 1695,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/history/issue87-store-r3.log",
+      "sha256": "4b7419b14c84611c4df44818a5f8ae8c5c4654f08ed65bffdb40798f11eacfa6"
+    },
+    {
+      "bytes": 9870,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/logs/canonical.log",
+      "sha256": "561ff7299db20bf8f863b9f362cf549ce4dd70da7d9408be4b4c89bf4d36d72c"
+    },
+    {
+      "bytes": 3032,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/logs/issue87-adapter-r6.log",
+      "sha256": "e6e74090c17d2091cba27dd1499e402735b52af845cc2791c8da5059d2f0b95b"
+    },
+    {
+      "bytes": 2340,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/logs/issue87-boundary-r2.log",
+      "sha256": "27c587f35dd3c00b2a17c55516e361ff948cc2d3f314771976c3508e4a11777f"
+    },
+    {
+      "bytes": 359,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/logs/issue87-protocol-receipt-r2.log",
+      "sha256": "fb0e5b04e95c39b31ee3b65fa7c97570286e665f378b3a651f940355c96b888d"
+    },
+    {
+      "bytes": 366,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/logs/issue87-receipt-clock-r2.log",
+      "sha256": "d1440eea9e00e008ddac154273df34cb3e882660be9a8273ba9d3e48f538ce2e"
+    },
+    {
+      "bytes": 1620,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/logs/issue87-store-r4.log",
+      "sha256": "56d398e07c269ccc4a8f26e10207845913b8f4766dbc38daec7718a1ba973ab5"
+    },
+    {
+      "bytes": 11214,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/README.md",
+      "sha256": "40bfb2861a25dc9a9a0b52678ae105b212ef7deb7489e6191b87b61c3095ff22"
+    },
+    {
+      "bytes": 2192,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/screenshot-review.json",
+      "sha256": "a3deef3340f252fe7a7703ed29cc55c8d861996c847b84dbc0f0d63005cb0a0c"
+    },
+    {
+      "bytes": 243197,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/screenshots/acceptance-fixture-stop-r5-browser-after-control.png",
+      "sha256": "0b80eb412ab1dc0b9a37671f03f0c66dbe2699fccecee21c66eb611f3cb42055"
+    },
+    {
+      "bytes": 776791,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/screenshots/acceptance-fixture-stop-r5-browser-before-stop.png",
+      "sha256": "5fad3167af30942cf8ca07e9fde5abebb493fcaf2e3311ddb21714062f0ac42e"
+    },
+    {
+      "bytes": 226364,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/screenshots/acceptance-fixture-suspend-r3-browser-after-control.png",
+      "sha256": "d35e985d9656ee47b05eca4bc61d5c0d2e83dbc9d4a440ceabbfc66155be5d56"
+    },
+    {
+      "bytes": 243364,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/screenshots/acceptance-provider-stop-r3-browser-after-control.png",
+      "sha256": "39cca80f4ad2323ec07682383ce9d38c6d61f0ef3060fe042151add1f003d228"
+    },
+    {
+      "bytes": 776570,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/screenshots/acceptance-provider-stop-r3-browser-before-stop.png",
+      "sha256": "586b0917a610f0096da84d79f9444b911ed287bcddc581849117a9b376e45bea"
+    },
+    {
+      "bytes": 9935,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/self-review.md",
+      "sha256": "7d71ab0f6c34561bcaa9b0e9f4c6a572a9381871df355d3826be5ef6c85d0036"
+    },
+    {
+      "bytes": 1349622,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/source-binding.json",
+      "sha256": "f28ceb8344bed3b0457c7474d699cc09ca0f5442291a0fa9c23197bfcea040a2"
+    },
+    {
+      "bytes": 1340995,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/source-manifest.json",
+      "sha256": "a8a2ffe866cdb13be00bf8e60047312de5b91b26810062f580b45461c5dbc6f4"
+    },
+    {
+      "bytes": 67752,
+      "path": "docs/evidence/2026-10-01-codex-stop-budget/summary.json",
+      "sha256": "9e7aaeddaff36d3a2e15ed5fe12f814aa0f1ba8370c93ff8f6076e2440f260bf"
+    }
+  ],
+  "final_plan": {
+    "node": [
+      ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+      ".github/skills/code-review/tests/executor-state.test.mjs",
+      ".github/skills/code-review/tests/package.test.mjs",
+      "apps/web/src/AgentPinControl.test.mjs",
+      "apps/web/src/DelegatedPanel.test.mjs",
+      "apps/web/src/VerificationPolicyEditor.test.mjs",
+      "apps/web/src/agentPinOperation.test.mjs",
+      "apps/web/src/evidenceNavigation.test.mjs",
+      "apps/web/src/evidenceSelection.test.mjs",
+      "apps/web/src/factoryAuthority.test.mjs",
+      "apps/web/src/factoryAuthorityConnection.test.mjs",
+      "apps/web/src/factoryCheckpointRecovery.test.mjs",
+      "apps/web/src/factoryControllerSelection.test.mjs",
+      "apps/web/src/factoryPolling.test.mjs",
+      "apps/web/src/formText.test.mjs",
+      "apps/web/src/missionCollaboration.test.mjs",
+      "apps/web/src/missionComposer.test.mjs",
+      "apps/web/src/missionOriginContext.test.mjs",
+      "apps/web/src/missionPreview.test.mjs",
+      "apps/web/src/missionProjection.test.mjs",
+      "apps/web/src/missionResultContext.test.mjs",
+      "apps/web/src/missionReviewSummary.test.mjs",
+      "apps/web/src/missionRuntime.test.mjs",
+      "apps/web/src/office/characterAssets.test.mjs",
+      "apps/web/src/office/officeModel.test.mjs",
+      "apps/web/src/runActivity.test.mjs",
+      "apps/web/src/snapshotRefresh.test.mjs",
+      "apps/web/src/verificationPolicy.test.mjs",
+      "apps/web/src/workResultCard.test.mjs",
+      "apps/web/src/workflowContext.test.mjs",
+      "apps/web/src/workspaceConnections.test.mjs",
+      "scenarios/repo-steward/actions.test.mjs",
+      "scenarios/repo-steward/feedback-cli.test.mjs",
+      "scenarios/repo-steward/feedback.test.mjs",
+      "scenarios/repo-steward/maintenance.test.mjs",
+      "scenarios/repo-steward/recurring-audit.test.mjs",
+      "scenarios/repo-steward/steward.test.mjs",
+      "scenarios/repo-steward/teams-host.test.mjs",
+      "tests/readiness/cli.test.js",
+      "tools/budget_fixture.test.mjs",
+      "tools/check_deliverable_diff.test.mjs",
+      "tools/check_documentation.test.mjs",
+      "tools/check_evidence_launch.test.mjs",
+      "tools/check_evidence_native_build.test.mjs",
+      "tools/check_evidence_personal_paths.test.mjs",
+      "tools/check_migrations.test.mjs",
+      "tools/check_replay_source.test.mjs",
+      "tools/checkpoint_application_fixture.test.mjs",
+      "tools/ci_external_adapters_windows.test.mjs",
+      "tools/ci_factory_repository.test.mjs",
+      "tools/ci_maintenance.test.mjs",
+      "tools/ci_owned_test_server.test.mjs",
+      "tools/ci_runner_tests.test.mjs",
+      "tools/consume_operation_receipt.test.mjs",
+      "tools/controlled_runner_fixture.test.mjs",
+      "tools/copilot_fs_wire_observer.test.mjs",
+      "tools/copilot_fs_wire_process.test.mjs",
+      "tools/copilot_probe_boundaries.test.mjs",
+      "tools/copilot_probe_environment.test.mjs",
+      "tools/copilot_probe_native_read.test.mjs",
+      "tools/copilot_probe_process.test.mjs",
+      "tools/coverage_web_models.test.mjs",
+      "tools/delegated_lifecycle.test.mjs",
+      "tools/delegated_qa_root.test.mjs",
+      "tools/e2e_agent_pinning.test.mjs",
+      "tools/e2e_checkpoint_verification.test.mjs",
+      "tools/e2e_evidence_selection.test.mjs",
+      "tools/e2e_external_adapters.test.mjs",
+      "tools/e2e_external_adapters_http.test.mjs",
+      "tools/e2e_factory_budget_recovery.test.mjs",
+      "tools/e2e_late_termination.test.mjs",
+      "tools/e2e_predispatch_failure.test.mjs",
+      "tools/e2e_stopped_source_checkpoint.test.mjs",
+      "tools/e2e_verifier_browser_retention.test.mjs",
+      "tools/e2e_verifier_browser_scope.test.mjs",
+      "tools/factory_budget_fixture_config.test.mjs",
+      "tools/factory_budget_git.test.mjs",
+      "tools/factory_budget_process.test.mjs",
+      "tools/factory_budget_provenance.test.mjs",
+      "tools/factory_budget_start.test.mjs",
+      "tools/fake_codex_budget_stream.test.mjs",
+      "tools/fake_github_quota.test.mjs",
+      "tools/fixture_source_identity.test.mjs",
+      "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+      "tools/identity_fixture.test.mjs",
+      "tools/import_operation_behavior.test.mjs",
+      "tools/issue161/qa-api-provenance.test.mjs",
+      "tools/issue161/qa-plan.test.mjs",
+      "tools/local_source_commit.test.mjs",
+      "tools/local_stack_lifecycle.test.mjs",
+      "tools/local_stack_operation.test.mjs",
+      "tools/native_qualification_attempt.test.mjs",
+      "tools/native_qualification_finality.test.mjs",
+      "tools/native_qualification_trust.test.mjs",
+      "tools/office_model.test.mjs",
+      "tools/operation_feedback.test.mjs",
+      "tools/operation_receipt.test.mjs",
+      "tools/owned_test_stack.test.mjs",
+      "tools/probe_mcp.test.mjs",
+      "tools/qa_multiplayer_object_sources.test.mjs",
+      "tools/readiness_contract.test.mjs",
+      "tools/readiness_replay_contract.test.mjs",
+      "tools/redact_evidence_capabilities.test.mjs",
+      "tools/research_handoff_adversarial.test.mjs",
+      "tools/research_handoff_browser.test.mjs",
+      "tools/research_handoff_native.test.mjs",
+      "tools/runner_ack_fault_relay.test.mjs",
+      "tools/secret_scan.test.mjs",
+      "tools/secret_scan_native.test.mjs",
+      "tools/security_fixtures.test.mjs",
+      "tools/startup_validation_harness.test.mjs",
+      "tools/task_graph_fixture.test.mjs",
+      "tools/verifier_browser.test.mjs",
+      "tools/verify_toolchain.test.mjs"
+    ],
+    "plan": [
+      {
+        "argv": [
+          "node",
+          "tools/check_migrations.mjs"
+        ],
+        "name": "migrations"
+      },
+      {
+        "argv": [
+          "node",
+          "tools/check_state_audit_compatibility.mjs"
+        ],
+        "name": "state-audit-compatibility"
+      },
+      {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "crony-audit",
+          "--test",
+          "ethereum_local_chain"
+        ],
+        "name": "state-audit-evm"
+      },
+      {
+        "argv": [
+          "node",
+          "tools/check_docs.mjs"
+        ],
+        "name": "docs"
+      },
+      {
+        "argv": [
+          "node",
+          "tools/check_documentation.mjs"
+        ],
+        "name": "repository-docs"
+      },
+      {
+        "argv": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "--test-timeout=180000",
+          "--test-reporter=tap",
+          ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+          ".github/skills/code-review/tests/executor-state.test.mjs",
+          ".github/skills/code-review/tests/package.test.mjs",
+          "apps/web/src/AgentPinControl.test.mjs",
+          "apps/web/src/DelegatedPanel.test.mjs",
+          "apps/web/src/VerificationPolicyEditor.test.mjs",
+          "apps/web/src/agentPinOperation.test.mjs",
+          "apps/web/src/evidenceNavigation.test.mjs",
+          "apps/web/src/evidenceSelection.test.mjs",
+          "apps/web/src/factoryAuthority.test.mjs",
+          "apps/web/src/factoryAuthorityConnection.test.mjs",
+          "apps/web/src/factoryCheckpointRecovery.test.mjs",
+          "apps/web/src/factoryControllerSelection.test.mjs",
+          "apps/web/src/factoryPolling.test.mjs",
+          "apps/web/src/formText.test.mjs",
+          "apps/web/src/missionCollaboration.test.mjs",
+          "apps/web/src/missionComposer.test.mjs",
+          "apps/web/src/missionOriginContext.test.mjs",
+          "apps/web/src/missionPreview.test.mjs",
+          "apps/web/src/missionProjection.test.mjs",
+          "apps/web/src/missionResultContext.test.mjs",
+          "apps/web/src/missionReviewSummary.test.mjs",
+          "apps/web/src/missionRuntime.test.mjs",
+          "apps/web/src/office/characterAssets.test.mjs",
+          "apps/web/src/office/officeModel.test.mjs",
+          "apps/web/src/runActivity.test.mjs",
+          "apps/web/src/snapshotRefresh.test.mjs",
+          "apps/web/src/verificationPolicy.test.mjs",
+          "apps/web/src/workResultCard.test.mjs",
+          "apps/web/src/workflowContext.test.mjs",
+          "apps/web/src/workspaceConnections.test.mjs",
+          "scenarios/repo-steward/actions.test.mjs",
+          "scenarios/repo-steward/feedback-cli.test.mjs",
+          "scenarios/repo-steward/feedback.test.mjs",
+          "scenarios/repo-steward/maintenance.test.mjs",
+          "scenarios/repo-steward/recurring-audit.test.mjs",
+          "scenarios/repo-steward/steward.test.mjs",
+          "scenarios/repo-steward/teams-host.test.mjs",
+          "tests/readiness/cli.test.js",
+          "tools/budget_fixture.test.mjs",
+          "tools/check_deliverable_diff.test.mjs",
+          "tools/check_documentation.test.mjs",
+          "tools/check_evidence_launch.test.mjs",
+          "tools/check_evidence_native_build.test.mjs",
+          "tools/check_evidence_personal_paths.test.mjs",
+          "tools/check_migrations.test.mjs",
+          "tools/check_replay_source.test.mjs",
+          "tools/checkpoint_application_fixture.test.mjs",
+          "tools/ci_external_adapters_windows.test.mjs",
+          "tools/ci_factory_repository.test.mjs",
+          "tools/ci_maintenance.test.mjs",
+          "tools/ci_owned_test_server.test.mjs",
+          "tools/ci_runner_tests.test.mjs",
+          "tools/consume_operation_receipt.test.mjs",
+          "tools/controlled_runner_fixture.test.mjs",
+          "tools/copilot_fs_wire_observer.test.mjs",
+          "tools/copilot_fs_wire_process.test.mjs",
+          "tools/copilot_probe_boundaries.test.mjs",
+          "tools/copilot_probe_environment.test.mjs",
+          "tools/copilot_probe_native_read.test.mjs",
+          "tools/copilot_probe_process.test.mjs",
+          "tools/coverage_web_models.test.mjs",
+          "tools/delegated_lifecycle.test.mjs",
+          "tools/delegated_qa_root.test.mjs",
+          "tools/e2e_agent_pinning.test.mjs",
+          "tools/e2e_checkpoint_verification.test.mjs",
+          "tools/e2e_evidence_selection.test.mjs",
+          "tools/e2e_external_adapters.test.mjs",
+          "tools/e2e_external_adapters_http.test.mjs",
+          "tools/e2e_factory_budget_recovery.test.mjs",
+          "tools/e2e_late_termination.test.mjs",
+          "tools/e2e_predispatch_failure.test.mjs",
+          "tools/e2e_stopped_source_checkpoint.test.mjs",
+          "tools/e2e_verifier_browser_retention.test.mjs",
+          "tools/e2e_verifier_browser_scope.test.mjs",
+          "tools/factory_budget_fixture_config.test.mjs",
+          "tools/factory_budget_git.test.mjs",
+          "tools/factory_budget_process.test.mjs",
+          "tools/factory_budget_provenance.test.mjs",
+          "tools/factory_budget_start.test.mjs",
+          "tools/fake_codex_budget_stream.test.mjs",
+          "tools/fake_github_quota.test.mjs",
+          "tools/fixture_source_identity.test.mjs",
+          "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+          "tools/identity_fixture.test.mjs",
+          "tools/import_operation_behavior.test.mjs",
+          "tools/issue161/qa-api-provenance.test.mjs",
+          "tools/issue161/qa-plan.test.mjs",
+          "tools/local_source_commit.test.mjs",
+          "tools/local_stack_lifecycle.test.mjs",
+          "tools/local_stack_operation.test.mjs",
+          "tools/native_qualification_attempt.test.mjs",
+          "tools/native_qualification_finality.test.mjs",
+          "tools/native_qualification_trust.test.mjs",
+          "tools/office_model.test.mjs",
+          "tools/operation_feedback.test.mjs",
+          "tools/operation_receipt.test.mjs",
+          "tools/owned_test_stack.test.mjs",
+          "tools/probe_mcp.test.mjs",
+          "tools/qa_multiplayer_object_sources.test.mjs",
+          "tools/readiness_contract.test.mjs",
+          "tools/readiness_replay_contract.test.mjs",
+          "tools/redact_evidence_capabilities.test.mjs",
+          "tools/research_handoff_adversarial.test.mjs",
+          "tools/research_handoff_browser.test.mjs",
+          "tools/research_handoff_native.test.mjs",
+          "tools/runner_ack_fault_relay.test.mjs",
+          "tools/secret_scan.test.mjs",
+          "tools/secret_scan_native.test.mjs",
+          "tools/security_fixtures.test.mjs",
+          "tools/startup_validation_harness.test.mjs",
+          "tools/task_graph_fixture.test.mjs",
+          "tools/verifier_browser.test.mjs",
+          "tools/verify_toolchain.test.mjs"
+        ],
+        "name": "node-tests"
+      },
+      {
+        "argv": [
+          "cargo",
+          "fmt",
+          "--check"
+        ],
+        "name": "format"
+      },
+      {
+        "argv": [
+          "cargo",
+          "clippy",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "name": "clippy"
+      },
+      {
+        "argv": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--locked"
+        ],
+        "name": "rust-tests"
+      },
+      {
+        "argv": [
+          "pnpm",
+          "build:web"
+        ],
+        "name": "web-build"
+      },
+      {
+        "argv": [
+          "pnpm",
+          "lint:web"
+        ],
+        "name": "web-lint"
+      }
+    ]
+  },
+  "finished_at_utc": "2026-10-01T15:08:09.707657+00:00",
+  "full_plan_unchanged": true,
+  "issue": 87,
+  "issue_completed": false,
+  "original_index_sha256": "790c549918f5349f0737f17a4be562df11bdba471833310fe23bd0d5570d2528",
+  "policy_sha256": {
+    ".gitleaks.toml": null,
+    ".gitleaksignore": "a8d6e15fa76e0c88f4266bca6d12f909f494a0ff646ef8699e88b8d9daec0ada"
+  },
+  "pr_merged": false,
+  "publication_tree": "2a37afaddcd0c73d98630f8cf149e07079091cd5",
+  "revision": "r1",
+  "scope": "Exact tested source and evidence-only additions; hosted checks remain unavailable.",
+  "secret_scans": {
+    "redacted": "sha256",
+    "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "source_files": 7156,
+  "source_manifest_sha256": "aa8e61f84f2789890c3bcdbcfedded482d2fe61bbc046b42ec476218873b8c8c",
+  "started_at_utc": "2026-10-01T15:07:48.895938+00:00",
+  "status": "failed",
+  "tested_tree": "636ea213bd1df15e19ffe67fd0ccf1f7326f0693"
+}

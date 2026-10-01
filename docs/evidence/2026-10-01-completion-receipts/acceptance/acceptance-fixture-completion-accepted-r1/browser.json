@@ -1,0 +1,190 @@
+{
+  "agent_id": "6bb894b2-648e-4468-90bd-fd69055657fa",
+  "assertions": [
+    {
+      "name": "Browser launched the mission through the real server",
+      "passed": true
+    },
+    {
+      "name": "Completion is held after persisted verification while source stays clean and present",
+      "passed": true
+    },
+    {
+      "name": "Authoritative run and task states converge without a fresh-workspace retry",
+      "passed": true
+    },
+    {
+      "name": "Real server receipt matches the exact committed event and every assignment fence",
+      "passed": true
+    },
+    {
+      "name": "Accepted receipt permits clean workspace removal",
+      "passed": true
+    },
+    {
+      "name": "Browser has no page errors",
+      "passed": true
+    }
+  ],
+  "assurance": "Deterministic Codex transport in the real owned browser/server/runner/PostgreSQL stack; no provider inference or mixed-version binary claim.",
+  "counts": {
+    "failed": 0,
+    "passed": 6
+  },
+  "events": [
+    {
+      "aggregate_id": "18a3c843-df56-4895-a106-3cff09cd34c0",
+      "id": "0491c8dc-c111-4955-8ef3-b8d377f9c983",
+      "type": "run.verification_passed"
+    },
+    {
+      "aggregate_id": "18a3c843-df56-4895-a106-3cff09cd34c0",
+      "id": "07cc9e56-efe5-4bd8-b330-03278c97d162",
+      "type": "run.completed"
+    },
+    {
+      "aggregate_id": "18a3c843-df56-4895-a106-3cff09cd34c0",
+      "id": "bed12544-1357-40e7-9df4-ea21ece5a3bd",
+      "type": "run.workspace_removed"
+    }
+  ],
+  "finished_at": "2026-10-01T16:35:34.234Z",
+  "gate": {
+    "acknowledgment": null,
+    "completion": {
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "event_id": "07cc9e56-efe5-4bd8-b330-03278c97d162",
+      "forwarded_at": "2026-10-01T16:35:31.292Z",
+      "received_at": "2026-10-01T16:35:30.401Z",
+      "request_forwarded": true,
+      "requested": true,
+      "run_id": "18a3c843-df56-4895-a106-3cff09cd34c0"
+    },
+    "connections": 1,
+    "failure": null,
+    "hard_stop": null,
+    "receipt": {
+      "event_id": "07cc9e56-efe5-4bd8-b330-03278c97d162",
+      "observed_at": "2026-10-01T16:35:31.336Z",
+      "run_id": "18a3c843-df56-4895-a106-3cff09cd34c0",
+      "scope_matches": true,
+      "withheld": false
+    },
+    "scenario": "fixture-completion-accepted",
+    "unconfirmed_failure": null
+  },
+  "historical_incident_reproduced": false,
+  "http_results": [
+    {
+      "method": "POST",
+      "origin": "http://127.0.0.1:50508",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "origin": "http://127.0.0.1:50517",
+      "route": "/release",
+      "status": 200
+    }
+  ],
+  "last_observation": {
+    "events": [
+      {
+        "id": "cb4467f3-b856-4fb1-bbfa-c99b2ea86eb8",
+        "type": "run.requested"
+      },
+      {
+        "id": "cede595e-7769-417c-8bf9-f85e58816397",
+        "type": "run.started"
+      },
+      {
+        "id": "0e1dd236-f76a-483a-8ae6-45dbabb4a104",
+        "type": "run.session"
+      },
+      {
+        "id": "405e1336-8368-4388-89c9-dd028f4d997c",
+        "type": "run.status"
+      },
+      {
+        "id": "bc89dd8a-2f7a-4857-8a12-15adcb047b19",
+        "type": "run.status"
+      },
+      {
+        "id": "50bf812c-0583-4b5f-b1b8-7294efe157ac",
+        "type": "run.output"
+      },
+      {
+        "id": "705a7b8b-d6f3-44dd-b780-974ec2516822",
+        "type": "run.usage"
+      },
+      {
+        "id": "2f44d9af-c970-4762-80a8-b32099e0e395",
+        "type": "run.control_observed"
+      },
+      {
+        "id": "279a2a16-d6bb-45ac-9c83-62514687bc51",
+        "type": "run.status"
+      },
+      {
+        "id": "9fec61dd-87fa-4459-b295-5b7a4d8024cb",
+        "type": "run.output"
+      },
+      {
+        "id": "b75bd164-8c38-406c-a2d9-e4f8d3a8ade5",
+        "type": "run.control_observed"
+      },
+      {
+        "id": "c57ca621-e8f6-42c6-96b7-6ac1ca142aa8",
+        "type": "run.control_observed"
+      },
+      {
+        "id": "8e0925e0-8a30-45e6-ba15-5bbc16d19025",
+        "type": "run.artifact"
+      },
+      {
+        "id": "ca3bca8f-9d5a-45ce-a7ae-ef946e9f4749",
+        "type": "run.session_terminated"
+      },
+      {
+        "id": "ccd6fe18-adc2-477c-9d11-f13b49ef8857",
+        "type": "run.verification_started"
+      },
+      {
+        "id": "71a3a597-8b92-43cd-9859-af29f2afc22b",
+        "type": "run.verification_evidence"
+      },
+      {
+        "id": "0491c8dc-c111-4955-8ef3-b8d377f9c983",
+        "type": "run.verification_passed"
+      },
+      {
+        "id": "07cc9e56-efe5-4bd8-b330-03278c97d162",
+        "type": "run.completed"
+      },
+      {
+        "id": "bed12544-1357-40e7-9df4-ea21ece5a3bd",
+        "type": "run.workspace_removed"
+      }
+    ],
+    "status": "completed",
+    "workspace_disposition": "removed"
+  },
+  "mission_id": "0a430ccf-918d-4f9e-b674-0500cacb1afb",
+  "run": {
+    "breaker_stage": "healthy",
+    "id": "18a3c843-df56-4895-a106-3cff09cd34c0",
+    "status": "completed",
+    "task_id": "8b1a0caf-bae2-4852-928c-dc334225bec5",
+    "workspace_disposition": "removed"
+  },
+  "run_id": "18a3c843-df56-4895-a106-3cff09cd34c0",
+  "scenario": "fixture-completion-accepted",
+  "schema_version": 1,
+  "started_at": "2026-10-01T16:35:23.975Z",
+  "status": "passed",
+  "title": "Completion receipt fixture-completion-accepted f47365de-9ce9-4241-8d5a-6da8c3c3122e",
+  "verification_event_id": "0491c8dc-c111-4955-8ef3-b8d377f9c983",
+  "verification_observed_at": "2026-10-01T16:35:30.702Z",
+  "workspace_path": "<local-user>\\qa\\issue87-stack-20261001T163457160-215f1766\\runner\\worktrees\\8b1a0cafbae24852928cdc334225bec5\\18a3c843df564895a1063cff09cd34c0"
+}

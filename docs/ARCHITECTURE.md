@@ -683,6 +683,27 @@ The runner buffers an adapter's completion signal, emits one evidence record per
 `run.completed` only after every automated check passes. The server rejects completion events that
 arrive before complete passing evidence or while a manual gate is required.
 
+Artifact storage moves the active assignment to verification without clearing the agent's
+`current_run_id`. The office keeps its live-run controls, including Emergency stop, available
+through verification and pending approval; the terminal run transition clears that reference.
+
+Automated success does not by itself authorize workspace removal. The runner requests a
+`run_completion_accepted` receipt and remains cancellable until the server commits that exact
+completion event. The receipt must match Corp, live connection epoch, run, assignment token and
+event ID. Completion and emergency stop serialize on the same Corp lock: a committed stop rejects
+completion; an already committed completion leaves no active run for a later stop. Only a matching
+receipt permits the runner to enter finalization, after which ordinary Git safety checks still
+preserve dirty, committed or unverifiable worktrees.
+
+Receipt waiting is bounded to 30 seconds. Cancellation, pending manual approval, recovery and
+unconfirmed completion retain the exact source. A missing receipt emits the typed
+`completion_unconfirmed` failure, which cannot automatically retry in a fresh workspace. If
+completion already committed, the server rejects that late failure and preserves completed state.
+There is no replay-based cleanup permission: reconcile retained source explicitly. New servers
+send the receipt only when the completion payload requests it, preserving older runners' wire
+compatibility. New runners against older servers retain source on timeout, but an old server may
+also reject the unfamiliar failure kind; mixed-version authoritative convergence is not promised.
+
 Failed verification sets the run to failed, the task to `verification_failed`, and the mission to
 failed. When the mission belongs to a factory item, the same transaction also moves that item to
 `verification_failed`, stores bounded failure detail, and appends the factory event. A successful
@@ -840,6 +861,24 @@ The Codex adapter:
 - applies a workspace-write, network-disabled sandbox policy
 - disables user-configured MCP servers, apps, and hooks for supervised runs
 - fingerprints tracked and untracked changed files in the evidence artifact
+
+Codex hard controls use the native `turn/interrupt` request with a two-second deadline measured
+from the first adapter receipt. A later `stop` can strengthen a pending `suspend` but cannot extend
+that deadline. An interrupt response acknowledges the request; it does not establish process
+termination. Transport writes are cancellation-safe and bounded, pending steering is discarded on
+hard control, and early notifications are bounded until the correlated `turn/start` response
+establishes the active turn. Every protocol exit, including malformed output and closed pipes,
+retains ownership through process teardown.
+
+The control journal distinguishes durable command creation, server socket send, authenticated
+runner receipt, adapter receipt, native interrupt write/response, process termination, and final
+usage observation. Runner observation times are diagnostic; database admission time controls
+accounting. Neither a socket-send receipt nor a runner acknowledgment claims provider termination.
+Repeated emergency stops reuse the first durable incident and command, including while the runner
+is disconnected. Accounting admits reports only before the first hard boundary plus five seconds
+and before terminal run state. Later reports remain idempotent, noncharging observations. Native
+cumulative usage replay never implies new provider work: the adapter records whether a report
+advanced its cumulative counters and never claims to know the provider's token-generation time.
 
 Claude Code and OpenCode use a shared normalized external-CLI adapter. Provider-specific launch
 flags are isolated at the boundary, while JSONL output, sessions, usage, cancellation, and

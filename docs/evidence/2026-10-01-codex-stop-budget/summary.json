@@ -1,0 +1,1181 @@
+{
+  "issue": 87,
+  "recorded_at_utc": "2026-10-01T15:05:31.830164+00:00",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "branch": "codex/issue87-bounded-codex-stop",
+  "canonical": {
+    "status": "passed",
+    "gates": [
+      "migrations",
+      "state-audit-compatibility",
+      "state-audit-evm",
+      "docs",
+      "repository-docs",
+      "node-tests",
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ],
+    "source_files": 7156,
+    "physical_manifest_sha256": "aa8e61f84f2789890c3bcdbcfedded482d2fe61bbc046b42ec476218873b8c8c",
+    "tested_tree": "636ea213bd1df15e19ffe67fd0ccf1f7326f0693",
+    "node_counts": {
+      "tests": 3103,
+      "passed": 3038,
+      "failed": 0,
+      "skipped": 65,
+      "todo": 0,
+      "cancelled": 0
+    },
+    "rust_counts": {
+      "passed": 898,
+      "failed": 0,
+      "ignored": 577,
+      "summaries": 41
+    }
+  },
+  "acceptance_lanes": [
+    "acceptance-fixture-suspend-r3",
+    "acceptance-fixture-stop-r5",
+    "acceptance-provider-stop-r3",
+    "acceptance-fixture-lifecycle-r2"
+  ],
+  "focused_lanes": [
+    "issue87-adapter-r6",
+    "issue87-boundary-r2",
+    "issue87-receipt-clock-r2",
+    "issue87-protocol-receipt-r2",
+    "issue87-store-r4"
+  ],
+  "historical_incident_reproduced": false,
+  "independent_review_performed": false,
+  "hosted_checks_available": false,
+  "pr_merged": false,
+  "issue_completed": false,
+  "publication_delta": "Only this evidence directory is added after canonical and acceptance validation; verify its documentation and unchanged source separately before committing.",
+  "artifacts": [
+    {
+      "source": "issue87-check-r4.log",
+      "published": "logs/canonical.log",
+      "original_sha256": "ba973bc342685a61aa5b044d049ea7daa5700e53e1dee84fdf5a06c6155e8e75",
+      "published_sha256": "715bffbf4dc76bb65fe8eb4686f5ff826f720b3e37e6f9397f06edbe14f53a93",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r6.log",
+      "published": "logs/issue87-adapter-r6.log",
+      "original_sha256": "e6e74090c17d2091cba27dd1499e402735b52af845cc2791c8da5059d2f0b95b",
+      "published_sha256": "c2704ce5424b8b2a4d2405670cc7c850d9345d53ff885d0b47caccb0c2f49d95",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-boundary-r2.log",
+      "published": "logs/issue87-boundary-r2.log",
+      "original_sha256": "27c587f35dd3c00b2a17c55516e361ff948cc2d3f314771976c3508e4a11777f",
+      "published_sha256": "e0b2bc1bb4ae12098ffc7007d5b87c0204ae3cde820bcdc5f86d5ecb7bb24033",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-receipt-clock-r2.log",
+      "published": "logs/issue87-receipt-clock-r2.log",
+      "original_sha256": "d1440eea9e00e008ddac154273df34cb3e882660be9a8273ba9d3e48f538ce2e",
+      "published_sha256": "eae5634fb8aad40993da49fe024cda4e88c3bbc5a51e3c6abbc3764bd951fbd7",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-protocol-receipt-r2.log",
+      "published": "logs/issue87-protocol-receipt-r2.log",
+      "original_sha256": "fb0e5b04e95c39b31ee3b65fa7c97570286e665f378b3a651f940355c96b888d",
+      "published_sha256": "9f13ddab8826099624e9e7b34bb6dcbd0f304b8dcbd75705f3a38bfeb504cf41",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-store-r4.log",
+      "published": "logs/issue87-store-r4.log",
+      "original_sha256": "56d398e07c269ccc4a8f26e10207845913b8f4766dbc38daec7718a1ba973ab5",
+      "published_sha256": "bd7f0d68deea0dacfd9be8a48bb7c8428c95f19a8e936dc3985594e66b0518b8",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-suspend-r3\\browser-after-control.png",
+      "published": "screenshots/acceptance-fixture-suspend-r3-browser-after-control.png",
+      "original_sha256": "d35e985d9656ee47b05eca4bc61d5c0d2e83dbc9d4a440ceabbfc66155be5d56",
+      "published_sha256": "d35e985d9656ee47b05eca4bc61d5c0d2e83dbc9d4a440ceabbfc66155be5d56",
+      "transformation": "none; original browser screenshot bytes"
+    },
+    {
+      "source": "acceptance-fixture-stop-r5\\browser-after-control.png",
+      "published": "screenshots/acceptance-fixture-stop-r5-browser-after-control.png",
+      "original_sha256": "0b80eb412ab1dc0b9a37671f03f0c66dbe2699fccecee21c66eb611f3cb42055",
+      "published_sha256": "0b80eb412ab1dc0b9a37671f03f0c66dbe2699fccecee21c66eb611f3cb42055",
+      "transformation": "none; original browser screenshot bytes"
+    },
+    {
+      "source": "acceptance-fixture-stop-r5\\browser-before-stop.png",
+      "published": "screenshots/acceptance-fixture-stop-r5-browser-before-stop.png",
+      "original_sha256": "5fad3167af30942cf8ca07e9fde5abebb493fcaf2e3311ddb21714062f0ac42e",
+      "published_sha256": "5fad3167af30942cf8ca07e9fde5abebb493fcaf2e3311ddb21714062f0ac42e",
+      "transformation": "none; original browser screenshot bytes"
+    },
+    {
+      "source": "acceptance-provider-stop-r3\\browser-after-control.png",
+      "published": "screenshots/acceptance-provider-stop-r3-browser-after-control.png",
+      "original_sha256": "39cca80f4ad2323ec07682383ce9d38c6d61f0ef3060fe042151add1f003d228",
+      "published_sha256": "39cca80f4ad2323ec07682383ce9d38c6d61f0ef3060fe042151add1f003d228",
+      "transformation": "none; original browser screenshot bytes"
+    },
+    {
+      "source": "acceptance-provider-stop-r3\\browser-before-stop.png",
+      "published": "screenshots/acceptance-provider-stop-r3-browser-before-stop.png",
+      "original_sha256": "586b0917a610f0096da84d79f9444b911ed287bcddc581849117a9b376e45bea",
+      "published_sha256": "586b0917a610f0096da84d79f9444b911ed287bcddc581849117a9b376e45bea",
+      "transformation": "none; original browser screenshot bytes"
+    },
+    {
+      "source": "issue87-install-r1.json",
+      "source_root": "run-evidence",
+      "published": "environment/issue87-install-r1.json",
+      "original_sha256": "609aa9adefaaffdb021f94cd7cccb7e1766cc92f544af61116b22e625127c4f4",
+      "published_sha256": "0f84079eded33d22f444f4264b9ffcf8a9b3fe80059f062efd4d6451808bb3fb",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-install-r1.log",
+      "published": "environment/issue87-install-r1.log",
+      "original_sha256": "abd5bcd7302ba089f52a8c85d8b811af879d4a7f03dce5ddf2ea99283713a54e",
+      "published_sha256": "f6d33fa8d0c1243d25941735ed95da372e557aa81866826bc7646d03c57dafe4",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-build-r1.json",
+      "source_root": "run-evidence",
+      "published": "environment/issue87-build-r1.json",
+      "original_sha256": "cdbb2bd0633759f3251d665154d573f0710f8db58e5ff57d98e08aa3e5209fda",
+      "published_sha256": "9cd0d3fa09fb8fc1cf363a8ccdafd19c7fd97471e395fb996f01949b0feb84d9",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-build-r1.log",
+      "published": "environment/issue87-build-r1.log",
+      "original_sha256": "f8d77b25f25d4bd3158a49afe06d77f9666cc5c3e383b2a9fbc1f3f318a84614",
+      "published_sha256": "fa96c5c9f8c3ddffd387aff2626e8a5d28505bf6dc74464163b369e6b9728add",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-build-r2.json",
+      "source_root": "run-evidence",
+      "published": "environment/issue87-build-r2.json",
+      "original_sha256": "e48e1c244ffd85c9232883a3c1223ad26ab73a9e8fae6dd33d564a35f24e28b9",
+      "published_sha256": "092c9b28872ba3246c9d8ad250b654ae06643cda07792fe91ad5587e346f76e6",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-build-r2.log",
+      "published": "environment/issue87-build-r2.log",
+      "original_sha256": "36c824227b930430f011ecf25e27dcec332d73439172d2fc83deb2e9188d1195",
+      "published_sha256": "b75524b395fc9378bd1beff6e8e0c7fbcb15d2e3809bb76706f2215d644e38ba",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-build-r2-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "environment/issue87-build-r2-session-exit.json",
+      "original_sha256": "96d45a2778c2c23054ed78ff466477951ea5a9ee24459b35937b6f49b13246ae",
+      "published_sha256": "4b78c08f20c9552e231717fe6b4306afad1fa611684d4a14fbf8b076389219db",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-validation-prerequisites-r1.json",
+      "source_root": "run-evidence",
+      "published": "environment/issue87-validation-prerequisites-r1.json",
+      "original_sha256": "bf7ca5e61da4da2f18b8fd646b748b68135a32a472bb9f5ad5275b0e6e65832d",
+      "published_sha256": "3821cfb4c016422a7300910ffb6b30785fc85cc13ca055916964f1f24838982f",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-validation-prerequisites-r1.log",
+      "published": "environment/issue87-validation-prerequisites-r1.log",
+      "original_sha256": "e7329e9bb3c37bed8619eb4912ad1d4d548a3618e6c4a94de06cdf9f2a64fbd9",
+      "published_sha256": "1c7075c438c07de41a18e78206854bf1aa62f295a7812ae6cede7059cd4cb30e",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-validation-prerequisites-r1-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "environment/issue87-validation-prerequisites-r1-session-exit.json",
+      "original_sha256": "f245a65c0d966beacc23c7effc375e23a80fd68a60732510d77d5e131ed2eb2d",
+      "published_sha256": "f245a65c0d966beacc23c7effc375e23a80fd68a60732510d77d5e131ed2eb2d",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-prerequisite-regression-python-r1.json",
+      "source_root": "run-evidence",
+      "published": "environment/issue87-prerequisite-regression-python-r1.json",
+      "original_sha256": "5cde770dbba74ecdeb8409be531c8ceccc9b1530ef4dc0a86c95e98fdc4092ad",
+      "published_sha256": "6839a827086d33f626a63b279b4e6fd253afc3ad148fdbf9c6202e3d5b37944c",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-prerequisite-regression-python-r1-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "environment/issue87-prerequisite-regression-python-r1-session-exit.json",
+      "original_sha256": "b028a952513cbf71e82e7c5804f510dc97a538e6e512b28da95696c2452c5aba",
+      "published_sha256": "fa341f603a124c0073f30ac95e9613791265374eb384790c0d249fa235f4e404",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-prerequisite-regression-python-r2.json",
+      "source_root": "run-evidence",
+      "published": "environment/issue87-prerequisite-regression-python-r2.json",
+      "original_sha256": "1b61d48e8d7013a9f136df06b1305dcdefbca0806887b51fb02e8058a3c597f5",
+      "published_sha256": "b10a14e1ef00ae59b2d843835170b1b85bdfe0a5c81ee4860899d2149f0fdc76",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-prerequisite-regression-python-r2.log",
+      "published": "environment/issue87-prerequisite-regression-python-r2.log",
+      "original_sha256": "7786ae2102d92876d34cc21575dc2b97b77f43e4fb2ab49584ebb54877b03e4c",
+      "published_sha256": "9a9a7cd1faaaa4d1117975291e5f257f0a7ee0eb5f1446db53539e9515d1ab61",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-prerequisite-regression-python-r2-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "environment/issue87-prerequisite-regression-python-r2-session-exit.json",
+      "original_sha256": "d5dc6b3e6997c262c9319c6e5a5d96f31ff39d99ff5dc04d8a34181346b9db72",
+      "published_sha256": "0150f8cc363fbd35096aeaf438a955d9331025784c129460b55eb77870edd62f",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-python-r4.json",
+      "source_root": "run-evidence",
+      "published": "environment/issue87-check-python-r4.json",
+      "original_sha256": "983a21fc37119847618ccf31698d1d19a546e649092ecf43977fff09576ee0dc",
+      "published_sha256": "38e1c9631d7d57e23334a17d10ddb7818d14c1164ebf3626cdc1a80a70407472",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-python-r4.log",
+      "published": "environment/issue87-check-python-r4.log",
+      "original_sha256": "cddbf9908260620bb7bf885074a60577c2b251276c747b75aa77bdcf70c66f10",
+      "published_sha256": "84307567878ec587f6fd69d20136dd521a6e0f11ba3adf5b8edaadad3f005e5c",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-retained-r4.json",
+      "source_root": "run-evidence",
+      "published": "environment/issue87-check-retained-r4.json",
+      "original_sha256": "5e327be9937bf37206bee7f452fa431172b31fd348d2b9aa19da5ce44655f573",
+      "published_sha256": "556653a6e5062e6f78e29cb615db1bce4eb8d674bfa2fc8b5eb141f8a3f63947",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-native-secret-fixtures-r1.json",
+      "source_root": "run-evidence",
+      "published": "environment/issue87-native-secret-fixtures-r1.json",
+      "original_sha256": "0a8bbf602046f0e05ffa0517bf9fc7c1415b69f506b67ebb71a7ce743c20934e",
+      "published_sha256": "8a16db54ce87316cb0cdaafe0e62278bf5526a6c8137e4251f883fe4ba865e3d",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-native-secret-fixtures-r1.log",
+      "published": "environment/issue87-native-secret-fixtures-r1.log",
+      "original_sha256": "a76e7335d5da25d888b5f65836496b52e88c2ccdb35b4f951e8d51ee94780697",
+      "published_sha256": "6c55ecb2c7adf5b055f63044e954bf31a66d20a88e7ee7894fedbbb5488de609",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-native-secret-fixtures-r1-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "environment/issue87-native-secret-fixtures-r1-session-exit.json",
+      "original_sha256": "54d7f2d177e38ad67642c042cd9e415dcd4911dae677e65c2cd40ec808a9c366",
+      "published_sha256": "9578da9784a524709e97bc887e3706561958ac08902f961976cac5b30e105109",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r6-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "focused-exits/issue87-adapter-r6-session-exit.json",
+      "original_sha256": "4a56f914ea3685706dcd8488f6c8663a48f57ab714106b3d842699cc3165e450",
+      "published_sha256": "02427dc83c5f1f7d69aec18f024552b77d40b7788f7a458fb63818a23a226ec0",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-boundary-r2-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "focused-exits/issue87-boundary-r2-session-exit.json",
+      "original_sha256": "0372432d3f87e42139196888ffa1f9d16413511415a87d9b18d79e770acca38d",
+      "published_sha256": "846dc6313edfd4f59bc35b1a1b197b2cf067db2308f136d116e81cb68d9ae150",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-receipt-clock-r2-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "focused-exits/issue87-receipt-clock-r2-session-exit.json",
+      "original_sha256": "df145e764424945c5e3f18d28d6f646132aeec72ed86f3b43479e1f68e8d2e01",
+      "published_sha256": "c62a5bc6081ef0439e57ddf4401e461ae88f73deff8ec892b8646af069c30899",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-protocol-receipt-r2-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "focused-exits/issue87-protocol-receipt-r2-session-exit.json",
+      "original_sha256": "1381c3b0547de5b4dc06c749df2848eb52e83020891abdff71c3d4cf8edd9f51",
+      "published_sha256": "d4b71eafba9ab94590aeaa49807c8819baa36ec7d77ace04e136fb0d2fa37a47",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-store-r4-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "focused-exits/issue87-store-r4-session-exit.json",
+      "original_sha256": "3269fe4f9e154634f259af3fd5e03edede05a8f610cbb93c7f2b5202aed13aee",
+      "published_sha256": "91517780435e2c5e2a5ea92d6bf20ad4e099390742401ddd42b4052415066fc3",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-r4-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "canonical-session-exit.json",
+      "original_sha256": "a8f18d27105792676a407fba0aa6263e982a4b600a17e00f507ac6ed101f00c5",
+      "published_sha256": "e911bbf0cb76e470a8153c70ce1a5e0e7949fc02afeb9c67538182eee3502001",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-source-r3.json",
+      "source_root": "run-evidence",
+      "published": "environment/issue87-source-r3.json",
+      "original_sha256": "27d55af14e2852427a2f978c214f3e2efde81846c3aa3e980f118a0b3861c52c",
+      "published_sha256": "a318e14f721baf738750e49b92b77b55d6afb9383f877c0a9548a751b6148a0a",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r1.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-adapter-r1.json",
+      "original_sha256": "4d29641051a6fbe2245e8630a828ff439d412b87aa284aa81f4c4d84407aadc5",
+      "published_sha256": "b8e260c6727673398a90f5e7f8d4473e8221fe1a0dbd8a631e8ef01a00591111",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r1.log",
+      "published": "history/issue87-adapter-r1.log",
+      "original_sha256": "4a3c35ac33ee80ad0a654ef8ab66bba59e5c9960e00675b32e000606d4e939c7",
+      "published_sha256": "126427642140fb8a53b81deb6300b0eaafbbae796e5d19a25244667d063a0af4",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r2.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-adapter-r2.json",
+      "original_sha256": "5fb7655ec9464b1890df0e5aa5ab60cbe0095558210d5dd41ca8e2f96cdb91cb",
+      "published_sha256": "b75113438535111dbea344e48f1935015865fc6693725e72c286d1bb5d28fb98",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r2.log",
+      "published": "history/issue87-adapter-r2.log",
+      "original_sha256": "ccf7ba755bf85c4aaf28df91829570bbdcf3aa458f9e8cbe470e02e1c0183a4e",
+      "published_sha256": "425621d8f0d58fc19ada33a232e7df17fbefcdd393f519a9b08c24ea23617d1c",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r2-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-adapter-r2-session-exit.json",
+      "original_sha256": "ac2ffb9b2e437f6e837f637f5ec1214fa508ec60e9dfc913d9cb192778b9144b",
+      "published_sha256": "965492810fdc8dadf1da3b463420213c73aa79bd0b212f98ad130c8205df26b3",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r3.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-adapter-r3.json",
+      "original_sha256": "9353affd8700d9015110a37015371930b54ef2f848e701bb64693acf37f7532e",
+      "published_sha256": "b6ab66d78956d99de3fea2feaf83f81871b3504ea7d0818a7b920e5cc7cd53a4",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r3.log",
+      "published": "history/issue87-adapter-r3.log",
+      "original_sha256": "99de70edd0293deffdad3ca2f1c9c179892ce2b6ac53ff8d013f979459036530",
+      "published_sha256": "89eb38142cb52fa430b56f846239ab107a060632bd5d65d557b55cddf0568a5c",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r3-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-adapter-r3-session-exit.json",
+      "original_sha256": "d027c308b5f4fe95debae5422a1ca0d8ee8a4550ff1edbe800d0a8632c7e4ad9",
+      "published_sha256": "9cf1d4485dcbe18c89034b7fdd09fc170ac2ac1e4327a2e659925e68c254fc05",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r4.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-adapter-r4.json",
+      "original_sha256": "d2a7db8c7f8f06e6df3b959e676bb48089ecde65654b5471369327aaa619094c",
+      "published_sha256": "2eca2ea7a907400de4595748ff119f84a54e04d728c65da60f5d3a186e3744be",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r4.log",
+      "published": "history/issue87-adapter-r4.log",
+      "original_sha256": "11939ba7ccdb9eae8e173d0a47e5901c871625ee99ad72b5d3c047a6cd13a847",
+      "published_sha256": "2cfc6ad3ec0033c21db5779826a8408fd2b93607828a9ebcda5655bcbe13995a",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r4-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-adapter-r4-session-exit.json",
+      "original_sha256": "8aad2988ce1fc9e2d42c650085f49ca80de0d26e115e7ee0e4d032d5f3f51e81",
+      "published_sha256": "8aad2988ce1fc9e2d42c650085f49ca80de0d26e115e7ee0e4d032d5f3f51e81",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r5.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-adapter-r5.json",
+      "original_sha256": "394abfa213e5754d20856c007c347e4f2206013a7e8d42ddcb0d1675eb5a384d",
+      "published_sha256": "855a67ae3e8f766d4d0b8d6b6539f8513232659fdc190fb9b54cd3e3f3e7e545",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r5.log",
+      "published": "history/issue87-adapter-r5.log",
+      "original_sha256": "279623259b339be717c50a85a3f1fe1f5834d0bded417666ac4e058875559bb0",
+      "published_sha256": "d80e009eb57adc0cd08634f97d912afebfb5cba0c6065e234363417a8e393d18",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r5-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-adapter-r5-session-exit.json",
+      "original_sha256": "76a9e442f3591108298d68e7c9092eda613024aa496930b409a7e8fc1e5365b7",
+      "published_sha256": "1d6b45f23158cc18f753df3dd585600e475c1aab88571e2a567d9d7de2020273",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-adapter-r5-session-exit-correction.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-adapter-r5-session-exit-correction.json",
+      "original_sha256": "2d41470cce56297b4ce7bc72fc84246bbdad1f91ab52bdda12613efd6a38e8e5",
+      "published_sha256": "9c5dedf3cd23edc941a0047d0b4e95cd3dd08f1ae7568de1217e981b0f9cb24f",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-store-r1.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-store-r1.json",
+      "original_sha256": "3336193094115eea19d8217f08eb16c6c8eddae27f9654412500df974a258223",
+      "published_sha256": "e7b0fe4013513e349b66c4749be820b86a0f46990452aa87747ae3bb3cb11fa6",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-store-r1.log",
+      "published": "history/issue87-store-r1.log",
+      "original_sha256": "8b3538e1cd33305d9fff27661448c249373a13077f3ba50b88f404a4956c16cf",
+      "published_sha256": "f0e757ccbafda5a5ded7ff582b7e79ab26465a1ef8656e0ed3db0e5e90193145",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-store-r1-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-store-r1-session-exit.json",
+      "original_sha256": "3ae09c4db8c4f5489e374dfbed27d4443dde8bf99182f688954b7dc18145ba0f",
+      "published_sha256": "6cec3cbc35aaf6359ed1b922df24134273971bd48e8df7afc944a84ba3bd3a28",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-store-r2.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-store-r2.json",
+      "original_sha256": "8b9a5922343472c14cb27d4b346444b4742c71f8eb6965674f4bdfec67af0eb0",
+      "published_sha256": "b70f796d3225b3a2492079abe9b5a87dcadaae5d6df5b71cc23495043f406dc1",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-store-r2.log",
+      "published": "history/issue87-store-r2.log",
+      "original_sha256": "264577ba977dda4347bcc0331d8c46c3f1f7599a7aff5bc8056b68d0821db4e5",
+      "published_sha256": "783c9f702bd65fe7c854a3aae977d112308664db1f07b50d06fe9ab65410dae0",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-store-r2-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-store-r2-session-exit.json",
+      "original_sha256": "eb69852ca159c55a89897f4716df762c3a4906096b6b914294c4b2d5b7a58fc5",
+      "published_sha256": "eb69852ca159c55a89897f4716df762c3a4906096b6b914294c4b2d5b7a58fc5",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-store-r3.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-store-r3.json",
+      "original_sha256": "219a4a9f16db19bb1f79a40adafb727530b87ff7d987907a476cca718d02b3a7",
+      "published_sha256": "8ae7a4f64429444134b6b92e967acc04a84017af92648146a7eb20c08978ea39",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-store-r3.log",
+      "published": "history/issue87-store-r3.log",
+      "original_sha256": "6beba7e48534f61f4270d0820b8bfb15f497d7c8161b5ac17a9f58fb782653fc",
+      "published_sha256": "565ee9f992f6273170a6ffa77d0cb9579ff04e9fddb8b4745d80c0b0cfbe5065",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-store-r3-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-store-r3-session-exit.json",
+      "original_sha256": "670c061eecda84c3d890e6fcb9a909b8507dd61b2f748b6b41c1eeca9b925a0d",
+      "published_sha256": "73fe6c4245ad44d6e08242742b5a20207f2462b81e21fdf9ce7e003f07328aa9",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-store-r3-session-exit-correction.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-store-r3-session-exit-correction.json",
+      "original_sha256": "bd14707937e3e1ef3d0a365f012dfcab673885df5200ecdf648c733b00424a25",
+      "published_sha256": "f9dcacb8c97b1ca1fbb67863c26c506873ae717b6c2376dab14dc167561b3603",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-r1.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-check-r1.json",
+      "original_sha256": "32cb35af15dc75b5ce25875543f1e16d1857f6cb19013caf5e592670df895cbf",
+      "published_sha256": "8106721985e417b970ee49b8dc53b2c895075905239ce1020024fd8467805b55",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-r1.log",
+      "published": "history/issue87-check-r1.log",
+      "original_sha256": "e955e0ca2541676f25bd2280cbc7f7616340ddfcf71a4d57aaea852f594706f0",
+      "published_sha256": "c1a4ccbc0af394f4c07b0f9805ba0f0521e8f883e59f3281d08b4b327d281ff9",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-r1-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-check-r1-session-exit.json",
+      "original_sha256": "72f467bb180552a471b5065e709eda0b11e88b0fce0ca2dc13980651329178e1",
+      "published_sha256": "4b3c77c4af1ff2655e40344d17e4ecbba3f496a399b3594f417793dcc0f31280",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-r2.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-check-r2.json",
+      "original_sha256": "a2a3f6a71a16cef28c1171fedc03b3defa0303206eaa30b70a729db577fdfe12",
+      "published_sha256": "79624eb40ec0068b4ef91125d5405193b41656cfcedf8d7da0be4a31de879fef",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-r2.log",
+      "published": "history/issue87-check-r2.log",
+      "original_sha256": "601fea9721bd083f195ea67c1d5b601a45123bee7a2d5af378c312ac4c044ec6",
+      "published_sha256": "d9c3a4e468ca81663dd06907a08a0645f856fb832c4015d1f283e8eef53b7e60",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-r2-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-check-r2-session-exit.json",
+      "original_sha256": "6938033e3d643307945a49943bdb5d7295f70e868c2ec3796cc820793ea2a59e",
+      "published_sha256": "4ed14ad5c8fd6839715d3e30901bd26007624db1f87fc7e4b4e568d36cb8990c",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-r3.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-check-r3.json",
+      "original_sha256": "db0eddabeb9f2b6c354b17361575c928db87f6e2a29bea063d693fdb982df24a",
+      "published_sha256": "0b09240b12ec45105ed12bbb6c51b306519063820479915a724df234e2567533",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-r3.log",
+      "published": "history/issue87-check-r3.log",
+      "original_sha256": "f2564d939e35af40b03b1f86366ef610408d0bedd250cbcef0fcf74e869a0527",
+      "published_sha256": "80e936846db48fbeeed0bcf59a44ba1db8906bb7a54c19c0e301d491d9f2a289",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-r3-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-check-r3-session-exit.json",
+      "original_sha256": "b66809e08e51154ceb3e7aad97f2f50ea5562d2ee0d516e690a59bc4d845e334",
+      "published_sha256": "0de1a0b3f06ddf88ba2c9eb89fdf8ce261b83fe4d6ea5efeea60200d90516663",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-eof-serial-diagnostic-r1.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-eof-serial-diagnostic-r1.json",
+      "original_sha256": "501b5308e262e71f641c184f2da486a4b4eaddba77ce9c311948a0082b108158",
+      "published_sha256": "83303c2c6476e3d6698ba04e172d2d0e7c6c1a6fe158a7b1be76be79b389d38b",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-eof-serial-diagnostic-r1.log",
+      "published": "history/issue87-eof-serial-diagnostic-r1.log",
+      "original_sha256": "319876cadb1936670c9259a815dfa6b35ba40b3445fa868bd35df414a18a2063",
+      "published_sha256": "130bc4e0d2afb913182fdc91ad89c02f903ff4c4d5ff19ac9f0bd601d762e6cc",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-eof-isolation-r2.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-eof-isolation-r2.json",
+      "original_sha256": "a917310a291085b6b5cfc0ce672266ed66b641bbf13b0eef5f52fa6de38fce49",
+      "published_sha256": "441a0ed6e2d4266d4b9656e6e169d125b4d86cfe7fa16554cd53ce5fbb9596bb",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-eof-isolation-r2.log",
+      "published": "history/issue87-eof-isolation-r2.log",
+      "original_sha256": "88f612ddc555706866b6c330a6ceb32c32df8f8ce8d111a20d21f853712162ec",
+      "published_sha256": "b43ee8552c98c2f5dcab838646b0e971712bbba24ad5552e3e671daaf4c1f30a",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-eof-isolation-r2-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-eof-isolation-r2-session-exit.json",
+      "original_sha256": "a4816d91ea1dfeb11fcb3e849dd4c1689a502152bcec35d7bf6e926232d2db2a",
+      "published_sha256": "87466e8bac937bde91be2b47f0547d37755abfdf4e1ec5b10ed18321a86f167f",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "output/readiness/2026-10-01T10-35-13-099Z-ad6e382f-1c20-4a28-93cb-f460fb05f619-full.json",
+      "source_root": "reviewed-worktree",
+      "published": "history/canonical-r1-readiness.json",
+      "original_sha256": "08febd9781f5053acdb0a13b133c9b53ec0b7a704e1bef008d4a821336a525eb",
+      "published_sha256": "08febd9781f5053acdb0a13b133c9b53ec0b7a704e1bef008d4a821336a525eb",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "output/readiness/2026-10-01T11-24-23-088Z-ae197053-e303-494d-9c0f-899d7d0ac8cc-full.json",
+      "source_root": "reviewed-worktree",
+      "published": "history/canonical-r2-readiness.json",
+      "original_sha256": "43a976c5546d7cbb1dc4581cbc40d95d3f1784c5a4f20f8f80872883484b9bb0",
+      "published_sha256": "43a976c5546d7cbb1dc4581cbc40d95d3f1784c5a4f20f8f80872883484b9bb0",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "output/readiness/2026-10-01T12-40-34-619Z-06db7860-f7f1-4ad3-b97e-dedf3abf3b99-full.json",
+      "source_root": "reviewed-worktree",
+      "published": "history/canonical-r3-readiness.json",
+      "original_sha256": "66784a0aeb736b9638d98b242d0883d7cae4950e1f128812ab54f3b8717dc834",
+      "published_sha256": "66784a0aeb736b9638d98b242d0883d7cae4950e1f128812ab54f3b8717dc834",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-python-r2.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-check-python-r2.json",
+      "original_sha256": "f477ddf4d0906482863bf7775386010fcf4df68f511a753f8251abc10f5fb7a8",
+      "published_sha256": "95c78e94a03af7b4228b5efb245e595974f51478dd0df8f480f7fe5c3210529c",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-python-r3.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-check-python-r3.json",
+      "original_sha256": "046f997df214ea790db45787f084f6644ae48232db074c90b37d4f446fe04e68",
+      "published_sha256": "2278acf80cc4dde10ae5581a2f32e8e8ce3aae2f7c49e2b67e9df6854dae761c",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-eof-stdio-diagnostic-r1.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-eof-stdio-diagnostic-r1.json",
+      "original_sha256": "e12c759fc0dddd23baaef8d654c6fda9a2a21916c1fe4e01c1a61abb5d2f3bc8",
+      "published_sha256": "a1d9e4cbb0f2dc611fbeb09850db187c5ab33258288d4840cef0ce7e7bb714e7",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-check-r3-startup-failure-r1.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-check-r3-startup-failure-r1.json",
+      "original_sha256": "c0353a0f89217360a4e3f5787e9b5f6519ddad8dcd26c30244e572fa084fbce4",
+      "published_sha256": "73521cb78ccfca0383beec57cfc893e5cd48549a879dab3febc3f05e723fdd21",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-f02-diagnostic-r1.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-f02-diagnostic-r1.json",
+      "original_sha256": "3c114563c8733f39a42d6db747880b512383f7f963603397441cc861641fc2bb",
+      "published_sha256": "603fc130c418085e657f70906bfe38c90ce58b3779055ac3334530cfe2809b81",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-f02-diagnostic-r1-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-f02-diagnostic-r1-session-exit.json",
+      "original_sha256": "f9bcbf1691b72ccea3d80a4c830fb8b228ad9f876de73780abafaaddfb3a3d96",
+      "published_sha256": "641bfd17761037daa4259d9155ae2c44dfe91e38bb285b7df66b1d3931b5f0f0",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-f02-diagnostic-r1\\attempt-1\\node.log",
+      "published": "history/f02/attempt-1/node.log",
+      "original_sha256": "a72a28f39901105950d0d6c29bbfd9ceddcff70e1d9917542ed8c8f1a76448e1",
+      "published_sha256": "789a2549f7032e9ed2f22a8d878449a0bea38953408f47ae1662c1bfa7275940",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-f02-diagnostic-r1/attempt-1/issue81-diff-zIR2yL/native-probe.json",
+      "source_root": "run-evidence",
+      "published": "history/f02/attempt-1/native-probe.json",
+      "original_sha256": "3093106ea2e6afb87499af393dce2b02f5416d7e04b182e42e31e729e6ecd573",
+      "published_sha256": "c2b566ae421f04edf0e3e00e832991a07f75aa3372517f557c28453e5c061794",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-f02-diagnostic-r1/attempt-1/issue81-diff-zIR2yL/cli-1.json",
+      "source_root": "run-evidence",
+      "published": "history/f02/attempt-1/cli-1.json",
+      "original_sha256": "7d8e50a60e1da92f3fe6831518d7a0d746af97bc9dea48bfe5dbebdd7bed42ac",
+      "published_sha256": "7ee52b917e021de1525de8b9e91d4ab541ec449ae3b958163bcfb1d25e5764f0",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-f02-diagnostic-r1/attempt-1/issue81-diff-zIR2yL/cli-1.stderr",
+      "source_root": "run-evidence",
+      "published": "history/f02/attempt-1/cli-1.stderr",
+      "original_sha256": "b9fffa4c773a3d070e68489a00844e49a0ad24b58ca63d7e202cbf6b7315cc15",
+      "published_sha256": "ddd6b10cefdd0d29e79c9a2f2ecd2abc3835544f973dafc9483db676c4c11bef",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-f02-diagnostic-r1\\attempt-2\\node.log",
+      "published": "history/f02/attempt-2/node.log",
+      "original_sha256": "9e71e2b6cbe0b6d9365bdd7e09f865dbc2928754af253c43ddf80d8a42ee9b94",
+      "published_sha256": "fff1b38a5ca07f872c351a7e20e09ed8d430f3c7ecebaa702e012211cf335894",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-f02-diagnostic-r1/attempt-2/issue81-diff-dASrZG/native-probe.json",
+      "source_root": "run-evidence",
+      "published": "history/f02/attempt-2/native-probe.json",
+      "original_sha256": "60eea8bfaa6ffee3b21fad65c72c702369f8c435061aeacde3c34362df2e065d",
+      "published_sha256": "943bacc88360ae6fabb49d2fe42725ce13cc3ec7168929815436d59e439fd375",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-f02-diagnostic-r1/attempt-2/issue81-diff-dASrZG/cli-1.json",
+      "source_root": "run-evidence",
+      "published": "history/f02/attempt-2/cli-1.json",
+      "original_sha256": "e57d426761d2fa048ab5fa1d8bec79748981396e117aa520151d62dcde739a3d",
+      "published_sha256": "f212cc6194dff93e3dd80af55b1587f75a26f082295a1e7d10a518449c2beb9e",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-f02-diagnostic-r1/attempt-2/issue81-diff-dASrZG/cli-1.stderr",
+      "source_root": "run-evidence",
+      "published": "history/f02/attempt-2/cli-1.stderr",
+      "original_sha256": "b9fffa4c773a3d070e68489a00844e49a0ad24b58ca63d7e202cbf6b7315cc15",
+      "published_sha256": "ddd6b10cefdd0d29e79c9a2f2ecd2abc3835544f973dafc9483db676c4c11bef",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-f02-diagnostic-r1\\attempt-3\\node.log",
+      "published": "history/f02/attempt-3/node.log",
+      "original_sha256": "33bb81531d39a64a73ec18173f6fa254b854d79f11b282a611bd268efc4722f6",
+      "published_sha256": "447cf8988ab77291a4e38dd50dcdc513339a10448387a95b2109138ce040be72",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-f02-diagnostic-r1/attempt-3/issue81-diff-hcOuxZ/native-probe.json",
+      "source_root": "run-evidence",
+      "published": "history/f02/attempt-3/native-probe.json",
+      "original_sha256": "1a1e3d4af0893f9f1778c9ba74648944a61d45e528df6b75d6b8a82995f99616",
+      "published_sha256": "15032142f66fc67d9826fcd1f0853a55c26ddeac81b2c9fa29958f00575dd89c",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-f02-diagnostic-r1/attempt-3/issue81-diff-hcOuxZ/cli-1.json",
+      "source_root": "run-evidence",
+      "published": "history/f02/attempt-3/cli-1.json",
+      "original_sha256": "4eedd1eb628483b4bc20be657d31673dc42ed3bc45b9a26fd779668e0eb02ea5",
+      "published_sha256": "ad5ceba3aba2547b520f6acc8c047ca7308bd0f4af43d84c1af097506fb1e9bf",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-f02-diagnostic-r1/attempt-3/issue81-diff-hcOuxZ/cli-1.stderr",
+      "source_root": "run-evidence",
+      "published": "history/f02/attempt-3/cli-1.stderr",
+      "original_sha256": "b9fffa4c773a3d070e68489a00844e49a0ad24b58ca63d7e202cbf6b7315cc15",
+      "published_sha256": "ddd6b10cefdd0d29e79c9a2f2ecd2abc3835544f973dafc9483db676c4c11bef",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-stop-r1/driver.json",
+      "source_root": "run-evidence",
+      "published": "history/acceptance-fixture-stop-r1/driver.json",
+      "original_sha256": "8a7803502785e10ad616cd44862c8b840e465b56ebacfbac919041cffe9e5392",
+      "published_sha256": "9d6c7bd281fce4eee5e6ef4a55e2b984072492f5cd05f75a8e61641359386495",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-stop-r1/browser.json",
+      "source_root": "run-evidence",
+      "published": "history/acceptance-fixture-stop-r1/browser.json",
+      "original_sha256": "89879136f85acb0e59b8c2caad1c47fed31549de895cdc2d6965dd2b7ca98c92",
+      "published_sha256": "89879136f85acb0e59b8c2caad1c47fed31549de895cdc2d6965dd2b7ca98c92",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-stop-r2/driver.json",
+      "source_root": "run-evidence",
+      "published": "history/acceptance-fixture-stop-r2/driver.json",
+      "original_sha256": "dfe1e86ff41e2d1616d0be057123dc852f32376d8a6f13a85ef917c7c313d425",
+      "published_sha256": "a1c790631d866298e5a0f73cc24e51183e871d4269176ed66249270de2d0d8ad",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-stop-r2/browser.json",
+      "source_root": "run-evidence",
+      "published": "history/acceptance-fixture-stop-r2/browser.json",
+      "original_sha256": "6a53a2c7ed1409709d7a7a51d9a65d045950fbe1c390f15cad5c45f9ee832538",
+      "published_sha256": "6a53a2c7ed1409709d7a7a51d9a65d045950fbe1c390f15cad5c45f9ee832538",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-provider-stop-r1/driver.json",
+      "source_root": "run-evidence",
+      "published": "history/acceptance-provider-stop-r1/driver.json",
+      "original_sha256": "a4b58bd44d3e67b97b17240e3137a78996d57891fa0183817f42f94e789a63c0",
+      "published_sha256": "df4bd4d7f272cec725bfc0a9cf71cc76b8cce8832cb62e573d32269e71b68762",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-provider-stop-r1/browser.json",
+      "source_root": "run-evidence",
+      "published": "history/acceptance-provider-stop-r1/browser.json",
+      "original_sha256": "5a5dccbd435375d2de8b5ac8777d079ecb2838f9571280d97a60460f54cf8c85",
+      "published_sha256": "07de3da522632d83aeee32bce89f04b6c135fcfc43e22ddc6395ad3ea4ef0bf9",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-suspend-r2/driver.json",
+      "source_root": "run-evidence",
+      "published": "history/acceptance-fixture-suspend-r2/driver.json",
+      "original_sha256": "e564bfc7fb2cf42627b904c7c18e061aa78758d6f4ca7d2d88e7525c60195d19",
+      "published_sha256": "ce898a7cbe15d53380ca0b51a00e2b2294c7a124aa1c9b71a3c54c69706655e0",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-suspend-r2/browser.json",
+      "source_root": "run-evidence",
+      "published": "history/acceptance-fixture-suspend-r2/browser.json",
+      "original_sha256": "44c534e13b9455420a4b8972a96a641c2a734a98a870b1038c23d507747b3cca",
+      "published_sha256": "c6679c63c56589bd7cf1aa8e84e29cf0e518d96a3003080c19503f505ddbf2b3",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-stop-r4/driver.json",
+      "source_root": "run-evidence",
+      "published": "history/acceptance-fixture-stop-r4/driver.json",
+      "original_sha256": "5ed4fc324aceb6a01f0869412089bc0add34844eba10c766ac8fd885bf8ac679",
+      "published_sha256": "b90d1d468f5b4c2fd87bb7aa5df634b2a95a04e198d46f6f117c0e5c0e342669",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-stop-r4/browser.json",
+      "source_root": "run-evidence",
+      "published": "history/acceptance-fixture-stop-r4/browser.json",
+      "original_sha256": "47680f8882636b10450cd0a2e9884a20e77283d8da8dc15be68ff4722e8ed45e",
+      "published_sha256": "c520d79683b2e5d5607ce023c4cfd88fcebb947e9535d0b57e38748fb00f87a0",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-provider-stop-r2/driver.json",
+      "source_root": "run-evidence",
+      "published": "history/acceptance-provider-stop-r2/driver.json",
+      "original_sha256": "202de9119553b8f10a380665fb9fa9a2f0671f02afbccf11a8dfe0c3979163f6",
+      "published_sha256": "888a4201770c29e129d213e9c0e4812f81f1931ebd356f33945010ba8f0b1fba",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-provider-stop-r2/browser.json",
+      "source_root": "run-evidence",
+      "published": "history/acceptance-provider-stop-r2/browser.json",
+      "original_sha256": "6f38eb7fbd0f0def1adb6608b855f508a26f6156246a8dfc66373fae9e40ce83",
+      "published_sha256": "e87947a2937c73d8b7a28b659bf18fb47c87c320e387b87a7de57738d34b401c",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-lifecycle-r1/driver.json",
+      "source_root": "run-evidence",
+      "published": "history/acceptance-fixture-lifecycle-r1/driver.json",
+      "original_sha256": "2a620408c14b2cfef513572c29f973249f5641015c481b568e5960cf177f56d4",
+      "published_sha256": "9eb8aec59ea5ef86eb728983c68f37133f4c7dba05077cd197aa88ca474531d8",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-lifecycle-r1/lifecycle.json",
+      "source_root": "run-evidence",
+      "published": "history/acceptance-fixture-lifecycle-r1/lifecycle.json",
+      "original_sha256": "345b28dca04c3411ca4373cda45f5264e3f9e5c6cc6eac53da6f4753de3701e1",
+      "published_sha256": "345b28dca04c3411ca4373cda45f5264e3f9e5c6cc6eac53da6f4753de3701e1",
+      "transformation": "source manifests projected with hashes; capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-self-review-r3.md",
+      "published": "self-review.md",
+      "original_sha256": "b88443ae82bc2dd44bed98acc41bf98ac11144b6b3355f8c9a0c1b9464abc7f9",
+      "published_sha256": "b88443ae82bc2dd44bed98acc41bf98ac11144b6b3355f8c9a0c1b9464abc7f9",
+      "transformation": "machine path prefixes removed; ANSI and trailing whitespace removed; UTF-8/LF text copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-suspend-r3/session-exit.json",
+      "source_root": "run-evidence",
+      "published": "acceptance-exits/acceptance-fixture-suspend-r3/session-exit.json",
+      "original_sha256": "61bef5a50cb874896d47955888fe147a7ab8f437befa7a77e67ef6e17f142da9",
+      "published_sha256": "c1327efe18b293c0750b3c889b8c7b50b4298d9d3aff403460d4493a0a02ea39",
+      "transformation": "capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-suspend-r3/cleanup-verification-r2.json",
+      "source_root": "run-evidence",
+      "published": "acceptance-exits/acceptance-fixture-suspend-r3/cleanup-verification-r2.json",
+      "original_sha256": "bed4fd1591a363721e5021e69037965003841638c6a07bfd622802f984c982aa",
+      "published_sha256": "6945c8239c32947786a6cf4238696ee993c7e2b3fffd1c590b870636f7ce07a8",
+      "transformation": "capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-stop-r5/session-exit.json",
+      "source_root": "run-evidence",
+      "published": "acceptance-exits/acceptance-fixture-stop-r5/session-exit.json",
+      "original_sha256": "ab9515286268755a206036bbfa07cebd0eb28dca2fcc33a0f65592c73b40453b",
+      "published_sha256": "e4e500d3a3ed4af3184bb7ddbe243abe83e235ac37ece9e01a775bcd4276ca14",
+      "transformation": "capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-stop-r5/cleanup-verification-r2.json",
+      "source_root": "run-evidence",
+      "published": "acceptance-exits/acceptance-fixture-stop-r5/cleanup-verification-r2.json",
+      "original_sha256": "e45f49893294d64f056e35772175a15475318144c4ad05fafd7a6d81d446597f",
+      "published_sha256": "b1f7353eea326d1e80b26eeb3c311f37622d3237c4be5e8392d979c08e2324db",
+      "transformation": "capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-provider-stop-r3/session-exit.json",
+      "source_root": "run-evidence",
+      "published": "acceptance-exits/acceptance-provider-stop-r3/session-exit.json",
+      "original_sha256": "f2ace13de5b828b27fef9331cd70dd21ef3f9d9b3b66f949498fedc39caf9efc",
+      "published_sha256": "4c62dd589bc902315bde9856dcc07276a6c8f7c2a1e0dc357b9d0a2e41074871",
+      "transformation": "capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-provider-stop-r3/cleanup-verification-r2.json",
+      "source_root": "run-evidence",
+      "published": "acceptance-exits/acceptance-provider-stop-r3/cleanup-verification-r2.json",
+      "original_sha256": "8bdb510945adc870a19743e4cc56a65d4a0abc6f417e2f6b0e8d0c86b1cfbe28",
+      "published_sha256": "e54b8ed380c11705ba289ad885dbcf1018737eb84d4e5477c398a5371904eb99",
+      "transformation": "capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-lifecycle-r2/session-exit.json",
+      "source_root": "run-evidence",
+      "published": "acceptance-exits/acceptance-fixture-lifecycle-r2/session-exit.json",
+      "original_sha256": "de2ed76d4533c78bcf140a8b2b0189ff48dd83f7bf30bec2b6769a046c3f39e4",
+      "published_sha256": "54d6d4aafbffa0d12be5ae40cbe7340340430dc482ef71ce7512cf76e2b3fa69",
+      "transformation": "capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "acceptance-fixture-lifecycle-r2/cleanup-verification-r2.json",
+      "source_root": "run-evidence",
+      "published": "acceptance-exits/acceptance-fixture-lifecycle-r2/cleanup-verification-r2.json",
+      "original_sha256": "ef2569fc3e8c82f17f390d26db2106d26baceb0619e988e2f61e17183b655513",
+      "published_sha256": "6e01e4c0ce62c0d931533c6f00f47b9fbd1bf3a8d2f3944ac4a64f05e21b22d3",
+      "transformation": "capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-screenshot-review-r2.json",
+      "source_root": "run-evidence",
+      "published": "screenshot-review.json",
+      "original_sha256": "50ea819137cc5307c0ec361ad4e31bc7b23cb8ec88603f28d0efdcc42585c444",
+      "published_sha256": "a3deef3340f252fe7a7703ed29cc55c8d861996c847b84dbc0f0d63005cb0a0c",
+      "transformation": "capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-cleanup-verification-r1-failure.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-cleanup-verification-r1-failure.json",
+      "original_sha256": "28164984bf7f04220fb48ad7b97555346d42396b85f6528f9d7acc9ccdec6d6f",
+      "published_sha256": "3959070f835feff70d942d84c9e895f78161267ae19b992b6c9a27f2472ce863",
+      "transformation": "capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-packet-preparation-r4-failure.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-packet-preparation-r4-failure.json",
+      "original_sha256": "0c9a0e2c9ffc505ace71725bc1b8c07356a4efb2758dcd7297b58e9a579b0b3f",
+      "published_sha256": "c6178f27feef35b3950afab151cda67694bcc7a7dc1d7c40ce1039b4aed64bdc",
+      "transformation": "capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-manifest-order-diagnostic-r1.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-manifest-order-diagnostic-r1.json",
+      "original_sha256": "a66bd307d52651c647e779ef595670253974467a59161dc5b43ea391ecc4d28b",
+      "published_sha256": "2cd609a1760dabfbe6742b4a7a2dde8896814e2bdf0060d2486f705eb49458fe",
+      "transformation": "capability keys redacted; machine prefixes removed; UTF-8/LF JSON copy; physical text written as UTF-8/LF, final log blank lines removed"
+    },
+    {
+      "source": "issue87-publication-validation-r1.json",
+      "source_root": "run-evidence",
+      "published": "history/publication-r1/issue87-publication-validation-r1.json",
+      "original_sha256": "2a97765fec4fbd4837004c2598dd7ed90462b14c36f2d899b73c4f26b93c0e01",
+      "published_sha256": "daea5da952b9be201ed2785cbf7a9598ca6767ade7366e55c937c161b5be6878",
+      "transformation": "capability keys redacted in JSON; machine prefixes, ANSI, trailing whitespace and final blank lines removed"
+    },
+    {
+      "source": "issue87-publication-validation-r1-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "history/publication-r1/issue87-publication-validation-r1-session-exit.json",
+      "original_sha256": "0b4e66a386d34ef578f09705d69c7bc858ab1e4041c523b15c64773798db4fb8",
+      "published_sha256": "16014fd77cf2d4025d3328f3460e3a33092565018d4b79f17708917daa57c45c",
+      "transformation": "capability keys redacted in JSON; machine prefixes, ANSI, trailing whitespace and final blank lines removed"
+    },
+    {
+      "source": "issue87-evidence-normalization-r1-session-exit.json",
+      "source_root": "run-evidence",
+      "published": "history/publication-r1/issue87-evidence-normalization-r1-session-exit.json",
+      "original_sha256": "2389f6d46fc7a25bda9f532c1b84ea8c095a4628ad12e1aa01efd9abde2d3b3a",
+      "published_sha256": "b12dc347be3f1736ba930a3118eb9899c1807bd35a660932fff0fbdff5716c15",
+      "transformation": "capability keys redacted in JSON; machine prefixes, ANSI, trailing whitespace and final blank lines removed"
+    },
+    {
+      "source": "issue87-publication-validation-r1-docs.log",
+      "source_root": "run-evidence",
+      "published": "history/publication-r1/issue87-publication-validation-r1-docs.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "transformation": "capability keys redacted in JSON; machine prefixes, ANSI, trailing whitespace and final blank lines removed"
+    },
+    {
+      "source": "issue87-publication-validation-r1-repository-docs.log",
+      "source_root": "run-evidence",
+      "published": "history/publication-r1/issue87-publication-validation-r1-repository-docs.log",
+      "original_sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "published_sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "transformation": "capability keys redacted in JSON; machine prefixes, ANSI, trailing whitespace and final blank lines removed"
+    },
+    {
+      "source": "issue87-publication-validation-r1-diff-check.log",
+      "source_root": "run-evidence",
+      "published": "history/publication-r1/issue87-publication-validation-r1-diff-check.log",
+      "original_sha256": "52775c4597c827e17f9df21fe780d6e4588a34b671b2587a16279773e305358b",
+      "published_sha256": "52775c4597c827e17f9df21fe780d6e4588a34b671b2587a16279773e305358b",
+      "transformation": "capability keys redacted in JSON; machine prefixes, ANSI, trailing whitespace and final blank lines removed"
+    },
+    {
+      "source": "issue87-evidence-normalization-r2.json",
+      "source_root": "run-evidence",
+      "published": "history/issue87-evidence-normalization-r2.json",
+      "original_sha256": "cb59bfa5f714e58ec9eeb8f391b62ea6d5ef6a91459f7e2a14a6623d7268a540",
+      "published_sha256": "fb1c03b07128d781bcabbeed77adb91112f71fa92af2092fbb2d3a812764b511",
+      "transformation": "machine prefixes removed; UTF-8/LF JSON copy"
+    }
+  ],
+  "historical_interpretations": [
+    {
+      "name": "issue87-adapter-r1",
+      "interpretation": "Compile failure E0277; no tests completed."
+    },
+    {
+      "name": "issue87-adapter-r2",
+      "interpretation": "15 passed and 2 failed; EOF/live-child and steering regressions."
+    },
+    {
+      "name": "issue87-adapter-r3",
+      "interpretation": "Preliminary pass before the later correlation regressions and final source."
+    },
+    {
+      "name": "issue87-adapter-r4",
+      "interpretation": "18 passed and 2 failed; early/foreign turn correlation regressions."
+    },
+    {
+      "name": "issue87-adapter-r5",
+      "interpretation": "27 passed on a preliminary source; final adapter R6 supersedes it."
+    },
+    {
+      "name": "issue87-store-r1",
+      "interpretation": "12 passed before the lock-wait regression was added."
+    },
+    {
+      "name": "issue87-store-r2",
+      "interpretation": "12 passed and 1 failed; stop timestamp sampled before a database lock wait."
+    },
+    {
+      "name": "issue87-store-r3",
+      "interpretation": "13 passed on a preliminary source; final database R4 supersedes it."
+    },
+    {
+      "name": "issue87-check-r1",
+      "interpretation": "3,103 Node tests: 3,025 passed, 13 failed, 65 skipped. Teams SDK and Python prerequisites were missing; later gates did not run."
+    },
+    {
+      "name": "issue87-check-r2",
+      "interpretation": "Node: 3,038 passed, 65 skipped, zero failures. Runner: 299 passed, 1 failed, 5 ignored. The EOF child fixture's serial libtest prefix obscured its first JSON frame; later workspace and web gates did not finish. The fixture correction was validated in the final canonical run."
+    },
+    {
+      "name": "issue87-check-r3",
+      "interpretation": "Node: 3,037 passed, 1 failed, 65 skipped. The existing F02 native filter case with 349,354 repeated delimiters returned a retained scratch directory. Its CLI diagnostics were not retained, so the cause remains unconfirmed. The first five gates passed; later gates did not run. Three focused repetitions and canonical R4 ran on identical source; no F02 assertion, timeout or cleanup behavior was changed."
+    },
+    {
+      "name": "issue87-eof-serial-diagnostic-r1",
+      "interpretation": "Reproduced the single EOF regression failure with the canonical binary and serial test environment before correcting fixture protocol framing."
+    },
+    {
+      "name": "issue87-eof-isolation-r2",
+      "interpretation": "After the test-only terse-output correction, the exact EOF regression passed in 0.58 seconds with serial child execution."
+    },
+    {
+      "name": "issue87-f02-diagnostic-r1",
+      "interpretation": "Three exact repetitions passed with preserved native diagnostics, unchanged source and empty scratch roots; this does not explain or fix the earlier R3 failure."
+    },
+    {
+      "name": "acceptance-fixture-stop-r1",
+      "interpretation": "Fixture staffing race before browser assertions."
+    },
+    {
+      "name": "acceptance-fixture-stop-r2",
+      "interpretation": "Fixture staffing race before browser assertions."
+    },
+    {
+      "name": "acceptance-provider-stop-r1",
+      "interpretation": "11 passed and 1 failed: retained pre-stop usage baseline missing. Termination succeeded; this is not proof of a production accounting defect."
+    },
+    {
+      "name": "acceptance-fixture-suspend-r2",
+      "interpretation": "Passed before the EOF test-only correction; superseded by refreshed fixture suspend R3 on the final canonical source."
+    },
+    {
+      "name": "acceptance-fixture-stop-r4",
+      "interpretation": "Passed before the EOF test-only correction; superseded by refreshed fixture stop R5 on the final canonical source."
+    },
+    {
+      "name": "acceptance-provider-stop-r2",
+      "interpretation": "Passed before the EOF test-only correction; superseded by refreshed provider stop R3 on the final canonical source."
+    },
+    {
+      "name": "acceptance-fixture-lifecycle-r1",
+      "interpretation": "Four scenarios passed before the EOF test-only correction; superseded by refreshed lifecycle R2 on the final canonical source."
+    }
+  ],
+  "evidence_corrections": {
+    "source_order": "The initial R4 packet helper rejected differently ordered manifest rows before writing a packet. All 7,156 unique path/hash rows matched. R5 compares complete rows sorted by path; product source and test results were unchanged.",
+    "cleanup": "The first independent fixture cleanup receipts contained empty process maps after a PowerShell conversion error and are invalid. Each lane has a corrected R2 receipt using the ownership manifest as a Hashtable.",
+    "screenshots": "The corrected R2 visual review supersedes an inaccurate generic description in the unpublished R1 review: suspend displays Resume agent session; it does not display the stop-stage recovery restriction. Five actual screenshots were reviewed; the lifecycle driver produced none.",
+    "publication_whitespace": "Publication R1 passed documentation but failed Git whitespace validation on 11 public log copies. The initial normalization helper handled LF only and exited 1 without changing files. R2 removes final blank log lines and normalizes public text copies from CRLF to LF so recorded public hashes describe the actual Git blob bytes. All original logs, failed copies, failed exits and validation remain retained; product source and recorded test results are unchanged."
+  }
+}

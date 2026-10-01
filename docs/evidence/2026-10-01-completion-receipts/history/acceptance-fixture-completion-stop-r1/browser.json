@@ -1,0 +1,69 @@
+{
+  "agent_id": "2aa7e49c-904e-4bdd-ba3c-d63b963fafde",
+  "assertions": [
+    {
+      "name": "Browser launched the mission through the real server",
+      "passed": true
+    },
+    {
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(runEvents(waiting).some(event => event.type === 'run.verification_passed'))",
+      "name": "Completion is held after persisted verification while source stays clean and present",
+      "passed": false
+    }
+  ],
+  "assurance": "Deterministic Codex transport in the real owned browser/server/runner/PostgreSQL stack; no provider inference or mixed-version binary claim.",
+  "counts": {
+    "failed": 1,
+    "passed": 1
+  },
+  "failure": "The expression evaluated to a falsy value:\n\n  assert.ok(runEvents(waiting).some(event => event.type === 'run.verification_passed'))",
+  "finished_at": "2026-10-01T16:20:30.347Z",
+  "gate": {
+    "acknowledgment": {
+      "applied": true,
+      "command_id": "2bed8d22-6124-40ac-b6be-eb502d5e0656",
+      "observed_at": "2026-10-01T16:20:29.901Z"
+    },
+    "completion": {
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "event_id": "c0382fca-dc18-4a9a-ad9a-ffb9b86cddfb",
+      "received_at": "2026-10-01T16:20:29.425Z",
+      "request_forwarded": true,
+      "requested": true,
+      "run_id": "088a86df-19f8-4ecf-8bf2-3f3729d18c4b"
+    },
+    "connections": 1,
+    "failure": null,
+    "hard_stop": {
+      "command_id": "2bed8d22-6124-40ac-b6be-eb502d5e0656",
+      "forwarded_at": "2026-10-01T16:20:29.900Z",
+      "run_id": "088a86df-19f8-4ecf-8bf2-3f3729d18c4b"
+    },
+    "receipt": null,
+    "scenario": "fixture-completion-stop",
+    "unconfirmed_failure": null
+  },
+  "historical_incident_reproduced": false,
+  "http_results": [
+    {
+      "method": "POST",
+      "origin": "http://127.0.0.1:65193",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "origin": "http://127.0.0.1:65193",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/2aa7e49c-904e-4bdd-ba3c-d63b963fafde/emergency-stop",
+      "status": 200
+    }
+  ],
+  "mission_id": "374b20c6-f2b5-44bc-9856-1bc630a67c73",
+  "run_id": "088a86df-19f8-4ecf-8bf2-3f3729d18c4b",
+  "scenario": "fixture-completion-stop",
+  "schema_version": 1,
+  "started_at": "2026-10-01T16:20:21.529Z",
+  "status": "failed",
+  "title": "Completion receipt fixture-completion-stop 733c6c46-97b9-4edf-9a07-28083168812d",
+  "workspace_path": "<local-user>\\qa\\issue87-stack-20261001T161950820-9d0a7b77\\runner\\worktrees\\0a8f49e8b7824259ab479ea7de18520e\\088a86df19f84ecf8bf23f3729d18c4b"
+}

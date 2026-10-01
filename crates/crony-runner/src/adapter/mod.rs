@@ -204,6 +204,11 @@ pub enum AdapterEvent {
         progressed: bool,
         human_conversation: bool,
     },
+    ControlObservation {
+        phase: &'static str,
+        observed_at: String,
+        detail: serde_json::Value,
+    },
     TeardownUncertain {
         detail: String,
     },

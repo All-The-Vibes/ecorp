@@ -1,0 +1,164 @@
+{
+  "agent_id": "de0037c0-ecb6-47a8-b57d-e899c80fb608",
+  "assertions": [
+    {
+      "name": "Browser launched the mission through the real server",
+      "passed": true
+    },
+    {
+      "name": "Completion is held after persisted verification while source stays clean and present",
+      "passed": true
+    }
+  ],
+  "assurance": "Deterministic Codex transport in the real owned browser/server/runner/PostgreSQL stack; no provider inference or mixed-version binary claim.",
+  "counts": {
+    "failed": 0,
+    "passed": 2
+  },
+  "failure": "Expected values to be strictly equal:\n+ actual - expected\n\n+ null\n- '7e6c8368-beaf-436b-ab82-f720391c5a04'",
+  "finished_at": "2026-10-01T16:28:29.604Z",
+  "gate": {
+    "acknowledgment": {
+      "applied": true,
+      "command_id": "157eab0f-8cd9-4030-99c4-f3435a586a75",
+      "observed_at": "2026-10-01T16:28:29.170Z"
+    },
+    "completion": {
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "event_id": "0fd26a9c-bd65-4cf7-a0ef-d9f581d7bbe6",
+      "received_at": "2026-10-01T16:28:27.972Z",
+      "request_forwarded": true,
+      "requested": true,
+      "run_id": "7e6c8368-beaf-436b-ab82-f720391c5a04"
+    },
+    "connections": 1,
+    "failure": null,
+    "hard_stop": {
+      "command_id": "157eab0f-8cd9-4030-99c4-f3435a586a75",
+      "forwarded_at": "2026-10-01T16:28:29.168Z",
+      "run_id": "7e6c8368-beaf-436b-ab82-f720391c5a04"
+    },
+    "receipt": null,
+    "scenario": "fixture-completion-stop",
+    "unconfirmed_failure": null
+  },
+  "historical_incident_reproduced": false,
+  "http_results": [
+    {
+      "method": "POST",
+      "origin": "http://127.0.0.1:49240",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "origin": "http://127.0.0.1:49240",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/de0037c0-ecb6-47a8-b57d-e899c80fb608/emergency-stop",
+      "status": 200
+    }
+  ],
+  "last_observation": {
+    "events": [
+      {
+        "id": "750e254b-7af0-4a4e-b6d7-1dbb27929028",
+        "type": "run.requested"
+      },
+      {
+        "id": "01635e09-26ac-43a2-bcd9-2a0a79ddfb5f",
+        "type": "run.started"
+      },
+      {
+        "id": "818542b6-cb3d-4405-b8a3-12a89455b81e",
+        "type": "run.session"
+      },
+      {
+        "id": "607a9e51-aa43-4f8c-94d6-606714a18265",
+        "type": "run.status"
+      },
+      {
+        "id": "5c269ada-98a2-481f-8a31-db92d062f222",
+        "type": "run.status"
+      },
+      {
+        "id": "cf260196-4f9d-415a-a841-c40612e4e299",
+        "type": "run.output"
+      },
+      {
+        "id": "b99ab21c-4f7f-4224-9ce7-95bf55bbd081",
+        "type": "run.usage"
+      },
+      {
+        "id": "47255c2c-d91e-4711-b27e-7b6e66e97d3b",
+        "type": "run.control_observed"
+      },
+      {
+        "id": "5441d773-5c78-481f-abc1-8b2cec0d9f2e",
+        "type": "run.status"
+      },
+      {
+        "id": "170015e0-d71d-4e92-93b6-d4e4d72a7559",
+        "type": "run.output"
+      },
+      {
+        "id": "4d81b649-bf43-46c9-91fa-d9f5357c656e",
+        "type": "run.control_observed"
+      },
+      {
+        "id": "cc42d1b0-2168-4ffe-a7e9-db217b64f1e9",
+        "type": "run.control_observed"
+      },
+      {
+        "id": "85c0804f-c583-4f37-8b23-2d4ae1953e4c",
+        "type": "run.artifact"
+      },
+      {
+        "id": "7aabc0fc-79ba-4ebf-8876-89b236feb3b4",
+        "type": "run.session_terminated"
+      },
+      {
+        "id": "86121562-3705-41b6-b368-f52a9d423c0b",
+        "type": "run.verification_started"
+      },
+      {
+        "id": "3122c987-b30e-4444-be7b-c832f0a9a66c",
+        "type": "run.verification_evidence"
+      },
+      {
+        "id": "15f8dfbc-40d0-41a6-bc42-614131b6e33f",
+        "type": "run.verification_passed"
+      },
+      {
+        "id": "dfc1fd66-daad-419d-a7bc-5c049ce3756a",
+        "type": "run.stop_requested"
+      },
+      {
+        "id": "d50d5a9b-542e-4fd0-a7b1-b816a098afcb",
+        "type": "runner.command_socket_sent"
+      },
+      {
+        "id": "3477f092-c55c-4f80-84a5-00841595a831",
+        "type": "runner.command_acknowledged"
+      },
+      {
+        "id": "0f13fe61-9ad2-43e5-afcd-dcd5762205b0",
+        "type": "run.cancelled"
+      },
+      {
+        "id": "15f0725b-f26f-4ef0-8231-43c55c0b62c4",
+        "type": "run.workspace_preserved"
+      }
+    ],
+    "status": "cancelled",
+    "workspace_disposition": "preserved"
+  },
+  "mission_id": "3270fd98-ecdd-41ec-b241-fd01b27ff069",
+  "run_id": "7e6c8368-beaf-436b-ab82-f720391c5a04",
+  "scenario": "fixture-completion-stop",
+  "schema_version": 1,
+  "started_at": "2026-10-01T16:28:22.173Z",
+  "status": "failed",
+  "title": "Completion receipt fixture-completion-stop 499ed335-fc5b-4d40-8e46-2cf7ab97900b",
+  "verification_event_id": "15f8dfbc-40d0-41a6-bc42-614131b6e33f",
+  "verification_observed_at": "2026-10-01T16:28:28.258Z",
+  "workspace_path": "<local-user>\\qa\\issue87-stack-20261001T162757076-4c31ca32\\runner\\worktrees\\d3477ff3e098451f9d5a616a527bc561\\7e6c8368beaf436bab82f720391c5a04"
+}

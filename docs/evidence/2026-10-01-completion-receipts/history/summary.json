@@ -1,0 +1,38 @@
+{
+  "attempts": [
+    {
+      "lane": "issue87-finalization-before-r1",
+      "interpretation": "Retrospective regression on published implementation with the new test: 0 passed, 1 failed, 0 ignored, 304 filtered. Expected applied stop (true, false), observed (false, false). This does not reproduce the September 3 incident."
+    },
+    {
+      "lane": "issue87-build-r1",
+      "interpretation": "Compilation failed because Value::Bool was unqualified in server code; the qualification was corrected before build R2."
+    },
+    {
+      "lane": "issue87-build-r2",
+      "interpretation": "Passed before the active-run-reference defect was found; build R3 is the final-source receipt."
+    },
+    {
+      "lane": "issue87-store-r1",
+      "interpretation": "Earlier-source native database regression; store R2 includes the final active-run-reference tests."
+    },
+    {
+      "lane": "issue87-finalization-r2",
+      "interpretation": "Earlier-source runner tests; finalization R3 is the final-source receipt."
+    },
+    {
+      "lane": "acceptance-fixture-completion-stop-r1",
+      "interpretation": "The transport gate observed completion before the verification event was persisted. The fixture was corrected to wait for authoritative verification."
+    },
+    {
+      "lane": "acceptance-fixture-completion-stop-r2",
+      "interpretation": "Owned fixture source had a CRLF/LF mismatch. The fixture now explicitly pins base.txt to LF."
+    },
+    {
+      "lane": "acceptance-fixture-completion-stop-r3",
+      "interpretation": "Two assertions passed, then the browser could not find Emergency stop. Artifact finalization had cleared agents.current_run_id during verification. The product was corrected, native regressions were added, and completion-stop R4 passed. The failed fixture used its owned cleanup API to cancel the run; its processes stopped."
+    }
+  ],
+  "previous_published_evidence": "../2026-10-01-codex-stop-budget",
+  "limitation": "Previous F02 hostile-filter failure remains unexplained; later passes do not establish its root cause or fix."
+}

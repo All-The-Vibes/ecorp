@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "scenario": "fixture-stop",
+  "started_at": "2026-10-01T10:27:35.934Z",
+  "status": "failed",
+  "historical_incident_reproduced": false,
+  "assertions": [],
+  "http_results": [
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "method": "POST",
+      "status": 400,
+      "expected": 200,
+      "detail": "{\"error\":\"no connected runner can staff the selected mission runtime, model, and source\"}"
+    }
+  ],
+  "server": "http://127.0.0.1:55560",
+  "web": "http://127.0.0.1:55561",
+  "corp_id": "00000000-0000-4000-8000-000000000001",
+  "runner_id": "issue87-8e033de7d9114e428d0af67a29e61e63",
+  "assurance": "Explicit deterministic Codex transport fixture in the real browser/server/runner stack; no provider inference.",
+  "title": "Codex stop acceptance fixture-stop 5351f662-e8c2-4561-9ba7-44acea216a62",
+  "failure": "/api/corps/00000000-0000-4000-8000-000000000001/missions: unexpected HTTP status\n\n400 !== 200\n",
+  "finished_at": "2026-10-01T10:27:35.985Z",
+  "counts": {
+    "passed": 0,
+    "failed": 0
+  }
+}

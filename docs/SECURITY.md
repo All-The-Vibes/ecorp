@@ -319,6 +319,23 @@ scope. Timed-out availability probes retain one shared cleanup guardian per adap
 duplicate probes until that guardian finishes, preventing unbounded detached cleanup tasks. This is
 host-process containment, not a network or filesystem sandbox.
 
+Codex on Windows reuses that Job Object scope. After its two-second native interrupt deadline,
+owned teardown allows 350 milliseconds for graceful exit, terminates the scope, and attempts to
+verify the root and descendants within five seconds. Uncertain cleanup retains supervision and
+the worktree; those bounds are deadlines for attempts, not permission to report a dead process
+when the operating system has not confirmed it. Unix Codex currently supervises only the provider
+root and explicitly records `root_only`; it provides no descendant-termination assurance.
+No Codex hard stop may upload an artifact, run accepted verification, or emit accepted completion.
+
+Clean-source removal additionally requires a positive server receipt for the exact committed
+completion event and current Corp/connection/run/assignment scope. Enqueuing a terminal event is
+not cleanup authority. Until that receipt arrives, a hard directive can still be acknowledged and
+cancel the local assignment. A lost or rejected completion receipt, manual gate, failed run or
+recovery retains source; the 30-second receipt timeout cannot authorize an automatic retry in a
+new worktree or reverse a completion already committed by the server. Existing Git cleanup checks
+still apply after acknowledgment. Receipt capability is requested per completion so older runners
+do not receive an unknown server message.
+
 Mission descriptions, task contracts, and verifier policies are authority-bearing records.
 Creation validates their bounds before persistence, and every revision stores both prior and
 replacement values rather than rewriting history invisibly. Revision idempotency is scoped by Corp
@@ -352,6 +369,17 @@ transaction; a previously staged object cannot become accepted evidence after th
 Run-local limits never fence unrelated runs. A stronger existing stage is never weakened or
 reissued, and current hard fences make queued effect-advancing approval/control commands obsolete.
 Rolling usage windows limit accounting, not the set of active assignments that must be fenced.
+
+Usage charging has a five-second grace from the first persisted `suspend` or `stop` incident,
+including an operator emergency stop. Admission uses database `clock_timestamp()` after the Corp
+and run locks are held, so lock contention, replay, escalation, or a runner clock cannot extend
+the boundary. Terminal runs are noncharging immediately; a hard stage with no trustworthy boundary
+time fails closed. Late reports retain diagnostic `run.usage_observed` events with their accounting
+decision and cutoff, without changing charged totals or creating a fresh budget window. This is
+ECorp's accounting policy, not proof of when a provider generated or billed tokens. Native report
+arrival and cumulative changes are recorded separately, with generation time explicitly unknown.
+Server-owned accounting, socket-send, and acknowledgment receipts cannot be supplied as arbitrary
+runner events. Command receipts revalidate the exact Corp, runner identity, and connected epoch.
 
 Mission budget recovery is a dedicated owner/admin operation, not a resume parameter. Original
 limits and consumed usage are never reset. Proposal and decision requests are Corp-scoped,

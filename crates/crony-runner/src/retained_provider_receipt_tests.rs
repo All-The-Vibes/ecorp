@@ -155,7 +155,7 @@ async fn run_receipt_fixture(
     let mut events = Vec::new();
     tokio::time::timeout(Duration::from_secs(60), async {
         while let Some(message) = received.recv().await {
-            if let RunnerToServer::RunEvent { run_id: observed_run, event_type, payload, .. } = message {
+            if let RunnerToServer::RunEvent { event_id, run_id: observed_run, event_type, payload, .. } = message {
                 assert_eq!(observed_run, run_id);
                 if event_type == "run.artifact_upload" {
                     assert_eq!(payload["artifact_role"], "provider_evidence");
@@ -258,6 +258,9 @@ async fn run_receipt_fixture(
                         artifact_role: "source_deliverable".to_owned(),
                         sha256: payload["sha256"].as_str().unwrap().to_owned(),
                     }).unwrap();
+                }
+                if event_type == "run.completed" {
+                    assert!(fixture.assignment.hard_boundary_checkpoint.accept_completion(event_id));
                 }
                 let finished = event_type == "run.workspace_preserved";
                 events.push((event_type, payload));
