@@ -186,11 +186,25 @@ fn issue297_change(path: &str, content: &[u8]) -> Value {
     })
 }
 
+// Synthetic admission identity, not evidence of a native Git export.
+fn issue297_source_verification() -> crony_domain::SourceVerification {
+    crony_domain::SourceVerification {
+        tree: "d".repeat(40),
+        base_commit: ISSUE297_BASE.to_owned(),
+        candidate_commit: "c".repeat(40),
+        ignored_input_sha256: "e".repeat(64),
+        ignored_input_count: 0,
+        ignored_input_bytes: 0,
+    }
+}
+
 fn issue297_document(changes: Vec<Value>) -> Value {
     let patch = b"diff --git a/handoff.md b/handoff.md\n";
+    let source = issue297_source_verification();
     json!({
         "schema_version": 1, "form": "typed_artifact_set",
         "base_commit": ISSUE297_BASE, "head_commit": null,
+        "verified_tree": source.tree, "source_verification": source,
         "branch": "crony/issue297-native-fixture", "verification_sha256": ISSUE297_VERIFIER,
         "patch_sha256": hex::encode(Sha256::digest(patch)), "patch_base64": BASE64.encode(patch),
         "git_bundle_sha256": null, "git_bundle_base64": null, "changes": changes,
@@ -209,10 +223,13 @@ async fn issue297_sign(
         "content_base64": BASE64.encode(bytes),
     });
     if typed {
+        let source = issue297_source_verification();
         payload["artifact_role"] = json!("source_deliverable");
         payload["file_name"] = json!("ecorp-artifact-set.json");
         payload["form"] = json!("typed_artifact_set");
         payload["verification_sha256"] = json!(ISSUE297_VERIFIER);
+        payload["verified_tree"] = json!(source.tree);
+        payload["source_verification"] = json!(source);
         payload["base_commit"] = json!(ISSUE297_BASE);
         payload["branch"] = json!("crony/issue297-native-fixture");
         payload["integration_state"] = json!("ready_for_review");
@@ -226,6 +243,35 @@ async fn issue297_sign(
         bytes
     );
     artifact
+}
+
+#[tokio::test]
+async fn issue297_native_source_fixture_passes_current_signing_and_decode_offline() {
+    let mut artifacts = memory_store();
+    artifacts.max_bytes = crate::dependency_source::MAX_TYPED_SOURCE_ENVELOPE_BYTES;
+    let paths = vec!["handoffs/a.md".to_owned()];
+    let content = b"Signed native fixture handoff\n";
+    let document = issue297_document(vec![issue297_change(&paths[0], content)]);
+    let bytes = serde_json::to_vec(&document).unwrap();
+    let artifact = issue297_sign(&artifacts, identity(), &bytes, true).await;
+    assert_eq!(
+        crony_domain::SourceVerification::from_payload(&artifact.metadata).unwrap(),
+        issue297_source_verification()
+    );
+    let files = crate::dependency_source::decode_typed_source(
+        &artifacts.read_verified(&artifact).await.unwrap(),
+        &crate::dependency_source::ExpectedTypedSource {
+            base_commit: ISSUE297_BASE,
+            verification_sha256: ISSUE297_VERIFIER,
+            declared_paths: &paths,
+            changed_paths: None,
+            source: None,
+        },
+    )
+    .unwrap();
+    assert_eq!(files.len(), 1);
+    assert_eq!(files[0].path, paths[0]);
+    assert_eq!(files[0].content.as_bytes(), content);
 }
 
 fn issue297_identity(artifact: &StoredArtifact) -> ArtifactIdentity<'_> {
@@ -298,6 +344,11 @@ impl Issue297Fixture {
         sqlx::raw_sql(
             "CREATE TABLE missions (id UUID PRIMARY KEY,corp_id UUID,room_id UUID,status TEXT);
              CREATE TABLE room_memberships (room_id UUID,actor_id UUID);
+             CREATE TABLE verification_requests (
+                 run_id UUID PRIMARY KEY,corp_id UUID NOT NULL,task_id UUID NOT NULL,
+                 status TEXT NOT NULL DEFAULT 'pending'
+                     CHECK (status IN ('pending','approved','rejected'))
+             );
              CREATE TABLE events (
                  seq BIGSERIAL PRIMARY KEY,id UUID,schema_version INTEGER,corp_id UUID,room_id UUID,
                  actor_id UUID,type TEXT,aggregate_type TEXT,aggregate_id UUID,aggregate_version BIGINT,

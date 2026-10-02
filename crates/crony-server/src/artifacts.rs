@@ -12,8 +12,8 @@ use crony_store::StoredArtifact;
 use futures_util::TryStreamExt;
 use hmac::{Hmac, KeyInit, Mac};
 use object_store::{
-    GetOptions, GetRange, GetResult, ObjectStore, aws::AmazonS3Builder, local::LocalFileSystem,
-    path::Path as ObjectPath,
+    GetOptions, GetRange, GetResult, ObjectStore, ObjectStoreExt, aws::AmazonS3Builder,
+    local::LocalFileSystem, path::Path as ObjectPath,
 };
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -1108,6 +1108,7 @@ mod tests {
             },
             range,
             attributes: Default::default(),
+            extensions: Default::default(),
         }
     }
 
