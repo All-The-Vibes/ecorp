@@ -1,0 +1,66 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$product = '<USER_HOME>\.codex\worktrees\issue291-finite-budget\ecorp'
+$receiptPath = Join-Path $PSScriptRoot 'issue291-web-r3.json'
+if (Test-Path -LiteralPath $receiptPath) { throw 'Preserve the existing validation attempt.' }
+foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|GIT_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','npm_execpath')) { [Environment]::SetEnvironmentVariable($name,$null,'Process') }
+}
+$env:PATH = '<USER_HOME>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64;' + $env:PATH
+$receipt = [ordered]@{repository='All-The-Vibes/ecorp';issue=291;status='running';wrapper_pid=$PID;started_at_utc=[DateTime]::UtcNow.ToString('o');source=$product;checks=@();failure=$null}
+function Save { [IO.File]::WriteAllText($receiptPath,($receipt | ConvertTo-Json -Depth 30)+"`n") }
+function Check([string]$Name,[string]$Log,[int]$Code,[string]$Command) {
+    $receipt.checks += [ordered]@{name=$Name;command=$Command;exit_code=$Code;log=$Log;sha256=(Get-FileHash -LiteralPath $Log).Hash.ToLowerInvariant()}
+    Save
+    Write-Output "$Name exit=$Code"
+    if ($Code) { throw "$Name failed; preserve the original log." }
+}
+Save
+Push-Location -LiteralPath $product
+try {
+    $before = & node (Join-Path $PSScriptRoot 'issue291-source-snapshot-r1.mjs') $product (Join-Path $PSScriptRoot 'issue291-source-before-web-r3.json')
+    if ($LASTEXITCODE) { throw 'Cannot establish source before web gates.' }
+    $receipt.source_before = $before | ConvertFrom-Json -AsHashtable
+    Save
+    $syntaxLog = Join-Path $PSScriptRoot 'issue291-e2e-syntax-r3.log'
+    & node --check tools/e2e_token_ceiling.mjs *> $syntaxLog
+    Check 'e2e-entrypoint-syntax' $syntaxLog $LASTEXITCODE 'node --check tools/e2e_token_ceiling.mjs'
+    $unitLog = Join-Path $PSScriptRoot 'issue291-helper-unit-r5.log'
+    & node --test --test-reporter=tap tools/token_ceiling.test.mjs *> $unitLog
+    Check 'safe-helper-unit-discovery' $unitLog $LASTEXITCODE 'node --test --test-reporter=tap tools/token_ceiling.test.mjs'
+    $unitText = Get-Content -LiteralPath $unitLog -Raw
+    if ($unitText -notmatch '(?m)^# tests 5\s*$' -or $unitText -notmatch '(?m)^# pass 5\s*$' -or $unitText -notmatch '(?m)^# fail 0\s*$') { throw 'Expected five actual helper tests.' }
+    $descriptor = Join-Path $PSScriptRoot 'issue291-approved-feed-lock-r3.yaml'
+    if (Test-Path -LiteralPath $descriptor) { throw 'Preserve the existing descriptor.' }
+    $primary = [IO.File]::ReadAllBytes((Join-Path $product 'pnpm-lock.yaml'))
+    if ([Text.Encoding]::UTF8.GetString($primary).Contains('https://registry.npmjs.org/')) { throw 'Inspect any required feed-prefix replacements before writing the descriptor.' }
+    [IO.File]::WriteAllBytes($descriptor,$primary)
+    $receipt.descriptor = @{path=$descriptor;sha256=(Get-FileHash -LiteralPath $descriptor).Hash.ToLowerInvariant();replacements=0;qualification='Current integrity-only lock copied byte-for-byte. No registry, TLS, versions, integrities or primary lock changes.'}
+    foreach ($gate in @('build','lint')) {
+        $log = Join-Path $PSScriptRoot "issue291-web-$gate-r3.log"
+        & node tools/test_token_ceiling.mjs --web-gate $gate $descriptor *> $log
+        $code = $LASTEXITCODE
+        Check "actual-disposable-web-$gate" $log $code "node tools/test_token_ceiling.mjs --web-gate $gate <identical-qualified-descriptor>"
+        $result = Get-Content -LiteralPath $log -Raw | ConvertFrom-Json -AsHashtable
+        $child = Get-Content -LiteralPath $result.receipt -Raw | ConvertFrom-Json -AsHashtable -Depth 40
+        $receipt.checks[-1].child_receipt = $result.receipt
+        $receipt.checks[-1].child_receipt_sha256 = (Get-FileHash -LiteralPath $result.receipt).Hash.ToLowerInvariant()
+        if ($result.status -ne 'passed' -or !$child.source_unchanged -or !$child.primary_lock_unchanged -or $child.source_before -cne $receipt.source_before.source_fingerprint) { throw 'Web helper did not validate this unchanged source.' }
+        Save
+    }
+    $receipt.status = 'passed'
+} catch { $receipt.status='failed';$receipt.failure=$_.Exception.Message } finally {
+    try {
+        $after = & node (Join-Path $PSScriptRoot 'issue291-source-snapshot-r1.mjs') $product (Join-Path $PSScriptRoot 'issue291-source-after-web-r3.json')
+        if ($LASTEXITCODE) { throw 'Cannot establish source after web gates.' }
+        $receipt.source_after = $after | ConvertFrom-Json -AsHashtable
+        $receipt.source_unchanged = $receipt.source_before.source_fingerprint -ceq $receipt.source_after.source_fingerprint
+        if (!$receipt.source_unchanged) { throw 'Source changed during web checks.' }
+    } catch { $receipt.status='failed';$receipt.source_failure=$_.Exception.Message }
+    Pop-Location
+    $receipt.finished_at_utc = [DateTime]::UtcNow.ToString('o')
+    Save
+}
+[pscustomobject]$receipt | Select-Object issue,status,source_unchanged,failure | ConvertTo-Json
+if ($receipt.status -ne 'passed') { exit 1 }

@@ -1,0 +1,288 @@
+{
+  "schema_version": 1,
+  "issue": 291,
+  "status": "passed",
+  "source": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+  "qa_root": "<USER_HOME>\\code\\qa\\issue224-planned-attempts-20261002-issue291-r2",
+  "started_at": "2026-10-02T04:07:21.215Z",
+  "cases": [
+    {
+      "label": "exact-ceiling",
+      "mission_id": "ec3ee44a-5b8d-4fe9-93fd-2554584a1c61",
+      "run_id": "4f0df860-13fb-4f50-a4e4-ade72225c60c",
+      "persisted": {
+        "input_tokens": 10,
+        "output_tokens": 2,
+        "budget_tokens_limit": 999999999999999,
+        "budget_cost_microusd_limit": 1000000
+      },
+      "prior_history_unchanged": true,
+      "artifact": {
+        "id": "c38ca646-75e2-4020-9d91-9fd4d0cc0ed7",
+        "bytes": 935,
+        "sha256": "dcd8da5392005358f610a1a9b87379734edd0f5873ca90f641d669924729bcb4"
+      },
+      "verification_status": "passed",
+      "max_attempts": 2
+    },
+    {
+      "label": "requester-remainder",
+      "mission_id": "32dba825-fdbc-4cb6-9494-69b06af13844",
+      "run_id": "e4f9558b-3cc3-4db6-b577-ee393428468b",
+      "persisted": {
+        "input_tokens": 10,
+        "output_tokens": 2,
+        "budget_tokens_limit": 20,
+        "budget_cost_microusd_limit": 1000000
+      },
+      "prior_history_unchanged": true,
+      "artifact": {
+        "id": "c9b9e482-92f5-433d-93ea-b534065137b8",
+        "bytes": 935,
+        "sha256": "1b8da6aebc388a808f9d71ea9069f13568094e73ed4ba2db25707235e06a622b"
+      },
+      "verification_status": "passed",
+      "max_attempts": 2
+    },
+    {
+      "label": "corp-remainder",
+      "mission_id": "2d873573-02f1-44ff-b09c-be8ed6915332",
+      "run_id": "bc3cb5c2-3b2b-468e-887b-d2feb824c1f3",
+      "persisted": {
+        "input_tokens": 10,
+        "output_tokens": 2,
+        "budget_tokens_limit": 20,
+        "budget_cost_microusd_limit": 1000000
+      },
+      "prior_history_unchanged": true,
+      "artifact": {
+        "id": "396c67eb-cf47-4b12-afd4-520a5d849e07",
+        "bytes": 935,
+        "sha256": "34d9e4a3cc793362d1c448fa0d08cbdffd9f006316d91a1c1e51397aca3e24c3"
+      },
+      "verification_status": "passed",
+      "max_attempts": 2
+    },
+    {
+      "label": "zero-remainder",
+      "status": 409,
+      "attempts_consumed": 0,
+      "runs_created": 0
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions/preview",
+      "value": 0,
+      "status": 400,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions",
+      "value": 0,
+      "status": 400,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions/preview",
+      "value": -1,
+      "status": 400,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions",
+      "value": -1,
+      "status": 400,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions/preview",
+      "value": 1000000000000000,
+      "status": 400,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions",
+      "value": 1000000000000000,
+      "status": 400,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions/preview",
+      "value": 1.5,
+      "status": 422,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions",
+      "value": 1.5,
+      "status": 422,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions/preview",
+      "value": "malformed",
+      "status": 422,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions",
+      "value": "malformed",
+      "status": 422,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions/preview",
+      "value": "999999999999999",
+      "status": 422,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions",
+      "value": "999999999999999",
+      "status": 422,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions/preview",
+      "value": 1e+30,
+      "status": 422,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions",
+      "value": 1e+30,
+      "status": 422,
+      "ledger_unchanged": true
+    }
+  ],
+  "scope": "Real browser, server, PostgreSQL and runner with the existing synthetic Codex protocol peer. No vendor inference, independent human review, Factory acceptance, publication or merge claim.",
+  "source_before": "e366d091bab92043a0e67a4efc30fa84f19e632bf17541d31a8ae6510e218fce",
+  "ownership_sha256": "e3d7e70fc6bc0b3cf8deed524da280f3f21d53b07d5e6e888ee02b9f3854d0a9",
+  "build": {
+    "receipt": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-native-r2-build.json",
+    "receipt_sha256": "3dc5663bd9a9dc9d63b9460ec1e55dbc7ab6d4d5088e73abb4238d3ca836d633",
+    "cargo_json_sha256": "1cc0d7cb6b5d082e7d5b384374c5d999dfd211bb2986e32d6ef6806156173be6",
+    "binaries": [
+      {
+        "role": "server",
+        "executable": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp\\target\\debug\\crony-server.exe",
+        "sha256": "9bd273e8c58a8c5da905d24566bed7a62039a14699d9942efef17d56042bc68d",
+        "compiler_fresh": true
+      },
+      {
+        "role": "runner",
+        "executable": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp\\target\\debug\\crony-runner.exe",
+        "sha256": "b3b3813104776f392b91ef2b1711075113abf1e9b50674d97992d06a48893c21",
+        "compiler_fresh": true
+      }
+    ]
+  },
+  "processes_before": {
+    "server": {
+      "creation": "2026-10-02T04:07:16.2814619Z",
+      "port_owned": true,
+      "pid": 5128,
+      "native_creation_ticks": "639265108362814619",
+      "platform": "win32",
+      "executable": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp\\target\\debug\\crony-server.exe"
+    },
+    "runner": {
+      "creation": "2026-10-02T04:07:17.9367878Z",
+      "port_owned": false,
+      "pid": 42048,
+      "native_creation_ticks": "639265108379367878",
+      "platform": "win32",
+      "executable": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp\\target\\debug\\crony-runner.exe"
+    },
+    "web": {
+      "creation": "2026-10-02T04:07:17.9651069Z",
+      "port_owned": true,
+      "pid": 28888,
+      "native_creation_ticks": "639265108379651069",
+      "platform": "win32",
+      "executable": "<USER_HOME>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe"
+    },
+    "postgres": {
+      "creation": "2026-10-02T04:07:14.8992159Z",
+      "port_owned": true,
+      "pid": 32284,
+      "native_creation_ticks": "639265108348992159",
+      "platform": "win32",
+      "executable": "<USER_HOME>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe"
+    }
+  },
+  "fixture_source": {
+    "repository": "ecorp-fixture/planned-attempts-fixture",
+    "base_ref": "main",
+    "base_commit": "2e533d1751f17badc66a12bacaf4071b4f3c4dbb"
+  },
+  "original_policy_defaults": {
+    "actor_tokens_per_24h": 999999999999999,
+    "actor_cost_microusd_per_24h": 10000000,
+    "corp_tokens_per_24h": 999999999999999,
+    "corp_cost_microusd_per_24h": 100000000,
+    "no_progress_event_limit": 8,
+    "repeated_tool_limit": 5
+  },
+  "served_app": {
+    "url": "http://127.0.0.1:16085/src/App.tsx",
+    "served_sha256": "abdb193ab10c86c429dc9542a183a526c2ac4dce87b47571d9b9c0a121fc709e",
+    "original_sha256": "2bd60cd3328f762a921ce9429410ec7de305b668550d9897f19555f4f6da1478",
+    "binding": "Actual browser response source-map bytes equal the physical reviewed source"
+  },
+  "page_errors": [],
+  "prior_history": {
+    "ec3ee44a-5b8d-4fe9-93fd-2554584a1c61": "61416febd5f84308c13fb28feb47302cde18e6b9235359f4acff0e92eac4b5e5",
+    "32dba825-fdbc-4cb6-9494-69b06af13844": "b4a7d2aaf6cb28554c032dabd3b7cfcbff5a70390ec9fa1eae3048caaaca805c",
+    "2d873573-02f1-44ff-b09c-be8ed6915332": "4c54d336cc84cac264d2a0adf17697f362bdb1284e726eac87082df9819a681d"
+  },
+  "processes_after": {
+    "server": {
+      "creation": "2026-10-02T04:07:16.2814619Z",
+      "port_owned": true,
+      "pid": 5128,
+      "native_creation_ticks": "639265108362814619",
+      "platform": "win32",
+      "executable": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp\\target\\debug\\crony-server.exe"
+    },
+    "runner": {
+      "creation": "2026-10-02T04:07:17.9367878Z",
+      "port_owned": false,
+      "pid": 42048,
+      "native_creation_ticks": "639265108379367878",
+      "platform": "win32",
+      "executable": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp\\target\\debug\\crony-runner.exe"
+    },
+    "web": {
+      "creation": "2026-10-02T04:07:17.9651069Z",
+      "port_owned": true,
+      "pid": 28888,
+      "native_creation_ticks": "639265108379651069",
+      "platform": "win32",
+      "executable": "<USER_HOME>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe"
+    },
+    "postgres": {
+      "creation": "2026-10-02T04:07:14.8992159Z",
+      "port_owned": true,
+      "pid": 32284,
+      "native_creation_ticks": "639265108348992159",
+      "platform": "win32",
+      "executable": "<USER_HOME>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe"
+    }
+  },
+  "source_after": "e366d091bab92043a0e67a4efc30fa84f19e632bf17541d31a8ae6510e218fce",
+  "finished_at": "2026-10-02T04:08:41.312Z"
+}

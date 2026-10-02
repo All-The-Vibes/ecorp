@@ -1,0 +1,99 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 291,
+  "status": "passed",
+  "wrapper_pid": 36740,
+  "purpose": "Fresh SQLx regressions: finite planning, initial remaining allocation, invalid admission and migration of unchanged historical spend",
+  "source": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-02T04:05:50.894Z",
+    "source": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "tree": "70ca1719de097ef9b27819acc847e9dce14b19b2",
+    "branch": "codex/issue291-finite-budget",
+    "status": "M apps/web/src/App.tsx\n M apps/web/src/missionPreview.test.mjs\n M crates/crony-domain/src/lib.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/budget_revision.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/factory_connection_tests.rs\n M crates/crony-store/src/lib.rs\n M db/migrations/manifest.json\n?? crates/crony-store/src/token_ceiling_tests.rs\n?? db/migrations/0057_token_budget_ceiling.sql\n?? tools/e2e_token_ceiling.mjs\n?? tools/test_token_ceiling.mjs\n?? tools/token_ceiling.test.mjs",
+    "clean": false,
+    "source_file_count": 7151,
+    "source_fingerprint": "e366d091bab92043a0e67a4efc30fa84f19e632bf17541d31a8ae6510e218fce",
+    "manifest": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-source-before-native-db-r3.json",
+    "manifest_sha256": "708fe7ebfafd0cb5479914635501382a0badaa34ebe43d1fa18db481148d3cd6"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-02T04:06:19.612Z",
+    "source": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "tree": "70ca1719de097ef9b27819acc847e9dce14b19b2",
+    "branch": "codex/issue291-finite-budget",
+    "status": "M apps/web/src/App.tsx\n M apps/web/src/missionPreview.test.mjs\n M crates/crony-domain/src/lib.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/budget_revision.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/factory_connection_tests.rs\n M crates/crony-store/src/lib.rs\n M db/migrations/manifest.json\n?? crates/crony-store/src/token_ceiling_tests.rs\n?? db/migrations/0057_token_budget_ceiling.sql\n?? tools/e2e_token_ceiling.mjs\n?? tools/test_token_ceiling.mjs\n?? tools/token_ceiling.test.mjs",
+    "clean": false,
+    "source_file_count": 7151,
+    "source_fingerprint": "e366d091bab92043a0e67a4efc30fa84f19e632bf17541d31a8ae6510e218fce",
+    "manifest": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-source-after-native-db-r3.json",
+    "manifest_sha256": "f45aab707172a22181e2445535414c81bb8338f497db689ece0d835042261f0f"
+  },
+  "source_unchanged": true,
+  "qa_root": "<USER_HOME>\\code\\qa\\issue291-finite-budget-20261002-r3",
+  "started_at_utc": "2026-10-02T04:05:51.3479265Z",
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "command": "initdb --auth=scram-sha-256 (private pwfile)",
+      "exit_code": 0,
+      "log": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-native-database-r3-initdb.log",
+      "sha256": "221c4bef47a67c6cf1bd3493e0e1b515008039bc03b397bca9991fee30e1c310",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0,
+        "summaries": 0
+      },
+      "passed_test_names": []
+    },
+    {
+      "name": "complete-finite-budget-sqlx-lane",
+      "command": "cargo test --locked --offline -p crony-store token_ceiling -- --ignored --test-threads=1",
+      "exit_code": 0,
+      "log": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-native-database-r3-tests.log",
+      "sha256": "17b8d03b0da836f560ea5cac305be7e9003871454b74ee8d754b1b35a9a26fa7",
+      "counts": {
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 554,
+        "summaries": 1
+      },
+      "passed_test_names": [
+        "workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_initial_dispatch_clamps_mission_remaining_and_rejects_exhaustion",
+        "workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_initial_dispatch_clamps_rolling_allowances_and_preserves_history",
+        "workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_invalid_admission_does_not_write_ledgers",
+        "workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_migration_preserves_existing_allocations_spend_and_graph_bounds",
+        "workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_store_and_factory_accept_exact_and_smaller_budgets"
+      ],
+      "discovery_log": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-native-database-r3-list.log",
+      "discovery_sha256": "1befa1d8353ae59bb946e9ceb2e68c2502c5f55941aa202b3c3f5dd70dc6d98c",
+      "discovered_test_names": [
+        "workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_initial_dispatch_clamps_mission_remaining_and_rejects_exhaustion",
+        "workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_initial_dispatch_clamps_rolling_allowances_and_preserves_history",
+        "workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_invalid_admission_does_not_write_ledgers",
+        "workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_migration_preserves_existing_allocations_spend_and_graph_bounds",
+        "workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_store_and_factory_accept_exact_and_smaller_budgets"
+      ],
+      "complete_discovered_lane_executed": true
+    }
+  ],
+  "cleanup": "Exact owned PostgreSQL stopped; fixture port inactive. Database, private credentials and logs preserved.",
+  "failure": null,
+  "scope": "Prospective contributor regressions only. No real-provider, native Factory publication or independent human acceptance.",
+  "authentication": {
+    "wrong_password_rejected": true,
+    "method": "scram-sha-256",
+    "delivery": "Private fixture credential files. SQLx environment-only delivery is reduced assurance.",
+    "authenticated_query": true
+  },
+  "finished_at_utc": "2026-10-02T04:06:20.7544305Z"
+}

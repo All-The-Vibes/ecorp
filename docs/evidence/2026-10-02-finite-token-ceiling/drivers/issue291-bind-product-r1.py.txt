@@ -1,0 +1,197 @@
+"""Bind the observed physical candidate to ordinary Git blobs, without rewriting it."""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+RUN = Path(__file__).resolve().parent
+WT = Path(r"<USER_HOME>\.codex\worktrees\issue291-finite-budget\ecorp")
+BASE = "878a1774774b0630c904cbaf4b05e1b346777817"
+BRANCH = "codex/issue291-finite-budget"
+FINGERPRINT = "e366d091bab92043a0e67a4efc30fa84f19e632bf17541d31a8ae6510e218fce"
+PLAN = ["migrations", "state-audit-compatibility", "state-audit-evm", "docs", "repository-docs", "node-tests", "format", "clippy", "rust-tests", "web-build", "web-lint"]
+SCANNER = Path(r"<USER_HOME>\code\ecorp\output\pr-completion\20260922T123548Z\gitleaks-8.30.1\gitleaks.exe")
+SCANNER_SHA = "17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c"
+ENV = dict(os.environ, GIT_LITERAL_PATHSPECS="1")
+for name in ("GITLEAKS_CONFIG", "GITLEAKS_CONFIG_TOML"):
+    ENV.pop(name, None)
+
+
+def require(value, message):
+    if not value:
+        raise RuntimeError(message)
+
+
+def now():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def sha(value):
+    return hashlib.sha256(value).hexdigest()
+
+
+def load(path):
+    return json.loads(Path(path).read_text(encoding="utf-8-sig"))
+
+
+def write(path, value):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("xb") as stream:
+        stream.write(value if isinstance(value, bytes) else (json.dumps(value, indent=2, ensure_ascii=False) + "\n").encode())
+
+
+def command(argv, timeout=300, data=None):
+    return subprocess.run([str(x) for x in argv], input=data, cwd=WT, env=ENV,
+                          capture_output=True, timeout=timeout, creationflags=subprocess.CREATE_NO_WINDOW)
+
+
+def git(*args, data=None):
+    result = command(["git", "--no-optional-locks", "-C", WT, *args], data=data)
+    require(result.returncode == 0, f"Git {args[0]} failed: {result.stderr.decode(errors='replace')[:1200]}")
+    return result.stdout
+
+
+def text_git(*args):
+    return git(*args).decode().strip()
+
+
+def inventory():
+    return sorted(set(git("ls-files", "-co", "--exclude-standard", "-z").decode().split("\0")) - {""})
+
+
+def validated_source():
+    canonical = load(RUN / "issue291-canonical-r1.json")
+    require(canonical["status"] == "passed" and canonical["source_unchanged"], "Canonical validation did not pass unchanged.")
+    checks = canonical["canonical"]
+    require(checks["exit_code"] == 0 and not checks["source_changed"] and not checks["not_run"], "Canonical status differs.")
+    require([c["name"] for c in checks["checks"]] == PLAN and all(c["passed"] and c["exitCode"] == 0 for c in checks["checks"]), "Incomplete named gate plan.")
+    manifests = []
+    for key in ("source_before", "source_after"):
+        source = canonical[key]
+        path = Path(source["manifest"])
+        require(sha(path.read_bytes()) == source["manifest_sha256"], "Observed source manifest changed.")
+        manifest = load(path)
+        require(manifest["source_fingerprint"] == FINGERPRINT and manifest["head"] == BASE and manifest["source_file_count"] == 7151, "Validated candidate differs.")
+        manifests.append(manifest)
+    require(manifests[0]["files"] == manifests[1]["files"], "Canonical physical source differed.")
+    files = manifests[1]["files"]
+    require(sha(json.dumps(files, ensure_ascii=False, separators=(",", ":")).encode()) == FINGERPRINT, "Physical fingerprint encoding differs.")
+    require(inventory() == [name for name, digest in files], "Physical file inventory changed.")
+    for name, digest in files:
+        path = WT / name
+        require(not path.is_symlink() and path.resolve(strict=True).is_relative_to(WT.resolve()), "Source path escapes owned checkout.")
+        require(sha(path.read_bytes()) == digest, "Physical source changed: " + name)
+    for filename in ("issue291-web-r3.json", "issue291-native-database-r3.json", "issue291-native-r2-lifecycle.json"):
+        receipt = load(RUN / filename)
+        require(receipt["status"] == "passed" and receipt["source_unchanged"], "Focused or native validation incomplete.")
+        require(receipt["source_before"]["source_fingerprint"] == FINGERPRINT and receipt["source_after"]["source_fingerprint"] == FINGERPRINT, "Focused physical source differs.")
+    return files
+
+
+def expected_paths():
+    owner = load(RUN / "issue291-owned-worktree-r4.json")
+    require(owner["owner_run"] == RUN.name and owner["source"] == str(WT) and owner["branch"] == BRANCH, "Worktree ownership differs.")
+    paths = sorted(row["path"] for row in owner["product_edits"])
+    require(len(paths) == 15 and len(set(paths)) == 15, "Unexpected contribution scope.")
+    for row in owner["product_edits"]:
+        require(sha((WT / row["path"]).read_bytes()) == row["sha256"], "Reviewed edit changed.")
+    return paths
+
+
+def assert_idle():
+    for name in ("MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "index.lock"):
+        require(not Path(text_git("rev-parse", "--path-format=absolute", "--git-path", name)).exists(), "Another Git operation is active.")
+    require(text_git("branch", "--show-current") == BRANCH, "Branch changed.")
+
+
+def scan(label, args):
+    require(sha(SCANNER.read_bytes()) == SCANNER_SHA, "Scanner identity differs.")
+    report = RUN / (label + ".json")
+    log = RUN / (label + ".log")
+    require(not report.exists() and not log.exists(), "Preserve previous scan.")
+    flags = ["--redact=100", "--no-banner", "--no-color", "--ignore-gitleaks-allow", "--gitleaks-ignore-path", WT / ".gitleaksignore", "--exit-code=42", "--timeout=300", "--report-format=json", "--report-path", report]
+    if (WT / ".gitleaks.toml").exists():
+        flags += ["--config", WT / ".gitleaks.toml"]
+    result = command([SCANNER, *args, *flags], timeout=330)
+    write(log, result.stdout + result.stderr)
+    row = dict(exit_code=result.returncode, finding_count=len(load(report)) if report.exists() else None,
+               log=str(log), log_sha256=sha(log.read_bytes()), report=str(report),
+               report_sha256=sha(report.read_bytes()) if report.exists() else None, scanner_sha256=SCANNER_SHA)
+    write(RUN / (label + "-receipt.json"), row)
+    require(row["exit_code"] == 0 and row["finding_count"] == 0, "Secret scan failed; preserve redacted diagnostic receipt.")
+    return row
+
+
+def stage():
+    assert_idle()
+    require(text_git("rev-parse", "HEAD") == BASE, "Starting head changed.")
+    require(not git("diff", "--cached", "--name-only").strip(), "Preserve existing staged work.")
+    files = validated_source()
+    paths = expected_paths()
+    pending = {line[3:] for line in git("status", "--porcelain=v1", "-z").decode().split("\0") if line}
+    require(pending == set(paths), "Unexpected pending changes; preserve them.")
+    context = load(RUN / "issue291-context-r2.json")
+    require(context["status"] == "complete" and context["actor"] == "shyamsridhar123" and context["main_after"] == BASE and not context["branch_pulls"] and context["issue"]["state"] == "open", "Remote context needs reconciliation.")
+    git("add", "--", *paths)
+    require(sorted(text_git("diff", "--cached", "--name-only").splitlines()) == paths, "Staged path scope differs.")
+    require(not git("diff", "--name-only").strip(), "Unstaged source changed.")
+    git("diff", "--cached", "--check")
+    rows = []
+    directory = RUN / "issue291-product-scan-input-r1"
+    require(not directory.exists(), "Preserve prior scan input.")
+    directory.mkdir()
+    for name in paths:
+        attributes = git("check-attr", "-z", "filter", "working-tree-encoding", "text", "eol", "--", name).decode().split("\0")
+        attrs = {attributes[i + 1]: attributes[i + 2] for i in range(0, len(attributes) - 1, 3)}
+        require(attrs["filter"] == "unspecified" and attrs["working-tree-encoding"] == "unspecified", "Unexpected clean filter or encoding.")
+        raw = (WT / name).read_bytes()
+        blob = git("show", ":" + name)
+        require(blob == raw or blob == raw.replace(b"\r\n", b"\n"), "Staging changed more than native CRLF to LF: " + name)
+        object_id = text_git("rev-parse", ":" + name)
+        require(hashlib.sha1(b"blob " + str(len(blob)).encode() + b"\0" + blob).hexdigest() == object_id, "Git blob identity differs.")
+        target = directory / name
+        write(target, blob)
+        rows.append(dict(path=name, physical_sha256=sha(raw), physical_bytes=len(raw), git_blob=object_id,
+                         git_blob_sha256=sha(blob), git_blob_bytes=len(blob), attributes=attrs,
+                         normalization="none" if blob == raw else "CRLF-to-LF-only"))
+    validated_source()
+    product_tree = text_git("write-tree")
+    scan_receipt = scan("issue291-product-secret-scan-r1", ["dir", directory])
+    record = dict(status="passed", recorded_at_utc=now(), base=BASE, base_tree=text_git("rev-parse", "HEAD^{tree}"),
+                  branch=BRANCH, product_tree=product_tree, physical_source_fingerprint=FINGERPRINT, source_file_count=len(files),
+                  physical_source_preserved=True, unchanged_paths_keep_base_blobs=True, product_files=rows,
+                  canonical_receipt_sha256=sha((RUN / "issue291-canonical-r1.json").read_bytes()), secret_scan=scan_receipt,
+                  evidence_limit="Validation ran on the recorded physical candidate before staging. Git converted only applicable CRLF sequences to LF; native receipt bytes were not claimed identical to those normalized blobs.")
+    write(RUN / "issue291-product-binding-r1.json", record)
+    print(json.dumps({key: record[key] for key in ("status", "product_tree", "physical_source_fingerprint", "source_file_count")}))
+
+
+def commit():
+    binding = load(RUN / "issue291-product-binding-r1.json")
+    assert_idle()
+    require(binding["status"] == "passed" and text_git("rev-parse", "HEAD") == BASE and text_git("write-tree") == binding["product_tree"], "Staged candidate changed.")
+    validated_source()
+    expected_paths()
+    require(not git("diff", "--name-only").strip(), "Unstaged source changed.")
+    result = git("commit", "-m", "fix(budgets): enforce finite token ceiling and remaining authority")
+    write(RUN / "issue291-product-commit-r1.log", result)
+    head = text_git("rev-parse", "HEAD")
+    require(text_git("show", "-s", "--format=%P", "HEAD") == BASE and text_git("rev-parse", "HEAD^{tree}") == binding["product_tree"], "Committed history differs.")
+    require(not git("status", "--porcelain=v1").strip(), "Committed checkout is not clean.")
+    validated_source()
+    record = dict(status="passed", recorded_at_utc=now(), head=head, tree=binding["product_tree"], parent=BASE,
+                  branch=BRANCH, physical_source_fingerprint=FINGERPRINT, physical_source_preserved=True,
+                  binding_sha256=sha((RUN / "issue291-product-binding-r1.json").read_bytes()),
+                  identity=text_git("show", "-s", "--format=%an <%ae>%n%cn <%ce>", "HEAD"))
+    write(RUN / "issue291-product-commit-r1.json", record)
+    print(json.dumps(record))
+
+
+if __name__ == "__main__":
+    {"stage": stage, "commit": commit}[sys.argv[1]]()

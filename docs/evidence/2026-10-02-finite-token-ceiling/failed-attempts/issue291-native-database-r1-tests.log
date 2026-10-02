@@ -1,0 +1,39 @@
+    Finished `test` profile [unoptimized] target(s) in 1.28s
+     Running unittests src\lib.rs (target\debug\deps\crony_store-55cb383881a956a4.exe)
+
+running 5 tests
+test workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_initial_dispatch_clamps_mission_remaining_and_rejects_exhaustion ... FAILED
+test workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_initial_dispatch_clamps_rolling_allowances_and_preserves_history ... FAILED
+test workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_invalid_admission_does_not_write_ledgers ... ok
+test workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_migration_preserves_existing_allocations_spend_and_graph_bounds ... FAILED
+test workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_store_and_factory_accept_exact_and_smaller_budgets ... ok
+
+failures:
+
+---- workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_initial_dispatch_clamps_mission_remaining_and_rejects_exhaustion stdout ----
+Error: error returned from database: null value in column "workspace_run_id" of relation "runs" violates not-null constraint
+
+Caused by:
+    null value in column "workspace_run_id" of relation "runs" violates not-null constraint
+
+---- workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_initial_dispatch_clamps_rolling_allowances_and_preserves_history stdout ----
+Error: error returned from database: null value in column "workspace_run_id" of relation "runs" violates not-null constraint
+
+Caused by:
+    null value in column "workspace_run_id" of relation "runs" violates not-null constraint
+
+---- workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_migration_preserves_existing_allocations_spend_and_graph_bounds stdout ----
+Error: error returned from database: null value in column "workspace_run_id" of relation "runs" violates not-null constraint
+
+Caused by:
+    null value in column "workspace_run_id" of relation "runs" violates not-null constraint
+
+
+failures:
+    workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_initial_dispatch_clamps_mission_remaining_and_rejects_exhaustion
+    workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_initial_dispatch_clamps_rolling_allowances_and_preserves_history
+    workspace_connections_tests::factory_connections::token_ceiling_tests::token_ceiling_migration_preserves_existing_allocations_spend_and_graph_bounds
+
+test result: FAILED. 2 passed; 3 failed; 0 ignored; 0 measured; 554 filtered out; finished in 12.38s
+
+error: test failed, to rerun pass `-p crony-store --lib`

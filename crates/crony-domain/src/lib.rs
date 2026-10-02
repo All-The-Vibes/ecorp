@@ -25,6 +25,10 @@ pub use retained_provider_receipt::{
 };
 pub use source_verification::{CANONICAL_SOURCE_VERIFICATION_CAPABILITY, SourceVerification};
 
+/// Finite token authority. Authored smaller limits and recorded usage still apply.
+/// This exact integer is also representable by the web client's JavaScript numbers.
+pub const MAX_TOKEN_BUDGET: i64 = 999_999_999_999_999;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ActorKind {

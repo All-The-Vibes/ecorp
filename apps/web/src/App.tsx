@@ -61,6 +61,8 @@ import { AgentPinControl } from './AgentPinControl'
 import { collaborationSnapshotIsCurrent, createDiscussionDraftStore, selectCollaborationMission } from './missionCollaboration'
 import type { CollaborationInput, DiscussionDraft } from './missionCollaboration'
 
+const MAX_TOKEN_BUDGET = 999_999_999_999_999
+
 type Actor = {
   id: string
   name: string
@@ -2239,7 +2241,7 @@ function BudgetRevisionPanel({
     setFinishAcceptanceTests(task.contract.acceptance_tests.join('\n'))
     setFinishWriteScope(task.contract.write_scope.join('\n'))
     setFinishBudgetTokens(
-      Math.min(task.contract.budget_tokens, availableTokens, 2_000_000),
+      Math.min(task.contract.budget_tokens, availableTokens, MAX_TOKEN_BUDGET),
     )
     const finishCostMicrousd = Math.min(
       task.contract.budget_cost_microusd,
@@ -2254,7 +2256,7 @@ function BudgetRevisionPanel({
 
   const openProposal = () => {
     const nextTokens = Math.min(
-      20_000_000,
+      MAX_TOKEN_BUDGET,
       Math.max(
         mission.budget_tokens +
           Math.max(50_000, Math.ceil(mission.budget_tokens * 0.25)),
@@ -2303,7 +2305,8 @@ function BudgetRevisionPanel({
     proposalErrors.push('The cost ceiling must exceed consumed spend.')
   }
   if (
-    proposedTokens > 20_000_000 ||
+    !Number.isSafeInteger(proposedTokens) ||
+    proposedTokens < 1 || proposedTokens > MAX_TOKEN_BUDGET ||
     proposedCostMicrousd > 100_000_000
   ) {
     proposalErrors.push('The proposed mission ceiling exceeds policy bounds.')
@@ -2324,10 +2327,11 @@ function BudgetRevisionPanel({
         )
       }
       if (
+        !Number.isSafeInteger(finishBudgetTokens) ||
         finishBudgetTokens < 1 ||
         finishBudgetTokens > selectedFinishTask.contract.budget_tokens ||
         finishBudgetTokens > proposedRemainingTokens ||
-        finishBudgetTokens > 2_000_000
+        finishBudgetTokens > MAX_TOKEN_BUDGET
       ) {
         proposalErrors.push(
           'The finish token budget must fit both the prior task and proposed remaining budget.',
@@ -2557,7 +2561,7 @@ function BudgetRevisionPanel({
                 <input
                   type="number"
                   min={Math.max(mission.budget_tokens, consumedTokens + 1)}
-                  max={20_000_000}
+                  max={MAX_TOKEN_BUDGET}
                   step={1}
                   value={proposedTokens}
                   onChange={(event) => setProposedTokens(Number(event.target.value))}
@@ -2667,7 +2671,7 @@ function BudgetRevisionPanel({
                       type="number"
                       min={1}
                       max={Math.min(
-                        selectedFinishTask?.contract.budget_tokens ?? 2_000_000,
+                        selectedFinishTask?.contract.budget_tokens ?? MAX_TOKEN_BUDGET,
                         Math.max(1, proposedRemainingTokens),
                       )}
                       step={1}
@@ -4456,7 +4460,7 @@ function App() {
     scope: string; data: WorkspaceConnections
   } | null>(null)
   const restoredConnectionScope = useRef('')
-  const [missionBudgetTokens, setMissionBudgetTokens] = useState(1_000_000)
+  const [missionBudgetTokens, setMissionBudgetTokens] = useState(MAX_TOKEN_BUDGET)
   const [missionDeliverable, setMissionDeliverable] =
     useState<NonNullable<TaskContract['deliverable']>['form']>('archive')
   const [commitDeliverable, setCommitDeliverable] = useState(false)
@@ -6697,6 +6701,7 @@ function App() {
                           <option value={500_000}>Quick • 500K</option>
                           <option value={1_000_000}>Standard • 1M</option>
                           <option value={2_000_000}>Large • 2M</option>
+                          <option value={MAX_TOKEN_BUDGET}>Finite ceiling • 999,999,999,999,999</option>
                         </select>
                         <small>A hard mission safety ceiling.</small>
                       </div>

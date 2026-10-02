@@ -1,0 +1,399 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 291,
+  "status": "passed",
+  "wrapper_pid": 43068,
+  "purpose": "Complete canonical contributor validation of the finite-token candidate. No native Factory or independent human acceptance claim.",
+  "started_at_utc": "2026-10-02T04:09:21.5661809Z",
+  "source": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-02T04:09:25.909Z",
+    "source": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "tree": "70ca1719de097ef9b27819acc847e9dce14b19b2",
+    "branch": "codex/issue291-finite-budget",
+    "status": "M apps/web/src/App.tsx\n M apps/web/src/missionPreview.test.mjs\n M crates/crony-domain/src/lib.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/budget_revision.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/factory_connection_tests.rs\n M crates/crony-store/src/lib.rs\n M db/migrations/manifest.json\n?? crates/crony-store/src/token_ceiling_tests.rs\n?? db/migrations/0057_token_budget_ceiling.sql\n?? tools/e2e_token_ceiling.mjs\n?? tools/test_token_ceiling.mjs\n?? tools/token_ceiling.test.mjs",
+    "clean": false,
+    "source_file_count": 7151,
+    "source_fingerprint": "e366d091bab92043a0e67a4efc30fa84f19e632bf17541d31a8ae6510e218fce",
+    "manifest": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-source-before-canonical-r1.json",
+    "manifest_sha256": "f81e4fd726154352ad64020cf491f99f6225401d4e673c712329a0bcd6dbbd57"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-02T05:21:25.565Z",
+    "source": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "tree": "70ca1719de097ef9b27819acc847e9dce14b19b2",
+    "branch": "codex/issue291-finite-budget",
+    "status": "M apps/web/src/App.tsx\n M apps/web/src/missionPreview.test.mjs\n M crates/crony-domain/src/lib.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/budget_revision.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/factory_connection_tests.rs\n M crates/crony-store/src/lib.rs\n M db/migrations/manifest.json\n?? crates/crony-store/src/token_ceiling_tests.rs\n?? db/migrations/0057_token_budget_ceiling.sql\n?? tools/e2e_token_ceiling.mjs\n?? tools/test_token_ceiling.mjs\n?? tools/token_ceiling.test.mjs",
+    "clean": false,
+    "source_file_count": 7151,
+    "source_fingerprint": "e366d091bab92043a0e67a4efc30fa84f19e632bf17541d31a8ae6510e218fce",
+    "manifest": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-source-after-canonical-r1.json",
+    "manifest_sha256": "de0df961d18d532802221508b289f94f021222782de1595cc541781626655565"
+  },
+  "source_unchanged": true,
+  "environment": {
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_INCREMENTAL": "0",
+    "RUST_TEST_THREADS": "1",
+    "CARGO_BUILD_JOBS": "2"
+  },
+  "dependency_install": {
+    "command": "pnpm install --frozen-lockfile --offline",
+    "sha256": "eb0f2352f7d1409b2cc41621aac08ac6d3f185ed7bb2b6d4ac87e4ac6ce4e8be",
+    "log": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-install-r2.log",
+    "exit_code": 0
+  },
+  "canonical": {
+    "source_changed": false,
+    "log_sha256": "46e5e05e40fdfe3aab2bd7f6bedb4a65e0d374b08df0c54cf14fb702e563113a",
+    "log": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-canonical-r1.log",
+    "checks": [
+      {
+        "name": "migrations",
+        "argv": [
+          "node",
+          "tools/check_migrations.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 585,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-compatibility",
+        "argv": [
+          "node",
+          "tools/check_state_audit_compatibility.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 118,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-evm",
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "crony-audit",
+          "--test",
+          "ethereum_local_chain"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 103863,
+        "counts": {
+          "rust": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "summaries": 1
+          },
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "docs",
+        "argv": [
+          "node",
+          "tools/check_docs.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 139,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "repository-docs",
+        "argv": [
+          "node",
+          "tools/check_documentation.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 157,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "node-tests",
+        "argv": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "--test-timeout=180000",
+          "--test-reporter=tap",
+          ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+          ".github/skills/code-review/tests/executor-state.test.mjs",
+          ".github/skills/code-review/tests/package.test.mjs",
+          "apps/web/src/AgentPinControl.test.mjs",
+          "apps/web/src/DelegatedPanel.test.mjs",
+          "apps/web/src/VerificationPolicyEditor.test.mjs",
+          "apps/web/src/agentPinOperation.test.mjs",
+          "apps/web/src/evidenceNavigation.test.mjs",
+          "apps/web/src/evidenceSelection.test.mjs",
+          "apps/web/src/factoryAuthority.test.mjs",
+          "apps/web/src/factoryAuthorityConnection.test.mjs",
+          "apps/web/src/factoryCheckpointRecovery.test.mjs",
+          "apps/web/src/factoryControllerSelection.test.mjs",
+          "apps/web/src/factoryPolling.test.mjs",
+          "apps/web/src/formText.test.mjs",
+          "apps/web/src/missionCollaboration.test.mjs",
+          "apps/web/src/missionComposer.test.mjs",
+          "apps/web/src/missionOriginContext.test.mjs",
+          "apps/web/src/missionPreview.test.mjs",
+          "apps/web/src/missionProjection.test.mjs",
+          "apps/web/src/missionResultContext.test.mjs",
+          "apps/web/src/missionReviewSummary.test.mjs",
+          "apps/web/src/missionRuntime.test.mjs",
+          "apps/web/src/office/characterAssets.test.mjs",
+          "apps/web/src/office/officeModel.test.mjs",
+          "apps/web/src/runActivity.test.mjs",
+          "apps/web/src/snapshotRefresh.test.mjs",
+          "apps/web/src/verificationPolicy.test.mjs",
+          "apps/web/src/workResultCard.test.mjs",
+          "apps/web/src/workflowContext.test.mjs",
+          "apps/web/src/workspaceConnections.test.mjs",
+          "scenarios/repo-steward/actions.test.mjs",
+          "scenarios/repo-steward/feedback-cli.test.mjs",
+          "scenarios/repo-steward/feedback.test.mjs",
+          "scenarios/repo-steward/maintenance.test.mjs",
+          "scenarios/repo-steward/recurring-audit.test.mjs",
+          "scenarios/repo-steward/steward.test.mjs",
+          "scenarios/repo-steward/teams-host.test.mjs",
+          "tests/readiness/cli.test.js",
+          "tools/budget_fixture.test.mjs",
+          "tools/check_deliverable_diff.test.mjs",
+          "tools/check_documentation.test.mjs",
+          "tools/check_evidence_launch.test.mjs",
+          "tools/check_evidence_native_build.test.mjs",
+          "tools/check_evidence_personal_paths.test.mjs",
+          "tools/check_migrations.test.mjs",
+          "tools/check_replay_source.test.mjs",
+          "tools/checkpoint_application_fixture.test.mjs",
+          "tools/ci_external_adapters_windows.test.mjs",
+          "tools/ci_factory_repository.test.mjs",
+          "tools/ci_maintenance.test.mjs",
+          "tools/ci_owned_test_server.test.mjs",
+          "tools/ci_runner_tests.test.mjs",
+          "tools/consume_operation_receipt.test.mjs",
+          "tools/controlled_runner_fixture.test.mjs",
+          "tools/copilot_fs_wire_observer.test.mjs",
+          "tools/copilot_fs_wire_process.test.mjs",
+          "tools/copilot_probe_boundaries.test.mjs",
+          "tools/copilot_probe_environment.test.mjs",
+          "tools/copilot_probe_native_read.test.mjs",
+          "tools/copilot_probe_process.test.mjs",
+          "tools/coverage_web_models.test.mjs",
+          "tools/delegated_lifecycle.test.mjs",
+          "tools/delegated_qa_root.test.mjs",
+          "tools/e2e_agent_pinning.test.mjs",
+          "tools/e2e_checkpoint_verification.test.mjs",
+          "tools/e2e_evidence_selection.test.mjs",
+          "tools/e2e_external_adapters.test.mjs",
+          "tools/e2e_external_adapters_http.test.mjs",
+          "tools/e2e_factory_budget_recovery.test.mjs",
+          "tools/e2e_late_termination.test.mjs",
+          "tools/e2e_predispatch_failure.test.mjs",
+          "tools/e2e_stopped_source_checkpoint.test.mjs",
+          "tools/e2e_verifier_browser_retention.test.mjs",
+          "tools/e2e_verifier_browser_scope.test.mjs",
+          "tools/factory_budget_fixture_config.test.mjs",
+          "tools/factory_budget_git.test.mjs",
+          "tools/factory_budget_process.test.mjs",
+          "tools/factory_budget_provenance.test.mjs",
+          "tools/factory_budget_start.test.mjs",
+          "tools/fake_codex_budget_stream.test.mjs",
+          "tools/fake_github_quota.test.mjs",
+          "tools/fixture_source_identity.test.mjs",
+          "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+          "tools/identity_fixture.test.mjs",
+          "tools/import_operation_behavior.test.mjs",
+          "tools/issue161/qa-api-provenance.test.mjs",
+          "tools/issue161/qa-plan.test.mjs",
+          "tools/local_source_commit.test.mjs",
+          "tools/local_stack_lifecycle.test.mjs",
+          "tools/local_stack_operation.test.mjs",
+          "tools/native_qualification_attempt.test.mjs",
+          "tools/native_qualification_finality.test.mjs",
+          "tools/native_qualification_trust.test.mjs",
+          "tools/office_model.test.mjs",
+          "tools/operation_feedback.test.mjs",
+          "tools/operation_receipt.test.mjs",
+          "tools/owned_test_stack.test.mjs",
+          "tools/probe_mcp.test.mjs",
+          "tools/qa_multiplayer_object_sources.test.mjs",
+          "tools/readiness_contract.test.mjs",
+          "tools/readiness_replay_contract.test.mjs",
+          "tools/redact_evidence_capabilities.test.mjs",
+          "tools/research_handoff_adversarial.test.mjs",
+          "tools/research_handoff_browser.test.mjs",
+          "tools/research_handoff_native.test.mjs",
+          "tools/runner_ack_fault_relay.test.mjs",
+          "tools/secret_scan.test.mjs",
+          "tools/secret_scan_native.test.mjs",
+          "tools/security_fixtures.test.mjs",
+          "tools/startup_validation_harness.test.mjs",
+          "tools/task_graph_fixture.test.mjs",
+          "tools/token_ceiling.test.mjs",
+          "tools/verifier_browser.test.mjs",
+          "tools/verify_toolchain.test.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2289087,
+        "counts": {
+          "rust": null,
+          "node": {
+            "tests": 3109,
+            "passed": 3044,
+            "failed": 0,
+            "skipped": 65,
+            "todo": 0,
+            "cancelled": 0
+          }
+        },
+        "errorCode": null
+      },
+      {
+        "name": "format",
+        "argv": [
+          "cargo",
+          "fmt",
+          "--check"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 3009,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "clippy",
+        "argv": [
+          "cargo",
+          "clippy",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 394920,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "rust-tests",
+        "argv": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--locked"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 1316488,
+        "counts": {
+          "rust": {
+            "passed": 881,
+            "failed": 0,
+            "ignored": 569,
+            "summaries": 41
+          },
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "web-build",
+        "argv": [
+          "pnpm",
+          "build:web"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 5130,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "web-lint",
+        "argv": [
+          "pnpm",
+          "lint:web"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2525,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      }
+    ],
+    "report": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp\\output\\readiness\\2026-10-02T04-12-32-144Z-39dcc610-0add-4e99-8b6e-7c37c339070a-full.json",
+    "report_sha256": "babe68dfc9ea7dd455cdec0f9ac7f11bed1ce7942b90a05655295de962ef630c",
+    "not_run": [],
+    "status": "passed",
+    "exit_code": 0,
+    "command": "pnpm check"
+  },
+  "failure": null,
+  "standalone_steward_installs": [
+    {
+      "command": "npm ci --ignore-scripts --no-audit --no-fund --workspaces=false --offline",
+      "sha256": "0631057522dd2a47bf224ae79634d66bbb2340efb894d76fb2cdae0b9d951d5f",
+      "log": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-steward-install-offline-r1.log",
+      "exit_code": 0
+    }
+  ],
+  "environment_preflight": {
+    "python": "<USER_HOME>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "log": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-node-environment-preflight-r1.log",
+    "command": "node --test --test-concurrency=1 --test-timeout=180000 --test-reporter=tap <five environment-sensitive test files>",
+    "sha256": "ce4c5bcb5b1dd38db486633ca4b61b6ed82d1a2b91994f2edf418feba67bc4b0",
+    "exit_code": 0,
+    "python_sha256": "372c2eae555b344520bf147be0096e009069aeca4e7f78d6aecea6d53158056a"
+  },
+  "prior_readiness_reports": [],
+  "canonical_started_at_utc": "2026-10-02T04:12:29.3976098Z",
+  "finished_at_utc": "2026-10-02T05:21:25.9777681Z"
+}
