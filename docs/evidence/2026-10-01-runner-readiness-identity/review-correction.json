@@ -1,0 +1,67 @@
+{
+  "recorded_at_utc": "2026-10-01T21:09:56.768935+00:00",
+  "review": 5385286454,
+  "comments": [
+    4160290754,
+    4160290828
+  ],
+  "reviewed_parent": "2cbaa0917514f51219f5a356e2ec1217b13d1344",
+  "reviewed_parent_tree": "861f9797cc1ac6ad213c1ec89cb9c53fea3decdd",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "tested_product_tree": "2c987005dba4d5bd1a47cd4d5f0fd34a40231118",
+  "product_changed": false,
+  "acceptance": {
+    "status": "passed",
+    "assertions": 44,
+    "failed": 0,
+    "source_checkpoints": 8,
+    "saved_local_sources": 2,
+    "source_unchanged": true,
+    "owned_services_stopped": true,
+    "head": "2cbaa0917514f51219f5a356e2ec1217b13d1344",
+    "physical_input_files": 7213,
+    "unchanged_canonical_files": 7147,
+    "source_fixture": {
+      "expected_repository": "readiness-acceptance/owned-source-801e865a8ed64f66a16937986472dd66",
+      "remote": "https://github.com/readiness-acceptance/owned-source-801e865a8ed64f66a16937986472dd66.git",
+      "commit": "8e1eb319f1a7d9d472e9c4f31a50f3740d18b105",
+      "git_allowed_protocol": "file"
+    },
+    "receipt": "acceptance-r3/driver.json"
+  },
+  "prior_publication_validation": {
+    "status": "passed",
+    "head": "2cbaa0917514f51219f5a356e2ec1217b13d1344",
+    "tree": "861f9797cc1ac6ad213c1ec89cb9c53fea3decdd",
+    "directory": "publication-r3",
+    "scoped_scan_findings": 0
+  },
+  "correction": "The earlier self-review's general non-ECorp source claim was too broad: R2's default origin named ECorp. Saved local clones already had distinct local identities. R3 explicitly observes the synthetic default identity and exact saved-source receipts without changing product behavior.",
+  "historical_artifacts_preserved": [
+    "self-review-before-canonical-completion.md",
+    "summary.json",
+    "acceptance-r1",
+    "acceptance-r2",
+    "publication-preflight-r1.json",
+    "publication-preflight-r2.json",
+    "artifact-provenance.json"
+  ],
+  "screenshots": [
+    {
+      "path": "acceptance-r3/readiness-desktop.png",
+      "sha256": "0ac04cdafff1f164a6e27f539b18060dd9af9e8795742ef6b5dfda97d97e8ae1",
+      "bytes": 71957,
+      "visually_inspected": true,
+      "bytes_modified": false
+    },
+    {
+      "path": "acceptance-r3/readiness-narrow.png",
+      "sha256": "ce6c4917c4f1dd4a56199f8199c10b281795fc496ae2a143e1b6730a6c9af1f0",
+      "bytes": 67378,
+      "visually_inspected": true,
+      "bytes_modified": false
+    }
+  ],
+  "scope": "Real local browser/server/runner/database readiness with an explicit account/catalog fixture. No remote fixture repository access, actual provider inference, dispatch, whole-issue completion, independent approval, merge or issue closure.",
+  "followup_publication": "A separate final tree/head-bound preflight and native history scan will be published on the PR after the evidence-only child commit. These prior-revision receipts do not claim tests on that future commit."
+}

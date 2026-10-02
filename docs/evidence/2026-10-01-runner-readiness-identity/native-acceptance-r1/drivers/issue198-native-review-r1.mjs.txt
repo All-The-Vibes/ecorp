@@ -1,0 +1,156 @@
+// Automated DEVELOPMENT-PRINCIPAL authorization regression on an owned fixture.
+// This is not a human review or a GitHub approval. Generated source stays intact.
+import assert from 'node:assert/strict'
+import { readFile, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import path from 'node:path'
+
+const output = path.resolve(process.argv[2])
+const read = async name => JSON.parse(await readFile(path.join(output, name), 'utf8'))
+const write = async (name, value) => writeFile(path.join(output, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+const fixture = await read('owned-fixture.json')
+const ready = await read('review-ready.json')
+const app = await read('generated-app-acceptance.json')
+const download = await read('download-receipt-r3.json')
+assert.equal(fixture.test_owned, true)
+assert.equal(path.resolve(fixture.output), output)
+for (const value of [fixture.web_url, fixture.server_url]) {
+  const url = new URL(value)
+  assert.equal(url.hostname, '127.0.0.1')
+  assert.equal(url.protocol, 'http:')
+}
+assert.equal(app.status, 'passed')
+assert.equal(app.run_id, ready.run_id)
+assert.equal(app.archive_sha256, download.download_sha256)
+const api = `/api/corps/${fixture.demo.corp_id}`
+const endpoint = `${api}/runs/${ready.run_id}/verification-decision`
+const snapshot = async () => {
+  const response = await fetch(`${fixture.server_url}${api}/snapshot?actor_id=${fixture.demo.alice_actor_id}`, { signal: AbortSignal.timeout(15000) })
+  assert.equal(response.status, 200)
+  return response.json()
+}
+const report = {
+  started_at: new Date().toISOString(), status: 'running', run_id: ready.run_id,
+  mission_id: ready.mission_id, assertions: [], archive_sha256: download.download_sha256,
+  assurance: 'Automated development-principal role test using the built-in demo operators. This does not establish independent human approval, production identity assurance or a GitHub approval.',
+  application_review: {
+    functional_assertions_passed: app.assertions.length,
+    tests: { total: 8, passed: 8, failed: 0, skipped: 0 },
+    visual_inspection: 'Actual desktop and 390px browser screenshots captured. The 390px view has no overflow and operable controls, but the text input is unnecessarily tall and the checkbox spacing is awkward. No polished UI claim.',
+    limitations: ['Storage-denied/quota failure was not tested; source does not fully handle it.', 'Browser console recorded one local 404; no JavaScript exceptions or external requests.']
+  }
+}
+const check = (name, fn) => { fn(); report.assertions.push({ name, passed: true }) }
+let browser, page
+try {
+  const before = await snapshot()
+  await write('independent-review-before-state.json', before)
+  const run = before.snapshot.runs.find(item => item.id === ready.run_id)
+  const task = before.snapshot.tasks.find(item => item.id === run.task_id)
+  const request = before.snapshot.verification_requests.find(item => item.run_id === ready.run_id)
+  const events = before.snapshot.events.filter(item => item.aggregate_id === ready.run_id)
+  report.task_id = run.task_id
+  report.task_contract = task
+  report.prior_request = request
+  check('The exact native task is waiting at its persisted independent gate', () => {
+    assert.equal(run.status, 'waiting_for_approval')
+    assert.equal(run.verification_status, 'waiting_for_approval')
+    assert.equal(task.status, 'awaiting_approval')
+    assert.equal(request.status, 'pending')
+    assert.equal(request.gate_type, 'independent_review')
+    assert.equal(request.gate.exclude_requester, true)
+  })
+  const stopped = events.find(item => item.type === 'run.session_terminated')
+  const started = events.find(item => item.type === 'run.verification_started')
+  const evidence = events.filter(item => item.type === 'run.verification_evidence')
+  const passed = events.find(item => item.type === 'run.verification_passed')
+  check('Provider stopped before all four source-bound verifier checks and their pass event', () => {
+    assert.equal(stopped.payload.provider_process_alive, false)
+    assert.equal(evidence.length, 4)
+    assert.ok(stopped.seq < started.seq && started.seq < passed.seq)
+    for (const item of evidence) {
+      assert.equal(item.payload.status, 'passed')
+      assert.ok(started.seq < item.seq && item.seq < passed.seq)
+      assert.equal(item.payload.payload.source.tree, passed.payload.verified_tree)
+    }
+    assert.equal(passed.payload.deliverable_sha256, download.download_sha256)
+  })
+  report.verifier_events = [stopped, started, ...evidence, passed]
+  const denied = await fetch(`${fixture.server_url}${endpoint}`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ actor_id: fixture.demo.alice_actor_id, approved: true, note: 'Automated owned-fixture negative requester-eligibility check.' }),
+    signal: AbortSignal.timeout(15000)
+  })
+  report.requester_denial = { status: denied.status, body: await denied.text() }
+  check('The server denies the requester even when the disabled UI is bypassed', () => {
+    assert.equal(report.requester_denial.status, 403)
+    assert.match(report.requester_denial.body, /independent review requires a different actor/)
+  })
+  const deniedState = await snapshot()
+  check('Rejected requester decision leaves the gate pending', () => {
+    assert.equal(deniedState.snapshot.verification_requests.find(item => item.run_id === ready.run_id).status, 'pending')
+    assert.equal(deniedState.snapshot.runs.find(item => item.id === ready.run_id).status, 'waiting_for_approval')
+    assert.equal(deniedState.snapshot.events.filter(item => item.aggregate_id === ready.run_id && item.type === 'verification.approved').length, 0)
+  })
+  const { chromium } = createRequire(import.meta.url)(process.env.CRONY_PLAYWRIGHT_MODULE)
+  browser = await chromium.launch({ channel: 'chrome', headless: true })
+  page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
+  page.setDefaultTimeout(20000)
+  await page.goto(`${fixture.web_url}/#missions`, { waitUntil: 'networkidle' })
+  await page.locator('.live-indicator.live-live').waitFor()
+  const selector = page.locator('#operator-actor')
+  assert.equal(await selector.inputValue(), fixture.demo.alice_actor_id)
+  await selector.selectOption(fixture.demo.bob_actor_id)
+  const gate = page.locator(`#mission-review-${ready.mission_id}[data-review-run-id="${ready.run_id}"]`)
+  const accept = gate.getByRole('button', { name: 'Accept evidence', exact: true })
+  await accept.waitFor()
+  assert.equal(await selector.inputValue(), fixture.demo.bob_actor_id)
+  assert.equal(await accept.isEnabled(), true)
+  await gate.screenshot({ path: path.join(output, 'eligible-demo-review.png') })
+  const pendingResponse = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === endpoint)
+  await accept.click()
+  const response = await pendingResponse
+  report.browser_decision = { status: response.status(), request: response.request().postDataJSON(), body: await response.text() }
+  check('The actual product UI submits one eligible demo-principal decision for the exact run', () => {
+    assert.equal(report.browser_decision.status, 200)
+    assert.equal(report.browser_decision.request.actor_id, fixture.demo.bob_actor_id)
+    assert.equal(report.browser_decision.request.approved, true)
+  })
+  const after = await snapshot()
+  await write('independent-review-after-state.json', after)
+  const finalRun = after.snapshot.runs.find(item => item.id === ready.run_id)
+  const finalTask = after.snapshot.tasks.find(item => item.id === finalRun.task_id)
+  const finalMission = after.snapshot.missions.find(item => item.id === ready.mission_id)
+  const finalRequest = after.snapshot.verification_requests.find(item => item.run_id === ready.run_id)
+  const decisions = after.snapshot.events.filter(item => item.aggregate_id === ready.run_id && item.type === 'verification.approved')
+  check('The persisted run, task and mission complete only after the eligible decision', () => {
+    assert.equal(finalRun.status, 'completed')
+    assert.equal(finalRun.verification_status, 'passed')
+    assert.equal(finalTask.status, 'completed')
+    assert.equal(finalMission.status, 'completed')
+    assert.equal(finalRequest.status, 'approved')
+    assert.equal(finalRequest.decided_by, fixture.demo.bob_actor_id)
+    assert.equal(decisions.length, 1)
+    assert.equal(decisions[0].actor_id, fixture.demo.bob_actor_id)
+    assert.ok(decisions[0].seq > passed.seq)
+    assert.equal(finalRun.deliverable_sha256, download.download_sha256)
+  })
+  report.final_run = finalRun
+  report.final_task = finalTask
+  report.final_mission = finalMission
+  report.final_request = finalRequest
+  report.approval_event = decisions[0]
+  await page.reload({ waitUntil: 'networkidle' })
+  await page.locator(`[data-mission-id="${ready.mission_id}"]`).screenshot({ path: path.join(output, 'native-completed-mission.png') })
+  report.status = 'passed'
+} catch (error) {
+  report.status = 'failed'
+  report.failure = error.stack
+  process.exitCode = 1
+  if (page) await page.screenshot({ path: path.join(output, 'independent-review-failure.png'), fullPage: true }).catch(() => {})
+} finally {
+  if (browser) await browser.close()
+  report.finished_at = new Date().toISOString()
+  await write('independent-review-receipt.json', report)
+}
+console.log(JSON.stringify({ status: report.status, assertions: report.assertions.length, failure: report.failure }))

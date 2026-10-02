@@ -1,0 +1,66 @@
+{
+  "stage": "publication-whitespace-check",
+  "status": "failed",
+  "exit_code": 1,
+  "helper_receipt": {
+    "started_at_utc": "2026-10-01T20:35:02.807418+00:00",
+    "status": "failed",
+    "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "checks": [],
+    "secret_scans": [],
+    "intentionally_ignored_packet_files": [
+      "docs/evidence/2026-10-01-runner-readiness-identity/build.log",
+      "docs/evidence/2026-10-01-runner-readiness-identity/canonical.log",
+      "docs/evidence/2026-10-01-runner-readiness-identity/failed-canonical-r1/canonical.log",
+      "docs/evidence/2026-10-01-runner-readiness-identity/focused-green.log",
+      "docs/evidence/2026-10-01-runner-readiness-identity/focused-red.log",
+      "docs/evidence/2026-10-01-runner-readiness-identity/install.log",
+      "docs/evidence/2026-10-01-runner-readiness-identity/setup-diagnostics/f02-diagnostic/attempt-1.log",
+      "docs/evidence/2026-10-01-runner-readiness-identity/setup-diagnostics/f02-diagnostic/attempt-2.log",
+      "docs/evidence/2026-10-01-runner-readiness-identity/setup-diagnostics/f02-diagnostic/attempt-3.log",
+      "docs/evidence/2026-10-01-runner-readiness-identity/setup-diagnostics/teams-install/attempt-1.log",
+      "docs/evidence/2026-10-01-runner-readiness-identity/setup-diagnostics/teams-tests/attempt-1.log"
+    ],
+    "tested_product_tree": "2c987005dba4d5bd1a47cd4d5f0fd34a40231118",
+    "publication_tree": "28966a8658939fd94f89532723281a8358c97e03",
+    "error": "Git diff exited 2.",
+    "finished_at_utc": "2026-10-01T20:35:03.877617+00:00"
+  },
+  "process_receipt": {
+    "session_id": 63310,
+    "chunk_id": "6084e9",
+    "exit_code": 1,
+    "observed_at_utc": "2026-10-01T20:36:00.5557410+00:00",
+    "observation": "write_stdin returned process exit",
+    "command_receipt": "issue198-publication-validation-r2.json",
+    "result": "failed",
+    "stage": "publication-whitespace-check"
+  },
+  "diagnostic": {
+    "observed_at_utc": "2026-10-01T20:36:02.023150+00:00",
+    "command": "git diff --cached --check (isolated temporary index)",
+    "exit_code": 2,
+    "diagnostic_lines": 16,
+    "log_sha256": "11d5a334d8e91876ddf0f1666f926686fb824a7c5e25d38fdff2028309a71caf"
+  },
+  "correction": [
+    {
+      "published": "failed-canonical-r1/canonical.log",
+      "before_sha256": "6464012e550dc86378cb4181518191d1da13151a364ace0c76113bd523d85910",
+      "before_bytes": 744455,
+      "after_sha256": "3e371a73683c5f57dc1249851e6f3721abbfe480bacd2b7b83ce41dcb026739e",
+      "after_bytes": 744447,
+      "lines_trimmed": 2
+    },
+    {
+      "published": "focused-red.log",
+      "before_sha256": "449751cbf0120d6469ef112f379ba5b6e658e842c4cd20c67dc6b9b88d1706d1",
+      "before_bytes": 3330,
+      "after_sha256": "04b820d156bf1ab44861bc833cb10acc3859d7a370c04ae2afaae8e62e8bd447",
+      "after_bytes": 3318,
+      "lines_trimmed": 6
+    }
+  ],
+  "product_source_changed": false,
+  "security_or_check_policy_changed": false
+}

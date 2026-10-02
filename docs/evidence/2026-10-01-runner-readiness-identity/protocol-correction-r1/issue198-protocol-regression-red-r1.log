@@ -1,0 +1,36 @@
+✔ base and multiple saved connections keep distinct identities and authoritative readiness (8.4194ms)
+✔ refresh, reorder and retest update status without replacing connection identity (1.9993ms)
+✔ omitted and null connection scope identify the same base installation (0.7561ms)
+✔ provider remains part of identity within the same saved connection (0.6504ms)
+✖ mixed provider and protocol rows describe their actual scope without losing readiness (2.2418ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1364.8961
+
+✖ failing tests:
+
+test at apps\web\src\runnerReadiness.test.mjs:92:1
+✖ mixed provider and protocol rows describe their actual scope without losing readiness (2.2418ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Runner feature/. Input:
+
+  '<li><span>durable-control-v1</span><strong>Ready</strong><small>Base installation</small></li>'
+
+      at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue198-readiness/ecorp/apps/web/src/runnerReadiness.test.mjs:120:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '<li><span>durable-control-v1</span><strong>Ready</strong><small>Base installation</small></li>',
+    expected: /Runner feature/,
+    operator: 'match',
+    diff: 'simple'
+  }

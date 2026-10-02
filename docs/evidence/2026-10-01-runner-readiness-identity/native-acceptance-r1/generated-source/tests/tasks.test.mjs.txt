@@ -1,0 +1,72 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import {
+  TITLE_LIMIT,
+  addTask,
+  createState,
+  deleteTask,
+  filterTasks,
+  parseState,
+  serializeState,
+  toggleTask
+} from "../tasks.mjs";
+
+test("addTask trims title and stores active task", () => {
+  const state = addTask(createState(), "  Deep work block  ");
+
+  assert.equal(state.tasks.length, 1);
+  assert.equal(state.tasks[0].title, "Deep work block");
+  assert.equal(state.tasks[0].completed, false);
+});
+
+test("addTask rejects blank titles", () => {
+  assert.throws(() => addTask(createState(), "   "), {
+    message: "Task title is required."
+  });
+});
+
+test("addTask rejects titles longer than 80 characters", () => {
+  assert.throws(() => addTask(createState(), "x".repeat(TITLE_LIMIT + 1)), {
+    message: "Task title must be 80 characters or fewer."
+  });
+});
+
+test("toggleTask flips completion state", () => {
+  const initial = addTask(createState(), "Review notes");
+  const toggled = toggleTask(initial, initial.tasks[0].id);
+
+  assert.equal(toggled.tasks[0].completed, true);
+});
+
+test("deleteTask removes the matching task", () => {
+  const state = addTask(addTask(createState(), "Plan"), "Ship");
+  const remaining = deleteTask(state, state.tasks[0].id);
+
+  assert.deepEqual(remaining.tasks.map((task) => task.title), ["Ship"]);
+});
+
+test("filterTasks returns active and completed views", () => {
+  const first = addTask(createState(), "First");
+  const second = addTask(first, "Second");
+  const completed = toggleTask(second, second.tasks[1].id);
+
+  assert.deepEqual(filterTasks(completed, "active").map((task) => task.title), ["First"]);
+  assert.deepEqual(filterTasks(completed, "completed").map((task) => task.title), ["Second"]);
+});
+
+test("serializeState and parseState round-trip valid tasks", () => {
+  const added = addTask(createState(), "Archive");
+  const completed = toggleTask(added, added.tasks[0].id);
+  const parsed = parseState(serializeState(completed));
+
+  assert.equal(parsed.tasks.length, 1);
+  assert.equal(parsed.tasks[0].title, "Archive");
+  assert.equal(parsed.tasks[0].completed, true);
+});
+
+test("parseState rejects invalid saved data", () => {
+  assert.throws(() => parseState('{"bad":true}'), {
+    message: "Saved tasks are invalid."
+  });
+});

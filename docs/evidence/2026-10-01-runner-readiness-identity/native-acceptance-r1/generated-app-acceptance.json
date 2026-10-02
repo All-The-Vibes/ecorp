@@ -1,0 +1,140 @@
+{
+  "started_at": "2026-10-01T23:40:43.866Z",
+  "status": "passed",
+  "run_id": "642f4132-259a-44bf-9a0d-75b5d93c2d8b",
+  "archive_sha256": "ce61b7eef5c8195e72037ec084d6bc499513e6af3ea1f411180c572819dbb3dc",
+  "source_files": [
+    {
+      "path": "app.mjs",
+      "bytes": 3193,
+      "sha256": "9654cb4e42a6f4c40529fcacf2a8a0a3b2a560ca2294c474e8120e3caf65a188",
+      "mode": "100644"
+    },
+    {
+      "path": "evidence/result.md",
+      "bytes": 714,
+      "sha256": "88a6fe15f75bf20c9106247daea02f0103e41f55e1ddfbc139a7e48b2d4efda7",
+      "mode": "100644"
+    },
+    {
+      "path": "index.html",
+      "bytes": 4856,
+      "sha256": "e5c21282f8e3c6cb67f0188c34608b39ab10b04f2ea156e0d67ce9b7022319c7",
+      "mode": "100644"
+    },
+    {
+      "path": "tasks.mjs",
+      "bytes": 2303,
+      "sha256": "fc6c7ae88c50e6d91b29c32cc2486e2ea13695d31ca8169db97c6016e81bcde8",
+      "mode": "100644"
+    },
+    {
+      "path": "tests/tasks.test.mjs",
+      "bytes": 2275,
+      "sha256": "866aa12a56633a1597ee16501c7bb51ee68e7d582cd75c3b7869799452b2f130",
+      "mode": "100644"
+    }
+  ],
+  "assertions": [
+    {
+      "name": "Downloaded source passes its actual Node regression command",
+      "passed": true
+    },
+    {
+      "name": "The native application starts with the required empty state",
+      "passed": true
+    },
+    {
+      "name": "Blank titles are rejected with an accessible error",
+      "passed": true
+    },
+    {
+      "name": "Enter submits a trimmed task title",
+      "passed": true
+    },
+    {
+      "name": "The Add task button creates a second task",
+      "passed": true
+    },
+    {
+      "name": "Completed filter retains only the checked task",
+      "passed": true
+    },
+    {
+      "name": "Active filter retains only the unfinished task",
+      "passed": true
+    },
+    {
+      "name": "Deleting a task removes only that task",
+      "passed": true
+    },
+    {
+      "name": "Reload preserves completion and deletion in actual localStorage",
+      "passed": true
+    },
+    {
+      "name": "The UI enforces the 80-character title boundary",
+      "passed": true
+    },
+    {
+      "name": "Keyboard navigation gives the next control visible focus",
+      "passed": true
+    },
+    {
+      "name": "Generated application fits a 390px viewport without horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "Corrupt storage recovers to an empty list with a clear message",
+      "passed": true
+    },
+    {
+      "name": "Generated application raises no JavaScript errors or external requests",
+      "passed": true
+    }
+  ],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "page_errors": [],
+  "external_requests": [],
+  "assurance": "Retrospective browser acceptance of the actual downloaded native deliverable. Source was inspected before running; no product or generated source is repaired by this driver.",
+  "node_test": {
+    "code": 0,
+    "signal": null,
+    "command": [
+      "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+      "--test",
+      "tests/tasks.test.mjs"
+    ]
+  },
+  "app_origin": "http://127.0.0.1:49522",
+  "blank_title": {
+    "task_count": 0,
+    "alerts": [
+      "Task title is required."
+    ],
+    "validation": "",
+    "aria_invalid": null
+  },
+  "maximum_title": {
+    "requested_length": 81,
+    "actual_input_length": 80,
+    "max_length": "80"
+  },
+  "focus": {
+    "tag": "BUTTON",
+    "text": "Add task",
+    "outline_style": "solid",
+    "outline_width": "3px",
+    "box_shadow": "none"
+  },
+  "narrow_layout": {
+    "width": 390,
+    "scroll_width": 390,
+    "body_width": 390
+  },
+  "storage_key": "focus-ledger.tasks",
+  "storage_recovery_text": "Focus Ledger\nTask title\nAdd task\n\nShow tasks\nAll\nActive\nCompleted\n\nSaved tasks were corrupted and have been reset.\n\nNo tasks yet.",
+  "finished_at": "2026-10-01T23:40:48.207Z"
+}

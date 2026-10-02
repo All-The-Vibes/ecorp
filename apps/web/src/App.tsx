@@ -23,7 +23,7 @@ import type { FactoryRecoveryCommandMode } from './factoryCheckpointRecovery'
 import { currentOfficeAgents, operatingOfficeAgents, selectOfficeAgent } from './office/officeModel'
 import type { OfficeAgent } from './office/officeModel'
 import {
-  availableRunnerAdapters, missionRuntimeError, selectMissionAdapter,
+  availableRunnerAdapters, isMissionRuntime, missionRuntimeError, selectMissionAdapter,
   STUDIO_STRATEGY, STUDIO_STRATEGY_LABEL, usesDeterministicHarness, workspaceCapability,
 } from './missionRuntime'
 import type { RepositoryTarget, RunnerCapability, RunnerNode } from './missionRuntime'
@@ -6148,9 +6148,14 @@ function App() {
                         {runner.capabilities
                           .filter((capability) => capability.name !== 'workspace-isolation')
                           .map((capability) => (
-                            <li key={capability.name}>
+                            <li key={JSON.stringify([capability.name, capability.workspace_connection_id ?? null])}>
                               <span>{adapterLabel(capability.name)}</span>
                               <strong>{capability.available ? 'Ready' : 'Unavailable'}</strong>
+                              <small>
+                                {capability.workspace_connection_id
+                                  ? `Saved connection ${capability.workspace_connection_id}`
+                                  : isMissionRuntime(capability.name) ? 'Base installation' : 'Runner feature'}
+                              </small>
                               {capability.models.length ? (
                                 <small>
                                   {capability.models.filter((model) => model.policy_state !== 'disabled').length} selectable models

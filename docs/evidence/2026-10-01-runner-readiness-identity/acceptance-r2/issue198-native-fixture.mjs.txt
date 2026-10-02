@@ -1,0 +1,20 @@
+// Explicit account/catalog fixture: unavailable base, ready private profiles.
+// No inference, credentials, or network. The production fixture validates scope.
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
+
+const [fixture, directory, ...args] = process.argv.slice(2)
+assert.ok(path.isAbsolute(fixture) && path.isAbsolute(directory))
+const root = fs.realpathSync.native(directory)
+assert.match(path.basename(path.dirname(root)), /^issue198-stack-/)
+if (args.length === 1 && args[0] === '--version') {
+  fs.appendFileSync(path.join(root, 'calls.jsonl'), `${JSON.stringify({
+    tool: 'codex', method: 'version', fixture_scope: 'unavailable-base', exit_code: 69,
+  })}\n`)
+  process.exitCode = 69
+} else {
+  process.argv = [process.execPath, fixture, root, ...args]
+  await import(pathToFileURL(fixture).href)
+}

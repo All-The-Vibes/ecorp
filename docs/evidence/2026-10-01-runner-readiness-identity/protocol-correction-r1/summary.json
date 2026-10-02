@@ -1,0 +1,175 @@
+{
+  "recorded_at_utc": "2026-10-01T22:33:14.941366+00:00",
+  "parent": "adfc09642a6d40f29b168dded6f3b086005a5b77",
+  "parent_tree": "ccfef4868f94efcedb3fb263f3b83e3543021803",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "tested_product_tree": "d62abf4e59887f84f3848ccf5c839fe487e51c30",
+  "review_comments": [
+    4160290754,
+    4160290828,
+    4160606480
+  ],
+  "product_files": [
+    "apps/web/src/App.tsx",
+    "apps/web/src/missionRuntime.ts",
+    "apps/web/src/runnerReadiness.test.mjs"
+  ],
+  "physical_input_files": 7240,
+  "product_input_files": 7147,
+  "canonical": {
+    "command": "pnpm check",
+    "status": "passed",
+    "gates": 11,
+    "node": {
+      "tests": 3108,
+      "passed": 3043,
+      "failed": 0,
+      "skipped": 65,
+      "todo": 0,
+      "cancelled": 0
+    },
+    "rust": {
+      "passed": 877,
+      "failed": 0,
+      "ignored": 564,
+      "summaries": 41
+    },
+    "evm": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "summaries": 1
+    },
+    "source_unchanged": true
+  },
+  "focused": [
+    {
+      "phase": "red-r1",
+      "counts": {
+        "tests": 5,
+        "pass": 4,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "receipt": "issue198-protocol-regression-red-r1.json",
+      "source": [
+        {
+          "path": "apps/web/src/App.tsx",
+          "sha256": "e5d76b3f25996b3f2755febb5d9713dc8247b28dc24e8d9dcbb1ce827fdf5eea"
+        },
+        {
+          "path": "apps/web/src/missionRuntime.ts",
+          "sha256": "f4054e4cedc2b01c4a5bc019b4001206f5de7c0728953af9db83fade6a73cfe8"
+        },
+        {
+          "path": "apps/web/src/runnerReadiness.test.mjs",
+          "sha256": "f19516a0c303b6d817d444d0f76004beddadac2443699c33fa63a4d0c8019a1c"
+        }
+      ],
+      "log_sha256": "c08cd2c5e3e9105521c80e964fdf2d426224c4a242f8b78f8aa81aae521128cd"
+    },
+    {
+      "phase": "green-r1",
+      "counts": {
+        "tests": 19,
+        "pass": 19,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "receipt": "issue198-protocol-regression-green-r1.json",
+      "source": [
+        {
+          "path": "apps/web/src/App.tsx",
+          "sha256": "bdfaa9ca1f71b87fbbd74d6fcce934e826529ee3cdfecd76f14f9e940257725b"
+        },
+        {
+          "path": "apps/web/src/missionRuntime.ts",
+          "sha256": "b0f08487ba409940a54a9c29884632abb4c7b36b18217e2f31431c3ffcdf1631"
+        },
+        {
+          "path": "apps/web/src/runnerReadiness.test.mjs",
+          "sha256": "b740ea4e6167448fb386d367987e9e438022f4210e613cf767e8b3d7218a7348"
+        }
+      ],
+      "log_sha256": "0ee77bea89d1339c66fbe2570e4ff2cb3e4920b44a64a22edf4b93933495608c"
+    },
+    {
+      "phase": "green-r2",
+      "counts": {
+        "tests": 19,
+        "pass": 19,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "receipt": "issue198-protocol-regression-green-r2.json",
+      "source": [
+        {
+          "path": "apps/web/src/App.tsx",
+          "sha256": "bdfaa9ca1f71b87fbbd74d6fcce934e826529ee3cdfecd76f14f9e940257725b"
+        },
+        {
+          "path": "apps/web/src/missionRuntime.ts",
+          "sha256": "b0f08487ba409940a54a9c29884632abb4c7b36b18217e2f31431c3ffcdf1631"
+        },
+        {
+          "path": "apps/web/src/runnerReadiness.test.mjs",
+          "sha256": "abd03f4ed0aa8aa11f0c00ec69cf5db7f2c962dc3f43ad432c8f7d4410dd0ad2"
+        }
+      ],
+      "log_sha256": "3af461339b1ef308be5699f66150afadbd2bdc35ab4ede6b81e992ba651436c8"
+    }
+  ],
+  "acceptance": {
+    "status": "passed",
+    "assertions": 60,
+    "failures": 0,
+    "protocol_checkpoints": 8,
+    "protocol_features": [
+      "canonical-source-verification-v1",
+      "checkpoint-verification-v1",
+      "durable-control-v1",
+      "retained-provider-receipt-v1",
+      "secret-delivery",
+      "verification-artifact-transfer-v1",
+      "verified-dependency-files-v1",
+      "verifier-cache-suppression-v1",
+      "workspace-setup-v1"
+    ],
+    "source_checkpoints": 8,
+    "saved_sources": 2,
+    "source_fixture": {
+      "expected_repository": "readiness-acceptance/owned-source-672756591d0f43188a8a73fc252d6f76",
+      "remote": "https://github.com/readiness-acceptance/owned-source-672756591d0f43188a8a73fc252d6f76.git",
+      "commit": "d21fdd421ff8c62198b6a3120efb576022aa71e8",
+      "git_allowed_protocol": "file"
+    },
+    "owned_services_stopped": true
+  },
+  "limits": [
+    "This is implementing-agent self-review, not independent approval or a human decision.",
+    "Account/catalog fixture only; no provider inference, dispatch or whole-issue application acceptance.",
+    "The original R2 general non-ECorp default-source claim is retracted; R3/R4 have explicit synthetic default and native local saved identities.",
+    "The red test preceded the product fix; a fixture name was corrected before green R2, so final test bytes differ.",
+    "The narrow screenshot retains its focused skip-link overlay, which obscures a row; images were not edited.",
+    "Historical failed attempts and Cargo advisory debt remain; focused secret scans are not a clean whole-history audit.",
+    "Required hosted checks are unavailable while GitHub Actions is disabled; PR remains draft and issue remains open."
+  ],
+  "publication_preflight_correction": {
+    "at_utc": "2026-10-01T22:36:06.439269+00:00",
+    "failed_receipt": "issue198-protocol-publication-r1-validation.json",
+    "failed_tree": "1c1fb86580be1739df1eaacf88cc6582757a7982",
+    "diagnostic": "docs/evidence/2026-10-01-runner-readiness-identity/protocol-correction-r1/issue198-install-r2.log:12: new blank line at EOF.",
+    "copy": "protocol-correction-r1/issue198-install-r2.log",
+    "old_sha256": "18a6bed68fa7ad2937cd007a8a7f33b929ab51852a066d2c3df80673e26c1e72",
+    "new_sha256": "181c9dd8eb71022acab5a7de437fd0bcd89211aeffc1353f3ca032e848af4dae",
+    "original_sha256": "b8e9b6bba23b64148e573db7a202dcf6f1817d91cfb7b1521d374c29c4503ca8",
+    "bytes_removed": 1,
+    "scope": "Evidence-only whitespace correction; original log, failing tree and receipts preserved."
+  }
+}

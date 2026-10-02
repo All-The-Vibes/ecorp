@@ -1,0 +1,93 @@
+#requires -Version 7.5
+param(
+    [Parameter(Mandatory)][ValidateSet('teams-install','teams-tests','f02-diagnostic')][string]$Lane,
+    [Parameter(Mandatory)][ValidatePattern('^r[0-9]+$')][string]$Revision
+)
+$ErrorActionPreference = 'Stop'
+$taskWorktree = '<USERPROFILE>\.codex\worktrees\issue198-readiness\ecorp'
+$taskReceipt = Join-Path $PSScriptRoot "issue198-$Lane-$Revision.json"
+$taskOutput = Join-Path $PSScriptRoot "issue198-$Lane-$Revision"
+if ((Test-Path -LiteralPath $taskReceipt) -or (Test-Path -LiteralPath $taskOutput)) { throw 'Preserve prior evidence.' }
+function Read-Source {
+    Push-Location $taskWorktree
+    try {
+        $taskFiles = (& git ls-files -z --cached --others --exclude-standard) -split "`0" | Where-Object { $_ } | Sort-Object -Unique
+        if ($LASTEXITCODE) { throw 'Source inventory failed.' }
+        @($taskFiles | ForEach-Object { [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash.ToLowerInvariant()} })
+    } finally { Pop-Location }
+}
+$taskRecord = [ordered]@{
+    issue=198;lane=$Lane;revision=$Revision;worktree=$taskWorktree
+    started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');status='running'
+    head=(& git --no-optional-locks -C $taskWorktree rev-parse HEAD)
+    source_before=(Read-Source);attempts=@()
+    driver=@{path=$PSCommandPath;sha256=(Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant()}
+    node_version=(& node --version);npm_version=(& npm --version)
+    assurance='Retrospective setup and diagnostic evidence. Does not erase the original canonical failure or establish its root cause.'
+}
+New-Item -ItemType Directory -Path $taskOutput | Out-Null
+$taskRecord | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+$taskPreviousFixture = [Environment]::GetEnvironmentVariable('ECORP_DIFF_TEST_ROOT','Process')
+$taskCode = 1
+try {
+    $taskLimit = if ($Lane -eq 'f02-diagnostic') { 3 } else { 1 }
+    for ($taskAttempt=1; $taskAttempt -le $taskLimit; $taskAttempt++) {
+        $taskLog = Join-Path $taskOutput "attempt-$taskAttempt.log"
+        $taskStarted = [DateTimeOffset]::UtcNow.ToString('o')
+        $taskCwd = $taskWorktree
+        if ($Lane -eq 'teams-install') { $taskCwd=Join-Path $taskWorktree 'scenarios/repo-steward' }
+        if ($Lane -eq 'f02-diagnostic') {
+            $taskFixture = Join-Path $taskOutput "fixtures-$taskAttempt"
+            New-Item -ItemType Directory -Path $taskFixture | Out-Null
+            $env:ECORP_DIFF_TEST_ROOT=$taskFixture
+        }
+        Push-Location $taskCwd
+        try {
+            $ErrorActionPreference='Continue'
+            switch ($Lane) {
+                'teams-install' {
+                    $taskCommand='npm ci --ignore-scripts --no-fund --workspaces=false'
+                    & npm ci --ignore-scripts --no-fund --workspaces=false *> $taskLog
+                }
+                'teams-tests' {
+                    $taskCommand='node --test --test-concurrency=1 scenarios/repo-steward/teams-host.test.mjs'
+                    & node --test --test-concurrency=1 scenarios/repo-steward/teams-host.test.mjs *> $taskLog
+                }
+                'f02-diagnostic' {
+                    $taskCommand='node --test --test-concurrency=1 --test-name-pattern=^F02 native filter repeated delimiters \(349354\) tools/check_deliverable_diff.test.mjs'
+                    & node --test --test-concurrency=1 '--test-name-pattern=^F02 native filter repeated delimiters \(349354\)' tools/check_deliverable_diff.test.mjs *> $taskLog
+                }
+            }
+            $taskNativeExit=$LASTEXITCODE
+            $ErrorActionPreference='Stop'
+        } finally { Pop-Location }
+        $taskAttemptRecord=[ordered]@{
+            attempt=$taskAttempt;command=$taskCommand;cwd=$taskCwd;native_exit_code=$taskNativeExit
+            started_at_utc=$taskStarted;finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+            log=$taskLog;log_sha256=(Get-FileHash -LiteralPath $taskLog -Algorithm SHA256).Hash.ToLowerInvariant()
+            results=@(Select-String -LiteralPath $taskLog -Pattern '^# (tests|pass|fail|cancelled|skipped|todo|duration_ms) ' | ForEach-Object Line)
+        }
+        if ($Lane -eq 'f02-diagnostic') { $taskAttemptRecord.fixture_root=$taskFixture;$taskAttemptRecord.owns_fixtures=$true }
+        $taskRecord.attempts += $taskAttemptRecord
+        $taskRecord | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+        if ($taskNativeExit -ne 0) { break }
+    }
+    $taskCode=$taskNativeExit
+    $taskRecord.status=if ($taskCode -eq 0) {'passed'} else {'failed'}
+    if ($Lane -eq 'teams-install' -and $taskCode -eq 0) {
+        $taskPackage=Get-Content -LiteralPath (Join-Path $taskWorktree 'scenarios/repo-steward/node_modules/@microsoft/teams.apps/package.json') -Raw | ConvertFrom-Json
+        $taskRecord.installed_package=@{name=$taskPackage.name;version=$taskPackage.version}
+    }
+} catch { $taskRecord.status='failed';$taskRecord.failure=$_.Exception.Message;$taskCode=1 }
+finally {
+    [Environment]::SetEnvironmentVariable('ECORP_DIFF_TEST_ROOT',$taskPreviousFixture,'Process')
+    $taskPreviousFixture=$null
+    $taskRecord.source_after=Read-Source
+    $taskRecord.head_after=& git --no-optional-locks -C $taskWorktree rev-parse HEAD
+    $taskRecord.source_unchanged=($taskRecord.head -ceq $taskRecord.head_after) -and ((ConvertTo-Json -InputObject $taskRecord.source_before -Depth 5 -Compress) -ceq (ConvertTo-Json -InputObject $taskRecord.source_after -Depth 5 -Compress))
+    if (!$taskRecord.source_unchanged) { $taskRecord.status='invalidated';$taskCode=1 }
+    $taskRecord.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+    $taskRecord | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+}
+[pscustomobject]$taskRecord | Select-Object lane,status,source_unchanged,attempts,installed_package,failure | ConvertTo-Json -Depth 6
+exit $taskCode

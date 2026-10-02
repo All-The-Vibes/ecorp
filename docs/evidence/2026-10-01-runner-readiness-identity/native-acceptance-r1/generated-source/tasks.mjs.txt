@@ -1,0 +1,114 @@
+const TITLE_LIMIT = 80;
+let nextId = 0;
+
+function assertTitle(title) {
+  const normalized = typeof title === "string" ? title.trim() : "";
+
+  if (!normalized) {
+    throw new Error("Task title is required.");
+  }
+
+  if (normalized.length > TITLE_LIMIT) {
+    throw new Error(`Task title must be ${TITLE_LIMIT} characters or fewer.`);
+  }
+
+  return normalized;
+}
+
+export function createState(tasks = []) {
+  return { tasks: [...tasks] };
+}
+
+export function addTask(state, title) {
+  const normalizedTitle = assertTitle(title);
+  const nextTask = {
+    id: globalThis.crypto?.randomUUID?.() ?? `task-${++nextId}`,
+    title: normalizedTitle,
+    completed: false
+  };
+
+  return {
+    tasks: [...state.tasks, nextTask]
+  };
+}
+
+export function toggleTask(state, id) {
+  let found = false;
+
+  const tasks = state.tasks.map((task) => {
+    if (task.id !== id) {
+      return task;
+    }
+
+    found = true;
+    return {
+      ...task,
+      completed: !task.completed
+    };
+  });
+
+  if (!found) {
+    throw new Error("Task not found.");
+  }
+
+  return { tasks };
+}
+
+export function deleteTask(state, id) {
+  const tasks = state.tasks.filter((task) => task.id !== id);
+
+  if (tasks.length === state.tasks.length) {
+    throw new Error("Task not found.");
+  }
+
+  return { tasks };
+}
+
+export function filterTasks(state, filter = "all") {
+  if (filter === "active") {
+    return state.tasks.filter((task) => !task.completed);
+  }
+
+  if (filter === "completed") {
+    return state.tasks.filter((task) => task.completed);
+  }
+
+  return [...state.tasks];
+}
+
+export function serializeState(state) {
+  return JSON.stringify(state.tasks);
+}
+
+export function parseState(serialized) {
+  if (serialized === null || serialized === "") {
+    return createState();
+  }
+
+  const parsed = JSON.parse(serialized);
+
+  if (!Array.isArray(parsed)) {
+    throw new Error("Saved tasks are invalid.");
+  }
+
+  return {
+    tasks: parsed.map((task) => {
+      if (
+        !task ||
+        typeof task.id !== "string" ||
+        typeof task.title !== "string" ||
+        typeof task.completed !== "boolean"
+      ) {
+        throw new Error("Saved tasks are invalid.");
+      }
+
+      return {
+        id: task.id,
+        title: assertTitle(task.title),
+        completed: task.completed
+      };
+    })
+  };
+}
+
+export { TITLE_LIMIT };

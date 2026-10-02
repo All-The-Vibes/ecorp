@@ -1,0 +1,125 @@
+import {
+  TITLE_LIMIT,
+  addTask,
+  createState,
+  deleteTask,
+  filterTasks,
+  parseState,
+  serializeState,
+  toggleTask
+} from "./tasks.mjs";
+
+const STORAGE_KEY = "focus-ledger.tasks";
+
+const elements = {
+  input: document.querySelector("#task-title"),
+  addButton: document.querySelector("#add-task"),
+  filter: document.querySelector("#show-tasks"),
+  list: document.querySelector("#task-list"),
+  empty: document.querySelector("#empty-state"),
+  error: document.querySelector("#form-error"),
+  status: document.querySelector("#storage-status")
+};
+
+let state = loadState();
+
+function loadState() {
+  try {
+    return parseState(window.localStorage.getItem(STORAGE_KEY));
+  } catch {
+    window.localStorage.removeItem(STORAGE_KEY);
+    elements.status.textContent = "Saved tasks were corrupted and have been reset.";
+    return createState();
+  }
+}
+
+function saveState() {
+  window.localStorage.setItem(STORAGE_KEY, serializeState(state));
+}
+
+function setError(message = "") {
+  elements.error.textContent = message;
+}
+
+function setStatus(message = "") {
+  elements.status.textContent = message;
+}
+
+function render() {
+  const visibleTasks = filterTasks(state, elements.filter.value);
+  elements.list.innerHTML = "";
+
+  if (visibleTasks.length === 0) {
+    elements.empty.hidden = false;
+    return;
+  }
+
+  elements.empty.hidden = true;
+
+  for (const task of visibleTasks) {
+    const item = document.createElement("li");
+    item.className = "task-item";
+    item.dataset.completed = String(task.completed);
+
+    const label = document.createElement("label");
+    label.className = "task-label";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = task.completed;
+    checkbox.setAttribute("aria-label", `Complete ${task.title}`);
+    checkbox.addEventListener("change", () => {
+      state = toggleTask(state, task.id);
+      saveState();
+      setStatus("");
+      render();
+    });
+
+    const text = document.createElement("span");
+    text.textContent = task.title;
+
+    label.append(checkbox, text);
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "secondary";
+    deleteButton.textContent = "Delete";
+    deleteButton.setAttribute("aria-label", `Delete ${task.title}`);
+    deleteButton.addEventListener("click", () => {
+      state = deleteTask(state, task.id);
+      saveState();
+      setStatus("");
+      render();
+    });
+
+    item.append(label, deleteButton);
+    elements.list.append(item);
+  }
+}
+
+function handleAdd() {
+  setError("");
+  setStatus("");
+
+  try {
+    state = addTask(state, elements.input.value);
+    saveState();
+    elements.input.value = "";
+    render();
+    elements.input.focus();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : `Task title must be ${TITLE_LIMIT} characters or fewer.`;
+    setError(message);
+  }
+}
+
+elements.addButton.addEventListener("click", handleAdd);
+elements.input.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    handleAdd();
+  }
+});
+elements.filter.addEventListener("change", () => render());
+
+render();

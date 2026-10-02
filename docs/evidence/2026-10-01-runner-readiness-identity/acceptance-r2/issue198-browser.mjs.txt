@@ -1,0 +1,252 @@
+// Real browser -> server -> runner readiness with an account/catalog native fixture.
+// No inference, browser/API mocks, or route overrides.
+import assert from 'node:assert/strict'
+import { readFile, writeFile, unlink } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import path from 'node:path'
+import { setTimeout as delay } from 'node:timers/promises'
+
+assert.equal(process.env.CRONY_READINESS_TEST, '1')
+assert.ok(path.isAbsolute(process.env.CRONY_READINESS_FIXTURE ?? ''))
+const fixture = JSON.parse(await readFile(process.env.CRONY_READINESS_FIXTURE, 'utf8'))
+assert.equal(fixture.test_owned, true)
+function owned(value) {
+  const relative = path.relative(fixture.qa_root, value)
+  assert.ok(relative && !relative.startsWith('..') && !path.isAbsolute(relative))
+  return value
+}
+owned(fixture.source)
+assert.notEqual(path.resolve(fixture.source), path.resolve(fixture.product_root))
+function loopback(value) {
+  const url = new URL(value)
+  assert.equal(url.protocol, 'http:')
+  assert.equal(url.hostname, '127.0.0.1')
+  assert.ok(url.port && !url.username && !url.password && !url.search && !url.hash)
+  assert.equal(url.pathname, '/')
+  return url.origin
+}
+const server = loopback(fixture.server_url)
+const web = loopback(fixture.web_url)
+const demo = fixture.demo
+const api = suffix => `/api/corps/${demo.corp_id}${suffix}`
+const report = {
+  issue: 198, started_at: new Date().toISOString(), status: 'running', assertions: [],
+  server, web, corp_id: demo.corp_id, runner_id: fixture.runner_id,
+  assurance: 'Local development bootstrap, real browser/server/runner, explicit account/catalog-only native fixture. No provider inference or whole-issue completion.',
+  connection_operations: [], observations: [], page_errors: [], console_errors: [],
+}
+const save = () => writeFile(path.join(fixture.output, 'browser.json'), `${JSON.stringify(report, null, 2)}\n`)
+function verify(name, test) {
+  try { test(); report.assertions.push({ name, passed: true }) }
+  catch (error) { report.assertions.push({ name, passed: false, error: error.message }); throw error }
+}
+async function get(route) {
+  const response = await fetch(`${server}${route}`, { redirect: 'error', signal: AbortSignal.timeout(10_000) })
+  assert.equal(response.status, 200, `Unexpected GET status: ${route}`)
+  return response.json()
+}
+const snapshot = () => get(api(`/snapshot?actor_id=${demo.alice_actor_id}`))
+const runner = state => state.runners.find(entry => entry.id === fixture.runner_id)
+const codex = state => runner(state).capabilities.filter(entry => entry.name === 'codex')
+async function waitFor(fn, label, timeout = 40_000) {
+  const deadline = Date.now() + timeout
+  while (Date.now() < deadline) {
+    const value = await fn()
+    if (value) return value
+    await delay(200)
+  }
+  throw new Error(`Timed out: ${label}`)
+}
+let browser, page
+let roomId
+const connectionRoute = () => api(`/rooms/${roomId}/connections`)
+const connections = () => get(`${connectionRoute()}?actor_id=${demo.alice_actor_id}`)
+async function operationFinished(operation, expected) {
+  const value = await waitFor(async () => {
+    const next = await get(api(`/setup-operations/${operation.id}?actor_id=${demo.alice_actor_id}`))
+    if (['queued', 'running'].includes(next.status)) return null
+    return next
+  }, 'runner setup receipt')
+  report.connection_operations.push(value)
+  verify(`Operation ${value.id} retains exact actor, runner and connection scope`, () => {
+    assert.equal(value.corp_id, demo.corp_id)
+    assert.equal(value.actor_id, demo.alice_actor_id)
+    assert.equal(value.runner_id, fixture.runner_id)
+    assert.equal(value.connection_id, operation.connection_id)
+    assert.equal(value.status, 'succeeded')
+    assert.equal(value.report.connection_status, expected)
+  })
+  await save()
+  return value
+}
+async function openConnections() {
+  await page.getByRole('button', { name: 'Connect a repository or coding agent', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Connect a project', exact: true })
+  await dialog.waitFor()
+  return dialog
+}
+async function createConnection(label) {
+  const dialog = await openConnections()
+  await dialog.getByRole('radio', { name: 'Existing local checkout', exact: true }).check()
+  await dialog.locator('#connection-directory').fill(fixture.source)
+  await dialog.getByRole('radio', { name: 'Codex', exact: true }).check()
+  if ((await dialog.locator('details.connections-options').getAttribute('open')) === null) {
+    await dialog.locator('details.connections-options > summary').click()
+  }
+  await dialog.locator('#connection-label').fill(label)
+  await dialog.locator('#connection-ref').fill('main')
+  await dialog.getByRole('checkbox', { name: 'Use the machine’s standard agent installation', exact: true }).uncheck()
+  await dialog.getByRole('checkbox', { name: 'Use the agent’s existing sign-in on this machine', exact: true }).uncheck()
+  const pending = page.waitForResponse(response => response.request().method() === 'POST' &&
+    new URL(response.url()).pathname.match(/\/rooms\/[^/]+\/connections$/))
+  await dialog.getByRole('button', { name: 'Connect and test', exact: true }).click()
+  const response = await pending
+  verify(`Browser creates ${label} on real server`, () => assert.equal(response.status(), 200))
+  const result = await response.json()
+  roomId = result.operation.room_id
+  await operationFinished(result.operation, 'ready')
+  await dialog.getByRole('button', { name: 'Close', exact: true }).click()
+  return { id: result.connection.id, label }
+}
+async function retest(connection, expected) {
+  const dialog = await openConnections()
+  const row = dialog.locator('.connections-saved li').filter({ has: page.locator('.connections-saved-title > strong', { hasText: connection.label }) })
+  await row.waitFor()
+  const pending = page.waitForResponse(response => response.request().method() === 'POST' &&
+    new URL(response.url()).pathname === api(`/connections/${connection.id}/check`))
+  await row.getByRole('button', { name: 'Test', exact: true }).click()
+  const response = await pending
+  verify(`Browser retests ${connection.id} on real server`, () => assert.equal(response.status(), 200))
+  const value = await response.json()
+  assert.equal(value.operation.connection_id, connection.id)
+  await operationFinished(value.operation, expected)
+  await dialog.getByRole('button', { name: 'Close', exact: true }).click()
+}
+async function openReadiness() {
+  const guide = page.getByRole('button').filter({ hasText: 'Start guide' })
+  if (await guide.isVisible()) await guide.click()
+  const details = page.locator('details.setup-drawer')
+  if ((await details.getAttribute('open')) === null) await details.locator('summary').click()
+  await page.locator('[aria-label="Connected runner readiness"]').waitFor()
+}
+async function observedRows() {
+  return page.locator('[aria-label="Connected runner readiness"] .runner-card > ul > li').evaluateAll(elements =>
+    elements.filter(element => element.querySelector('span')?.textContent === 'OpenAI Codex').map(element => ({
+      label: element.querySelector('small')?.textContent.trim(),
+      status: element.querySelector('strong')?.textContent.trim(),
+      models: Array.from(element.querySelectorAll('small')).slice(1).map(small => small.textContent.trim()),
+    })).sort((a, b) => a.label.localeCompare(b.label)))
+}
+async function checkRows(name, expectedConnections) {
+  const state = await waitFor(async () => {
+    const next = await snapshot()
+    const entries = codex(next)
+    return entries.length === expectedConnections.length + 1 && expectedConnections.every(connection =>
+      entries.some(entry => entry.workspace_connection_id === connection.id && entry.available)) ? next : null
+  }, `${name}: server capability count`)
+  const entries = codex(state)
+  verify(`${name}: independent base and saved provider records`, () => {
+    const base = entries.filter(entry => !entry.workspace_connection_id)
+    assert.equal(base.length, 1)
+    assert.equal(base[0].available, false)
+    for (const connection of expectedConnections) {
+      const entry = entries.find(candidate => candidate.workspace_connection_id === connection.id)
+      assert.equal(entry.source_base_commit, fixture.source_head)
+      assert.equal(entry.models.length, 1)
+      assert.match(entry.detail, /inference.*not.*tested/i)
+    }
+  })
+  await openReadiness()
+  const expected = entries.map(entry => ({
+    label: entry.workspace_connection_id ? `Saved connection ${entry.workspace_connection_id}` : 'Base installation',
+    status: entry.available ? 'Ready' : 'Unavailable',
+    models: entry.models.length ? [`${entry.models.filter(model => model.policy_state !== 'disabled').length} selectable models`] : [],
+  })).sort((a,b) => a.label.localeCompare(b.label))
+  const rows = await waitFor(async () => {
+    const current = await observedRows()
+    return JSON.stringify(current) === JSON.stringify(expected) ? current : null
+  }, `${name}: browser agrees with server`)
+  verify(`${name}: UI preserves every authoritative row and source label`, () => assert.deepEqual(rows, expected))
+  report.observations.push({ name, at: new Date().toISOString(), capabilities: entries, browser_rows: rows })
+  await save()
+}
+try {
+  await save()
+  const { chromium } = createRequire(import.meta.url)(process.env.CRONY_PLAYWRIGHT_MODULE)
+  browser = await chromium.launch({ channel: 'chrome', headless: true })
+  page = await browser.newPage({ viewport: { width: 1440, height: 1050 }, reducedMotion: 'reduce' })
+  page.setDefaultTimeout(20_000)
+  page.on('pageerror', error => report.page_errors.push(error.message))
+  page.on('console', message => { if (message.type() === 'error' || /same key|unique.*key/i.test(message.text())) report.console_errors.push(message.text()) })
+  await page.goto(`${web}/#missions`, { waitUntil: 'networkidle' })
+  await page.locator('.live-indicator.live-live').waitFor()
+  const expand = page.locator('#new-mission-button')
+  if (await expand.isVisible()) await expand.click()
+  await checkRows('initial base', [])
+  const first = await createConnection('Readiness Alpha')
+  await checkRows('first saved connection', [first])
+  const second = await createConnection('Readiness Beta')
+  report.saved_connections = [first, second]
+  await checkRows('two saved connections', [first, second])
+  await page.locator('[aria-label="Connected runner readiness"]').screenshot({ path: path.join(fixture.output, 'readiness-desktop.png') })
+  await page.reload({ waitUntil: 'networkidle' })
+  await page.locator('.live-indicator.live-live').waitFor()
+  await checkRows('after reload', [first, second])
+  await retest(second, 'ready')
+  await checkRows('after ready retest', [first, second])
+  const marker = owned(path.join(fixture.qa_root, 'runner', `codex-signed-out-${first.id.replaceAll('-', '')}`))
+  await writeFile(marker, 'Explicit deterministic account state; no real credential.\n', { flag: 'wx' })
+  await retest(first, 'needs_sign_in')
+  await checkRows('after signed-out retest', [second])
+  const afterSignOut = await connections()
+  verify('Signed-out connection remains saved and honestly needs sign-in', () => {
+    assert.equal(afterSignOut.connections.find(entry => entry.id === first.id).status, 'needs_sign_in')
+    assert.equal(afterSignOut.connections.find(entry => entry.id === second.id).status, 'ready')
+  })
+  await unlink(marker)
+  await retest(first, 'ready')
+  await checkRows('after account restoration', [first, second])
+  await page.setViewportSize({ width: 390, height: 844 })
+  await checkRows('narrow viewport', [first, second])
+  const layout = await page.locator('[aria-label="Connected runner readiness"]').evaluate(element => ({
+    width: element.clientWidth, scroll_width: element.scrollWidth,
+    rows: Array.from(element.querySelectorAll('.runner-card > ul > li')).map(row => ({width: row.clientWidth, scroll_width: row.scrollWidth})),
+  }))
+  report.narrow_layout = layout
+  verify('Full connection IDs fit narrow readiness rows without horizontal overflow', () => {
+    assert.ok(layout.scroll_width <= layout.width + 1)
+    assert.ok(layout.rows.every(row => row.scroll_width <= row.width + 1))
+  })
+  await page.locator('[aria-label="Connected runner readiness"]').screenshot({ path: path.join(fixture.output, 'readiness-narrow.png') })
+  const audit = (await readFile(owned(path.join(fixture.qa_root, 'runner/calls.jsonl')), 'utf8')).trim().split('\n').map(JSON.parse)
+  report.native_calls = audit
+  verify('Unavailable base comes from the explicit failed version-probe fixture', () => {
+    assert.ok(audit.some(entry => entry.method === 'version' && entry.fixture_scope === 'unavailable-base' && entry.exit_code === 69))
+  })
+  verify('Native fixture performed account/catalog setup for both private connection profiles', () => {
+    for (const connection of [first, second]) {
+      const entries = audit.filter(entry => entry.connection === connection.id.replaceAll('-', ''))
+      assert.ok(entries.some(entry => entry.method === 'account/read'))
+      assert.ok(entries.some(entry => entry.method === 'model/list'))
+    }
+    assert.ok(audit.every(entry => ['version', 'initialize', 'initialized', 'account/read', 'model/list'].includes(entry.method)))
+  })
+  verify('No duplicate-key or browser runtime errors', () => {
+    assert.deepEqual(report.page_errors, [])
+    assert.deepEqual(report.console_errors, [])
+  })
+  report.status = 'passed'
+} catch (error) {
+  report.status = 'failed'
+  report.failure = error.stack
+  process.exitCode = 1
+  if (page) {
+    await page.screenshot({ path: path.join(fixture.output, 'failure.png'), fullPage: true }).catch(() => {})
+    report.failed_page_text = await page.locator('body').innerText().catch(() => '')
+  }
+} finally {
+  if (browser) await browser.close()
+  report.finished_at = new Date().toISOString()
+  await save()
+}
+console.log(JSON.stringify({ status: report.status, assertions: report.assertions.length, output: fixture.output }))

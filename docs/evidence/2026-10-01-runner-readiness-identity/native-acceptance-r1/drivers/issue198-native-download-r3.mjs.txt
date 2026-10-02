@@ -1,0 +1,139 @@
+// Download the actual runner deliverable through the product browser, then
+// validate its persisted hashes and extract only regular, safe relative files.
+// This script does not execute generated source or submit an evidence decision.
+import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { readFile, writeFile, mkdir, lstat } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import path from 'node:path'
+
+const output = path.resolve(process.argv[2])
+const fixture = JSON.parse(await readFile(path.join(output, 'owned-fixture.json'), 'utf8'))
+const ready = JSON.parse(await readFile(path.join(output, 'review-ready.json'), 'utf8'))
+assert.equal(fixture.test_owned, true)
+assert.equal(path.resolve(fixture.output), output)
+const sha256 = data => createHash('sha256').update(data).digest('hex')
+for (const value of [fixture.web_url, fixture.server_url]) {
+  const url = new URL(value)
+  assert.equal(url.protocol, 'http:')
+  assert.equal(url.hostname, '127.0.0.1')
+  assert.ok(url.port && !url.username && !url.password)
+}
+const receipt = { started_at: new Date().toISOString(), status: 'running', run_id: ready.run_id,
+  mission_id: ready.mission_id, assertions: [], files: [], assurance: 'Real browser download and current persisted source linkage. Generated source is not executed by this preparation step.' }
+const check = (name, callback) => {
+  callback()
+  receipt.assertions.push({ name, passed: true })
+}
+const api = `/api/corps/${fixture.demo.corp_id}`
+let browser
+try {
+  const response = await fetch(`${fixture.server_url}${api}/snapshot?actor_id=${fixture.demo.alice_actor_id}`, { signal: AbortSignal.timeout(15000) })
+  assert.equal(response.status, 200)
+  const state = await response.json()
+  await writeFile(path.join(output, 'download-before-state-r3.json'), JSON.stringify(state, null, 2) + '\n')
+  const run = state.snapshot.runs.find(item => item.id === ready.run_id)
+  const deliverables = state.snapshot.source_deliverables.filter(item => item.run_id === ready.run_id)
+  const review = state.snapshot.verification_requests.find(item => item.run_id === ready.run_id && item.status === 'pending')
+  check('Source is bound to the sole reviewed run and pending independent gate', () => {
+    assert.equal(deliverables.length, 1)
+    assert.equal(run.status, 'waiting_for_approval')
+    assert.equal(run.verification_status, 'waiting_for_approval')
+    assert.ok(state.snapshot.events.some(event => event.aggregate_id === ready.run_id && event.type === 'run.verification_passed'))
+    assert.equal(review.gate_type, 'independent_review')
+    assert.equal(review.gate.exclude_requester, true)
+  })
+  const deliverable = deliverables[0]
+  receipt.deliverable = deliverable
+  receipt.run = run
+  receipt.review = review
+  const { chromium } = createRequire(import.meta.url)(process.env.CRONY_PLAYWRIGHT_MODULE)
+  browser = await chromium.launch({ channel: 'chrome', headless: true })
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true })
+  page.setDefaultTimeout(25000)
+  await page.goto(`${fixture.web_url}/#missions`, { waitUntil: 'networkidle' })
+  await page.locator('.live-indicator.live-live').waitFor()
+  assert.equal(await page.locator('#operator-actor').inputValue(), fixture.demo.alice_actor_id)
+  const card = page.locator(`[data-mission-id="${ready.mission_id}"]`)
+  await card.waitFor()
+  const gate = page.locator(`#mission-review-${ready.mission_id}[data-review-run-id="${ready.run_id}"]`)
+  await gate.waitFor()
+  const requesterDisabled = await gate.getByRole('button', { name: 'Accept evidence', exact: true }).isDisabled()
+  check('Actual browser prevents requester from accepting the independent review', () => assert.equal(requesterDisabled, true))
+  receipt.requester_gate_text = await gate.innerText()
+  await gate.screenshot({ path: path.join(output, 'requester-review-disabled-r3.png') })
+  const pendingDownload = page.waitForEvent('download')
+  await card.getByRole('button', { name: 'Download source deliverable', exact: true }).click()
+  const download = await pendingDownload
+  receipt.suggested_filename = download.suggestedFilename()
+  const original = path.join(output, 'native-source-deliverable-r3.json')
+  await download.saveAs(original)
+  assert.equal(await download.failure(), null)
+  const bytes = await readFile(original)
+  receipt.download_sha256 = sha256(bytes)
+  check('Downloaded bytes match the persisted source-deliverable digest and length', () => {
+    assert.equal(receipt.download_sha256, deliverable.sha256)
+    assert.equal(bytes.length, deliverable.bytes)
+  })
+  const archive = JSON.parse(bytes)
+  check('Archive retains exact base, source verification and immutable review linkage', () => {
+    assert.equal(archive.schema_version, 1)
+    assert.equal(archive.form, 'archive')
+    assert.equal(archive.verification_sha256, deliverable.verification_sha256)
+    assert.equal(archive.base_commit, fixture.source_head)
+    assert.equal(archive.base_commit, deliverable.base_commit)
+    assert.ok(archive.source_verification && archive.verified_tree)
+  })
+  const extract = path.join(output, 'downloaded-app-r3')
+  await mkdir(extract) // fails if an earlier extraction exists; never overwrite it
+  receipt.extracted_root = extract
+  const seen = new Set()
+  for (const change of archive.changes) {
+    assert.equal(typeof change.path, 'string')
+    const parts = change.path.split('/')
+    assert.ok(parts.length && !/[\\:\x00-\x1f]/.test(change.path))
+    assert.ok(!path.posix.isAbsolute(change.path) && !path.win32.isAbsolute(change.path))
+    for (const part of parts) {
+      assert.ok(part && part !== '.' && part !== '..' && !/[ .]$/.test(part))
+      assert.ok(!/^(con|prn|aux|nul|com[0-9]|lpt[0-9])(?:\.|$)/i.test(part))
+      assert.notEqual(part.toLowerCase(), '.git')
+    }
+    assert.ok(!seen.has(change.path.toLowerCase()), 'Duplicate Windows path')
+    seen.add(change.path.toLowerCase())
+    assert.ok(['100644', '100755'].includes(String(change.mode)), 'Only regular files may be extracted')
+    assert.equal(typeof change.content_base64, 'string')
+    assert.match(change.content_base64, /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/)
+    const content = Buffer.from(change.content_base64, 'base64')
+    assert.equal(content.length, change.bytes)
+    assert.equal(sha256(content), change.sha256)
+    const destination = path.resolve(extract, ...parts)
+    assert.ok(destination.startsWith(extract + path.sep))
+    await mkdir(path.dirname(destination), { recursive: true })
+    await writeFile(destination, content, { flag: 'wx' })
+    assert.equal((await lstat(destination)).isSymbolicLink(), false)
+    const live = await readFile(path.join(ready.workspace_path, ...parts))
+    assert.match(archive.verified_tree, /^[a-f0-9]{40}$/)
+    const canonical = execFileSync('git', ['-C', ready.workspace_path, 'cat-file', 'blob', `${archive.verified_tree}:${change.path}`], { windowsHide: true, maxBuffer: 8 * 1024 * 1024 })
+    assert.equal(sha256(canonical), change.sha256, 'Downloaded bytes must match the immutable Git tree that the verifier checked')
+    const normalized = Buffer.from(live.toString('utf8').replaceAll('\r\n', '\n'), 'utf8')
+    assert.equal(sha256(normalized), change.sha256, 'This fixture permits only observed CRLF conversion between preserved worktree and canonical archive')
+    receipt.physical_source ??= []
+    receipt.physical_source.push({path: change.path, bytes: live.length, sha256: sha256(live), normalized_lf_sha256: sha256(normalized), canonical_sha256: sha256(canonical)})
+    receipt.files.push({ path: change.path, bytes: content.length, sha256: change.sha256, mode: change.mode })
+  }
+  check('Native task provided the requested source and test files', () => {
+    for (const required of ['index.html', 'app.mjs', 'tasks.mjs', 'tests/tasks.test.mjs', 'evidence/result.md']) assert.ok(seen.has(required), required)
+  })
+  await card.screenshot({ path: path.join(output, 'native-source-download-card-r3.png') })
+  receipt.status = 'download_verified_source_execution_pending'
+} catch (error) {
+  receipt.status = 'failed'
+  receipt.failure = error.stack
+  process.exitCode = 1
+} finally {
+  if (browser) await browser.close()
+  receipt.finished_at = new Date().toISOString()
+  await writeFile(path.join(output, 'download-receipt-r3.json'), JSON.stringify(receipt, null, 2) + '\n')
+}
+console.log(JSON.stringify({ status: receipt.status, files: receipt.files, failure: receipt.failure }))
