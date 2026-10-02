@@ -296,7 +296,7 @@ impl Issue297Fixture {
         use crate::{AuthService, DashMap, SecretCipher, ServerMode, StrategyRegistry, broadcast};
         initialize_dependency_artifact_fixture(store.pool()).await;
         sqlx::raw_sql(
-            "CREATE TABLE missions (id UUID PRIMARY KEY,corp_id UUID,room_id UUID,status TEXT);
+            "CREATE TABLE missions (id UUID PRIMARY KEY,corp_id UUID,room_id UUID,status TEXT,deadline_policy JSONB);
              CREATE TABLE room_memberships (room_id UUID,actor_id UUID);
              CREATE TABLE events (
                  seq BIGSERIAL PRIMARY KEY,id UUID,schema_version INTEGER,corp_id UUID,room_id UUID,
@@ -305,7 +305,7 @@ impl Issue297Fixture {
                  created_at TIMESTAMPTZ DEFAULT now(),UNIQUE(corp_id,idempotency_key)
              );",
         ).execute(store.pool()).await.unwrap();
-        sqlx::query("INSERT INTO missions VALUES ($1,$2,$3,'running')")
+        sqlx::query("INSERT INTO missions (id,corp_id,room_id,status) VALUES ($1,$2,$3,'running')")
             .bind(Uuid::from_u128(2))
             .bind(Uuid::from_u128(1))
             .bind(Uuid::from_u128(20))

@@ -34,6 +34,7 @@ async fn fixture(pool: PgPool) -> Result<Fixture> {
         })
         .await?;
     let plan = TaskGraphPlan {
+        deadline: None,
         strategy: "single".to_owned(),
         max_nodes: 1,
         max_depth: 0,

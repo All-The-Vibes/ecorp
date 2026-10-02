@@ -1,0 +1,107 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 298,
+  "status": "passed",
+  "executed_test": "mission_deadline::tests::queue_parent_restart_and_verifier_delays_consume_one_clock",
+  "started_at_utc": "2026-10-02T13:25:19.2282203Z",
+  "finished_at_utc": "2026-10-02T13:25:55.0791797Z",
+  "source": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-02T13:25:36.853Z",
+    "source": "<reviewed-checkout>",
+    "head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+    "tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+    "branch": "codex/issue298-mission-deadline",
+    "status": "M apps/web/src/App.tsx\n M apps/web/src/OperationsUx.css\n M apps/web/src/missionPreview.test.mjs\n M apps/web/src/missionPreview.ts\n M crates/crony-cli/src/main.rs\n M crates/crony-domain/src/lib.rs\n M crates/crony-protocol/src/lib.rs\n M crates/crony-runner/Cargo.toml\n M crates/crony-runner/src/main.rs\n M crates/crony-server/src/delegated.rs\n M crates/crony-server/src/issue297_native_fixture.rs\n M crates/crony-server/src/main.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/agent_pinning/tests.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/aggregate_breaker_tests.rs\n M crates/crony-store/src/checkpoint_correction.rs\n M crates/crony-store/src/checkpoint_correction_dispatch_tests.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/deliverable_failure_tests.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_context_tests.rs\n M crates/crony-store/src/retained_provider_receipt.rs\n M crates/crony-store/src/staffing.rs\n M crates/crony-store/src/state_audit.rs\n M crates/crony-store/src/steering_lock_tests.rs\n M crates/crony-store/src/verification_dispatch.rs\n M crates/crony-store/src/workspace_connections_tests.rs\n M db/migrations/manifest.json\n M scripts/fake-codex-app-server.mjs\n?? apps/web/src/MissionDeadlineEditor.test.mjs\n?? apps/web/src/MissionDeadlineEditor.tsx\n?? apps/web/src/missionDeadline.test.mjs\n?? apps/web/src/missionDeadline.ts\n?? crates/crony-domain/src/mission_deadline.rs\n?? crates/crony-runner/src/mission_deadline_tests.rs\n?? crates/crony-store/src/mission_deadline.rs\n?? crates/crony-store/src/mission_deadline_tests.rs\n?? db/migrations/0057_mission_deadlines.sql\n?? docs/MISSION_DEADLINES.md\n?? tools/e2e_mission_deadline.mjs\n?? tools/e2e_mission_deadline.test.mjs\n?? tools/fake_codex_deadline.test.mjs",
+    "source_file_count": 7428,
+    "source_fingerprint": "aab4c5ab28c1077d8eb04508e40af79808f443c71bb11c30d3400a2eb6a060b3",
+    "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-before-fake-clock-r1.json",
+    "manifest_sha256": "a01a5952ff05d709617d22a6769d20e497be46d4acea9bcd94e84a75e4241dbb"
+  },
+  "command": "cargo test --locked --offline -p crony-domain mission_deadline -- --nocapture",
+  "counts": [
+    {
+      "filtered_out": 25,
+      "failed": 0,
+      "ignored": 0,
+      "passed": 8,
+      "measured": 0
+    }
+  ],
+  "observations": [
+    {
+      "clock": "supplied-test-time",
+      "elapsed_seconds": 0,
+      "observed_allowance": {
+        "dispatched_at": "2026-10-02T12:00:00Z",
+        "mission_deadline_at": "2026-10-02T12:10:00Z",
+        "remaining_ms": 480000,
+        "task_deadline_at": "2026-10-02T12:08:00Z"
+      },
+      "stage": "created",
+      "task_key": "research"
+    },
+    {
+      "clock": "supplied-test-time",
+      "elapsed_seconds": 300,
+      "observed_allowance": {
+        "dispatched_at": "2026-10-02T12:05:00Z",
+        "mission_deadline_at": "2026-10-02T12:10:00Z",
+        "remaining_ms": 180000,
+        "task_deadline_at": "2026-10-02T12:08:00Z"
+      },
+      "stage": "queue_delay",
+      "task_key": "research"
+    },
+    {
+      "clock": "supplied-test-time",
+      "elapsed_seconds": 470,
+      "observed_allowance": {
+        "dispatched_at": "2026-10-02T12:07:50Z",
+        "mission_deadline_at": "2026-10-02T12:10:00Z",
+        "remaining_ms": 130000,
+        "task_deadline_at": "2026-10-02T12:10:00Z"
+      },
+      "stage": "parent_delay",
+      "task_key": "implementation"
+    },
+    {
+      "clock": "supplied-test-time",
+      "elapsed_seconds": 550,
+      "observed_allowance": {
+        "dispatched_at": "2026-10-02T12:09:10Z",
+        "mission_deadline_at": "2026-10-02T12:10:00Z",
+        "remaining_ms": 50000,
+        "task_deadline_at": "2026-10-02T12:10:00Z"
+      },
+      "stage": "restart_resume_delay",
+      "task_key": "implementation"
+    },
+    {
+      "clock": "supplied-test-time",
+      "elapsed_seconds": 599,
+      "observed_allowance": {
+        "dispatched_at": "2026-10-02T12:09:59Z",
+        "mission_deadline_at": "2026-10-02T12:10:00Z",
+        "remaining_ms": 1000,
+        "task_deadline_at": "2026-10-02T12:10:00Z"
+      },
+      "stage": "verifier_delay",
+      "task_key": "review"
+    },
+    {
+      "clock": "supplied-test-time",
+      "elapsed_seconds": 600,
+      "mission_deadline_at": "2026-10-02T12:10:00Z",
+      "observed_error": "mission deadline or declared stage allowance has expired",
+      "sampled_at": "2026-10-02T12:10:00Z",
+      "stage": "expired_dispatch",
+      "task_key": "review"
+    }
+  ],
+  "original_log": {
+    "file": "output/issue-completion/20261002T023252Z\\issue298-fake-clock-r1-domain.log",
+    "sha256": "a3aea47af68b80bf9be31293ae119b4093c7077b69bc196cfa4d8a347ae71cf8"
+  },
+  "scope": "Actual output from the native Rust deadline policy at supplied fake-clock times. Stage names label simulated delays, not separately executed native process restarts. UTC sample times are fixture inputs, distinct from the real execution timestamps. Native store reopen/resume and process cancellation are separate regressions."
+}

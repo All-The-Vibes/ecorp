@@ -31,6 +31,9 @@ import {
   buildMissionRequest, currentMissionPreview, missionRequestScope, startMissionPreview,
 } from './missionPreview'
 import type { MissionPreviewLoad, MissionRequestScope } from './missionPreview'
+import { emptyMissionDeadlineDraft, readMissionDeadlineDraft } from './missionDeadline'
+import type { MissionDeadlinePolicy } from './missionDeadline'
+import { MissionDeadlineEditor, MissionDeadlineReadback } from './MissionDeadlineEditor'
 import { isProviderLiveRun, missionIdForLink, pendingReviewForRun, relatedWorkOptions, reviewBlockedReason, selectMissionEvidenceRun, workLinkLabel, workflowTaskLabel } from './workflowContext'
 import { canPostRoomMessage, discussionScopeKey, missionOrigin, resolveDiscussionRoom, roomDiscussionMessages, roomWorkContext } from './missionProjection'
 import type { DiscussionScope } from './missionProjection'
@@ -81,6 +84,7 @@ type Mission = {
   description: string
   specification_version: number
   strategy: string
+  deadline?: MissionDeadlinePolicy | null
   max_nodes: number
   max_depth: number
   original_budget_tokens: number
@@ -3318,6 +3322,7 @@ function MissionCard({
         <span className="mission-id">#{shortId(mission.id)}</span>
       </div>
       <h3>{mission.title}</h3>
+      {mission.deadline ? <MissionDeadlineReadback deadline={mission.deadline} /> : null}
       {collaborationInput && onViewAgent ? <MissionCollaborationPanel
         input={collaborationInput}
         onViewAgent={onViewAgent}
@@ -3509,6 +3514,8 @@ function MissionCard({
                     </dd>
                   </div>
                   <div><dt>Budget</dt><dd>{task.contract.budget_tokens.toLocaleString()} tokens</dd></div>
+                  <div><dt>Deadline</dt><dd><MissionDeadlineReadback deadline={mission.deadline}
+                    taskKey={task.plan_key} contractDeadline={task.contract.deadline_at} /></dd></div>
                   <div><dt>Write scope</dt><dd>{task.contract.write_scope.length ? task.contract.write_scope.join(', ') : 'No repository writes declared'}</dd></div>
                   <div><dt>Allowed tools</dt><dd>{task.contract.allowed_tools.join(', ')}</dd></div>
                   <div><dt>References</dt><dd>{task.contract.references.length ? task.contract.references.join(', ') : 'None attached'}</dd></div>
@@ -4348,14 +4355,21 @@ function RoomPanel({
 
 function MissionAllocationPreview({
   scope,
+  onReadyScope,
 }: {
   scope: MissionRequestScope
+  onReadyScope: (scopeKey: string | null) => void
 }) {
   const [load, setLoad] = useState<MissionPreviewLoad | null>(null)
   const [refresh, setRefresh] = useState(0)
   const { key, corpId, actorId, body, strategy } = scope
-  useEffect(() => startMissionPreview({ key, corpId, actorId, body, strategy }, api, setLoad),
-    [key, corpId, actorId, body, strategy, refresh])
+  useEffect(() => {
+    const stop = startMissionPreview({ key, corpId, actorId, body, strategy }, api, (value) => {
+      setLoad(value)
+      onReadyScope(value.status === 'ready' ? value.scopeKey : null)
+    })
+    return () => { stop(); onReadyScope(null) }
+  }, [key, corpId, actorId, body, strategy, refresh, onReadyScope])
   const current = currentMissionPreview(scope, load)
   const quote = current?.status === 'ready' ? current.quote : null
   return (
@@ -4369,11 +4383,13 @@ function MissionAllocationPreview({
           <p className="operations-approval-note" role="status">
             Server-checked allocation · <strong>{quote.budget_tokens.toLocaleString()} total tokens</strong>
           </p>
+          {quote.deadline ? <MissionDeadlineReadback deadline={quote.deadline} heading="Server-confirmed mission deadline" /> : null}
           <ul className="evidence-checks" aria-label="Exact task token allocations">
             {quote.tasks.map((task) => (
               <li className="evidence-check" key={task.key} data-task-key={task.key}>
                 <strong title={task.title}>
                   {statusLabel(task.key)}<span className="sr-only">: {task.title}</span>
+                  <small className="mission-task-key">Exact key: <code>{task.key}</code></small>
                 </strong>
                 <span>{task.budget_tokens.toLocaleString()} tokens</span>
               </li>
@@ -4404,6 +4420,7 @@ function MissionAllocationPreview({
       {current?.status === 'error' ? (
         <button className="button button-secondary" type="button" onClick={() => {
           setLoad(null)
+          onReadyScope(null)
           setRefresh((value) => value + 1)
         }}>
           Retry preview
@@ -4457,6 +4474,17 @@ function App() {
   } | null>(null)
   const restoredConnectionScope = useRef('')
   const [missionBudgetTokens, setMissionBudgetTokens] = useState(1_000_000)
+  const [missionDeadlineDraft, setMissionDeadlineDraft] = useState(emptyMissionDeadlineDraft)
+  const [missionDeadlineClock, setMissionDeadlineClock] = useState(Date.now)
+  const [missionDeadlinePreviewScope, setMissionDeadlinePreviewScope] = useState<string | null>(null)
+  const missionDeadline = readMissionDeadlineDraft(missionDeadlineDraft, missionDeadlineClock)
+  const deadlineAdmissionClosesAt = missionDeadline.admissionClosesAt
+  useEffect(() => {
+    if (deadlineAdmissionClosesAt === null) return
+    const timer = window.setTimeout(() => setMissionDeadlineClock(Date.now()),
+      Math.min(Math.max(1, deadlineAdmissionClosesAt - Date.now()), 2_147_483_647))
+    return () => window.clearTimeout(timer)
+  }, [deadlineAdmissionClosesAt, missionDeadlineClock])
   const [missionDeliverable, setMissionDeliverable] =
     useState<NonNullable<TaskContract['deliverable']>['form']>('archive')
   const [commitDeliverable, setCommitDeliverable] = useState(false)
@@ -5028,16 +5056,19 @@ function App() {
     contract: missionContractHasInput ? missionContract : null,
     customVerification,
     verificationPolicy: missionVerificationPolicy,
+    deadline: missionDeadline.policy,
   }) : null
   const missionRequestBody = missionRequest ? JSON.stringify(missionRequest) : null
   const missionCorpId = bootstrap?.corp_id
   const missionActorId = selectedActor?.id
   const currentMissionRequest = missionCorpId && missionActorId && missionRequestBody
     ? missionRequestScope(missionCorpId, missionActorId, missionRequestBody) : null
+  const missionDeadlinePreviewPending = Boolean(missionDeadline.policy &&
+    (!currentMissionRequest || missionDeadlinePreviewScope !== currentMissionRequest.key))
   const missionPreviewEnabled = !missionComposerCollapsed && activeWorkspaceView === 'missions' &&
     Boolean(currentMissionRequest && selectedMissionSource && selectedActor && canOperate(selectedActor.role)) &&
     Boolean(missionTitle.trim()) && missionSourceConfirmed && !busy &&
-    !runtimeError && missionVerifierErrors.length === 0
+    !runtimeError && missionVerifierErrors.length === 0 && !missionDeadline.error
 
   const selectActor = (actor: Actor) => {
     currentViewer.current = bootstrap ? { corpId: bootstrap.corp_id, actorId: actor.id } : null
@@ -5068,6 +5099,13 @@ function App() {
 
   const createMission = async (event: FormEvent) => {
     event.preventDefault()
+    const submittedAt = Date.now()
+    const freshDeadline = readMissionDeadlineDraft(missionDeadlineDraft, submittedAt)
+    if (freshDeadline.error) {
+      setMissionDeadlineClock(submittedAt)
+      setError(freshDeadline.error)
+      return
+    }
     if (
       !bootstrap ||
       !selectedActor ||
@@ -5077,6 +5115,7 @@ function App() {
       !missionSourceConfirmed ||
       busy ||
       runtimeError ||
+      missionDeadlinePreviewPending ||
       missionVerifierErrors.length > 0
     ) {
       return
@@ -5107,6 +5146,8 @@ function App() {
       setMissionProhibitedActions('')
       setMissionReferences('')
       setMissionWriteScope('')
+      setMissionDeadlineDraft(emptyMissionDeadlineDraft())
+      setMissionDeadlinePreviewScope(null)
       if (!selectedMissionSource.workspaceConnectionId) setMissionSourceKey('')
       setMissionSourceConfirmed(Boolean(selectedMissionSource.workspaceConnectionId && !isEcorpRepository(selectedMissionSource)))
       setCustomVerification(false)
@@ -6723,6 +6764,8 @@ function App() {
                       <small>Portable source bytes, never a runner-local path.</small>
                     </div>
                     </div>
+                  <MissionDeadlineEditor draft={missionDeadlineDraft} result={missionDeadline}
+                    onChange={(draft) => { setMissionDeadlineDraft(draft); setMissionDeadlineClock(Date.now()) }} />
                   <div className="loadout-switches">
                     <label className="mission-run-toggle">
                       <input
@@ -6956,7 +6999,7 @@ function App() {
                 </p>
               ) : null}
               {missionPreviewEnabled && currentMissionRequest ? (
-                <MissionAllocationPreview key={currentMissionRequest.key} scope={currentMissionRequest} />
+                <MissionAllocationPreview key={currentMissionRequest.key} scope={currentMissionRequest} onReadyScope={setMissionDeadlinePreviewScope} />
               ) : (
                 <p className="operations-approval-note" role="status">
                   {busy ? 'Starting your mission…'
@@ -6964,7 +7007,7 @@ function App() {
                     : !missionTitle.trim() ? 'Describe the work to start setting up your mission.'
                     : !selectedMissionSource ? 'Choose the repository you want ECorp to work in.'
                     : !missionSourceConfirmed ? 'Confirm the selected repository to see the exact plan.'
-                    : runtimeError ?? 'Complete the check settings to see the exact plan.'}
+                    : missionDeadline.error ?? runtimeError ?? 'Complete the check settings to see the exact plan.'}
                 </p>
               )}
             </section>
@@ -6996,6 +7039,8 @@ function App() {
                     !selectedMissionSource ||
                     !missionSourceConfirmed ||
                     Boolean(runtimeError) ||
+                    Boolean(missionDeadline.error) ||
+                    missionDeadlinePreviewPending ||
                     missionVerifierErrors.length > 0
                   }
                 >
@@ -7005,6 +7050,9 @@ function App() {
             </div>
             {missionVerifierErrors.length ? (
               <p className="contract-error">{missionVerifierErrors[0]}</p>
+            ) : null}
+            {missionDeadline.error || missionDeadlinePreviewPending ? (
+              <p className="contract-error" role="status">{missionDeadline.error ?? 'Waiting for the server to confirm this deadline and reserve before saving or starting.'}</p>
             ) : null}
             {missionComposerStep === 'proof' && selectedMissionSource && runtimeError ? (
               <p className="contract-error" role="status">{runtimeError}</p>

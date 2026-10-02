@@ -26,7 +26,7 @@ async fn commit_failure_preserves_transport(pool: PgPool, connected: bool) {
     let (sender, receiver) = std::sync::mpsc::channel();
     let receiver = connected.then_some(receiver);
     let outcome = dispatcher
-        .with_run_budget_dispatch(CORP, run_id(1), run_id(1), "issue56-runner-1", || {
+        .with_run_budget_dispatch(CORP, run_id(1), run_id(1), "issue56-runner-1", |_| {
             let transport = sender.send(run_id(1));
             // PostgreSQL ends the idle transaction after the real enqueue,
             // without a production fault hook or a synthetic commit error.
@@ -364,7 +364,7 @@ async fn issue56_native_enqueue_rejects_fenced_and_wrong_assignments(pool: PgPoo
     ] {
         assert!(
             store
-                .with_run_budget_dispatch(corp, run_id(1), token, runner, || {
+                .with_run_budget_dispatch(corp, run_id(1), token, runner, |_| {
                     panic!("wrong assignment must never enqueue native work")
                 })
                 .await
@@ -376,7 +376,7 @@ async fn issue56_native_enqueue_rejects_fenced_and_wrong_assignments(pool: PgPoo
         .await
         .unwrap();
     let error = store
-        .with_run_budget_dispatch(CORP, run_id(1), run_id(1), "issue56-runner-1", || {
+        .with_run_budget_dispatch(CORP, run_id(1), run_id(1), "issue56-runner-1", |_| {
             panic!("a fenced starting run must never enqueue StartRun or ResumeRun")
         })
         .await
@@ -409,7 +409,7 @@ async fn issue56_native_enqueue_precedes_a_concurrent_fence(pool: PgPool) {
     let dispatcher = store.clone();
     let dispatch = tokio::spawn(async move {
         dispatcher
-            .with_run_budget_dispatch(CORP, run_id(1), run_id(1), "issue56-runner-1", || {
+            .with_run_budget_dispatch(CORP, run_id(1), run_id(1), "issue56-runner-1", |_| {
                 sent.store(true, std::sync::atomic::Ordering::SeqCst);
                 true
             })
@@ -950,7 +950,8 @@ async fn issue56_progress_enqueue_binds_durable_identity_and_lifecycle(pool: PgP
                         panic!("mismatched {field} must never enqueue")
                     })
                     .await
-                    .unwrap(),
+                    .unwrap()
+                    .transport_result,
                 RunnerCommandDispatchOutcome::Settled
             );
         }
@@ -958,14 +959,16 @@ async fn issue56_progress_enqueue_binds_durable_identity_and_lifecycle(pool: PgP
             store
                 .with_progress_command_dispatch(command, |_| Ok(false))
                 .await
-                .unwrap(),
+                .unwrap()
+                .transport_result,
             RunnerCommandDispatchOutcome::Disconnected
         );
         assert_eq!(
             store
                 .with_progress_command_dispatch(command, |_| Ok(true))
                 .await
-                .unwrap(),
+                .unwrap()
+                .transport_result,
             RunnerCommandDispatchOutcome::Sent
         );
     }
@@ -977,7 +980,8 @@ async fn issue56_progress_enqueue_binds_durable_identity_and_lifecycle(pool: PgP
         store
             .with_progress_command_dispatch(&commands[0], |_| panic!("settled command"))
             .await
-            .unwrap(),
+            .unwrap()
+            .transport_result,
         RunnerCommandDispatchOutcome::Settled
     );
     sqlx::query("UPDATE runs SET status='completed' WHERE id=$1")
@@ -989,7 +993,8 @@ async fn issue56_progress_enqueue_binds_durable_identity_and_lifecycle(pool: PgP
         store
             .with_progress_command_dispatch(&commands[1], |_| panic!("terminal run"))
             .await
-            .unwrap(),
+            .unwrap()
+            .transport_result,
         RunnerCommandDispatchOutcome::Obsolete
     );
 }
@@ -1039,14 +1044,16 @@ async fn issue56_expired_approval_cleanup_reaches_terminal_fenced_runner(pool: P
         store
             .with_progress_command_dispatch(command, |_| Ok(false))
             .await
-            .unwrap(),
+            .unwrap()
+            .transport_result,
         RunnerCommandDispatchOutcome::Disconnected
     );
     assert_eq!(
         store
             .with_progress_command_dispatch(command, |_| Ok(true))
             .await
-            .unwrap(),
+            .unwrap()
+            .transport_result,
         RunnerCommandDispatchOutcome::Sent
     );
     // Enqueue must not manufacture a provider acknowledgement or revive the run.
@@ -1067,7 +1074,8 @@ async fn issue56_expired_approval_cleanup_reaches_terminal_fenced_runner(pool: P
         store
             .with_progress_command_dispatch(command, |_| panic!("already acknowledged"))
             .await
-            .unwrap(),
+            .unwrap()
+            .transport_result,
         RunnerCommandDispatchOutcome::Settled
     );
     assert!(
@@ -1106,7 +1114,8 @@ async fn issue56_rejection_cleanup_requires_durable_negative_approval_scope(pool
         store
             .with_progress_command_dispatch(command, |_| Ok(true))
             .await
-            .unwrap(),
+            .unwrap()
+            .transport_result,
         RunnerCommandDispatchOutcome::Sent
     );
     sqlx::query("UPDATE runs SET breaker_stage='suspend' WHERE id=$1")
@@ -1133,7 +1142,8 @@ async fn issue56_rejection_cleanup_requires_durable_negative_approval_scope(pool
             store
                 .with_progress_command_dispatch(&changed, |_| panic!("mismatched {field}"))
                 .await
-                .unwrap(),
+                .unwrap()
+                .transport_result,
             RunnerCommandDispatchOutcome::Settled
         );
     }
@@ -1164,7 +1174,8 @@ async fn issue56_rejection_cleanup_requires_durable_negative_approval_scope(pool
             store
                 .with_progress_command_dispatch(&changed, |_| panic!("unproven negative decision"))
                 .await
-                .unwrap(),
+                .unwrap()
+                .transport_result,
             RunnerCommandDispatchOutcome::Obsolete
         );
     }
@@ -1190,7 +1201,8 @@ async fn issue56_rejection_cleanup_requires_durable_negative_approval_scope(pool
                 store
                     .with_progress_command_dispatch(command, |_| Ok(true))
                     .await
-                    .unwrap(),
+                    .unwrap()
+                    .transport_result,
                 RunnerCommandDispatchOutcome::Sent
             );
         } else {
@@ -1202,7 +1214,8 @@ async fn issue56_rejection_cleanup_requires_durable_negative_approval_scope(pool
                 store
                     .with_progress_command_dispatch(command, |_| panic!("approval is not rejected"))
                     .await
-                    .unwrap(),
+                    .unwrap()
+                    .transport_result,
                 RunnerCommandDispatchOutcome::Obsolete
             );
         }
@@ -1225,7 +1238,8 @@ async fn issue56_progress_enqueue_checks_usage_before_persisted_fence(pool: PgPo
             store
                 .with_progress_command_dispatch(command, |_| panic!("aggregate budget reached"))
                 .await
-                .unwrap(),
+                .unwrap()
+                .transport_result,
             RunnerCommandDispatchOutcome::Obsolete
         );
     }
@@ -1239,7 +1253,8 @@ async fn issue56_progress_enqueue_checks_usage_before_persisted_fence(pool: PgPo
             store
                 .with_progress_command_dispatch(command, |_| panic!("persisted fence"))
                 .await
-                .unwrap(),
+                .unwrap()
+                .transport_result,
             RunnerCommandDispatchOutcome::Obsolete
         );
     }
@@ -1307,7 +1322,7 @@ async fn issue56_progress_enqueue_precedes_concurrent_accounting(pool: PgPool) {
     );
     barrier.commit().await.unwrap();
     assert_eq!(
-        dispatch.await.unwrap().unwrap(),
+        dispatch.await.unwrap().unwrap().transport_result,
         RunnerCommandDispatchOutcome::Sent
     );
     assert_eq!(usage.await.unwrap().unwrap().breaker_commands.len(), 2);
@@ -1316,7 +1331,8 @@ async fn issue56_progress_enqueue_precedes_concurrent_accounting(pool: PgPool) {
             store
                 .with_progress_command_dispatch(command, |_| panic!("late progress enqueue"))
                 .await
-                .unwrap(),
+                .unwrap()
+                .transport_result,
             RunnerCommandDispatchOutcome::Obsolete
         );
     }
@@ -1444,7 +1460,7 @@ async fn issue56_control_dispatch_revalidates_lease_after_run_wait(pool: PgPool)
         }).await.expect("lease mutation must not wait for the blocked run");
         barrier.commit().await.unwrap();
         assert_eq!(
-            dispatch.await.unwrap().unwrap(),
+            dispatch.await.unwrap().unwrap().transport_result,
             RunnerCommandDispatchOutcome::Obsolete,
             "{mutation}"
         );
@@ -1483,7 +1499,7 @@ async fn issue56_control_dispatch_locks_and_rechecks_lease_row(pool: PgPool) {
     .unwrap();
     barrier.commit().await.unwrap();
     assert_eq!(
-        dispatch.await.unwrap().unwrap(),
+        dispatch.await.unwrap().unwrap().transport_result,
         RunnerCommandDispatchOutcome::Obsolete
     );
 }
@@ -1542,7 +1558,7 @@ async fn issue56_control_dispatch_checks_wall_clock_after_lock_wait(pool: PgPool
     .unwrap();
     barrier.commit().await.unwrap();
     assert_eq!(
-        dispatch.await.unwrap().unwrap(),
+        dispatch.await.unwrap().unwrap().transport_result,
         RunnerCommandDispatchOutcome::Obsolete
     );
 }
@@ -1573,7 +1589,8 @@ async fn issue56_control_dispatch_uses_locked_token_and_preserves_retry(pool: Pg
                 Ok(true)
             })
             .await
-            .unwrap(),
+            .unwrap()
+            .transport_result,
         RunnerCommandDispatchOutcome::Sent
     );
     let status: String = sqlx::query_scalar("SELECT status FROM runner_commands WHERE id=$1")

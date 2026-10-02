@@ -25,6 +25,7 @@ let terminal = false
 let finalMessage = 'Synthetic Codex turn completed.'
 let usageTotal = 0
 let emitUsageOnFinish = true
+let completeAfterInterrupt = false
 
 function send(value) {
   process.stdout.write(`${JSON.stringify(value)}\n`)
@@ -121,6 +122,9 @@ function startTurn(message) {
   terminal = false
   emitUsageOnFinish = true
   const prompt = textFromInput(message.params?.input)
+  // Opt-in adversarial transport for owned deadline acceptance. A provider's
+  // late success must not undo ECorp's already delivered hard stop.
+  completeAfterInterrupt = prompt.includes('[deadline-complete-after-stop]')
   respond(message.id, {
     turn: { id: turnId, items: [], status: 'inProgress', error: null },
   })
@@ -182,14 +186,14 @@ function startTurn(message) {
     // An explicit synthetic finish avoids replaying the original budget marker
     // retained in the native resume contract. Existing stream cases are unchanged.
     completionTimer = setTimeout(() => finish('completed'), 300)
-  } else if (prompt.includes('[steering-contention]')) {
-    // Opt-in protocol fixture: keep actual native status events flowing while
-    // the owned test deliberately holds the server's message admission lock.
+  } else if (prompt.includes('[steering-contention]') || completeAfterInterrupt) {
+    // Opt-in protocol fixtures: keep native status events flowing during an
+    // admission-lock wait or until the declared deadline requests interruption.
     activityTimer = setInterval(() => {
       if (!terminal) emit('item/started', {
         threadId, turnId,
         item: { type: 'commandExecution', id: randomUUID(),
-          command: 'issue223 status fixture', cwd: workspace,
+          command: completeAfterInterrupt ? 'owned deadline status fixture' : 'issue223 status fixture', cwd: workspace,
           status: 'inProgress', commandActions: [] },
       })
     }, 100)
@@ -311,7 +315,7 @@ lineReader.on('line', (line) => {
     }
     case 'turn/interrupt':
       respond(message.id, {})
-      finish('interrupted')
+      finish(completeAfterInterrupt ? 'completed' : 'interrupted')
       break
     default:
       if (message.id !== undefined) {

@@ -56,6 +56,32 @@ impl RunScope {
         Ok(scope)
     }
 
+    pub(super) async fn lock_mission_tx(
+        tx: &mut Transaction<'_, Postgres>,
+        corp_id: Uuid,
+        mission_id: Uuid,
+    ) -> Result<Self> {
+        // A queued mission may have no run yet. Use the same Factory gates as
+        // run reconciliation before taking any lifecycle row locks.
+        let work_item_id = sqlx::query_scalar(
+            "SELECT item.id FROM factory_work_items item
+             JOIN missions mission ON mission.id=item.mission_id AND mission.corp_id=item.corp_id
+             WHERE mission.corp_id=$1 AND mission.id=$2",
+        )
+        .bind(corp_id)
+        .bind(mission_id)
+        .fetch_optional(&mut **tx)
+        .await?;
+        let scope = Self {
+            mission_id,
+            work_item_id,
+        };
+        let mut keys = Vec::new();
+        scope.add_lock_keys(corp_id, &mut keys);
+        lock_factory_keys_tx(tx, &keys).await?;
+        Ok(scope)
+    }
+
     pub(super) async fn validate_tx(
         &self,
         tx: &mut Transaction<'_, Postgres>,
@@ -107,6 +133,15 @@ pub(super) async fn reconcile_tx(
             .fetch_one(&mut **tx)
             .await?;
     if !failed {
+        return Ok(None);
+    }
+    if mission_deadline::obsolete_if_expired(
+        mission_deadline::for_run_tx(tx, corp_id, run_id).await,
+    )?
+    .is_err()
+    {
+        // The bounded deadline reconciler records the automated policy cause.
+        // An expired mission must not acquire ordinary-failure resume authority.
         return Ok(None);
     }
     let (item, _) = factory_work_item_tx(tx, corp_id, item_id, true)
@@ -166,6 +201,62 @@ pub(super) async fn reconcile_tx(
     .await?
     .context("Factory run-failure event unexpectedly existed")?;
     Ok(Some(event))
+}
+
+pub(super) async fn block_deadline_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    scope: &RunScope,
+    corp_id: Uuid,
+    room_id: Uuid,
+    reason: &str,
+) -> Result<Option<DomainEvent>> {
+    let Some(item_id) = scope.work_item_id else {
+        return Ok(None);
+    };
+    let (item, _) = factory_work_item_tx(tx, corp_id, item_id, true)
+        .await?
+        .context("deadline Factory item disappeared")?;
+    if !matches!(
+        item.state,
+        FactoryWorkItemState::Claimed
+            | FactoryWorkItemState::MissionCreated
+            | FactoryWorkItemState::Running
+            | FactoryWorkItemState::AwaitingApproval
+    ) {
+        // Existing verifier, publication and policy outcomes retain their cause.
+        return Ok(None);
+    }
+    let version: i64 = sqlx::query_scalar(
+        "UPDATE factory_work_items
+         SET state='blocked', version=version+1, failure_detail=$1, updated_at=clock_timestamp()
+         WHERE corp_id=$2 AND id=$3 AND mission_id=$4 RETURNING version",
+    )
+    .bind(reason)
+    .bind(corp_id)
+    .bind(item_id)
+    .bind(scope.mission_id)
+    .fetch_one(&mut **tx)
+    .await?;
+    append_event_tx(
+        tx,
+        NewEvent {
+            room_id: Some(room_id),
+            aggregate_version: version,
+            correlation_id: Some(scope.mission_id),
+            ..NewEvent::new(
+                corp_id,
+                None,
+                "factory.blocked",
+                "factory_work_item",
+                item_id,
+                format!("factory:{item_id}:mission-deadline"),
+                json!({"previous_state":item.state.as_str(), "state":"blocked",
+                "mission_id":scope.mission_id, "cause":"mission_deadline_expired",
+                "mission_status":"failed", "failure_detail":reason}),
+            )
+        },
+    )
+    .await
 }
 
 struct FailureOrigin {

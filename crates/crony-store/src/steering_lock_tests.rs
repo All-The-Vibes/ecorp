@@ -5,6 +5,7 @@ use tokio::time::{Duration as StdDuration, timeout};
 
 fn plan(agent_id: Uuid) -> TaskGraphPlan {
     TaskGraphPlan {
+        deadline: None,
         strategy: "single".to_owned(),
         max_nodes: 1,
         max_depth: 0,

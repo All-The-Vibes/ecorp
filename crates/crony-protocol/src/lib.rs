@@ -142,6 +142,8 @@ pub enum ServerToRunner {
         sha256: String,
     },
     StartRun {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        deadline: Option<crony_domain::RunDeadline>,
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         dependency_files: Vec<dependency_files::VerifiedDependencyFile>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -167,6 +169,8 @@ pub enum ServerToRunner {
         secrets: Vec<ResolvedSecret>,
     },
     ResumeRun {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        deadline: Option<crony_domain::RunDeadline>,
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         dependency_files: Vec<dependency_files::VerifiedDependencyFile>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -201,6 +205,8 @@ pub enum ServerToRunner {
         secrets: Vec<ResolvedSecret>,
     },
     VerifyRun {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        deadline: Option<crony_domain::RunDeadline>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         workspace_connection_id: Option<Uuid>,
         command_id: Uuid,
@@ -418,6 +424,8 @@ pub struct MissionSource {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateMissionRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deadline: Option<crony_domain::MissionDeadlinePolicy>,
     pub title: String,
     #[serde(default)]
     pub description: String,
@@ -529,6 +537,8 @@ pub struct CreateMissionResponse {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PreviewMissionResponse {
     pub strategy: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deadline: Option<crony_domain::MissionDeadlinePolicy>,
     pub budget_tokens: i64,
     pub budget_cost_microusd: i64,
     pub tasks: Vec<PreviewMissionTask>,
@@ -1390,6 +1400,7 @@ mod tests {
     fn mission_preview_wire_shape_is_only_the_public_graph_summary() {
         let response = super::PreviewMissionResponse {
             strategy: "parallel-specialists".to_owned(),
+            deadline: None,
             budget_tokens: 10_001,
             budget_cost_microusd: 20_003,
             tasks: vec![
@@ -1443,6 +1454,20 @@ mod tests {
                 .expect("deserialize preview"),
             response
         );
+    }
+
+    #[test]
+    fn mission_preview_preserves_an_explicit_deadline_and_reserve() {
+        let wire = serde_json::json!({
+            "strategy": "pipeline", "budget_tokens": 100, "budget_cost_microusd": 1000,
+            "tasks": [],
+            "deadline": {
+                "deadline_at": "2026-10-02T12:30:00Z",
+                "reserve": { "seconds": 120, "task_keys": ["implementation", "review"] }
+            }
+        });
+        let response: super::PreviewMissionResponse = serde_json::from_value(wire.clone()).unwrap();
+        assert_eq!(serde_json::to_value(response).unwrap(), wire);
     }
 
     #[test]

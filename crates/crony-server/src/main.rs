@@ -526,8 +526,38 @@ async fn run_server() -> anyhow::Result<()> {
         let mut interval = tokio::time::interval(StdDuration::from_secs(3));
         interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
         let mut scheduling_cursor = CorpScheduleCursor::default();
+        let mut deadline_cursor = None;
         loop {
             interval.tick().await;
+            match retirement_state
+                .store
+                .deadline_missions_after(deadline_cursor)
+                .await
+            {
+                Ok(missions) => {
+                    if missions.is_empty() {
+                        deadline_cursor = None;
+                    }
+                    for (corp_id, mission_id) in missions {
+                        deadline_cursor = Some(mission_id);
+                        match retirement_state
+                            .store
+                            .expire_mission_deadline(corp_id, mission_id)
+                            .await
+                        {
+                            Ok(events) => {
+                                for event in events {
+                                    publish(&retirement_state, event);
+                                }
+                            }
+                            Err(error) => {
+                                warn!(%error, %corp_id, %mission_id, "mission deadline reconciliation deferred")
+                            }
+                        }
+                    }
+                }
+                Err(error) => warn!(%error, "mission deadline page unavailable"),
+            }
             match retirement_state
                 .store
                 .retire_terminal_mission_agents()
@@ -1608,11 +1638,15 @@ enum RunnerDispatchError {
     UnsupportedVerifierPolicy,
     UnsupportedDependencyFiles,
     UnsupportedCanonicalSource,
+    UnsupportedMissionDeadline,
 }
 
 impl RunnerDispatchError {
     fn detail(&self) -> &'static str {
         match self {
+            Self::UnsupportedMissionDeadline => {
+                "runner requires mission-deadline-v1 before accepting a timed assignment"
+            }
             Self::UnsupportedCanonicalSource => {
                 "runner requires canonical-source-verification-v1 before accepting a source deliverable"
             }
@@ -1654,6 +1688,14 @@ fn runner_supports_canonical_source(capabilities: &[RunnerCapability]) -> bool {
     })
 }
 
+fn runner_supports_mission_deadline(capabilities: &[RunnerCapability]) -> bool {
+    capabilities.iter().any(|cap| {
+        cap.workspace_connection_id.is_none()
+            && cap.name == crony_domain::MISSION_DEADLINE_CAPABILITY
+            && cap.available
+    })
+}
+
 fn send_command_to_current_runner(
     runners: &DashMap<String, RunnerConnection>,
     runner_id: &str,
@@ -1667,6 +1709,22 @@ fn send_command_to_current_runner(
         .ok_or(RunnerDispatchError::Unavailable)?;
     if connection.connection_epoch != connection_epoch || !connection.dispatch_ready {
         return Err(RunnerDispatchError::Unavailable);
+    }
+    let timed = matches!(
+        &command,
+        ServerToRunner::StartRun {
+            deadline: Some(_),
+            ..
+        } | ServerToRunner::ResumeRun {
+            deadline: Some(_),
+            ..
+        } | ServerToRunner::VerifyRun {
+            deadline: Some(_),
+            ..
+        }
+    );
+    if timed && !runner_supports_mission_deadline(&connection.capabilities) {
+        return Err(RunnerDispatchError::UnsupportedMissionDeadline);
     }
     if let ServerToRunner::StartRun {
         dependency_files, ..
@@ -1733,6 +1791,7 @@ fn send_command_to_current_runner(
             &connection,
             *corp_id,
             &RunnerRequirements {
+                mission_deadline: timed,
                 dependency_files: !dependency_files.is_empty(),
                 adapter,
                 model: model.as_deref(),
@@ -1883,11 +1942,22 @@ async fn dispatch_pending_runner_commands_for_epoch(
                 }
             };
             let mut rejection = None;
-            let enqueue = |lease_token| {
-                let outgoing = match outgoing {
+            let enqueue = |lease_token, deadline| {
+                let mut outgoing = match outgoing {
                     Some(outgoing) => outgoing,
                     None => decode_runner_command(&command, lease_token, durable_control)?,
                 };
+                match &mut outgoing {
+                    ServerToRunner::ResumeRun {
+                        deadline: allowance,
+                        ..
+                    }
+                    | ServerToRunner::VerifyRun {
+                        deadline: allowance,
+                        ..
+                    } => *allowance = deadline,
+                    _ => {}
+                }
                 Ok(
                     match send_command_to_current_runner(
                         &state.runners,
@@ -1907,7 +1977,9 @@ async fn dispatch_pending_runner_commands_for_epoch(
             let dispatch = if progress {
                 state
                     .store
-                    .with_progress_command_dispatch(&command, enqueue)
+                    .with_progress_command_dispatch(&command, |lease_token| {
+                        enqueue(lease_token, None)
+                    })
                     .await?
             } else if command.command_kind == "factory_verification_recovery"
                 && command
@@ -1918,14 +1990,34 @@ async fn dispatch_pending_runner_commands_for_epoch(
             {
                 state
                     .store
-                    .with_source_correction_command_dispatch(&command, || enqueue(None))
+                    .with_source_correction_command_dispatch(&command, |deadline| {
+                        enqueue(None, deadline)
+                    })
                     .await?
-            } else if enqueue(None)? {
-                RunnerCommandDispatchOutcome::Sent
+            } else if command.command_kind == "factory_verification_recovery" {
+                state
+                    .store
+                    .with_verification_recovery_dispatch(&command, |deadline| {
+                        enqueue(None, deadline)
+                    })
+                    .await?
             } else {
-                RunnerCommandDispatchOutcome::Disconnected
+                crony_store::RunBudgetDispatchOutcome {
+                    transport_result: if enqueue(None, None)? {
+                        RunnerCommandDispatchOutcome::Sent
+                    } else {
+                        RunnerCommandDispatchOutcome::Disconnected
+                    },
+                    commit_error: None,
+                }
             };
-            match dispatch {
+            if let Some(error) = &dispatch.commit_error {
+                // Enqueue has already happened. Preserve its observed result and
+                // leave durable delivery pending for the runner's acknowledgement.
+                warn!(%error, run_id = %command.run_id, command_id = %command.id,
+                    "runner command enqueue result retained after uncertain transaction commit");
+            }
+            match dispatch.transport_result {
                 RunnerCommandDispatchOutcome::Sent => {}
                 RunnerCommandDispatchOutcome::Disconnected => {
                     if rejection == Some(RunnerDispatchError::UnsupportedVerifierPolicy) {
@@ -1942,7 +2034,13 @@ async fn dispatch_pending_runner_commands_for_epoch(
                         }
                         continue;
                     }
-                    if rejection == Some(RunnerDispatchError::UnsupportedDependencyFiles) {
+                    if matches!(
+                        rejection,
+                        Some(
+                            RunnerDispatchError::UnsupportedDependencyFiles
+                                | RunnerDispatchError::UnsupportedMissionDeadline
+                        )
+                    ) {
                         warn!(run_id = %command.run_id, command_id = %command.id, %runner_id,
                             "retaining recovery until runner supports verified dependency files; continuing other runs");
                         blocked_runs.push(command.run_id);
@@ -1955,9 +2053,9 @@ async fn dispatch_pending_runner_commands_for_epoch(
                     // The transaction owns budget and lease admission. Retire only
                     // this stale command; its native fence owns the run state.
                     let reason = if progress {
-                        "progress command target is inactive, hard budget fenced, or its control lease changed or expired before enqueue"
+                        "progress command target is inactive, deadline or hard budget fenced, or its control lease changed or expired before enqueue"
                     } else {
-                        "source-correction command authority changed or aggregate budget was fenced before enqueue"
+                        "recovery command authority changed, or its deadline or aggregate budget was fenced before enqueue"
                     };
                     if let Some(event) = state
                         .store
@@ -2126,6 +2224,7 @@ async fn decode_recovery_runner_command(
                         return Ok(None);
                     }
                     Ok(Some(ServerToRunner::ResumeRun {
+                        deadline: None, // Recomputed under final transactional dispatch authority.
                         dependency_files: dependencies.files,
                         workspace_connection_id: payload.workspace_connection_id,
                         command_id: Some(command.id),
@@ -2201,6 +2300,7 @@ async fn decode_recovery_runner_command(
                         return Ok(None);
                     }
                     Ok(Some(ServerToRunner::VerifyRun {
+                        deadline: None, // Recomputed under final transactional dispatch authority.
                         workspace_connection_id: payload.workspace_connection_id,
                         command_id: command.id,
                         corp_id: payload.corp_id,
@@ -2746,6 +2846,7 @@ struct ArtifactDownloadQuery {
 }
 
 struct MissionPlanInput<'a> {
+    deadline: Option<&'a crony_domain::MissionDeadlinePolicy>,
     actor_id: Uuid,
     title: &'a str,
     description: &'a str,
@@ -2768,6 +2869,7 @@ struct MissionPlanInput<'a> {
 impl<'a> MissionPlanInput<'a> {
     fn from_create_request(request: &'a CreateMissionRequest, actor_id: Uuid) -> Self {
         Self {
+            deadline: request.deadline.as_ref(),
             actor_id,
             title: &request.title,
             description: &request.description,
@@ -2897,6 +2999,7 @@ async fn plan_mission(
                     state,
                     corp_id,
                     &RunnerRequirements {
+                        mission_deadline: input.deadline.is_some(),
                         dependency_files: false,
                         adapter,
                         model: preferred_model,
@@ -2969,6 +3072,12 @@ async fn plan_mission(
     if input.require_factory_manual_gate {
         enforce_factory_manual_gate(&mut plan);
     }
+    plan.deadline = input.deadline.cloned();
+    for task in &mut plan.tasks {
+        task.contract.deadline_at = plan.deadline.as_ref().map(|policy| policy.deadline_at);
+    }
+    plan.admit_deadline_at(Utc::now())
+        .map_err(ApiError::bad_request)?;
     validate_plan(&plan, &agents).map_err(ApiError::bad_request)?;
     if source.is_some() {
         validate_plan_runner_compatibility(state, corp_id, &plan)?;
@@ -3276,6 +3385,7 @@ async fn plan_create_mission(
 fn mission_preview_response(plan: &TaskGraphPlan) -> PreviewMissionResponse {
     PreviewMissionResponse {
         strategy: plan.strategy.clone(),
+        deadline: plan.deadline.clone(),
         budget_tokens: plan.budget_tokens,
         budget_cost_microusd: plan.budget_cost_microusd,
         tasks: plan
@@ -4033,6 +4143,7 @@ async fn preflight_factory_mission(
         &state,
         corp_id,
         MissionPlanInput {
+            deadline: None,
             workspace_connection_id,
             actor_id: request.actor_id,
             title: &request.title,
@@ -4227,6 +4338,7 @@ async fn materialize_factory_mission(
         &state,
         corp_id,
         MissionPlanInput {
+            deadline: None,
             workspace_connection_id,
             actor_id,
             title: &request.title,
@@ -4901,6 +5013,7 @@ async fn schedule_ready_tasks(
                 }
             };
         let requirements = RunnerRequirements {
+            mission_deadline: candidate.requires_deadline,
             dependency_files: candidate.requires_dependency_files,
             canonical_source: candidate.requires_canonical_source,
             adapter: &candidate.required_adapter,
@@ -5020,12 +5133,13 @@ async fn schedule_ready_tasks(
                 record.run_id,
                 record.assignment_token,
                 &runner_id,
-                || {
+                |deadline| {
                     send_command_to_current_runner(
                         &state.runners,
                         &runner_id,
                         connection_epoch,
                         ServerToRunner::StartRun {
+                            deadline,
                             dependency_files: dependency_context.files,
                             workspace_connection_id: record.workspace_connection_id,
                             corp_id: record.corp_id,
@@ -5475,6 +5589,7 @@ fn runner_requirement_mismatch(
 }
 
 struct RunnerRequirements<'a> {
+    mission_deadline: bool,
     dependency_files: bool,
     canonical_source: bool,
     adapter: &'a str,
@@ -5490,6 +5605,7 @@ struct RunnerRequirements<'a> {
 impl<'a> RunnerRequirements<'a> {
     fn for_planned_task(task: &'a crony_domain::PlannedTask, plan: &TaskGraphPlan) -> Self {
         Self {
+            mission_deadline: plan.deadline.is_some(),
             canonical_source: task.contract.deliverable.is_some(),
             dependency_files: plan.tasks.iter().any(|parent| {
                 task.depends_on.contains(&parent.key)
@@ -5522,6 +5638,8 @@ fn runner_satisfies_requirements(
         .collect::<Vec<_>>();
     connection.dispatch_ready
         && connection.corp_id == corp_id
+        && (!requirements.mission_deadline
+            || runner_supports_mission_deadline(&connection.capabilities))
         && (!requirements.dependency_files || supports_dependency_files(&connection.capabilities))
         && (!requirements.canonical_source
             || runner_supports_canonical_source(&connection.capabilities))
@@ -5878,12 +5996,13 @@ async fn resume_run(
             record.run_id,
             record.assignment_token,
             &record.runner_id,
-            || {
+            |deadline| {
                 send_command_to_current_runner(
                     &state.runners,
                     &record.runner_id,
                     connection_epoch,
                     ServerToRunner::ResumeRun {
+                        deadline,
                         dependency_files: dependencies.files,
                         workspace_connection_id: record.workspace_connection_id,
                         command_id: None,
@@ -8267,6 +8386,23 @@ mod tests {
                 assert!(!wire.contains(&agent.id.to_string()));
             }
             assert_eq!(serde_json::to_value(&plan).unwrap(), before);
+            assert!(preview.deadline.is_none());
+            plan.deadline = Some(crony_domain::MissionDeadlinePolicy {
+                deadline_at: "2026-10-02T12:30:00Z".parse().unwrap(),
+                reserve: (task_count > 1).then(|| crony_domain::MissionDeadlineReserve {
+                    seconds: 120,
+                    task_keys: vec![plan.tasks.last().unwrap().key.clone()],
+                }),
+            });
+            for task in &mut plan.tasks {
+                task.contract.deadline_at = plan.deadline.as_ref().map(|policy| policy.deadline_at);
+            }
+            let timed_before = serde_json::to_value(&plan).unwrap();
+            let timed_preview = mission_preview_response(&plan);
+            assert_eq!(timed_preview.deadline, plan.deadline);
+            assert_eq!(timed_preview.tasks, preview.tasks);
+            assert_eq!(timed_preview.budget_tokens, preview.budget_tokens);
+            assert_eq!(serde_json::to_value(&plan).unwrap(), timed_before);
         }
     }
 
@@ -8317,6 +8453,7 @@ mod tests {
         });
         runners.insert("runner".to_owned(), connection);
         let mut requirements = RunnerRequirements {
+            mission_deadline: false,
             requires_cache_suppression: false,
             canonical_source: false,
             dependency_files: true,
@@ -9033,6 +9170,7 @@ mod tests {
         let corp_id = connection.corp_id;
         runners.insert("runner".to_owned(), connection);
         let requirements = RunnerRequirements {
+            mission_deadline: false,
             requires_cache_suppression: false,
             canonical_source: false,
             workspace_connection_id: None,
@@ -9362,6 +9500,7 @@ mod tests {
             let runners = Arc::new(DashMap::new());
             runners.insert("runner".to_owned(), connection);
             let requirements = RunnerRequirements {
+                mission_deadline: false,
                 dependency_files: false,
                 canonical_source: false,
                 requires_cache_suppression: false,
@@ -9376,6 +9515,7 @@ mod tests {
             let (runner_id, selected_epoch) =
                 select_ready_runner(&runners, corp_id, &requirements).unwrap();
             let command = ServerToRunner::StartRun {
+                deadline: None,
                 dependency_files: Vec::new(),
                 workspace_connection_id: workspace,
                 corp_id,
@@ -9662,6 +9802,7 @@ mod tests {
             "quality".to_owned(),
         ];
         TaskGraphPlan {
+            deadline: None,
             strategy: "studio-swarm".to_owned(),
             max_nodes: 4,
             max_depth: 1,
@@ -9744,6 +9885,7 @@ mod tests {
     #[test]
     fn mission_description_is_normalized_and_delivered_to_each_task() {
         let mut plan = TaskGraphPlan {
+            deadline: None,
             strategy: "single".to_owned(),
             max_nodes: 1,
             max_depth: 0,
@@ -10005,6 +10147,113 @@ mod cache_admission_tests {
     }
 
     #[test]
+    fn issue298_timed_assignments_require_current_scoped_deadline_support() {
+        let now = chrono::Utc::now();
+        let allowance = crony_domain::MissionDeadlinePolicy {
+            deadline_at: now + chrono::TimeDelta::minutes(1),
+            reserve: None,
+        }
+        .allowance_at("task", now)
+        .unwrap();
+        let requirements = RunnerRequirements {
+            mission_deadline: true,
+            dependency_files: false,
+            canonical_source: false,
+            adapter: "fake-process",
+            model: None,
+            reasoning_effort: None,
+            source_repository: None,
+            source_base_ref: None,
+            source_base_commit: None,
+            workspace_connection_id: None,
+            requires_cache_suppression: false,
+        };
+        for kind in ["start_run", "resume_run", "verify_run"] {
+            let timed_command = || {
+                let mut value = command(kind, false);
+                match &mut value {
+                    ServerToRunner::StartRun { deadline, .. }
+                    | ServerToRunner::ResumeRun { deadline, .. }
+                    | ServerToRunner::VerifyRun { deadline, .. } => {
+                        *deadline = Some(allowance.clone());
+                    }
+                    _ => unreachable!(),
+                }
+                value
+            };
+            let runners = DashMap::new();
+            let epoch = Uuid::new_v4();
+            let (runner, mut rx) = connection(epoch, vec![capability("fake-process")]);
+            runners.insert("runner".to_owned(), runner);
+            // A legacy runner can still accept an untimed assignment.
+            assert!(
+                send_command_to_current_runner(&runners, "runner", epoch, command(kind, false))
+                    .is_ok()
+            );
+            assert!(rx.try_recv().is_ok());
+            for support in [
+                None,
+                Some((false, None)),
+                Some((true, Some(Uuid::new_v4()))),
+            ] {
+                let mut capabilities = vec![capability("fake-process")];
+                if let Some((available, workspace_connection_id)) = support {
+                    let mut deadline = capability(crony_domain::MISSION_DEADLINE_CAPABILITY);
+                    deadline.available = available;
+                    deadline.workspace_connection_id = workspace_connection_id;
+                    capabilities.push(deadline);
+                }
+                runners.get_mut("runner").unwrap().capabilities = capabilities;
+                assert!(select_ready_runner(&runners, Uuid::nil(), &requirements).is_none());
+                assert_eq!(
+                    send_command_to_current_runner(&runners, "runner", epoch, timed_command()),
+                    Err(RunnerDispatchError::UnsupportedMissionDeadline)
+                );
+                assert!(rx.try_recv().is_err());
+            }
+            runners
+                .get_mut("runner")
+                .unwrap()
+                .capabilities
+                .push(capability(crony_domain::MISSION_DEADLINE_CAPABILITY));
+            let selected = select_ready_runner(&runners, Uuid::nil(), &requirements).unwrap();
+            assert_eq!(selected, ("runner".to_owned(), epoch));
+            assert!(select_ready_runner(&runners, Uuid::new_v4(), &requirements).is_none());
+            assert!(
+                send_command_to_current_runner(&runners, &selected.0, selected.1, timed_command())
+                    .is_ok()
+            );
+            assert!(rx.try_recv().is_ok());
+            // Selection is not durable permission to dispatch after capability loss.
+            runners.get_mut("runner").unwrap().capabilities = vec![capability("fake-process")];
+            assert_eq!(
+                send_command_to_current_runner(&runners, &selected.0, selected.1, timed_command()),
+                Err(RunnerDispatchError::UnsupportedMissionDeadline)
+            );
+            assert!(rx.try_recv().is_err());
+            let replacement = Uuid::new_v4();
+            let (runner, mut replacement_rx) = connection(
+                replacement,
+                vec![
+                    capability("fake-process"),
+                    capability(crony_domain::MISSION_DEADLINE_CAPABILITY),
+                ],
+            );
+            runners.insert("runner".to_owned(), runner);
+            assert_eq!(
+                send_command_to_current_runner(&runners, &selected.0, selected.1, timed_command()),
+                Err(RunnerDispatchError::Unavailable)
+            );
+            assert!(replacement_rx.try_recv().is_err());
+            assert!(
+                send_command_to_current_runner(&runners, "runner", replacement, timed_command())
+                    .is_ok()
+            );
+            assert!(replacement_rx.try_recv().is_ok());
+        }
+    }
+
+    #[test]
     fn issue82_canonical_source_support_gates_every_assignment_and_current_epoch() {
         for kind in ["start_run", "resume_run", "verify_run"] {
             let runners = DashMap::new();
@@ -10077,6 +10326,7 @@ mod cache_admission_tests {
         let (runner, _rx) = connection(epoch, vec![capability("fake-process")]);
         runners.insert("runner".to_owned(), runner);
         let mut requirements = RunnerRequirements {
+            mission_deadline: false,
             dependency_files: false,
             canonical_source: true,
             adapter: "fake-process",
@@ -10194,6 +10444,7 @@ mod cache_admission_tests {
         let (runner, _rx) = connection(epoch, vec![capability("fake-process")]);
         runners.insert("runner".to_owned(), runner);
         let mut requirements = RunnerRequirements {
+            mission_deadline: false,
             dependency_files: false,
             canonical_source: false,
             adapter: "fake-process",

@@ -943,22 +943,9 @@ impl PgStore {
             return Ok(false);
         }
         let mut tx = self.pool.begin().await?;
-        let result = async {
-            if !lock_for_run_tx(&mut tx, command.corp_id, command.run_id).await? {
-                return Err(denied("collection dispatch must target a verifier"));
-            }
-            current_tx(&mut tx, command.corp_id, command.run_id, Some(command)).await?;
-            Ok::<(), anyhow::Error>(())
-        }
-        .await;
-        match result {
-            Ok(()) => {
-                tx.commit().await?;
-                Ok(true)
-            }
-            Err(error) if database_error(&error) => Err(error),
-            Err(_) => Ok(false),
-        }
+        let authorized = retained_dispatch_authorized_tx(&mut tx, command).await?;
+        tx.commit().await?;
+        Ok(authorized)
     }
 
     /// Recheck before preparing/signing native bytes. Explicit retained markers
@@ -990,6 +977,25 @@ impl PgStore {
         validate_upload_input_tx(&mut tx, input, &grant).await?;
         tx.commit().await?;
         Ok(Some(grant))
+    }
+}
+
+pub(super) async fn retained_dispatch_authorized_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    command: &PendingRunnerCommand,
+) -> Result<bool> {
+    let result = async {
+        if !lock_for_run_tx(tx, command.corp_id, command.run_id).await? {
+            return Err(denied("collection dispatch must target a verifier"));
+        }
+        current_tx(tx, command.corp_id, command.run_id, Some(command)).await?;
+        Ok::<(), anyhow::Error>(())
+    }
+    .await;
+    match result {
+        Ok(()) => Ok(true),
+        Err(error) if database_error(&error) => Err(error),
+        Err(_) => Ok(false),
     }
 }
 

@@ -14,6 +14,30 @@ pub(super) async fn enqueue_emergency_stop_tx(
     actor_id: Uuid,
     reason: &str,
 ) -> Result<Uuid> {
+    enqueue_stop_tx(
+        tx,
+        corp_id,
+        run_id,
+        runner_id,
+        task_id,
+        mission_id,
+        reason,
+        json!({"scope":"run","scope_id":run_id,"metric":"operator_stop","actor_id":actor_id}),
+    )
+    .await
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) async fn enqueue_stop_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    corp_id: Uuid,
+    run_id: Uuid,
+    runner_id: &str,
+    task_id: Uuid,
+    mission_id: Uuid,
+    reason: &str,
+    input: Value,
+) -> Result<Uuid> {
     // Reuse the existing monotonic breaker boundary and durable runner command.
     // Repeated stop requests never replace the first incident or its timestamp.
     sqlx::query(
@@ -36,7 +60,7 @@ pub(super) async fn enqueue_emergency_stop_tx(
     .bind(task_id)
     .bind(run_id)
     .bind(reason)
-    .bind(json!({"scope":"run","scope_id":run_id,"metric":"operator_stop","actor_id":actor_id}))
+    .bind(input)
     .execute(&mut **tx)
     .await?;
     let key = format!("breaker:{run_id}:stop");

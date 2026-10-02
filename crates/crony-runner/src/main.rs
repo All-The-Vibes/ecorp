@@ -4,6 +4,8 @@ mod deliverable;
 mod dependency_files;
 #[cfg(test)]
 mod issue297_native_fixtures;
+#[cfg(test)]
+mod mission_deadline_tests;
 mod retained_provider_receipt;
 #[cfg(test)]
 mod retained_provider_receipt_tests;
@@ -222,6 +224,7 @@ struct HardBoundaryControl {
     phase: AtomicU8,
     cancellation: watch::Sender<bool>,
     completion: watch::Sender<Option<(Uuid, bool)>>,
+    deadline: Option<tokio::time::Instant>,
 }
 
 impl Default for HardBoundaryControl {
@@ -230,6 +233,7 @@ impl Default for HardBoundaryControl {
             phase: AtomicU8::new(Self::OPEN),
             cancellation: watch::channel(false).0,
             completion: watch::channel(None).0,
+            deadline: None,
         }
     }
 }
@@ -238,6 +242,29 @@ impl HardBoundaryControl {
     const OPEN: u8 = 0;
     const REQUESTED: u8 = 1;
     const FINALIZING: u8 = 2;
+
+    fn with_deadline(deadline: Option<crony_domain::RunDeadline>) -> Self {
+        let mut control = Self::default();
+        if let Some(deadline) = deadline {
+            // Anchor once on receipt. Duplicate commands never replace an active
+            // assignment, and later wall-clock changes cannot renew this clock.
+            let received = tokio::time::Instant::now();
+            control.deadline = Some(
+                deadline
+                    .remaining_at(chrono::Utc::now())
+                    .ok()
+                    .and_then(|ms| received.checked_add(Duration::from_millis(ms)))
+                    // An expired or malformed wire allowance must fail closed.
+                    .unwrap_or(received),
+            );
+        }
+        control
+    }
+
+    fn deadline_expired(&self) -> bool {
+        self.deadline
+            .is_some_and(|deadline| tokio::time::Instant::now() >= deadline)
+    }
 
     fn request(&self) -> bool {
         match self.phase.compare_exchange(
@@ -255,10 +282,16 @@ impl HardBoundaryControl {
     }
 
     fn requested(&self) -> bool {
+        if self.deadline_expired() {
+            self.request();
+        }
         self.phase.load(Ordering::Acquire) == Self::REQUESTED
     }
 
     fn begin_finalization(&self) -> bool {
+        if self.deadline_expired() {
+            self.request();
+        }
         self.phase
             .compare_exchange(
                 Self::OPEN,
@@ -323,6 +356,19 @@ struct ActiveRunControl {
 }
 
 impl ActiveRunControl {
+    fn schedule_deadline(&self) -> DeadlineStopGuard {
+        DeadlineStopGuard(self.hard_boundary_checkpoint.deadline.map(|deadline| {
+            let active = self.clone();
+            tokio::spawn(async move {
+                tokio::time::sleep_until(deadline).await;
+                active.apply_stop(
+                    "Mission deadline or declared stage allowance expired; retain source."
+                        .to_owned(),
+                );
+            })
+        }))
+    }
+
     fn apply_stop(&self, reason: String) -> bool {
         if !self.hard_boundary_checkpoint.request() {
             return false;
@@ -350,6 +396,18 @@ impl ActiveRunControl {
         // The assignment can still own cancellable verification after the
         // provider's control receiver closes. The hard directive applies there too.
         delivered || hard
+    }
+}
+
+/// The timer belongs to its native assignment, including verification. It must
+/// not retain channels or stop a later run after the owning assignment exits.
+struct DeadlineStopGuard(Option<tokio::task::JoinHandle<()>>);
+
+impl Drop for DeadlineStopGuard {
+    fn drop(&mut self) {
+        if let Some(timer) = &self.0 {
+            timer.abort();
+        }
     }
 }
 
@@ -810,6 +868,19 @@ async fn run_connection(
     });
     capabilities.push(RunnerCapability {
         workspace_connection_id: None,
+        name: crony_domain::MISSION_DEADLINE_CAPABILITY.to_owned(),
+        available: true,
+        detail: Some(
+            "Immutable mission allowance uses the existing native hard stop through verification."
+                .to_owned(),
+        ),
+        models: Vec::new(),
+        source_repository: None,
+        source_base_ref: None,
+        source_base_commit: None,
+    });
+    capabilities.push(RunnerCapability {
+        workspace_connection_id: None,
         name: "durable-control-v1".to_owned(),
         available: true,
         detail: Some(
@@ -1147,6 +1218,7 @@ async fn run_connection(
                 }
             }
             ServerToRunner::StartRun {
+                deadline,
                 dependency_files,
                 workspace_connection_id,
                 corp_id,
@@ -1198,7 +1270,9 @@ async fn run_connection(
                     verification_command_id: None,
                     retained_provider_receipt: None,
                     checkpoint_verification: false,
-                    hard_boundary_checkpoint: Arc::default(),
+                    hard_boundary_checkpoint: Arc::new(HardBoundaryControl::with_deadline(
+                        deadline,
+                    )),
                 };
                 if assignment.workspace_connection_id.is_none()
                     && let Err(error) = validate_assignment_source(&workspaces, &assignment)
@@ -1247,21 +1321,21 @@ async fn run_connection(
                 }
                 let (artifact_ack_tx, artifact_ack_rx) = mpsc::unbounded_channel::<ArtifactAck>();
                 schedule_secret_expiry(secret_ttl, control_tx.clone());
-                active_runs.insert(
-                    assignment.run_id,
-                    ActiveRunControl {
-                        assignment_token,
-                        control: control_tx,
-                        artifact_ack: artifact_ack_tx,
-                        hard_boundary_checkpoint: assignment.hard_boundary_checkpoint.clone(),
-                    },
-                );
+                let active = ActiveRunControl {
+                    assignment_token,
+                    control: control_tx,
+                    artifact_ack: artifact_ack_tx,
+                    hard_boundary_checkpoint: assignment.hard_boundary_checkpoint.clone(),
+                };
+                let deadline_guard = active.schedule_deadline();
+                active_runs.insert(assignment.run_id, active);
                 let task_workspaces = workspaces.clone();
                 let runner_id = args.runner_id.clone();
                 let task_outbound = outbound.clone();
                 let task_runs = active_runs.clone();
                 let task_connections = connection_manager.clone();
                 tokio::spawn(async move {
+                    let _deadline_guard = deadline_guard;
                     if let Err(error) = execute_connected_assignment(
                         task_workspaces,
                         runner_id.clone(),
@@ -1290,6 +1364,7 @@ async fn run_connection(
                 });
             }
             ServerToRunner::ResumeRun {
+                deadline,
                 dependency_files,
                 workspace_connection_id,
                 command_id,
@@ -1358,7 +1433,9 @@ async fn run_connection(
                     verification_command_id: None,
                     retained_provider_receipt: None,
                     checkpoint_verification: false,
-                    hard_boundary_checkpoint: Arc::default(),
+                    hard_boundary_checkpoint: Arc::new(HardBoundaryControl::with_deadline(
+                        deadline,
+                    )),
                 };
                 if assignment.workspace_connection_id.is_none()
                     && let Err(error) = validate_assignment_source(&workspaces, &assignment)
@@ -1445,21 +1522,21 @@ async fn run_connection(
                 let (control_tx, control_rx) = mpsc::unbounded_channel::<AdapterControl>();
                 let (artifact_ack_tx, artifact_ack_rx) = mpsc::unbounded_channel::<ArtifactAck>();
                 schedule_secret_expiry(secret_ttl, control_tx.clone());
-                active_runs.insert(
-                    assignment.run_id,
-                    ActiveRunControl {
-                        assignment_token,
-                        control: control_tx,
-                        artifact_ack: artifact_ack_tx,
-                        hard_boundary_checkpoint: assignment.hard_boundary_checkpoint.clone(),
-                    },
-                );
+                let active = ActiveRunControl {
+                    assignment_token,
+                    control: control_tx,
+                    artifact_ack: artifact_ack_tx,
+                    hard_boundary_checkpoint: assignment.hard_boundary_checkpoint.clone(),
+                };
+                let deadline_guard = active.schedule_deadline();
+                active_runs.insert(assignment.run_id, active);
                 let task_workspaces = workspaces.clone();
                 let runner_id = args.runner_id.clone();
                 let task_outbound = outbound.clone();
                 let task_runs = active_runs.clone();
                 let task_connections = connection_manager.clone();
                 tokio::spawn(async move {
+                    let _deadline_guard = deadline_guard;
                     if let Err(error) = execute_connected_assignment(
                         task_workspaces,
                         runner_id.clone(),
@@ -1496,6 +1573,7 @@ async fn run_connection(
                 );
             }
             ServerToRunner::VerifyRun {
+                deadline,
                 workspace_connection_id,
                 command_id,
                 corp_id,
@@ -1560,7 +1638,9 @@ async fn run_connection(
                     verification_command_id: Some(command_id),
                     retained_provider_receipt: retained_provider_receipt.map(|grant| *grant),
                     checkpoint_verification,
-                    hard_boundary_checkpoint: Arc::default(),
+                    hard_boundary_checkpoint: Arc::new(HardBoundaryControl::with_deadline(
+                        deadline,
+                    )),
                 };
                 if let Err(error) = retained_provider_receipt::validate_assignment(&assignment) {
                     seen_commands.remove(&command_id);
@@ -1616,21 +1696,21 @@ async fn run_connection(
                 }
                 let (control_tx, control_rx) = mpsc::unbounded_channel::<AdapterControl>();
                 let (artifact_ack_tx, artifact_ack_rx) = mpsc::unbounded_channel::<ArtifactAck>();
-                active_runs.insert(
-                    assignment.run_id,
-                    ActiveRunControl {
-                        assignment_token,
-                        control: control_tx,
-                        artifact_ack: artifact_ack_tx,
-                        hard_boundary_checkpoint: assignment.hard_boundary_checkpoint.clone(),
-                    },
-                );
+                let active = ActiveRunControl {
+                    assignment_token,
+                    control: control_tx,
+                    artifact_ack: artifact_ack_tx,
+                    hard_boundary_checkpoint: assignment.hard_boundary_checkpoint.clone(),
+                };
+                let deadline_guard = active.schedule_deadline();
+                active_runs.insert(assignment.run_id, active);
                 let task_workspaces = workspaces.clone();
                 let runner_id = args.runner_id.clone();
                 let task_outbound = outbound.clone();
                 let task_runs = active_runs.clone();
                 let task_connections = connection_manager.clone();
                 tokio::spawn(async move {
+                    let _deadline_guard = deadline_guard;
                     if let Err(error) = execute_connected_verification_assignment(
                         task_workspaces,
                         runner_id.clone(),
@@ -2236,6 +2316,9 @@ async fn execute_connected_assignment(
     resume_session_id: Option<String>,
     connections: Option<Arc<connections::ConnectionManager>>,
 ) -> Result<()> {
+    if cancel_assignment_before_execution(&outbound, &runner_id, &assignment, None) {
+        return Ok(());
+    }
     let (workspaces, adapter) = if let Some(id) = assignment.workspace_connection_id {
         let manager =
             connections.context("this runner cannot open the saved execution connection")?;
@@ -2266,6 +2349,9 @@ async fn execute_connected_verification_assignment(
     channels: AssignmentChannels,
     connections: Option<Arc<connections::ConnectionManager>>,
 ) -> Result<()> {
+    if cancel_assignment_before_execution(&outbound, &runner_id, &assignment, None) {
+        return Ok(());
+    }
     let workspaces = if let Some(id) = assignment.workspace_connection_id {
         connections
             .context("this runner cannot open the saved workspace")?
@@ -2295,6 +2381,32 @@ async fn checkpoint_connected_workspace(
     checkpoint_preserved_workspace(workspaces, runner_id, assignment, outbound).await
 }
 
+fn cancel_assignment_before_execution(
+    outbound: &OutboundBus,
+    runner_id: &str,
+    assignment: &Assignment,
+    workspace: Option<&WorkspaceLease>,
+) -> bool {
+    if !assignment.hard_boundary_requested() {
+        return false;
+    }
+    let reason =
+        "Native hard stop or expired mission allowance prevented execution; source retained.";
+    send_run_event(
+        outbound,
+        runner_id,
+        assignment,
+        "run.cancelled",
+        json!({"reason": reason}),
+    );
+    if let Some(workspace) = workspace {
+        send_teardown_workspace_preserved(
+            outbound, runner_id, assignment, workspace, reason, None, false,
+        );
+    }
+    true
+}
+
 async fn execute_assignment(
     workspaces: Arc<WorkspaceManager>,
     runner_id: String,
@@ -2304,6 +2416,9 @@ async fn execute_assignment(
     channels: AssignmentChannels,
     resume_session_id: Option<String>,
 ) -> Result<()> {
+    if cancel_assignment_before_execution(&outbound, &runner_id, &assignment, None) {
+        return Ok(());
+    }
     let AssignmentChannels {
         controls,
         mut artifact_acks,
@@ -2362,6 +2477,9 @@ async fn execute_assignment(
         );
         return Ok(());
     }
+    if cancel_assignment_before_execution(&outbound, &runner_id, &assignment, Some(&workspace)) {
+        return Ok(());
+    }
     let request = AdapterRunRequest {
         trusted_assignment: if assignment.adapter == "delegated-resource" {
             Some(outbound.delegated_assignment(&assignment, &runner_id)?)
@@ -2395,6 +2513,9 @@ async fn execute_assignment(
         terminal: terminal.clone(),
         teardown_uncertain: teardown_uncertain.clone(),
     });
+    if cancel_assignment_before_execution(&outbound, &runner_id, &assignment, Some(&workspace)) {
+        return Ok(());
+    }
     let execution = if let Some(session_id) = resume_session_id {
         adapter.resume(request, &session_id, controls, sink).await
     } else {
@@ -2635,6 +2756,9 @@ async fn execute_verification_assignment(
     outbound: OutboundBus,
     channels: AssignmentChannels,
 ) -> Result<()> {
+    if cancel_assignment_before_execution(&outbound, &runner_id, &assignment, None) {
+        return Ok(());
+    }
     let AssignmentChannels {
         mut controls,
         mut artifact_acks,
@@ -2650,6 +2774,9 @@ async fn execute_verification_assignment(
         )
         .await
         .context("prepare preserved verifier-only worktree")?;
+    if cancel_assignment_before_execution(&outbound, &runner_id, &assignment, Some(&workspace)) {
+        return Ok(());
+    }
     send_run_event(
         &outbound,
         &runner_id,
@@ -4325,7 +4452,10 @@ mod tests {
         assert!(ttl > Duration::from_secs(50));
     }
 
-    fn verification_artifact_reference(path: &str, bytes: &[u8]) -> VerificationArtifactReference {
+    pub(super) fn verification_artifact_reference(
+        path: &str,
+        bytes: &[u8],
+    ) -> VerificationArtifactReference {
         VerificationArtifactReference {
             path: path.to_owned(),
             sha256: hex::encode(sha2::Sha256::digest(bytes)),

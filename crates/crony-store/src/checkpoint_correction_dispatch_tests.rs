@@ -50,7 +50,7 @@ async fn issue56_source_correction_holds_authority_inside_enqueue(pool: PgPool) 
     let observed_enqueue = enqueued.clone();
     let (observed_tx, observed_rx) = mpsc::channel();
     let mut worker = None;
-    let outcome = dispatcher.with_source_correction_command_dispatch(&command, || {
+    let outcome = dispatcher.with_source_correction_command_dispatch(&command, |_| {
         // A separate runtime keeps actual accounting and lock observation moving
         // while the production callback synchronously enqueues on this thread.
         worker = Some(std::thread::spawn(move || {
@@ -89,14 +89,18 @@ async fn issue56_source_correction_holds_authority_inside_enqueue(pool: PgPool) 
         .expect("enqueue callback reached")
         .join()
         .expect("owned accounting worker");
-    assert_eq!(outcome.unwrap(), RunnerCommandDispatchOutcome::Sent);
+    assert_eq!(
+        outcome.unwrap().transport_result,
+        RunnerCommandDispatchOutcome::Sent
+    );
     assert!(enqueue_preceded_fence);
     assert!(!accounting.unwrap().breaker_commands.is_empty());
     assert_eq!(
         store
-            .with_source_correction_command_dispatch(&command, || panic!("fenced replay"))
+            .with_source_correction_command_dispatch(&command, |_| panic!("fenced replay"))
             .await
-            .unwrap(),
+            .unwrap()
+            .transport_result,
         RunnerCommandDispatchOutcome::Obsolete
     );
     let status: String = sqlx::query_scalar("SELECT status FROM runner_commands WHERE id=$1")
@@ -123,9 +127,10 @@ async fn issue56_source_correction_fence_wins_before_enqueue(pool: PgPool) {
     );
     assert_eq!(
         store
-            .with_source_correction_command_dispatch(&command, || panic!("stale provider enqueue"))
+            .with_source_correction_command_dispatch(&command, |_| panic!("stale provider enqueue"))
             .await
-            .unwrap(),
+            .unwrap()
+            .transport_result,
         RunnerCommandDispatchOutcome::Obsolete
     );
 }
@@ -137,17 +142,19 @@ async fn issue56_source_correction_disconnect_preserves_durable_retry(pool: PgPo
     let before = correction_state(&store).await;
     assert_eq!(
         store
-            .with_source_correction_command_dispatch(&command, || Ok(false))
+            .with_source_correction_command_dispatch(&command, |_| Ok(false))
             .await
-            .unwrap(),
+            .unwrap()
+            .transport_result,
         RunnerCommandDispatchOutcome::Disconnected
     );
     assert_eq!(correction_state(&store).await, before);
     assert_eq!(
         store
-            .with_source_correction_command_dispatch(&command, || Ok(true))
+            .with_source_correction_command_dispatch(&command, |_| Ok(true))
             .await
-            .unwrap(),
+            .unwrap()
+            .transport_result,
         RunnerCommandDispatchOutcome::Sent
     );
     assert_eq!(correction_state(&store).await, before);
