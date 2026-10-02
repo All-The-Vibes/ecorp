@@ -255,8 +255,12 @@ try {
   })
   assert.equal(digest(normalized), digest(first), 'Labels and budgets must not depend on private prose')
   await preview('omitted strategy uses the create default', { ...request, strategy: undefined })
+  await preview('parallel handoffs require a directory write scope', {
+    ...request, strategy: 'parallel-specialists',
+  }, 400, { errorPattern: /approved directory write scope/ })
   const parallel = await preview('parallel graph dependencies and budgets', {
     ...request, strategy: 'parallel-specialists',
+    contract: { ...request.contract, write_scope: ['handoffs/**', 'result.md'] },
   }, 200, { taskCount: 3 })
   assert.deepEqual(parallel.tasks.find((task) => task.key === 'synthesis')?.depends_on,
     ['specialist-a', 'specialist-b'])
