@@ -1,0 +1,590 @@
+{
+  "scope": "Observed retrospective regressions on the exact physical source recorded in source-mapping.json, before the publication commit.",
+  "canonical": {
+    "command": "pnpm check",
+    "exit_code": 0,
+    "status": "passed",
+    "checks": [
+      {
+        "name": "migrations",
+        "argv": [
+          "node",
+          "tools/check_migrations.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 138,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-compatibility",
+        "argv": [
+          "node",
+          "tools/check_state_audit_compatibility.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 109,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-evm",
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "crony-audit",
+          "--test",
+          "ethereum_local_chain"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 13725,
+        "counts": {
+          "rust": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "summaries": 1
+          },
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "docs",
+        "argv": [
+          "node",
+          "tools/check_docs.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 115,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "repository-docs",
+        "argv": [
+          "node",
+          "tools/check_documentation.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 118,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "node-tests",
+        "argv": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "--test-timeout=180000",
+          "--test-reporter=tap",
+          ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+          ".github/skills/code-review/tests/executor-state.test.mjs",
+          ".github/skills/code-review/tests/package.test.mjs",
+          "apps/web/src/AgentPinControl.test.mjs",
+          "apps/web/src/DelegatedPanel.test.mjs",
+          "apps/web/src/VerificationPolicyEditor.test.mjs",
+          "apps/web/src/agentPinOperation.test.mjs",
+          "apps/web/src/evidenceNavigation.test.mjs",
+          "apps/web/src/evidenceSelection.test.mjs",
+          "apps/web/src/factoryAuthority.test.mjs",
+          "apps/web/src/factoryAuthorityConnection.test.mjs",
+          "apps/web/src/factoryCheckpointRecovery.test.mjs",
+          "apps/web/src/factoryControllerSelection.test.mjs",
+          "apps/web/src/factoryPolling.test.mjs",
+          "apps/web/src/formText.test.mjs",
+          "apps/web/src/missionCollaboration.test.mjs",
+          "apps/web/src/missionComposer.test.mjs",
+          "apps/web/src/missionOriginContext.test.mjs",
+          "apps/web/src/missionPreview.test.mjs",
+          "apps/web/src/missionProjection.test.mjs",
+          "apps/web/src/missionResultContext.test.mjs",
+          "apps/web/src/missionReviewSummary.test.mjs",
+          "apps/web/src/missionRuntime.test.mjs",
+          "apps/web/src/office/characterAssets.test.mjs",
+          "apps/web/src/office/officeModel.test.mjs",
+          "apps/web/src/runActivity.test.mjs",
+          "apps/web/src/snapshotRefresh.test.mjs",
+          "apps/web/src/verificationPolicy.test.mjs",
+          "apps/web/src/workResultCard.test.mjs",
+          "apps/web/src/workflowContext.test.mjs",
+          "apps/web/src/workspaceConnections.test.mjs",
+          "scenarios/repo-steward/actions.test.mjs",
+          "scenarios/repo-steward/feedback-cli.test.mjs",
+          "scenarios/repo-steward/feedback.test.mjs",
+          "scenarios/repo-steward/maintenance.test.mjs",
+          "scenarios/repo-steward/recurring-audit.test.mjs",
+          "scenarios/repo-steward/steward.test.mjs",
+          "scenarios/repo-steward/teams-host.test.mjs",
+          "tests/readiness/cli.test.js",
+          "tools/budget_fixture.test.mjs",
+          "tools/check_deliverable_diff.test.mjs",
+          "tools/check_documentation.test.mjs",
+          "tools/check_evidence_launch.test.mjs",
+          "tools/check_evidence_native_build.test.mjs",
+          "tools/check_evidence_personal_paths.test.mjs",
+          "tools/check_migrations.test.mjs",
+          "tools/check_replay_source.test.mjs",
+          "tools/checkpoint_application_fixture.test.mjs",
+          "tools/ci_external_adapters_windows.test.mjs",
+          "tools/ci_factory_repository.test.mjs",
+          "tools/ci_maintenance.test.mjs",
+          "tools/ci_owned_test_server.test.mjs",
+          "tools/ci_runner_tests.test.mjs",
+          "tools/consume_operation_receipt.test.mjs",
+          "tools/controlled_runner_fixture.test.mjs",
+          "tools/copilot_fs_wire_observer.test.mjs",
+          "tools/copilot_fs_wire_process.test.mjs",
+          "tools/copilot_probe_boundaries.test.mjs",
+          "tools/copilot_probe_environment.test.mjs",
+          "tools/copilot_probe_native_read.test.mjs",
+          "tools/copilot_probe_process.test.mjs",
+          "tools/coverage_web_models.test.mjs",
+          "tools/delegated_lifecycle.test.mjs",
+          "tools/delegated_qa_root.test.mjs",
+          "tools/e2e_agent_pinning.test.mjs",
+          "tools/e2e_checkpoint_verification.test.mjs",
+          "tools/e2e_evidence_selection.test.mjs",
+          "tools/e2e_external_adapters.test.mjs",
+          "tools/e2e_external_adapters_http.test.mjs",
+          "tools/e2e_factory_budget_recovery.test.mjs",
+          "tools/e2e_late_termination.test.mjs",
+          "tools/e2e_predispatch_failure.test.mjs",
+          "tools/e2e_stopped_source_checkpoint.test.mjs",
+          "tools/e2e_verifier_browser_retention.test.mjs",
+          "tools/e2e_verifier_browser_scope.test.mjs",
+          "tools/factory_budget_fixture_config.test.mjs",
+          "tools/factory_budget_git.test.mjs",
+          "tools/factory_budget_process.test.mjs",
+          "tools/factory_budget_provenance.test.mjs",
+          "tools/factory_budget_start.test.mjs",
+          "tools/fake_codex_budget_stream.test.mjs",
+          "tools/fake_github_quota.test.mjs",
+          "tools/fixture_source_identity.test.mjs",
+          "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+          "tools/identity_fixture.test.mjs",
+          "tools/import_operation_behavior.test.mjs",
+          "tools/issue161/qa-api-provenance.test.mjs",
+          "tools/issue161/qa-plan.test.mjs",
+          "tools/local_source_commit.test.mjs",
+          "tools/local_stack_lifecycle.test.mjs",
+          "tools/local_stack_operation.test.mjs",
+          "tools/native_qualification_attempt.test.mjs",
+          "tools/native_qualification_finality.test.mjs",
+          "tools/native_qualification_trust.test.mjs",
+          "tools/office_model.test.mjs",
+          "tools/operation_feedback.test.mjs",
+          "tools/operation_receipt.test.mjs",
+          "tools/owned_test_stack.test.mjs",
+          "tools/probe_mcp.test.mjs",
+          "tools/qa_multiplayer_object_sources.test.mjs",
+          "tools/readiness_contract.test.mjs",
+          "tools/readiness_replay_contract.test.mjs",
+          "tools/redact_evidence_capabilities.test.mjs",
+          "tools/research_handoff_adversarial.test.mjs",
+          "tools/research_handoff_browser.test.mjs",
+          "tools/research_handoff_native.test.mjs",
+          "tools/runner_ack_fault_relay.test.mjs",
+          "tools/secret_scan.test.mjs",
+          "tools/secret_scan_native.test.mjs",
+          "tools/security_fixtures.test.mjs",
+          "tools/startup_validation_harness.test.mjs",
+          "tools/task_graph_fixture.test.mjs",
+          "tools/verifier_browser.test.mjs",
+          "tools/verify_toolchain.test.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2351950,
+        "counts": {
+          "rust": null,
+          "node": {
+            "tests": 3103,
+            "passed": 3038,
+            "failed": 0,
+            "skipped": 65,
+            "todo": 0,
+            "cancelled": 0
+          }
+        },
+        "errorCode": null
+      },
+      {
+        "name": "format",
+        "argv": [
+          "cargo",
+          "fmt",
+          "--check"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2932,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "clippy",
+        "argv": [
+          "cargo",
+          "clippy",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 253988,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "rust-tests",
+        "argv": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--locked"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 1258073,
+        "counts": {
+          "rust": {
+            "passed": 878,
+            "failed": 0,
+            "ignored": 564,
+            "summaries": 41
+          },
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "web-build",
+        "argv": [
+          "pnpm",
+          "build:web"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 6362,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "web-lint",
+        "argv": [
+          "pnpm",
+          "lint:web"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2534,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      }
+    ],
+    "not_run": [],
+    "source_changed": false,
+    "log_sha256": "87834024634a6b182a0623d6043b317edf9bb4b9d76dd344d5ccd14a25e8c83a",
+    "report_sha256": "5e772053d67775c88383e7a061ee608d4bd188723ed7ee8ae27d6bfbc8c3f7fe"
+  },
+  "canonical_started_at_utc": "2026-10-02T09:17:08.8868077Z",
+  "canonical_finished_at_utc": "2026-10-02T10:25:25.7239840Z",
+  "native_regressions": {
+    "repository": "All-The-Vibes/ecorp",
+    "pull_request": 397,
+    "status": "passed",
+    "pid": 28076,
+    "started_at_utc": "2026-10-02T07:51:05.6434534Z",
+    "source_before": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T07:51:05.236Z",
+      "source": "<reviewed-checkout>",
+      "head": "782803de6cbb0f42174ba37b3b576ded2ff79fba",
+      "tree": "c97b89e06d9f6d8671d85817a597f43e5df0925a",
+      "branch": "codex/pr397-object-store-review",
+      "status": "M crates/crony-server/src/artifacts.rs\n M crates/crony-server/src/issue297_native_fixture.rs",
+      "clean": false,
+      "source_file_count": 7146,
+      "source_fingerprint": "71855e9110c458a39f265959b7185f43d850412e0c1aeade36df78ba1b25dab9",
+      "manifest": "output/issue-completion/20261002T023252Z\\pr397-source-before-native-server-r3.json",
+      "manifest_sha256": "e73f581be5b2b5e4cb184b5a1cab0e092613bb1024caa0b8231d62d65d542480"
+    },
+    "source_after": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T07:51:34.56Z",
+      "source": "<reviewed-checkout>",
+      "head": "782803de6cbb0f42174ba37b3b576ded2ff79fba",
+      "tree": "c97b89e06d9f6d8671d85817a597f43e5df0925a",
+      "branch": "codex/pr397-object-store-review",
+      "status": "M crates/crony-server/src/artifacts.rs\n M crates/crony-server/src/issue297_native_fixture.rs",
+      "clean": false,
+      "source_file_count": 7146,
+      "source_fingerprint": "71855e9110c458a39f265959b7185f43d850412e0c1aeade36df78ba1b25dab9",
+      "manifest": "output/issue-completion/20261002T023252Z\\pr397-source-after-native-server-r3.json",
+      "manifest_sha256": "facee20549a0b433295fc71712adc5e289ceec597e1caf99401ad71bd285218f"
+    },
+    "source_unchanged": true,
+    "qa_root": "<owned-native-fixture>/pr397-server-native-20261002-r3",
+    "nonce": "cd961fdb-f9f4-4c3d-b571-8ff515aed503",
+    "database": "ecorp_issue297_cd961fdbf9f44c3db5718ff515aed503",
+    "port": 59397,
+    "checks": [
+      {
+        "log": "output/issue-completion/20261002T023252Z\\pr397-native-server-r3-build.jsonl",
+        "sha256": "3f58f49c1c050fd9b62d43694996344d6c6eb6165aaebe21576848661e56cf5d",
+        "exit_code": 0,
+        "name": "source-bound-native-server-build"
+      },
+      {
+        "log": "output/issue-completion/20261002T023252Z\\pr397-native-server-r3-initdb.log",
+        "sha256": "2c7f763d19f5da838fc024b2c7910b47e29567643346dbd449a5fff1637745e7",
+        "exit_code": 0,
+        "name": "owned-postgresql-initialization"
+      },
+      {
+        "log": "output/issue-completion/20261002T023252Z\\pr397-native-server-r3-create-owned-database.log",
+        "sha256": "c4f0e6a1d4c0f5670985351933a6e3b37f82d0e083b70cd21e88d7d6258dd588",
+        "exit_code": 0,
+        "name": "create-owned-database"
+      },
+      {
+        "log": "output/issue-completion/20261002T023252Z\\pr397-native-server-r3-mark-owned-database.log",
+        "sha256": "a935dbf1afeeccf1776a74a52e88c4a9fb8278b02ba153f72d83d820462ac199",
+        "exit_code": 0,
+        "name": "mark-owned-database"
+      },
+      {
+        "log": "output/issue-completion/20261002T023252Z\\pr397-native-server-r3-driver.log",
+        "sha256": "bea58ade94c6e08cca93d1e39cab493a0858c3a9d10504a094b6412cc9280146",
+        "exit_code": 0,
+        "name": "all-13-server-artifact-native-cases"
+      }
+    ],
+    "cleanup": "Exact owned PostgreSQL stopped; fixture port inactive. Data, credentials and logs retained.",
+    "scope": "Fresh SCRAM PostgreSQL fixture, exact source-bound native binary, 13 existing server artifact adversarial cases. No browser, provider inference or S3 acceptance claimed.",
+    "binary": {
+      "sha256": "32f7a1e55905ec3f6901be2d592535c41ac803ddc63cddf47cd998929dee7a79",
+      "build_receipt": "output/issue-completion/20261002T023252Z\\pr397-native-server-r3-build.jsonl",
+      "path": "<reviewed-checkout>\\target\\debug\\deps\\crony_server-f306af6127d41266.exe"
+    },
+    "authentication": {
+      "method": "scram-sha-256",
+      "delivery": "Private fixture password files outside source and runner paths. SQLx environment-only delivery is reduced assurance.",
+      "wrong_password_rejected": true
+    },
+    "counts": {
+      "ignored": 0,
+      "failed": 0,
+      "filtered": 3406,
+      "passed": 13
+    },
+    "finished_at_utc": "2026-10-02T07:51:34.9574275Z"
+  },
+  "focused_regressions": {
+    "repository": "All-The-Vibes/ecorp",
+    "pull_request": 397,
+    "head": "782803de6cbb0f42174ba37b3b576ded2ff79fba",
+    "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "worktree": "<reviewed-checkout>",
+    "started_at_utc": "2026-10-02T07:48:57.1404896Z",
+    "pid": 27568,
+    "status": "passed",
+    "checks": [
+      {
+        "finished_at_utc": "2026-10-02T07:49:00.1915666Z",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "started_at_utc": "2026-10-02T07:48:57.1660815Z",
+        "log": "output/issue-completion/20261002T023252Z\\pr397-focused-r5-rust-format.log",
+        "argv": [
+          "cargo",
+          "fmt",
+          "--check"
+        ],
+        "counts": {
+          "filtered": 0,
+          "passed": 0,
+          "summaries": 0,
+          "ignored": 0,
+          "failed": 0
+        },
+        "name": "rust-format",
+        "exit_code": 0
+      },
+      {
+        "finished_at_utc": "2026-10-02T07:49:55.2950783Z",
+        "sha256": "4c3f5c3318097befbba531dbeab2fb506506200ba53492f92e9910b24c7d502a",
+        "started_at_utc": "2026-10-02T07:49:00.2018708Z",
+        "log": "output/issue-completion/20261002T023252Z\\pr397-focused-r5-server-artifact-and-receipt-regressions.log",
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "-p",
+          "crony-server",
+          "artifacts::",
+          "--",
+          "--test-threads=1"
+        ],
+        "counts": {
+          "failed": 0,
+          "filtered": 245,
+          "summaries": 2,
+          "passed": 24,
+          "ignored": 1
+        },
+        "name": "server-artifact-and-receipt-regressions",
+        "exit_code": 0
+      },
+      {
+        "finished_at_utc": "2026-10-02T07:50:19.5873901Z",
+        "sha256": "5a1fa81e5dd529dbe84220fed4933783a40cb296c51f4f39e02d823a2536bda7",
+        "started_at_utc": "2026-10-02T07:49:55.2993167Z",
+        "log": "output/issue-completion/20261002T023252Z\\pr397-focused-r5-server-all-targets-clippy.log",
+        "argv": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--offline",
+          "-p",
+          "crony-server",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "counts": {
+          "filtered": 0,
+          "passed": 0,
+          "summaries": 0,
+          "ignored": 0,
+          "failed": 0
+        },
+        "name": "server-all-targets-clippy",
+        "exit_code": 0
+      }
+    ],
+    "source_before": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T07:48:56.709Z",
+      "source": "<reviewed-checkout>",
+      "head": "782803de6cbb0f42174ba37b3b576ded2ff79fba",
+      "tree": "c97b89e06d9f6d8671d85817a597f43e5df0925a",
+      "branch": "codex/pr397-object-store-review",
+      "status": "M crates/crony-server/src/artifacts.rs\n M crates/crony-server/src/issue297_native_fixture.rs",
+      "clean": false,
+      "source_file_count": 7146,
+      "source_fingerprint": "71855e9110c458a39f265959b7185f43d850412e0c1aeade36df78ba1b25dab9",
+      "manifest": "output/issue-completion/20261002T023252Z\\pr397-source-before-focused-r5.json",
+      "manifest_sha256": "d5f1e9180c6aa7ba5b89a23eb341f6d40bae33bb06113d886a9a5d8664d71c06"
+    },
+    "source_unchanged": true,
+    "scope": "Focused artifact-storage tests and server clippy. This is not native S3, browser acceptance, the complete canonical gate or hosted validation.",
+    "source_after": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T07:50:22.796Z",
+      "source": "<reviewed-checkout>",
+      "head": "782803de6cbb0f42174ba37b3b576ded2ff79fba",
+      "tree": "c97b89e06d9f6d8671d85817a597f43e5df0925a",
+      "branch": "codex/pr397-object-store-review",
+      "status": "M crates/crony-server/src/artifacts.rs\n M crates/crony-server/src/issue297_native_fixture.rs",
+      "clean": false,
+      "source_file_count": 7146,
+      "source_fingerprint": "71855e9110c458a39f265959b7185f43d850412e0c1aeade36df78ba1b25dab9",
+      "manifest": "output/issue-completion/20261002T023252Z\\pr397-source-after-focused-r5.json",
+      "manifest_sha256": "afa42bf8031dd728d34586ede2b8379af55b6c5a086a73f1e917f59b30569f39"
+    },
+    "finished_at_utc": "2026-10-02T07:50:23.2739494Z"
+  },
+  "runtime": {
+    "status": "passed",
+    "started_at_utc": "2026-10-02T10:32:47.2918244Z",
+    "finished_at_utc": "2026-10-02T10:33:47.2962462Z",
+    "source_unchanged": true,
+    "browser_checks": 6,
+    "signed_s3_read": {
+      "status": "passed",
+      "expected_sha256": "ddb462da9d3de32b782df27fb254b8b9cfd57acc4aecee8270b4a27568be73ca",
+      "objects": [
+        {
+          "object_path_sha256": "29e6b2c43210fdf75a31f91bf99628f3d4e1ebb0bf046219319971c7734939c7",
+          "sha256": "326c5e521b3f6810e48edd4b28975d6901204389a478897006666f80775c91be",
+          "bytes": 939
+        },
+        {
+          "object_path_sha256": "201286fd533e508614cb5ba21f4bd4227d05a82cf929c213631f7d107a4ea310",
+          "sha256": "a9045166f1f1f42094c37b31bd95f1e4a1a2e405d09b0d8d48b8067f3984172b",
+          "bytes": 1385
+        },
+        {
+          "object_path_sha256": "9625a567807701bfde765507864cf61c0e4c1f212bd2a5818aec35b5e56467c7",
+          "sha256": "ddb462da9d3de32b782df27fb254b8b9cfd57acc4aecee8270b4a27568be73ca",
+          "bytes": 1386
+        }
+      ],
+      "signed": true,
+      "emulator_only": true,
+      "cloud_iam_verified": false
+    },
+    "binaries": [
+      {
+        "name": "crony-server.exe",
+        "sha256": "bb0bc06068c600ac0f325f75b95adc3b1c080597648549e604b20c7247eb0bf6"
+      },
+      {
+        "name": "crony-runner.exe",
+        "sha256": "7f6c794620c08661fe76d72f0ccc6c3077b0b1cfb8a88a1b06302398127b39ef"
+      }
+    ],
+    "cleanup": "All exact owned processes and the digest-pinned emulator were verified stopped. Fixture data retained."
+  },
+  "prior_attempts": [
+    "R1 browser six checks passed, but its anonymous GET to a private emulator object returned 403; overall acceptance failed.",
+    "R2 browser six checks passed, but the signed-read probe failed because the supervisor cleared the shared in-memory credential hashtable; overall acceptance failed.",
+    "R3 passes a clone to the supervisor and keeps the independent signed probe identity only in wrapper memory until cleanup. Both browser and signed S3 probe passed. Product source was unchanged across these harness-only attempts."
+  ],
+  "limitations": [
+    "Real Edge, matching native server/runner, owned PostgreSQL and pinned Moto S3 emulator. Browser-authored fake-process mission with persisted verification and byte-verified artifact download. Synthetic principals and provider; environment-only fixture secrets are reduced assurance. No real-cloud IAM, TLS-storage-provider, production OIDC, or real-model acceptance claimed.",
+    "Local loopback HTTP storage tests transport/protocol compatibility only; no real-cloud IAM, cloud-provider TLS, production OIDC, real-model, signed installer or non-Windows acceptance is claimed.",
+    "Existing Cargo audit debt remains separately recorded: 12 advisories (2 high, 1 moderate, 9 low); no new clean-audit claim.",
+    "Required hosted CI, CodeQL, security and code-quality successes are unavailable while organization Actions are disabled. No merge or review-policy exception was attempted."
+  ],
+  "publication_note": "Absolute local checkout, log and fixture paths are normalized for publication; commands, counts, source identities, receipt hashes and capture bytes are unchanged."
+}

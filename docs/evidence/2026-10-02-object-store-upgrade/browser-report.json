@@ -1,0 +1,125 @@
+{
+  "pull_request": 397,
+  "status": "passed",
+  "started_at": "2026-10-02T10:33:19.681Z",
+  "source_binding": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-02T10:32:49.729Z",
+    "source": "<reviewed-checkout>",
+    "head": "782803de6cbb0f42174ba37b3b576ded2ff79fba",
+    "tree": "c97b89e06d9f6d8671d85817a597f43e5df0925a",
+    "branch": "codex/pr397-object-store-review",
+    "status": "M crates/crony-server/src/artifacts.rs\n M crates/crony-server/src/issue297_native_fixture.rs",
+    "clean": false,
+    "source_file_count": 7146,
+    "source_fingerprint": "71855e9110c458a39f265959b7185f43d850412e0c1aeade36df78ba1b25dab9",
+    "manifest": "output/issue-completion/20261002T023252Z\\pr397-source-before-artifact-acceptance-r3.json",
+    "manifest_sha256": "8f3cc3cf39bd8436cf076e732140093e728708d4344bdfffe4a5bd1f90d522d2"
+  },
+  "server": "http://127.0.0.1:19097",
+  "web": "http://127.0.0.1:16097",
+  "s3": {
+    "container_id": "b6e91259c6e7d99ed8ceeae1a5837f9477cfbdde2711ea66acfe3b3c7c550616",
+    "bucket": "pr397-artifacts-4e579ee684c5267a",
+    "image": "motoserver/moto@sha256:91fd602a21f49cf9eb82fdf474015a3c131d40104c8297ea6a2ca920708ae32c",
+    "emulator_only": true,
+    "endpoint": "http://127.0.0.1:19098"
+  },
+  "checks": [
+    {
+      "name": "browser explicitly selects synthetic source, deterministic provider and server allocation",
+      "passed": true
+    },
+    {
+      "name": "browser creates and launches one runner mission",
+      "passed": true,
+      "mission_id": "c7fffac7-48bf-4a09-b3fe-9450e65a607a",
+      "run_id": "4261fc59-0db9-4b69-965f-bfb550ec663c",
+      "runner_id": "pr397-artifact-qa",
+      "status": "completed",
+      "verification_status": "passed",
+      "workspace_disposition": "preserved",
+      "artifact_id": "e5a5cc38-7095-44cf-a035-cd51ff834faf",
+      "artifact_sha256": "ddb462da9d3de32b782df27fb254b8b9cfd57acc4aecee8270b4a27568be73ca",
+      "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/e5a5cc38-7095-44cf-a035-cd51ff834faf"
+    },
+    {
+      "name": "verified signed API download and persisted evidence",
+      "passed": true,
+      "downloaded_bytes": 1386,
+      "artifact_sha256": "ddb462da9d3de32b782df27fb254b8b9cfd57acc4aecee8270b4a27568be73ca",
+      "event_id": "b38f50b3-740f-478e-87ee-baddbdb6390b",
+      "evidence_id": "4a084133-09f9-4b57-a9a9-b025361ec449"
+    },
+    {
+      "name": "real browser downloads the selected artifact bytes",
+      "passed": true,
+      "file": "output/issue-completion/20261002T023252Z\\pr397-artifact-browser-r3\\browser-artifact.md",
+      "suggested_filename": "ecorp-artifact-e5a5cc38-7095-44cf-a035-cd51ff834faf.md",
+      "sha256": "ddb462da9d3de32b782df27fb254b8b9cfd57acc4aecee8270b4a27568be73ca",
+      "bytes": 1386
+    },
+    {
+      "name": "verified artifact download stays visible at desktop and narrow widths",
+      "passed": true
+    },
+    {
+      "name": "application authorization rejects unrelated actor",
+      "passed": true,
+      "denied_status": 404
+    }
+  ],
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/api/corps/00000000-0000-4000-8000-000000000001/missions/preview",
+      "body_sha256": "7e55c996c3f1ad7e1155657a14920fa9947b0f83e795d5988398ce1d5934ce18",
+      "preferred_adapter": "fake-process",
+      "requested_by": "00000000-0000-4000-8000-000000000011"
+    },
+    {
+      "method": "POST",
+      "path": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "body_sha256": "7e55c996c3f1ad7e1155657a14920fa9947b0f83e795d5988398ce1d5934ce18",
+      "preferred_adapter": "fake-process",
+      "requested_by": "00000000-0000-4000-8000-000000000011"
+    },
+    {
+      "method": "POST",
+      "path": "/api/corps/00000000-0000-4000-8000-000000000001/missions/c7fffac7-48bf-4a09-b3fe-9450e65a607a/launch",
+      "body_sha256": "f7c73aed4fa9190e3ca8d65c34cccd354cefd5ca499e6ce1e2bb443387a1ffdc",
+      "preferred_adapter": null,
+      "requested_by": "00000000-0000-4000-8000-000000000011"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "artifact-1440.png",
+      "sha256": "f193107a5449e37191d684ce8cb1a90911e619ef6515fc27555d0bc69bcac64f"
+    },
+    {
+      "file": "artifact-390.png",
+      "sha256": "114fe7ca5a698ca695287b1a9ab2635d1fe434366f8966d8c617f2ecf2a8465e"
+    }
+  ],
+  "blocked_requests": [],
+  "page_errors": [],
+  "scope": "Real Edge, matching native server/runner, owned PostgreSQL and pinned Moto S3 emulator. Browser-authored fake-process mission with persisted verification and byte-verified artifact download. Synthetic principals and provider; environment-only fixture secrets are reduced assurance. No real-cloud IAM, TLS-storage-provider, production OIDC, or real-model acceptance claimed.",
+  "before": {
+    "missions": 1,
+    "runs": 1
+  },
+  "run": {
+    "mission_id": "c7fffac7-48bf-4a09-b3fe-9450e65a607a",
+    "run_id": "4261fc59-0db9-4b69-965f-bfb550ec663c",
+    "runner_id": "pr397-artifact-qa",
+    "status": "completed",
+    "verification_status": "passed",
+    "workspace_disposition": "preserved",
+    "artifact_id": "e5a5cc38-7095-44cf-a035-cd51ff834faf",
+    "artifact_sha256": "ddb462da9d3de32b782df27fb254b8b9cfd57acc4aecee8270b4a27568be73ca",
+    "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/e5a5cc38-7095-44cf-a035-cd51ff834faf"
+  },
+  "finished_at": "2026-10-02T10:33:40.055Z",
+  "publication_note": "Original assertions, times, source identity and image bytes; only absolute local artifact paths are normalized. No new browser run is claimed."
+}
