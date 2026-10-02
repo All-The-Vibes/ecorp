@@ -6,9 +6,9 @@ use crony_domain::{
     ActionApproval, Actor, ActorKind, Agent, AgentStatus, CircuitBreakerIncident, ControlLease,
     Corp, CorpSnapshot, DeliverableForm, DeliverableSpec, DomainEvent, EntityLink,
     FactoryController, FactoryVerificationRecovery, FactoryVerificationRecoveryMode,
-    FactoryWorkItem, FactoryWorkItemState, ManualVerificationGate, Mission, MissionBudgetRevision,
-    MissionContractRevision, MissionContractRevisionAction, MissionStatus, NewEvent,
-    PullRequestPublication, PullRequestPublicationAttempt, PullRequestPublicationState,
+    FactoryWorkItem, FactoryWorkItemState, MAX_TOKEN_BUDGET, ManualVerificationGate, Mission,
+    MissionBudgetRevision, MissionContractRevision, MissionContractRevisionAction, MissionStatus,
+    NewEvent, PullRequestPublication, PullRequestPublicationAttempt, PullRequestPublicationState,
     QueuedMessage, Room, RoomMessage, Run, RunFailureKind, RunStatus, SourceDeliverable, Task,
     TaskContract, TaskGraphPlan, TaskSecretReference, TaskStatus, VerificationEvidence,
     VerificationPolicy, VerificationRequest, VerifierCheck, factory_workspace_connection_id,
@@ -568,6 +568,24 @@ struct RollingBudgetRemaining {
     actor_cost_microusd: i64,
     corp_tokens: i64,
     corp_cost_microusd: i64,
+}
+
+fn clamped_token_allocation(
+    task_tokens: i64,
+    remaining_mission_tokens: i64,
+    rolling: RollingBudgetRemaining,
+) -> Result<i64> {
+    if !(1..=MAX_TOKEN_BUDGET).contains(&task_tokens) {
+        return Err(anyhow!("task token budget is out of range"));
+    }
+    let tokens = task_tokens
+        .min(remaining_mission_tokens)
+        .min(rolling.actor_tokens)
+        .min(rolling.corp_tokens);
+    if tokens <= 0 {
+        return Err(anyhow!("no remaining authorized token budget"));
+    }
+    Ok(tokens)
 }
 
 #[derive(Debug, Clone)]
@@ -3423,6 +3441,7 @@ impl PgStore {
                 ));
             }
             crony_domain::validate_factory_cost_policy(&policy).map_err(anyhow::Error::msg)?;
+            factory_token_budget(&policy)?;
             let work_item_id = Uuid::new_v4();
             let row = sqlx::query(
                 r#"
@@ -5249,7 +5268,7 @@ impl PgStore {
             budget_revision::mission_usage_tx(&mut tx, input.corp_id, mission_id).await?;
         let mission_budget_tokens: i64 = row.get("mission_budget_tokens");
         let mission_budget_cost_microusd: i64 = row.get("mission_budget_cost_microusd");
-        let remaining_mission_tokens = mission_budget_tokens - mission_tokens_used;
+        let remaining_mission_tokens = mission_budget_tokens.saturating_sub(mission_tokens_used);
         let remaining_mission_cost_microusd = mission_budget_cost_microusd - mission_cost_used;
         if !checkpoint_verification
             && (remaining_mission_tokens <= 0 || remaining_mission_cost_microusd <= 0)
@@ -5272,11 +5291,7 @@ impl PgStore {
         let run_budget_tokens = if checkpoint_verification {
             0
         } else {
-            contract
-                .budget_tokens
-                .min(remaining_mission_tokens)
-                .min(rolling.actor_tokens)
-                .min(rolling.corp_tokens)
+            clamped_token_allocation(contract.budget_tokens, remaining_mission_tokens, rolling)?
         };
         let run_budget_cost_microusd = if checkpoint_verification {
             0
@@ -6502,6 +6517,12 @@ impl PgStore {
         }
         let contract: TaskContract =
             serde_json::from_value(row.get("contract")).context("decode task contract")?;
+        let run_budget_tokens = clamped_token_allocation(
+            contract.budget_tokens,
+            row.get::<i64, _>("budget_tokens")
+                .saturating_sub(used_tokens),
+            rolling,
+        )?;
         let verification_policy: VerificationPolicy =
             serde_json::from_value(row.get("verification_policy"))
                 .context("decode verification policy")?;
@@ -6530,7 +6551,7 @@ impl PgStore {
         .bind(agent_id)
         .bind(runner_id)
         .bind(assignment_token)
-        .bind(contract.budget_tokens)
+        .bind(run_budget_tokens)
         .bind(contract.budget_cost_microusd)
         .bind(&model)
         .bind(&reasoning_effort)
@@ -6786,7 +6807,7 @@ impl PgStore {
             budget_revision::mission_usage_tx(&mut tx, corp_id, mission_id).await?;
         let mission_budget_tokens: i64 = row.get("mission_budget_tokens");
         let mission_budget_cost_microusd: i64 = row.get("mission_budget_cost_microusd");
-        let remaining_mission_tokens = mission_budget_tokens - mission_tokens_used;
+        let remaining_mission_tokens = mission_budget_tokens.saturating_sub(mission_tokens_used);
         let remaining_mission_cost_microusd = mission_budget_cost_microusd - mission_cost_used;
         if remaining_mission_tokens <= 0 || remaining_mission_cost_microusd <= 0 {
             return Err(anyhow!(
@@ -6803,11 +6824,8 @@ impl PgStore {
                 "requester or Corp rolling budget has no remaining authority; wait for the window to clear or revise Corp policy before resume"
             ));
         }
-        let resume_budget_tokens = contract
-            .budget_tokens
-            .min(remaining_mission_tokens)
-            .min(rolling.actor_tokens)
-            .min(rolling.corp_tokens);
+        let resume_budget_tokens =
+            clamped_token_allocation(contract.budget_tokens, remaining_mission_tokens, rolling)?;
         let resume_budget_cost_microusd = contract
             .budget_cost_microusd
             .min(remaining_mission_cost_microusd)
@@ -10069,9 +10087,9 @@ impl PgStore {
             ));
         }
         lock_factory_keys_tx(&mut tx, &budget_scope_lock_keys(corp_id, actor_id)).await?;
-        if actor_tokens_per_24h <= 0
+        if !(1..=MAX_TOKEN_BUDGET).contains(&actor_tokens_per_24h)
             || actor_cost_microusd_per_24h <= 0
-            || corp_tokens_per_24h <= 0
+            || !(1..=MAX_TOKEN_BUDGET).contains(&corp_tokens_per_24h)
             || corp_cost_microusd_per_24h <= 0
             || !(2..=100).contains(&no_progress_event_limit)
             || !(2..=100).contains(&repeated_tool_limit)
@@ -11691,6 +11709,26 @@ async fn finished_provider_review_tx(
     .context("check finished provider outcome review before runner loss")
 }
 
+fn validate_plan_token_budgets(plan: &TaskGraphPlan) -> Result<()> {
+    if !(1..=MAX_TOKEN_BUDGET).contains(&plan.budget_tokens) {
+        return Err(anyhow!("mission token budget is out of range"));
+    }
+    let total = plan.tasks.iter().try_fold(0_i64, |total, task| {
+        if !(1..=MAX_TOKEN_BUDGET).contains(&task.contract.budget_tokens) {
+            return Err(anyhow!("task {} token budget is out of range", task.key));
+        }
+        total
+            .checked_add(task.contract.budget_tokens)
+            .context("task token budget sum overflow")
+    })?;
+    if total > plan.budget_tokens {
+        return Err(anyhow!(
+            "task token budgets exceed the mission token budget"
+        ));
+    }
+    Ok(())
+}
+
 async fn mission_creation_admission_tx(
     tx: &mut Transaction<'_, Postgres>,
     corp_id: Uuid,
@@ -11702,6 +11740,7 @@ async fn mission_creation_admission_tx(
     let title = normalize_mission_title(title)?;
     let description = normalize_mission_description(description)?;
     assert_mission_operator_tx(tx, corp_id, requested_by).await?;
+    validate_plan_token_budgets(plan)?;
     staffing::validate_staffing(plan)?;
     let room_id = match workspace_connections::plan_room_tx(tx, corp_id, requested_by, plan).await?
     {
@@ -12043,6 +12082,8 @@ fn validate_factory_plan_against_policy_parts(
     plan: &TaskGraphPlan,
 ) -> Result<()> {
     crony_domain::validate_factory_cost_policy(policy).map_err(anyhow::Error::msg)?;
+    let budget_tokens = factory_token_budget(policy)?;
+    validate_plan_token_budgets(plan)?;
     factory_attempt_policy::validate_plan(policy, plan)?;
     let connection_id = factory_workspace_connection_id(policy).map_err(anyhow::Error::msg)?;
     if let Some(task) = plan
@@ -12257,7 +12298,6 @@ fn validate_factory_plan_against_policy_parts(
             task.key
         ));
     }
-    let budget_tokens = factory_policy_positive_i64(policy, "budget_tokens")?;
     if plan.budget_tokens > budget_tokens {
         return Err(anyhow!(
             "factory plan token budget {} exceeds policy {}",
@@ -12403,6 +12443,19 @@ fn factory_policy_positive_i64(policy: &serde_json::Map<String, Value>, key: &st
         .and_then(Value::as_i64)
         .filter(|value| *value > 0)
         .with_context(|| format!("factory policy {key} must be a positive integer"))
+}
+
+fn factory_token_budget(policy: &Value) -> Result<i64> {
+    let policy = policy
+        .as_object()
+        .context("factory policy snapshot must be a JSON object")?;
+    let tokens = factory_policy_positive_i64(policy, "budget_tokens")?;
+    if tokens > MAX_TOKEN_BUDGET {
+        return Err(anyhow!(
+            "factory policy budget_tokens exceeds the finite token ceiling"
+        ));
+    }
+    Ok(tokens)
 }
 
 fn normalize_factory_source(input: FactorySourceInput) -> Result<FactorySourceInput> {
@@ -15710,9 +15763,9 @@ async fn rolling_budget_remaining_tx(
 ) -> Result<RollingBudgetRemaining> {
     let row = sqlx::query(
         r#"
-        SELECT COALESCE(policy.actor_tokens_per_24h, 4000000) AS actor_token_limit,
+        SELECT COALESCE(policy.actor_tokens_per_24h, 999999999999999) AS actor_token_limit,
                COALESCE(policy.actor_cost_microusd_per_24h, 10000000) AS actor_cost_limit,
-               COALESCE(policy.corp_tokens_per_24h, 20000000) AS corp_token_limit,
+               COALESCE(policy.corp_tokens_per_24h, 999999999999999) AS corp_token_limit,
                COALESCE(policy.corp_cost_microusd_per_24h, 100000000) AS corp_cost_limit,
                (
                    SELECT COALESCE(SUM(run.input_tokens + run.output_tokens), 0)::BIGINT
@@ -15812,7 +15865,7 @@ async fn hard_breaker_reached_tx(
                 JOIN tasks other_task ON other_task.id = other.task_id
                 WHERE other_task.mission_id = mission.id
             ) >= mission.budget_cost_microusd)
-         OR (COALESCE(policy.actor_tokens_per_24h, 4000000) > 0 AND (
+         OR (COALESCE(policy.actor_tokens_per_24h, 999999999999999) > 0 AND (
                 SELECT COALESCE(SUM(other.input_tokens + other.output_tokens), 0)::BIGINT
                 FROM runs other
                 JOIN tasks other_task ON other_task.id = other.task_id
@@ -15820,7 +15873,7 @@ async fn hard_breaker_reached_tx(
                 WHERE other_mission.corp_id = run.corp_id
                   AND other_mission.requested_by = mission.requested_by
                   AND other.created_at >= now() - interval '24 hours'
-            ) >= COALESCE(policy.actor_tokens_per_24h, 4000000))
+            ) >= COALESCE(policy.actor_tokens_per_24h, 999999999999999))
          OR (COALESCE(policy.actor_cost_microusd_per_24h, 10000000) > 0 AND (
                 SELECT COALESCE(SUM(other.cost_microusd), 0)::BIGINT
                 FROM runs other
@@ -15830,12 +15883,12 @@ async fn hard_breaker_reached_tx(
                   AND other_mission.requested_by = mission.requested_by
                   AND other.created_at >= now() - interval '24 hours'
             ) >= COALESCE(policy.actor_cost_microusd_per_24h, 10000000))
-         OR (COALESCE(policy.corp_tokens_per_24h, 20000000) > 0 AND (
+         OR (COALESCE(policy.corp_tokens_per_24h, 999999999999999) > 0 AND (
                 SELECT COALESCE(SUM(other.input_tokens + other.output_tokens), 0)::BIGINT
                 FROM runs other
                 WHERE other.corp_id = run.corp_id
                   AND other.created_at >= now() - interval '24 hours'
-            ) >= COALESCE(policy.corp_tokens_per_24h, 20000000))
+            ) >= COALESCE(policy.corp_tokens_per_24h, 999999999999999))
          OR (COALESCE(policy.corp_cost_microusd_per_24h, 100000000) > 0 AND (
                 SELECT COALESCE(SUM(other.cost_microusd), 0)::BIGINT
                 FROM runs other
@@ -15935,7 +15988,7 @@ fn strongest_breaker_stage<'a>(
         if *limit <= 0 {
             continue;
         }
-        let basis_points = used.saturating_mul(10_000) / limit;
+        let basis_points = i128::from(*used) * 10_000 / i128::from(*limit);
         let stage = if basis_points >= 11_000 {
             Some("stop")
         } else if basis_points >= 10_000 {

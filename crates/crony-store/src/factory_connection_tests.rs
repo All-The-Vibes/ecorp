@@ -842,3 +842,6 @@ mod claim_authority;
 
 #[path = "factory_cost_policy_tests.rs"]
 mod cost_policy;
+
+#[path = "token_ceiling_tests.rs"]
+mod token_ceiling_tests;

@@ -701,7 +701,7 @@ fn validate_revised_contract(
         || contract.prohibited_actions.is_empty()
         || contract.write_scope.is_empty()
         || contract.budget_tokens <= 0
-        || contract.budget_tokens > 2_000_000
+        || contract.budget_tokens > MAX_TOKEN_BUDGET
         || contract.budget_cost_microusd <= 0
         || contract.budget_cost_microusd > 10_000_000
     {

@@ -2,9 +2,9 @@ use super::state_audit::native_policy;
 use super::*;
 use sqlx::Acquire;
 
-const MAX_MISSION_BUDGET_TOKENS: i64 = 20_000_000;
+const MAX_MISSION_BUDGET_TOKENS: i64 = MAX_TOKEN_BUDGET;
 const MAX_MISSION_BUDGET_COST_MICROUSD: i64 = 100_000_000;
-const MAX_TASK_BUDGET_TOKENS: i64 = 2_000_000;
+const MAX_TASK_BUDGET_TOKENS: i64 = MAX_TOKEN_BUDGET;
 const MAX_TASK_BUDGET_COST_MICROUSD: i64 = 10_000_000;
 
 const REVISION_SELECT: &str = r#"
@@ -1095,7 +1095,9 @@ mod tests {
     }
 
     #[test]
-    fn recovery_and_finish_scope_token_ceilings_are_distinct() {
+    fn recovery_and_finish_scope_share_the_finite_token_ceiling() {
+        assert_eq!(MAX_MISSION_BUDGET_TOKENS, crony_domain::MAX_TOKEN_BUDGET);
+        assert_eq!(MAX_TASK_BUDGET_TOKENS, crony_domain::MAX_TOKEN_BUDGET);
         let mission_ceiling =
             normalize_proposal(proposal_with_token_budgets(MAX_MISSION_BUDGET_TOKENS, None))
                 .expect("the recovery mission ceiling must be accepted");
@@ -1113,13 +1115,15 @@ mod tests {
         );
 
         normalize_proposal(proposal_with_token_budgets(
-            2_750_000,
+            MAX_MISSION_BUDGET_TOKENS,
             Some(MAX_TASK_BUDGET_TOKENS),
         ))
         .expect("the per-task finish-scope ceiling must be accepted");
 
-        let finish_scope_over_ceiling =
-            proposal_with_token_budgets(2_750_000, Some(MAX_TASK_BUDGET_TOKENS + 1));
+        let finish_scope_over_ceiling = proposal_with_token_budgets(
+            MAX_MISSION_BUDGET_TOKENS,
+            Some(MAX_TASK_BUDGET_TOKENS + 1),
+        );
         assert!(
             normalize_proposal(finish_scope_over_ceiling)
                 .unwrap_err()
