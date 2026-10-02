@@ -1,0 +1,864 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 298,
+  "pr": 400,
+  "execution_source_fingerprint": "baff5fd3a41ae6f582549d0c0e1ef605e13cb28b598ab57b278b36309be1deed",
+  "focused_r5": {
+    "repository": "All-The-Vibes/ecorp",
+    "issue": 298,
+    "status": "passed",
+    "wrapper_pid": 10028,
+    "started_at_utc": "2026-10-02T15:41:58.5978776Z",
+    "source": "<reviewed-checkout>",
+    "source_before": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T15:42:00.647Z",
+      "source": "<reviewed-checkout>",
+      "head": "998f8e2ca6290f894f93b2fdb36d99af79548120",
+      "tree": "9bad23042f04601f96f91c540cea1658eec55535",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M crates/crony-domain/src/mission_deadline.rs\n M crates/crony-runner/src/main.rs\n M crates/crony-runner/src/mission_deadline_tests.rs\n M crates/crony-server/src/main.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_deadline.rs\n M crates/crony-store/src/mission_deadline_tests.rs\n M db/migrations/manifest.json\n M docs/MISSION_DEADLINES.md\n M docs/evidence/2026-10-02-mission-deadlines/README.md\n M tools/e2e_mission_deadline.mjs\n M tools/e2e_mission_deadline.test.mjs\n?? db/migrations/0058_mission_deadline_due_index.sql\n?? docs/evidence/2026-10-02-mission-deadlines/canonical-original-r1.json",
+      "source_file_count": 7440,
+      "source_fingerprint": "4eafc7c7a274aee21c193d23808a6b77472b0ce2e4e4cf638338590684349b3f",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-before-ui-focused-r5.json",
+      "manifest_sha256": "ebaca7fbf478b1524759a0b6d33ef9ab4cce1f87cec11a0e0fa388d594618da7"
+    },
+    "source_after": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T15:43:42.014Z",
+      "source": "<reviewed-checkout>",
+      "head": "998f8e2ca6290f894f93b2fdb36d99af79548120",
+      "tree": "9bad23042f04601f96f91c540cea1658eec55535",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M crates/crony-domain/src/mission_deadline.rs\n M crates/crony-runner/src/main.rs\n M crates/crony-runner/src/mission_deadline_tests.rs\n M crates/crony-server/src/main.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_deadline.rs\n M crates/crony-store/src/mission_deadline_tests.rs\n M db/migrations/manifest.json\n M docs/MISSION_DEADLINES.md\n M docs/evidence/2026-10-02-mission-deadlines/README.md\n M tools/e2e_mission_deadline.mjs\n M tools/e2e_mission_deadline.test.mjs\n?? db/migrations/0058_mission_deadline_due_index.sql\n?? docs/evidence/2026-10-02-mission-deadlines/canonical-original-r1.json",
+      "source_file_count": 7440,
+      "source_fingerprint": "4eafc7c7a274aee21c193d23808a6b77472b0ce2e4e4cf638338590684349b3f",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-after-ui-focused-r5.json",
+      "manifest_sha256": "ea35c66abb3283dd4814040b742f292639823bd50e1fa51f3b84b102b7e2faa1"
+    },
+    "purpose": "Focused actual UI/model, preview protocol/planner and native deadline regressions, including capability-loss admission; web build/lint are required in the separate canonical lane. Not a canonical or full-stack acceptance receipt.",
+    "checks": [
+      {
+        "name": "node",
+        "node_counts": {
+          "tests": 48,
+          "todo": 0,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "pass": 48
+        },
+        "command": "node.exe --test --test-concurrency=1 --test-timeout=180000 --test-reporter=tap apps/web/src/missionDeadline.test.mjs apps/web/src/MissionDeadlineEditor.test.mjs apps/web/src/missionPreview.test.mjs tools/e2e_mission_deadline.test.mjs tools/fake_codex_deadline.test.mjs",
+        "sha256": "4f5e23ada74f07759807d484d0e56819f15a5628ad17ce48826e7f22bf2c4c7a",
+        "log": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r5-node.log",
+        "exit_code": 0,
+        "rust_counts": []
+      },
+      {
+        "name": "format",
+        "node_counts": {},
+        "command": "cargo fmt --check",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "log": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r5-format.log",
+        "exit_code": 0,
+        "rust_counts": []
+      },
+      {
+        "name": "protocol",
+        "node_counts": {},
+        "command": "cargo test --locked --offline -p crony-protocol mission_preview -- --nocapture",
+        "sha256": "480d9351368a96ec647d898d69c28354ff9317a1b8446827d82d7779835dc76f",
+        "log": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r5-protocol.log",
+        "exit_code": 0,
+        "rust_counts": [
+          {
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "filtered_out": 12,
+            "measured": 0
+          }
+        ]
+      },
+      {
+        "name": "planner",
+        "node_counts": {},
+        "command": "cargo test --locked --offline -p crony-server mission_preview -- --nocapture",
+        "sha256": "0d3a349917a36e5d65bc7d873902ccac62c3d9feac942e9383342d6b9ccbd974",
+        "log": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r5-planner.log",
+        "exit_code": 0,
+        "rust_counts": [
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "filtered_out": 7,
+            "measured": 0
+          },
+          {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "filtered_out": 260,
+            "measured": 0
+          }
+        ]
+      },
+      {
+        "name": "admission",
+        "node_counts": {},
+        "command": "cargo test --locked --offline -p crony-server issue298_ -- --nocapture",
+        "sha256": "34f91c561025f692a13d0c262c04a70a5f4737fc83bd1ebb78e4e138e11e96bc",
+        "log": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r5-admission.log",
+        "exit_code": 0,
+        "rust_counts": [
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "filtered_out": 7,
+            "measured": 0
+          },
+          {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "filtered_out": 262,
+            "measured": 0
+          }
+        ]
+      },
+      {
+        "name": "domain",
+        "node_counts": {},
+        "command": "cargo test --locked --offline -p crony-domain mission_deadline -- --nocapture",
+        "sha256": "a027134040db7fd75d1c6d50dc58a6e30d8e97ad12dcbd2f324e96aab99d65ad",
+        "log": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r5-domain.log",
+        "exit_code": 0,
+        "rust_counts": [
+          {
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "filtered_out": 25,
+            "measured": 0
+          }
+        ]
+      },
+      {
+        "name": "runner",
+        "node_counts": {},
+        "command": "cargo test --locked --offline -p crony-runner mission_deadline -- --nocapture",
+        "sha256": "017b174eb8e05a953f7ad434efe1c961336f2ca4919fd1fc742284b965f8f0c3",
+        "log": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r5-runner.log",
+        "exit_code": 0,
+        "rust_counts": [
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "filtered_out": 25,
+            "measured": 0
+          },
+          {
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "filtered_out": 310,
+            "measured": 0
+          }
+        ]
+      }
+    ],
+    "source_unchanged": true,
+    "failure": null,
+    "finished_at_utc": "2026-10-02T15:43:42.5945246Z"
+  },
+  "native_database_r6": {
+    "repository": "All-The-Vibes/ecorp",
+    "issue": 298,
+    "related_issues": [
+      183,
+      221,
+      297
+    ],
+    "status": "passed",
+    "wrapper_pid": 43648,
+    "purpose": "Fresh owned PostgreSQL deadline admission, lock-wait rollback, expiry, recovery and dispatch regressions, plus existing recovery compatibility. Synthetic metadata only; no real-provider or complete-stack acceptance claimed.",
+    "source": "<reviewed-checkout>",
+    "source_before": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T15:52:38.611Z",
+      "source": "<reviewed-checkout>",
+      "head": "998f8e2ca6290f894f93b2fdb36d99af79548120",
+      "tree": "9bad23042f04601f96f91c540cea1658eec55535",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M crates/crony-domain/src/mission_deadline.rs\n M crates/crony-runner/src/main.rs\n M crates/crony-runner/src/mission_deadline_tests.rs\n M crates/crony-server/src/main.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_deadline.rs\n M crates/crony-store/src/mission_deadline_tests.rs\n M db/migrations/manifest.json\n M docs/MISSION_DEADLINES.md\n M docs/evidence/2026-10-02-mission-deadlines/README.md\n M tools/e2e_mission_deadline.mjs\n M tools/e2e_mission_deadline.test.mjs\n?? db/migrations/0058_mission_deadline_due_index.sql\n?? docs/evidence/2026-10-02-mission-deadlines/canonical-original-r1.json",
+      "source_file_count": 7440,
+      "source_fingerprint": "baff5fd3a41ae6f582549d0c0e1ef605e13cb28b598ab57b278b36309be1deed",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-before-native-db-r6.json",
+      "manifest_sha256": "d0af1ff0799129cdf32bca459790269e5fe1f743fdac15bc081f8d9a4c781599"
+    },
+    "source_after": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T15:58:57.043Z",
+      "source": "<reviewed-checkout>",
+      "head": "998f8e2ca6290f894f93b2fdb36d99af79548120",
+      "tree": "9bad23042f04601f96f91c540cea1658eec55535",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M crates/crony-domain/src/mission_deadline.rs\n M crates/crony-runner/src/main.rs\n M crates/crony-runner/src/mission_deadline_tests.rs\n M crates/crony-server/src/main.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_deadline.rs\n M crates/crony-store/src/mission_deadline_tests.rs\n M db/migrations/manifest.json\n M docs/MISSION_DEADLINES.md\n M docs/evidence/2026-10-02-mission-deadlines/README.md\n M tools/e2e_mission_deadline.mjs\n M tools/e2e_mission_deadline.test.mjs\n?? db/migrations/0058_mission_deadline_due_index.sql\n?? docs/evidence/2026-10-02-mission-deadlines/canonical-original-r1.json",
+      "source_file_count": 7440,
+      "source_fingerprint": "baff5fd3a41ae6f582549d0c0e1ef605e13cb28b598ab57b278b36309be1deed",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-after-native-db-r6.json",
+      "manifest_sha256": "8a7c68fd8bf482b821fbe91b04ebe1508e9bc62ef75112d273ed5b8d3918b138"
+    },
+    "source_unchanged": true,
+    "qa_root": "<owned-native-db-fixture-r6>",
+    "started_at_utc": "2026-10-02T15:52:39.2355473Z",
+    "environment": {
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_BUILD_JOBS": "2",
+      "CARGO_INCREMENTAL": "0",
+      "CARGO_NET_OFFLINE": "true",
+      "RUST_TEST_THREADS": "1",
+      "CARGO_PROFILE_TEST_DEBUG": "0"
+    },
+    "checks": [
+      {
+        "name": "owned-postgresql-initialization",
+        "command": "initdb --auth=scram-sha-256 (private pwfile)",
+        "exit_code": 0,
+        "log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r6-initdb.log",
+        "sha256": "41991a9f75f38b94981bb3da285becc255ff40cad1699b421db90cb4d248794b",
+        "counts": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0,
+          "summaries": 0
+        },
+        "passed_test_names": []
+      },
+      {
+        "name": "deadline-authority-and-recovery",
+        "command": "cargo test --locked --offline -p crony-store issue298_ -- --ignored --test-threads=1",
+        "exit_code": 0,
+        "log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r6-crony-store-issue298.log",
+        "sha256": "bf1564939830d4a5349cb9835cf210b7480e04f201a4a29d3dada2fb0064ac52",
+        "counts": {
+          "passed": 29,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 571,
+          "summaries": 1
+        },
+        "passed_test_names": [
+          "factory_recovery_loss_tests::issue298_early_recovery_timer_does_not_assert_database_expiry",
+          "factory_recovery_loss_tests::issue298_expired_native_recovery_cancellation_preserves_verifier_verdict",
+          "factory_recovery_loss_tests::issue298_expired_predispatch_recovery_fails_deadline_without_retry_authority",
+          "factory_recovery_loss_tests::issue298_expired_source_recovery_loss_cannot_grant_retry",
+          "factory_recovery_loss_tests::issue298_expired_verifier_recovery_loss_cannot_grant_retry",
+          "factory_recovery_loss_tests::issue298_late_recovery_operator_ack_preserves_cause_after_sweep",
+          "factory_recovery_loss_tests::issue298_late_recovery_operator_ack_preserves_cause_without_sweep",
+          "factory_recovery_loss_tests::issue298_verifier_dispatch_uses_remaining_deadline_and_rejects_expired",
+          "mission_deadline_tests::issue298_approval_cannot_commit_after_dependent_row_wait",
+          "mission_deadline_tests::issue298_cancellation_requires_matching_scoped_authority",
+          "mission_deadline_tests::issue298_completed_parent_does_not_make_reserved_child_due",
+          "mission_deadline_tests::issue298_completed_parent_leaves_only_actual_shared_time_for_reserved_child",
+          "mission_deadline_tests::issue298_completion_cannot_commit_after_dependent_row_wait",
+          "mission_deadline_tests::issue298_creation_rechecks_time_after_event_write_wait",
+          "mission_deadline_tests::issue298_deadline_policy_scope_and_task_contract_are_immutable",
+          "mission_deadline_tests::issue298_derived_cutoff_is_precise_timezone_independent_and_not_renewable",
+          "mission_deadline_tests::issue298_disconnected_expiry_is_idempotent_and_never_claims_physical_stop",
+          "mission_deadline_tests::issue298_dispatch_samples_time_after_observed_corp_lock_wait",
+          "mission_deadline_tests::issue298_due_index_upgrade_preserves_applied_sql_and_audit_authority",
+          "mission_deadline_tests::issue298_durable_expiry_overrides_forged_runner_authority",
+          "mission_deadline_tests::issue298_early_runner_timer_requires_later_database_reconciliation",
+          "mission_deadline_tests::issue298_expired_creation_and_launch_have_no_partial_effects",
+          "mission_deadline_tests::issue298_first_hard_incident_survives_later_stop",
+          "mission_deadline_tests::issue298_future_missions_cannot_consume_the_due_page",
+          "mission_deadline_tests::issue298_late_operator_ack_preserves_original_cause_after_sweep",
+          "mission_deadline_tests::issue298_late_operator_ack_preserves_original_cause_without_sweep",
+          "mission_deadline_tests::issue298_queued_parent_exhausting_reserve_fails_without_fabricated_handoff",
+          "mission_deadline_tests::issue298_resume_and_reopened_store_consume_the_same_deadline",
+          "mission_deadline_tests::issue298_sweep_preserves_an_earlier_terminal_failure"
+        ],
+        "package": "crony-store",
+        "discovery_log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r6-crony-store-issue298-list.log",
+        "discovery_sha256": "4ba87ca7f53e269079dbc1772f395d1e67ce2f81625f84256268e27f398429b4",
+        "discovered_test_names": [
+          "factory_recovery_loss_tests::issue298_early_recovery_timer_does_not_assert_database_expiry",
+          "factory_recovery_loss_tests::issue298_expired_native_recovery_cancellation_preserves_verifier_verdict",
+          "factory_recovery_loss_tests::issue298_expired_predispatch_recovery_fails_deadline_without_retry_authority",
+          "factory_recovery_loss_tests::issue298_expired_source_recovery_loss_cannot_grant_retry",
+          "factory_recovery_loss_tests::issue298_expired_verifier_recovery_loss_cannot_grant_retry",
+          "factory_recovery_loss_tests::issue298_late_recovery_operator_ack_preserves_cause_after_sweep",
+          "factory_recovery_loss_tests::issue298_late_recovery_operator_ack_preserves_cause_without_sweep",
+          "factory_recovery_loss_tests::issue298_verifier_dispatch_uses_remaining_deadline_and_rejects_expired",
+          "mission_deadline_tests::issue298_approval_cannot_commit_after_dependent_row_wait",
+          "mission_deadline_tests::issue298_cancellation_requires_matching_scoped_authority",
+          "mission_deadline_tests::issue298_completed_parent_does_not_make_reserved_child_due",
+          "mission_deadline_tests::issue298_completed_parent_leaves_only_actual_shared_time_for_reserved_child",
+          "mission_deadline_tests::issue298_completion_cannot_commit_after_dependent_row_wait",
+          "mission_deadline_tests::issue298_creation_rechecks_time_after_event_write_wait",
+          "mission_deadline_tests::issue298_deadline_policy_scope_and_task_contract_are_immutable",
+          "mission_deadline_tests::issue298_derived_cutoff_is_precise_timezone_independent_and_not_renewable",
+          "mission_deadline_tests::issue298_disconnected_expiry_is_idempotent_and_never_claims_physical_stop",
+          "mission_deadline_tests::issue298_dispatch_samples_time_after_observed_corp_lock_wait",
+          "mission_deadline_tests::issue298_due_index_upgrade_preserves_applied_sql_and_audit_authority",
+          "mission_deadline_tests::issue298_durable_expiry_overrides_forged_runner_authority",
+          "mission_deadline_tests::issue298_early_runner_timer_requires_later_database_reconciliation",
+          "mission_deadline_tests::issue298_expired_creation_and_launch_have_no_partial_effects",
+          "mission_deadline_tests::issue298_first_hard_incident_survives_later_stop",
+          "mission_deadline_tests::issue298_future_missions_cannot_consume_the_due_page",
+          "mission_deadline_tests::issue298_late_operator_ack_preserves_original_cause_after_sweep",
+          "mission_deadline_tests::issue298_late_operator_ack_preserves_original_cause_without_sweep",
+          "mission_deadline_tests::issue298_queued_parent_exhausting_reserve_fails_without_fabricated_handoff",
+          "mission_deadline_tests::issue298_resume_and_reopened_store_consume_the_same_deadline",
+          "mission_deadline_tests::issue298_sweep_preserves_an_earlier_terminal_failure"
+        ],
+        "complete_discovered_lane_executed": true
+      },
+      {
+        "name": "existing-recovery-loss",
+        "command": "cargo test --locked --offline -p crony-store issue183_ -- --ignored --test-threads=1",
+        "exit_code": 0,
+        "log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r6-crony-store-issue183.log",
+        "sha256": "ac4c6f975947addbc69ecc1a0236a794a4fc0d10280dd85efedb978e0d7599a1",
+        "counts": {
+          "passed": 13,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 587,
+          "summaries": 1
+        },
+        "passed_test_names": [
+          "factory_recovery_loss_tests::issue183_acked_source_correction_loss_terminalizes_exact_recovery",
+          "factory_recovery_loss_tests::issue183_cleanup_after_missing_started_report_restores_bound_assignment",
+          "factory_recovery_loss_tests::issue183_foreign_and_replaced_recovery_bindings_are_not_adopted",
+          "factory_recovery_loss_tests::issue183_item_gate_precedes_loss_rows",
+          "factory_recovery_loss_tests::issue183_loss_rolls_back_when_factory_transition_cannot_commit",
+          "factory_recovery_loss_tests::issue183_native_cleanup_restores_exact_source_correction_context",
+          "factory_recovery_loss_tests::issue183_next_native_recovery_keeps_the_cleaned_lost_source_binding",
+          "factory_recovery_loss_tests::issue183_ordinary_provider_loss_is_not_a_verification_recovery",
+          "factory_recovery_loss_tests::issue183_pending_command_and_accepted_claim_are_not_lost",
+          "factory_recovery_loss_tests::issue183_publication_gate_precedes_loss_rows",
+          "factory_recovery_loss_tests::issue183_source_correction_grace_expiry_is_atomic_and_epoch_fenced",
+          "factory_recovery_loss_tests::issue183_terminal_factory_outcomes_are_not_downgraded",
+          "factory_recovery_loss_tests::issue183_verifier_only_loss_keeps_original_cleanup_seal"
+        ],
+        "package": "crony-store",
+        "discovery_log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r6-crony-store-issue183-list.log",
+        "discovery_sha256": "470bcd5c1e0e7118211efda5690846fb0c6d21b381b1c0093746af1da277809d",
+        "discovered_test_names": [
+          "factory_recovery_loss_tests::issue183_acked_source_correction_loss_terminalizes_exact_recovery",
+          "factory_recovery_loss_tests::issue183_cleanup_after_missing_started_report_restores_bound_assignment",
+          "factory_recovery_loss_tests::issue183_foreign_and_replaced_recovery_bindings_are_not_adopted",
+          "factory_recovery_loss_tests::issue183_item_gate_precedes_loss_rows",
+          "factory_recovery_loss_tests::issue183_loss_rolls_back_when_factory_transition_cannot_commit",
+          "factory_recovery_loss_tests::issue183_native_cleanup_restores_exact_source_correction_context",
+          "factory_recovery_loss_tests::issue183_next_native_recovery_keeps_the_cleaned_lost_source_binding",
+          "factory_recovery_loss_tests::issue183_ordinary_provider_loss_is_not_a_verification_recovery",
+          "factory_recovery_loss_tests::issue183_pending_command_and_accepted_claim_are_not_lost",
+          "factory_recovery_loss_tests::issue183_publication_gate_precedes_loss_rows",
+          "factory_recovery_loss_tests::issue183_source_correction_grace_expiry_is_atomic_and_epoch_fenced",
+          "factory_recovery_loss_tests::issue183_terminal_factory_outcomes_are_not_downgraded",
+          "factory_recovery_loss_tests::issue183_verifier_only_loss_keeps_original_cleanup_seal"
+        ],
+        "complete_discovered_lane_executed": true
+      },
+      {
+        "name": "existing-checkpoint-correction",
+        "command": "cargo test --locked --offline -p crony-store issue221_ -- --ignored --test-threads=1",
+        "exit_code": 0,
+        "log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r6-crony-store-issue221.log",
+        "sha256": "88681f81e512be172adfb40ea362efdf2fed0cdb4f16cf74a13594935498e5bf",
+        "counts": {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 589,
+          "summaries": 1
+        },
+        "passed_test_names": [
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_after_failed_checkpoint_correction",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_command_insert_failure_rolls_back_the_full_allocation",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_context_and_current_replay_keep_two_correction_chain",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_does_not_reset_exhausted_cost_spend",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_does_not_reset_exhausted_token_spend",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_fences_current_scope_request_and_pending_command",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_native_predispatch_failure_keeps_latest_physical_source",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_native_provider_failure_stays_governed_and_bounded",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_rechecks_current_authority_and_protected_lineage",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_rechecks_native_history_and_revision_ledger_bridge",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_rejects_missing_and_damaged_prior_and_current_grants"
+        ],
+        "package": "crony-store",
+        "discovery_log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r6-crony-store-issue221-list.log",
+        "discovery_sha256": "af2e9762fc847adcfa1def6a563a9de480cf550b5addb7620f590e137995418d",
+        "discovered_test_names": [
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_after_failed_checkpoint_correction",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_command_insert_failure_rolls_back_the_full_allocation",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_context_and_current_replay_keep_two_correction_chain",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_does_not_reset_exhausted_cost_spend",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_does_not_reset_exhausted_token_spend",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_fences_current_scope_request_and_pending_command",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_native_predispatch_failure_keeps_latest_physical_source",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_native_provider_failure_stays_governed_and_bounded",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_rechecks_current_authority_and_protected_lineage",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_rechecks_native_history_and_revision_ledger_bridge",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_rejects_missing_and_damaged_prior_and_current_grants"
+        ],
+        "complete_discovered_lane_executed": true
+      }
+    ],
+    "cleanup": "Exact owned PostgreSQL stopped and fixture port verified inactive; database, private credentials and logs preserved.",
+    "failure": null,
+    "authentication": {
+      "delivery": "Private fixture credential files for PostgreSQL clients. SQLx environment-only delivery is reduced assurance.",
+      "method": "scram-sha-256",
+      "authenticated_query": true,
+      "wrong_password_rejected": true
+    },
+    "finished_at_utc": "2026-10-02T15:58:58.9864556Z"
+  },
+  "native_build_r3": {
+    "repository": "All-The-Vibes/ecorp",
+    "issue": 298,
+    "source": "<reviewed-checkout>",
+    "source_before": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T16:00:22.407Z",
+      "source": "<reviewed-checkout>",
+      "head": "998f8e2ca6290f894f93b2fdb36d99af79548120",
+      "tree": "9bad23042f04601f96f91c540cea1658eec55535",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M crates/crony-domain/src/mission_deadline.rs\n M crates/crony-runner/src/main.rs\n M crates/crony-runner/src/mission_deadline_tests.rs\n M crates/crony-server/src/main.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_deadline.rs\n M crates/crony-store/src/mission_deadline_tests.rs\n M db/migrations/manifest.json\n M docs/MISSION_DEADLINES.md\n M docs/evidence/2026-10-02-mission-deadlines/README.md\n M tools/e2e_mission_deadline.mjs\n M tools/e2e_mission_deadline.test.mjs\n?? db/migrations/0058_mission_deadline_due_index.sql\n?? docs/evidence/2026-10-02-mission-deadlines/canonical-original-r1.json",
+      "source_file_count": 7440,
+      "source_fingerprint": "baff5fd3a41ae6f582549d0c0e1ef605e13cb28b598ab57b278b36309be1deed",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-before-native-build-r3.json",
+      "manifest_sha256": "cf75dc2d9863cbf53a48e5dc5ebb0b17fc47a2db06a689a6cff42eb53ccf34ec"
+    },
+    "started_at_utc": "2026-10-02T16:00:23.0541533Z",
+    "pid": 41140,
+    "status": "passed",
+    "source_unchanged": true,
+    "command": "cargo build --locked --offline -p crony-server -p crony-runner",
+    "binaries": [
+      {
+        "path": "<reviewed-checkout>\\target\\debug\\crony-server.exe",
+        "sha256": "281ccb4b59221e6c63b6dd9b5063398ae270c7f49a1e7c7e5d40b04566b4eb25"
+      },
+      {
+        "path": "<reviewed-checkout>\\target\\debug\\crony-runner.exe",
+        "sha256": "6fc7247fce9902b50a89acbeff43b32ba3603d3ad081f59d847caca9b17b34e0"
+      }
+    ],
+    "scope": "Native executables for the isolated deadline acceptance fixture. This build is not canonical validation or acceptance; unchanged cached Rust artifacts may be reused.",
+    "build": {
+      "sha256": "2c5890fac5414e6c37b75047b0697c327d141eac92e5159d1f2ad3749e5ac0ec",
+      "exit_code": 0,
+      "log": "output/issue-completion/20261002T023252Z\\issue298-native-build-r3.log"
+    },
+    "source_after": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T16:01:56.544Z",
+      "source": "<reviewed-checkout>",
+      "head": "998f8e2ca6290f894f93b2fdb36d99af79548120",
+      "tree": "9bad23042f04601f96f91c540cea1658eec55535",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M crates/crony-domain/src/mission_deadline.rs\n M crates/crony-runner/src/main.rs\n M crates/crony-runner/src/mission_deadline_tests.rs\n M crates/crony-server/src/main.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_deadline.rs\n M crates/crony-store/src/mission_deadline_tests.rs\n M db/migrations/manifest.json\n M docs/MISSION_DEADLINES.md\n M docs/evidence/2026-10-02-mission-deadlines/README.md\n M tools/e2e_mission_deadline.mjs\n M tools/e2e_mission_deadline.test.mjs\n?? db/migrations/0058_mission_deadline_due_index.sql\n?? docs/evidence/2026-10-02-mission-deadlines/canonical-original-r1.json",
+      "source_file_count": 7440,
+      "source_fingerprint": "baff5fd3a41ae6f582549d0c0e1ef605e13cb28b598ab57b278b36309be1deed",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-after-native-build-r3.json",
+      "manifest_sha256": "d5dbedd03e2df5eda8290f3d04fd2d3842778eef7696504bcbf5252fd9e2f822"
+    },
+    "finished_at_utc": "2026-10-02T16:01:57.1307347Z"
+  },
+  "browser_wrapper_r3": {
+    "issue": 298,
+    "repository": "All-The-Vibes/ecorp",
+    "source": "<reviewed-checkout>",
+    "source_before": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T16:04:11.737Z",
+      "source": "<reviewed-checkout>",
+      "head": "998f8e2ca6290f894f93b2fdb36d99af79548120",
+      "tree": "9bad23042f04601f96f91c540cea1658eec55535",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M crates/crony-domain/src/mission_deadline.rs\n M crates/crony-runner/src/main.rs\n M crates/crony-runner/src/mission_deadline_tests.rs\n M crates/crony-server/src/main.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_deadline.rs\n M crates/crony-store/src/mission_deadline_tests.rs\n M db/migrations/manifest.json\n M docs/MISSION_DEADLINES.md\n M docs/evidence/2026-10-02-mission-deadlines/README.md\n M tools/e2e_mission_deadline.mjs\n M tools/e2e_mission_deadline.test.mjs\n?? db/migrations/0058_mission_deadline_due_index.sql\n?? docs/evidence/2026-10-02-mission-deadlines/canonical-original-r1.json",
+      "source_file_count": 7440,
+      "source_fingerprint": "baff5fd3a41ae6f582549d0c0e1ef605e13cb28b598ab57b278b36309be1deed",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-before-browser-r3.json",
+      "manifest_sha256": "6e8faf2d36953d72532828c6c1d798d8b113556aa0a7775c1d9f720534a92d58"
+    },
+    "qa_root": "<owned-browser-fixture-r3>",
+    "started_at_utc": "2026-10-02T16:04:12.7099457+00:00",
+    "status": "passed",
+    "wrapper_pid": 42588,
+    "checks": [
+      {
+        "log": "output/issue-completion/20261002T023252Z\\issue298-browser-r3-driver-check.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "name": "browser-driver-syntax",
+        "exit_code": 0
+      },
+      {
+        "log": "output/issue-completion/20261002T023252Z\\issue298-browser-r3-stack-start.log",
+        "sha256": "71949362549ae93a5a053bd2411ea999760341646541020d6f430e16fe4ef209",
+        "name": "owned-stack-start",
+        "exit_code": 0
+      },
+      {
+        "log": "output/issue-completion/20261002T023252Z\\issue298-browser-r3-stack-status.log",
+        "sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+        "name": "owned-stack-process-identities",
+        "exit_code": 0
+      },
+      {
+        "log": "output/issue-completion/20261002T023252Z\\issue298-browser-r3-driver.log",
+        "sha256": "623dacd7198ac262109716dcdb50e52c3f040e11650a9e58839722ecf8488f4a",
+        "name": "browser-server-runner-deadline-acceptance",
+        "exit_code": 0
+      }
+    ],
+    "cleanup": "Verified every exact owned process stopped. Database, synthetic source, credentials, ownership and evidence retained.",
+    "source_unchanged": true,
+    "binaries": [
+      {
+        "path": "<reviewed-checkout>\\target\\debug\\crony-server.exe",
+        "sha256": "281ccb4b59221e6c63b6dd9b5063398ae270c7f49a1e7c7e5d40b04566b4eb25"
+      },
+      {
+        "path": "<reviewed-checkout>\\target\\debug\\crony-runner.exe",
+        "sha256": "6fc7247fce9902b50a89acbeff43b32ba3603d3ad081f59d847caca9b17b34e0"
+      }
+    ],
+    "inherited_native_build": {
+      "sha256": "4a85519a9f392ad1a592e472e3c604ebd4c60f7936843c73580a7d46dffa931c",
+      "path": "output/issue-completion/20261002T023252Z\\issue298-native-build-r3.json"
+    },
+    "harness": {
+      "supervisor": {
+        "sha256": "9ca372976e6c507a93b3484b119b9513a296b403691a4d899a659cd8189fa90f",
+        "path": "output\\issue-completion\\20260926T112626Z\\issue224-stack-r1.ps1"
+      },
+      "browser": {
+        "sha256": "41a0c0a0f15622af4ebf6b10b1b4a2dc2b34abc27f20d3c600b09265ff2e4ad0",
+        "path": "<reviewed-checkout>\\tools\\e2e_mission_deadline.mjs"
+      }
+    },
+    "scope": "Actual Edge browser, fresh owned PostgreSQL, server and runner, development principals and deterministic native Codex transport. Exercises persisted queue expiry, a declared reserve, native stop with adversarial late success, durable cancellation, preserved worktrees and browser readbacks. Not canonical validation, real-provider evidence, historical R4 reproduction or independent acceptance.",
+    "database_authentication": {
+      "wrong_password_rejected": true,
+      "authenticated_creation": true,
+      "method": "scram-sha-256",
+      "credential_delivery": "Private PGPASSFILE for fixture SQL clients; server and SQLx environment-only delivery is reduced assurance.",
+      "runner_and_web_environment_secrets_removed": true,
+      "credentials_outside_source_and_runner_workspaces": true
+    },
+    "setup": {
+      "sha256": "af0a97c0bc9efc7ebae0789993ae01e9baf93afffc293aac9649c735263f5177",
+      "path": "<owned-browser-fixture-r3>\\evidence\\mission-deadline-setup.json"
+    },
+    "browser_report": {
+      "sha256": "ed27931e721d302844e227182751d5c6952488217b7160c4694c2f65c4840e3a",
+      "status": "passed",
+      "passed_checks": 15,
+      "path": "<owned-browser-fixture-r3>\\evidence\\mission-deadline\\report.json",
+      "failed_phase": null,
+      "checks": 15,
+      "scenarios": 2,
+      "failure": null
+    },
+    "source_after": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T16:06:05.934Z",
+      "source": "<reviewed-checkout>",
+      "head": "998f8e2ca6290f894f93b2fdb36d99af79548120",
+      "tree": "9bad23042f04601f96f91c540cea1658eec55535",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M crates/crony-domain/src/mission_deadline.rs\n M crates/crony-runner/src/main.rs\n M crates/crony-runner/src/mission_deadline_tests.rs\n M crates/crony-server/src/main.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_deadline.rs\n M crates/crony-store/src/mission_deadline_tests.rs\n M db/migrations/manifest.json\n M docs/MISSION_DEADLINES.md\n M docs/evidence/2026-10-02-mission-deadlines/README.md\n M tools/e2e_mission_deadline.mjs\n M tools/e2e_mission_deadline.test.mjs\n?? db/migrations/0058_mission_deadline_due_index.sql\n?? docs/evidence/2026-10-02-mission-deadlines/canonical-original-r1.json",
+      "source_file_count": 7440,
+      "source_fingerprint": "baff5fd3a41ae6f582549d0c0e1ef605e13cb28b598ab57b278b36309be1deed",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-after-browser-r3.json",
+      "manifest_sha256": "f55e032e8362fb41dff1df32451ac452f10c23e92efeeb8f58eb7ae1a12e5ce2"
+    },
+    "finished_at_utc": "2026-10-02T16:06:08.8530684+00:00"
+  },
+  "failed_native_database_r5": {
+    "repository": "All-The-Vibes/ecorp",
+    "issue": 298,
+    "related_issues": [
+      183,
+      221,
+      297
+    ],
+    "status": "failed",
+    "wrapper_pid": 44676,
+    "purpose": "Fresh owned PostgreSQL deadline admission, lock-wait rollback, expiry, recovery and dispatch regressions, plus existing recovery compatibility. Synthetic metadata only; no real-provider or complete-stack acceptance claimed.",
+    "source": "<reviewed-checkout>",
+    "source_before": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T15:44:51.144Z",
+      "source": "<reviewed-checkout>",
+      "head": "998f8e2ca6290f894f93b2fdb36d99af79548120",
+      "tree": "9bad23042f04601f96f91c540cea1658eec55535",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M crates/crony-domain/src/mission_deadline.rs\n M crates/crony-runner/src/main.rs\n M crates/crony-runner/src/mission_deadline_tests.rs\n M crates/crony-server/src/main.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_deadline.rs\n M crates/crony-store/src/mission_deadline_tests.rs\n M db/migrations/manifest.json\n M docs/MISSION_DEADLINES.md\n M docs/evidence/2026-10-02-mission-deadlines/README.md\n M tools/e2e_mission_deadline.mjs\n M tools/e2e_mission_deadline.test.mjs\n?? db/migrations/0058_mission_deadline_due_index.sql\n?? docs/evidence/2026-10-02-mission-deadlines/canonical-original-r1.json",
+      "source_file_count": 7440,
+      "source_fingerprint": "4eafc7c7a274aee21c193d23808a6b77472b0ce2e4e4cf638338590684349b3f",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-before-native-db-r5.json",
+      "manifest_sha256": "4d2aa86b30a4f9a2f9acf6002d405a9546a79e7e4b3bed947ee13962a8cf7387"
+    },
+    "source_after": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T15:50:14.123Z",
+      "source": "<reviewed-checkout>",
+      "head": "998f8e2ca6290f894f93b2fdb36d99af79548120",
+      "tree": "9bad23042f04601f96f91c540cea1658eec55535",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M crates/crony-domain/src/mission_deadline.rs\n M crates/crony-runner/src/main.rs\n M crates/crony-runner/src/mission_deadline_tests.rs\n M crates/crony-server/src/main.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_deadline.rs\n M crates/crony-store/src/mission_deadline_tests.rs\n M db/migrations/manifest.json\n M docs/MISSION_DEADLINES.md\n M docs/evidence/2026-10-02-mission-deadlines/README.md\n M tools/e2e_mission_deadline.mjs\n M tools/e2e_mission_deadline.test.mjs\n?? db/migrations/0058_mission_deadline_due_index.sql\n?? docs/evidence/2026-10-02-mission-deadlines/canonical-original-r1.json",
+      "source_file_count": 7440,
+      "source_fingerprint": "4eafc7c7a274aee21c193d23808a6b77472b0ce2e4e4cf638338590684349b3f",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-after-native-db-r5.json",
+      "manifest_sha256": "734d3d0dd7d1b62cb16b7c5973858d27048f26194f06308c629222445fc25ed2"
+    },
+    "source_unchanged": true,
+    "qa_root": "<owned-native-db-fixture-r5>",
+    "started_at_utc": "2026-10-02T15:44:51.8099555Z",
+    "environment": {
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_BUILD_JOBS": "2",
+      "CARGO_INCREMENTAL": "0",
+      "RUST_TEST_THREADS": "1",
+      "CARGO_PROFILE_TEST_DEBUG": "0",
+      "CARGO_PROFILE_DEV_DEBUG": "0"
+    },
+    "checks": [
+      {
+        "name": "owned-postgresql-initialization",
+        "command": "initdb --auth=scram-sha-256 (private pwfile)",
+        "exit_code": 0,
+        "log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r5-initdb.log",
+        "sha256": "7e20c09552b17eefa70f90613410f2449b721b5157509b70f2869cf632300c43",
+        "counts": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0,
+          "summaries": 0
+        },
+        "passed_test_names": []
+      },
+      {
+        "name": "deadline-authority-and-recovery",
+        "command": "cargo test --locked --offline -p crony-store issue298_ -- --ignored --test-threads=1",
+        "exit_code": 101,
+        "log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r5-crony-store-issue298.log",
+        "sha256": "e053ad9fed7fd6012fb18483e0e50a5c9fc37850a0e92a35eb3e746c9f000d9f",
+        "counts": {
+          "passed": 28,
+          "failed": 1,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 571,
+          "summaries": 1
+        },
+        "passed_test_names": [
+          "factory_recovery_loss_tests::issue298_early_recovery_timer_does_not_assert_database_expiry",
+          "factory_recovery_loss_tests::issue298_expired_native_recovery_cancellation_preserves_verifier_verdict",
+          "factory_recovery_loss_tests::issue298_expired_predispatch_recovery_fails_deadline_without_retry_authority",
+          "factory_recovery_loss_tests::issue298_expired_source_recovery_loss_cannot_grant_retry",
+          "factory_recovery_loss_tests::issue298_expired_verifier_recovery_loss_cannot_grant_retry",
+          "factory_recovery_loss_tests::issue298_late_recovery_operator_ack_preserves_cause_after_sweep",
+          "factory_recovery_loss_tests::issue298_late_recovery_operator_ack_preserves_cause_without_sweep",
+          "factory_recovery_loss_tests::issue298_verifier_dispatch_uses_remaining_deadline_and_rejects_expired",
+          "mission_deadline_tests::issue298_approval_cannot_commit_after_dependent_row_wait",
+          "mission_deadline_tests::issue298_cancellation_requires_matching_scoped_authority",
+          "mission_deadline_tests::issue298_completed_parent_does_not_make_reserved_child_due",
+          "mission_deadline_tests::issue298_completed_parent_leaves_only_actual_shared_time_for_reserved_child",
+          "mission_deadline_tests::issue298_completion_cannot_commit_after_dependent_row_wait",
+          "mission_deadline_tests::issue298_creation_rechecks_time_after_event_write_wait",
+          "mission_deadline_tests::issue298_deadline_policy_scope_and_task_contract_are_immutable",
+          "mission_deadline_tests::issue298_derived_cutoff_is_precise_timezone_independent_and_not_renewable",
+          "mission_deadline_tests::issue298_disconnected_expiry_is_idempotent_and_never_claims_physical_stop",
+          "mission_deadline_tests::issue298_dispatch_samples_time_after_observed_corp_lock_wait",
+          "mission_deadline_tests::issue298_durable_expiry_overrides_forged_runner_authority",
+          "mission_deadline_tests::issue298_early_runner_timer_requires_later_database_reconciliation",
+          "mission_deadline_tests::issue298_expired_creation_and_launch_have_no_partial_effects",
+          "mission_deadline_tests::issue298_first_hard_incident_survives_later_stop",
+          "mission_deadline_tests::issue298_future_missions_cannot_consume_the_due_page",
+          "mission_deadline_tests::issue298_late_operator_ack_preserves_original_cause_after_sweep",
+          "mission_deadline_tests::issue298_late_operator_ack_preserves_original_cause_without_sweep",
+          "mission_deadline_tests::issue298_queued_parent_exhausting_reserve_fails_without_fabricated_handoff",
+          "mission_deadline_tests::issue298_resume_and_reopened_store_consume_the_same_deadline",
+          "mission_deadline_tests::issue298_sweep_preserves_an_earlier_terminal_failure"
+        ]
+      }
+    ],
+    "cleanup": "Exact owned PostgreSQL stopped and fixture port verified inactive; database, private credentials and logs preserved.",
+    "failure": "deadline-authority-and-recovery did not satisfy its native regression requirement.",
+    "authentication": {
+      "wrong_password_rejected": true,
+      "authenticated_query": true,
+      "delivery": "Private fixture credential files for PostgreSQL clients. SQLx environment-only delivery is reduced assurance.",
+      "method": "scram-sha-256"
+    },
+    "finished_at_utc": "2026-10-02T15:50:15.5430026Z"
+  },
+  "published_logs": [
+    {
+      "file": "logs/issue298-ui-focused-r5-node.log",
+      "sha256": "f3f32efe820136e5f857377765bc394dd11482a8b16a46010139f167eb2d2c9f",
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r5-node.log",
+        "sha256": "4f5e23ada74f07759807d484d0e56819f15a5628ad17ce48826e7f22bf2c4c7a"
+      }
+    },
+    {
+      "file": "logs/issue298-ui-focused-r5-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r5-format.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "file": "logs/issue298-ui-focused-r5-protocol.log",
+      "sha256": "1657893c8c6d6722ac303647566e8346b354f2b4d58dc5f9de748ddc6abc3440",
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r5-protocol.log",
+        "sha256": "480d9351368a96ec647d898d69c28354ff9317a1b8446827d82d7779835dc76f"
+      }
+    },
+    {
+      "file": "logs/issue298-ui-focused-r5-planner.log",
+      "sha256": "bb14f8fbbc2c2af51f357cf2446cfbe0fdc72f90b5f773485ba85804b840a413",
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r5-planner.log",
+        "sha256": "0d3a349917a36e5d65bc7d873902ccac62c3d9feac942e9383342d6b9ccbd974"
+      }
+    },
+    {
+      "file": "logs/issue298-ui-focused-r5-admission.log",
+      "sha256": "2f92437a41ef07cea9b09b2026e497f32f570ed135dd6b3157b5897884ccd2c9",
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r5-admission.log",
+        "sha256": "34f91c561025f692a13d0c262c04a70a5f4737fc83bd1ebb78e4e138e11e96bc"
+      }
+    },
+    {
+      "file": "logs/issue298-ui-focused-r5-domain.log",
+      "sha256": "bcbc6c6ed3e28dc294d9862467e17f64a5baae9d7410b46afd3d12173d250c77",
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r5-domain.log",
+        "sha256": "a027134040db7fd75d1c6d50dc58a6e30d8e97ad12dcbd2f324e96aab99d65ad"
+      }
+    },
+    {
+      "file": "logs/issue298-ui-focused-r5-runner.log",
+      "sha256": "0542bb802e678a032fdb2a7679b6609d91fa5be8fd8ce2cd71253d4ad439d3a5",
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r5-runner.log",
+        "sha256": "017b174eb8e05a953f7ad434efe1c961336f2ca4919fd1fc742284b965f8f0c3"
+      }
+    },
+    {
+      "file": "logs/issue298-native-database-r6-crony-store-issue298.log",
+      "sha256": "a1f1df9bf438e814c0c53ab5bdfc1376d3e06a07d6abe878664bdc4c146eb5e8",
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-native-database-r6-crony-store-issue298.log",
+        "sha256": "bf1564939830d4a5349cb9835cf210b7480e04f201a4a29d3dada2fb0064ac52"
+      }
+    },
+    {
+      "file": "logs/issue298-native-database-r6-crony-store-issue298-list.log",
+      "sha256": "53a2195cfe133bbacd756132fc8e85e48f47df4948e51995802944a5b3e949a6",
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-native-database-r6-crony-store-issue298-list.log",
+        "sha256": "4ba87ca7f53e269079dbc1772f395d1e67ce2f81625f84256268e27f398429b4"
+      }
+    },
+    {
+      "file": "logs/issue298-native-database-r6-crony-store-issue183.log",
+      "sha256": "175ab85b6549768319ed3df259a8b4e56e40389c80f96550323935c277e58575",
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-native-database-r6-crony-store-issue183.log",
+        "sha256": "ac4c6f975947addbc69ecc1a0236a794a4fc0d10280dd85efedb978e0d7599a1"
+      }
+    },
+    {
+      "file": "logs/issue298-native-database-r6-crony-store-issue183-list.log",
+      "sha256": "298faabfc8c5da0c78f0a47794322747ae2faff359d3562b6e235e1b2c592c43",
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-native-database-r6-crony-store-issue183-list.log",
+        "sha256": "470bcd5c1e0e7118211efda5690846fb0c6d21b381b1c0093746af1da277809d"
+      }
+    },
+    {
+      "file": "logs/issue298-native-database-r6-crony-store-issue221.log",
+      "sha256": "c76a7a9c3d3444696963387faaff23b04b1a0d8da379a54d5da00398f2c0c626",
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-native-database-r6-crony-store-issue221.log",
+        "sha256": "88681f81e512be172adfb40ea362efdf2fed0cdb4f16cf74a13594935498e5bf"
+      }
+    },
+    {
+      "file": "logs/issue298-native-database-r6-crony-store-issue221-list.log",
+      "sha256": "277011ea9a119fe67472419d4fbfbe9c4ca46570c27432c40255f146acd5b89a",
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-native-database-r6-crony-store-issue221-list.log",
+        "sha256": "af2e9762fc847adcfa1def6a563a9de480cf550b5addb7620f590e137995418d"
+      }
+    },
+    {
+      "file": "logs/issue298-native-database-r5-crony-store-issue298.log",
+      "sha256": "a0718f6854e224d004f7366783e47b5cc1ea3cca884bb955191c863dc121e710",
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-native-database-r5-crony-store-issue298.log",
+        "sha256": "e053ad9fed7fd6012fb18483e0e50a5c9fc37850a0e92a35eb3e746c9f000d9f"
+      }
+    },
+    {
+      "file": "logs/issue298-native-build-r3.log",
+      "sha256": "a83bf684ffca99908ec065f2aac36e73d2d723c7b9e367a772b5e600d7543f67",
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-native-build-r3.log",
+        "sha256": "2c5890fac5414e6c37b75047b0697c327d141eac92e5159d1f2ad3749e5ac0ec"
+      }
+    }
+  ],
+  "log_selection": "Full selected test/build output; only absolute local path prefixes and text encoding/newlines normalized. Both original and published hashes retained. Private stack setup and connection data are excluded.",
+  "focused_source_mapping": {
+    "original_fingerprint": "4eafc7c7a274aee21c193d23808a6b77472b0ce2e4e4cf638338590684349b3f",
+    "later_fingerprint": "baff5fd3a41ae6f582549d0c0e1ef605e13cb28b598ab57b278b36309be1deed",
+    "different_files": [
+      "db/migrations/0058_mission_deadline_due_index.sql",
+      "db/migrations/manifest.json"
+    ],
+    "meaning": "Focused R5 predates only migration58 index/backfill ordering and its manifest checksum. Every other physical file matches. Native R6 actually executes the corrected migration, including upgrade and deferred audit checks."
+  },
+  "observed_counts": {
+    "focused_node_passed": 48,
+    "focused_rust_passed": 26,
+    "native_db_passed": 53,
+    "browser_passed": 15,
+    "browser_scenarios": 2
+  },
+  "counting_note": "Per-lane failures, ignored/skipped and filtered cases remain in receipts. Overlapping reruns are not additional unique tests. Native SQLx cases were explicitly run with --ignored against fresh owned PostgreSQL.",
+  "limitations": [
+    "Canonical pnpm check of this evidence-inclusive candidate is still required and will be recorded separately. Original canonical R1 validates only the original implementation.",
+    "Implementing-agent regression evidence, not independent deadline/cancellation acceptance, human review, real-provider qualification or historical R4 reproduction.",
+    "Actual Edge/server/runner/PostgreSQL with synthetic development principals and deterministic native Codex transport. Existing native execution and cancellation paths are reused.",
+    "Environment-only fixture secret delivery remains reduced assurance. Private credential files and database/runtime fixtures are retained locally and not published.",
+    "Required hosted CI/CodeQL/security/quality checks remain unavailable while organization Actions is disabled; no check or policy bypass.",
+    "Historical Cargo debt remains 12 advisories: 2 high, 1 moderate and 9 low. This is not a clean audit.",
+    "PR392 is still the dependency base. Unpublished migration58 can require integration renumbering; applied SQL must remain unchanged and combined native validation is required."
+  ]
+}

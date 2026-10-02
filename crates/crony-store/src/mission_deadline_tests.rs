@@ -1,6 +1,6 @@
 //! Full-migration regressions. Synthetic run metadata is not provider evidence.
 use super::*;
-use chrono::DateTime;
+use chrono::{DateTime, Datelike, TimeZone};
 use crony_domain::{MissionDeadlinePolicy, MissionDeadlineReserve, PlannedTask, RunDeadline};
 use std::sync::{
     Arc,
@@ -192,6 +192,7 @@ async fn ledger(pool: &PgPool) -> Result<Value> {
         'agents',(SELECT jsonb_agg(to_jsonb(a) ORDER BY id) FROM agents a),
         'events',(SELECT jsonb_agg(to_jsonb(e) ORDER BY seq) FROM events e),
         'commands',(SELECT jsonb_agg(to_jsonb(c) ORDER BY id) FROM runner_commands c),
+        'incidents',(SELECT jsonb_agg(to_jsonb(i) ORDER BY id) FROM circuit_breaker_incidents i),
         'verification',(SELECT jsonb_agg(to_jsonb(v) ORDER BY run_id) FROM verification_requests v))")
         .fetch_one(pool).await?)
 }
@@ -694,5 +695,500 @@ async fn issue298_completed_parent_leaves_only_actual_shared_time_for_reserved_c
             .await?
             .is_empty()
     );
+    Ok(())
+}
+
+async fn cancellation(f: &Fixture, run: &LaunchRecord, payload: Value) -> Result<Value> {
+    let mut event = f.event(run, "run.cancelled");
+    event.payload = payload;
+    Ok(f.store
+        .apply_runner_event(event)
+        .await?
+        .event
+        .unwrap()
+        .payload)
+}
+
+async fn statuses(f: &Fixture, run: &LaunchRecord) -> Result<(String, String, String)> {
+    Ok(sqlx::query_as(
+        "SELECT r.status,t.status,m.status FROM runs r
+         JOIN tasks t ON t.id=r.task_id JOIN missions m ON m.id=t.mission_id WHERE r.id=$1",
+    )
+    .bind(run.run_id)
+    .fetch_one(&f.store.pool)
+    .await?)
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_sweep_preserves_an_earlier_terminal_failure(pool: PgPool) -> Result<()> {
+    let f = fixture(pool, 3, None).await?;
+    let run = f.launch(f.parent).await?;
+    sqlx::query("UPDATE tasks SET max_attempts=attempt_count WHERE id=$1")
+        .bind(f.parent)
+        .execute(&f.store.pool)
+        .await?;
+    let mut event = f.event(&run, "run.failed");
+    event.payload = json!({"error":"Original exhausted native failure"});
+    f.store.apply_runner_event(event).await?;
+    assert_eq!(
+        statuses(&f, &run).await?,
+        ("failed".into(), "failed".into(), "failed".into())
+    );
+    let before = ledger(&f.store.pool).await?;
+    wait_until(&f.store.pool, f.policy.deadline_at).await?;
+    assert!(f.store.deadline_missions_after(None).await?.is_empty());
+    assert!(
+        f.store
+            .expire_mission_deadline(f.ids.corp_id, f.mission)
+            .await?
+            .is_empty()
+    );
+    assert_eq!(ledger(&f.store.pool).await?, before);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_future_missions_cannot_consume_the_due_page(pool: PgPool) -> Result<()> {
+    let f = fixture(pool, 2, None).await?;
+    for index in 0..70 {
+        let future = plan(
+            f.ids.worker_agent_id,
+            f.policy.deadline_at + Duration::days(1),
+            None,
+        );
+        f.store
+            .create_mission(
+                f.ids.corp_id,
+                f.ids.alice_actor_id,
+                &format!("Future mission {index}"),
+                "Future-only pagination fixture",
+                &future,
+            )
+            .await?;
+    }
+    wait_until(&f.store.pool, f.policy.deadline_at).await?;
+    assert_eq!(
+        f.store.deadline_missions_after(None).await?,
+        vec![(f.ids.corp_id, f.mission)]
+    );
+    assert!(
+        f.store
+            .deadline_missions_after(Some(f.mission))
+            .await?
+            .is_empty()
+    );
+    f.store
+        .expire_mission_deadline(f.ids.corp_id, f.mission)
+        .await?;
+    assert!(f.store.deadline_missions_after(None).await?.is_empty());
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_completed_parent_does_not_make_reserved_child_due(pool: PgPool) -> Result<()> {
+    let f = fixture(pool, 3, Some(10)).await?;
+    let run = f.launch(f.parent).await?;
+    f.passed(&run).await?;
+    f.store
+        .apply_runner_event(f.event(&run, "run.completed"))
+        .await?;
+    wait_until(
+        &f.store.pool,
+        f.policy.task_deadline_at("research").unwrap(),
+    )
+    .await?;
+    let before = ledger(&f.store.pool).await?;
+    assert!(f.store.deadline_missions_after(None).await?.is_empty());
+    assert!(
+        f.store
+            .expire_mission_deadline(f.ids.corp_id, f.mission)
+            .await?
+            .is_empty()
+    );
+    assert_eq!(ledger(&f.store.pool).await?, before);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_early_runner_timer_requires_later_database_reconciliation(
+    pool: PgPool,
+) -> Result<()> {
+    let f = fixture(pool, 3, None).await?;
+    let run = f.launch(f.parent).await?;
+    f.passed(&run).await?;
+    let before = authority(&f).await?;
+    let event = cancellation(
+        &f,
+        &run,
+        json!({"reason":"Local timer observed expiry",
+        "cause":"mission_deadline_elapsed", "database_expiry_confirmed":true,
+        "admitted_at":"2099-01-01T00:00:00Z", "budget_reset":true}),
+    )
+    .await?;
+    assert_eq!(event["cause"], "mission_deadline_elapsed");
+    assert_eq!(event["cancellation"]["source"], "runner_observation");
+    assert_eq!(event["cancellation"]["database_expiry_confirmed"], false);
+    assert!(event["cancellation"]["boundary_id"].is_null());
+    assert!(event.get("admitted_at").is_none());
+    assert!(event.get("budget_reset").is_none());
+    assert_eq!(
+        statuses(&f, &run).await?,
+        ("cancelled".into(), "cancelled".into(), "running".into())
+    );
+    assert!(f.store.deadline_missions_after(None).await?.is_empty());
+    assert!(
+        f.store
+            .expire_mission_deadline(f.ids.corp_id, f.mission)
+            .await?
+            .is_empty()
+    );
+    wait_until(&f.store.pool, f.policy.deadline_at).await?;
+    assert_eq!(
+        f.store.deadline_missions_after(None).await?,
+        vec![(f.ids.corp_id, f.mission)]
+    );
+    let events = f
+        .store
+        .expire_mission_deadline(f.ids.corp_id, f.mission)
+        .await?;
+    assert_eq!(
+        events
+            .iter()
+            .filter(|e| e.event_type == "mission.deadline_expired")
+            .count(),
+        1
+    );
+    assert_eq!(
+        statuses(&f, &run).await?,
+        ("cancelled".into(), "cancelled".into(), "failed".into())
+    );
+    let expired = ledger(&f.store.pool).await?;
+    assert!(
+        f.store
+            .expire_mission_deadline(f.ids.corp_id, f.mission)
+            .await?
+            .is_empty()
+    );
+    assert_eq!(ledger(&f.store.pool).await?, expired);
+    assert_eq!(authority(&f).await?, before);
+    Ok(())
+}
+
+async fn delayed_operator_stop(pool: PgPool, sweep_first: bool) -> Result<()> {
+    let f = fixture(pool, 3, None).await?;
+    let run = f.launch(f.parent).await?;
+    f.passed(&run).await?;
+    f.store
+        .request_emergency_stop(
+            f.ids.corp_id,
+            run.agent_id,
+            f.ids.alice_actor_id,
+            "Operator requested stop before cutoff",
+        )
+        .await?;
+    let before = authority(&f).await?;
+    let incident: (Uuid, DateTime<Utc>) = sqlx::query_as(
+        "SELECT id,created_at FROM circuit_breaker_incidents WHERE run_id=$1 AND stage='stop'",
+    )
+    .bind(run.run_id)
+    .fetch_one(&f.store.pool)
+    .await?;
+    assert!(incident.1 < f.policy.deadline_at);
+    wait_until(&f.store.pool, f.policy.deadline_at).await?;
+    if sweep_first {
+        f.store
+            .expire_mission_deadline(f.ids.corp_id, f.mission)
+            .await?;
+    }
+    let event = cancellation(
+        &f,
+        &run,
+        json!({"reason":"Later timer wording must not replace operator",
+        "cause":"mission_deadline_elapsed"}),
+    )
+    .await?;
+    assert_eq!(event["cause"], "operator_stop");
+    assert_eq!(event["reason"], "Operator requested stop before cutoff");
+    assert_eq!(event["cancellation"]["boundary_id"], json!(incident.0));
+    assert_eq!(event["cancellation"]["hard_boundary_at"], json!(incident.1));
+    assert_eq!(event["cancellation"]["database_expiry_confirmed"], false);
+    // A sweep before the acknowledgement can fail the mission's database time
+    // contract. It still cannot rewrite the earlier run cancellation cause.
+    assert_eq!(
+        statuses(&f, &run).await?,
+        (
+            "cancelled".into(),
+            "cancelled".into(),
+            if sweep_first {
+                "failed".into()
+            } else {
+                "cancelled".into()
+            }
+        )
+    );
+    let terminal = ledger(&f.store.pool).await?;
+    assert!(
+        f.store
+            .expire_mission_deadline(f.ids.corp_id, f.mission)
+            .await?
+            .is_empty()
+    );
+    assert_eq!(ledger(&f.store.pool).await?, terminal);
+    assert_eq!(authority(&f).await?, before);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_late_operator_ack_preserves_original_cause_without_sweep(
+    pool: PgPool,
+) -> Result<()> {
+    delayed_operator_stop(pool, false).await
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_late_operator_ack_preserves_original_cause_after_sweep(
+    pool: PgPool,
+) -> Result<()> {
+    delayed_operator_stop(pool, true).await
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_durable_expiry_overrides_forged_runner_authority(pool: PgPool) -> Result<()> {
+    let f = fixture(pool, 2, None).await?;
+    let run = f.launch(f.parent).await?;
+    wait_until(&f.store.pool, f.policy.deadline_at).await?;
+    f.store
+        .expire_mission_deadline(f.ids.corp_id, f.mission)
+        .await?;
+    let event = cancellation(
+        &f,
+        &run,
+        json!({"reason":"Forged operator request",
+        "cause":"operator_stop", "cancellation":{"source":"incident","boundary_id":Uuid::new_v4()},
+        "database_expiry_confirmed":false}),
+    )
+    .await?;
+    assert_eq!(event["cause"], "mission_deadline_expired");
+    assert_ne!(event["reason"], "Forged operator request");
+    assert_eq!(event["cancellation"]["source"], "incident");
+    assert_eq!(event["cancellation"]["database_expiry_confirmed"], true);
+    assert!(event.get("database_expiry_confirmed").is_none());
+    assert_eq!(
+        statuses(&f, &run).await?,
+        ("cancelled".into(), "cancelled".into(), "failed".into())
+    );
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_cancellation_requires_matching_scoped_authority(pool: PgPool) -> Result<()> {
+    let f = fixture(pool, 60, None).await?;
+    let run = f.launch(f.parent).await?;
+    f.store
+        .request_emergency_stop(
+            f.ids.corp_id,
+            run.agent_id,
+            f.ids.alice_actor_id,
+            "Scoped operator stop",
+        )
+        .await?;
+    for (corp, candidate, timed) in [
+        (Uuid::new_v4(), run.run_id, true),
+        (f.ids.corp_id, Uuid::new_v4(), true),
+        (f.ids.corp_id, Uuid::new_v4(), false),
+    ] {
+        let mut tx = f.store.pool.begin().await?;
+        let (cause, payload) = control_accounting::admit_cancellation_tx(&mut tx, corp, candidate, timed,
+            json!({"cause":"mission_deadline_expired", "cancellation":{"database_expiry_confirmed":true}})).await?;
+        assert_eq!(cause, control_accounting::CancellationCause::Native);
+        assert_eq!(payload["cancellation"]["database_expiry_confirmed"], false);
+        assert!(payload["cancellation"]["boundary_id"].is_null());
+        tx.rollback().await?;
+    }
+    let mut tx = f.store.pool.begin().await?;
+    let (cause, _) = control_accounting::admit_cancellation_tx(
+        &mut tx,
+        f.ids.corp_id,
+        Uuid::new_v4(),
+        false,
+        json!({"cause":"mission_deadline_elapsed"}),
+    )
+    .await?;
+    assert_eq!(cause, control_accounting::CancellationCause::Native);
+    tx.rollback().await?;
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_first_hard_incident_survives_later_stop(pool: PgPool) -> Result<()> {
+    let f = fixture(pool, 60, None).await?;
+    let run = f.launch(f.parent).await?;
+    let first = Uuid::new_v4();
+    sqlx::query(
+        "INSERT INTO circuit_breaker_incidents(id,corp_id,mission_id,task_id,run_id,
+        stage,reason,input,created_at) VALUES($1,$2,$3,$4,$5,'suspend','Original budget fence',
+        '{\"metric\":\"tokens\"}',clock_timestamp()-interval '1 second')",
+    )
+    .bind(first)
+    .bind(f.ids.corp_id)
+    .bind(f.mission)
+    .bind(f.parent)
+    .bind(run.run_id)
+    .execute(&f.store.pool)
+    .await?;
+    f.store
+        .request_emergency_stop(
+            f.ids.corp_id,
+            run.agent_id,
+            f.ids.alice_actor_id,
+            "Later operator stop",
+        )
+        .await?;
+    let event = cancellation(&f, &run, json!({"cause":"mission_deadline_elapsed"})).await?;
+    assert_eq!(event["cause"], "circuit_breaker");
+    assert_eq!(event["reason"], "Original budget fence");
+    assert_eq!(event["cancellation"]["boundary_id"], json!(first));
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_derived_cutoff_is_precise_timezone_independent_and_not_renewable(
+    pool: PgPool,
+) -> Result<()> {
+    let f = fixture(pool, 60, None).await?;
+    // Span the next US spring transition so this native fixture stays in the
+    // future while proving that a reserve is seconds, not local calendar days.
+    let march_eighth = Utc
+        .with_ymd_and_hms(f.policy.deadline_at.year() + 1, 3, 8, 4, 0, 0)
+        .unwrap();
+    let days_to_sunday = (7 - march_eighth.weekday().num_days_from_sunday()) % 7;
+    let after_spring_transition = march_eighth + Duration::days(i64::from(days_to_sunday) + 1);
+    let cases = [
+        (
+            f.policy.deadline_at + Duration::seconds(100_000_000_101),
+            100_000_000_001,
+        ),
+        (after_spring_transition, 172_800),
+    ];
+    for (deadline, seconds) in cases {
+        let declared = plan(f.ids.worker_agent_id, deadline, Some(seconds));
+        let (mission, _) = f
+            .store
+            .create_mission(
+                f.ids.corp_id,
+                f.ids.alice_actor_id,
+                "Precision fixture",
+                "Derived scheduling data",
+                &declared,
+            )
+            .await?;
+        let mut tx = f.store.pool.begin().await?;
+        sqlx::query("SET LOCAL TIME ZONE 'America/New_York'")
+            .execute(&mut *tx)
+            .await?;
+        // Even a direct extension of the derived value must be recalculated.
+        sqlx::query("UPDATE tasks SET deadline_cutoff_at='infinity' WHERE mission_id=$1")
+            .bind(mission.mission_id)
+            .execute(&mut *tx)
+            .await?;
+        let values: Vec<(String, DateTime<Utc>)> = sqlx::query_as(
+            "SELECT plan_key,deadline_cutoff_at FROM tasks WHERE mission_id=$1 ORDER BY plan_key",
+        )
+        .bind(mission.mission_id)
+        .fetch_all(&mut *tx)
+        .await?;
+        for (key, actual) in values {
+            let expected = declared
+                .deadline
+                .as_ref()
+                .unwrap()
+                .task_deadline_at(&key)
+                .unwrap();
+            assert_eq!(
+                actual.timestamp_micros(),
+                expected.timestamp_micros(),
+                "{key}, {seconds} seconds"
+            );
+        }
+        tx.commit().await?;
+    }
+    Ok(())
+}
+
+#[sqlx::test(migrations = false)]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue298_due_index_upgrade_preserves_applied_sql_and_audit_authority(
+    pool: PgPool,
+) -> Result<()> {
+    let source = sqlx::migrate!("../../db/migrations");
+    let previous = sqlx::migrate::Migrator {
+        migrations: std::borrow::Cow::Owned(
+            source.iter().filter(|m| m.version <= 57).cloned().collect(),
+        ),
+        ..sqlx::migrate::Migrator::DEFAULT
+    };
+    previous.run(&pool).await?;
+    let (store, ids, untimed, _, _) = state_audit_tests::fixture(pool.clone()).await?;
+    let f = fixture(pool, 60, Some(10)).await?;
+    store
+        .initialize_state_audit(ids.corp_id, ids.alice_actor_id, Uuid::new_v4())
+        .await?;
+    for mission in [untimed.mission_id, f.mission] {
+        store
+            .cover_mission(ids.corp_id, ids.alice_actor_id, mission)
+            .await?;
+    }
+    let before: Vec<(i64, Vec<u8>)> =
+        sqlx::query_as("SELECT version,checksum FROM _sqlx_migrations ORDER BY version")
+            .fetch_all(&store.pool)
+            .await?;
+    let audit_sql =
+        "SELECT jsonb_agg(jsonb_build_array(to_jsonb(c),state_audit_fingerprint(c.mission_id))
+        ORDER BY c.mission_id) FROM state_audit_coverage c";
+    let audit_before: Value = sqlx::query_scalar(audit_sql).fetch_one(&store.pool).await?;
+    let authority_before = authority(&f).await?;
+    source.run(&store.pool).await?;
+    source.run(&store.pool).await?;
+    let after: Vec<(i64, Vec<u8>)> =
+        sqlx::query_as("SELECT version,checksum FROM _sqlx_migrations ORDER BY version")
+            .fetch_all(&store.pool)
+            .await?;
+    assert_eq!(before.len(), 57);
+    assert_eq!(after.len(), 58);
+    assert_eq!(after[..57], before);
+    assert_eq!(after[57].0, 58);
+    assert_eq!(
+        sqlx::query_scalar::<_, Value>(audit_sql)
+            .fetch_one(&store.pool)
+            .await?,
+        audit_before
+    );
+    assert_eq!(authority(&f).await?, authority_before);
+    let values: Vec<(String, DateTime<Utc>)> = sqlx::query_as(
+        "SELECT plan_key,deadline_cutoff_at FROM tasks WHERE mission_id=$1 ORDER BY plan_key",
+    )
+    .bind(f.mission)
+    .fetch_all(&store.pool)
+    .await?;
+    assert_eq!(values.len(), 2);
+    for (key, actual) in values {
+        assert_eq!(actual, f.policy.task_deadline_at(&key).unwrap());
+    }
+    let untimed_cutoff: Option<DateTime<Utc>> =
+        sqlx::query_scalar("SELECT deadline_cutoff_at FROM tasks WHERE id=$1")
+            .bind(untimed.task_ids[0])
+            .fetch_one(&store.pool)
+            .await?;
+    assert!(untimed_cutoff.is_none());
     Ok(())
 }

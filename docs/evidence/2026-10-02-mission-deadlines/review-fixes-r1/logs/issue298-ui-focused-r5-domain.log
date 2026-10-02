@@ -1,0 +1,23 @@
+    Finished `test` profile [unoptimized] target(s) in 0.51s
+     Running unittests src\lib.rs (target\debug\deps\crony_domain-ffaf8d42afae68b2.exe)
+
+running 10 tests
+test mission_deadline::tests::exhausted_stage_rejects_creation_without_resetting_budget_or_fabricating_handoff ... ok
+test mission_deadline::tests::invalid_native_allowance_and_duration_overflow_fail_closed ... ok
+test mission_deadline::tests::no_reserve_shares_the_exact_deadline_without_an_inferred_split ... ok
+ISSUE298_FAKE_CLOCK {"clock":"supplied-test-time","elapsed_seconds":0,"observed_allowance":{"dispatched_at":"2026-10-02T12:00:00Z","mission_deadline_at":"2026-10-02T12:10:00Z","remaining_ms":480000,"task_deadline_at":"2026-10-02T12:08:00Z"},"stage":"created","task_key":"research"}
+ISSUE298_FAKE_CLOCK {"clock":"supplied-test-time","elapsed_seconds":300,"observed_allowance":{"dispatched_at":"2026-10-02T12:05:00Z","mission_deadline_at":"2026-10-02T12:10:00Z","remaining_ms":180000,"task_deadline_at":"2026-10-02T12:08:00Z"},"stage":"queue_delay","task_key":"research"}
+ISSUE298_FAKE_CLOCK {"clock":"supplied-test-time","elapsed_seconds":470,"observed_allowance":{"dispatched_at":"2026-10-02T12:07:50Z","mission_deadline_at":"2026-10-02T12:10:00Z","remaining_ms":130000,"task_deadline_at":"2026-10-02T12:10:00Z"},"stage":"parent_delay","task_key":"implementation"}
+ISSUE298_FAKE_CLOCK {"clock":"supplied-test-time","elapsed_seconds":550,"observed_allowance":{"dispatched_at":"2026-10-02T12:09:10Z","mission_deadline_at":"2026-10-02T12:10:00Z","remaining_ms":50000,"task_deadline_at":"2026-10-02T12:10:00Z"},"stage":"restart_resume_delay","task_key":"implementation"}
+ISSUE298_FAKE_CLOCK {"clock":"supplied-test-time","elapsed_seconds":599,"observed_allowance":{"dispatched_at":"2026-10-02T12:09:59Z","mission_deadline_at":"2026-10-02T12:10:00Z","remaining_ms":1000,"task_deadline_at":"2026-10-02T12:10:00Z"},"stage":"verifier_delay","task_key":"review"}
+ISSUE298_FAKE_CLOCK {"clock":"supplied-test-time","elapsed_seconds":600,"mission_deadline_at":"2026-10-02T12:10:00Z","observed_error":"mission deadline or declared stage allowance has expired","sampled_at":"2026-10-02T12:10:00Z","stage":"expired_dispatch","task_key":"review"}
+test mission_deadline::tests::queue_parent_restart_and_verifier_delays_consume_one_clock ... ok
+test mission_deadline::tests::reserve_accepts_parallel_final_tasks_after_all_earlier_work ... ok
+test mission_deadline::tests::reserve_cannot_protect_one_parallel_specialist_before_its_sibling_finishes ... ok
+test mission_deadline::tests::reserve_expiration_denies_parent_without_extending_or_completing_it ... ok
+test mission_deadline::tests::reserve_requires_a_declared_descendant_closed_suffix ... ok
+test mission_deadline::tests::task_contracts_cannot_drop_or_extend_the_shared_deadline ... ok
+test mission_deadline::tests::transit_and_local_clock_cannot_increase_dispatch_allowance ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.00s
+

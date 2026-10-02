@@ -20,7 +20,8 @@ It ran on October 2, 2026, from 13:00:09.355 to 13:01:29.615 UTC. Focused/native
 R4 ran later. A server test, the missing manifest57 entry and output in one domain
 test were added after the browser capture. In-memory whole-file hash checks
 establish that those differences do not change the captured production code.
-No capture is relabeled as execution on the future publication commit.
+No capture is relabeled as execution on the publication commit or a later
+review-fix revision.
 
 ## Observed acceptance
 
@@ -69,9 +70,17 @@ The first browser attempt failed to open collapsed specification details; the
 driver was corrected and that failed attempt retained. The migration checker
 initially reported 56 manifest entries for 57 SQL files; appending the new,
 unapplied migration57 checksum fixed the check without changing applied SQL.
-The evidence-inclusive canonical `pnpm check` result will be published separately
-after execution, before committing this candidate. Original receipts remain under
-`output/issue-completion/20261002T023252Z` in the owned completion workspace.
+The subsequent evidence-inclusive canonical `pnpm check` passed all eleven gates
+on October 2, 2026, between 13:36:20.9059237 and 14:44:12.7762069 UTC, including
+locked dependency installation. [The original canonical result](canonical-original-r1.json)
+preserves its commands, counts, source fingerprint and original receipt/log
+hashes. It observed 3,128 Node tests (3,063 passed, 65 skipped, zero failed) and
+922 passed Rust tests (597 ignored, zero failed across 41 summaries), plus the
+EVM gate. This was the candidate later published as
+`998f8e2ca6290f894f93b2fdb36d99af79548120`; it does not validate subsequent
+review fixes. The immutable original receipt is
+`output/issue-completion/20261002T023252Z/issue298-canonical-r1.json`, SHA-256
+`913ca61c05a070abb3de854c2fc710486c2f3c08371d1476e9ea1d1f31079d11`.
 
 See [the contract and opt-in fixture setup](../../MISSION_DEADLINES.md) for exact
 field meanings and reproduction. Safe `*.test.mjs` tests stay in full Node
@@ -84,3 +93,9 @@ reproduction, independent acceptance, merge or issue completion is claimed.
 The observed Codex version is not an enforced pin. Environment-only fixture
 secret delivery is reduced assurance. The historical Cargo audit still has 12
 advisories (2 high, 1 moderate, 9 low); this evidence does not claim a clean audit.
+
+## Subsequent review fixes
+
+[Review-fix regression evidence](review-fixes-r1/README.md) records the later
+implementation corrections, native upgrade failure and successful rerun, and new
+full-stack captures. Original tests and images above remain historical evidence.

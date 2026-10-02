@@ -100,13 +100,12 @@ impl PgStore {
     /// connection is required to reconcile a queued mission.
     pub async fn deadline_missions_after(&self, after: Option<Uuid>) -> Result<Vec<(Uuid, Uuid)>> {
         Ok(sqlx::query_as(
-            "SELECT corp_id,id FROM missions mission
-             WHERE deadline_policy IS NOT NULL AND status NOT IN ('completed','cancelled')
-               AND ($1::uuid IS NULL OR id>$1)
-               AND NOT EXISTS(SELECT 1 FROM events event
-                 WHERE event.corp_id=mission.corp_id AND event.aggregate_id=mission.id
-                   AND event.aggregate_type='mission' AND event.type='mission.deadline_expired')
-             ORDER BY id LIMIT 64",
+            "SELECT DISTINCT mission.corp_id,mission.id FROM tasks task
+             JOIN missions mission ON mission.id=task.mission_id AND mission.corp_id=task.corp_id
+             WHERE task.deadline_cutoff_at <= statement_timestamp() AND task.status <> 'completed'
+               AND mission.status NOT IN ('completed','failed','cancelled')
+               AND ($1::uuid IS NULL OR mission.id>$1)
+             ORDER BY mission.id,mission.corp_id LIMIT 64",
         )
         .bind(after)
         .fetch_all(&self.pool)
@@ -164,7 +163,11 @@ impl PgStore {
         .bind(mission_id)
         .fetch_one(&mut *tx)
         .await?;
-        if already_recorded || matches!(mission.get::<&str, _>("status"), "completed" | "cancelled")
+        if already_recorded
+            || matches!(
+                mission.get::<&str, _>("status"),
+                "completed" | "failed" | "cancelled"
+            )
         {
             return Ok(Vec::new());
         }

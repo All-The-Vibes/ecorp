@@ -131,6 +131,29 @@ impl TaskGraphPlan {
         }) {
             return Err("mission deadline reserve must include every descendant of protected work");
         }
+        // A reserve is a final stage, not an arbitrary branch that may run
+        // alongside earlier work. Each protected task must wait for every
+        // unprotected task, either directly or through a dependency chain.
+        for task in self
+            .tasks
+            .iter()
+            .filter(|task| keys.contains(task.key.as_str()))
+        {
+            let mut ancestors = HashSet::new();
+            let mut pending: Vec<_> = task.depends_on.iter().map(String::as_str).collect();
+            while let Some(key) = pending.pop() {
+                if ancestors.insert(key)
+                    && let Some(parent) = self.tasks.iter().find(|parent| parent.key == key)
+                {
+                    pending.extend(parent.depends_on.iter().map(String::as_str));
+                }
+            }
+            if self.tasks.iter().any(|earlier| {
+                !keys.contains(earlier.key.as_str()) && !ancestors.contains(earlier.key.as_str())
+            }) {
+                return Err("every protected task must depend on all earlier unreserved work");
+            }
+        }
         Ok(())
     }
 
@@ -251,6 +274,55 @@ mod tests {
             .unwrap()
             .task_keys = vec!["review".into()];
         assert!(final_only.validate_deadline().is_ok());
+    }
+
+    #[test]
+    fn reserve_cannot_protect_one_parallel_specialist_before_its_sibling_finishes() {
+        let mut plan = plan();
+        for (task, key) in plan
+            .tasks
+            .iter_mut()
+            .zip(["specialist-a", "specialist-b", "synthesis"])
+        {
+            task.key = key.into();
+        }
+        plan.tasks[1].depends_on.clear();
+        plan.tasks[1].depth = 0;
+        plan.tasks[2].depends_on = vec!["specialist-a".into(), "specialist-b".into()];
+        plan.tasks[2].depth = 1;
+        plan.deadline
+            .as_mut()
+            .unwrap()
+            .reserve
+            .as_mut()
+            .unwrap()
+            .task_keys = vec!["specialist-a".into(), "synthesis".into()];
+        assert!(plan.validate_deadline().is_err());
+        plan.deadline
+            .as_mut()
+            .unwrap()
+            .reserve
+            .as_mut()
+            .unwrap()
+            .task_keys = vec!["synthesis".into()];
+        assert!(plan.validate_deadline().is_ok());
+    }
+
+    #[test]
+    fn reserve_accepts_parallel_final_tasks_after_all_earlier_work() {
+        let mut plan = plan();
+        let mut second_review = plan.tasks[2].clone();
+        second_review.key = "second-review".into();
+        plan.tasks.push(second_review);
+        plan.max_nodes = 4;
+        plan.deadline
+            .as_mut()
+            .unwrap()
+            .reserve
+            .as_mut()
+            .unwrap()
+            .task_keys = vec!["review".into(), "second-review".into()];
+        assert!(plan.validate_deadline().is_ok());
     }
 
     #[test]

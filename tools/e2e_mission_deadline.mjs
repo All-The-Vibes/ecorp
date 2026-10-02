@@ -2,7 +2,7 @@
 // Importing this module is inert. Deterministic transport is not provider proof.
 import assert from 'node:assert/strict'
 import { createHash, randomUUID } from 'node:crypto'
-import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises'
+import { lstat, mkdir, readFile, realpath, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
@@ -61,6 +61,40 @@ export function validateDeadlineFixture(setup, optIn) {
   return { server, web }
 }
 
+async function canonicalDirectory(value) {
+  const declared = path.resolve(value)
+  const info = await lstat(declared)
+  assert.ok(info.isDirectory() && !info.isSymbolicLink(), 'Fixture directory must not be a link')
+  const canonical = path.resolve(await realpath(declared))
+  assert.equal(canonical, declared, 'Fixture directory must not use an alias or reparse path')
+  return canonical
+}
+
+export async function validateDeadlineFixturePaths(setup) {
+  // Derive identity from this module, never from a receipt's assertion alone.
+  const actualRepository = await canonicalDirectory(path.resolve(import.meta.dirname, '..'))
+  const repository = await canonicalDirectory(setup.repository)
+  assert.equal(repository, actualRepository, 'Receipt must identify the actual product checkout')
+  const qa = await canonicalDirectory(setup.qa_root)
+  const source = await canonicalDirectory(setup.source)
+  const contains = (root, target) => {
+    const relative = path.relative(root, target)
+    return !relative || (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative))
+  }
+  for (const fixture of [qa, source]) {
+    assert.ok(!contains(repository, fixture) && !contains(fixture, repository),
+      'Owned fixture and actual product checkout must be disjoint')
+  }
+  assert.equal(source, path.join(qa, 'source'))
+  // Check the existing parent before any output directory is created. A linked
+  // evidence directory must not redirect even an otherwise safe owned fixture.
+  const evidence = await canonicalDirectory(path.join(qa, 'evidence'))
+  inside(qa, evidence)
+  const output = inside(evidence, path.join(evidence, 'mission-deadline'))
+  await assert.rejects(lstat(output), { code: 'ENOENT' }, 'Each fixture requires a new output directory')
+  return output
+}
+
 export function assertCancelledDeadlineRun(run, events) {
   assert.equal(run.status, 'cancelled')
   assert.equal(run.workspace_disposition, 'preserved')
@@ -88,10 +122,7 @@ export async function runDeadlineAcceptance(setupPath, optIn) {
   assert.ok(path.isAbsolute(setupPath ?? ''), 'An explicit setup receipt is required')
   const setup = JSON.parse((await readFile(setupPath, 'utf8')).replace(/^\uFEFF/u, ''))
   const { server, web } = validateDeadlineFixture(setup, optIn)
-  // Resolve the actual filesystem paths before authorizing any fixture writes.
-  assert.equal(path.resolve(await realpath(setup.source)), path.resolve(setup.source))
-  assert.equal(path.resolve(await realpath(setup.qa_root)), path.resolve(setup.qa_root))
-  const output = inside(setup.qa_root, path.join(setup.qa_root, 'evidence', 'mission-deadline'))
+  const output = await validateDeadlineFixturePaths(setup)
   await mkdir(output, { recursive: false }) // Failed attempts are never replaced.
   const reportPath = path.join(output, 'report.json')
   const report = { schema_version: 1, issue: 298, status: 'running', started_at: new Date().toISOString(),

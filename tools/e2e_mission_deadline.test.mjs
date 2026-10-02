@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
+import os from 'node:os'
+import { lstat, mkdir, mkdtemp, readFile, realpath, rm, rmdir, symlink, writeFile } from 'node:fs/promises'
 import test from 'node:test'
-import { assertCancelledDeadlineRun, validateDeadlineFixture } from './e2e_mission_deadline.mjs'
+import { assertCancelledDeadlineRun, validateDeadlineFixture, validateDeadlineFixturePaths } from './e2e_mission_deadline.mjs'
 
 function setup() {
   const repository = path.resolve('inert-fixture-input', 'product')
@@ -30,6 +32,78 @@ test('deadline driver refuses shared sources, remote endpoints and changed proce
     assert.throws(() => validateDeadlineFixture({ ...config, server_url }, '1'))
   }
   assert.throws(() => validateDeadlineFixture({ ...config, processes: { ...config.processes, server: { ...config.processes.server, pid: 0 } } }, '1'))
+})
+
+async function filesystemFixture(t) {
+  const temporary = await realpath(os.tmpdir())
+  const root = await mkdtemp(path.join(temporary, 'ecorp-issue298-paths-'))
+  t.after(async () => {
+    assert.equal(await realpath(root), root)
+    assert.equal(path.dirname(root), temporary)
+    await rm(root, { recursive: true }) // Only this test's owned temporary tree.
+  })
+  const config = { ...setup(), repository: path.resolve(import.meta.dirname, '..'),
+    qa_root: path.join(root, 'qa', 'issue224-planned-attempts-test-issue298-r1') }
+  config.source = path.join(config.qa_root, 'source')
+  await mkdir(config.source, { recursive: true })
+  await mkdir(path.join(config.qa_root, 'evidence'))
+  return { root, config }
+}
+
+test('deadline fixture resolves the actual checkout and existing output parent before writes', async t => {
+  const { config } = await filesystemFixture(t)
+  validateDeadlineFixture(config, '1')
+  const output = await validateDeadlineFixturePaths(config)
+  assert.equal(output, path.join(config.qa_root, 'evidence', 'mission-deadline'))
+  await assert.rejects(lstat(output), { code: 'ENOENT' }, 'validation itself performs no writes')
+})
+
+test('deadline fixture rejects a false canonical repository receipt', async t => {
+  const { root, config } = await filesystemFixture(t)
+  const falseRepository = path.join(root, 'unrelated-product')
+  await mkdir(falseRepository)
+  await assert.rejects(validateDeadlineFixturePaths({ ...config, repository: falseRepository }), /actual product checkout/u)
+})
+
+test('deadline fixture rejects repository and QA directory aliases', async t => {
+  const { root, config } = await filesystemFixture(t)
+  const repositoryAlias = path.join(root, 'product-alias')
+  await symlink(config.repository, repositoryAlias, 'junction')
+  await assert.rejects(validateDeadlineFixturePaths({ ...config, repository: repositoryAlias }), /link|alias|reparse/u)
+  const qaAlias = path.join(root, 'qa-alias')
+  await symlink(config.qa_root, qaAlias, 'junction')
+  await assert.rejects(validateDeadlineFixturePaths({ ...config, qa_root: qaAlias, source: path.join(qaAlias, 'source') }), /link|alias|reparse/u)
+})
+
+test('deadline fixture rejects source and evidence links without writing through them', async t => {
+  const { root, config } = await filesystemFixture(t)
+  await rmdir(config.source) // Empty owned directory; never the product checkout.
+  await symlink(config.repository, config.source, 'junction')
+  await assert.rejects(validateDeadlineFixturePaths(config), /link|alias|reparse/u)
+  await rm(config.source) // Unlink only the test-created junction.
+  await mkdir(config.source)
+  const outside = path.join(root, 'outside-evidence')
+  await mkdir(outside)
+  const sentinel = path.join(outside, 'sentinel.txt')
+  await writeFile(sentinel, 'preserve this file')
+  const evidence = path.join(config.qa_root, 'evidence')
+  await rmdir(evidence)
+  await symlink(outside, evidence, 'junction')
+  await assert.rejects(validateDeadlineFixturePaths(config), /link|alias|reparse/u)
+  assert.equal(await readFile(sentinel, 'utf8'), 'preserve this file')
+  await assert.rejects(lstat(path.join(outside, 'mission-deadline')), { code: 'ENOENT' })
+})
+
+test('deadline fixture rejects an existing linked output before any writes', async t => {
+  const { root, config } = await filesystemFixture(t)
+  const outside = path.join(root, 'outside-output')
+  await mkdir(outside)
+  const sentinel = path.join(outside, 'sentinel.txt')
+  await writeFile(sentinel, 'preserve this file')
+  await symlink(outside, path.join(config.qa_root, 'evidence', 'mission-deadline'), 'junction')
+  await assert.rejects(validateDeadlineFixturePaths(config), /new output directory/u)
+  assert.equal(await readFile(sentinel, 'utf8'), 'preserve this file')
+  await assert.rejects(lstat(path.join(outside, 'report.json')), { code: 'ENOENT' })
 })
 
 function observations() {

@@ -19,6 +19,62 @@ fn timed_control(seconds: u64) -> (ActiveRunControl, mpsc::UnboundedReceiver<Ada
 }
 
 #[tokio::test(start_paused = true)]
+async fn mission_deadline_timer_cannot_relabel_an_earlier_operator_stop() {
+    let (active, mut controls) = timed_control(5);
+    let _guard = active.schedule_deadline();
+    active.apply_stop("operator stopped this run".into());
+    assert!(matches!(
+        controls.recv().await,
+        Some(AdapterControl::Stop { .. })
+    ));
+    tokio::time::advance(Duration::from_secs(6)).await;
+    tokio::task::yield_now().await;
+    assert!(active.hard_boundary_checkpoint.requested());
+    assert_eq!(
+        active.hard_boundary_checkpoint.cancellation_cause(),
+        "native_cancelled"
+    );
+    assert!(!active.hard_boundary_checkpoint.begin_finalization());
+}
+
+#[tokio::test(start_paused = true)]
+async fn mission_deadline_observation_survives_a_later_operator_stop() {
+    let (active, mut controls) = timed_control(5);
+    let _guard = active.schedule_deadline();
+    tokio::time::advance(Duration::from_secs(5)).await;
+    assert!(matches!(
+        controls.recv().await,
+        Some(AdapterControl::Stop { .. })
+    ));
+    active.apply_stop("operator stop after timer".into());
+    assert_eq!(
+        active.hard_boundary_checkpoint.cancellation_cause(),
+        "mission_deadline_elapsed"
+    );
+    assert!(!active.hard_boundary_checkpoint.begin_finalization());
+}
+
+#[tokio::test(start_paused = true)]
+async fn mission_deadline_payload_does_not_invent_a_timer_observation() {
+    let (active, _controls) = timed_control(5);
+    // No timer or boundary request has been observed. Payload construction is
+    // read-only even when a native cancellation acknowledgement is delayed.
+    tokio::time::advance(Duration::from_secs(6)).await;
+    assert_eq!(
+        active.hard_boundary_checkpoint.cancellation_cause(),
+        "native_cancelled"
+    );
+    assert_eq!(
+        active
+            .hard_boundary_checkpoint
+            .phase
+            .load(Ordering::Acquire),
+        HardBoundaryControl::OPEN
+    );
+    assert!(!*active.hard_boundary_checkpoint.cancellation.borrow());
+}
+
+#[tokio::test(start_paused = true)]
 async fn mission_deadline_uses_the_existing_native_stop_boundary() {
     let (active, mut controls) = timed_control(5);
     let _guard = active.schedule_deadline();

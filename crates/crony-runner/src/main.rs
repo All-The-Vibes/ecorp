@@ -217,6 +217,10 @@ impl Assignment {
     fn hard_boundary_requested(&self) -> bool {
         self.hard_boundary_checkpoint.requested()
     }
+
+    fn cancellation_payload(&self, reason: &str) -> Value {
+        json!({"reason": reason, "cause": self.hard_boundary_checkpoint.cancellation_cause()})
+    }
 }
 
 #[derive(Debug)]
@@ -242,6 +246,7 @@ impl HardBoundaryControl {
     const OPEN: u8 = 0;
     const REQUESTED: u8 = 1;
     const FINALIZING: u8 = 2;
+    const DEADLINE_REQUESTED: u8 = 3;
 
     fn with_deadline(deadline: Option<crony_domain::RunDeadline>) -> Self {
         let mut control = Self::default();
@@ -267,13 +272,21 @@ impl HardBoundaryControl {
     }
 
     fn request(&self) -> bool {
+        self.request_with_phase(Self::REQUESTED)
+    }
+
+    fn request_deadline(&self) -> bool {
+        self.request_with_phase(Self::DEADLINE_REQUESTED)
+    }
+
+    fn request_with_phase(&self, requested: u8) -> bool {
         match self.phase.compare_exchange(
             Self::OPEN,
-            Self::REQUESTED,
+            requested,
             Ordering::AcqRel,
             Ordering::Acquire,
         ) {
-            Ok(_) | Err(Self::REQUESTED) => {
+            Ok(_) | Err(Self::REQUESTED | Self::DEADLINE_REQUESTED) => {
                 self.cancellation.send_replace(true);
                 true
             }
@@ -283,14 +296,27 @@ impl HardBoundaryControl {
 
     fn requested(&self) -> bool {
         if self.deadline_expired() {
-            self.request();
+            self.request_deadline();
         }
-        self.phase.load(Ordering::Acquire) == Self::REQUESTED
+        matches!(
+            self.phase.load(Ordering::Acquire),
+            Self::REQUESTED | Self::DEADLINE_REQUESTED
+        )
+    }
+
+    fn cancellation_cause(&self) -> &'static str {
+        // The first native boundary wins. Reading the payload must not infer a
+        // new cause from the acknowledgement time or a later timer callback.
+        if self.phase.load(Ordering::Acquire) == Self::DEADLINE_REQUESTED {
+            "mission_deadline_elapsed"
+        } else {
+            "native_cancelled"
+        }
     }
 
     fn begin_finalization(&self) -> bool {
         if self.deadline_expired() {
-            self.request();
+            self.request_deadline();
         }
         self.phase
             .compare_exchange(
@@ -361,10 +387,13 @@ impl ActiveRunControl {
             let active = self.clone();
             tokio::spawn(async move {
                 tokio::time::sleep_until(deadline).await;
-                active.apply_stop(
-                    "Mission deadline or declared stage allowance expired; retain source."
-                        .to_owned(),
-                );
+                if active.hard_boundary_checkpoint.request_deadline() {
+                    let _ = active.control.send(AdapterControl::Stop {
+                        reason:
+                            "Mission deadline or declared stage allowance expired; retain source."
+                                .to_owned(),
+                    });
+                }
             })
         }))
     }
@@ -2397,7 +2426,7 @@ fn cancel_assignment_before_execution(
         runner_id,
         assignment,
         "run.cancelled",
-        json!({"reason": reason}),
+        assignment.cancellation_payload(reason),
     );
     if let Some(workspace) = workspace {
         send_teardown_workspace_preserved(
@@ -2619,7 +2648,7 @@ async fn execute_assignment(
                         &runner_id,
                         &assignment,
                         "run.cancelled",
-                        json!({"reason": "Hard circuit breaker cancelled verification; source retained without a pre-verification checkpoint."}),
+                        assignment.cancellation_payload("Hard boundary cancelled verification; source retained without a pre-verification checkpoint."),
                     );
                     cancellation_reported = true;
                 }
@@ -2640,7 +2669,7 @@ async fn execute_assignment(
                     &runner_id,
                     &assignment,
                     "run.cancelled",
-                    json!({"reason": reason}),
+                    assignment.cancellation_payload(&reason),
                 );
                 cancellation_reported = true;
             }
@@ -2655,7 +2684,9 @@ async fn execute_assignment(
                 &runner_id,
                 &assignment,
                 "run.cancelled",
-                json!({"reason": "Hard circuit breaker reached before accepted completion; source retained."}),
+                assignment.cancellation_payload(
+                    "Hard boundary reached before accepted completion; source retained.",
+                ),
             );
         }
         source_checkpoint::report(
@@ -3028,7 +3059,7 @@ async fn execute_verification_assignment(
                     &runner_id,
                     &assignment,
                     "run.cancelled",
-                    json!({"reason": reason}),
+                    assignment.cancellation_payload(&reason),
                 ),
                 Err(error) => send_run_event(
                     &outbound,

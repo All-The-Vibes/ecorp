@@ -2042,7 +2042,8 @@ async fn dispatch_pending_runner_commands_for_epoch(
                         )
                     ) {
                         warn!(run_id = %command.run_id, command_id = %command.id, %runner_id,
-                            "retaining recovery until runner supports verified dependency files; continuing other runs");
+                            reason = rejection.expect("matched missing capability").detail(),
+                            "retaining recovery until runner supports the required capability; continuing other runs");
                         blocked_runs.push(command.run_id);
                         continue;
                     }

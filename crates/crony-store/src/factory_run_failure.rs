@@ -140,9 +140,17 @@ pub(super) async fn reconcile_tx(
     )?
     .is_err()
     {
-        // The bounded deadline reconciler records the automated policy cause.
-        // An expired mission must not acquire ordinary-failure resume authority.
-        return Ok(None);
+        // Keep the actual terminal failure. A later sweep must not relabel it,
+        // and an exhausted clock cannot grant ordinary-failure resume authority.
+        return block_control_tx(
+            tx,
+            scope,
+            corp_id,
+            room_id,
+            reason,
+            "run_failure_after_deadline",
+        )
+        .await;
     }
     let (item, _) = factory_work_item_tx(tx, corp_id, item_id, true)
         .await?
@@ -210,6 +218,25 @@ pub(super) async fn block_deadline_tx(
     room_id: Uuid,
     reason: &str,
 ) -> Result<Option<DomainEvent>> {
+    block_control_tx(
+        tx,
+        scope,
+        corp_id,
+        room_id,
+        reason,
+        "mission_deadline_expired",
+    )
+    .await
+}
+
+pub(super) async fn block_control_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    scope: &RunScope,
+    corp_id: Uuid,
+    room_id: Uuid,
+    reason: &str,
+    cause: &str,
+) -> Result<Option<DomainEvent>> {
     let Some(item_id) = scope.work_item_id else {
         return Ok(None);
     };
@@ -237,6 +264,12 @@ pub(super) async fn block_deadline_tx(
     .bind(scope.mission_id)
     .fetch_one(&mut **tx)
     .await?;
+    let mission_status: String =
+        sqlx::query_scalar("SELECT status FROM missions WHERE id=$1 AND corp_id=$2")
+            .bind(scope.mission_id)
+            .bind(corp_id)
+            .fetch_one(&mut **tx)
+            .await?;
     append_event_tx(
         tx,
         NewEvent {
@@ -249,10 +282,14 @@ pub(super) async fn block_deadline_tx(
                 "factory.blocked",
                 "factory_work_item",
                 item_id,
-                format!("factory:{item_id}:mission-deadline"),
+                if cause == "mission_deadline_expired" {
+                    format!("factory:{item_id}:mission-deadline")
+                } else {
+                    format!("factory:{item_id}:control:{cause}")
+                },
                 json!({"previous_state":item.state.as_str(), "state":"blocked",
-                "mission_id":scope.mission_id, "cause":"mission_deadline_expired",
-                "mission_status":"failed", "failure_detail":reason}),
+                "mission_id":scope.mission_id, "cause":cause,
+                "mission_status":mission_status, "failure_detail":reason}),
             )
         },
     )

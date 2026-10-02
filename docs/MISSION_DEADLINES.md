@@ -28,9 +28,11 @@ Creation and preview accept `deadline`, containing `deadline_at` (an absolute UT
 timestamp) and an optional `reserve` with `seconds` and `task_keys`. The requester
 selects the implementation/finalization task keys from the preview. A reserve
 must be positive, name existing tasks without duplicates, include every
-descendant of a reserved task, and leave at least one earlier task. This makes
-the protected stages explicit; the planner does not invent a percentage or
-choose protected work for the requester.
+descendant of a reserved task, and leave at least one earlier task. Every
+protected task must depend, directly or transitively, on every unprotected task.
+This forms a final suffix: a protected specialist cannot start alongside an
+unprotected sibling. Parallel final tasks are allowed after all earlier work.
+The planner does not invent a percentage or choose protected work for the requester.
 
 Every task contract contains the same mission `deadline_at`. Tasks outside the
 declared reserve must finish, including verification, by the mission deadline
@@ -51,7 +53,11 @@ for creation, dispatch and accepted progress/completion. Native enqueue receives
 the current absolute task cutoff and remaining milliseconds from that same
 transaction. An expired assignment cannot launch or accept late completion.
 The existing lifecycle sweep reconciles expiration, including queued work and
-disconnected runners, through existing durable stop commands.
+disconnected runners, through existing durable stop commands. Its bounded pages
+select only unfinished tasks whose derived cutoff is due. Migration58 backfills
+and indexes that scheduling value; a trigger always derives it from immutable
+mission policy. It does not replace the post-lock clock check or change applied
+SQL. Completed, failed and cancelled missions retain their terminal cause.
 
 Deadline assignments require the runner's explicit `mission-deadline-v1`
 capability. The runner takes the smaller of the server's remaining allowance and
@@ -61,6 +67,18 @@ sending native stop. Worktree cleanup still requires the exact committed
 completion receipt. A wall-clock difference can shorten or delay the physical
 stop; authoritative acceptance uses database time and does not rely on clock
 agreement. This is not a distributed real-time execution guarantee.
+
+Cancellation records the first native hard-boundary cause. The store binds that
+acknowledgement to the first scoped durable stop or suspension, preserving its
+original bounded reason. A later acknowledgement cannot turn an earlier
+operator stop into deadline expiry. A runner timer that fires ahead of database
+time records `mission_deadline_elapsed`: the run and task are cancelled, but the
+mission remains available to the database expiry sweep. Only a database-admitted
+deadline stop records `mission_deadline_expired` as the cancellation cause.
+The sweep can independently fail the mission after an earlier operator stop;
+the run still retains the operator cause. Supplied timestamps or claimed
+authority cannot override this provenance. Neither case grants a retry or
+resets budgets, verifier verdicts or retained source identity.
 
 Codex 0.154.0 was observed locally and its generated native schemas were read.
 `turn/start` has no absolute mission deadline field; `turn/interrupt` targets the
@@ -105,8 +123,12 @@ uses the existing planned-attempts supervisor convention: a fresh
 `ecorp-fixture/planned-attempts-fixture` source and `issue224-planned-qa` runner.
 Point `CRONY_PLAYWRIGHT_MODULE` at the installed Playwright module if necessary.
 
-The driver independently verifies live server/web identity and listener
-ownership, then creates only two new missions through an actual Edge browser.
+The driver resolves the actual module checkout, QA root and source to canonical
+nonlink identities, verifies their separation in both directions, and requires
+a new evidence destination. False repository receipts, aliases and existing
+linked output destinations are rejected before mutations. It independently
+verifies live server/web identity and listener ownership, then creates only two
+new missions through an actual Edge browser.
 A saved solo plan expires in the queue. A parallel plan waits before launch,
 then expires at its specialist cutoff before the reserved synthesis stage.
 The explicit `[deadline-complete-after-stop]` transport reports native success

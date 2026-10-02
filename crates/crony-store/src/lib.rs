@@ -8286,6 +8286,7 @@ impl PgStore {
                    r.execution_mode, r.status AS run_status,
                    t.mission_id, t.contract, t.verification_policy, m.room_id,
                    t.status AS task_status, m.status AS mission_status,
+                   m.deadline_policy IS NOT NULL AS timed_mission,
                    t.attempt_count, t.max_attempts
             FROM runs r
             JOIN tasks t ON t.id = r.task_id AND t.corp_id = r.corp_id
@@ -8392,7 +8393,19 @@ impl PgStore {
         if event_type == "run.verification_evidence" {
             payload = sanitize_verification_evidence_tx(&mut tx, run_id, payload).await?;
         }
-        if event_type == "run.usage" {
+        let mut cancellation_cause = None;
+        if event_type == "run.cancelled" {
+            let (cause, normalized) = control_accounting::admit_cancellation_tx(
+                &mut tx,
+                corp_id,
+                run_id,
+                row.get("timed_mission"),
+                payload,
+            )
+            .await?;
+            cancellation_cause = Some(cause);
+            payload = normalized;
+        } else if event_type == "run.usage" {
             (event_type, payload) = control_accounting::admit_usage_tx(
                 &mut tx,
                 corp_id,
@@ -9399,14 +9412,11 @@ impl PgStore {
                 .await?;
             }
             "run.cancelled" => {
-                let deadline_expired = mission_deadline::obsolete_if_expired(
-                    mission_deadline::for_run_tx(&mut tx, corp_id, run_id).await,
-                )?
-                .is_err();
+                let cause = cancellation_cause.context("cancellation was not normalized")?;
                 let summary = payload
                     .get("reason")
                     .and_then(Value::as_str)
-                    .unwrap_or("Run cancelled by an authorized operator");
+                    .unwrap_or("Native run cancelled");
                 let recovery_id: Option<Uuid> = sqlx::query_scalar(
                     r#"
                     SELECT id
@@ -9430,11 +9440,7 @@ impl PgStore {
                         room_id,
                         summary,
                         "cancelled",
-                        if deadline_expired {
-                            "mission_deadline_expired"
-                        } else {
-                            "recovery_run_cancelled"
-                        },
+                        cause.as_str(),
                     )
                     .await?
                     {
@@ -9442,36 +9448,59 @@ impl PgStore {
                     }
                 } else {
                     sqlx::query(
-                        "UPDATE runs SET status = 'cancelled', summary = $1, updated_at = now() WHERE id = $2",
+                        "UPDATE runs SET status = 'cancelled', summary = $1, updated_at = now() WHERE id = $2 AND corp_id=$3",
                     )
                     .bind(summary)
                     .bind(run_id)
+                    .bind(corp_id)
                     .execute(&mut *tx)
                     .await?;
                     sqlx::query(
-                        "UPDATE tasks SET status = 'cancelled', updated_at = now() WHERE id = $1",
+                        "UPDATE tasks SET status = 'cancelled', updated_at = now()
+                         WHERE id = $1 AND corp_id=$2 AND status NOT IN ('completed','failed','cancelled')",
                     )
                     .bind(task_id)
+                    .bind(corp_id)
                     .execute(&mut *tx)
                     .await?;
                     sqlx::query(
                         "UPDATE missions SET status = $2, updated_at = now()
-                         WHERE id = $1 AND status IN ('ready','running')",
+                         WHERE id = $1 AND corp_id=$3 AND status IN ('ready','running') AND NOT $4",
                     )
                     .bind(mission_id)
-                    .bind(if deadline_expired {
-                        "failed"
-                    } else {
-                        "cancelled"
-                    })
+                    .bind(
+                        if cause == control_accounting::CancellationCause::DeadlineExpired {
+                            "failed"
+                        } else {
+                            "cancelled"
+                        },
+                    )
+                    .bind(corp_id)
+                    .bind(cause == control_accounting::CancellationCause::DeadlineObserved)
                     .execute(&mut *tx)
                     .await?;
+                    if matches!(
+                        cause,
+                        control_accounting::CancellationCause::DeadlineExpired
+                            | control_accounting::CancellationCause::DeadlineObserved
+                    ) && matches!(row.get::<&str, _>("mission_status"), "ready" | "running")
+                        && let Some(scope) = &factory_scope
+                        && let Some(event) = factory_run_failure::block_control_tx(
+                            &mut tx,
+                            scope,
+                            corp_id,
+                            room_id,
+                            summary,
+                            cause.as_str(),
+                        )
+                        .await?
+                    {
+                        related_events.push(event);
+                    }
                 }
-                sqlx::query(
-                    "UPDATE agents SET status = 'idle', station = NULL, current_run_id = NULL WHERE id = $1",
+                factory_run_failure::release_failed_run_agent_tx(
+                    &mut tx, corp_id, agent_id, run_id,
                 )
-                .bind(agent_id)
-                .execute(&mut *tx)
                 .await?;
             }
             _ => {}
@@ -14011,10 +14040,23 @@ async fn terminalize_factory_recovery_run_tx(
             "factory recovery terminal run status {run_status} is unsupported"
         ));
     }
-    let deadline_expired = mission_deadline::obsolete_if_expired(
-        mission_deadline::for_run_tx(tx, corp_id, run_id).await,
-    )?
-    .is_err();
+    // Cancellation was normalized from durable control before its event was
+    // appended. Failed/lost recovery still needs the database retry fence.
+    let deadline_expired = if run_status == "cancelled" {
+        cause == "mission_deadline_expired"
+    } else {
+        mission_deadline::obsolete_if_expired(
+            mission_deadline::for_run_tx(tx, corp_id, run_id).await,
+        )?
+        .is_err()
+    };
+    let deadline_observed = run_status == "cancelled" && cause == "mission_deadline_elapsed";
+    let previous_mission_status: String =
+        sqlx::query_scalar("SELECT status FROM missions WHERE id=$1 AND corp_id=$2")
+            .bind(mission_id)
+            .bind(corp_id)
+            .fetch_one(&mut **tx)
+            .await?;
     sqlx::query(
         r#"
         UPDATE runs
@@ -14046,7 +14088,7 @@ async fn terminalize_factory_recovery_run_tx(
             verification_status = CASE
                 WHEN $2='cancelled' OR $3 THEN verification_status ELSE 'failed' END,
             updated_at = now()
-        WHERE id = $1 AND corp_id = $4
+        WHERE id = $1 AND corp_id = $4 AND status NOT IN ('completed','failed','cancelled')
         "#,
     )
     .bind(task_id)
@@ -14056,10 +14098,17 @@ async fn terminalize_factory_recovery_run_tx(
     .execute(&mut **tx)
     .await?;
     sqlx::query(
-        "UPDATE missions SET status = 'failed', updated_at = now() WHERE id = $1 AND corp_id = $2",
+        "UPDATE missions SET status = $3, updated_at = now()
+         WHERE id = $1 AND corp_id = $2 AND status IN ('ready','running') AND NOT $4",
     )
     .bind(mission_id)
     .bind(corp_id)
+    .bind(if run_status == "cancelled" && !deadline_expired {
+        "cancelled"
+    } else {
+        "failed"
+    })
+    .bind(deadline_observed)
     .execute(&mut **tx)
     .await?;
     sqlx::query(
@@ -14102,12 +14151,30 @@ async fn terminalize_factory_recovery_run_tx(
     .bind(run_id)
     .execute(&mut **tx)
     .await?;
-    if deadline_expired {
+    if matches!(
+        previous_mission_status.as_str(),
+        "completed" | "failed" | "cancelled"
+    ) {
+        return Ok(None);
+    }
+    if run_status == "cancelled" || deadline_expired {
         // Native delivery proves the cancellation/failure, never that dispatch
         // did not happen. An exhausted clock cannot create verifier-retry or
         // ordinary-failure authority. The caller already holds Factory gates.
         let scope = factory_run_failure::RunScope::read_tx(tx, corp_id, run_id).await?;
-        return factory_run_failure::block_deadline_tx(tx, &scope, corp_id, room_id, summary).await;
+        return factory_run_failure::block_control_tx(
+            tx,
+            &scope,
+            corp_id,
+            room_id,
+            summary,
+            if deadline_expired {
+                "mission_deadline_expired"
+            } else {
+                cause
+            },
+        )
+        .await;
     }
     Ok(reconcile_factory_verification_failure_tx(
         tx, corp_id, mission_id, room_id, run_id, None, summary, cause,
