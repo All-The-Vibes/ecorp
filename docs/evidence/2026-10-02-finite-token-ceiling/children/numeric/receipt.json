@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "issue": 291,
+  "status": "passed",
+  "started_at": "2026-10-02T04:06:50.781Z",
+  "source": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+  "directory": "<USER_HOME>\\AppData\\Local\\Temp\\ecorp-token-ceiling-9lUNw2",
+  "commands": [
+    {
+      "label": "store-numeric",
+      "program": "cargo",
+      "args": [
+        "test",
+        "--locked",
+        "--offline",
+        "-p",
+        "crony-store",
+        "token_ceiling",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+      "started_at": "2026-10-02T04:06:52.902Z",
+      "finished_at": "2026-10-02T04:06:54.539Z",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "log": "<USER_HOME>\\AppData\\Local\\Temp\\ecorp-token-ceiling-9lUNw2\\store-numeric.log",
+      "log_sha256": "a9789e91cca00cc2ee0ebc85a1d0cf6353d133628a970b697e73811bb5c9792b"
+    },
+    {
+      "label": "planning",
+      "program": "cargo",
+      "args": [
+        "test",
+        "--locked",
+        "--offline",
+        "-p",
+        "crony-server",
+        "--bin",
+        "crony-server",
+        "token_ceiling_all_ordinary_strategies",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+      "started_at": "2026-10-02T04:06:54.539Z",
+      "finished_at": "2026-10-02T04:06:56.227Z",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "log": "<USER_HOME>\\AppData\\Local\\Temp\\ecorp-token-ceiling-9lUNw2\\planning.log",
+      "log_sha256": "8034ac8c089a88e59a4ac32f35a510fb1b36a73110900b8b182a57f6143b6771"
+    },
+    {
+      "label": "frontend",
+      "program": "<USER_HOME>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+      "args": [
+        "--test",
+        "apps/web/src/missionPreview.test.mjs"
+      ],
+      "cwd": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+      "started_at": "2026-10-02T04:06:56.227Z",
+      "finished_at": "2026-10-02T04:06:56.552Z",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "log": "<USER_HOME>\\AppData\\Local\\Temp\\ecorp-token-ceiling-9lUNw2\\frontend.log",
+      "log_sha256": "7563411d5ad14543bfc91a884cd4f2572454a3b38192b5276ecad36ce2a0744f"
+    }
+  ],
+  "kind": "numeric-regression",
+  "scope": "Contributor regression only; no native Factory, real-provider or independent outcome acceptance",
+  "source_before": "e366d091bab92043a0e67a4efc30fa84f19e632bf17541d31a8ae6510e218fce",
+  "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "database_scope": "Ignored SQLx cases require a separate explicitly owned database execution; inspect actual logs",
+  "source_after": "e366d091bab92043a0e67a4efc30fa84f19e632bf17541d31a8ae6510e218fce",
+  "primary_lock_unchanged": true,
+  "source_unchanged": true,
+  "finished_at": "2026-10-02T04:06:58.161Z"
+}
