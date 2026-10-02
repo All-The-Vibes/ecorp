@@ -1,0 +1,109 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$taskProduct = '<user-home>\.codex\worktrees\issue198-readiness\ecorp'
+$taskExpectedHead = '3e882d6748735099b68fef8f73e979ecb29ff4e7'
+$taskCargo = '<user-home>\.cargo\bin\cargo.exe'
+$taskQa = '<user-home>\qa\ir2-' + [Guid]::NewGuid().ToString('N').Substring(0,8)
+$taskReceipt = Join-Path $PSScriptRoot 'issue198-runner-r2.json'
+$taskOwnership = Join-Path $PSScriptRoot 'run-ownership.json'
+if ((Test-Path -LiteralPath $taskQa) -or (Test-Path -LiteralPath $taskReceipt)) { throw 'Preserve existing validation resources.' }
+if ((& git -C $taskProduct rev-parse HEAD) -cne $taskExpectedHead) { throw 'Current source is not the reviewed head.' }
+if (@(& git -C $taskProduct status --porcelain=v1 --untracked-files=normal).Count -ne 0) { throw 'Preserve dirty source; do not run against an unreviewed revision.' }
+function Get-SourceIdentity {
+    Push-Location $taskProduct
+    try {
+        @(& git ls-files --cached --others --exclude-standard -- Cargo.toml Cargo.lock rust-toolchain.toml crates db scripts | Sort-Object -Unique | ForEach-Object {
+            [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash.ToLowerInvariant()}
+        })
+    } finally { Pop-Location }
+}
+$taskResult = [ordered]@{
+    issue=198;pr=393;started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');worktree=$taskProduct;qa_root=$taskQa
+    head=$taskExpectedHead;tree=(& git -C $taskProduct rev-parse 'HEAD^{tree}');source_files=(Get-SourceIdentity)
+    driver_sha256=(Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant()
+    evidence_kind='Retrospective focused runner and adapter tests, including Windows native-process fixtures with fake GitHub/Codex/Claude/Copilot protocols and real owned Git/worktrees. No real account, network request or provider inference. Cases overlap the already recorded canonical Rust lane.'
+    historical_incident_reproduced=$false
+    prior_failed_receipt='issue198-runner-r1.json'
+    rerun_reason='The r1 test fixture prefix caused native Git worktree setup to fail with GIT_DIR too big before restart assertions. R2 changes only the owned TEMP/TMP root length; no product source or Git protection is changed. R1 and its failed fixture are preserved.'
+    profile=@{test_debug='0';dev_debug='0';incremental='0';jobs='2';test_threads='1'}
+    status='starting';lanes=@()
+}
+$taskEnvNames = @('RUST_TEST_THREADS','CARGO_TARGET_DIR','CARGO_PROFILE_DEV_DEBUG','CARGO_PROFILE_TEST_DEBUG','CARGO_INCREMENTAL','CARGO_BUILD_JOBS','TEMP','TMP')
+$taskPreviousEnv = @{}
+foreach ($taskName in $taskEnvNames) { $taskPreviousEnv[$taskName] = [Environment]::GetEnvironmentVariable($taskName,'Process') }
+$taskCode = 1
+try {
+    New-Item -ItemType Directory -Path $taskQa | Out-Null
+    $taskSid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+    & icacls.exe $taskQa /inheritance:r /grant:r "*${taskSid}:(OI)(CI)F" '*S-1-5-18:(OI)(CI)F' | Out-Null
+    if ($LASTEXITCODE) { throw 'Cannot make fixture root private.' }
+    $taskTemp = $taskQa
+    # Use the short, already-created owned root directly for TEMP/TMP.
+    $taskRunRecord = Get-Content -LiteralPath $taskOwnership -Raw | ConvertFrom-Json -AsHashtable
+    $taskRunRecord.owned_resources = @($taskRunRecord.owned_resources) + @($taskQa)
+    $taskRunRecord.active_validation = @($taskRunRecord.active_validation) + @(@{name='issue198-runner-r2';receipt=$taskReceipt;qa_root=$taskQa;driver_pid=$PID;started_at_utc=$taskResult.started_at_utc})
+    $taskRunRecord.status = 'focused-validation-running'
+    $taskRunRecord | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $taskOwnership -Encoding utf8
+    $env:RUST_TEST_THREADS = '1'
+    $env:CARGO_TARGET_DIR = Join-Path $taskProduct 'target'
+    $env:CARGO_PROFILE_DEV_DEBUG = '0'
+    $env:CARGO_PROFILE_TEST_DEBUG = '0'
+    $env:CARGO_INCREMENTAL = '0'
+    $env:CARGO_BUILD_JOBS = '2'
+    $env:TEMP = $taskTemp
+    $env:TMP = $taskTemp
+    $taskCode = 0
+    foreach ($taskLanePlan in @(@{name='connections';filter='connections::'})) {
+        $taskLane = [ordered]@{name=$taskLanePlan.name;filter=$taskLanePlan.filter;started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');status='starting'}
+        $taskLane.list_command = "cargo test --locked -p crony-runner $($taskLane.filter) -- --list"
+        $taskLane.command = "cargo test --locked -p crony-runner $($taskLane.filter) -- --test-threads=1"
+        $taskLane.list_log = Join-Path $PSScriptRoot "issue198-$($taskLane.name)-list-r2.log"
+        $taskLane.log = Join-Path $PSScriptRoot "issue198-$($taskLane.name)-r2.log"
+        if ((Test-Path -LiteralPath $taskLane.list_log) -or (Test-Path -LiteralPath $taskLane.log)) { throw 'Do not overwrite focused test logs.' }
+        $taskResult.status = 'running'
+        $taskResult.lanes += $taskLane
+        $taskResult | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+        Push-Location $taskProduct
+        try {
+            $ErrorActionPreference = 'Continue'
+            & $taskCargo test --locked -p crony-runner $taskLane.filter -- --list *> $taskLane.list_log
+            $taskLane.list_exit_code = $LASTEXITCODE
+            $ErrorActionPreference = 'Stop'
+            if ($taskLane.list_exit_code -ne 0) { throw "Discovery failed for $($taskLane.name)." }
+            $taskLane.discovered_cases = @(Select-String -LiteralPath $taskLane.list_log -Pattern '^\S+: test$' | ForEach-Object { $_.Line -replace ': test$','' })
+            if ($taskLane.discovered_cases.Count -eq 0) { throw "No tests were discovered for $($taskLane.name)." }
+            $ErrorActionPreference = 'Continue'
+            & $taskCargo test --locked -p crony-runner $taskLane.filter -- --test-threads=1 *> $taskLane.log
+            $taskLane.exit_code = $LASTEXITCODE
+            $ErrorActionPreference = 'Stop'
+        } finally { Pop-Location }
+        $taskLane.test_results = @(Select-String -LiteralPath $taskLane.log -Pattern '^test result:' | ForEach-Object Line)
+        $taskLane.individual_results = @(Select-String -LiteralPath $taskLane.log -Pattern '^test .* \.\.\. (ok|FAILED|ignored)' | ForEach-Object Line)
+        $taskLane.log_sha256 = (Get-FileHash -LiteralPath $taskLane.log -Algorithm SHA256).Hash.ToLowerInvariant()
+        $taskLane.list_log_sha256 = (Get-FileHash -LiteralPath $taskLane.list_log -Algorithm SHA256).Hash.ToLowerInvariant()
+        $taskLane.finished_at_utc = [DateTimeOffset]::UtcNow.ToString('o')
+        $taskLane.status = if ($taskLane.exit_code -eq 0) {'passed'} else {'failed'}
+        if ($taskLane.exit_code -ne 0) { $taskCode = 1 }
+        $taskResult | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+    }
+    $taskResult.status = if ($taskCode -eq 0) {'passed'} else {'failed'}
+} catch {
+    $taskResult.status = 'failed'; $taskResult.failure = $_.Exception.Message
+    $taskCode = 1
+} finally {
+    foreach ($taskName in $taskEnvNames) { [Environment]::SetEnvironmentVariable($taskName,$taskPreviousEnv[$taskName],'Process') }
+    $taskPreviousEnv.Clear()
+    $taskResult.source_unchanged = (ConvertTo-Json -InputObject $taskResult.source_files -Depth 5 -Compress) -ceq (ConvertTo-Json -InputObject (Get-SourceIdentity) -Depth 5 -Compress)
+    $taskResult.head_unchanged = (& git -C $taskProduct rev-parse HEAD) -ceq $taskExpectedHead
+    $taskResult.worktree_clean = @(& git -C $taskProduct status --porcelain=v1 --untracked-files=normal).Count -eq 0
+    if (!$taskResult.source_unchanged -or !$taskResult.head_unchanged -or !$taskResult.worktree_clean) { $taskResult.status='failed'; $taskResult.failure='Source identity changed during validation'; $taskCode=1 }
+    $taskResult.finished_at_utc = [DateTimeOffset]::UtcNow.ToString('o')
+    $taskResult.exit_code = $taskCode
+    $taskResult | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $taskReceipt -Encoding utf8
+    $taskRunRecord = Get-Content -LiteralPath $taskOwnership -Raw | ConvertFrom-Json -AsHashtable
+    $taskRunRecord.active_validation = @($taskRunRecord.active_validation | Where-Object name -ne 'issue198-runner-r2')
+    $taskRunRecord.status = 'focused-validation-recorded'
+    $taskRunRecord | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $taskOwnership -Encoding utf8
+}
+[ordered]@{status=$taskResult.status;exit_code=$taskCode;source_unchanged=$taskResult.source_unchanged;lanes=@($taskResult.lanes | ForEach-Object { @{name=$_.name;status=$_.status;results=$_.test_results;discovered=$_.discovered_cases.Count} });failure=$taskResult.failure;receipt=$taskReceipt} | ConvertTo-Json -Depth 6
+exit $taskCode

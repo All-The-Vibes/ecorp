@@ -1,5 +1,16 @@
 # Runner readiness identities — October 1, 2026
 
+## New focused acceptance evidence
+
+The [October 2 focused packet](focused-acceptance-r1/README.md) adds 17 passing
+database-backed store cases and passing reruns of 26 runner connection and 17
+adapter cases, with the failed long-root runner attempt retained. Its
+[review and acceptance mapping](focused-acceptance-r1/review.md) covers all five
+child #198 criteria within the stated native and simulated scopes. Product bytes
+are unchanged. These counts do not replace or add to the prior canonical totals;
+the 17 SQLx cases were ignored in that earlier run. Hosted checks and merge remain
+outstanding, so the PR remains draft and #198 remains open.
+
 ## New native application acceptance
 
 The [native acceptance packet](native-acceptance-r1/README.md) records a real Copilot application

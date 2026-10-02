@@ -1,0 +1,124 @@
+{
+  "recorded_at_utc": "2026-10-02T00:55:13.268823+00:00",
+  "issue": 198,
+  "pr": 393,
+  "review_kind": "implementing-agent retrospective review; not independent approval",
+  "reviewed_head": "3e882d6748735099b68fef8f73e979ecb29ff4e7",
+  "reviewed_tree": "b77fdb292101317513bf531d52de8715ddbee0f2",
+  "main_base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "tested_product_tree": "d62abf4e59887f84f3848ccf5c839fe487e51c30",
+  "product_changes": [],
+  "product_file_count": 7147,
+  "focused": {
+    "store_r1": {
+      "passed": 17,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 534,
+      "postgresql": "17.10",
+      "source_files": 266
+    },
+    "runner_r1": {
+      "passed": 25,
+      "failed": 1,
+      "ignored": 0,
+      "filtered": 260,
+      "source_files": 272,
+      "status": "failed"
+    },
+    "runner_r2": {
+      "passed": 26,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 260,
+      "source_files": 272
+    },
+    "adapter_r1": {
+      "passed": 17,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 269
+    },
+    "additional_binary_each_runner_lane": {
+      "selected": 0,
+      "filtered": 25
+    },
+    "unique_final_selected_cases": 60,
+    "counts_additive_to_canonical": false,
+    "store_cases_previously_ignored_in_canonical": 17
+  },
+  "canonical": {
+    "command": "pnpm check",
+    "gates": [
+      "migrations",
+      "state-audit-compatibility",
+      "state-audit-evm",
+      "docs",
+      "repository-docs",
+      "node-tests",
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ],
+    "status": "passed",
+    "node": {
+      "tests": 3108,
+      "passed": 3043,
+      "failed": 0,
+      "skipped": 65,
+      "todo": 0,
+      "cancelled": 0
+    },
+    "rust": {
+      "passed": 877,
+      "failed": 0,
+      "ignored": 564,
+      "summaries": 41
+    },
+    "evm": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "summaries": 1
+    },
+    "reused_for_identical_product_bytes": true,
+    "rerun_for_this_evidence_only_child": false,
+    "report": "../protocol-correction-r1/canonical-report.json",
+    "report_sha256": "dc653cc8f99d9dedc3424b21274a22bf104b47dcf4db9157e40448735f8a92bb",
+    "source_manifest": "../protocol-correction-r1/source-manifest.json",
+    "source_manifest_sha256": "70149fde37284b86efd344541b6b17c14d0b5652daa8a512151d2c30c81c7a26"
+  },
+  "runner_retry": {
+    "failure": "Git worktree setup exited 128 with fatal: '$GIT_DIR' too big",
+    "failed_attempt_retained": true,
+    "changed": "Only the external driver's owned TEMP/TMP root length and selected rerun lane; no product, assertions, timeouts or security changes.",
+    "r1_qa_root_characters": 59,
+    "r2_qa_root_characters": 37,
+    "arbitrary_long_windows_roots_validated": false
+  },
+  "acceptance_scope": {
+    "real_native_application": "../native-acceptance-r1/README.md",
+    "synthetic_full_stack": "../protocol-correction-r1/acceptance/browser.json",
+    "matrix": "review.md",
+    "local_criteria_evidence_mapped": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "hosted_required_checks": "unavailable while Actions is disabled",
+    "issue_completed": false
+  },
+  "limitations": [
+    "Store provider observations and run metadata are synthetic; PostgreSQL and migrations are real.",
+    "Runner and adapter protocols are fake; processes, Git and owned worktrees are real. This is not live account/network/inference evidence.",
+    "The previously published native run uses real Copilot inference; Codex readiness and unsigned-in Claude status do not claim all-provider inference.",
+    "Review is by the implementing agent; demo-principal application acceptance is not independent human or GitHub approval.",
+    "The earlier canonical 564 ignored tests and 65 skipped Node tests remain historical counts. New focused executions do not rewrite them.",
+    "Earlier failures, failed fixtures, generated application work and historical Cargo advisory debt remain preserved.",
+    "Required hosted CI/security/quality and merge remain outstanding; no check, policy or identity bypass is authorized by this evidence."
+  ]
+}
