@@ -1,0 +1,213 @@
+{
+  "suite": "mission-preview-read-only",
+  "status": "passed",
+  "server": "http://127.0.0.1:19084",
+  "corp_id": "00000000-0000-4000-8000-000000000001",
+  "actor_id": "00000000-0000-4000-8000-000000000011",
+  "started_at": "2026-10-02T08:09:52.009Z",
+  "checks": [
+    {
+      "name": "valid source-selected preview",
+      "status": 200,
+      "unchanged": true
+    },
+    {
+      "name": "repeated preview 1",
+      "status": 200,
+      "unchanged": true
+    },
+    {
+      "name": "repeated preview 2",
+      "status": 200,
+      "unchanged": true
+    },
+    {
+      "name": "padded title and CRLF description",
+      "status": 200,
+      "unchanged": true
+    },
+    {
+      "name": "omitted strategy uses the create default",
+      "status": 200,
+      "unchanged": true
+    },
+    {
+      "name": "parallel handoffs require a directory write scope",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "parallel graph dependencies and budgets",
+      "status": 200,
+      "unchanged": true
+    },
+    {
+      "name": "Studio exact manual-budget allocation",
+      "status": 200,
+      "unchanged": true
+    },
+    {
+      "name": "repeated Studio preview",
+      "status": 200,
+      "unchanged": true
+    },
+    {
+      "name": "empty title",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "oversized title",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "UTF-8 title byte bound",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "title control character",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "description control character",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "description byte bound",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "zero token budget",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "zero cost budget",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "unknown strategy",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "unavailable model",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "unsupported reasoning",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "missing source commit",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "stale source commit",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "wrong source ref",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "wrong source repository",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "unsafe write scope",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "empty verifier policy",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "invalid verifier timeout",
+      "status": 400,
+      "unchanged": true
+    },
+    {
+      "name": "unknown Corp",
+      "status": 403,
+      "unchanged": true
+    },
+    {
+      "name": "unknown or spoofed actor",
+      "status": 403,
+      "unchanged": true
+    },
+    {
+      "name": "existing non-operator role",
+      "status": 403,
+      "unchanged": true
+    }
+  ],
+  "coverage_limits": [
+    "No existing roomless operator; room-denial fixture not created",
+    "Development-principal RBAC only; production OIDC not exercised"
+  ],
+  "requests": 64,
+  "execution_requested": false,
+  "receipt_scope": "Authenticated Corp/room snapshot rows and append-only event watermark",
+  "authentication_mode": "development",
+  "before": {
+    "rows": {
+      "actors": 3,
+      "agents": 0,
+      "rooms": 1,
+      "missions": 0,
+      "tasks": 0,
+      "runs": 0,
+      "mission_contract_revisions": 0,
+      "mission_budget_revisions": 0,
+      "verification_evidence": 0,
+      "verification_requests": 0,
+      "source_deliverables": 0,
+      "factory_work_items": 0,
+      "factory_verification_recoveries": 0,
+      "action_approvals": 0,
+      "events": 3
+    },
+    "active_runs": 0,
+    "event_watermark": 3,
+    "visible_state_sha256": "ac3bedb7e5daa85d6bc4e77466bfa57e749aca9c56816c6aba9bf35dae8b8ab2"
+  },
+  "after": {
+    "rows": {
+      "actors": 3,
+      "agents": 0,
+      "rooms": 1,
+      "missions": 0,
+      "tasks": 0,
+      "runs": 0,
+      "mission_contract_revisions": 0,
+      "mission_budget_revisions": 0,
+      "verification_evidence": 0,
+      "verification_requests": 0,
+      "source_deliverables": 0,
+      "factory_work_items": 0,
+      "factory_verification_recoveries": 0,
+      "action_approvals": 0,
+      "events": 3
+    },
+    "active_runs": 0,
+    "event_watermark": 3,
+    "visible_state_sha256": "ac3bedb7e5daa85d6bc4e77466bfa57e749aca9c56816c6aba9bf35dae8b8ab2"
+  },
+  "finished_at": "2026-10-02T08:09:54.270Z"
+}

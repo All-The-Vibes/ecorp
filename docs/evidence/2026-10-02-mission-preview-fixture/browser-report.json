@@ -1,0 +1,217 @@
+{
+  "issue": 164,
+  "status": "passed",
+  "started_at": "2026-10-02T08:09:54.418Z",
+  "source_binding": {
+    "schema_version": 1,
+    "source_head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "source_tree": "70ca1719de097ef9b27819acc847e9dce14b19b2",
+    "source_files_sha256": "ee504d0cba61c7a79a2bd8675fd45346434c79f3f057e5f7b8619e5b76acd834",
+    "source_file_count": 7146,
+    "source_clean": false,
+    "source_status": "M tools/e2e_mission_preview.mjs",
+    "source_fingerprint_algorithm": "sha256(JSON.stringify(sorted path/physical-SHA256 pairs))",
+    "candidate_helper_sha256": "b9ed06d5588c760eae789fca34816104211862439ae033bf4381a6a9ef682cab",
+    "canonical_receipt": "output/issue-completion/20261002T023252Z/issue164-canonical-r1.json",
+    "canonical_receipt_sha256": "3b04ccd5e009b8f2a597b53a5bdcd7b5e22aa30f40a7273a6789b4cce5674282",
+    "canonical_report_sha256": "db8f7ec433b565f8435d94a4c8b7d86f16bca0f478557a5689aeda78dcbaf065",
+    "canonical_gate_names": [
+      "migrations",
+      "state-audit-compatibility",
+      "state-audit-evm",
+      "docs",
+      "repository-docs",
+      "node-tests",
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ]
+  },
+  "server": "http://127.0.0.1:19084",
+  "web": "http://127.0.0.1:16084",
+  "checks": [
+    {
+      "name": "exact Studio allocation and single launch",
+      "passed": true,
+      "allocations": [
+        {
+          "key": "visual-direction",
+          "tokens": 150000
+        },
+        {
+          "key": "gameplay-systems",
+          "tokens": 150000
+        },
+        {
+          "key": "quality-verification",
+          "tokens": 150000
+        },
+        {
+          "key": "studio-integration",
+          "tokens": 550000
+        }
+      ],
+      "launch_clicked": false
+    },
+    {
+      "name": "keyboard dependency and retry disclosure",
+      "passed": true
+    },
+    {
+      "name": "visible exact allocations without overflow at 1440",
+      "passed": true,
+      "client": 1440,
+      "scroll": 1440
+    },
+    {
+      "name": "visible exact allocations without overflow at 390",
+      "passed": true,
+      "client": 390,
+      "scroll": 390
+    },
+    {
+      "name": "actor change clears target and removes the former actor allocation",
+      "passed": true,
+      "actor_id": "00000000-0000-4000-8000-000000000012",
+      "build_disabled": true
+    },
+    {
+      "name": "actor change fences the complete request",
+      "passed": true,
+      "actor_id": "00000000-0000-4000-8000-000000000012",
+      "target_reconfirmed": true
+    },
+    {
+      "name": "failed preview removes obsolete allocations",
+      "passed": true
+    },
+    {
+      "name": "retry obtains the current 500K server allocation",
+      "passed": true
+    },
+    {
+      "name": "late previous-budget response cannot replace current allocation",
+      "passed": true,
+      "old_request": {
+        "requested_by": "00000000-0000-4000-8000-000000000012",
+        "strategy": "studio-swarm",
+        "budget_tokens": 1000000,
+        "body_sha256": "d1481f7221e930b2377d9f09bf857bb562f0b9661e784d56e2a51c3e27a2c913",
+        "response_mode": "hold"
+      },
+      "current_tokens": 2000000
+    },
+    {
+      "name": "all visible rows and event state unchanged; connected runner started no runs",
+      "passed": true
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "studio-1440.png",
+      "sha256": "cfa853d6108a2ae26d5f2f92db7e607801be634520f9b836fb3d5be307aafa8b"
+    },
+    {
+      "file": "studio-390.png",
+      "sha256": "163ee4ca326838a0352f2d0a299c3f07eedb9f50d8ed89ee95badaee67a706b4"
+    },
+    {
+      "file": "failed-preview-no-obsolete-allocation.png",
+      "sha256": "e738d9aa897ef48d7b3087d9e03674fa1b3d3181ecff7f4031cbfccd08a51fd4"
+    }
+  ],
+  "preview_requests": [
+    {
+      "requested_by": "00000000-0000-4000-8000-000000000011",
+      "strategy": "studio-swarm",
+      "budget_tokens": 1000000,
+      "body_sha256": "c6791be50f5d0dc1d7832b951ad8e173a3678f38b1302f38d2c4c10a7c907190",
+      "response_mode": "normal"
+    },
+    {
+      "requested_by": "00000000-0000-4000-8000-000000000012",
+      "strategy": "studio-swarm",
+      "budget_tokens": 1000000,
+      "body_sha256": "d1481f7221e930b2377d9f09bf857bb562f0b9661e784d56e2a51c3e27a2c913",
+      "response_mode": "normal"
+    },
+    {
+      "requested_by": "00000000-0000-4000-8000-000000000012",
+      "strategy": "studio-swarm",
+      "budget_tokens": 500000,
+      "body_sha256": "ea41bed951d2ae0bcf8a5d02709c2dfad1764b7a17c6c4ec783b8862655e71af",
+      "response_mode": "fail"
+    },
+    {
+      "requested_by": "00000000-0000-4000-8000-000000000012",
+      "strategy": "studio-swarm",
+      "budget_tokens": 500000,
+      "body_sha256": "ea41bed951d2ae0bcf8a5d02709c2dfad1764b7a17c6c4ec783b8862655e71af",
+      "response_mode": "normal"
+    },
+    {
+      "requested_by": "00000000-0000-4000-8000-000000000012",
+      "strategy": "studio-swarm",
+      "budget_tokens": 1000000,
+      "body_sha256": "d1481f7221e930b2377d9f09bf857bb562f0b9661e784d56e2a51c3e27a2c913",
+      "response_mode": "hold"
+    },
+    {
+      "requested_by": "00000000-0000-4000-8000-000000000012",
+      "strategy": "studio-swarm",
+      "budget_tokens": 2000000,
+      "body_sha256": "7f996a5dacabeb60a76f703f15c34647ad50b81c61081aec142a70181765820d",
+      "response_mode": "normal"
+    }
+  ],
+  "blocked_requests": [],
+  "page_errors": [],
+  "scope": "Actual Edge, server, PostgreSQL and connected runner. Read-only planning with explicit synthetic Copilot capability and development principals. No provider launch, game completion, human outcome decision or production OIDC claim.",
+  "before": {
+    "rows": {
+      "actors": 3,
+      "agents": 0,
+      "rooms": 1,
+      "missions": 0,
+      "tasks": 0,
+      "runs": 0,
+      "mission_contract_revisions": 0,
+      "mission_budget_revisions": 0,
+      "verification_evidence": 0,
+      "verification_requests": 0,
+      "source_deliverables": 0,
+      "factory_work_items": 0,
+      "factory_verification_recoveries": 0,
+      "action_approvals": 0,
+      "events": 3
+    },
+    "sha256": "ac3bedb7e5daa85d6bc4e77466bfa57e749aca9c56816c6aba9bf35dae8b8ab2",
+    "runner_connected": true
+  },
+  "after": {
+    "rows": {
+      "actors": 3,
+      "agents": 0,
+      "rooms": 1,
+      "missions": 0,
+      "tasks": 0,
+      "runs": 0,
+      "mission_contract_revisions": 0,
+      "mission_budget_revisions": 0,
+      "verification_evidence": 0,
+      "verification_requests": 0,
+      "source_deliverables": 0,
+      "factory_work_items": 0,
+      "factory_verification_recoveries": 0,
+      "action_approvals": 0,
+      "events": 3
+    },
+    "sha256": "ac3bedb7e5daa85d6bc4e77466bfa57e749aca9c56816c6aba9bf35dae8b8ab2",
+    "runner_connected": true
+  },
+  "state_unchanged": true,
+  "finished_at": "2026-10-02T08:10:08.120Z",
+  "publication_note": "Normalized copy of the retained report: private absolute artifact paths replaced by repository/run-relative paths. Assertions, times, source hashes and screenshot bytes are unchanged."
+}
