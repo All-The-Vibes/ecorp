@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Ledger</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #5b6475;
+      --border: #c7d0e0;
+      --accent: #2457d6;
+      --accent-strong: #153ea4;
+      --danger: #b42318;
+      --success: #1f7a3d;
+      --shadow: 0 16px 40px rgba(23, 32, 51, 0.08);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .shell {
+      width: min(100%, 39rem);
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: var(--shadow);
+      padding: 1rem;
+    }
+
+    h1 {
+      margin: 0 0 1rem;
+      font-size: clamp(1.75rem, 4vw, 2.2rem);
+      line-height: 1.2;
+    }
+
+    .controls,
+    .toolbar {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    label,
+    .toolbar-label {
+      font-weight: 700;
+    }
+
+    .inline {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: end;
+    }
+
+    input,
+    select,
+    button {
+      font: inherit;
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      padding: 0.8rem 0.9rem;
+      max-width: 100%;
+    }
+
+    input,
+    select {
+      background: #fff;
+      color: var(--text);
+    }
+
+    input {
+      flex: 1 1 14rem;
+      min-width: 0;
+    }
+
+    button,
+    .button-like {
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      border-color: var(--accent);
+    }
+
+    button:hover,
+    button:focus-visible {
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    button.secondary:hover,
+    button.secondary:focus-visible {
+      background: #eef3ff;
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    :focus-visible {
+      outline: 3px solid #ffbf47;
+      outline-offset: 2px;
+    }
+
+    .message {
+      min-height: 1.5rem;
+      margin: 0;
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .status {
+      min-height: 1.5rem;
+      margin: 0.5rem 0 0;
+      color: var(--success);
+      font-weight: 700;
+    }
+
+    .tasks {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0 0;
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .task-item {
+      border: 1px solid var(--border);
+      border-radius: 0.9rem;
+      padding: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      background: #fff;
+    }
+
+    .task-label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1 1 14rem;
+      min-width: 0;
+    }
+
+    .task-label span {
+      overflow-wrap: anywhere;
+    }
+
+    .task-item[data-completed="true"] .task-label span {
+      color: var(--muted);
+    }
+
+    .empty {
+      color: var(--muted);
+      margin: 1rem 0 0;
+    }
+
+    @media (max-width: 420px) {
+      .shell,
+      .panel {
+        padding: 0.85rem;
+      }
+
+      .inline {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      button,
+      input,
+      select {
+        width: 100%;
+      }
+
+      .task-item {
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="panel" aria-labelledby="page-title">
+      <h1 id="page-title">Focus Ledger</h1>
+
+      <div class="controls">
+        <label for="task-title">Task title</label>
+        <div class="inline">
+          <input id="task-title" name="task-title" type="text" maxlength="80" autocomplete="off" aria-describedby="form-error storage-status">
+          <button id="add-task" type="button">Add task</button>
+        </div>
+        <p id="form-error" class="message" role="alert" aria-live="assertive"></p>
+      </div>
+
+      <div class="toolbar" style="margin-top: 1rem;">
+        <label class="toolbar-label" for="show-tasks">Show tasks</label>
+        <select id="show-tasks" name="show-tasks">
+          <option value="all">All</option>
+          <option value="active">Active</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+
+      <p id="storage-status" class="status" role="status" aria-live="polite"></p>
+      <p id="empty-state" class="empty">No tasks yet.</p>
+      <ul id="task-list" class="tasks" aria-live="polite"></ul>
+    </section>
+  </main>
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>

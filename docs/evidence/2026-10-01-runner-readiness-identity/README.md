@@ -1,5 +1,19 @@
 # Runner readiness identities — October 1, 2026
 
+## New native application acceptance
+
+The [native acceptance packet](native-acceptance-r1/README.md) records a real Copilot application
+run, four passed persisted verifier checks, exact source download, 14 combined
+application assertions and six demo-role review assertions. Real Connect/Test
+receipts cover Copilot, Codex and unsigned-in Claude. These observations supersede
+older statements below that provider inference and the application journey were
+unproven. See the [exact scope and limits](native-acceptance-r1/summary.json), including the
+two-attempt policy with one observed attempt, failed observer runs and development
+identity limits. Product code is unchanged from d41efee. Required hosted checks
+remain unavailable; the PR stays draft and #198 stays open. The historical sections
+below preserve their original chronology and do not impose parent-only acceptance
+requirements on child #198.
+
 ## Current protocol-label correction
 
 The [protocol correction](protocol-correction.md) addresses review comment

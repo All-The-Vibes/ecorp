@@ -1,0 +1,584 @@
+diff --git a/app.mjs b/app.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..4e7fb64524973a990f1c71c07950af0f369e7a2c
+--- /dev/null
++++ b/app.mjs
+@@ -0,0 +1,125 @@
++import {
++  TITLE_LIMIT,
++  addTask,
++  createState,
++  deleteTask,
++  filterTasks,
++  parseState,
++  serializeState,
++  toggleTask
++} from "./tasks.mjs";
++
++const STORAGE_KEY = "focus-ledger.tasks";
++
++const elements = {
++  input: document.querySelector("#task-title"),
++  addButton: document.querySelector("#add-task"),
++  filter: document.querySelector("#show-tasks"),
++  list: document.querySelector("#task-list"),
++  empty: document.querySelector("#empty-state"),
++  error: document.querySelector("#form-error"),
++  status: document.querySelector("#storage-status")
++};
++
++let state = loadState();
++
++function loadState() {
++  try {
++    return parseState(window.localStorage.getItem(STORAGE_KEY));
++  } catch {
++    window.localStorage.removeItem(STORAGE_KEY);
++    elements.status.textContent = "Saved tasks were corrupted and have been reset.";
++    return createState();
++  }
++}
++
++function saveState() {
++  window.localStorage.setItem(STORAGE_KEY, serializeState(state));
++}
++
++function setError(message = "") {
++  elements.error.textContent = message;
++}
++
++function setStatus(message = "") {
++  elements.status.textContent = message;
++}
++
++function render() {
++  const visibleTasks = filterTasks(state, elements.filter.value);
++  elements.list.innerHTML = "";
++
++  if (visibleTasks.length === 0) {
++    elements.empty.hidden = false;
++    return;
++  }
++
++  elements.empty.hidden = true;
++
++  for (const task of visibleTasks) {
++    const item = document.createElement("li");
++    item.className = "task-item";
++    item.dataset.completed = String(task.completed);
++
++    const label = document.createElement("label");
++    label.className = "task-label";
++
++    const checkbox = document.createElement("input");
++    checkbox.type = "checkbox";
++    checkbox.checked = task.completed;
++    checkbox.setAttribute("aria-label", `Complete ${task.title}`);
++    checkbox.addEventListener("change", () => {
++      state = toggleTask(state, task.id);
++      saveState();
++      setStatus("");
++      render();
++    });
++
++    const text = document.createElement("span");
++    text.textContent = task.title;
++
++    label.append(checkbox, text);
++
++    const deleteButton = document.createElement("button");
++    deleteButton.type = "button";
++    deleteButton.className = "secondary";
++    deleteButton.textContent = "Delete";
++    deleteButton.setAttribute("aria-label", `Delete ${task.title}`);
++    deleteButton.addEventListener("click", () => {
++      state = deleteTask(state, task.id);
++      saveState();
++      setStatus("");
++      render();
++    });
++
++    item.append(label, deleteButton);
++    elements.list.append(item);
++  }
++}
++
++function handleAdd() {
++  setError("");
++  setStatus("");
++
++  try {
++    state = addTask(state, elements.input.value);
++    saveState();
++    elements.input.value = "";
++    render();
++    elements.input.focus();
++  } catch (error) {
++    const message = error instanceof Error ? error.message : `Task title must be ${TITLE_LIMIT} characters or fewer.`;
++    setError(message);
++  }
++}
++
++elements.addButton.addEventListener("click", handleAdd);
++elements.input.addEventListener("keydown", (event) => {
++  if (event.key === "Enter") {
++    event.preventDefault();
++    handleAdd();
++  }
++});
++elements.filter.addEventListener("change", () => render());
++
++render();
+diff --git a/evidence/result.md b/evidence/result.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..8747735f92f0d92740b50ede9ddd2e6e4ab21391
+--- /dev/null
++++ b/evidence/result.md
+@@ -0,0 +1,10 @@
++# Focus Ledger result
++
++- Implemented `index.html`, `app.mjs`, and `tasks.mjs` as a dependency-free static checklist with localStorage persistence, accessible form/task controls, keyboard focus visibility, Enter-to-add support, filter options, and corrupt-storage recovery messaging.
++- Added `tests/tasks.test.mjs` with node:test coverage for title validation, add, toggle, delete, filtering, and storage parsing behavior.
++- Ran `node --test tests/tasks.test.mjs` after implementation.
++
++## Limits
++
++- Browser rendering and 390px viewport behavior were addressed in the responsive HTML/CSS implementation but not executed in a browser in this session.
++- Final persisted verifier execution is delegated to the runner.
+diff --git a/index.html b/index.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..6ff30be9eb16fbefe39e2349138bb657803d808d
+--- /dev/null
++++ b/index.html
+@@ -0,0 +1,233 @@
++<!DOCTYPE html>
++<html lang="en">
++<head>
++  <meta charset="UTF-8">
++  <meta name="viewport" content="width=device-width, initial-scale=1.0">
++  <title>Focus Ledger</title>
++  <style>
++    :root {
++      color-scheme: light;
++      --bg: #f5f7fb;
++      --panel: #ffffff;
++      --text: #172033;
++      --muted: #5b6475;
++      --border: #c7d0e0;
++      --accent: #2457d6;
++      --accent-strong: #153ea4;
++      --danger: #b42318;
++      --success: #1f7a3d;
++      --shadow: 0 16px 40px rgba(23, 32, 51, 0.08);
++      font-family: Arial, Helvetica, sans-serif;
++    }
++
++    * {
++      box-sizing: border-box;
++    }
++
++    body {
++      margin: 0;
++      min-width: 320px;
++      background: var(--bg);
++      color: var(--text);
++    }
++
++    .shell {
++      width: min(100%, 39rem);
++      margin: 0 auto;
++      padding: 1rem;
++    }
++
++    .panel {
++      background: var(--panel);
++      border: 1px solid var(--border);
++      border-radius: 1rem;
++      box-shadow: var(--shadow);
++      padding: 1rem;
++    }
++
++    h1 {
++      margin: 0 0 1rem;
++      font-size: clamp(1.75rem, 4vw, 2.2rem);
++      line-height: 1.2;
++    }
++
++    .controls,
++    .toolbar {
++      display: grid;
++      gap: 0.75rem;
++    }
++
++    label,
++    .toolbar-label {
++      font-weight: 700;
++    }
++
++    .inline {
++      display: flex;
++      gap: 0.75rem;
++      flex-wrap: wrap;
++      align-items: end;
++    }
++
++    input,
++    select,
++    button {
++      font: inherit;
++      border-radius: 0.75rem;
++      border: 1px solid var(--border);
++      padding: 0.8rem 0.9rem;
++      max-width: 100%;
++    }
++
++    input,
++    select {
++      background: #fff;
++      color: var(--text);
++    }
++
++    input {
++      flex: 1 1 14rem;
++      min-width: 0;
++    }
++
++    button,
++    .button-like {
++      background: var(--accent);
++      color: #fff;
++      cursor: pointer;
++      border-color: var(--accent);
++    }
++
++    button:hover,
++    button:focus-visible {
++      background: var(--accent-strong);
++      border-color: var(--accent-strong);
++    }
++
++    button.secondary {
++      background: #fff;
++      color: var(--text);
++      border-color: var(--border);
++    }
++
++    button.secondary:hover,
++    button.secondary:focus-visible {
++      background: #eef3ff;
++      color: var(--text);
++      border-color: var(--accent);
++    }
++
++    :focus-visible {
++      outline: 3px solid #ffbf47;
++      outline-offset: 2px;
++    }
++
++    .message {
++      min-height: 1.5rem;
++      margin: 0;
++      color: var(--danger);
++      font-weight: 700;
++    }
++
++    .status {
++      min-height: 1.5rem;
++      margin: 0.5rem 0 0;
++      color: var(--success);
++      font-weight: 700;
++    }
++
++    .tasks {
++      list-style: none;
++      padding: 0;
++      margin: 1rem 0 0;
++      display: grid;
++      gap: 0.75rem;
++    }
++
++    .task-item {
++      border: 1px solid var(--border);
++      border-radius: 0.9rem;
++      padding: 0.9rem;
++      display: flex;
++      justify-content: space-between;
++      align-items: center;
++      gap: 0.75rem;
++      flex-wrap: wrap;
++      background: #fff;
++    }
++
++    .task-label {
++      display: flex;
++      align-items: center;
++      gap: 0.75rem;
++      flex: 1 1 14rem;
++      min-width: 0;
++    }
++
++    .task-label span {
++      overflow-wrap: anywhere;
++    }
++
++    .task-item[data-completed="true"] .task-label span {
++      color: var(--muted);
++    }
++
++    .empty {
++      color: var(--muted);
++      margin: 1rem 0 0;
++    }
++
++    @media (max-width: 420px) {
++      .shell,
++      .panel {
++        padding: 0.85rem;
++      }
++
++      .inline {
++        flex-direction: column;
++        align-items: stretch;
++      }
++
++      button,
++      input,
++      select {
++        width: 100%;
++      }
++
++      .task-item {
++        align-items: stretch;
++      }
++    }
++  </style>
++</head>
++<body>
++  <main class="shell">
++    <section class="panel" aria-labelledby="page-title">
++      <h1 id="page-title">Focus Ledger</h1>
++
++      <div class="controls">
++        <label for="task-title">Task title</label>
++        <div class="inline">
++          <input id="task-title" name="task-title" type="text" maxlength="80" autocomplete="off" aria-describedby="form-error storage-status">
++          <button id="add-task" type="button">Add task</button>
++        </div>
++        <p id="form-error" class="message" role="alert" aria-live="assertive"></p>
++      </div>
++
++      <div class="toolbar" style="margin-top: 1rem;">
++        <label class="toolbar-label" for="show-tasks">Show tasks</label>
++        <select id="show-tasks" name="show-tasks">
++          <option value="all">All</option>
++          <option value="active">Active</option>
++          <option value="completed">Completed</option>
++        </select>
++      </div>
++
++      <p id="storage-status" class="status" role="status" aria-live="polite"></p>
++      <p id="empty-state" class="empty">No tasks yet.</p>
++      <ul id="task-list" class="tasks" aria-live="polite"></ul>
++    </section>
++  </main>
++  <script type="module" src="./app.mjs"></script>
++</body>
++</html>
+diff --git a/tasks.mjs b/tasks.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..39b33bc23f2dfbf97c1e20c3198a08c74d9704e4
+--- /dev/null
++++ b/tasks.mjs
+@@ -0,0 +1,114 @@
++const TITLE_LIMIT = 80;
++let nextId = 0;
++
++function assertTitle(title) {
++  const normalized = typeof title === "string" ? title.trim() : "";
++
++  if (!normalized) {
++    throw new Error("Task title is required.");
++  }
++
++  if (normalized.length > TITLE_LIMIT) {
++    throw new Error(`Task title must be ${TITLE_LIMIT} characters or fewer.`);
++  }
++
++  return normalized;
++}
++
++export function createState(tasks = []) {
++  return { tasks: [...tasks] };
++}
++
++export function addTask(state, title) {
++  const normalizedTitle = assertTitle(title);
++  const nextTask = {
++    id: globalThis.crypto?.randomUUID?.() ?? `task-${++nextId}`,
++    title: normalizedTitle,
++    completed: false
++  };
++
++  return {
++    tasks: [...state.tasks, nextTask]
++  };
++}
++
++export function toggleTask(state, id) {
++  let found = false;
++
++  const tasks = state.tasks.map((task) => {
++    if (task.id !== id) {
++      return task;
++    }
++
++    found = true;
++    return {
++      ...task,
++      completed: !task.completed
++    };
++  });
++
++  if (!found) {
++    throw new Error("Task not found.");
++  }
++
++  return { tasks };
++}
++
++export function deleteTask(state, id) {
++  const tasks = state.tasks.filter((task) => task.id !== id);
++
++  if (tasks.length === state.tasks.length) {
++    throw new Error("Task not found.");
++  }
++
++  return { tasks };
++}
++
++export function filterTasks(state, filter = "all") {
++  if (filter === "active") {
++    return state.tasks.filter((task) => !task.completed);
++  }
++
++  if (filter === "completed") {
++    return state.tasks.filter((task) => task.completed);
++  }
++
++  return [...state.tasks];
++}
++
++export function serializeState(state) {
++  return JSON.stringify(state.tasks);
++}
++
++export function parseState(serialized) {
++  if (serialized === null || serialized === "") {
++    return createState();
++  }
++
++  const parsed = JSON.parse(serialized);
++
++  if (!Array.isArray(parsed)) {
++    throw new Error("Saved tasks are invalid.");
++  }
++
++  return {
++    tasks: parsed.map((task) => {
++      if (
++        !task ||
++        typeof task.id !== "string" ||
++        typeof task.title !== "string" ||
++        typeof task.completed !== "boolean"
++      ) {
++        throw new Error("Saved tasks are invalid.");
++      }
++
++      return {
++        id: task.id,
++        title: assertTitle(task.title),
++        completed: task.completed
++      };
++    })
++  };
++}
++
++export { TITLE_LIMIT };
+diff --git a/tests/tasks.test.mjs b/tests/tasks.test.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..25536732f83c9b08460865c4243555f96043faa9
+--- /dev/null
++++ b/tests/tasks.test.mjs
+@@ -0,0 +1,72 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++import {
++  TITLE_LIMIT,
++  addTask,
++  createState,
++  deleteTask,
++  filterTasks,
++  parseState,
++  serializeState,
++  toggleTask
++} from "../tasks.mjs";
++
++test("addTask trims title and stores active task", () => {
++  const state = addTask(createState(), "  Deep work block  ");
++
++  assert.equal(state.tasks.length, 1);
++  assert.equal(state.tasks[0].title, "Deep work block");
++  assert.equal(state.tasks[0].completed, false);
++});
++
++test("addTask rejects blank titles", () => {
++  assert.throws(() => addTask(createState(), "   "), {
++    message: "Task title is required."
++  });
++});
++
++test("addTask rejects titles longer than 80 characters", () => {
++  assert.throws(() => addTask(createState(), "x".repeat(TITLE_LIMIT + 1)), {
++    message: "Task title must be 80 characters or fewer."
++  });
++});
++
++test("toggleTask flips completion state", () => {
++  const initial = addTask(createState(), "Review notes");
++  const toggled = toggleTask(initial, initial.tasks[0].id);
++
++  assert.equal(toggled.tasks[0].completed, true);
++});
++
++test("deleteTask removes the matching task", () => {
++  const state = addTask(addTask(createState(), "Plan"), "Ship");
++  const remaining = deleteTask(state, state.tasks[0].id);
++
++  assert.deepEqual(remaining.tasks.map((task) => task.title), ["Ship"]);
++});
++
++test("filterTasks returns active and completed views", () => {
++  const first = addTask(createState(), "First");
++  const second = addTask(first, "Second");
++  const completed = toggleTask(second, second.tasks[1].id);
++
++  assert.deepEqual(filterTasks(completed, "active").map((task) => task.title), ["First"]);
++  assert.deepEqual(filterTasks(completed, "completed").map((task) => task.title), ["Second"]);
++});
++
++test("serializeState and parseState round-trip valid tasks", () => {
++  const added = addTask(createState(), "Archive");
++  const completed = toggleTask(added, added.tasks[0].id);
++  const parsed = parseState(serializeState(completed));
++
++  assert.equal(parsed.tasks.length, 1);
++  assert.equal(parsed.tasks[0].title, "Archive");
++  assert.equal(parsed.tasks[0].completed, true);
++});
++
++test("parseState rejects invalid saved data", () => {
++  assert.throws(() => parseState('{"bad":true}'), {
++    message: "Saved tasks are invalid."
++  });
++});

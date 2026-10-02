@@ -1,0 +1,178 @@
+// Run only after the downloaded native source has been inspected. The reviewed
+// archive digest is required explicitly and each extracted file is rehashed.
+import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
+import { readFile, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import { createServer } from 'node:http'
+import { spawn } from 'node:child_process'
+import path from 'node:path'
+
+const output = path.resolve(process.argv[2])
+const reviewedDigest = process.argv[3]
+const download = JSON.parse(await readFile(path.join(output, 'download-receipt-r3.json'), 'utf8'))
+assert.equal(download.status, 'download_verified_source_execution_pending')
+assert.match(reviewedDigest ?? '', /^[a-f0-9]{64}$/)
+assert.equal(reviewedDigest, download.download_sha256)
+const root = path.resolve(download.extracted_root)
+assert.ok(root.startsWith(output + path.sep))
+const sha256 = bytes => createHash('sha256').update(bytes).digest('hex')
+const files = new Map()
+for (const file of download.files) {
+  const bytes = await readFile(path.join(root, file.path))
+  assert.equal(sha256(bytes), file.sha256)
+  files.set(`/${file.path}`, bytes)
+}
+const report = { started_at: new Date().toISOString(), status: 'running', run_id: download.run_id,
+  archive_sha256: reviewedDigest, source_files: download.files, assertions: [], console_errors: [], page_errors: [],
+  external_requests: [], assurance: 'Retrospective browser acceptance of the actual downloaded native deliverable. Source was inspected before running; no product or generated source is repaired by this driver.' }
+const check = (name, callback) => {
+  try { callback(); report.assertions.push({ name, passed: true }) }
+  catch (error) { report.assertions.push({ name, passed: false, error: error.message }); throw error }
+}
+let browser, server, page
+try {
+  let stdout = '', stderr = ''
+  const test = spawn(process.execPath, ['--test', 'tests/tasks.test.mjs'], {
+    cwd: root, windowsHide: true,
+    env: { PATH: path.dirname(process.execPath), SystemRoot: process.env.SystemRoot,
+      TEMP: process.env.TEMP, TMP: process.env.TMP, NODE_DISABLE_COLORS: '1' },
+    stdio: ['ignore', 'pipe', 'pipe'], timeout: 60000,
+  })
+  test.stdout.on('data', bytes => { stdout += bytes })
+  test.stderr.on('data', bytes => { stderr += bytes })
+  report.node_test = await new Promise((resolve, reject) => {
+    test.once('error', reject)
+    test.once('close', (code, signal) => resolve({ code, signal, command: [process.execPath, '--test', 'tests/tasks.test.mjs'] }))
+  })
+  await writeFile(path.join(output, 'generated-app-node.stdout.log'), stdout)
+  await writeFile(path.join(output, 'generated-app-node.stderr.log'), stderr)
+  check('Downloaded source passes its actual Node regression command', () => assert.equal(report.node_test.code, 0))
+  server = createServer((request, response) => {
+    const pathname = new URL(request.url, 'http://127.0.0.1').pathname
+    const key = pathname === '/' ? '/index.html' : pathname
+    const bytes = files.get(key)
+    if (!bytes || !['GET', 'HEAD'].includes(request.method)) { response.writeHead(404); response.end(); return }
+    const type = key.endsWith('.html') ? 'text/html' : key.endsWith('.css') ? 'text/css' : key.endsWith('.mjs') || key.endsWith('.js') ? 'text/javascript' : 'text/plain'
+    response.writeHead(200, { 'content-type': `${type}; charset=utf-8`, 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' })
+    response.end(request.method === 'HEAD' ? undefined : bytes)
+  })
+  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve) })
+  const origin = `http://127.0.0.1:${server.address().port}`
+  report.app_origin = origin
+  const { chromium } = createRequire(import.meta.url)(process.env.CRONY_PLAYWRIGHT_MODULE)
+  browser = await chromium.launch({ channel: 'chrome', headless: true })
+  page = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' })
+  page.setDefaultTimeout(10000)
+  page.on('pageerror', error => report.page_errors.push(error.message))
+  page.on('console', message => { if (message.type() === 'error') report.console_errors.push(message.text()) })
+  page.on('request', request => { if (new URL(request.url()).origin !== origin) report.external_requests.push(request.url()) })
+  await page.goto(origin, { waitUntil: 'networkidle' })
+  await page.getByRole('heading', { name: 'Focus Ledger', exact: true }).waitFor()
+  const title = page.getByRole('textbox', { name: 'Task title', exact: true })
+  const add = page.getByRole('button', { name: 'Add task', exact: true })
+  const filter = page.getByRole('combobox', { name: 'Show tasks', exact: true })
+  check('The native application starts with the required empty state', () => assert.ok(files.has('/index.html')))
+  await page.getByText('No tasks yet.', { exact: true }).waitFor().catch(async () => {
+    await page.getByText('No tasks yet', { exact: true }).waitFor()
+  })
+  await title.fill('   ')
+  await add.click()
+  const blank = { task_count: await page.getByRole('checkbox').count(),
+    alerts: await page.getByRole('alert').allTextContents(),
+    validation: await title.evaluate(element => element.validationMessage),
+    aria_invalid: await title.getAttribute('aria-invalid') }
+  report.blank_title = blank
+  check('Blank titles are rejected with an accessible error', () => {
+    assert.equal(blank.task_count, 0)
+    assert.ok(blank.alerts.some(text => text.trim()) || blank.validation || blank.aria_invalid === 'true')
+  })
+  await title.fill('  Plan launch  ')
+  await title.press('Enter')
+  await page.getByRole('checkbox', { name: 'Complete Plan launch', exact: true }).waitFor()
+  check('Enter submits a trimmed task title', () => assert.ok(true))
+  await title.fill('Review evidence')
+  await add.click()
+  await page.getByRole('checkbox', { name: 'Complete Review evidence', exact: true }).waitFor()
+  check('The Add task button creates a second task', () => assert.ok(true))
+  await page.getByRole('checkbox', { name: 'Complete Plan launch', exact: true }).check()
+  await filter.selectOption({ label: 'Completed' })
+  assert.equal(await page.getByRole('checkbox').count(), 1)
+  assert.equal(await page.getByRole('checkbox', { name: 'Complete Plan launch', exact: true }).isChecked(), true)
+  check('Completed filter retains only the checked task', () => assert.ok(true))
+  await filter.selectOption({ label: 'Active' })
+  assert.equal(await page.getByRole('checkbox').count(), 1)
+  await page.getByRole('checkbox', { name: 'Complete Review evidence', exact: true }).waitFor()
+  check('Active filter retains only the unfinished task', () => assert.ok(true))
+  await filter.selectOption({ label: 'All' })
+  assert.equal(await page.getByRole('checkbox').count(), 2)
+  await page.getByRole('button', { name: 'Delete Review evidence', exact: true }).click()
+  assert.equal(await page.getByRole('checkbox').count(), 1)
+  assert.equal(await page.getByRole('button', { name: 'Delete Review evidence', exact: true }).count(), 0)
+  check('Deleting a task removes only that task', () => assert.ok(true))
+  await page.reload({ waitUntil: 'networkidle' })
+  assert.equal(await page.getByRole('checkbox').count(), 1)
+  assert.equal(await page.getByRole('checkbox', { name: 'Complete Plan launch', exact: true }).isChecked(), true)
+  check('Reload preserves completion and deletion in actual localStorage', () => assert.ok(true))
+  await title.fill('x'.repeat(81))
+  const entered = await title.inputValue()
+  if (entered.length > 80) {
+    await add.click()
+    assert.equal(await page.getByRole('checkbox').count(), 1)
+    assert.ok((await page.getByRole('alert').allTextContents()).some(text => text.trim()) || await title.evaluate(element => element.validationMessage))
+  } else {
+    assert.equal(entered.length, 80)
+  }
+  report.maximum_title = { requested_length: 81, actual_input_length: entered.length, max_length: await title.getAttribute('maxlength') }
+  check('The UI enforces the 80-character title boundary', () => assert.ok(true))
+  await title.fill('')
+  await title.focus()
+  await page.keyboard.press('Tab')
+  report.focus = await page.evaluate(() => {
+    const element = document.activeElement
+    const style = getComputedStyle(element)
+    return { tag: element.tagName, text: element.textContent, outline_style: style.outlineStyle, outline_width: style.outlineWidth, box_shadow: style.boxShadow }
+  })
+  check('Keyboard navigation gives the next control visible focus', () => {
+    assert.equal(report.focus.tag, 'BUTTON')
+    assert.ok(report.focus.outline_style !== 'none' && parseFloat(report.focus.outline_width) > 0 || report.focus.box_shadow !== 'none')
+  })
+  await page.screenshot({ path: path.join(output, 'focus-ledger-desktop.png'), fullPage: true })
+  await page.setViewportSize({ width: 390, height: 844 })
+  report.narrow_layout = await page.evaluate(() => ({ width: innerWidth, scroll_width: document.documentElement.scrollWidth, body_width: document.body.scrollWidth }))
+  check('Generated application fits a 390px viewport without horizontal overflow', () => {
+    assert.ok(report.narrow_layout.scroll_width <= report.narrow_layout.width + 1)
+    assert.ok(report.narrow_layout.body_width <= report.narrow_layout.width + 1)
+  })
+  await page.screenshot({ path: path.join(output, 'focus-ledger-narrow.png'), fullPage: true })
+  const storage = await page.evaluate(() => Object.fromEntries(Object.keys(localStorage).map(key => [key, localStorage.getItem(key)])))
+  const appKeys = Object.keys(storage).filter(key => storage[key].includes('Plan launch'))
+  assert.equal(appKeys.length, 1)
+  report.storage_key = appKeys[0]
+  await page.evaluate(key => localStorage.setItem(key, '{malformed-json'), appKeys[0])
+  await page.reload({ waitUntil: 'networkidle' })
+  assert.equal(await page.getByRole('checkbox').count(), 0)
+  const recoveryText = await page.locator('body').innerText()
+  report.storage_recovery_text = recoveryText
+  check('Corrupt storage recovers to an empty list with a clear message', () => assert.match(recoveryText, /corrupt|recover|could not|couldn.t|reset|invalid|unreadable/i))
+  await page.screenshot({ path: path.join(output, 'focus-ledger-storage-recovery.png'), fullPage: true })
+  check('Generated application raises no JavaScript errors or external requests', () => {
+    assert.deepEqual(report.page_errors, [])
+    assert.deepEqual(report.external_requests, [])
+  })
+  report.status = 'passed'
+} catch (error) {
+  report.status = 'failed'
+  report.failure = error.stack
+  if (page) {
+    report.failed_page_text = await page.locator('body').innerText().catch(() => '')
+    await page.screenshot({ path: path.join(output, 'generated-app-failure.png'), fullPage: true }).catch(() => {})
+  }
+  process.exitCode = 1
+} finally {
+  if (browser) await browser.close()
+  if (server) await new Promise(resolve => server.close(resolve))
+  report.finished_at = new Date().toISOString()
+  await writeFile(path.join(output, 'generated-app-acceptance.json'), JSON.stringify(report, null, 2) + '\n')
+}
+console.log(JSON.stringify({ status: report.status, assertions: report.assertions.length, failure: report.failure }))

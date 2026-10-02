@@ -1,0 +1,411 @@
+// Opt-in native acceptance driver. No API interception or provider fixtures.
+import assert from 'node:assert/strict'
+import { createHash, randomUUID } from 'node:crypto'
+import { readFile, writeFile, rename, mkdir } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import path from 'node:path'
+import { setTimeout as delay } from 'node:timers/promises'
+
+assert.equal(process.env.CRONY_NATIVE_ACCEPTANCE, '1')
+const fixture = JSON.parse(await readFile(process.env.CRONY_NATIVE_FIXTURE, 'utf8'))
+assert.equal(fixture.test_owned, true)
+const owned = value => {
+  const relative = path.relative(fixture.qa_root, value)
+  assert.ok(relative && !relative.startsWith('..') && !path.isAbsolute(relative))
+  return value
+}
+owned(fixture.source)
+assert.notEqual(path.resolve(fixture.source), path.resolve(fixture.product_root))
+function loopback(value) {
+  const url = new URL(value)
+  assert.equal(url.protocol, 'http:')
+  assert.equal(url.hostname, '127.0.0.1')
+  assert.ok(url.port && !url.username && !url.password)
+  return url.origin
+}
+const server = loopback(fixture.server_url)
+const web = loopback(fixture.web_url)
+const demo = fixture.demo
+const api = suffix => `/api/corps/${demo.corp_id}${suffix}`
+const hash = value => createHash('sha256').update(value).digest('hex')
+const report = {
+  schema_version: 1, issue: 198, started_at: new Date().toISOString(), status: 'running',
+  product_root: fixture.product_root, runner_id: fixture.runner_id, corp_id: demo.corp_id,
+  assertions: [], phases: [], connections: [], operations: [], replay_receipts: [],
+  permission_decisions: [], page_errors: [], console_errors: [],
+  assurance: 'Real native providers and browser/server/runner; owned local source without a remote. Development-principal role checks are not production identity or independent human approval. No historical evidence is relabeled.',
+}
+const save = () => writeFile(path.join(fixture.output, 'browser.json'), `${JSON.stringify(report, null, 2)}\n`)
+async function phase(name) {
+  report.phase = name
+  report.phases.push({ name, at: new Date().toISOString() })
+  await save()
+  console.log(JSON.stringify({ phase: name, at: new Date().toISOString() }))
+}
+function verify(name, fn) {
+  try { fn(); report.assertions.push({ name, passed: true }) }
+  catch (error) { report.assertions.push({ name, passed: false, error: error.message }); throw error }
+}
+async function request(route, body, expected = 200) {
+  const response = await fetch(`${server}${route}`, {
+    method: body === undefined ? 'GET' : 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    redirect: 'error', signal: AbortSignal.timeout(15000),
+  })
+  assert.equal(response.status, expected, `${route}: ${response.status} ${(response.status === expected ? '' : await response.clone().text()).slice(0, 1000)}`)
+  return expected === 404 || expected === 204 ? null : response.json()
+}
+let lastState
+const snapshot = async () => (lastState = await request(api(`/snapshot?actor_id=${demo.alice_actor_id}`)))
+async function waitFor(fn, label, timeout = 60000) {
+  const end = Date.now() + timeout
+  while (Date.now() < end) {
+    const value = await fn()
+    if (value) return value
+    await delay(350)
+  }
+  throw new Error(`Deadline exceeded: ${label}`)
+}
+async function writeAtomic(filename, value) {
+  const temporary = path.join(fixture.output, `${filename}.tmp`)
+  await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`)
+  for (let attempt = 0; ; attempt++) {
+    try { await rename(temporary, path.join(fixture.output, filename)); break }
+    catch (error) {
+      if (!['EPERM', 'EBUSY'].includes(error.code) || attempt >= 19) throw error
+      await delay(50)
+    }
+  }
+}
+async function readOptional(filename) {
+  try { return JSON.parse(await readFile(path.join(fixture.output, filename), 'utf8')) }
+  catch (error) { if (error.code === 'ENOENT') return null; throw error }
+}
+let browser, page, roomId
+const connectionRoute = () => api(`/rooms/${roomId}/connections`)
+const connections = () => request(`${connectionRoute()}?actor_id=${demo.alice_actor_id}`)
+async function openConnections() {
+  await page.getByRole('button', { name: 'Connect a repository or coding agent', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Connect a project', exact: true })
+  await dialog.waitFor()
+  return dialog
+}
+function connectionRow(dialog, connection) {
+  return dialog.locator('.connections-saved li').filter({
+    has: page.locator('.connections-saved-title > strong', { hasText: connection.label }),
+  })
+}
+async function finished(operation) {
+  const receipt = await waitFor(async () => {
+    const next = await request(api(`/setup-operations/${operation.id}?actor_id=${demo.alice_actor_id}`))
+    return ['queued', 'running'].includes(next.status) ? null : next
+  }, `native setup ${operation.id}`, 90000)
+  report.operations.push(receipt)
+  verify(`${receipt.id}: native receipt retains actor, Corp, runner and connection`, () => {
+    assert.equal(receipt.corp_id, demo.corp_id)
+    assert.equal(receipt.actor_id, demo.alice_actor_id)
+    assert.equal(receipt.runner_id, fixture.runner_id)
+    assert.equal(receipt.connection_id, operation.connection_id)
+    assert.ok(receipt.report && receipt.report.connection_status)
+  })
+  await save()
+  return receipt
+}
+async function createConnection(provider, existingAccount) {
+  await phase(`connect-${provider.id}`)
+  const label = `Native ${provider.label} Oct 1`
+  const dialog = await openConnections()
+  await dialog.getByRole('radio', { name: 'Existing local checkout', exact: true }).check()
+  await dialog.locator('#connection-directory').fill(fixture.source)
+  await dialog.getByRole('radio', { name: provider.label, exact: true }).check()
+  await dialog.locator('details.connections-options > summary').click()
+  await dialog.locator('#connection-label').fill(label)
+  await dialog.locator('#connection-ref').fill('main')
+  await dialog.getByRole('checkbox', { name: 'Use the machine’s standard agent installation', exact: true }).check()
+  await dialog.getByRole('checkbox', { name: 'Use the agent’s existing sign-in on this machine', exact: true }).setChecked(existingAccount)
+  const pending = page.waitForResponse(response => response.request().method() === 'POST' &&
+    /\/rooms\/[^/]+\/connections$/.test(new URL(response.url()).pathname))
+  await dialog.getByRole('button', { name: 'Connect and test', exact: true }).click()
+  const response = await pending
+  assert.equal(response.status(), 200)
+  const body = response.request().postDataJSON()
+  const created = await response.json()
+  roomId = created.operation.room_id
+  const operation = await finished(created.operation)
+  const replay = await request(connectionRoute(), body)
+  verify(`${provider.label}: same request key retains connection and operation identities`, () => {
+    assert.equal(replay.connection.id, created.connection.id)
+    assert.equal(replay.operation.id, created.operation.id)
+  })
+  report.replay_receipts.push({ provider: provider.id, request: body, connection_id: replay.connection.id, operation_id: replay.operation.id })
+  await request(api(`/setup-operations/${operation.id}?actor_id=${demo.bob_actor_id}`), undefined, 404)
+  verify(`${provider.label}: another development actor cannot read Alice's setup receipt`, () => assert.ok(true))
+  const record = (await connections()).connections.find(item => item.id === created.connection.id)
+  verify(`${provider.label}: saved source/status match the native setup receipt`, () => {
+    assert.equal(record.agent, provider.id)
+    assert.equal(record.status, operation.report.connection_status)
+    assert.equal(record.source.base_commit, fixture.source_head)
+    assert.equal(record.source.base_ref, 'main')
+    assert.match(record.source.repository, /^local\//)
+    assert.ok(!record.source.repository.toLowerCase().endsWith('/ecorp'))
+  })
+  const row = connectionRow(dialog, { label })
+  await row.waitFor()
+  const checkPending = page.waitForResponse(result => result.request().method() === 'POST' &&
+    new URL(result.url()).pathname === api(`/connections/${record.id}/check`))
+  await row.getByRole('button', { name: 'Test', exact: true }).click()
+  const checkedResponse = await checkPending
+  assert.equal(checkedResponse.status(), 200)
+  const checked = await finished((await checkedResponse.json()).operation)
+  const after = (await connections()).connections.find(item => item.id === record.id)
+  verify(`${provider.label}: Test retains connection/source and reports actual readiness`, () => {
+    assert.equal(after.id, record.id)
+    assert.deepEqual(after.source, record.source)
+    assert.equal(after.status, checked.report.connection_status)
+  })
+  report.connections.push({ ...after, test_existing_account: existingAccount })
+  await dialog.screenshot({ path: path.join(fixture.output, `connection-${provider.id}.png`) })
+  await dialog.getByRole('button', { name: 'Close', exact: true }).click()
+  await save()
+  return after
+}
+async function runnerControl(action) {
+  const nonce = `${action}-${randomUUID()}`
+  await writeAtomic('runner-control.json', { nonce, action, runner_id: fixture.runner_id })
+  return waitFor(() => readOptional(`runner-control-${nonce}.json`), `owned runner ${action}`)
+}
+async function permission(approval) {
+  const fingerprint = hash(JSON.stringify(approval))
+  await writeAtomic('pending-approval.json', { run_id: report.run_id, fingerprint, approval })
+  await phase(`permission-review-${approval.id}`)
+  const decision = await waitFor(async () => {
+    const next = await readOptional(`decision-${approval.id}.json`)
+    return next && next.approval_id === approval.id && next.fingerprint === fingerprint && typeof next.approve === 'boolean' ? next : null
+  }, 'exact scoped command review by acceptance operator', 180000)
+  const item = page.locator('.mission-approval-item').filter({ has: page.getByText(approval.action, { exact: true }) })
+  const responsePending = page.waitForResponse(response => response.request().method() === 'POST' && response.url().includes(approval.id))
+  await item.getByRole('button', { name: decision.approve ? 'Approve action' : 'Reject', exact: true }).click()
+  const response = await responsePending
+  assert.equal(response.status(), 200)
+  report.permission_decisions.push({ approval, fingerprint, decision, response: await response.json(), decided_at: new Date().toISOString() })
+  await save()
+}
+async function addFileCheck(editor, number, filename) {
+  await editor.getByRole('button', { name: 'Add check', exact: true }).click()
+  const check = editor.getByRole('group', { name: `Check ${number}`, exact: true })
+  await check.getByLabel(`Verifier check ${number} type`, { exact: true }).selectOption('file')
+  await check.getByLabel('Worktree-relative path', { exact: true }).fill(filename)
+  await check.getByLabel('Minimum bytes', { exact: true }).fill('1')
+}
+const terminal = run => run && ['completed', 'failed', 'cancelled', 'lost'].includes(run.status)
+try {
+  await save()
+  const { chromium } = createRequire(import.meta.url)(process.env.CRONY_PLAYWRIGHT_MODULE)
+  browser = await chromium.launch({ channel: 'chrome', headless: true })
+  page = await browser.newPage({ viewport: { width: 1440, height: 1050 }, reducedMotion: 'reduce', acceptDownloads: true })
+  page.setDefaultTimeout(25000)
+  page.on('pageerror', error => report.page_errors.push(error.message))
+  page.on('console', message => { if (message.type() === 'error') report.console_errors.push(message.text()) })
+  await page.goto(`${web}/#missions`, { waitUntil: 'networkidle' })
+  await page.locator('.live-indicator.live-live').waitFor()
+  if (await page.locator('#new-mission-button').isVisible()) await page.locator('#new-mission-button').click()
+  assert.ok(fixture.resumed_from)
+  const previous = JSON.parse(await readFile(path.join(fixture.resumed_from, 'browser.json'), 'utf8'))
+  assert.equal(previous.mission_id, undefined)
+  assert.equal(previous.run_id, undefined)
+  report.resumed_from = fixture.resumed_from
+  report.prior_driver_failure = previous.failure
+  roomId = previous.connections[0].room_id
+  const saved = await connections()
+  for (const prior of previous.connections) {
+    const current = saved.connections.find(item => item.id === prior.id)
+    verify(`${prior.agent}: recovery retained the saved connection and exact source`, () => {
+      assert.ok(current)
+      assert.equal(current.runner_id, fixture.runner_id)
+      assert.deepEqual(current.source, prior.source)
+      assert.equal(current.status, prior.status)
+    })
+    report.connections.push(current)
+  }
+  verify('Recovery creates no duplicate saved connections', () => assert.equal(saved.connections.length, previous.connections.length))
+  const selected = report.connections.find(item => item.agent === 'github-copilot' && item.status === 'ready') ??
+    report.connections.find(item => item.status === 'ready')
+  if (!selected) {
+    report.status = 'blocked'; report.blocker = 'No real native connection is ready. The recorded actual provider states require external sign-in/environment recovery.'
+    process.exitCode = 2
+  } else {
+    report.selected_connection = selected
+    await phase('recover-persisted-selection')
+    let dialog = await openConnections()
+    await connectionRow(dialog, selected).getByRole('button', { name: 'Use', exact: true }).click()
+    await waitFor(async () => (await page.locator('#mission-repository').inputValue()) === `connection:${selected.id}`, 'selected saved connection')
+    await page.reload({ waitUntil: 'networkidle' })
+    await page.locator('.live-indicator.live-live').waitFor()
+    if (await page.locator('#new-mission-button').isVisible()) await page.locator('#new-mission-button').click()
+    const reloadedSelection = await page.locator('#mission-repository').inputValue()
+    verify('Saved selection survives reload', () => assert.equal(reloadedSelection, `connection:${selected.id}`))
+    dialog = await openConnections()
+    report.reconnect_test_reference = 'issue198-native-r1/browser.json and its stop/start receipts; already observed on this same fixture and source';
+    const afterReconnect = await connections()
+    verify('Recovery retains every connection and immutable source', () => {
+      assert.equal(afterReconnect.connections.length, report.connections.length)
+      for (const item of report.connections) assert.deepEqual(afterReconnect.connections.find(next => next.id === item.id).source, item.source)
+    })
+    await page.setViewportSize({ width: 390, height: 844 })
+    await dialog.screenshot({ path: path.join(fixture.output, 'connections-narrow.png') })
+    report.narrow_layout = await dialog.evaluate(element => ({ width: element.clientWidth, scroll_width: element.scrollWidth }))
+    verify('Connection panel fits a 390-pixel viewport', () => assert.ok(report.narrow_layout.scroll_width <= report.narrow_layout.width + 1))
+    await page.keyboard.press('Escape')
+    await dialog.waitFor({ state: 'hidden' })
+    const restoredFocus = await page.getByRole('button', { name: 'Connect a repository or coding agent', exact: true }).evaluate(element => document.activeElement === element)
+    verify('Escape closes setup and restores the keyboard focus to its opener', () => assert.equal(restoredFocus, true))
+    await page.setViewportSize({ width: 1440, height: 1050 })
+    assert.equal(await page.locator('#mission-repository').inputValue(), `connection:${selected.id}`)
+    await phase('save-exact-application-plan')
+    await page.locator('#mission-title').fill('Build Focus Ledger, an accessible local task checklist with persistence and tests')
+    await page.locator('details.mission-advanced-options').filter({ has: page.locator('#mission-description') }).locator('summary').click()
+    await page.locator('#mission-description').fill([
+      'Create a small dependency-free static application in this assigned isolated worktree only. Do not modify the original checkout or any other source.',
+      'Deliver index.html, app.mjs, tasks.mjs, tests/tasks.test.mjs and evidence/result.md. No packages, network access, publishing, commits, background servers, browser launch or process termination are needed. Use native file tools for code and run node --test tests/tasks.test.mjs once when ready. Do not inspect account/credential files.',
+      'The page heading must be Focus Ledger. Provide a field labelled Task title, an Add task button, and a Show tasks select with All, Active and Completed options. The empty state is No tasks yet. Each task has an accessible checkbox named Complete followed by its exact title, and a Delete followed by its exact title button. Keep titles visible while completed.',
+      'Reject blank titles with an accessible error; trim titles and limit to 80 characters. Use a pure tasks.mjs model with at least six meaningful node:test cases covering blank/long titles, add, complete, deletion and filtering. UI state persists in localStorage; corrupt localStorage recovers to an empty list with a clear message.',
+      'Pressing Enter in the title field adds a valid task, controls have visible keyboard focus, and a 390px viewport must not overflow horizontally. No external assets. Use a responsive light theme.',
+      'Record actual tests and implementation limits in evidence/result.md. The runner separately executes the persisted verifier after your provider session ends. A later development-principal review gate remains separate from implementation. Return promptly when done.',
+    ].join('\n'))
+    const options = page.locator('details.mission-advanced-options').filter({ has: page.locator('#mission-budget') })
+    await options.locator('summary').click()
+    const enabledModels = selected.models.filter(model => model.policy_state !== 'disabled')
+    const model = enabledModels.find(item => item.id === 'gpt-5.4') ?? enabledModels[0]
+    assert.ok(model, 'No enabled model in actual native catalog')
+    await page.locator('#mission-model').selectOption(model.id)
+    report.selected_model = model.id
+    await page.locator('#mission-budget').selectOption('500000')
+    await page.locator('#mission-deliverable').selectOption('archive')
+    await options.getByRole('checkbox', { name: /Commit verified work/ }).uncheck()
+    await options.getByRole('checkbox', { name: /Save without starting/ }).check()
+    await page.getByRole('button', { name: 'Review and build', exact: true }).click()
+    await page.getByRole('checkbox', { name: /Custom verification/ }).check()
+    const editor = page.getByTestId('mission-verification-editor')
+    await addFileCheck(editor, 2, 'index.html')
+    await addFileCheck(editor, 3, 'evidence/result.md')
+    await editor.getByRole('button', { name: 'Add check', exact: true }).click()
+    const commandCheck = editor.getByRole('group', { name: 'Check 4', exact: true })
+    await commandCheck.getByLabel('Verifier check 4 type', { exact: true }).selectOption('test')
+    await commandCheck.getByLabel('Program', { exact: true }).fill(fixture.node_path)
+    // React's controlled textarea has initial text content; exact label text
+    // can include that value. This fieldset has exactly one argument textarea.
+    assert.equal(await commandCheck.locator('textarea').count(), 1)
+    await commandCheck.locator('textarea').fill('--test\ntests/tasks.test.mjs')
+    await commandCheck.getByLabel('Timeout in milliseconds', { exact: true }).fill('60000')
+    await editor.locator('.manual-gate-editor > label > select').selectOption('independent_review')
+    await editor.getByRole('checkbox', { name: /Exclude the mission requester/ }).check()
+    const createPending = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === api('/missions'))
+    await page.getByRole('button', { name: 'Save plan', exact: true }).click()
+    const createResponse = await createPending
+    assert.equal(createResponse.status(), 200)
+    report.mission_create_request = createResponse.request().postDataJSON()
+    const created = await createResponse.json()
+    report.mission_id = created.mission_id
+    const held = await snapshot()
+    report.held_plan = {
+      mission: held.snapshot.missions.find(item => item.id === report.mission_id),
+      tasks: held.snapshot.tasks.filter(item => item.mission_id === report.mission_id),
+      runs: held.snapshot.runs.filter(item => held.snapshot.tasks.some(task => task.id === item.task_id && task.mission_id === report.mission_id)),
+    }
+    verify('Browser saved one held task with the exact saved connection/source and verifier', () => {
+      assert.equal(report.held_plan.runs.length, 0)
+      assert.equal(report.held_plan.tasks.length, 1)
+      const task = report.held_plan.tasks[0]
+      assert.equal(task.contract.workspace_connection_id, selected.id)
+      assert.equal(task.contract.source_repository, selected.source.repository)
+      assert.equal(task.contract.source_base_ref, selected.source.base_ref)
+      assert.equal(task.contract.source_base_commit, selected.source.base_commit)
+      assert.equal(task.verification_policy.checks.length, 4)
+      assert.equal(task.verification_policy.manual_gate.exclude_requester, true)
+    })
+    report.attempt_limit = report.held_plan.tasks[0].max_attempts
+    report.attempt_scope = 'The browser preserves its persisted attempt policy. This observer launches once and never retries a failed or stopped run.'
+    await save()
+    await page.screenshot({ path: path.join(fixture.output, 'native-application-held.png'), fullPage: true })
+    const card = page.locator(`[data-mission-id="${report.mission_id}"]`)
+    const launchPending = page.waitForResponse(response => response.request().method() === 'POST' &&
+      new URL(response.url()).pathname === api(`/missions/${report.mission_id}/launch`))
+    await card.getByTestId('work-result-card').getByRole('button', { name: 'Start mission', exact: true }).click()
+    const launched = await launchPending
+    assert.equal(launched.status(), 200)
+    report.run_id = (await launched.json()).run_id
+    await phase('real-native-application-running')
+    const end = Date.now() + 600000
+    const decisions = new Set()
+    let readyForReview = false
+    while (Date.now() < end) {
+      const state = await snapshot()
+      const run = state.snapshot.runs.find(item => item.id === report.run_id)
+      report.run = run
+      if (run?.workspace_path) {
+        owned(run.workspace_path)
+        assert.notEqual(path.resolve(run.workspace_path), path.resolve(fixture.source))
+        report.workspace_path = run.workspace_path
+      }
+      for (const approval of state.snapshot.action_approvals.filter(item => item.run_id === report.run_id && item.status === 'pending')) {
+        if (!decisions.has(approval.id)) { await permission(approval); decisions.add(approval.id) }
+      }
+      const review = state.snapshot.verification_requests.find(item => item.run_id === report.run_id && item.status === 'pending')
+      if (review) { report.verification_request = review; readyForReview = true; break }
+      if (terminal(run)) {
+        if (run.status !== 'completed') throw new Error(`Native application ended ${run.status}; preserve exact lineage without a reset`)
+        break
+      }
+      await save()
+      await delay(1000)
+    }
+    const final = await snapshot()
+    report.run = final.snapshot.runs.find(item => item.id === report.run_id)
+    report.events = final.snapshot.events.filter(item => item.aggregate_id === report.run_id)
+    await writeFile(path.join(fixture.output, 'native-final-state.json'), `${JSON.stringify(final, null, 2)}\n`)
+    verify('Actual provider session reported nonzero usage', () => {
+      assert.ok(report.run.provider_session_id)
+      assert.ok(report.run.input_tokens + report.run.output_tokens > 0)
+    })
+    verify('Exactly one task attempt was used; no retry or replacement workspace', () => {
+      assert.equal(final.snapshot.runs.filter(item => item.task_id === report.run.task_id).length, 1)
+    })
+    verify('Native execution reached its persisted review gate', () => assert.ok(readyForReview))
+    await page.screenshot({ path: path.join(fixture.output, 'native-application-review.png'), fullPage: true })
+    await phase('native-review-ready')
+    await writeAtomic('review-ready.json', { run_id: report.run_id, mission_id: report.mission_id, workspace_path: report.workspace_path, verification_request: report.verification_request })
+    // Permit inspection of the generated source and application before deciding the
+    // independent development-principal gate. This does not synthesize a human review.
+    const continuation = await waitFor(async () => {
+      const next = await readOptional('native-finish.json')
+      return next?.run_id === report.run_id ? next : null
+    }, 'source/application inspection while preserving pending review', 420000)
+    report.application_followup = continuation
+    report.status = continuation.application_passed ? 'passed_to_review' : 'native_verifier_passed_application_unverified'
+    report.review_limitation = 'The independent review gate remains pending unless a separate observed development-principal decision receipt is recorded. No production human approval is claimed.'
+  }
+} catch (error) {
+  report.status = 'failed'; report.failure = error.stack; process.exitCode = 1
+  if (page) {
+    await page.screenshot({ path: path.join(fixture.output, 'failure.png'), fullPage: true }).catch(() => {})
+    report.failed_page_text = await page.locator('body').innerText().catch(() => '')
+    await writeFile(path.join(fixture.output, 'failed-dom.html'), await page.content()).catch(() => {})
+  }
+  try {
+    const state = await snapshot()
+    await writeFile(path.join(fixture.output, 'native-failure-state.json'), `${JSON.stringify(state, null, 2)}\n`)
+    const run = state.snapshot.runs.find(item => item.id === report.run_id)
+    const review = state.snapshot.verification_requests.find(item => item.run_id === report.run_id && item.status === 'pending')
+    if (run && !terminal(run) && !review) {
+      report.failure_stop = await request(api(`/agents/${run.agent_id}/emergency-stop`), { actor_id: demo.alice_actor_id, reason: 'Owned native acceptance stopped on failure; retain this exact lineage and worktree.' })
+      await delay(7000)
+      await writeFile(path.join(fixture.output, 'native-stopped-state.json'), `${JSON.stringify(await snapshot(), null, 2)}\n`)
+    }
+  } catch (cleanupError) { report.stop_failure = cleanupError.message }
+} finally {
+  if (browser) await browser.close()
+  report.finished_at = new Date().toISOString()
+  await save()
+}
+console.log(JSON.stringify({ status: report.status, assertions: report.assertions.length, output: fixture.output }))

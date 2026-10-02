@@ -1,0 +1,247 @@
+#requires -Version 7.5
+# Opt-in real native acceptance against a fresh owned local source and local services.
+param(
+    [Parameter(Mandatory)][string]$ProductRoot,
+    [Parameter(Mandatory)][string]$PostgresBin,
+    [Parameter(Mandatory)][string]$QaParent,
+    [Parameter(Mandatory)][string]$OutputRoot,
+    [Parameter(Mandatory)][string]$PlaywrightModule
+)
+$ErrorActionPreference = 'Stop'
+$taskProduct = (Resolve-Path -LiteralPath $ProductRoot).Path
+$taskPg = (Resolve-Path -LiteralPath $PostgresBin).Path
+$taskQaParent = (Resolve-Path -LiteralPath $QaParent).Path
+$taskOutput = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputRoot)
+$taskQa = Join-Path $taskQaParent ('issue198-native-' + [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfff') + '-' + [guid]::NewGuid().ToString('N').Substring(0,8))
+if ((Test-Path -LiteralPath $taskQa) -or (Test-Path -LiteralPath $taskOutput)) { throw 'Fresh paths required; preserve prior acceptance.' }
+if ($taskQa.StartsWith($taskProduct + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Fixture must be outside product source.' }
+$taskNode = (Resolve-Path -LiteralPath '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe').Path
+$taskServer = (Resolve-Path -LiteralPath (Join-Path $taskProduct 'target/debug/crony-server.exe')).Path
+$taskRunner = (Resolve-Path -LiteralPath (Join-Path $taskProduct 'target/debug/crony-runner.exe')).Path
+$taskVite = (Resolve-Path -LiteralPath (Join-Path $taskProduct 'apps/web/node_modules/vite/bin/vite.js')).Path
+$taskCodex = (Resolve-Path -LiteralPath '<USERPROFILE>\.local\bin\codex.exe').Path
+$taskClaude = (Resolve-Path -LiteralPath '<USERPROFILE>\AppData\Local\Microsoft\WinGet\Links\claude.exe').Path
+$taskCopilot = (Resolve-Path -LiteralPath '<USERPROFILE>\AppData\Local\github-copilot-sdk\cli\1.0.79\copilot.exe').Path
+$taskBrowserDriver = Join-Path $PSScriptRoot 'issue198-native-browser-r1.mjs'
+$taskRunnerEnvironment = $null
+$taskControlNonces = [Collections.Generic.HashSet[string]]::new()
+
+Import-Module (Join-Path $taskProduct 'tools/local_stack.psm1') -Force
+function New-FixturePort {
+    $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, 0)
+    try { $listener.Start(); $listener.LocalEndpoint.Port } finally { $listener.Stop() }
+}
+function Get-FixtureSourceIdentity {
+    Push-Location $taskProduct
+    try {
+        $taskFiles = (& git ls-files -z --cached --others --exclude-standard) -split "`0" | Where-Object { $_ } | Sort-Object -Unique
+        if ($LASTEXITCODE) { throw 'Source inventory failed.' }
+        @($taskFiles | ForEach-Object { [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash.ToLowerInvariant()} })
+    } finally { Pop-Location }
+}
+function Invoke-FixtureGit {
+    param([string[]]$Arguments)
+    & git -C (Join-Path $taskQa 'source') @Arguments *> (Join-Path $taskQa 'git-last.log')
+    if ($LASTEXITCODE) { throw 'Owned fixture Git command failed; inspect git-last.log.' }
+}
+function Wait-FixtureHttp {
+    param([string]$Url)
+    $deadline = [DateTime]::UtcNow.AddSeconds(60)
+    do {
+        try { $null = Invoke-RestMethod -Uri $Url -TimeoutSec 2; return } catch { Start-Sleep -Milliseconds 250 }
+    } while ([DateTime]::UtcNow -lt $deadline)
+    throw 'Owned HTTP service did not become ready.'
+}
+$taskState = @{schema_version=2;workspace=$taskQa;purpose='issue198-native-full-stack';test_owned=$true;processes=@{}}
+$taskReceipt = [ordered]@{
+    started_at=[DateTimeOffset]::UtcNow.ToString('o');status='starting';issue=198
+    qa_root=$taskQa;product_root=$taskProduct;output=$taskOutput;stopped=@{}
+    head=(& git -C $taskProduct rev-parse HEAD);source_before=(Get-FixtureSourceIdentity)
+    server_sha256=(Get-FileHash -LiteralPath $taskServer -Algorithm SHA256).Hash.ToLowerInvariant()
+    runner_sha256=(Get-FileHash -LiteralPath $taskRunner -Algorithm SHA256).Hash.ToLowerInvariant()
+    native_executables=@(
+      @{provider='codex';path=$taskCodex;sha256=(Get-FileHash -LiteralPath $taskCodex -Algorithm SHA256).Hash.ToLowerInvariant()}
+      @{provider='claude-code';path=$taskClaude;sha256=(Get-FileHash -LiteralPath $taskClaude -Algorithm SHA256).Hash.ToLowerInvariant()}
+      @{provider='github-copilot';path=$taskCopilot;sha256=(Get-FileHash -LiteralPath $taskCopilot -Algorithm SHA256).Hash.ToLowerInvariant();required_cli_version='1.0.79';sdk_version='1.0.11'}
+    )
+    runner_controls=@()
+    driver_sha256=(Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant()
+    browser_driver_sha256=(Get-FileHash -LiteralPath $taskBrowserDriver -Algorithm SHA256).Hash.ToLowerInvariant()
+    assurance='Real browser/server/runner and real installed native providers. Fresh owned local Git source without a remote. Development principals do not represent production human review. Readiness is separate from observed inference and verifier evidence.'
+}
+$taskCode = 1
+$taskSecretPaths = @()
+try {
+    New-Item -ItemType Directory -Path $taskQa,$taskOutput | Out-Null
+    $taskSid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+    & icacls.exe $taskQa /inheritance:r /grant:r "*${taskSid}:(OI)(CI)F" '*S-1-5-18:(OI)(CI)F' | Out-Null
+    if ($LASTEXITCODE) { throw 'Cannot restrict fixture to current user and SYSTEM.' }
+    New-Item -ItemType Directory -Path (Join-Path $taskQa 'source'),(Join-Path $taskQa 'runner') | Out-Null
+    Invoke-FixtureGit -Arguments @('init','-b','main')
+    Invoke-FixtureGit -Arguments @('config','user.name','ECorp acceptance fixture')
+    Invoke-FixtureGit -Arguments @('config','user.email','acceptance@example.invalid')
+    Invoke-FixtureGit -Arguments @('config','commit.gpgsign','false')
+    # This non-ECorp source has no remote. The runner assigns its native local identity.
+    [IO.File]::WriteAllText((Join-Path $taskQa 'source/README.md'), "# Focus Ledger acceptance source`n`nOwned empty application repository for issue 198 native acceptance. No remote is configured.`n")
+    Invoke-FixtureGit -Arguments @('add','--','README.md')
+    Invoke-FixtureGit -Arguments @('commit','-m','Initialize owned readiness acceptance source')
+    $taskSourceHead = & git -C (Join-Path $taskQa 'source') rev-parse HEAD
+    if ($LASTEXITCODE) { throw 'Cannot identify fixture source.' }
+    $taskReceipt.fixture_source_head_before=$taskSourceHead
+    $taskDbPort = New-FixturePort
+    & (Join-Path $taskPg 'initdb.exe') -D (Join-Path $taskQa 'database') -U issue198_acceptance --auth=trust --encoding=UTF8 --locale=C *> (Join-Path $taskQa 'initdb.log')
+    if ($LASTEXITCODE) { throw 'Owned PostgreSQL initialization failed.' }
+    $taskState.processes.postgres = Start-LocalOwnedProcess -Role postgres -Workspace $taskQa -FilePath (Join-Path $taskPg 'postgres.exe') -ArgumentList @('-D',(Join-Path $taskQa 'database'),'-h','127.0.0.1','-p',"$taskDbPort") -WorkingDirectory $taskQa -LogDirectory (Join-Path $taskQa 'logs')
+    Save-LocalStackState -Path (Join-Path $taskQa 'ownership.json') -State $taskState -Workspace $taskQa
+    $taskDeadline = [DateTime]::UtcNow.AddSeconds(30)
+    do {
+        & (Join-Path $taskPg 'pg_isready.exe') -h 127.0.0.1 -p $taskDbPort -U issue198_acceptance -d postgres *> $null
+        if ($LASTEXITCODE -eq 0) { break }
+        Start-Sleep -Milliseconds 200
+    } while ([DateTime]::UtcNow -lt $taskDeadline)
+    if ($LASTEXITCODE) { throw 'Owned PostgreSQL did not become ready.' }
+    $taskServerPort = New-FixturePort
+    $taskWebPort = New-FixturePort
+    $taskServerUrl = "http://127.0.0.1:$taskServerPort"
+    $taskWebUrl = "http://127.0.0.1:$taskWebPort"
+    $taskState.processes.server = Start-LocalOwnedProcess -Role server -Workspace $taskQa -FilePath $taskServer -WorkingDirectory $taskProduct -LogDirectory (Join-Path $taskQa 'logs') -Environment @{
+        DATABASE_URL="postgres://issue198_acceptance@127.0.0.1:$taskDbPort/postgres"
+        CRONY_BIND="127.0.0.1:$taskServerPort";CRONY_CORS_ORIGINS=$taskWebUrl
+        CRONY_OBJECT_STORE_LOCAL_ROOT=(Join-Path $taskQa 'objects')
+    }
+    Save-LocalStackState -Path (Join-Path $taskQa 'ownership.json') -State $taskState -Workspace $taskQa
+    Wait-FixtureHttp "$taskServerUrl/health"
+    $taskDemo = Invoke-RestMethod -Uri "$taskServerUrl/api/demo/bootstrap?seed_crew=false" -Method Post -ContentType 'application/json' -Body '{}'
+    $taskRunnerId = 'issue198-' + [guid]::NewGuid().ToString('N')
+    $taskEnrollment = Invoke-RestMethod -Uri "$taskServerUrl/api/corps/$($taskDemo.corp_id)/runners/enroll" -Method Post -ContentType 'application/json' -Body (@{actor_id=$taskDemo.alice_actor_id;runner_id=$taskRunnerId;expires_in_seconds=600} | ConvertTo-Json -Compress)
+    $taskTokenPath = Join-Path $taskQa 'runner-enrollment.token'
+    $taskCredentialPath = Join-Path $taskQa 'runner/credential.json'
+    $taskSecretPaths = @($taskTokenPath,$taskCredentialPath)
+    [IO.File]::WriteAllText($taskTokenPath, $taskEnrollment.enrollment_token)
+    $taskEnrollment = $null
+    $taskRunnerEnvironment = @{
+        CRONY_RUNNER_ENROLLMENT_TOKEN_FILE=$taskTokenPath;CRONY_RUNNER_CREDENTIAL_FILE=$taskCredentialPath
+        CRONY_RUNNER_WORKSPACE=(Join-Path $taskQa 'runner');CRONY_SOURCE_REPOSITORY=(Join-Path $taskQa 'source');CRONY_SOURCE_BASE_REF='main'
+        CRONY_CONNECTIONS_DIRECTORY=(Join-Path $taskQa 'runner/connections');CRONY_REPOSITORY_ROOTS=(Join-Path $taskQa 'source')
+        CRONY_CORP_ID=$taskDemo.corp_id;CRONY_RUNNER_ID=$taskRunnerId
+        CRONY_SERVER_WS="ws://127.0.0.1:$taskServerPort/ws/runner"
+        CRONY_CODEX_COMMAND=$taskCodex;CRONY_CLAUDE_COMMAND=$taskClaude
+        CRONY_OPENCODE_COMMAND=(Join-Path $taskQa 'absent-opencode.exe')
+        CRONY_COPILOT_CLI_PATH=$taskCopilot;COPILOT_AUTO_UPDATE='false'
+        CRONY_GITHUB_COMMAND=(Join-Path $taskQa 'absent-gh.exe')
+    }
+    $taskState.processes.runner = Start-LocalOwnedProcess -Role runner -Workspace $taskQa -FilePath $taskRunner -WorkingDirectory $taskProduct -LogDirectory (Join-Path $taskQa 'logs') -Environment $taskRunnerEnvironment
+    $taskState.processes.web = Start-LocalOwnedProcess -Role web -Workspace $taskQa -FilePath $taskNode -ArgumentList @($taskVite,'--host','127.0.0.1','--port',"$taskWebPort",'--strictPort') -WorkingDirectory (Join-Path $taskProduct 'apps/web') -LogDirectory (Join-Path $taskQa 'logs') -Environment @{VITE_CRONY_SERVER_HTTP=$taskServerUrl}
+    Save-LocalStackState -Path (Join-Path $taskQa 'ownership.json') -State $taskState -Workspace $taskQa
+    Wait-FixtureHttp $taskWebUrl
+    $taskDeadline = [DateTime]::UtcNow.AddSeconds(60)
+    do {
+        $taskSnapshot = Invoke-RestMethod -Uri "$taskServerUrl/api/corps/$($taskDemo.corp_id)/snapshot?actor_id=$($taskDemo.alice_actor_id)" -TimeoutSec 5
+        $taskReady = @($taskSnapshot.runners | Where-Object { $_.id -eq $taskRunnerId -and $_.connected -and $_.status -eq 'connected' }).Count -eq 1
+        if (!$taskReady) { Start-Sleep -Milliseconds 300 }
+    } while (!$taskReady -and [DateTime]::UtcNow -lt $taskDeadline)
+    if (!$taskReady) { throw 'Owned runner did not connect.' }
+    $taskManifest = @{test_owned=$true;qa_root=$taskQa;product_root=$taskProduct;output=$taskOutput;source=(Join-Path $taskQa 'source');source_head=$taskSourceHead;node_path=$taskNode;server_url=$taskServerUrl;web_url=$taskWebUrl;runner_id=$taskRunnerId;processes=$taskState.processes;demo=$taskDemo}
+    $taskFixturePath = Join-Path $taskOutput 'owned-fixture.json'
+    $taskManifest | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $taskFixturePath -Encoding utf8
+    $taskReceipt.status='running'
+    $taskReceipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $taskOutput 'driver.json') -Encoding utf8
+    $taskState.processes.acceptance = Start-LocalOwnedProcess -Role acceptance -Workspace $taskQa -FilePath $taskNode -ArgumentList @($taskBrowserDriver) -WorkingDirectory $taskProduct -LogDirectory $taskOutput -Environment @{
+        CRONY_PLAYWRIGHT_MODULE=$PlaywrightModule;CRONY_NATIVE_ACCEPTANCE='1';CRONY_NATIVE_FIXTURE=$taskFixturePath
+    }
+    Save-LocalStackState -Path (Join-Path $taskQa 'ownership.json') -State $taskState -Workspace $taskQa
+    $taskAcceptance = Get-Process -Id $taskState.processes.acceptance.pid -ErrorAction Stop
+    try {
+        [void]$taskAcceptance.Handle
+        $taskDeadline = [DateTime]::UtcNow.AddSeconds(1500)
+        while (!$taskAcceptance.WaitForExit(500)) {
+            if ([DateTime]::UtcNow -ge $taskDeadline) { throw 'Owned native acceptance exceeded 25 minutes; preserve the same lineage.' }
+            $controlPath = Join-Path $taskOutput 'runner-control.json'
+            if (Test-Path -LiteralPath $controlPath) {
+                $control = Get-Content -LiteralPath $controlPath -Raw | ConvertFrom-Json
+                if ($control.nonce -match '^[a-z0-9-]{8,80}$' -and $taskControlNonces.Add([string]$control.nonce)) {
+                    $controlReceipt = [ordered]@{nonce=$control.nonce;action=$control.action;at=[DateTimeOffset]::UtcNow.ToString('o');runner_id=$taskRunnerId;status='failed'}
+                    if ($control.action -eq 'stop') {
+                        $stateNow = Invoke-RestMethod -Uri "$taskServerUrl/api/corps/$($taskDemo.corp_id)/snapshot?actor_id=$($taskDemo.alice_actor_id)" -TimeoutSec 5
+                        if (@($stateNow.snapshot.runs | Where-Object { $_.runner_id -eq $taskRunnerId -and $_.status -notin @('completed','failed','cancelled','lost') }).Count) { throw 'Cannot run disconnect test during an active owned run.' }
+                        $controlReceipt.previous=$taskState.processes.runner
+                        if (!(Test-LocalOwnedProcess -Record $taskState.processes.runner -Workspace $taskQa)) { throw 'Runner ownership was not verified for disconnect test.' }
+                        $null=Stop-LocalOwnedProcess -Record $taskState.processes.runner -Workspace $taskQa
+                        if (Test-LocalOwnedProcess -Record $taskState.processes.runner -Workspace $taskQa) { throw 'Owned runner remains live after stop.' }
+                        $controlReceipt.status='stopped'
+                    } elseif ($control.action -eq 'start') {
+                        if (Test-LocalOwnedProcess -Record $taskState.processes.runner -Workspace $taskQa) { throw 'Refuse duplicate owned runner.' }
+                        $taskState.processes.runner=Start-LocalOwnedProcess -Role runner -Workspace $taskQa -FilePath $taskRunner -WorkingDirectory $taskProduct -LogDirectory (Join-Path $taskQa 'logs/reconnected') -Environment $taskRunnerEnvironment
+                        $controlReceipt.current=$taskState.processes.runner
+                        $controlReceipt.status='started'
+                    } else { throw 'Unsupported runner-control action.' }
+                    $taskReceipt.runner_controls+=@($controlReceipt)
+                    Save-LocalStackState -Path (Join-Path $taskQa 'ownership.json') -State $taskState -Workspace $taskQa
+                    $controlReceipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $taskOutput ('runner-control-'+$control.nonce+'.json')) -Encoding utf8
+                }
+            }
+        }
+        $taskCode = $taskAcceptance.ExitCode
+    } finally { $taskAcceptance.Dispose() }
+    $taskReceipt.native_exit_code=$taskCode
+    $taskReceipt.status = if ($taskCode -eq 0) {'passed'} else {'failed'}
+} catch {
+    $taskReceipt.status='failed';$taskReceipt.failure=$_.Exception.Message;$taskCode=1
+} finally {
+    $taskReceipt.cleanup_errors=@()
+    # A browser failure must not abandon a live provider before orderly service cleanup.
+    if ($taskDemo -and $taskServerUrl -and $taskRunnerId) {
+        try {
+            $stopState = Invoke-RestMethod -Uri "$taskServerUrl/api/corps/$($taskDemo.corp_id)/snapshot?actor_id=$($taskDemo.alice_actor_id)" -TimeoutSec 5
+            $taskReceipt.cleanup_run_stops=@()
+            foreach ($active in @($stopState.snapshot.runs | Where-Object { $_.runner_id -eq $taskRunnerId -and $_.status -notin @('completed','failed','cancelled','lost','awaiting_review') })) {
+                $response = Invoke-RestMethod -Uri "$taskServerUrl/api/corps/$($taskDemo.corp_id)/agents/$($active.agent_id)/emergency-stop" -Method Post -ContentType 'application/json' -Body (@{actor_id=$taskDemo.alice_actor_id;reason='Owned native acceptance cleanup; preserve exact lineage and worktree.'} | ConvertTo-Json -Compress) -TimeoutSec 10
+                $taskReceipt.cleanup_run_stops+=@(@{run_id=$active.id;agent_id=$active.agent_id;response=$response})
+            }
+            if ($taskReceipt.cleanup_run_stops.Count) { Start-Sleep -Seconds 8 }
+        } catch { $taskReceipt.cleanup_errors += 'Owned run cleanup state unavailable; inspect retained runtime logs.' }
+    }
+    foreach ($role in @('acceptance','web','runner','server')) {
+        if ($taskState.processes[$role]) {
+            try {
+                $record=$taskState.processes[$role]
+                if (Test-LocalOwnedProcess -Record $record -Workspace $taskQa) { $null=Stop-LocalOwnedProcess -Record $record -Workspace $taskQa }
+                $taskReceipt.stopped[$role]=!(Test-LocalOwnedProcess -Record $record -Workspace $taskQa)
+            } catch { $taskReceipt.stopped[$role]=$false;$taskReceipt.cleanup_errors += "${role}: $($_.Exception.Message)" }
+        }
+    }
+    if ($taskState.processes.postgres) {
+        try {
+            if (Test-LocalOwnedProcess -Record $taskState.processes.postgres -Workspace $taskQa) {
+                & (Join-Path $taskPg 'pg_ctl.exe') -D (Join-Path $taskQa 'database') -m fast -w -t 30 stop *> (Join-Path $taskQa 'shutdown.log')
+                $taskReceipt.database_stop_exit_code=$LASTEXITCODE
+            }
+            $taskReceipt.stopped.postgres=!(Test-LocalOwnedProcess -Record $taskState.processes.postgres -Workspace $taskQa)
+        } catch { $taskReceipt.stopped.postgres=$false;$taskReceipt.cleanup_errors += "postgres: $($_.Exception.Message)" }
+    }
+    foreach ($secretPath in $taskSecretPaths) {
+        try { if (Test-Path -LiteralPath $secretPath) { Remove-Item -LiteralPath $secretPath } }
+        catch { $taskReceipt.cleanup_errors += 'Temporary runner credential cleanup failed.' }
+    }
+    $taskEnrollment=$null
+    try {
+        $taskReceipt.source_after=Get-FixtureSourceIdentity
+        $taskReceipt.source_unchanged=(ConvertTo-Json -InputObject $taskReceipt.source_before -Depth 5 -Compress) -ceq (ConvertTo-Json -InputObject $taskReceipt.source_after -Depth 5 -Compress)
+        $taskReceipt.head_after=& git -C $taskProduct rev-parse HEAD
+        if ($LASTEXITCODE -or $taskReceipt.head_after -cne $taskReceipt.head) { $taskReceipt.source_unchanged=$false }
+        if ($taskSourceHead) {
+            $taskReceipt.fixture_source_head_after=& git -C (Join-Path $taskQa 'source') rev-parse HEAD
+            if ($LASTEXITCODE -or $taskReceipt.fixture_source_head_after -cne $taskSourceHead) { $taskReceipt.source_unchanged=$false }
+            $taskReceipt.fixture_source_status=@(& git -C (Join-Path $taskQa 'source') status --porcelain)
+            if ($LASTEXITCODE -or $taskReceipt.fixture_source_status.Count) { $taskReceipt.source_unchanged=$false }
+        }
+    } catch { $taskReceipt.source_unchanged=$null;$taskReceipt.cleanup_errors += 'Final source identity unavailable.' }
+    $taskReceipt.finished_at=[DateTimeOffset]::UtcNow.ToString('o')
+    $taskState.stopped_at_utc=$taskReceipt.finished_at
+    if (!$taskReceipt.source_unchanged -or @($taskReceipt.stopped.Values | Where-Object { !$_ }).Count -or $taskReceipt.cleanup_errors.Count) { $taskReceipt.status='failed';$taskCode=1 }
+    try { if (Test-Path -LiteralPath $taskQa) { Save-LocalStackState -Path (Join-Path $taskQa 'ownership.json') -State $taskState -Workspace $taskQa } }
+    catch { $taskReceipt.status='failed';$taskCode=1;$taskReceipt.cleanup_errors += 'Final ownership checkpoint failed.' }
+    if (Test-Path -LiteralPath $taskOutput) { $taskReceipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $taskOutput 'driver.json') -Encoding utf8 }
+}
+[pscustomobject]$taskReceipt | Select-Object status,native_exit_code,source_unchanged,qa_root,output,stopped,failure | ConvertTo-Json -Depth 8
+exit $taskCode

@@ -1,0 +1,120 @@
+{
+  "recorded_at_utc": "2026-10-01T23:58:21.035711+00:00",
+  "issue": 198,
+  "pr": 393,
+  "parent": "d41efee9386064fcb73ae0ef660054439b0390e5",
+  "parent_tree": "e4f6b7e581bd46eac7716e6fff9fbfe51b536964",
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "tested_product_tree": "d62abf4e59887f84f3848ccf5c839fe487e51c30",
+  "product_changes_in_this_publication": [],
+  "native": {
+    "mission": "967bdc55-3c3f-4342-a434-356927e00f86",
+    "task": "1b397a14-7efb-4ea6-b774-0fc31b522a74",
+    "run": "642f4132-259a-44bf-9a0d-75b5d93c2d8b",
+    "provider": "github-copilot",
+    "model": "gpt-5.4",
+    "policy_max_attempts": 2,
+    "observed_attempts": 1,
+    "input_tokens": 136962,
+    "output_tokens": 5369,
+    "budget_tokens_limit": 500000,
+    "budget_cost_microusd_limit": 1000000,
+    "reported_cost_microusd": 0,
+    "billing_guarantee": false
+  },
+  "setup": {
+    "r1_overall_status": "failed",
+    "completed_assertions_before_failure": 22,
+    "providers": {
+      "github-copilot": "ready",
+      "codex": "ready",
+      "claude-code": "needs_sign_in"
+    },
+    "connect_test_operations": 6,
+    "idempotency_replays": 3
+  },
+  "acceptance": {
+    "native_r4_assertions": 12,
+    "download_assertions": 5,
+    "persisted_verifier_checks": 4,
+    "persisted_node_tests": {
+      "tests": 8,
+      "suites": 0,
+      "pass": 8,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "downloaded_app_combined_assertions": 14,
+    "demo_review_assertions": 6,
+    "independent_human_approval": false,
+    "source": {
+      "base": "57fd05449410dc05c99c7acdf4b77e7f65607d51",
+      "candidate": "28686d75ea0a73000b5a7e1ec57634947b5e6e95",
+      "tree": "621808addbb665f825db18909047dc1d98c82790",
+      "verification_sha256": "1e71160a916bb563eda8c0a830f2c36ea7bdfa318231ff0a1c9afff8ee68957c",
+      "archive_sha256": "ce61b7eef5c8195e72037ec084d6bc499513e6af3ea1f411180c572819dbb3dc",
+      "archive_bytes": 39898
+    }
+  },
+  "canonical": {
+    "command": "pnpm check",
+    "gates": [
+      "migrations",
+      "state-audit-compatibility",
+      "state-audit-evm",
+      "docs",
+      "repository-docs",
+      "node-tests",
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ],
+    "status": "passed",
+    "node": {
+      "tests": 3108,
+      "passed": 3043,
+      "failed": 0,
+      "skipped": 65,
+      "todo": 0,
+      "cancelled": 0
+    },
+    "rust": {
+      "passed": 877,
+      "failed": 0,
+      "ignored": 564,
+      "summaries": 41
+    },
+    "evm": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "summaries": 1
+    },
+    "reused_for_identical_product_bytes": true,
+    "rerun_for_this_evidence_only_child": false
+  },
+  "cleanup": {
+    "all_owned_services_stopped": true,
+    "cleanup_errors": [],
+    "source_unchanged": true,
+    "generated_worktree_preserved": true
+  },
+  "limitations": [
+    "This is automated development-principal acceptance and implementing-agent review, not independent human or GitHub approval.",
+    "Copilot inference only; Codex readiness and truthful unsigned-in Claude state. All-provider inference is not a child #198 criterion.",
+    "Local approved source without a remote. Parent #145/#63 retains real-GitHub publication and the broader operating lane.",
+    "Fourteen downloaded-app assertions include one Node command that repeats the same eight app tests; counts are not additive.",
+    "At 390px the generated app fits and operates, but the input is unnecessarily tall and checkbox spacing is awkward.",
+    "Storage-denial/quota behavior was not tested. Corrupt-storage recovery was tested.",
+    "One local 404 console message of undetermined resource; no JavaScript exceptions or external requests.",
+    "Provider result.md did not claim browser testing. Observer browser tests were retrospective.",
+    "Three scoped shell approvals occurred; this does not prove the parent's zero-routine-approval goal.",
+    "Earlier failed setup/download/publication/canonical runs remain. F02 timeout cause is still unestablished.",
+    "Historical Cargo advisory debt remains; focused secret scans are not a clean whole-history audit.",
+    "Required hosted checks are unavailable while Actions is disabled. No merge or issue completion is claimed."
+  ]
+}

@@ -1,0 +1,628 @@
+{
+  "started_at": "2026-10-01T23:41:45.034Z",
+  "status": "passed",
+  "run_id": "642f4132-259a-44bf-9a0d-75b5d93c2d8b",
+  "mission_id": "967bdc55-3c3f-4342-a434-356927e00f86",
+  "assertions": [
+    {
+      "name": "The exact native task is waiting at its persisted independent gate",
+      "passed": true
+    },
+    {
+      "name": "Provider stopped before all four source-bound verifier checks and their pass event",
+      "passed": true
+    },
+    {
+      "name": "The server denies the requester even when the disabled UI is bypassed",
+      "passed": true
+    },
+    {
+      "name": "Rejected requester decision leaves the gate pending",
+      "passed": true
+    },
+    {
+      "name": "The actual product UI submits one eligible demo-principal decision for the exact run",
+      "passed": true
+    },
+    {
+      "name": "The persisted run, task and mission complete only after the eligible decision",
+      "passed": true
+    }
+  ],
+  "archive_sha256": "ce61b7eef5c8195e72037ec084d6bc499513e6af3ea1f411180c572819dbb3dc",
+  "assurance": "Automated development-principal role test using the built-in demo operators. This does not establish independent human approval, production identity assurance or a GitHub approval.",
+  "application_review": {
+    "functional_assertions_passed": 14,
+    "tests": {
+      "total": 8,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0
+    },
+    "visual_inspection": "Actual desktop and 390px browser screenshots captured. The 390px view has no overflow and operable controls, but the text input is unnecessarily tall and the checkbox spacing is awkward. No polished UI claim.",
+    "limitations": [
+      "Storage-denied/quota failure was not tested; source does not fully handle it.",
+      "Browser console recorded one local 404; no JavaScript exceptions or external requests."
+    ]
+  },
+  "task_id": "1b397a14-7efb-4ea6-b774-0fc31b522a74",
+  "task_contract": {
+    "id": "1b397a14-7efb-4ea6-b774-0fc31b522a74",
+    "mission_id": "967bdc55-3c3f-4342-a434-356927e00f86",
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "title": "Produce the mission outcome",
+    "objective": "Create a small dependency-free static application in this assigned isolated worktree only. Do not modify the original checkout or any other source.\nDeliver index.html, app.mjs, tasks.mjs, tests/tasks.test.mjs and evidence/result.md. No packages, network access, publishing, commits, background servers, browser launch or process termination are needed. Use native file tools for code and run node --test tests/tasks.test.mjs once when ready. Do not inspect account/credential files.\nThe page heading must be Focus Ledger. Provide a field labelled Task title, an Add task button, and a Show tasks select with All, Active and Completed options. The empty state is No tasks yet. Each task has an accessible checkbox named Complete followed by its exact title, and a Delete followed by its exact title button. Keep titles visible while completed.\nReject blank titles with an accessible error; trim titles and limit to 80 characters. Use a pure tasks.mjs model with at least six meaningful node:test cases covering blank/long titles, add, complete, deletion and filtering. UI state persists in localStorage; corrupt localStorage recovers to an empty list with a clear message.\nPressing Enter in the title field adds a valid task, controls have visible keyboard focus, and a 390px viewport must not overflow horizontally. No external assets. Use a responsive light theme.\nRecord actual tests and implementation limits in evidence/result.md. The runner separately executes the persisted verifier after your provider session ends. A later development-principal review gate remains separate from implementation. Return promptly when done.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: Build Focus Ledger, an accessible local task checklist with persistence and tests",
+    "plan_key": "deliver",
+    "contract": {
+      "objective": "Create a small dependency-free static application in this assigned isolated worktree only. Do not modify the original checkout or any other source.\nDeliver index.html, app.mjs, tasks.mjs, tests/tasks.test.mjs and evidence/result.md. No packages, network access, publishing, commits, background servers, browser launch or process termination are needed. Use native file tools for code and run node --test tests/tasks.test.mjs once when ready. Do not inspect account/credential files.\nThe page heading must be Focus Ledger. Provide a field labelled Task title, an Add task button, and a Show tasks select with All, Active and Completed options. The empty state is No tasks yet. Each task has an accessible checkbox named Complete followed by its exact title, and a Delete followed by its exact title button. Keep titles visible while completed.\nReject blank titles with an accessible error; trim titles and limit to 80 characters. Use a pure tasks.mjs model with at least six meaningful node:test cases covering blank/long titles, add, complete, deletion and filtering. UI state persists in localStorage; corrupt localStorage recovers to an empty list with a clear message.\nPressing Enter in the title field adds a valid task, controls have visible keyboard focus, and a 390px viewport must not overflow horizontally. No external assets. Use a responsive light theme.\nRecord actual tests and implementation limits in evidence/result.md. The runner separately executes the persisted verifier after your provider session ends. A later development-principal review gate remains separate from implementation. Return promptly when done.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: Build Focus Ledger, an accessible local task checklist with persistence and tests",
+      "expected_output": "A source-backed, verified mission artifact",
+      "source_repository": "local/f43977789e484322a0c75fd8c6250eb2-94c67be09d64",
+      "source_base_ref": "main",
+      "source_base_commit": "57fd05449410dc05c99c7acdf4b77e7f65607d51",
+      "workspace_connection_id": "f4397778-9e48-4322-a0c7-5fd8c6250eb2",
+      "acceptance_tests": [
+        "the declared artifact exists",
+        "the task reports concrete verification evidence"
+      ],
+      "allowed_tools": [
+        "filesystem",
+        "shell"
+      ],
+      "prohibited_actions": [
+        "modify files outside the assigned worktree",
+        "use undeclared long-lived credentials"
+      ],
+      "references": [],
+      "write_scope": [
+        "**"
+      ],
+      "budget_tokens": 500000,
+      "budget_cost_microusd": 1000000,
+      "deadline_at": null,
+      "escalation": "ask the current human controller or mission owner",
+      "secret_refs": [],
+      "model": "gpt-5.4",
+      "reasoning_effort": null,
+      "deliverable": {
+        "form": "archive",
+        "commit_after_verification": false,
+        "paths": []
+      }
+    },
+    "contract_version": 1,
+    "depth": 0,
+    "max_attempts": 2,
+    "attempt_count": 1,
+    "required_adapter": "github-copilot",
+    "depends_on": [],
+    "verification_policy": {
+      "checks": [
+        {
+          "type": "artifact",
+          "min_bytes": 1
+        },
+        {
+          "type": "file",
+          "path": "index.html",
+          "min_bytes": 1
+        },
+        {
+          "type": "file",
+          "path": "evidence/result.md",
+          "min_bytes": 1
+        },
+        {
+          "type": "test",
+          "program": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+          "args": [
+            "--test",
+            "tests/tasks.test.mjs"
+          ],
+          "timeout_ms": 60000
+        }
+      ],
+      "manual_gate": {
+        "type": "independent_review",
+        "roles": [
+          "member",
+          "manager",
+          "admin",
+          "owner"
+        ],
+        "exclude_requester": true
+      }
+    },
+    "verification_status": "waiting_for_approval",
+    "status": "awaiting_approval",
+    "assigned_agent_id": "a776e927-ce27-4bb5-b7e7-e01dd5b871aa",
+    "created_at": "2026-10-01T23:33:49.509319Z",
+    "updated_at": "2026-10-01T23:39:36.526479Z"
+  },
+  "prior_request": {
+    "run_id": "642f4132-259a-44bf-9a0d-75b5d93c2d8b",
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "task_id": "1b397a14-7efb-4ea6-b774-0fc31b522a74",
+    "gate_type": "independent_review",
+    "gate": {
+      "type": "independent_review",
+      "roles": [
+        "member",
+        "manager",
+        "admin",
+        "owner"
+      ],
+      "exclude_requester": true
+    },
+    "status": "pending",
+    "requested_at": "2026-10-01T23:39:36.526479Z",
+    "decided_by": null,
+    "decision_note": null,
+    "decided_at": null
+  },
+  "verifier_events": [
+    {
+      "seq": 255,
+      "id": "8fa8f686-597d-4d23-abf2-640fffc66a2c",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.session_terminated",
+      "aggregate_type": "run",
+      "aggregate_id": "642f4132-259a-44bf-9a0d-75b5d93c2d8b",
+      "aggregate_version": 1,
+      "correlation_id": "967bdc55-3c3f-4342-a434-356927e00f86",
+      "causation_id": null,
+      "idempotency_key": "runner:issue198-115686f88bff47ac80b4656a9ba41bb9:event:8fa8f686-597d-4d23-abf2-640fffc66a2c",
+      "visibility": "corp",
+      "payload": {
+        "adapter": "github-copilot",
+        "message": "Provider session stopped; no idle agent process remains.",
+        "outcome": "completed",
+        "provider_process_alive": false
+      },
+      "created_at": "2026-10-01T23:39:25.940296Z"
+    },
+    {
+      "seq": 256,
+      "id": "cdc99be5-3f73-481d-a54c-6ef3aa93650c",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.verification_started",
+      "aggregate_type": "run",
+      "aggregate_id": "642f4132-259a-44bf-9a0d-75b5d93c2d8b",
+      "aggregate_version": 1,
+      "correlation_id": "967bdc55-3c3f-4342-a434-356927e00f86",
+      "causation_id": null,
+      "idempotency_key": "runner:issue198-115686f88bff47ac80b4656a9ba41bb9:event:cdc99be5-3f73-481d-a54c-6ef3aa93650c",
+      "visibility": "corp",
+      "payload": {
+        "check_count": 4
+      },
+      "created_at": "2026-10-01T23:39:25.943895Z"
+    },
+    {
+      "seq": 257,
+      "id": "8776f800-c58f-4273-9a92-345423bf4050",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.verification_evidence",
+      "aggregate_type": "run",
+      "aggregate_id": "642f4132-259a-44bf-9a0d-75b5d93c2d8b",
+      "aggregate_version": 1,
+      "correlation_id": "967bdc55-3c3f-4342-a434-356927e00f86",
+      "causation_id": null,
+      "idempotency_key": "runner:issue198-115686f88bff47ac80b4656a9ba41bb9:event:8776f800-c58f-4273-9a92-345423bf4050",
+      "visibility": "corp",
+      "payload": {
+        "check_index": 0,
+        "evidence_id": "b7d1e4be-58ce-4dc6-bc60-638ef5b739a9",
+        "kind": "artifact",
+        "payload": {
+          "artifact_id": "bf3fbb9b-65dc-47fb-9f03-85f73c0ac717",
+          "bytes": 460,
+          "media_type": "application/json",
+          "producer_agent_id": "a776e927-ce27-4bb5-b7e7-e01dd5b871aa",
+          "producer_runner_id": "issue198-115686f88bff47ac80b4656a9ba41bb9",
+          "provenance_signature": "973855ad6b6ba545666e0602f607bf23817e3e70d72fa272885e42354b646e63",
+          "retention_until": "2026-10-31T23:39:25.907006Z",
+          "sha256": "015177b3abfc4feedcad3de583be3593597934a5db4867880dc4e4a94fa27d43",
+          "source": {
+            "base_commit": "57fd05449410dc05c99c7acdf4b77e7f65607d51",
+            "candidate_commit": "28686d75ea0a73000b5a7e1ec57634947b5e6e95",
+            "ignored_input_bytes": 0,
+            "ignored_input_count": 0,
+            "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tree": "621808addbb665f825db18909047dc1d98c82790"
+          },
+          "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/bf3fbb9b-65dc-47fb-9f03-85f73c0ac717",
+          "verifier": "crony-server:artifact-ingest-v1"
+        },
+        "status": "passed",
+        "summary": "durable artifact bf3fbb9b-65dc-47fb-9f03-85f73c0ac717 has 460 verified bytes"
+      },
+      "created_at": "2026-10-01T23:39:35.295122Z"
+    },
+    {
+      "seq": 258,
+      "id": "fb316d1b-6ce0-4fb8-a5e9-fd08cbb363a0",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.verification_evidence",
+      "aggregate_type": "run",
+      "aggregate_id": "642f4132-259a-44bf-9a0d-75b5d93c2d8b",
+      "aggregate_version": 1,
+      "correlation_id": "967bdc55-3c3f-4342-a434-356927e00f86",
+      "causation_id": null,
+      "idempotency_key": "runner:issue198-115686f88bff47ac80b4656a9ba41bb9:event:fb316d1b-6ce0-4fb8-a5e9-fd08cbb363a0",
+      "visibility": "corp",
+      "payload": {
+        "check_index": 1,
+        "evidence_id": "90a844e7-e117-4823-aa71-36e0bffcdfaa",
+        "kind": "file",
+        "payload": {
+          "bytes": 4856,
+          "path": "index.html",
+          "sha256": "e5c21282f8e3c6cb67f0188c34608b39ab10b04f2ea156e0d67ce9b7022319c7",
+          "source": {
+            "base_commit": "57fd05449410dc05c99c7acdf4b77e7f65607d51",
+            "candidate_commit": "28686d75ea0a73000b5a7e1ec57634947b5e6e95",
+            "ignored_input_bytes": 0,
+            "ignored_input_count": 0,
+            "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tree": "621808addbb665f825db18909047dc1d98c82790"
+          }
+        },
+        "status": "passed",
+        "summary": "index.html exists with 4856 bytes"
+      },
+      "created_at": "2026-10-01T23:39:35.317408Z"
+    },
+    {
+      "seq": 259,
+      "id": "a4b22c2c-f93e-4cea-a2b7-55a054a3ca3d",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.verification_evidence",
+      "aggregate_type": "run",
+      "aggregate_id": "642f4132-259a-44bf-9a0d-75b5d93c2d8b",
+      "aggregate_version": 1,
+      "correlation_id": "967bdc55-3c3f-4342-a434-356927e00f86",
+      "causation_id": null,
+      "idempotency_key": "runner:issue198-115686f88bff47ac80b4656a9ba41bb9:event:a4b22c2c-f93e-4cea-a2b7-55a054a3ca3d",
+      "visibility": "corp",
+      "payload": {
+        "check_index": 2,
+        "evidence_id": "c524e17c-82f9-4686-9ca6-19b22850682c",
+        "kind": "file",
+        "payload": {
+          "bytes": 714,
+          "path": "evidence/result.md",
+          "sha256": "88a6fe15f75bf20c9106247daea02f0103e41f55e1ddfbc139a7e48b2d4efda7",
+          "source": {
+            "base_commit": "57fd05449410dc05c99c7acdf4b77e7f65607d51",
+            "candidate_commit": "28686d75ea0a73000b5a7e1ec57634947b5e6e95",
+            "ignored_input_bytes": 0,
+            "ignored_input_count": 0,
+            "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tree": "621808addbb665f825db18909047dc1d98c82790"
+          }
+        },
+        "status": "passed",
+        "summary": "evidence/result.md exists with 714 bytes"
+      },
+      "created_at": "2026-10-01T23:39:35.322571Z"
+    },
+    {
+      "seq": 260,
+      "id": "d916b080-761a-4036-b65f-efda43d4956b",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.verification_evidence",
+      "aggregate_type": "run",
+      "aggregate_id": "642f4132-259a-44bf-9a0d-75b5d93c2d8b",
+      "aggregate_version": 1,
+      "correlation_id": "967bdc55-3c3f-4342-a434-356927e00f86",
+      "causation_id": null,
+      "idempotency_key": "runner:issue198-115686f88bff47ac80b4656a9ba41bb9:event:d916b080-761a-4036-b65f-efda43d4956b",
+      "visibility": "corp",
+      "payload": {
+        "check_index": 3,
+        "evidence_id": "d049e2ae-9558-41d9-b0fc-8d7854079afe",
+        "kind": "test",
+        "payload": {
+          "args": [
+            "--test",
+            "tests/tasks.test.mjs"
+          ],
+          "cache_suppression": {
+            "cleanup_authorized": false,
+            "policy": null,
+            "requested_argument_prefix": [],
+            "requested_environment": {},
+            "scope": "verifier_child",
+            "source": "none",
+            "zero_cache_writes_verified": false
+          },
+          "error": null,
+          "exit_code": 0,
+          "program": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+          "requested_program": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+          "resolution_mode": "explicit_path",
+          "resolved_executable": {
+            "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+            "file_name": "node.exe"
+          },
+          "source": {
+            "base_commit": "57fd05449410dc05c99c7acdf4b77e7f65607d51",
+            "candidate_commit": "28686d75ea0a73000b5a7e1ec57634947b5e6e95",
+            "ignored_input_bytes": 0,
+            "ignored_input_count": 0,
+            "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tree": "621808addbb665f825db18909047dc1d98c82790"
+          },
+          "stderr": "",
+          "stdout": "✔ addTask trims title and stores active task (5.0518ms)\n✔ addTask rejects blank titles (0.7292ms)\n✔ addTask rejects titles longer than 80 characters (0.1844ms)\n✔ toggleTask flips completion state (0.2168ms)\n✔ deleteTask removes the matching task (0.7655ms)\n✔ filterTasks returns active and completed views (0.2486ms)\n✔ serializeState and parseState round-trip valid tasks (0.2868ms)\n✔ parseState rejects invalid saved data (0.1698ms)\nℹ tests 8\nℹ suites 0\nℹ pass 8\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 165.0142\n"
+        },
+        "status": "passed",
+        "summary": "\"<USERPROFILE>\\\\AppData\\\\Local\\\\Programs\\\\ecorp-tools\\\\node-v24.21.0-win-x64\\\\node.exe\" exited successfully"
+      },
+      "created_at": "2026-10-01T23:39:35.327748Z"
+    },
+    {
+      "seq": 262,
+      "id": "cebff5d3-dfc5-45a5-bd6b-532983b10701",
+      "schema_version": 1,
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "room_id": "00000000-0000-4000-8000-000000000041",
+      "actor_id": null,
+      "type": "run.verification_passed",
+      "aggregate_type": "run",
+      "aggregate_id": "642f4132-259a-44bf-9a0d-75b5d93c2d8b",
+      "aggregate_version": 1,
+      "correlation_id": "967bdc55-3c3f-4342-a434-356927e00f86",
+      "causation_id": null,
+      "idempotency_key": "runner:issue198-115686f88bff47ac80b4656a9ba41bb9:event:cebff5d3-dfc5-45a5-bd6b-532983b10701",
+      "visibility": "corp",
+      "payload": {
+        "deliverable_sha256": "ce61b7eef5c8195e72037ec084d6bc499513e6af3ea1f411180c572819dbb3dc",
+        "source_verification": {
+          "base_commit": "57fd05449410dc05c99c7acdf4b77e7f65607d51",
+          "candidate_commit": "28686d75ea0a73000b5a7e1ec57634947b5e6e95",
+          "ignored_input_bytes": 0,
+          "ignored_input_count": 0,
+          "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tree": "621808addbb665f825db18909047dc1d98c82790"
+        },
+        "summary": "all 4 verifier checks passed",
+        "verification_sha256": "1e71160a916bb563eda8c0a830f2c36ea7bdfa318231ff0a1c9afff8ee68957c",
+        "verified_tree": "621808addbb665f825db18909047dc1d98c82790"
+      },
+      "created_at": "2026-10-01T23:39:36.517390Z"
+    }
+  ],
+  "requester_denial": {
+    "status": 403,
+    "body": "{\"error\":\"forbidden: independent review requires a different actor\"}"
+  },
+  "browser_decision": {
+    "status": 200,
+    "request": {
+      "actor_id": "00000000-0000-4000-8000-000000000012",
+      "approved": true,
+      "note": "Bob accepted the recorded verification evidence."
+    },
+    "body": "{\"run_id\":\"642f4132-259a-44bf-9a0d-75b5d93c2d8b\",\"status\":\"approved\",\"replayed\":false}"
+  },
+  "final_run": {
+    "id": "642f4132-259a-44bf-9a0d-75b5d93c2d8b",
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "task_id": "1b397a14-7efb-4ea6-b774-0fc31b522a74",
+    "agent_id": "a776e927-ce27-4bb5-b7e7-e01dd5b871aa",
+    "runner_id": "issue198-115686f88bff47ac80b4656a9ba41bb9",
+    "provider_session_id": "1eaefa11-669b-4880-8979-a7e8f01fcbdf",
+    "resumed_from_run_id": null,
+    "workspace_run_id": "642f4132-259a-44bf-9a0d-75b5d93c2d8b",
+    "model": "gpt-5.4",
+    "reasoning_effort": null,
+    "input_tokens": 136962,
+    "output_tokens": 5369,
+    "cost_microusd": 0,
+    "budget_tokens_limit": 500000,
+    "budget_cost_microusd_limit": 1000000,
+    "breaker_stage": "healthy",
+    "no_progress_events": 0,
+    "repeated_tool_count": 0,
+    "source_repository": "local/f43977789e484322a0c75fd8c6250eb2-94c67be09d64",
+    "source_base_ref": "main",
+    "source_base_commit": "57fd05449410dc05c99c7acdf4b77e7f65607d51",
+    "workspace_connection_id": "f4397778-9e48-4322-a0c7-5fd8c6250eb2",
+    "workspace_path": "<USERPROFILE>\\qa\\issue198-native-20261001T232455583-ea595ccb\\runner\\connections\\w\\worktrees\\1b397a147efb4ea6b7740fc31b522a74\\642f4132259a44bf9a0d75b5d93c2d8b",
+    "workspace_branch": "crony/task-1b397a147efb4ea6b7740fc31b522a74/run-642f4132259a44bf9a0d75b5d93c2d8b",
+    "workspace_base_ref": "main",
+    "workspace_base_commit": "57fd05449410dc05c99c7acdf4b77e7f65607d51",
+    "workspace_disposition": "preserved",
+    "workspace_detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=6; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+    "workspace_fingerprint": "2cd60fe96ae5baeb03c1c36797e8ad50316fa5a685ac1e3472b02a0039682608",
+    "execution_mode": "provider",
+    "verification_status": "passed",
+    "verification_summary": "all 4 verifier checks passed",
+    "verification_sha256": "1e71160a916bb563eda8c0a830f2c36ea7bdfa318231ff0a1c9afff8ee68957c",
+    "deliverable_sha256": "ce61b7eef5c8195e72037ec084d6bc499513e6af3ea1f411180c572819dbb3dc",
+    "status": "completed",
+    "summary": "GitHub Copilot completed with gpt-5.4.",
+    "artifact_id": "bf3fbb9b-65dc-47fb-9f03-85f73c0ac717",
+    "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/bf3fbb9b-65dc-47fb-9f03-85f73c0ac717",
+    "artifact_media_type": "application/json",
+    "artifact_signature": "973855ad6b6ba545666e0602f607bf23817e3e70d72fa272885e42354b646e63",
+    "artifact_sha256": "015177b3abfc4feedcad3de583be3593597934a5db4867880dc4e4a94fa27d43",
+    "created_at": "2026-10-01T23:33:49.883810Z",
+    "updated_at": "2026-10-01T23:41:48.751021Z"
+  },
+  "final_task": {
+    "id": "1b397a14-7efb-4ea6-b774-0fc31b522a74",
+    "mission_id": "967bdc55-3c3f-4342-a434-356927e00f86",
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "title": "Produce the mission outcome",
+    "objective": "Create a small dependency-free static application in this assigned isolated worktree only. Do not modify the original checkout or any other source.\nDeliver index.html, app.mjs, tasks.mjs, tests/tasks.test.mjs and evidence/result.md. No packages, network access, publishing, commits, background servers, browser launch or process termination are needed. Use native file tools for code and run node --test tests/tasks.test.mjs once when ready. Do not inspect account/credential files.\nThe page heading must be Focus Ledger. Provide a field labelled Task title, an Add task button, and a Show tasks select with All, Active and Completed options. The empty state is No tasks yet. Each task has an accessible checkbox named Complete followed by its exact title, and a Delete followed by its exact title button. Keep titles visible while completed.\nReject blank titles with an accessible error; trim titles and limit to 80 characters. Use a pure tasks.mjs model with at least six meaningful node:test cases covering blank/long titles, add, complete, deletion and filtering. UI state persists in localStorage; corrupt localStorage recovers to an empty list with a clear message.\nPressing Enter in the title field adds a valid task, controls have visible keyboard focus, and a 390px viewport must not overflow horizontally. No external assets. Use a responsive light theme.\nRecord actual tests and implementation limits in evidence/result.md. The runner separately executes the persisted verifier after your provider session ends. A later development-principal review gate remains separate from implementation. Return promptly when done.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: Build Focus Ledger, an accessible local task checklist with persistence and tests",
+    "plan_key": "deliver",
+    "contract": {
+      "objective": "Create a small dependency-free static application in this assigned isolated worktree only. Do not modify the original checkout or any other source.\nDeliver index.html, app.mjs, tasks.mjs, tests/tasks.test.mjs and evidence/result.md. No packages, network access, publishing, commits, background servers, browser launch or process termination are needed. Use native file tools for code and run node --test tests/tasks.test.mjs once when ready. Do not inspect account/credential files.\nThe page heading must be Focus Ledger. Provide a field labelled Task title, an Add task button, and a Show tasks select with All, Active and Completed options. The empty state is No tasks yet. Each task has an accessible checkbox named Complete followed by its exact title, and a Delete followed by its exact title button. Keep titles visible while completed.\nReject blank titles with an accessible error; trim titles and limit to 80 characters. Use a pure tasks.mjs model with at least six meaningful node:test cases covering blank/long titles, add, complete, deletion and filtering. UI state persists in localStorage; corrupt localStorage recovers to an empty list with a clear message.\nPressing Enter in the title field adds a valid task, controls have visible keyboard focus, and a 390px viewport must not overflow horizontally. No external assets. Use a responsive light theme.\nRecord actual tests and implementation limits in evidence/result.md. The runner separately executes the persisted verifier after your provider session ends. A later development-principal review gate remains separate from implementation. Return promptly when done.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: Build Focus Ledger, an accessible local task checklist with persistence and tests",
+      "expected_output": "A source-backed, verified mission artifact",
+      "source_repository": "local/f43977789e484322a0c75fd8c6250eb2-94c67be09d64",
+      "source_base_ref": "main",
+      "source_base_commit": "57fd05449410dc05c99c7acdf4b77e7f65607d51",
+      "workspace_connection_id": "f4397778-9e48-4322-a0c7-5fd8c6250eb2",
+      "acceptance_tests": [
+        "the declared artifact exists",
+        "the task reports concrete verification evidence"
+      ],
+      "allowed_tools": [
+        "filesystem",
+        "shell"
+      ],
+      "prohibited_actions": [
+        "modify files outside the assigned worktree",
+        "use undeclared long-lived credentials"
+      ],
+      "references": [],
+      "write_scope": [
+        "**"
+      ],
+      "budget_tokens": 500000,
+      "budget_cost_microusd": 1000000,
+      "deadline_at": null,
+      "escalation": "ask the current human controller or mission owner",
+      "secret_refs": [],
+      "model": "gpt-5.4",
+      "reasoning_effort": null,
+      "deliverable": {
+        "form": "archive",
+        "commit_after_verification": false,
+        "paths": []
+      }
+    },
+    "contract_version": 1,
+    "depth": 0,
+    "max_attempts": 2,
+    "attempt_count": 1,
+    "required_adapter": "github-copilot",
+    "depends_on": [],
+    "verification_policy": {
+      "checks": [
+        {
+          "type": "artifact",
+          "min_bytes": 1
+        },
+        {
+          "type": "file",
+          "path": "index.html",
+          "min_bytes": 1
+        },
+        {
+          "type": "file",
+          "path": "evidence/result.md",
+          "min_bytes": 1
+        },
+        {
+          "type": "test",
+          "program": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+          "args": [
+            "--test",
+            "tests/tasks.test.mjs"
+          ],
+          "timeout_ms": 60000
+        }
+      ],
+      "manual_gate": {
+        "type": "independent_review",
+        "roles": [
+          "member",
+          "manager",
+          "admin",
+          "owner"
+        ],
+        "exclude_requester": true
+      }
+    },
+    "verification_status": "passed",
+    "status": "completed",
+    "assigned_agent_id": "a776e927-ce27-4bb5-b7e7-e01dd5b871aa",
+    "created_at": "2026-10-01T23:33:49.509319Z",
+    "updated_at": "2026-10-01T23:41:48.751021Z"
+  },
+  "final_mission": {
+    "id": "967bdc55-3c3f-4342-a434-356927e00f86",
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "room_id": "00000000-0000-4000-8000-000000000041",
+    "requested_by": "00000000-0000-4000-8000-000000000011",
+    "title": "Build Focus Ledger, an accessible local task checklist with persistence and tests",
+    "description": "Create a small dependency-free static application in this assigned isolated worktree only. Do not modify the original checkout or any other source.\nDeliver index.html, app.mjs, tasks.mjs, tests/tasks.test.mjs and evidence/result.md. No packages, network access, publishing, commits, background servers, browser launch or process termination are needed. Use native file tools for code and run node --test tests/tasks.test.mjs once when ready. Do not inspect account/credential files.\nThe page heading must be Focus Ledger. Provide a field labelled Task title, an Add task button, and a Show tasks select with All, Active and Completed options. The empty state is No tasks yet. Each task has an accessible checkbox named Complete followed by its exact title, and a Delete followed by its exact title button. Keep titles visible while completed.\nReject blank titles with an accessible error; trim titles and limit to 80 characters. Use a pure tasks.mjs model with at least six meaningful node:test cases covering blank/long titles, add, complete, deletion and filtering. UI state persists in localStorage; corrupt localStorage recovers to an empty list with a clear message.\nPressing Enter in the title field adds a valid task, controls have visible keyboard focus, and a 390px viewport must not overflow horizontally. No external assets. Use a responsive light theme.\nRecord actual tests and implementation limits in evidence/result.md. The runner separately executes the persisted verifier after your provider session ends. A later development-principal review gate remains separate from implementation. Return promptly when done.",
+    "specification_version": 1,
+    "strategy": "single",
+    "max_nodes": 1,
+    "max_depth": 0,
+    "original_budget_tokens": 500000,
+    "original_budget_cost_microusd": 1000000,
+    "budget_tokens": 500000,
+    "budget_cost_microusd": 1000000,
+    "status": "completed",
+    "created_at": "2026-10-01T23:33:49.509319Z",
+    "updated_at": "2026-10-01T23:41:48.751021Z"
+  },
+  "final_request": {
+    "run_id": "642f4132-259a-44bf-9a0d-75b5d93c2d8b",
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "task_id": "1b397a14-7efb-4ea6-b774-0fc31b522a74",
+    "gate_type": "independent_review",
+    "gate": {
+      "type": "independent_review",
+      "roles": [
+        "member",
+        "manager",
+        "admin",
+        "owner"
+      ],
+      "exclude_requester": true
+    },
+    "status": "approved",
+    "requested_at": "2026-10-01T23:39:36.526479Z",
+    "decided_by": "00000000-0000-4000-8000-000000000012",
+    "decision_note": "Bob accepted the recorded verification evidence.",
+    "decided_at": "2026-10-01T23:41:48.751021Z"
+  },
+  "approval_event": {
+    "seq": 268,
+    "id": "2a3b18a2-3a19-44d6-a7e0-4de121a1b09a",
+    "schema_version": 1,
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "room_id": "00000000-0000-4000-8000-000000000041",
+    "actor_id": "00000000-0000-4000-8000-000000000012",
+    "type": "verification.approved",
+    "aggregate_type": "run",
+    "aggregate_id": "642f4132-259a-44bf-9a0d-75b5d93c2d8b",
+    "aggregate_version": 1,
+    "correlation_id": "967bdc55-3c3f-4342-a434-356927e00f86",
+    "causation_id": null,
+    "idempotency_key": "verification-decision:642f4132-259a-44bf-9a0d-75b5d93c2d8b:approved",
+    "visibility": "corp",
+    "payload": {
+      "gate_type": "independent_review",
+      "note": "Bob accepted the recorded verification evidence.",
+      "status": "approved",
+      "task_id": "1b397a14-7efb-4ea6-b774-0fc31b522a74"
+    },
+    "created_at": "2026-10-01T23:41:48.751021Z"
+  },
+  "finished_at": "2026-10-01T23:41:50.314Z"
+}
