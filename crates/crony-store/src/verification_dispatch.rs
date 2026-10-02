@@ -32,15 +32,81 @@ impl PgStore {
         &self,
         command: &PendingRunnerCommand,
     ) -> Result<bool> {
-        if !verification_command_identity_matches(command) {
-            return Ok(false);
+        let mut tx = self.pool.begin().await?;
+        let authorized = verification_recovery_dispatch_authorized_tx(&mut tx, command).await?;
+        let admitted = if authorized {
+            mission_deadline::obsolete_if_expired(
+                mission_deadline::for_run_tx(&mut tx, command.corp_id, command.run_id).await,
+            )?
+            .is_ok()
+        } else {
+            false
+        };
+        tx.commit().await?;
+        Ok(admitted)
+    }
+
+    /// Reuse native recovery authority and retain its locks through final enqueue.
+    pub async fn with_verification_recovery_dispatch<F>(
+        &self,
+        command: &PendingRunnerCommand,
+        dispatch: F,
+    ) -> Result<RunBudgetDispatchOutcome<RunnerCommandDispatchOutcome>>
+    where
+        F: FnOnce(Option<crony_domain::RunDeadline>) -> Result<bool>,
+    {
+        let mut tx = self.pool.begin().await?;
+        if !verification_recovery_dispatch_authorized_tx(&mut tx, command).await? {
+            return Ok(RunBudgetDispatchOutcome {
+                transport_result: RunnerCommandDispatchOutcome::Obsolete,
+                commit_error: None,
+            });
         }
-        if retained_provider_receipt::has_collection(&command.payload) {
-            return self
-                .retained_provider_receipt_dispatch_authorized(command)
-                .await;
-        }
-        Ok(sqlx::query_scalar(
+        let Ok(deadline) = mission_deadline::obsolete_if_expired(
+            mission_deadline::for_run_tx(&mut tx, command.corp_id, command.run_id).await,
+        )?
+        else {
+            return Ok(RunBudgetDispatchOutcome {
+                transport_result: RunnerCommandDispatchOutcome::Obsolete,
+                commit_error: None,
+            });
+        };
+        let outcome = if dispatch(deadline)? {
+            RunnerCommandDispatchOutcome::Sent
+        } else {
+            RunnerCommandDispatchOutcome::Disconnected
+        };
+        let commit_error = tx.commit().await.err();
+        Ok(RunBudgetDispatchOutcome {
+            transport_result: outcome,
+            commit_error,
+        })
+    }
+}
+
+async fn verification_recovery_dispatch_authorized_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    command: &PendingRunnerCommand,
+) -> Result<bool> {
+    if !verification_command_identity_matches(command) {
+        return Ok(false);
+    }
+    if retained_provider_receipt::has_collection(&command.payload) {
+        return retained_provider_receipt::retained_dispatch_authorized_tx(tx, command).await;
+    }
+    aggregate_breaker::lock_corp_tx(tx, command.corp_id).await?;
+    factory_run_failure::RunScope::lock_tx(tx, command.corp_id, command.run_id).await?;
+    sqlx::query("SELECT id FROM runs WHERE corp_id=$1 AND id=$2 FOR UPDATE")
+        .bind(command.corp_id)
+        .bind(command.run_id)
+        .fetch_optional(&mut **tx)
+        .await?;
+    sqlx::query("SELECT id FROM runner_commands WHERE corp_id=$1 AND id=$2 FOR UPDATE")
+        .bind(command.corp_id)
+        .bind(command.id)
+        .fetch_optional(&mut **tx)
+        .await?;
+    Ok(sqlx::query_scalar(
             r#"
             SELECT EXISTS (
                 SELECT 1 FROM runner_commands stored
@@ -146,9 +212,8 @@ impl PgStore {
         .bind(command.run_id)
         .bind(&command.runner_id)
         .bind(&command.payload)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut **tx)
         .await?)
-    }
 }
 
 #[cfg(test)]

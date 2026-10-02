@@ -1,0 +1,298 @@
+TAP version 13
+# Subtest: deadline editor has explicit labels, local timezone, blank defaults and no launch controls
+ok 1 - deadline editor has explicit labels, local timezone, blank defaults and no launch controls
+  ---
+  duration_ms: 27.8187
+  type: 'test'
+  ...
+# Subtest: editor callbacks preserve other explicit fields and do not mutate the draft
+ok 2 - editor callbacks preserve other explicit fields and do not mutate the draft
+  ---
+  duration_ms: 0.9715
+  type: 'test'
+  ...
+# Subtest: saved readback projects the original shared deadline and the reserved task cutoff
+ok 3 - saved readback projects the original shared deadline and the reserved task cutoff
+  ---
+  duration_ms: 3.193
+  type: 'test'
+  ...
+# Subtest: a missing or changed task contract cannot be presented as an agreed deadline
+ok 4 - a missing or changed task contract cannot be presented as an agreed deadline
+  ---
+  duration_ms: 0.9255
+  type: 'test'
+  ...
+# Subtest: untimed and legacy task deadlines remain explicit without inventing a mission policy
+ok 5 - untimed and legacy task deadlines remain explicit without inventing a mission policy
+  ---
+  duration_ms: 0.3958
+  type: 'test'
+  ...
+# Subtest: an empty draft supplies no default duration or reserve and returns fresh editable state
+ok 6 - an empty draft supplies no default duration or reserve and returns fresh editable state
+  ---
+  duration_ms: 2.0037
+  type: 'test'
+  ...
+# Subtest: the selected local wall time becomes one absolute cutoff without a reserve
+ok 7 - the selected local wall time becomes one absolute cutoff without a reserve
+  ---
+  duration_ms: 0.795
+  type: 'test'
+  ...
+# Subtest: calendar overflow and incomplete or timezone-bearing local input are rejected
+ok 8 - calendar overflow and incomplete or timezone-bearing local input are rejected
+  ---
+  duration_ms: 0.4675
+  type: 'test'
+  ...
+# Subtest: a DST gap is rejected and the displayed local zone determines the absolute instant
+ok 9 - a DST gap is rejected and the displayed local zone determines the absolute instant
+  ---
+  duration_ms: 137.7107
+  type: 'test'
+  ...
+# Subtest: deadline and earlier-stage cutoff are rechecked at submission time
+ok 10 - deadline and earlier-stage cutoff are rechecked at submission time
+  ---
+  duration_ms: 0.6314
+  type: 'test'
+  ...
+# Subtest: a reserve requires explicit seconds and distinct task keys without changing the shared deadline
+ok 11 - a reserve requires explicit seconds and distinct task keys without changing the shared deadline
+  ---
+  duration_ms: 0.5117
+  type: 'test'
+  ...
+# Subtest: partial, duplicate, fractional, overflowing and already-consumed reserves are rejected
+ok 12 - partial, duplicate, fractional, overflowing and already-consumed reserves are rejected
+  ---
+  duration_ms: 0.5398
+  type: 'test'
+  ...
+# Subtest: deadline echoes compare absolute instants and retain sub-millisecond precision
+ok 13 - deadline echoes compare absolute instants and retain sub-millisecond precision
+  ---
+  duration_ms: 0.8416
+  type: 'test'
+  ...
+# Subtest: malformed saved policies remain unknown, while expired policies remain readable
+ok 14 - malformed saved policies remain unknown, while expired policies remain readable
+  ---
+  duration_ms: 0.4337
+  type: 'test'
+  ...
+# Subtest: one builder preserves the complete current creation payload and retained settings
+ok 15 - one builder preserves the complete current creation payload and retained settings
+  ---
+  duration_ms: 2.1537
+  type: 'test'
+  ...
+# Subtest: provider defaults, supported reasoning and commit-branch semantics match submission
+ok 16 - provider defaults, supported reasoning and commit-branch semantics match submission
+  ---
+  duration_ms: 0.2324
+  type: 'test'
+  ...
+# Subtest: timed preview and creation preserve one explicit deadline and reserve in the shared request
+ok 17 - timed preview and creation preserve one explicit deadline and reserve in the shared request
+  ---
+  duration_ms: 0.4091
+  type: 'test'
+  ...
+# Subtest: a timed preview must echo the exact deadline and reserve, allowing equivalent RFC3339 instants
+ok 18 - a timed preview must echo the exact deadline and reserve, allowing equivalent RFC3339 instants
+  ---
+  duration_ms: 9.4359
+  type: 'test'
+  ...
+# Subtest: an unavailable endpoint never advises launching a timed mission without server confirmation
+ok 19 - an unavailable endpoint never advises launching a timed mission without server confirmation
+  ---
+  duration_ms: 0.97
+  type: 'test'
+  ...
+# Subtest: a server cannot silently introduce a deadline into an untimed allocation preview
+ok 20 - a server cannot silently introduce a deadline into an untimed allocation preview
+  ---
+  duration_ms: 0.7527
+  type: 'test'
+  ...
+# Subtest: existing deterministic fixture semantics are not converted into provider settings
+ok 21 - existing deterministic fixture semantics are not converted into provider settings
+  ---
+  duration_ms: 0.344
+  type: 'test'
+  ...
+# Subtest: scope freezes the exact serialized body and rejects an actor mismatch
+ok 22 - scope freezes the exact serialized body and rejects an actor mismatch
+  ---
+  duration_ms: 0.6319
+  type: 'test'
+  ...
+# Subtest: every request field, Corp and actor invalidate an earlier quote
+ok 23 - every request field, Corp and actor invalidate an earlier quote
+  ---
+  duration_ms: 1.0238
+  type: 'test'
+  ...
+# Subtest: preview debounces, uses the exact creation body, and calls only the read-only preview POST
+ok 24 - preview debounces, uses the exact creation body, and calls only the read-only preview POST
+  ---
+  duration_ms: 2.7993
+  type: 'test'
+  ...
+# Subtest: an edit or closing the composer before debounce starts no request
+ok 25 - an edit or closing the composer before debounce starts no request
+  ---
+  duration_ms: 0.5667
+  type: 'test'
+  ...
+# Subtest: an invalidated request is aborted and cannot publish a late successful quote
+ok 26 - an invalidated request is aborted and cannot publish a late successful quote
+  ---
+  duration_ms: 1.3719
+  type: 'test'
+  ...
+# Subtest: late errors after actor/Corp change or unmount cannot replace the new preview
+ok 27 - late errors after actor/Corp change or unmount cannot replace the new preview
+  ---
+  duration_ms: 0.8863
+  type: 'test'
+  ...
+# Subtest: editing away and back still requires a fresh request, not a revived quote
+ok 28 - editing away and back still requires a fresh request, not a revived quote
+  ---
+  duration_ms: 2.4263
+  type: 'test'
+  ...
+# Subtest: allocations are displayed verbatim from the server, not a frontend Studio formula
+ok 29 - allocations are displayed verbatim from the server, not a frontend Studio formula
+  ---
+  duration_ms: 0.8282
+  type: 'test'
+  ...
+# Subtest: missing or mismatched quote fields never become a current allocation
+ok 30 - missing or mismatched quote fields never become a current allocation
+  ---
+  duration_ms: 1.4341
+  type: 'test'
+  ...
+# Subtest: an absent preview endpoint gives a useful failure state without inventing allocations
+ok 31 - an absent preview endpoint gives a useful failure state without inventing allocations
+  ---
+  duration_ms: 1.2336
+  type: 'test'
+  ...
+# Subtest: preview response is bounded to eight tasks without reallocating server budgets
+ok 32 - preview response is bounded to eight tasks without reallocating server budgets
+  ---
+  duration_ms: 0.8525
+  type: 'test'
+  ...
+# Subtest: unknown, self, duplicate and oversized dependency references remain unknown allocations
+ok 33 - unknown, self, duplicate and oversized dependency references remain unknown allocations
+  ---
+  duration_ms: 0.9891
+  type: 'test'
+  ...
+# Subtest: retry clears an old failure immediately and can accept a fresh quote
+ok 34 - retry clears an old failure immediately and can accept a fresh quote
+  ---
+  duration_ms: 0.8112
+  type: 'test'
+  ...
+# Subtest: timeout clears the quote, aborts the request and ignores a late response
+ok 35 - timeout clears the quote, aborts the request and ignores a late response
+  ---
+  duration_ms: 0.5666
+  type: 'test'
+  ...
+# Subtest: App shares the request body, invalidates keyed preview instances and retains native Launch
+ok 36 - App shares the request body, invalidates keyed preview instances and retains native Launch
+  ---
+  duration_ms: 5.2503
+  type: 'test'
+  ...
+# Subtest: imported deadline driver is inert and requires explicit owned deterministic configuration
+ok 37 - imported deadline driver is inert and requires explicit owned deterministic configuration
+  ---
+  duration_ms: 4.624
+  type: 'test'
+  ...
+# Subtest: deadline driver refuses shared sources, remote endpoints and changed process receipts
+ok 38 - deadline driver refuses shared sources, remote endpoints and changed process receipts
+  ---
+  duration_ms: 6.2829
+  type: 'test'
+  ...
+# Subtest: deadline fixture resolves the actual checkout and existing output parent before writes
+ok 39 - deadline fixture resolves the actual checkout and existing output parent before writes
+  ---
+  duration_ms: 23.1012
+  type: 'test'
+  ...
+# Subtest: deadline fixture rejects a false canonical repository receipt
+ok 40 - deadline fixture rejects a false canonical repository receipt
+  ---
+  duration_ms: 13.728
+  type: 'test'
+  ...
+# Subtest: deadline fixture rejects repository and QA directory aliases
+ok 41 - deadline fixture rejects repository and QA directory aliases
+  ---
+  duration_ms: 15.7163
+  type: 'test'
+  ...
+# Subtest: deadline fixture rejects source and evidence links without writing through them
+ok 42 - deadline fixture rejects source and evidence links without writing through them
+  ---
+  duration_ms: 29.137
+  type: 'test'
+  ...
+# Subtest: deadline fixture rejects an existing linked output before any writes
+ok 43 - deadline fixture rejects an existing linked output before any writes
+  ---
+  duration_ms: 20.5151
+  type: 'test'
+  ...
+# Subtest: deadline acceptance needs late native success, committed cancellation and separate termination
+ok 44 - deadline acceptance needs late native success, committed cancellation and separate termination
+  ---
+  duration_ms: 1.4754
+  type: 'test'
+  ...
+# Subtest: deadline acceptance rejects artifacts, false physical-stop claims and renewed stop allowance
+ok 45 - deadline acceptance rejects artifacts, false physical-stop claims and renewed stop allowance
+  ---
+  duration_ms: 0.8958
+  type: 'test'
+  ...
+# Subtest: deadline fixture reports late native success only after the explicit interrupt response
+ok 46 - deadline fixture reports late native success only after the explicit interrupt response
+  ---
+  duration_ms: 6.0348
+  type: 'test'
+  ...
+# Subtest: ordinary delayed fixture still reports interrupted and never emits a success answer
+ok 47 - ordinary delayed fixture still reports interrupted and never emits a success answer
+  ---
+  duration_ms: 1.8188
+  type: 'test'
+  ...
+# Subtest: late-success opt-in is reset for the next native turn
+ok 48 - late-success opt-in is reset for the next native turn
+  ---
+  duration_ms: 1.9818
+  type: 'test'
+  ...
+1..48
+# tests 48
+# suites 0
+# pass 48
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2299.8684

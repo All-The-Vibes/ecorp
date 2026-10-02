@@ -376,23 +376,38 @@ impl PgStore {
         &self,
         command: &PendingRunnerCommand,
         dispatch: F,
-    ) -> Result<RunnerCommandDispatchOutcome>
+    ) -> Result<RunBudgetDispatchOutcome<RunnerCommandDispatchOutcome>>
     where
-        F: FnOnce() -> Result<bool>,
+        F: FnOnce(Option<crony_domain::RunDeadline>) -> Result<bool>,
     {
         let mut tx = self.pool.begin().await?;
         if !source_correction_command_authorized_tx(&mut tx, command).await? {
-            return Ok(RunnerCommandDispatchOutcome::Obsolete);
+            return Ok(RunBudgetDispatchOutcome {
+                transport_result: RunnerCommandDispatchOutcome::Obsolete,
+                commit_error: None,
+            });
         }
-        let outcome = if dispatch()? {
+        let Ok(deadline) = mission_deadline::obsolete_if_expired(
+            mission_deadline::for_run_tx(&mut tx, command.corp_id, command.run_id).await,
+        )?
+        else {
+            return Ok(RunBudgetDispatchOutcome {
+                transport_result: RunnerCommandDispatchOutcome::Obsolete,
+                commit_error: None,
+            });
+        };
+        let outcome = if dispatch(deadline)? {
             RunnerCommandDispatchOutcome::Sent
         } else {
             RunnerCommandDispatchOutcome::Disconnected
         };
         // An aggregate fence cannot commit between this check and enqueue.
         // Delivery remains pending until the assigned runner acknowledges it.
-        tx.commit().await?;
-        Ok(outcome)
+        let commit_error = tx.commit().await.err();
+        Ok(RunBudgetDispatchOutcome {
+            transport_result: outcome,
+            commit_error,
+        })
     }
 }
 

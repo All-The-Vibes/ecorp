@@ -605,6 +605,7 @@ async fn validate_job_binding(
 fn protected_plan(source: &RunnerCapability) -> TaskGraphPlan {
     let agent_id = Uuid::new_v4();
     TaskGraphPlan {
+        deadline: None,
         strategy:"single".into(),max_nodes:1,max_depth:0,budget_tokens:1000,budget_cost_microusd:1000,
         staffing:vec![PlannedAgent{id:agent_id,name:"Delegated resource reader".into(),role:"worker".into(),
             adapter:"delegated-resource".into(),accent:"#b11f4b".into()}],

@@ -7,7 +7,7 @@ impl PgStore {
         &self,
         command: &PendingRunnerCommand,
         dispatch: F,
-    ) -> Result<RunnerCommandDispatchOutcome>
+    ) -> Result<RunBudgetDispatchOutcome<RunnerCommandDispatchOutcome>>
     where
         F: FnOnce(Option<Uuid>) -> Result<bool>,
     {
@@ -101,6 +101,15 @@ impl PgStore {
         {
             state = RunnerCommandDispatchState::Obsolete;
         }
+        if state == RunnerCommandDispatchState::Pending
+            && !cleanup
+            && mission_deadline::obsolete_if_expired(
+                mission_deadline::for_run_tx(&mut tx, command.corp_id, command.run_id).await,
+            )?
+            .is_err()
+        {
+            state = RunnerCommandDispatchState::Obsolete;
+        }
         let outcome = match state {
             RunnerCommandDispatchState::Pending => {
                 if dispatch(lease.map(|lease| lease.token))? {
@@ -113,8 +122,11 @@ impl PgStore {
             RunnerCommandDispatchState::Obsolete => RunnerCommandDispatchOutcome::Obsolete,
         };
         // Budget, command, message and lease locks remain held through synchronous enqueue.
-        tx.commit().await?;
-        Ok(outcome)
+        let commit_error = tx.commit().await.err();
+        Ok(RunBudgetDispatchOutcome {
+            transport_result: outcome,
+            commit_error,
+        })
     }
 
     /// An error means dispatch was never invoked. Once invoked, preserve its
@@ -128,7 +140,7 @@ impl PgStore {
         dispatch: F,
     ) -> Result<RunBudgetDispatchOutcome<T>>
     where
-        F: FnOnce() -> T,
+        F: FnOnce(Option<crony_domain::RunDeadline>) -> T,
     {
         let mut tx = self.pool.begin().await?;
         lock_corp_tx(&mut tx, corp_id).await?;
@@ -149,7 +161,8 @@ impl PgStore {
         // pass a check before asynchronous dependency/secret preparation.
         // Preserve the native transport result, including a verifier-policy
         // rejection, without releasing budget authority before enqueue.
-        let transport_result = dispatch();
+        let deadline = mission_deadline::for_run_tx(&mut tx, corp_id, run_id).await?;
+        let transport_result = dispatch(deadline);
         let commit_error = tx.commit().await.err();
         Ok(RunBudgetDispatchOutcome {
             transport_result,

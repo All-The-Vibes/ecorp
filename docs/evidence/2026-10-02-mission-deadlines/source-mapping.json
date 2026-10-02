@@ -1,0 +1,417 @@
+{
+  "schema_version": 1,
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 298,
+  "base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parent_pr": 392,
+  "parent_head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+  "parent_tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+  "original_browser_fingerprint": "5f435b1405c6be63bc174b513f5b1461f05876809caf6838c3ce8ee18a25f3f9",
+  "original_focused_and_native_fingerprint": "27146edbbdff1566968f646ab9b7d89d7aaf8f5463de743a81ab08f0fcc8a69e",
+  "pre_trace_fingerprint": "161841ad998a44f991928195c72e520667f3b201854cb33023036b378d4671e4",
+  "code_candidate_fingerprint": "aab4c5ab28c1077d8eb04508e40af79808f443c71bb11c30d3400a2eb6a060b3",
+  "code_candidate_file_count": 7428,
+  "chronology": "Browser R2 ran 13:00:09.355-13:01:29.615 UTC before the added server cfg(test) admission case and the missing migration57 manifest entry. Focused/native R4 include the admission case but precede the manifest correction. The later fake-clock run adds output only to an existing cfg(test) domain test. Evidence files are added after those executions; no earlier test is relabeled as a run on the future publication commit.",
+  "changed_source": [
+    {
+      "path": "apps/web/src/App.tsx",
+      "physical_sha256": "3de77a165cb23185892cb28a6528b3668d8472bbbcc983cdea57fc500a32206e",
+      "git_normalized_blob": "dafa997f720a522f1265d3f8c4bc53c80644cebd"
+    },
+    {
+      "path": "apps/web/src/MissionDeadlineEditor.test.mjs",
+      "physical_sha256": "324d98050636d43c09a084334173af28accb04ff4f7f44f5d05a40c78ad403e0",
+      "git_normalized_blob": "fa31beaf48b6175d072f4cd5fd14dde45b54d603"
+    },
+    {
+      "path": "apps/web/src/MissionDeadlineEditor.tsx",
+      "physical_sha256": "94363fcc38baeef28728bbbb2046f5ed7f8ce1681405cc931d4aafe5a1dbccc4",
+      "git_normalized_blob": "80001e140fd78c054067f26488d5d0ebe38ca3da"
+    },
+    {
+      "path": "apps/web/src/OperationsUx.css",
+      "physical_sha256": "32093ab0386c9c20db0ae9912e567487e7f6469f29159b8cb643801d0209052b",
+      "git_normalized_blob": "ad9cbdba702afda00c21954b2c914ce4850639f0"
+    },
+    {
+      "path": "apps/web/src/missionDeadline.test.mjs",
+      "physical_sha256": "ad777e0ff380ee464102cee30270e46bd8aa8da471fc16f9d802eae4ef354826",
+      "git_normalized_blob": "bcbe778cf53f18a80defc6a2cd0b5f5e83e95d6e"
+    },
+    {
+      "path": "apps/web/src/missionDeadline.ts",
+      "physical_sha256": "8a9bed426a57db4b6d637a101fa675a5b3eacd45c24aacdf0adffb1574bcfb11",
+      "git_normalized_blob": "1de8299a31898bf239fa84c69d91eac6152d4c58"
+    },
+    {
+      "path": "apps/web/src/missionPreview.test.mjs",
+      "physical_sha256": "d5af97763d2118dd8dafe672768371041c3cc8add857f750ea3f88821c04c45f",
+      "git_normalized_blob": "70ce663a799263d82829a1e5b84ccfea68f1e2bf"
+    },
+    {
+      "path": "apps/web/src/missionPreview.ts",
+      "physical_sha256": "287aa79bba66bd22febb044b81183cdda76be33b84d78a11e5571ed2d26a9ffe",
+      "git_normalized_blob": "2e1684be3045c256bf083b68aebec9b85ca5a5a0"
+    },
+    {
+      "path": "crates/crony-cli/src/main.rs",
+      "physical_sha256": "0584d5b9c21d5e4a62703e061b9245c9c675f7ffa5482cbcdc0ac140fcbd0cf3",
+      "git_normalized_blob": "b5167aea0ce0c55eb795288dce648dac40c845ed"
+    },
+    {
+      "path": "crates/crony-domain/src/lib.rs",
+      "physical_sha256": "35b2d0d4419701df0e8a2e6d1d04e6e90f39bba4d1d4bb2bb169e8cd1b1d6610",
+      "git_normalized_blob": "c83df11dd590699b9b19ac2d846a2553879d5da7"
+    },
+    {
+      "path": "crates/crony-domain/src/mission_deadline.rs",
+      "physical_sha256": "15bac243dd530cae04c0db3d56a83bab0f57d658ecbb3e66d8dd75249f5f60b4",
+      "git_normalized_blob": "a75688781fa96a7abcffed7728f2ff9c471e6a1f"
+    },
+    {
+      "path": "crates/crony-protocol/src/lib.rs",
+      "physical_sha256": "292435f55e4339c42e59d8def1a5ac249bf4835652eca95e06e9b618621cef31",
+      "git_normalized_blob": "93dba50b8b7f84c4337b18b599e34ec13e9c4b1b"
+    },
+    {
+      "path": "crates/crony-runner/Cargo.toml",
+      "physical_sha256": "abd6ed0e292dfb3f6b1d847fc10fd2e49a5ede48a054626a50917dbec9ce400a",
+      "git_normalized_blob": "ed495be7416b0451329aaf1961f2fdedb3c1a46e"
+    },
+    {
+      "path": "crates/crony-runner/src/main.rs",
+      "physical_sha256": "8d4486850ab3e387769f8f383b568678c8246d6b0428fea52b21b784e964de05",
+      "git_normalized_blob": "5489fd871bb2257648ef88997d964352689738f2"
+    },
+    {
+      "path": "crates/crony-runner/src/mission_deadline_tests.rs",
+      "physical_sha256": "1dde796e761e9f3650dbc0bd6604067e00f7d4c25241f91b071a06a920189fee",
+      "git_normalized_blob": "4909df498753a7e2aeaa8c188f70bedfd505de22"
+    },
+    {
+      "path": "crates/crony-server/src/delegated.rs",
+      "physical_sha256": "306d696119083dde86998b9188a4b99af1a61e0d95112670239a5d8742f68080",
+      "git_normalized_blob": "ee3920a5fa4eab93e6486b9fc3b7a9003d5e4b88"
+    },
+    {
+      "path": "crates/crony-server/src/issue297_native_fixture.rs",
+      "physical_sha256": "6fdb1bce51cb47b3ddce17292f4f6b8d92180d69150ff69d1ef2360fd115eed2",
+      "git_normalized_blob": "30f19e20f01c4fe37f0cba7acb2b8fe8f6d5a9cb"
+    },
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "physical_sha256": "6c315a238168b6e2d58eb7fdf8b45d5c19d7440bf688f5c8788e2c2614385c42",
+      "git_normalized_blob": "504982c5dcaf94a39627d91200680950d43277ce"
+    },
+    {
+      "path": "crates/crony-server/src/planning.rs",
+      "physical_sha256": "720772ed6f8cd807fa20036ab74acd90284ea7e28cb1856bcaff97dabea6e035",
+      "git_normalized_blob": "ebc5572b591cb7949328b5c8499e7ffa4d410b5e"
+    },
+    {
+      "path": "crates/crony-store/src/agent_pinning/tests.rs",
+      "physical_sha256": "7e004e373b5a5d5eef31fd206459b45c54b96612d49230ab5cb7c7e59969d5cd",
+      "git_normalized_blob": "ce5272aebce4abdb0fb77ac3c4c2d9a32126410a"
+    },
+    {
+      "path": "crates/crony-store/src/aggregate_breaker.rs",
+      "physical_sha256": "43a7ed10e13b1f1fe272af196ef825c1dfedbd48bbe20ebe2f61c86319d3efe0",
+      "git_normalized_blob": "9e8b1e7b6804bab18a0f812f1639191dc42a1d4b"
+    },
+    {
+      "path": "crates/crony-store/src/aggregate_breaker_tests.rs",
+      "physical_sha256": "766215278b4dbe3e2c3b08c7deda2fe9c0b14897b17d252ffeae770ef50bb5cb",
+      "git_normalized_blob": "c1f5605842cbf8be49adbf56dfad47b56a584509"
+    },
+    {
+      "path": "crates/crony-store/src/checkpoint_correction.rs",
+      "physical_sha256": "36876e764f7f1685a2386b26816add0bb061c0bed0fbbbe3a324a537aab0e622",
+      "git_normalized_blob": "bc0672da59cacb65bc24e70a4c36a2235724ca5d"
+    },
+    {
+      "path": "crates/crony-store/src/checkpoint_correction_dispatch_tests.rs",
+      "physical_sha256": "b44e9e1aaa80cc25359b544cb874c3008f629d16692c98074661010d5f5996cc",
+      "git_normalized_blob": "43d0e8120ff667eb24c99f4962522c4454fefb77"
+    },
+    {
+      "path": "crates/crony-store/src/contract_revision.rs",
+      "physical_sha256": "ea78e8d8b29ba3275c925ac1e664e6b595ab06fdbd80f9c4f98f763eb34a96b4",
+      "git_normalized_blob": "241d99b1190053f508e31962a64310a492a96be8"
+    },
+    {
+      "path": "crates/crony-store/src/control_accounting.rs",
+      "physical_sha256": "71d3b2f335b2bd2aef291e8751fbe15f3c6e361a361b5eeff1b87a94462dc432",
+      "git_normalized_blob": "7b3be03a9340cb112dae66544f48013b47105fb7"
+    },
+    {
+      "path": "crates/crony-store/src/deliverable_failure_tests.rs",
+      "physical_sha256": "242a908bbb92278cc580c3df86b06a42d8c572cd458fc11f62af7598b9b8a68e",
+      "git_normalized_blob": "980a277500881eccc08ea4914215eb97d6705d2c"
+    },
+    {
+      "path": "crates/crony-store/src/factory_recovery_loss_tests.rs",
+      "physical_sha256": "6e112d59b7072c1f14c58f24e89b77e89287f3a7c7bf6e36f337964f84d77453",
+      "git_normalized_blob": "23ed382458719e4b15826433ddda989e29c8a418"
+    },
+    {
+      "path": "crates/crony-store/src/factory_run_failure.rs",
+      "physical_sha256": "7bf1f3adcd6cf2958130ce7503f2a2889c883a7f130a14ce815fb2b4ec1d8f52",
+      "git_normalized_blob": "d670e62a3a390798745c805b239d0cfd49efd4bd"
+    },
+    {
+      "path": "crates/crony-store/src/lib.rs",
+      "physical_sha256": "9b8b0e275c142bad6718b13d1d5ca7d0edbd63f43ba2201a4cacca6739c7c2ec",
+      "git_normalized_blob": "664cb26c63e9f429fec0e95d72775851d023cf47"
+    },
+    {
+      "path": "crates/crony-store/src/mission_context_tests.rs",
+      "physical_sha256": "7d96559ebab2c6eca23609eaa832cdf5a200b6eec18415d253c0fa15260b91e0",
+      "git_normalized_blob": "c5f2b6dac5fb4f50b4b068d1487c0480835e08c1"
+    },
+    {
+      "path": "crates/crony-store/src/mission_deadline.rs",
+      "physical_sha256": "6ab05ddfa4c8abac8cb279b5f453e03207ff23545b2085e76b9ac7d51e2e939e",
+      "git_normalized_blob": "524a9c4a7bc4b5b356f8a2b7d196a2e78593e4df"
+    },
+    {
+      "path": "crates/crony-store/src/mission_deadline_tests.rs",
+      "physical_sha256": "5ff0097eb7d351b13ed66d689d40909015803a72af3e10745187a6d92ad89680",
+      "git_normalized_blob": "f4ce684aaac161f635a2898f5e840cfc831ee309"
+    },
+    {
+      "path": "crates/crony-store/src/retained_provider_receipt.rs",
+      "physical_sha256": "e9aaf8f56f68ddb488b07b1208cd93eb64c4681c9b7ef4c41bc0226dffba6314",
+      "git_normalized_blob": "f463fa76dfcdbe3b4034892064fa1d0958918904"
+    },
+    {
+      "path": "crates/crony-store/src/staffing.rs",
+      "physical_sha256": "1b59a256325f7d9429434fb70262f916a306c69d17d18afe8e0655f12f76dc81",
+      "git_normalized_blob": "47581f1e1d3e1a0019e5a05fcf56f433298c3568"
+    },
+    {
+      "path": "crates/crony-store/src/state_audit.rs",
+      "physical_sha256": "70cd3dd8e5a0e43cbca09db6721e9f21fa2f31bd4d2c8fa13203f3cafa792f75",
+      "git_normalized_blob": "38c42c18b22ccc5ae32de18de3b11f15847d02fa"
+    },
+    {
+      "path": "crates/crony-store/src/steering_lock_tests.rs",
+      "physical_sha256": "824059a367ea0f13ea29359d95fd6696f586c8a9caa72a9c11adbc24d3988e3e",
+      "git_normalized_blob": "aebb9c94cadab63ef7ebb40bbd583647cba3b880"
+    },
+    {
+      "path": "crates/crony-store/src/verification_dispatch.rs",
+      "physical_sha256": "9d2a4e89c7ca6d7bcac6162305ff8b250d0b750c0941089adbbef0f82ff6a2b6",
+      "git_normalized_blob": "6a2046257c4b48da3ee85385902e100260d29940"
+    },
+    {
+      "path": "crates/crony-store/src/workspace_connections_tests.rs",
+      "physical_sha256": "c1d3c4167ef30ff0bef1f9b5e9cf4f14638fe574ccb987f920dc09c4fd211d8e",
+      "git_normalized_blob": "f4f3239c08947a86d54cc402fcedd11665da23fa"
+    },
+    {
+      "path": "db/migrations/0057_mission_deadlines.sql",
+      "physical_sha256": "5c80b62c721bc2fc0d057f2afbafbb60796a6f3b5365fcb0bb1d5fce35ac23b8",
+      "git_normalized_blob": "c5cd635f133002d70d371067298ee9a32ad9c566"
+    },
+    {
+      "path": "db/migrations/manifest.json",
+      "physical_sha256": "cffc3b1c4bf82a9bf18436e3222a936282b3fd6410a170f99030cac535bfdcd5",
+      "git_normalized_blob": "ebe3073130a6077d77ccd9dd7f4010bc8466da62"
+    },
+    {
+      "path": "docs/MISSION_DEADLINES.md",
+      "physical_sha256": "da92fc449b29135186bd9fb9b5001fdc2de5188dacfe85277ae1f16ae413a659",
+      "git_normalized_blob": "8d0d05512e19fd6965e1b4fa98621e4f6eb1fabb"
+    },
+    {
+      "path": "scripts/fake-codex-app-server.mjs",
+      "physical_sha256": "90dbd9f7f6d924191b1474f5fa8abe8c1e98c0b0316b5d826195385ccf99ec77",
+      "git_normalized_blob": "356c577a7e39cdc75155ee291a8fac4561d52e9d"
+    },
+    {
+      "path": "tools/e2e_mission_deadline.mjs",
+      "physical_sha256": "2e5847d699fed1ed36948ebb46a650b418abf44437c519fc9139c2a187f742af",
+      "git_normalized_blob": "d88eb38dd9c48ba0bc13c1f333e91b6299bf72d4"
+    },
+    {
+      "path": "tools/e2e_mission_deadline.test.mjs",
+      "physical_sha256": "5c813f9786d1ed1bd763d6a1cf0518744f547372b25e2bd138a3332ad815d24f",
+      "git_normalized_blob": "d725decaf1479249873fea55f18cdc6dac411f32"
+    },
+    {
+      "path": "tools/fake_codex_deadline.test.mjs",
+      "physical_sha256": "fdaf9914f2530da29ace547dd67b931e46b860d05bdbb98832777f14f2fc245c",
+      "git_normalized_blob": "c9127dd85c1be9312428010b55343b945b6111e0"
+    }
+  ],
+  "prior_equivalence": {
+    "status": "passed",
+    "recorded_at_utc": "2026-10-02T13:12:10.338305+00:00",
+    "repository": "All-The-Vibes/ecorp",
+    "issue": 298,
+    "current_source": {
+      "path": "output/issue-completion/20261002T023252Z\\issue298-source-after-manifest-r1.json",
+      "sha256_at_checkpoint": "c84ff257dacd1f068a44e26adfc57ef507fad0cc32d5c26f366158b858fb4aff",
+      "status_at_checkpoint": "M apps/web/src/App.tsx\n M apps/web/src/OperationsUx.css\n M apps/web/src/missionPreview.test.mjs\n M apps/web/src/missionPreview.ts\n M crates/crony-cli/src/main.rs\n M crates/crony-domain/src/lib.rs\n M crates/crony-protocol/src/lib.rs\n M crates/crony-runner/Cargo.toml\n M crates/crony-runner/src/main.rs\n M crates/crony-server/src/delegated.rs\n M crates/crony-server/src/issue297_native_fixture.rs\n M crates/crony-server/src/main.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/agent_pinning/tests.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/aggregate_breaker_tests.rs\n M crates/crony-store/src/checkpoint_correction.rs\n M crates/crony-store/src/checkpoint_correction_dispatch_tests.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/deliverable_failure_tests.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_context_tests.rs\n M crates/crony-store/src/retained_provider_receipt.rs\n M crates/crony-store/src/staffing.rs\n M crates/crony-store/src/state_audit.rs\n M crates/crony-store/src/steering_lock_tests.rs\n M crates/crony-store/src/verification_dispatch.rs\n M crates/crony-store/src/workspace_connections_tests.rs\n M db/migrations/manifest.json\n M scripts/fake-codex-app-server.mjs\n?? apps/web/src/MissionDeadlineEditor.test.mjs\n?? apps/web/src/MissionDeadlineEditor.tsx\n?? apps/web/src/missionDeadline.test.mjs\n?? apps/web/src/missionDeadline.ts\n?? crates/crony-domain/src/mission_deadline.rs\n?? crates/crony-runner/src/mission_deadline_tests.rs\n?? crates/crony-store/src/mission_deadline.rs\n?? crates/crony-store/src/mission_deadline_tests.rs\n?? db/migrations/0057_mission_deadlines.sql\n?? docs/MISSION_DEADLINES.md\n?? tools/e2e_mission_deadline.mjs\n?? tools/e2e_mission_deadline.test.mjs\n?? tools/fake_codex_deadline.test.mjs",
+      "source_unchanged": null
+    },
+    "browser_source": {
+      "path": "output/issue-completion/20261002T023252Z\\issue298-source-before-browser-r2.json",
+      "sha256_at_checkpoint": "9fbb0878b208b840771395fd5159f6f014e5be5bd1599eadefee91e8a27d8672",
+      "status_at_checkpoint": "M apps/web/src/App.tsx\n M apps/web/src/OperationsUx.css\n M apps/web/src/missionPreview.test.mjs\n M apps/web/src/missionPreview.ts\n M crates/crony-cli/src/main.rs\n M crates/crony-domain/src/lib.rs\n M crates/crony-protocol/src/lib.rs\n M crates/crony-runner/Cargo.toml\n M crates/crony-runner/src/main.rs\n M crates/crony-server/src/delegated.rs\n M crates/crony-server/src/issue297_native_fixture.rs\n M crates/crony-server/src/main.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/agent_pinning/tests.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/aggregate_breaker_tests.rs\n M crates/crony-store/src/checkpoint_correction.rs\n M crates/crony-store/src/checkpoint_correction_dispatch_tests.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/deliverable_failure_tests.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_context_tests.rs\n M crates/crony-store/src/retained_provider_receipt.rs\n M crates/crony-store/src/staffing.rs\n M crates/crony-store/src/state_audit.rs\n M crates/crony-store/src/steering_lock_tests.rs\n M crates/crony-store/src/verification_dispatch.rs\n M crates/crony-store/src/workspace_connections_tests.rs\n M scripts/fake-codex-app-server.mjs\n?? apps/web/src/MissionDeadlineEditor.test.mjs\n?? apps/web/src/MissionDeadlineEditor.tsx\n?? apps/web/src/missionDeadline.test.mjs\n?? apps/web/src/missionDeadline.ts\n?? crates/crony-domain/src/mission_deadline.rs\n?? crates/crony-runner/src/mission_deadline_tests.rs\n?? crates/crony-store/src/mission_deadline.rs\n?? crates/crony-store/src/mission_deadline_tests.rs\n?? db/migrations/0057_mission_deadlines.sql\n?? docs/MISSION_DEADLINES.md\n?? tools/e2e_mission_deadline.mjs\n?? tools/e2e_mission_deadline.test.mjs\n?? tools/fake_codex_deadline.test.mjs",
+      "source_unchanged": null
+    },
+    "focused_source": {
+      "path": "output/issue-completion/20261002T023252Z\\issue298-source-before-ui-focused-r4.json",
+      "sha256_at_checkpoint": "f8308d4b44b9e9eca659757883564168a64f77335fd3b84c2e64288b0e0e9ad0",
+      "status_at_checkpoint": "M apps/web/src/App.tsx\n M apps/web/src/OperationsUx.css\n M apps/web/src/missionPreview.test.mjs\n M apps/web/src/missionPreview.ts\n M crates/crony-cli/src/main.rs\n M crates/crony-domain/src/lib.rs\n M crates/crony-protocol/src/lib.rs\n M crates/crony-runner/Cargo.toml\n M crates/crony-runner/src/main.rs\n M crates/crony-server/src/delegated.rs\n M crates/crony-server/src/issue297_native_fixture.rs\n M crates/crony-server/src/main.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/agent_pinning/tests.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/aggregate_breaker_tests.rs\n M crates/crony-store/src/checkpoint_correction.rs\n M crates/crony-store/src/checkpoint_correction_dispatch_tests.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/deliverable_failure_tests.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_context_tests.rs\n M crates/crony-store/src/retained_provider_receipt.rs\n M crates/crony-store/src/staffing.rs\n M crates/crony-store/src/state_audit.rs\n M crates/crony-store/src/steering_lock_tests.rs\n M crates/crony-store/src/verification_dispatch.rs\n M crates/crony-store/src/workspace_connections_tests.rs\n M scripts/fake-codex-app-server.mjs\n?? apps/web/src/MissionDeadlineEditor.test.mjs\n?? apps/web/src/MissionDeadlineEditor.tsx\n?? apps/web/src/missionDeadline.test.mjs\n?? apps/web/src/missionDeadline.ts\n?? crates/crony-domain/src/mission_deadline.rs\n?? crates/crony-runner/src/mission_deadline_tests.rs\n?? crates/crony-store/src/mission_deadline.rs\n?? crates/crony-store/src/mission_deadline_tests.rs\n?? db/migrations/0057_mission_deadlines.sql\n?? docs/MISSION_DEADLINES.md\n?? tools/e2e_mission_deadline.mjs\n?? tools/e2e_mission_deadline.test.mjs\n?? tools/fake_codex_deadline.test.mjs",
+      "source_unchanged": null
+    },
+    "current_fingerprint": "161841ad998a44f991928195c72e520667f3b201854cb33023036b378d4671e4",
+    "browser_fingerprint": "5f435b1405c6be63bc174b513f5b1461f05876809caf6838c3ce8ee18a25f3f9",
+    "focused_fingerprint": "27146edbbdff1566968f646ab9b7d89d7aaf8f5463de743a81ab08f0fcc8a69e",
+    "browser_delta": [
+      "crates/crony-server/src/main.rs",
+      "db/migrations/manifest.json"
+    ],
+    "focused_delta": [
+      "db/migrations/manifest.json"
+    ],
+    "server_test_only_proof": {
+      "removed_function": "issue298_timed_assignments_require_current_scoped_deadline_support",
+      "reconstructed_browser_sha256": "721b197930ddde3bf567216f3b329c865148bf63b51647d7f9ec21ade15ace21",
+      "browser_recorded_sha256": "721b197930ddde3bf567216f3b329c865148bf63b51647d7f9ec21ade15ace21",
+      "current_sha256": "6c315a238168b6e2d58eb7fdf8b45d5c19d7440bf688f5c8788e2c2614385c42",
+      "scope": "Only the added function inside the existing cfg(test) cache_admission_tests module was removed in memory; the reconstructed bytes match the entire earlier server file exactly."
+    },
+    "migration_fix": {
+      "before": {
+        "path": "output/issue-completion/20261002T023252Z\\issue298-migrations-before-manifest-r1.json",
+        "sha256_at_checkpoint": "5af79a9950ed94076ae03f908fa97d23f54bb56beca7a6ed1a2bb904b9b058f0",
+        "status_at_checkpoint": null,
+        "source_unchanged": null
+      },
+      "after": {
+        "path": "output/issue-completion/20261002T023252Z\\issue298-migrations-after-manifest-r1.json",
+        "sha256_at_checkpoint": "c1d64688f88190c2dbf244869e49a6af15b89bfccd15bf55f62a589f33063c6d",
+        "status_at_checkpoint": null,
+        "source_unchanged": null
+      },
+      "entry": {
+        "version": 57,
+        "file": "0057_mission_deadlines.sql",
+        "sha384": "11042685eebfba3dbebb78c885ce4d2530a6fc41950fde5e4bf071c6b7a935c1edfec72f781a9bafc39390d55f4d91f4"
+      },
+      "scope": "Appended only the incoming unapplied 57 manifest entry. SQL bytes and all other tracked/unignored source files match focused/native R4."
+    },
+    "limitation": "A source-equivalence proof, not a new build or browser execution. Original execution times, source fingerprints and failed attempts remain unchanged. Canonical validation of the final candidate remains required."
+  },
+  "additional_test_only_proof": {
+    "function": "mission_deadline::tests::queue_parent_restart_and_verifier_delays_consume_one_clock",
+    "old_domain_sha256": "05024e0049bed861d7d617301bf777dd4bce00ebcd0f446457a4f94e096aca8b",
+    "reconstructed_old_domain_sha256": "05024e0049bed861d7d617301bf777dd4bce00ebcd0f446457a4f94e096aca8b",
+    "current_domain_sha256": "15bac243dd530cae04c0db3d56a83bab0f57d658ecbb3e66d8dd75249f5f60b4",
+    "explanation": "Replaced only the new trace test function with its prior text in memory; the entire reconstructed file matches the prior physical hash. All other tracked/unignored files match the prior source snapshot."
+  },
+  "original_receipts": [
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r4.json",
+      "sha256": "e43fb2017069bfd044bf1732ad618facb0907284fa778d055a50834a62f19a86"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-native-database-r4.json",
+      "sha256": "58eec3690eb0c14a610c2bc490d430ababceb6a62bbff4149428e4a804f9d0e9"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-browser-r2.json",
+      "sha256": "646466aaac8dc8db728f473c815ee792f697bc8d6569373df40ddfbcf096f97e"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-native-build-r2.json",
+      "sha256": "b3a4db2d8b5132676acacae5721e084dc42bdd863be07f3005665ea4589131e1"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-source-equivalence-r1.json",
+      "sha256": "34cb4cf12f28f29cbd2c9b1bcf9e0f0d1dc50b8868dc0ffdf51b2b0154539472"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-fake-clock-r1.json",
+      "sha256": "f884cc5e6dcce0f6e444c916362131abe6255e0f7d561da0700b2dd6b4cbd197"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-source-before-browser-r2.json",
+      "sha256": "9fbb0878b208b840771395fd5159f6f014e5be5bd1599eadefee91e8a27d8672"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-source-after-browser-r2.json",
+      "sha256": "c5681dbf452696fb4fd8243e0f7755d52e244b68f1212ac113d1b2460c057758"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-source-before-ui-focused-r4.json",
+      "sha256": "f8308d4b44b9e9eca659757883564168a64f77335fd3b84c2e64288b0e0e9ad0"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-source-after-ui-focused-r4.json",
+      "sha256": "b8a800a9a8a6e9dd50a4eccf234cc429936cd06abec3f10fae1b1e1be6324340"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-source-after-manifest-r1.json",
+      "sha256": "c84ff257dacd1f068a44e26adfc57ef507fad0cc32d5c26f366158b858fb4aff"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-source-after-fake-clock-r1.json",
+      "sha256": "f3fe11d49d6e8d0430079982bc11a6b50e8ec590f7422c3b74acf7b8d9e7979c"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-browser-r1.json",
+      "sha256": "f03ead38010ea17154a1ad018e5ff2795ed1c47d0839d59d8165ba43eb610e18"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-native-database-r1.json",
+      "sha256": "b691305c19e7decccdf3b09f232fe4c8be58abc97c3a8bd77234608896db0052"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-native-database-r2.json",
+      "sha256": "f74207a0cb5232bf10b7937eb0b7927c82f7fff15d35e91e662b587bb8383959"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-native-database-r3.json",
+      "sha256": "05e9b747c8d6c418ec639686f1f11720ad79e2e99e242164d68a2a3ea1c78428"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-migrations-before-manifest-r1.json",
+      "sha256": "5af79a9950ed94076ae03f908fa97d23f54bb56beca7a6ed1a2bb904b9b058f0"
+    },
+    {
+      "file": "output/issue-completion/20261002T023252Z\\issue298-migrations-after-manifest-r1.json",
+      "sha256": "c1d64688f88190c2dbf244869e49a6af15b89bfccd15bf55f62a589f33063c6d"
+    },
+    {
+      "file": "<owned-browser-fixture>\\evidence\\mission-deadline\\report.json",
+      "sha256": "c00526ef37cfd46ac837f6ddf4edb69d4a2584323e99f60cca82457f10c374ed"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "single-1440.png",
+      "sha256": "9af502620bc6cc115cb37dd8d8a829b841b2f14836576ed8d0c2058840a9de34"
+    },
+    {
+      "file": "single-390.png",
+      "sha256": "bc048e767b16f4deff2a67f42025065cb7d71769af7243a76d799a9200184798"
+    },
+    {
+      "file": "parallel-running-before-cutoff.png",
+      "sha256": "d494aaedaf140e1e2e929d28c86c78d0a0c85ed4252e0b52ca36c24e60f7fe90"
+    },
+    {
+      "file": "parallel-specialists-1440.png",
+      "sha256": "1cf066da8ea0f83ce8ec59652871fcc211bfb99d7be07b40f50a6423de1c3ae2"
+    },
+    {
+      "file": "parallel-specialists-390.png",
+      "sha256": "78cb2b5efcc450affc0a3deda18d1fccac0ba066627837057d1a9d3cf343c6ae"
+    }
+  ],
+  "visual_inspection": "The five original images were visually inspected during this completion pass. The queued mission shows its persisted failed/cancelled deadline state; the parallel images show running specialists and then failed/cancelled state at both viewport widths. Still images are not timing, isolation or termination proof; the recorded events and native tests establish those assertions."
+}

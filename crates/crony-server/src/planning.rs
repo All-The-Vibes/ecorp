@@ -132,6 +132,7 @@ impl ManagerStrategy for SingleTaskStrategy {
             task_contract.deliverable = Some(deliverable.clone());
         }
         Ok(TaskGraphPlan {
+            deadline: None,
             strategy: self.id().to_owned(),
             max_nodes: 1,
             max_depth: 0,
@@ -216,6 +217,7 @@ impl ManagerStrategy for ParallelSpecialistsStrategy {
             "task:specialist-b".to_owned(),
         ];
         let mut plan = TaskGraphPlan {
+            deadline: None,
             strategy: self.id().to_owned(),
             max_nodes: 3,
             max_depth: 1,
@@ -532,6 +534,7 @@ impl ManagerStrategy for StudioSwarmStrategy {
             verification_policy: artifact_policy(),
         });
         Ok(TaskGraphPlan {
+            deadline: None,
             strategy: self.id().to_owned(),
             max_nodes: 4,
             max_depth: 1,
@@ -747,6 +750,7 @@ fn verification_plan(
     task_contract.normalize_for_adapter(&agent.adapter);
     task_contract.deliverable = request.deliverable.cloned();
     Ok(TaskGraphPlan {
+        deadline: None,
         strategy: strategy.to_owned(),
         max_nodes: 1,
         max_depth: 0,
@@ -837,6 +841,7 @@ fn contract(objective: String, expected_output: &str, budget_tokens: i64) -> Tas
 }
 
 pub fn validate_plan(plan: &TaskGraphPlan, agents: &[Agent]) -> Result<()> {
+    plan.validate_deadline().map_err(anyhow::Error::msg)?;
     if plan.tasks.is_empty() || plan.tasks.len() > MAX_GRAPH_NODES {
         return Err(anyhow!(
             "task graph must contain between 1 and {MAX_GRAPH_NODES} nodes"

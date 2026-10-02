@@ -161,6 +161,11 @@ impl PgStore {
             .context("decode current task contract")?;
         let current_description: String = mission.get("description");
         let mut replacement_contract = input.contract.clone();
+        if replacement_contract.deadline_at != current_contract.deadline_at {
+            return Err(native_policy!(
+                "contract revision cannot erase or change the mission deadline"
+            ));
+        }
         replacement_contract.objective = compose_revised_task_objective(
             &current_description,
             &description,

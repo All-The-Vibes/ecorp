@@ -1610,7 +1610,7 @@ async fn snapshot(
     mission: Uuid,
     ledger: Uuid,
 ) -> Result<Value> {
-    let m=sqlx::query("SELECT room_id,requested_by,description,specification_version,budget_tokens,budget_cost_microusd FROM missions WHERE id=$1 AND corp_id=$2")
+    let m=sqlx::query("SELECT room_id,requested_by,description,specification_version,budget_tokens,budget_cost_microusd,deadline_policy FROM missions WHERE id=$1 AND corp_id=$2")
         .bind(mission).bind(corp).fetch_one(&mut **tx).await?;
     let tasks=sqlx::query("SELECT id,contract,contract_version,verification_policy FROM tasks WHERE mission_id=$1 AND corp_id=$2 ORDER BY id LIMIT 65")
         .bind(mission).bind(corp).fetch_all(&mut **tx).await?;
@@ -1642,15 +1642,17 @@ async fn snapshot(
             "budget_cost_microusd":r.get::<i64,_>("proposed_budget_cost_microusd"),
             "replacement_contract_digest":contract,"replacement_verification_digest":verification}))
     }).collect::<Result<Vec<_>>>()?;
-    Ok(
-        json!({"schema_version":1,"ledger_id":ledger,"corp_id":corp,"mission_id":mission,
+    let mut content = json!({"schema_version":1,"ledger_id":ledger,"corp_id":corp,"mission_id":mission,
         "room_id":m.get::<Uuid,_>("room_id"),"requested_by":m.get::<Uuid,_>("requested_by"),
         "resource_key":format!("mission/{mission}/governance"),
         "description_digest":digest("description-input",m.get::<String,_>("description").as_bytes()),
         "specification_version":m.get::<i64,_>("specification_version"),
         "budget_tokens":m.get::<i64,_>("budget_tokens"),"budget_cost_microusd":m.get::<i64,_>("budget_cost_microusd"),
-        "tasks":task_content,"pending_budget_proposals":pending_content }),
-    )
+        "tasks":task_content,"pending_budget_proposals":pending_content });
+    if let Some(policy) = m.get::<Option<Value>, _>("deadline_policy") {
+        content["deadline_policy"] = policy;
+    }
+    Ok(content)
 }
 
 async fn append(

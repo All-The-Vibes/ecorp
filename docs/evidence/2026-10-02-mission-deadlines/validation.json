@@ -1,0 +1,694 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 298,
+  "focused": {
+    "repository": "All-The-Vibes/ecorp",
+    "issue": 298,
+    "status": "passed",
+    "wrapper_pid": 39492,
+    "started_at_utc": "2026-10-02T13:04:01.9610486Z",
+    "source": "<reviewed-checkout>",
+    "source_before": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T13:04:04.71Z",
+      "source": "<reviewed-checkout>",
+      "head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+      "tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M apps/web/src/App.tsx\n M apps/web/src/OperationsUx.css\n M apps/web/src/missionPreview.test.mjs\n M apps/web/src/missionPreview.ts\n M crates/crony-cli/src/main.rs\n M crates/crony-domain/src/lib.rs\n M crates/crony-protocol/src/lib.rs\n M crates/crony-runner/Cargo.toml\n M crates/crony-runner/src/main.rs\n M crates/crony-server/src/delegated.rs\n M crates/crony-server/src/issue297_native_fixture.rs\n M crates/crony-server/src/main.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/agent_pinning/tests.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/aggregate_breaker_tests.rs\n M crates/crony-store/src/checkpoint_correction.rs\n M crates/crony-store/src/checkpoint_correction_dispatch_tests.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/deliverable_failure_tests.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_context_tests.rs\n M crates/crony-store/src/retained_provider_receipt.rs\n M crates/crony-store/src/staffing.rs\n M crates/crony-store/src/state_audit.rs\n M crates/crony-store/src/steering_lock_tests.rs\n M crates/crony-store/src/verification_dispatch.rs\n M crates/crony-store/src/workspace_connections_tests.rs\n M scripts/fake-codex-app-server.mjs\n?? apps/web/src/MissionDeadlineEditor.test.mjs\n?? apps/web/src/MissionDeadlineEditor.tsx\n?? apps/web/src/missionDeadline.test.mjs\n?? apps/web/src/missionDeadline.ts\n?? crates/crony-domain/src/mission_deadline.rs\n?? crates/crony-runner/src/mission_deadline_tests.rs\n?? crates/crony-store/src/mission_deadline.rs\n?? crates/crony-store/src/mission_deadline_tests.rs\n?? db/migrations/0057_mission_deadlines.sql\n?? docs/MISSION_DEADLINES.md\n?? tools/e2e_mission_deadline.mjs\n?? tools/e2e_mission_deadline.test.mjs\n?? tools/fake_codex_deadline.test.mjs",
+      "source_file_count": 7428,
+      "source_fingerprint": "27146edbbdff1566968f646ab9b7d89d7aaf8f5463de743a81ab08f0fcc8a69e",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-before-ui-focused-r4.json",
+      "manifest_sha256": "f8308d4b44b9e9eca659757883564168a64f77335fd3b84c2e64288b0e0e9ad0"
+    },
+    "source_after": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T13:05:20.328Z",
+      "source": "<reviewed-checkout>",
+      "head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+      "tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M apps/web/src/App.tsx\n M apps/web/src/OperationsUx.css\n M apps/web/src/missionPreview.test.mjs\n M apps/web/src/missionPreview.ts\n M crates/crony-cli/src/main.rs\n M crates/crony-domain/src/lib.rs\n M crates/crony-protocol/src/lib.rs\n M crates/crony-runner/Cargo.toml\n M crates/crony-runner/src/main.rs\n M crates/crony-server/src/delegated.rs\n M crates/crony-server/src/issue297_native_fixture.rs\n M crates/crony-server/src/main.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/agent_pinning/tests.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/aggregate_breaker_tests.rs\n M crates/crony-store/src/checkpoint_correction.rs\n M crates/crony-store/src/checkpoint_correction_dispatch_tests.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/deliverable_failure_tests.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_context_tests.rs\n M crates/crony-store/src/retained_provider_receipt.rs\n M crates/crony-store/src/staffing.rs\n M crates/crony-store/src/state_audit.rs\n M crates/crony-store/src/steering_lock_tests.rs\n M crates/crony-store/src/verification_dispatch.rs\n M crates/crony-store/src/workspace_connections_tests.rs\n M scripts/fake-codex-app-server.mjs\n?? apps/web/src/MissionDeadlineEditor.test.mjs\n?? apps/web/src/MissionDeadlineEditor.tsx\n?? apps/web/src/missionDeadline.test.mjs\n?? apps/web/src/missionDeadline.ts\n?? crates/crony-domain/src/mission_deadline.rs\n?? crates/crony-runner/src/mission_deadline_tests.rs\n?? crates/crony-store/src/mission_deadline.rs\n?? crates/crony-store/src/mission_deadline_tests.rs\n?? db/migrations/0057_mission_deadlines.sql\n?? docs/MISSION_DEADLINES.md\n?? tools/e2e_mission_deadline.mjs\n?? tools/e2e_mission_deadline.test.mjs\n?? tools/fake_codex_deadline.test.mjs",
+      "source_file_count": 7428,
+      "source_fingerprint": "27146edbbdff1566968f646ab9b7d89d7aaf8f5463de743a81ab08f0fcc8a69e",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-after-ui-focused-r4.json",
+      "manifest_sha256": "b8a800a9a8a6e9dd50a4eccf234cc429936cd06abec3f10fae1b1e1be6324340"
+    },
+    "purpose": "Focused actual UI/model, preview protocol/planner and native deadline regressions, including capability-loss admission; web build/lint are required in the separate canonical lane. Not a canonical or full-stack acceptance receipt.",
+    "checks": [
+      {
+        "command": "node.exe --test --test-concurrency=1 --test-timeout=180000 --test-reporter=tap apps/web/src/missionDeadline.test.mjs apps/web/src/MissionDeadlineEditor.test.mjs apps/web/src/missionPreview.test.mjs tools/e2e_mission_deadline.test.mjs tools/fake_codex_deadline.test.mjs",
+        "exit_code": 0,
+        "rust_counts": [],
+        "node_counts": {
+          "pass": 43,
+          "skipped": 0,
+          "tests": 43,
+          "fail": 0,
+          "todo": 0,
+          "cancelled": 0
+        },
+        "name": "node",
+        "log": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r4-node.log",
+        "sha256": "97c1309380fe505f0169def5cf728bac1b6e75d30a1a94027685e771c55eff22"
+      },
+      {
+        "command": "cargo fmt --check",
+        "exit_code": 0,
+        "rust_counts": [],
+        "node_counts": {},
+        "name": "format",
+        "log": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r4-format.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": "cargo test --locked --offline -p crony-protocol mission_preview -- --nocapture",
+        "exit_code": 0,
+        "rust_counts": [
+          {
+            "ignored": 0,
+            "measured": 0,
+            "passed": 2,
+            "failed": 0,
+            "filtered_out": 12
+          }
+        ],
+        "node_counts": {},
+        "name": "protocol",
+        "log": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r4-protocol.log",
+        "sha256": "9c63847392dac48aa1e9689cb729bedcb9bfdaa4b7217b4c0a87eaebb26cd137"
+      },
+      {
+        "command": "cargo test --locked --offline -p crony-server mission_preview -- --nocapture",
+        "exit_code": 0,
+        "rust_counts": [
+          {
+            "ignored": 0,
+            "measured": 0,
+            "passed": 0,
+            "failed": 0,
+            "filtered_out": 7
+          },
+          {
+            "ignored": 0,
+            "measured": 0,
+            "passed": 3,
+            "failed": 0,
+            "filtered_out": 260
+          }
+        ],
+        "node_counts": {},
+        "name": "planner",
+        "log": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r4-planner.log",
+        "sha256": "0ad9adbdd144e5d2ad1a3a7eed84b9d000549a8e02553545be12963799f8174e"
+      },
+      {
+        "command": "cargo test --locked --offline -p crony-server issue298_ -- --nocapture",
+        "exit_code": 0,
+        "rust_counts": [
+          {
+            "ignored": 0,
+            "measured": 0,
+            "passed": 0,
+            "failed": 0,
+            "filtered_out": 7
+          },
+          {
+            "ignored": 0,
+            "measured": 0,
+            "passed": 1,
+            "failed": 0,
+            "filtered_out": 262
+          }
+        ],
+        "node_counts": {},
+        "name": "admission",
+        "log": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r4-admission.log",
+        "sha256": "487a0f367db0f25b65f755e0f1e0b1a932cfb72cc862640360ab15c8c232aac1"
+      },
+      {
+        "command": "cargo test --locked --offline -p crony-domain mission_deadline -- --nocapture",
+        "exit_code": 0,
+        "rust_counts": [
+          {
+            "ignored": 0,
+            "measured": 0,
+            "passed": 8,
+            "failed": 0,
+            "filtered_out": 25
+          }
+        ],
+        "node_counts": {},
+        "name": "domain",
+        "log": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r4-domain.log",
+        "sha256": "333d69625062af68b66d4488571bf6410d28f617b8083c25755656afd4e745bb"
+      },
+      {
+        "command": "cargo test --locked --offline -p crony-runner mission_deadline -- --nocapture",
+        "exit_code": 0,
+        "rust_counts": [
+          {
+            "ignored": 0,
+            "measured": 0,
+            "passed": 0,
+            "failed": 0,
+            "filtered_out": 25
+          },
+          {
+            "ignored": 0,
+            "measured": 0,
+            "passed": 7,
+            "failed": 0,
+            "filtered_out": 310
+          }
+        ],
+        "node_counts": {},
+        "name": "runner",
+        "log": "output/issue-completion/20261002T023252Z\\issue298-ui-focused-r4-runner.log",
+        "sha256": "93faabef16c3b850120ed4e27b2febe9c4bc7a51240b8d35950c32f3655f926f"
+      }
+    ],
+    "source_unchanged": true,
+    "failure": null,
+    "finished_at_utc": "2026-10-02T13:05:21.0785782Z"
+  },
+  "native_database": {
+    "repository": "All-The-Vibes/ecorp",
+    "issue": 298,
+    "related_issues": [
+      183,
+      221,
+      297
+    ],
+    "status": "passed",
+    "wrapper_pid": 43608,
+    "purpose": "Fresh owned PostgreSQL deadline admission, lock-wait rollback, expiry, recovery and dispatch regressions, plus existing recovery compatibility. Synthetic metadata only; no real-provider or complete-stack acceptance claimed.",
+    "source": "<reviewed-checkout>",
+    "source_before": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T13:04:06.436Z",
+      "source": "<reviewed-checkout>",
+      "head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+      "tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M apps/web/src/App.tsx\n M apps/web/src/OperationsUx.css\n M apps/web/src/missionPreview.test.mjs\n M apps/web/src/missionPreview.ts\n M crates/crony-cli/src/main.rs\n M crates/crony-domain/src/lib.rs\n M crates/crony-protocol/src/lib.rs\n M crates/crony-runner/Cargo.toml\n M crates/crony-runner/src/main.rs\n M crates/crony-server/src/delegated.rs\n M crates/crony-server/src/issue297_native_fixture.rs\n M crates/crony-server/src/main.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/agent_pinning/tests.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/aggregate_breaker_tests.rs\n M crates/crony-store/src/checkpoint_correction.rs\n M crates/crony-store/src/checkpoint_correction_dispatch_tests.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/deliverable_failure_tests.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_context_tests.rs\n M crates/crony-store/src/retained_provider_receipt.rs\n M crates/crony-store/src/staffing.rs\n M crates/crony-store/src/state_audit.rs\n M crates/crony-store/src/steering_lock_tests.rs\n M crates/crony-store/src/verification_dispatch.rs\n M crates/crony-store/src/workspace_connections_tests.rs\n M scripts/fake-codex-app-server.mjs\n?? apps/web/src/MissionDeadlineEditor.test.mjs\n?? apps/web/src/MissionDeadlineEditor.tsx\n?? apps/web/src/missionDeadline.test.mjs\n?? apps/web/src/missionDeadline.ts\n?? crates/crony-domain/src/mission_deadline.rs\n?? crates/crony-runner/src/mission_deadline_tests.rs\n?? crates/crony-store/src/mission_deadline.rs\n?? crates/crony-store/src/mission_deadline_tests.rs\n?? db/migrations/0057_mission_deadlines.sql\n?? docs/MISSION_DEADLINES.md\n?? tools/e2e_mission_deadline.mjs\n?? tools/e2e_mission_deadline.test.mjs\n?? tools/fake_codex_deadline.test.mjs",
+      "source_file_count": 7428,
+      "source_fingerprint": "27146edbbdff1566968f646ab9b7d89d7aaf8f5463de743a81ab08f0fcc8a69e",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-before-native-db-r4.json",
+      "manifest_sha256": "6cacbad882419d43c7cfb5d3eff7d5bd58eaa0e948162e91c530b5df86f3476d"
+    },
+    "source_after": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T13:08:04.013Z",
+      "source": "<reviewed-checkout>",
+      "head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+      "tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M apps/web/src/App.tsx\n M apps/web/src/OperationsUx.css\n M apps/web/src/missionPreview.test.mjs\n M apps/web/src/missionPreview.ts\n M crates/crony-cli/src/main.rs\n M crates/crony-domain/src/lib.rs\n M crates/crony-protocol/src/lib.rs\n M crates/crony-runner/Cargo.toml\n M crates/crony-runner/src/main.rs\n M crates/crony-server/src/delegated.rs\n M crates/crony-server/src/issue297_native_fixture.rs\n M crates/crony-server/src/main.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/agent_pinning/tests.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/aggregate_breaker_tests.rs\n M crates/crony-store/src/checkpoint_correction.rs\n M crates/crony-store/src/checkpoint_correction_dispatch_tests.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/deliverable_failure_tests.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_context_tests.rs\n M crates/crony-store/src/retained_provider_receipt.rs\n M crates/crony-store/src/staffing.rs\n M crates/crony-store/src/state_audit.rs\n M crates/crony-store/src/steering_lock_tests.rs\n M crates/crony-store/src/verification_dispatch.rs\n M crates/crony-store/src/workspace_connections_tests.rs\n M scripts/fake-codex-app-server.mjs\n?? apps/web/src/MissionDeadlineEditor.test.mjs\n?? apps/web/src/MissionDeadlineEditor.tsx\n?? apps/web/src/missionDeadline.test.mjs\n?? apps/web/src/missionDeadline.ts\n?? crates/crony-domain/src/mission_deadline.rs\n?? crates/crony-runner/src/mission_deadline_tests.rs\n?? crates/crony-store/src/mission_deadline.rs\n?? crates/crony-store/src/mission_deadline_tests.rs\n?? db/migrations/0057_mission_deadlines.sql\n?? docs/MISSION_DEADLINES.md\n?? tools/e2e_mission_deadline.mjs\n?? tools/e2e_mission_deadline.test.mjs\n?? tools/fake_codex_deadline.test.mjs",
+      "source_file_count": 7428,
+      "source_fingerprint": "27146edbbdff1566968f646ab9b7d89d7aaf8f5463de743a81ab08f0fcc8a69e",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-after-native-db-r4.json",
+      "manifest_sha256": "1db768f78c75a6065c3c555ca99e1bbd015d44fef3c9905e62627dc2164d724f"
+    },
+    "source_unchanged": true,
+    "qa_root": "<owned-native-db-fixture>",
+    "started_at_utc": "2026-10-02T13:04:07.1548336Z",
+    "environment": {
+      "RUST_TEST_THREADS": "1",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_BUILD_JOBS": "2",
+      "CARGO_PROFILE_TEST_DEBUG": "0",
+      "CARGO_INCREMENTAL": "0",
+      "CARGO_PROFILE_DEV_DEBUG": "0"
+    },
+    "checks": [
+      {
+        "name": "owned-postgresql-initialization",
+        "command": "initdb --auth=scram-sha-256 (private pwfile)",
+        "exit_code": 0,
+        "log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r4-initdb.log",
+        "sha256": "eb612381e55b164110104be2d81cdc09bfcc977cbd182ce8d09e1c3112cfad36",
+        "counts": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0,
+          "summaries": 0
+        },
+        "passed_test_names": []
+      },
+      {
+        "name": "deadline-authority-and-recovery",
+        "command": "cargo test --locked --offline -p crony-store issue298_ -- --ignored --test-threads=1",
+        "exit_code": 0,
+        "log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r4-crony-store-issue298.log",
+        "sha256": "0beb60e51f652f23b9b1c11c0b66bc16746183d89b784974f8dd101a54df18ce",
+        "counts": {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 571,
+          "summaries": 1
+        },
+        "passed_test_names": [
+          "factory_recovery_loss_tests::issue298_expired_native_recovery_cancellation_preserves_verifier_verdict",
+          "factory_recovery_loss_tests::issue298_expired_predispatch_recovery_fails_deadline_without_retry_authority",
+          "factory_recovery_loss_tests::issue298_expired_source_recovery_loss_cannot_grant_retry",
+          "factory_recovery_loss_tests::issue298_expired_verifier_recovery_loss_cannot_grant_retry",
+          "factory_recovery_loss_tests::issue298_verifier_dispatch_uses_remaining_deadline_and_rejects_expired",
+          "mission_deadline_tests::issue298_approval_cannot_commit_after_dependent_row_wait",
+          "mission_deadline_tests::issue298_completed_parent_leaves_only_actual_shared_time_for_reserved_child",
+          "mission_deadline_tests::issue298_completion_cannot_commit_after_dependent_row_wait",
+          "mission_deadline_tests::issue298_creation_rechecks_time_after_event_write_wait",
+          "mission_deadline_tests::issue298_deadline_policy_scope_and_task_contract_are_immutable",
+          "mission_deadline_tests::issue298_disconnected_expiry_is_idempotent_and_never_claims_physical_stop",
+          "mission_deadline_tests::issue298_dispatch_samples_time_after_observed_corp_lock_wait",
+          "mission_deadline_tests::issue298_expired_creation_and_launch_have_no_partial_effects",
+          "mission_deadline_tests::issue298_queued_parent_exhausting_reserve_fails_without_fabricated_handoff",
+          "mission_deadline_tests::issue298_resume_and_reopened_store_consume_the_same_deadline"
+        ],
+        "package": "crony-store",
+        "discovery_log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r4-crony-store-issue298-list.log",
+        "discovery_sha256": "137de62dd635ff03ea179ff93fa27a8155915b9caaffa6434a001196f362912a",
+        "discovered_test_names": [
+          "factory_recovery_loss_tests::issue298_expired_native_recovery_cancellation_preserves_verifier_verdict",
+          "factory_recovery_loss_tests::issue298_expired_predispatch_recovery_fails_deadline_without_retry_authority",
+          "factory_recovery_loss_tests::issue298_expired_source_recovery_loss_cannot_grant_retry",
+          "factory_recovery_loss_tests::issue298_expired_verifier_recovery_loss_cannot_grant_retry",
+          "factory_recovery_loss_tests::issue298_verifier_dispatch_uses_remaining_deadline_and_rejects_expired",
+          "mission_deadline_tests::issue298_approval_cannot_commit_after_dependent_row_wait",
+          "mission_deadline_tests::issue298_completed_parent_leaves_only_actual_shared_time_for_reserved_child",
+          "mission_deadline_tests::issue298_completion_cannot_commit_after_dependent_row_wait",
+          "mission_deadline_tests::issue298_creation_rechecks_time_after_event_write_wait",
+          "mission_deadline_tests::issue298_deadline_policy_scope_and_task_contract_are_immutable",
+          "mission_deadline_tests::issue298_disconnected_expiry_is_idempotent_and_never_claims_physical_stop",
+          "mission_deadline_tests::issue298_dispatch_samples_time_after_observed_corp_lock_wait",
+          "mission_deadline_tests::issue298_expired_creation_and_launch_have_no_partial_effects",
+          "mission_deadline_tests::issue298_queued_parent_exhausting_reserve_fails_without_fabricated_handoff",
+          "mission_deadline_tests::issue298_resume_and_reopened_store_consume_the_same_deadline"
+        ],
+        "complete_discovered_lane_executed": true
+      },
+      {
+        "name": "existing-recovery-loss",
+        "command": "cargo test --locked --offline -p crony-store issue183_ -- --ignored --test-threads=1",
+        "exit_code": 0,
+        "log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r4-crony-store-issue183.log",
+        "sha256": "4b56b275c93ba79dab360927b0d20e11ff0926fc6b8605275791b00828775410",
+        "counts": {
+          "passed": 13,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 573,
+          "summaries": 1
+        },
+        "passed_test_names": [
+          "factory_recovery_loss_tests::issue183_acked_source_correction_loss_terminalizes_exact_recovery",
+          "factory_recovery_loss_tests::issue183_cleanup_after_missing_started_report_restores_bound_assignment",
+          "factory_recovery_loss_tests::issue183_foreign_and_replaced_recovery_bindings_are_not_adopted",
+          "factory_recovery_loss_tests::issue183_item_gate_precedes_loss_rows",
+          "factory_recovery_loss_tests::issue183_loss_rolls_back_when_factory_transition_cannot_commit",
+          "factory_recovery_loss_tests::issue183_native_cleanup_restores_exact_source_correction_context",
+          "factory_recovery_loss_tests::issue183_next_native_recovery_keeps_the_cleaned_lost_source_binding",
+          "factory_recovery_loss_tests::issue183_ordinary_provider_loss_is_not_a_verification_recovery",
+          "factory_recovery_loss_tests::issue183_pending_command_and_accepted_claim_are_not_lost",
+          "factory_recovery_loss_tests::issue183_publication_gate_precedes_loss_rows",
+          "factory_recovery_loss_tests::issue183_source_correction_grace_expiry_is_atomic_and_epoch_fenced",
+          "factory_recovery_loss_tests::issue183_terminal_factory_outcomes_are_not_downgraded",
+          "factory_recovery_loss_tests::issue183_verifier_only_loss_keeps_original_cleanup_seal"
+        ],
+        "package": "crony-store",
+        "discovery_log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r4-crony-store-issue183-list.log",
+        "discovery_sha256": "c5a9c78ed3701dc9db687e62022cac2347b48161e7c39e36dfe00d5d491631eb",
+        "discovered_test_names": [
+          "factory_recovery_loss_tests::issue183_acked_source_correction_loss_terminalizes_exact_recovery",
+          "factory_recovery_loss_tests::issue183_cleanup_after_missing_started_report_restores_bound_assignment",
+          "factory_recovery_loss_tests::issue183_foreign_and_replaced_recovery_bindings_are_not_adopted",
+          "factory_recovery_loss_tests::issue183_item_gate_precedes_loss_rows",
+          "factory_recovery_loss_tests::issue183_loss_rolls_back_when_factory_transition_cannot_commit",
+          "factory_recovery_loss_tests::issue183_native_cleanup_restores_exact_source_correction_context",
+          "factory_recovery_loss_tests::issue183_next_native_recovery_keeps_the_cleaned_lost_source_binding",
+          "factory_recovery_loss_tests::issue183_ordinary_provider_loss_is_not_a_verification_recovery",
+          "factory_recovery_loss_tests::issue183_pending_command_and_accepted_claim_are_not_lost",
+          "factory_recovery_loss_tests::issue183_publication_gate_precedes_loss_rows",
+          "factory_recovery_loss_tests::issue183_source_correction_grace_expiry_is_atomic_and_epoch_fenced",
+          "factory_recovery_loss_tests::issue183_terminal_factory_outcomes_are_not_downgraded",
+          "factory_recovery_loss_tests::issue183_verifier_only_loss_keeps_original_cleanup_seal"
+        ],
+        "complete_discovered_lane_executed": true
+      },
+      {
+        "name": "existing-checkpoint-correction",
+        "command": "cargo test --locked --offline -p crony-store issue221_ -- --ignored --test-threads=1",
+        "exit_code": 0,
+        "log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r4-crony-store-issue221.log",
+        "sha256": "9979ae207cd9cf85ffc2490d59bab1369bd33bc8bbf905881a04b3a6f06bc1c8",
+        "counts": {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 575,
+          "summaries": 1
+        },
+        "passed_test_names": [
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_after_failed_checkpoint_correction",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_command_insert_failure_rolls_back_the_full_allocation",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_context_and_current_replay_keep_two_correction_chain",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_does_not_reset_exhausted_cost_spend",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_does_not_reset_exhausted_token_spend",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_fences_current_scope_request_and_pending_command",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_native_predispatch_failure_keeps_latest_physical_source",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_native_provider_failure_stays_governed_and_bounded",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_rechecks_current_authority_and_protected_lineage",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_rechecks_native_history_and_revision_ledger_bridge",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_rejects_missing_and_damaged_prior_and_current_grants"
+        ],
+        "package": "crony-store",
+        "discovery_log": "output/issue-completion/20261002T023252Z\\issue298-native-database-r4-crony-store-issue221-list.log",
+        "discovery_sha256": "4ddda31500ba59c2c67a8055ea96aa1d75c59d88beed9430ad898c599ea68a3e",
+        "discovered_test_names": [
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_after_failed_checkpoint_correction",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_command_insert_failure_rolls_back_the_full_allocation",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_context_and_current_replay_keep_two_correction_chain",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_does_not_reset_exhausted_cost_spend",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_does_not_reset_exhausted_token_spend",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_fences_current_scope_request_and_pending_command",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_native_predispatch_failure_keeps_latest_physical_source",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_native_provider_failure_stays_governed_and_bounded",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_rechecks_current_authority_and_protected_lineage",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_rechecks_native_history_and_revision_ledger_bridge",
+          "budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_rejects_missing_and_damaged_prior_and_current_grants"
+        ],
+        "complete_discovered_lane_executed": true
+      }
+    ],
+    "cleanup": "Exact owned PostgreSQL stopped and fixture port verified inactive; database, private credentials and logs preserved.",
+    "failure": null,
+    "authentication": {
+      "authenticated_query": true,
+      "delivery": "Private fixture credential files for PostgreSQL clients. SQLx environment-only delivery is reduced assurance.",
+      "wrong_password_rejected": true,
+      "method": "scram-sha-256"
+    },
+    "finished_at_utc": "2026-10-02T13:08:05.4001554Z"
+  },
+  "native_build": {
+    "repository": "All-The-Vibes/ecorp",
+    "issue": 298,
+    "source": "<reviewed-checkout>",
+    "source_before": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T12:59:37.404Z",
+      "source": "<reviewed-checkout>",
+      "head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+      "tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M apps/web/src/App.tsx\n M apps/web/src/OperationsUx.css\n M apps/web/src/missionPreview.test.mjs\n M apps/web/src/missionPreview.ts\n M crates/crony-cli/src/main.rs\n M crates/crony-domain/src/lib.rs\n M crates/crony-protocol/src/lib.rs\n M crates/crony-runner/Cargo.toml\n M crates/crony-runner/src/main.rs\n M crates/crony-server/src/delegated.rs\n M crates/crony-server/src/issue297_native_fixture.rs\n M crates/crony-server/src/main.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/agent_pinning/tests.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/aggregate_breaker_tests.rs\n M crates/crony-store/src/checkpoint_correction.rs\n M crates/crony-store/src/checkpoint_correction_dispatch_tests.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/deliverable_failure_tests.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_context_tests.rs\n M crates/crony-store/src/retained_provider_receipt.rs\n M crates/crony-store/src/staffing.rs\n M crates/crony-store/src/state_audit.rs\n M crates/crony-store/src/steering_lock_tests.rs\n M crates/crony-store/src/verification_dispatch.rs\n M crates/crony-store/src/workspace_connections_tests.rs\n M scripts/fake-codex-app-server.mjs\n?? apps/web/src/MissionDeadlineEditor.test.mjs\n?? apps/web/src/MissionDeadlineEditor.tsx\n?? apps/web/src/missionDeadline.test.mjs\n?? apps/web/src/missionDeadline.ts\n?? crates/crony-domain/src/mission_deadline.rs\n?? crates/crony-runner/src/mission_deadline_tests.rs\n?? crates/crony-store/src/mission_deadline.rs\n?? crates/crony-store/src/mission_deadline_tests.rs\n?? db/migrations/0057_mission_deadlines.sql\n?? docs/MISSION_DEADLINES.md\n?? tools/e2e_mission_deadline.mjs\n?? tools/e2e_mission_deadline.test.mjs\n?? tools/fake_codex_deadline.test.mjs",
+      "source_file_count": 7428,
+      "source_fingerprint": "5f435b1405c6be63bc174b513f5b1461f05876809caf6838c3ce8ee18a25f3f9",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-before-native-build-r2.json",
+      "manifest_sha256": "360ca37575f75b55c2922607979f789a4f4692064c88f44b9a74e59b38cb0afc"
+    },
+    "started_at_utc": "2026-10-02T12:59:38.0158317Z",
+    "pid": 9288,
+    "status": "passed",
+    "source_unchanged": true,
+    "command": "cargo build --locked --offline -p crony-server -p crony-runner",
+    "binaries": [
+      {
+        "path": "<reviewed-checkout>\\target\\debug\\crony-server.exe",
+        "sha256": "b4d947a6f8e478e5dc20847441e66f0684b1459fe1c3f61538b7eea29ea183c7"
+      },
+      {
+        "path": "<reviewed-checkout>\\target\\debug\\crony-runner.exe",
+        "sha256": "cf7d697a15e93006ecac664b05864e79d551982239c5f34b07bea68b192bb143"
+      }
+    ],
+    "scope": "Native executables for the isolated deadline acceptance fixture. This build is not canonical validation or acceptance; unchanged cached Rust artifacts may be reused.",
+    "build": {
+      "sha256": "fde9cb410ee35401f324301f5ec1fce37dab5173a0e5af972f5ae0249334b8a4",
+      "log": "output/issue-completion/20261002T023252Z\\issue298-native-build-r2.log",
+      "exit_code": 0
+    },
+    "source_after": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T12:59:42.544Z",
+      "source": "<reviewed-checkout>",
+      "head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+      "tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M apps/web/src/App.tsx\n M apps/web/src/OperationsUx.css\n M apps/web/src/missionPreview.test.mjs\n M apps/web/src/missionPreview.ts\n M crates/crony-cli/src/main.rs\n M crates/crony-domain/src/lib.rs\n M crates/crony-protocol/src/lib.rs\n M crates/crony-runner/Cargo.toml\n M crates/crony-runner/src/main.rs\n M crates/crony-server/src/delegated.rs\n M crates/crony-server/src/issue297_native_fixture.rs\n M crates/crony-server/src/main.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/agent_pinning/tests.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/aggregate_breaker_tests.rs\n M crates/crony-store/src/checkpoint_correction.rs\n M crates/crony-store/src/checkpoint_correction_dispatch_tests.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/deliverable_failure_tests.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_context_tests.rs\n M crates/crony-store/src/retained_provider_receipt.rs\n M crates/crony-store/src/staffing.rs\n M crates/crony-store/src/state_audit.rs\n M crates/crony-store/src/steering_lock_tests.rs\n M crates/crony-store/src/verification_dispatch.rs\n M crates/crony-store/src/workspace_connections_tests.rs\n M scripts/fake-codex-app-server.mjs\n?? apps/web/src/MissionDeadlineEditor.test.mjs\n?? apps/web/src/MissionDeadlineEditor.tsx\n?? apps/web/src/missionDeadline.test.mjs\n?? apps/web/src/missionDeadline.ts\n?? crates/crony-domain/src/mission_deadline.rs\n?? crates/crony-runner/src/mission_deadline_tests.rs\n?? crates/crony-store/src/mission_deadline.rs\n?? crates/crony-store/src/mission_deadline_tests.rs\n?? db/migrations/0057_mission_deadlines.sql\n?? docs/MISSION_DEADLINES.md\n?? tools/e2e_mission_deadline.mjs\n?? tools/e2e_mission_deadline.test.mjs\n?? tools/fake_codex_deadline.test.mjs",
+      "source_file_count": 7428,
+      "source_fingerprint": "5f435b1405c6be63bc174b513f5b1461f05876809caf6838c3ce8ee18a25f3f9",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-after-native-build-r2.json",
+      "manifest_sha256": "22bc2e2ed3472d79ef4afb8d74869d759b4e947e38c6dcd1bbe6a1f2d29b88df"
+    },
+    "finished_at_utc": "2026-10-02T12:59:43.1461427Z"
+  },
+  "browser_wrapper": {
+    "issue": 298,
+    "repository": "All-The-Vibes/ecorp",
+    "source": "<reviewed-checkout>",
+    "source_before": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T12:59:49.449Z",
+      "source": "<reviewed-checkout>",
+      "head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+      "tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M apps/web/src/App.tsx\n M apps/web/src/OperationsUx.css\n M apps/web/src/missionPreview.test.mjs\n M apps/web/src/missionPreview.ts\n M crates/crony-cli/src/main.rs\n M crates/crony-domain/src/lib.rs\n M crates/crony-protocol/src/lib.rs\n M crates/crony-runner/Cargo.toml\n M crates/crony-runner/src/main.rs\n M crates/crony-server/src/delegated.rs\n M crates/crony-server/src/issue297_native_fixture.rs\n M crates/crony-server/src/main.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/agent_pinning/tests.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/aggregate_breaker_tests.rs\n M crates/crony-store/src/checkpoint_correction.rs\n M crates/crony-store/src/checkpoint_correction_dispatch_tests.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/deliverable_failure_tests.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_context_tests.rs\n M crates/crony-store/src/retained_provider_receipt.rs\n M crates/crony-store/src/staffing.rs\n M crates/crony-store/src/state_audit.rs\n M crates/crony-store/src/steering_lock_tests.rs\n M crates/crony-store/src/verification_dispatch.rs\n M crates/crony-store/src/workspace_connections_tests.rs\n M scripts/fake-codex-app-server.mjs\n?? apps/web/src/MissionDeadlineEditor.test.mjs\n?? apps/web/src/MissionDeadlineEditor.tsx\n?? apps/web/src/missionDeadline.test.mjs\n?? apps/web/src/missionDeadline.ts\n?? crates/crony-domain/src/mission_deadline.rs\n?? crates/crony-runner/src/mission_deadline_tests.rs\n?? crates/crony-store/src/mission_deadline.rs\n?? crates/crony-store/src/mission_deadline_tests.rs\n?? db/migrations/0057_mission_deadlines.sql\n?? docs/MISSION_DEADLINES.md\n?? tools/e2e_mission_deadline.mjs\n?? tools/e2e_mission_deadline.test.mjs\n?? tools/fake_codex_deadline.test.mjs",
+      "source_file_count": 7428,
+      "source_fingerprint": "5f435b1405c6be63bc174b513f5b1461f05876809caf6838c3ce8ee18a25f3f9",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-before-browser-r2.json",
+      "manifest_sha256": "9fbb0878b208b840771395fd5159f6f014e5be5bd1599eadefee91e8a27d8672"
+    },
+    "qa_root": "<owned-browser-fixture>",
+    "started_at_utc": "2026-10-02T12:59:50.3767719+00:00",
+    "status": "passed",
+    "wrapper_pid": 8508,
+    "checks": [
+      {
+        "exit_code": 0,
+        "log": "output/issue-completion/20261002T023252Z\\issue298-browser-r2-driver-check.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "name": "browser-driver-syntax"
+      },
+      {
+        "exit_code": 0,
+        "log": "output/issue-completion/20261002T023252Z\\issue298-browser-r2-stack-start.log",
+        "sha256": "54e26f7fc7b4fb2b955c86a22ddb2b8a683c480685a35daa72e81e5943caa7a9",
+        "name": "owned-stack-start"
+      },
+      {
+        "exit_code": 0,
+        "log": "output/issue-completion/20261002T023252Z\\issue298-browser-r2-stack-status.log",
+        "sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+        "name": "owned-stack-process-identities"
+      },
+      {
+        "exit_code": 0,
+        "log": "output/issue-completion/20261002T023252Z\\issue298-browser-r2-driver.log",
+        "sha256": "16e08d27e9855db15dea065064c93b029ff3bb07c3deb789d775ccd978467c6c",
+        "name": "browser-server-runner-deadline-acceptance"
+      }
+    ],
+    "cleanup": "Verified every exact owned process stopped. Database, synthetic source, credentials, ownership and evidence retained.",
+    "source_unchanged": true,
+    "binaries": [
+      {
+        "path": "<reviewed-checkout>\\target\\debug\\crony-server.exe",
+        "sha256": "b4d947a6f8e478e5dc20847441e66f0684b1459fe1c3f61538b7eea29ea183c7"
+      },
+      {
+        "path": "<reviewed-checkout>\\target\\debug\\crony-runner.exe",
+        "sha256": "cf7d697a15e93006ecac664b05864e79d551982239c5f34b07bea68b192bb143"
+      }
+    ],
+    "inherited_native_build": {
+      "sha256": "b3a4db2d8b5132676acacae5721e084dc42bdd863be07f3005665ea4589131e1",
+      "path": "output/issue-completion/20261002T023252Z\\issue298-native-build-r2.json"
+    },
+    "harness": {
+      "supervisor": {
+        "sha256": "9ca372976e6c507a93b3484b119b9513a296b403691a4d899a659cd8189fa90f",
+        "path": "output\\issue-completion\\20260926T112626Z\\issue224-stack-r1.ps1"
+      },
+      "browser": {
+        "sha256": "2e5847d699fed1ed36948ebb46a650b418abf44437c519fc9139c2a187f742af",
+        "path": "<reviewed-checkout>\\tools\\e2e_mission_deadline.mjs"
+      }
+    },
+    "scope": "Actual Edge browser, fresh owned PostgreSQL, server and runner, development principals and deterministic native Codex transport. Exercises persisted queue expiry, a declared reserve, native stop with adversarial late success, durable cancellation, preserved worktrees and browser readbacks. Not canonical validation, real-provider evidence, historical R4 reproduction or independent acceptance.",
+    "database_authentication": {
+      "credential_delivery": "Private PGPASSFILE for fixture SQL clients; server and SQLx environment-only delivery is reduced assurance.",
+      "credentials_outside_source_and_runner_workspaces": true,
+      "method": "scram-sha-256",
+      "runner_and_web_environment_secrets_removed": true,
+      "authenticated_creation": true,
+      "wrong_password_rejected": true
+    },
+    "setup": {
+      "sha256": "4fca266543a048bdc30f2a3ac1bb2336165ac395da02699d90c16db3b9a4b2b5",
+      "path": "<owned-browser-fixture>\\evidence\\mission-deadline-setup.json"
+    },
+    "browser_report": {
+      "path": "<owned-browser-fixture>\\evidence\\mission-deadline\\report.json",
+      "checks": 15,
+      "failure": null,
+      "failed_phase": null,
+      "scenarios": 2,
+      "sha256": "c00526ef37cfd46ac837f6ddf4edb69d4a2584323e99f60cca82457f10c374ed",
+      "status": "passed",
+      "passed_checks": 15
+    },
+    "source_after": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T13:01:31.97Z",
+      "source": "<reviewed-checkout>",
+      "head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+      "tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M apps/web/src/App.tsx\n M apps/web/src/OperationsUx.css\n M apps/web/src/missionPreview.test.mjs\n M apps/web/src/missionPreview.ts\n M crates/crony-cli/src/main.rs\n M crates/crony-domain/src/lib.rs\n M crates/crony-protocol/src/lib.rs\n M crates/crony-runner/Cargo.toml\n M crates/crony-runner/src/main.rs\n M crates/crony-server/src/delegated.rs\n M crates/crony-server/src/issue297_native_fixture.rs\n M crates/crony-server/src/main.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/agent_pinning/tests.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/aggregate_breaker_tests.rs\n M crates/crony-store/src/checkpoint_correction.rs\n M crates/crony-store/src/checkpoint_correction_dispatch_tests.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/deliverable_failure_tests.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_context_tests.rs\n M crates/crony-store/src/retained_provider_receipt.rs\n M crates/crony-store/src/staffing.rs\n M crates/crony-store/src/state_audit.rs\n M crates/crony-store/src/steering_lock_tests.rs\n M crates/crony-store/src/verification_dispatch.rs\n M crates/crony-store/src/workspace_connections_tests.rs\n M scripts/fake-codex-app-server.mjs\n?? apps/web/src/MissionDeadlineEditor.test.mjs\n?? apps/web/src/MissionDeadlineEditor.tsx\n?? apps/web/src/missionDeadline.test.mjs\n?? apps/web/src/missionDeadline.ts\n?? crates/crony-domain/src/mission_deadline.rs\n?? crates/crony-runner/src/mission_deadline_tests.rs\n?? crates/crony-store/src/mission_deadline.rs\n?? crates/crony-store/src/mission_deadline_tests.rs\n?? db/migrations/0057_mission_deadlines.sql\n?? docs/MISSION_DEADLINES.md\n?? tools/e2e_mission_deadline.mjs\n?? tools/e2e_mission_deadline.test.mjs\n?? tools/fake_codex_deadline.test.mjs",
+      "source_file_count": 7428,
+      "source_fingerprint": "5f435b1405c6be63bc174b513f5b1461f05876809caf6838c3ce8ee18a25f3f9",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-after-browser-r2.json",
+      "manifest_sha256": "c5681dbf452696fb4fd8243e0f7755d52e244b68f1212ac113d1b2460c057758"
+    },
+    "finished_at_utc": "2026-10-02T13:01:34.5134963+00:00"
+  },
+  "fake_clock": {
+    "repository": "All-The-Vibes/ecorp",
+    "issue": 298,
+    "status": "passed",
+    "wrapper_pid": 17248,
+    "started_at_utc": "2026-10-02T13:25:19.2282203Z",
+    "source": "<reviewed-checkout>",
+    "source_before": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T13:25:36.853Z",
+      "source": "<reviewed-checkout>",
+      "head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+      "tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M apps/web/src/App.tsx\n M apps/web/src/OperationsUx.css\n M apps/web/src/missionPreview.test.mjs\n M apps/web/src/missionPreview.ts\n M crates/crony-cli/src/main.rs\n M crates/crony-domain/src/lib.rs\n M crates/crony-protocol/src/lib.rs\n M crates/crony-runner/Cargo.toml\n M crates/crony-runner/src/main.rs\n M crates/crony-server/src/delegated.rs\n M crates/crony-server/src/issue297_native_fixture.rs\n M crates/crony-server/src/main.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/agent_pinning/tests.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/aggregate_breaker_tests.rs\n M crates/crony-store/src/checkpoint_correction.rs\n M crates/crony-store/src/checkpoint_correction_dispatch_tests.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/deliverable_failure_tests.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_context_tests.rs\n M crates/crony-store/src/retained_provider_receipt.rs\n M crates/crony-store/src/staffing.rs\n M crates/crony-store/src/state_audit.rs\n M crates/crony-store/src/steering_lock_tests.rs\n M crates/crony-store/src/verification_dispatch.rs\n M crates/crony-store/src/workspace_connections_tests.rs\n M db/migrations/manifest.json\n M scripts/fake-codex-app-server.mjs\n?? apps/web/src/MissionDeadlineEditor.test.mjs\n?? apps/web/src/MissionDeadlineEditor.tsx\n?? apps/web/src/missionDeadline.test.mjs\n?? apps/web/src/missionDeadline.ts\n?? crates/crony-domain/src/mission_deadline.rs\n?? crates/crony-runner/src/mission_deadline_tests.rs\n?? crates/crony-store/src/mission_deadline.rs\n?? crates/crony-store/src/mission_deadline_tests.rs\n?? db/migrations/0057_mission_deadlines.sql\n?? docs/MISSION_DEADLINES.md\n?? tools/e2e_mission_deadline.mjs\n?? tools/e2e_mission_deadline.test.mjs\n?? tools/fake_codex_deadline.test.mjs",
+      "source_file_count": 7428,
+      "source_fingerprint": "aab4c5ab28c1077d8eb04508e40af79808f443c71bb11c30d3400a2eb6a060b3",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-before-fake-clock-r1.json",
+      "manifest_sha256": "a01a5952ff05d709617d22a6769d20e497be46d4acea9bcd94e84a75e4241dbb"
+    },
+    "source_after": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-02T13:25:54.492Z",
+      "source": "<reviewed-checkout>",
+      "head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+      "tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+      "branch": "codex/issue298-mission-deadline",
+      "status": "M apps/web/src/App.tsx\n M apps/web/src/OperationsUx.css\n M apps/web/src/missionPreview.test.mjs\n M apps/web/src/missionPreview.ts\n M crates/crony-cli/src/main.rs\n M crates/crony-domain/src/lib.rs\n M crates/crony-protocol/src/lib.rs\n M crates/crony-runner/Cargo.toml\n M crates/crony-runner/src/main.rs\n M crates/crony-server/src/delegated.rs\n M crates/crony-server/src/issue297_native_fixture.rs\n M crates/crony-server/src/main.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/agent_pinning/tests.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/aggregate_breaker_tests.rs\n M crates/crony-store/src/checkpoint_correction.rs\n M crates/crony-store/src/checkpoint_correction_dispatch_tests.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/control_accounting.rs\n M crates/crony-store/src/deliverable_failure_tests.rs\n M crates/crony-store/src/factory_recovery_loss_tests.rs\n M crates/crony-store/src/factory_run_failure.rs\n M crates/crony-store/src/lib.rs\n M crates/crony-store/src/mission_context_tests.rs\n M crates/crony-store/src/retained_provider_receipt.rs\n M crates/crony-store/src/staffing.rs\n M crates/crony-store/src/state_audit.rs\n M crates/crony-store/src/steering_lock_tests.rs\n M crates/crony-store/src/verification_dispatch.rs\n M crates/crony-store/src/workspace_connections_tests.rs\n M db/migrations/manifest.json\n M scripts/fake-codex-app-server.mjs\n?? apps/web/src/MissionDeadlineEditor.test.mjs\n?? apps/web/src/MissionDeadlineEditor.tsx\n?? apps/web/src/missionDeadline.test.mjs\n?? apps/web/src/missionDeadline.ts\n?? crates/crony-domain/src/mission_deadline.rs\n?? crates/crony-runner/src/mission_deadline_tests.rs\n?? crates/crony-store/src/mission_deadline.rs\n?? crates/crony-store/src/mission_deadline_tests.rs\n?? db/migrations/0057_mission_deadlines.sql\n?? docs/MISSION_DEADLINES.md\n?? tools/e2e_mission_deadline.mjs\n?? tools/e2e_mission_deadline.test.mjs\n?? tools/fake_codex_deadline.test.mjs",
+      "source_file_count": 7428,
+      "source_fingerprint": "aab4c5ab28c1077d8eb04508e40af79808f443c71bb11c30d3400a2eb6a060b3",
+      "manifest": "output/issue-completion/20261002T023252Z\\issue298-source-after-fake-clock-r1.json",
+      "manifest_sha256": "f3fe11d49d6e8d0430079982bc11a6b50e8ec590f7422c3b74acf7b8d9e7979c"
+    },
+    "purpose": "Native domain fake-clock regressions with actual JSON observations from the existing deadline policy at supplied test times. Includes all eight domain deadline cases and formatting. This is new retrospective test telemetry; no production wall clock, native process restart or canonical/full-stack acceptance claim.",
+    "checks": [
+      {
+        "log": "output/issue-completion/20261002T023252Z\\issue298-fake-clock-r1-format.log",
+        "command": "cargo fmt --check",
+        "exit_code": 0,
+        "rust_counts": [],
+        "node_counts": {},
+        "name": "format",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "log": "output/issue-completion/20261002T023252Z\\issue298-fake-clock-r1-domain.log",
+        "command": "cargo test --locked --offline -p crony-domain mission_deadline -- --nocapture",
+        "exit_code": 0,
+        "rust_counts": [
+          {
+            "filtered_out": 25,
+            "failed": 0,
+            "ignored": 0,
+            "passed": 8,
+            "measured": 0
+          }
+        ],
+        "node_counts": {},
+        "name": "domain",
+        "sha256": "a3aea47af68b80bf9be31293ae119b4093c7077b69bc196cfa4d8a347ae71cf8"
+      }
+    ],
+    "source_unchanged": true,
+    "failure": null,
+    "finished_at_utc": "2026-10-02T13:25:55.0791797Z"
+  },
+  "observed_counts": {
+    "focused_node_passed": 43,
+    "focused_rust_passed": 21,
+    "native_db_passed": 39,
+    "browser_checks_passed": 15,
+    "browser_scenarios": 2,
+    "later_fake_clock_domain_passed": 8
+  },
+  "counting_note": "The later eight domain tests rerun the same eight domain cases included in focused R4; they are not eight additional unique cases. Per-lane ignored, skipped and filtered counts remain in the receipts. Native SQLx tests are explicitly executed with --ignored in an owned database, not claimed by ordinary workspace discovery.",
+  "prior_attempts": [
+    {
+      "status": "failed",
+      "failure": "Could not discover the complete focused ignored test lane.",
+      "started_at_utc": "2026-10-02T11:49:12.1202072Z",
+      "finished_at_utc": "2026-10-02T11:51:38.8887204Z",
+      "source_unchanged": true,
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-native-database-r1.json",
+        "sha256": "b691305c19e7decccdf3b09f232fe4c8be58abc97c3a8bd77234608896db0052"
+      }
+    },
+    {
+      "status": "failed",
+      "failure": "deadline-authority-and-recovery did not satisfy its native regression requirement.",
+      "started_at_utc": "2026-10-02T11:53:39.4019340Z",
+      "finished_at_utc": "2026-10-02T11:57:08.9188068Z",
+      "source_unchanged": true,
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-native-database-r2.json",
+        "sha256": "f74207a0cb5232bf10b7937eb0b7927c82f7fff15d35e91e662b587bb8383959"
+      }
+    },
+    {
+      "status": "passed",
+      "failure": null,
+      "started_at_utc": "2026-10-02T11:58:25.0221006Z",
+      "finished_at_utc": "2026-10-02T12:04:15.1784614Z",
+      "source_unchanged": true,
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-native-database-r3.json",
+        "sha256": "05e9b747c8d6c418ec639686f1f11720ad79e2e99e242164d68a2a3ea1c78428"
+      }
+    },
+    {
+      "status": "failed",
+      "failure": "browser-server-runner-deadline-acceptance failed; preserve all evidence and fixture files.",
+      "started_at_utc": "2026-10-02T12:57:34.5436246+00:00",
+      "finished_at_utc": "2026-10-02T12:58:36.0436595+00:00",
+      "source_unchanged": true,
+      "original": {
+        "file": "output/issue-completion/20261002T023252Z\\issue298-browser-r1.json",
+        "sha256": "f03ead38010ea17154a1ad018e5ff2795ed1c47d0839d59d8165ba43eb610e18"
+      }
+    }
+  ],
+  "limitations": [
+    "Canonical pnpm check of the evidence-inclusive candidate is required before commit and will be recorded separately. This packet does not claim that future result.",
+    "Independent deadline/cancellation acceptance remains outstanding. This is implementing-agent evidence, not an independent review or human Factory decision.",
+    "Deterministic native Codex transport and synthetic development principals; no real-model, production authentication, signed installer, cross-platform or historical R4 rerun claim.",
+    "SQLx/server fixture secret delivery through environment is explicitly reduced assurance. Private fixture credentials remain outside source and runner workspaces and are not published.",
+    "Codex 0.154.0 was observed locally; the repository does not enforce that version as a pin.",
+    "Required hosted checks remain unavailable while organization Actions are disabled. No bypass, policy mutation or merge has occurred.",
+    "Historical Cargo audit debt remains: 12 advisories, including 2 high, 1 moderate and 9 low. This is not a clean audit.",
+    "Migration57 is new and unapplied; other open branches also introduce migration numbers in this range. Only incoming unpublished migrations may be renumbered during integration, with a new combined fresh-database validation."
+  ]
+}

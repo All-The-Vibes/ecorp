@@ -11,7 +11,11 @@ mod factory_authority;
 pub use factory_authority::{FactoryAuthority, factory_claim_authority_id};
 mod planned_attempts;
 pub use planned_attempts::{MAX_TASK_ATTEMPTS, factory_max_task_attempts};
+mod mission_deadline;
 mod planning_cost;
+pub use mission_deadline::{
+    MISSION_DEADLINE_CAPABILITY, MissionDeadlinePolicy, MissionDeadlineReserve, RunDeadline,
+};
 pub use planning_cost::{
     MAX_GRAPH_BUDGET_COST_MICROUSD, MAX_TASK_BUDGET_COST_MICROUSD, strategy_cost_budgets,
     validate_factory_cost_policy,
@@ -318,6 +322,8 @@ pub struct Agent {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Mission {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deadline: Option<MissionDeadlinePolicy>,
     pub id: Uuid,
     pub corp_id: Uuid,
     pub room_id: Uuid,
@@ -686,6 +692,8 @@ pub fn write_scope_is_subset(requested: &str, allowed: &str) -> bool {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskGraphPlan {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deadline: Option<MissionDeadlinePolicy>,
     pub strategy: String,
     pub max_nodes: i32,
     pub max_depth: i32,

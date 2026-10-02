@@ -3,6 +3,93 @@ use super::*;
 
 pub(super) const USAGE_GRACE_SECONDS: i64 = 5;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum CancellationCause {
+    DeadlineExpired,
+    DeadlineObserved,
+    OperatorStop,
+    CircuitBreaker,
+    Native,
+}
+
+impl CancellationCause {
+    pub(super) fn as_str(self) -> &'static str {
+        match self {
+            Self::DeadlineExpired => "mission_deadline_expired",
+            Self::DeadlineObserved => "mission_deadline_elapsed",
+            Self::OperatorStop => "operator_stop",
+            Self::CircuitBreaker => "circuit_breaker",
+            Self::Native => "native_cancelled",
+        }
+    }
+}
+
+/// Bind cancellation to the first persisted hard control, not the clock when
+/// its native acknowledgement arrives. A runner timer is only an observation;
+/// it cannot manufacture a database expiry or overwrite an operator's cause.
+pub(super) async fn admit_cancellation_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    corp_id: Uuid,
+    run_id: Uuid,
+    timed_mission: bool,
+    payload: Value,
+) -> Result<(CancellationCause, Value)> {
+    let boundary = sqlx::query(
+        "SELECT id,created_at,metric,source,reason FROM (
+           SELECT id,created_at,input->>'metric' AS metric,'incident' AS source,reason
+           FROM circuit_breaker_incidents
+           WHERE corp_id=$1 AND run_id=$2 AND stage IN ('suspend','stop')
+           UNION ALL
+           SELECT id,created_at,'operator_stop' AS metric,'legacy_stop' AS source,payload->>'reason' AS reason
+           FROM events WHERE corp_id=$1 AND aggregate_type='run' AND aggregate_id=$2
+             AND type='run.stop_requested' AND payload->>'command_id' IS NULL
+         ) boundaries ORDER BY created_at,id LIMIT 1",
+    )
+    .bind(corp_id)
+    .bind(run_id)
+    .fetch_optional(&mut **tx)
+    .await?;
+    let cause = if let Some(boundary) = &boundary {
+        match boundary.get::<Option<&str>, _>("metric") {
+            Some("mission_deadline") => CancellationCause::DeadlineExpired,
+            Some("operator_stop") => CancellationCause::OperatorStop,
+            _ => CancellationCause::CircuitBreaker,
+        }
+    } else if timed_mission
+        && payload.get("cause").and_then(Value::as_str) == Some("mission_deadline_elapsed")
+    {
+        CancellationCause::DeadlineObserved
+    } else {
+        CancellationCause::Native
+    };
+    let recorded_at: chrono::DateTime<Utc> = sqlx::query_scalar("SELECT clock_timestamp()")
+        .fetch_one(&mut **tx)
+        .await?;
+    let reason = normalize_bounded_failure_reason(
+        boundary
+            .as_ref()
+            .and_then(|row| row.get::<Option<&str>, _>("reason"))
+            .or_else(|| payload.get("reason").and_then(Value::as_str))
+            .unwrap_or("Native run cancelled"),
+        "Native run cancelled",
+    );
+    // Reconstruct the narrow payload so supplied authority/timestamps cannot
+    // survive beside the normalized record as apparently authoritative fields.
+    Ok((
+        cause,
+        json!({
+            "reason":reason, "cause":cause.as_str(),
+            "cancellation":{
+                "source":boundary.as_ref().map(|row| row.get::<&str,_>("source")).unwrap_or("runner_observation"),
+                "boundary_id":boundary.as_ref().map(|row| row.get::<Uuid,_>("id")),
+                "hard_boundary_at":boundary.as_ref().map(|row| row.get::<chrono::DateTime<Utc>,_>("created_at")),
+                "recorded_at":recorded_at,
+                "database_expiry_confirmed":cause == CancellationCause::DeadlineExpired
+            }
+        }),
+    ))
+}
+
 #[allow(clippy::too_many_arguments)]
 pub(super) async fn enqueue_emergency_stop_tx(
     tx: &mut Transaction<'_, Postgres>,
@@ -13,6 +100,30 @@ pub(super) async fn enqueue_emergency_stop_tx(
     mission_id: Uuid,
     actor_id: Uuid,
     reason: &str,
+) -> Result<Uuid> {
+    enqueue_stop_tx(
+        tx,
+        corp_id,
+        run_id,
+        runner_id,
+        task_id,
+        mission_id,
+        reason,
+        json!({"scope":"run","scope_id":run_id,"metric":"operator_stop","actor_id":actor_id}),
+    )
+    .await
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) async fn enqueue_stop_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    corp_id: Uuid,
+    run_id: Uuid,
+    runner_id: &str,
+    task_id: Uuid,
+    mission_id: Uuid,
+    reason: &str,
+    input: Value,
 ) -> Result<Uuid> {
     // Reuse the existing monotonic breaker boundary and durable runner command.
     // Repeated stop requests never replace the first incident or its timestamp.
@@ -36,7 +147,7 @@ pub(super) async fn enqueue_emergency_stop_tx(
     .bind(task_id)
     .bind(run_id)
     .bind(reason)
-    .bind(json!({"scope":"run","scope_id":run_id,"metric":"operator_stop","actor_id":actor_id}))
+    .bind(input)
     .execute(&mut **tx)
     .await?;
     let key = format!("breaker:{run_id}:stop");

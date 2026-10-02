@@ -599,6 +599,7 @@ mod tests {
     fn plan(agents: [Uuid; 3]) -> TaskGraphPlan {
         let keys = ["visual", "gameplay", "quality", "integration"];
         TaskGraphPlan {
+            deadline: None,
             strategy: "studio-swarm".to_owned(),
             max_nodes: 4,
             max_depth: 1,

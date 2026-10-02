@@ -34,6 +34,9 @@ tracing-subscriber.workspace = true
 url.workspace = true
 uuid.workspace = true
 
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }
+
 [target.'cfg(unix)'.dependencies]
 libc.workspace = true
 rustix.workspace = true

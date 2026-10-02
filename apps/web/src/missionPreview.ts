@@ -1,4 +1,6 @@
 import { usesDeterministicHarness } from './missionRuntime.ts'
+import { sameMissionDeadline } from './missionDeadline.ts'
+import type { MissionDeadlinePolicy } from './missionDeadline.ts'
 
 type MissionDraft<Contract, Policy> = {
   title: string
@@ -16,6 +18,7 @@ type MissionDraft<Contract, Policy> = {
   contract: Contract | null
   customVerification: boolean
   verificationPolicy: Policy
+  deadline?: MissionDeadlinePolicy | null
 }
 
 /** The builder is shared by preview and creation; it does not allocate budgets. */
@@ -45,6 +48,7 @@ export function buildMissionRequest<Contract, Policy>(draft: MissionDraft<Contra
     },
     contract: draft.contract,
     verification_policy: !deterministic && draft.customVerification ? draft.verificationPolicy : null,
+    ...(draft.deadline ? { deadline: draft.deadline } : {}),
   }
 }
 
@@ -67,6 +71,7 @@ export function missionRequestScope(corpId: string, actorId: string, body: strin
 
 export type MissionPreviewQuote = {
   strategy: string
+  deadline?: MissionDeadlinePolicy | null
   budget_tokens: number
   budget_cost_microusd: number
   tasks: {
@@ -107,17 +112,24 @@ function readMissionPreview(value: unknown, scope: MissionRequestScope): Mission
     task.depends_on.some((key) => key === task.key || !keys.has(key)))) {
     throw new Error('The server returned invalid task/dependency keys. Exact allocations are unknown.')
   }
+  const request = JSON.parse(scope.body) as { deadline?: unknown }
+  if (!sameMissionDeadline(request.deadline, quote.deadline)) {
+    throw new Error('The server did not confirm the requested mission deadline and reserve. Saving or starting a timed mission is blocked.')
+  }
   // These values are quoted by the server. Do not infer or recompute any split.
   return quote
 }
 
-function previewError(error: unknown): string {
+function previewError(error: unknown, scope: MissionRequestScope): string {
   const status = error && typeof error === 'object' && 'status' in error ? error.status : null
+  const timed = (JSON.parse(scope.body) as { deadline?: unknown }).deadline != null
+  const launch = timed ? 'Timed missions require a matching server deadline preview before saving or starting.'
+    : 'Launch still uses the existing server validation.'
   if (status === 404 || status === 405 || status === 501) {
-    return `Allocation preview is unavailable on this server (HTTP ${status}). No exact task allocations are available; Launch still uses the existing server validation.`
+    return `Allocation preview is unavailable on this server (HTTP ${status}). No exact task allocations are available; ${launch}`
   }
   if (error instanceof SyntaxError) {
-    return 'Allocation preview returned no readable JSON; the endpoint may be unavailable on this server. Exact task allocations are unknown; Launch still uses the existing server validation.'
+    return `Allocation preview returned no readable JSON; the endpoint may be unavailable on this server. Exact task allocations are unknown; ${launch}`
   }
   const detail = error instanceof Error ? error.message : 'The preview request failed.'
   return `Allocation preview unavailable: ${detail.slice(0, 320)}`
@@ -160,7 +172,7 @@ export function startMissionPreview(
       publish({ scopeKey: scope.key, status: 'ready', quote, error: null })
     }).catch((error: unknown) => {
       if (!active || controller.signal.aborted) return
-      publish({ scopeKey: scope.key, status: 'error', quote: null, error: previewError(error) })
+      publish({ scopeKey: scope.key, status: 'error', quote: null, error: previewError(error, scope) })
     }).finally(() => {
       if (requestTimeout !== undefined) timers.clearTimeout(requestTimeout)
     })

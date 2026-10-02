@@ -90,6 +90,60 @@ test('provider defaults, supported reasoning and commit-branch semantics match s
   assert.equal(buildMissionRequest({ ...draft, commitDeliverable: true }).deliverable.commit_after_verification, true)
 })
 
+test('timed preview and creation preserve one explicit deadline and reserve in the shared request', () => {
+  const deadline = { deadline_at: '2026-10-02T12:10:00.000Z', reserve: { seconds: 120, task_keys: ['studio-integration'] } }
+  const timed = buildMissionRequest({ ...draft, deadline })
+  assert.deepEqual(timed.deadline, deadline)
+  assert.deepEqual(JSON.parse(scopeFor(timed).body).deadline, deadline)
+  assert.notEqual(scopeFor(timed).key, scope.key)
+  assert.equal('deadline' in buildMissionRequest({ ...draft, deadline: null }), false)
+})
+
+test('a timed preview must echo the exact deadline and reserve, allowing equivalent RFC3339 instants', async () => {
+  const deadline = { deadline_at: '2026-10-02T12:10:00.000Z', reserve: { seconds: 120, task_keys: ['studio-integration'] } }
+  const timedScope = scopeFor(buildMissionRequest({ ...draft, deadline }))
+  const echoes = [undefined, null, { deadline_at: deadline.deadline_at },
+    { ...deadline, deadline_at: '2026-10-02T12:11:00Z' },
+    { ...deadline, reserve: { seconds: 121, task_keys: ['studio-integration'] } },
+    { ...deadline, reserve: { seconds: 120, task_keys: ['quality-verification'] } }]
+  for (const echoed of echoes) {
+    const f = fixture(timedScope)
+    f.fire(300)
+    f.response.resolve({ ...quote, deadline: echoed })
+    await flush()
+    assert.equal(f.loads.at(-1).status, 'error')
+    assert.equal(f.loads.at(-1).quote, null)
+    assert.match(f.loads.at(-1).error, /did not confirm/)
+    f.stop()
+  }
+  const f = fixture(timedScope)
+  f.fire(300)
+  f.response.resolve({ ...quote, deadline: { ...deadline, deadline_at: '2026-10-02T07:10:00-05:00' } })
+  await flush()
+  assert.equal(f.loads.at(-1).status, 'ready')
+  f.stop()
+})
+
+test('an unavailable endpoint never advises launching a timed mission without server confirmation', async () => {
+  const f = fixture(scopeFor(buildMissionRequest({ ...draft, deadline: { deadline_at: '2026-10-02T12:10:00Z' } })))
+  f.fire(300)
+  f.response.reject(Object.assign(new Error('Missing route'), { status: 404 }))
+  await flush()
+  assert.match(f.loads.at(-1).error, /require a matching server deadline preview/)
+  assert.doesNotMatch(f.loads.at(-1).error, /Launch still/)
+  f.stop()
+})
+
+test('a server cannot silently introduce a deadline into an untimed allocation preview', async () => {
+  const f = fixture()
+  f.fire(300)
+  f.response.resolve({ ...quote, deadline: { deadline_at: '2026-10-02T12:10:00Z' } })
+  await flush()
+  assert.equal(f.loads.at(-1).status, 'error')
+  assert.equal(f.loads.at(-1).quote, null)
+  f.stop()
+})
+
 test('existing deterministic fixture semantics are not converted into provider settings', () => {
   const result = buildMissionRequest({ ...draft, strategy: 'verification-matrix', adapter: 'fake-process' })
   assert.equal(result.budget_tokens, null)
@@ -326,8 +380,10 @@ test('App shares the request body, invalidates keyed preview instances and retai
   assert.match(app, /currentMissionRequest && selectedMissionSource && selectedActor && canOperate\(selectedActor\.role\)/)
   assert.match(app, /Boolean\(missionTitle\.trim\(\)\) && missionSourceConfirmed && !busy/)
   assert.match(app, /!runtimeError && missionVerifierErrors\.length === 0/)
-  assert.match(app, /useEffect\(\(\) => startMissionPreview\(\{ key, corpId, actorId, body, strategy \}, api, setLoad\)/)
-  assert.match(app, /\[key, corpId, actorId, body, strategy, refresh\]/)
+  assert.match(app, /const stop = startMissionPreview\(\{ key, corpId, actorId, body, strategy \}, api, \(value\) =>/)
+  assert.match(app, /onReadyScope\(value\.status === 'ready' \? value\.scopeKey : null\)/)
+  assert.match(app, /return \(\) => \{ stop\(\); onReadyScope\(null\) \}/)
+  assert.match(app, /\[key, corpId, actorId, body, strategy, refresh, onReadyScope\]/)
   assert.match(app, /Strategy and budget stay selected between missions/)
   assert.match(app, /3 handoffs, then integration after all three complete/)
   assert.match(app, /<details className="mission-allocation-details">/)

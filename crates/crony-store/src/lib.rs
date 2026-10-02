@@ -53,6 +53,8 @@ mod factory_authority;
 mod factory_controller;
 mod factory_run_failure;
 mod mission_context;
+mod mission_deadline;
+pub use mission_deadline::DeadlineExpired;
 mod publication;
 mod retained_provider_receipt;
 mod staffing;
@@ -76,6 +78,8 @@ mod factory_recovery_loss_tests;
 mod finished_review_tests;
 #[cfg(test)]
 mod mission_context_tests;
+#[cfg(test)]
+mod mission_deadline_tests;
 #[cfg(test)]
 mod steering_lock_tests;
 #[cfg(test)]
@@ -527,6 +531,7 @@ pub struct LaunchRecord {
 #[derive(Debug, Clone)]
 pub struct SchedulableTask {
     pub task_id: Uuid,
+    pub requires_deadline: bool,
     pub requires_dependency_files: bool,
     pub requires_canonical_source: bool,
     pub required_adapter: String,
@@ -1615,7 +1620,7 @@ impl PgStore {
                    m.description, m.specification_version, m.strategy,
                    m.max_nodes, m.max_depth, m.original_budget_tokens,
                    m.original_budget_cost_microusd, m.budget_tokens,
-                   m.budget_cost_microusd, m.status, m.created_at, m.updated_at
+                   m.budget_cost_microusd, m.status, m.created_at, m.updated_at, m.deadline_policy
             FROM missions m
             JOIN room_memberships rm ON rm.room_id = m.room_id
             WHERE m.corp_id = $1 AND rm.actor_id = $2
@@ -6298,6 +6303,7 @@ impl PgStore {
         sqlx::query(
             r#"
             SELECT t.id AS task_id,
+                   m.deadline_policy IS NOT NULL AS requires_deadline,
                    EXISTS (
                        SELECT 1 FROM task_dependencies d
                        JOIN tasks p ON p.id = d.depends_on_task_id
@@ -6351,6 +6357,7 @@ impl PgStore {
         .map(|row| {
             Ok(SchedulableTask {
                 task_id: row.get("task_id"),
+                requires_deadline: row.get("requires_deadline"),
                 verification_policy: row.get("verification_policy"),
                 requires_dependency_files: row.get("requires_dependency_files"),
                 requires_canonical_source: row.get("requires_canonical_source"),
@@ -6600,6 +6607,7 @@ impl PgStore {
         )
         .await?
         .context("run requested event unexpectedly existed")?;
+        mission_deadline::for_task_tx(&mut tx, corp_id, task_id).await?;
         tx.commit().await?;
 
         Ok((
@@ -6924,6 +6932,7 @@ impl PgStore {
         )
         .await?
         .context("run resume event unexpectedly existed")?;
+        mission_deadline::for_task_tx(&mut tx, corp_id, task_id).await?;
         tx.commit().await?;
         Ok((
             ResumeLaunchRecord {
@@ -7219,14 +7228,18 @@ impl PgStore {
     ) -> Result<Vec<DomainEvent>> {
         let reason = normalize_factory_text(reason, "factory recovery dispatch failure", 2_000)?;
         let mut tx = self.pool.begin().await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
+        let factory_scope =
+            factory_run_failure::RunScope::lock_tx(&mut tx, corp_id, run_id).await?;
         let row = sqlx::query(
             r#"
             SELECT run.task_id, run.agent_id, run.status AS run_status,
                    task.mission_id, mission.room_id,
                    recovery.id AS recovery_id, recovery.status AS recovery_status
             FROM runs run
-            JOIN tasks task ON task.id = run.task_id
+            JOIN tasks task ON task.id = run.task_id AND task.corp_id = run.corp_id
             JOIN missions mission ON mission.id = task.mission_id
+                                 AND mission.corp_id = task.corp_id
             JOIN factory_verification_recoveries recovery
               ON recovery.replacement_run_id = run.id
              AND recovery.corp_id = run.corp_id
@@ -7239,6 +7252,10 @@ impl PgStore {
         .fetch_optional(&mut *tx)
         .await?
         .context("factory recovery run not found for dispatch failure")?;
+        let mission_id: Uuid = row.get("mission_id");
+        factory_scope
+            .validate_tx(&mut tx, corp_id, mission_id)
+            .await?;
         let recovery_status: String = row.get("recovery_status");
         let run_status: String = row.get("run_status");
         if recovery_status == "failed" && run_status == "failed" {
@@ -7262,72 +7279,47 @@ impl PgStore {
         }
         let task_id: Uuid = row.get("task_id");
         let agent_id: Uuid = row.get("agent_id");
-        let mission_id: Uuid = row.get("mission_id");
         let room_id: Uuid = row.get("room_id");
-        sqlx::query(
-            r#"
-            UPDATE runs
-            SET status = 'failed',
-                verification_status = 'failed',
-                verification_summary = $1,
-                summary = $1,
-                workspace_detail = 'dispatch_not_started',
-                updated_at = now()
-            WHERE id = $2
-            "#,
+        let factory_event = terminalize_factory_recovery_run_tx(
+            &mut tx,
+            corp_id,
+            row.get("recovery_id"),
+            run_id,
+            task_id,
+            mission_id,
+            room_id,
+            &reason,
+            "failed",
+            "recovery_dispatch",
         )
-        .bind(&reason)
+        .await?;
+        // Read the persisted classification, not a second clock sample. Expiry
+        // preserves the verifier verdict and cannot grant predispatch retry.
+        let dispatch_not_started: bool = sqlx::query_scalar(
+            "SELECT COALESCE(workspace_detail = 'dispatch_not_started', false)
+             FROM runs WHERE id = $1 AND corp_id = $2",
+        )
         .bind(run_id)
-        .execute(&mut *tx)
+        .bind(corp_id)
+        .fetch_one(&mut *tx)
         .await?;
         sqlx::query(
             "UPDATE queued_messages
              SET status = 'queued', run_id = NULL
-             WHERE run_id = $1 AND status = 'reserved'",
+             WHERE run_id = $1 AND corp_id = $2 AND status = 'reserved'",
         )
         .bind(run_id)
+        .bind(corp_id)
         .execute(&mut *tx)
         .await?;
-        sqlx::query(
-            "UPDATE tasks
-             SET status = 'verification_failed',
-                 verification_status = 'failed',
-                 updated_at = now()
-             WHERE id = $1",
-        )
-        .bind(task_id)
-        .execute(&mut *tx)
-        .await?;
-        sqlx::query("UPDATE missions SET status = 'failed', updated_at = now() WHERE id = $1")
-            .bind(mission_id)
-            .execute(&mut *tx)
-            .await?;
         sqlx::query(
             "UPDATE agents
              SET status = 'idle', station = NULL, current_run_id = NULL
-             WHERE id = $1 AND current_run_id = $2",
+             WHERE id = $1 AND current_run_id = $2 AND corp_id = $3",
         )
         .bind(agent_id)
         .bind(run_id)
-        .execute(&mut *tx)
-        .await?;
-        sqlx::query(
-            "UPDATE factory_verification_recoveries
-             SET status = 'failed', updated_at = now()
-             WHERE id = $1 AND corp_id = $2",
-        )
-        .bind(row.get::<Uuid, _>("recovery_id"))
         .bind(corp_id)
-        .execute(&mut *tx)
-        .await?;
-        sqlx::query(
-            "UPDATE runner_commands
-             SET status = 'dispatched', dispatched_at = COALESCE(dispatched_at, now())
-             WHERE corp_id = $1 AND run_id = $2
-               AND command_kind = 'factory_verification_recovery'",
-        )
-        .bind(corp_id)
-        .bind(run_id)
         .execute(&mut *tx)
         .await?;
         let expired_secret_access_grant_count =
@@ -7346,7 +7338,7 @@ impl PgStore {
                     format!("run:{run_id}:factory-recovery-dispatch-failed"),
                     json!({
                         "error": reason,
-                        "dispatch_not_started": true,
+                        "dispatch_not_started": dispatch_not_started,
                         "expired_secret_access_grant_count": expired_secret_access_grant_count,
                     }),
                 )
@@ -7355,20 +7347,10 @@ impl PgStore {
         .await?
         .context("factory recovery dispatch-failure event unexpectedly existed")?;
         let mut events = vec![run_event];
-        if let Some((_, factory_event)) = reconcile_factory_verification_failure_tx(
-            &mut tx,
-            corp_id,
-            mission_id,
-            room_id,
-            run_id,
-            None,
-            &reason,
-            "recovery_dispatch",
-        )
-        .await?
-        {
+        if let Some(factory_event) = factory_event {
             events.push(factory_event);
         }
+        events.sort_by_key(|event| event.seq);
         tx.commit().await?;
         Ok(events)
     }
@@ -8304,6 +8286,7 @@ impl PgStore {
                    r.execution_mode, r.status AS run_status,
                    t.mission_id, t.contract, t.verification_policy, m.room_id,
                    t.status AS task_status, m.status AS mission_status,
+                   m.deadline_policy IS NOT NULL AS timed_mission,
                    t.attempt_count, t.max_attempts
             FROM runs r
             JOIN tasks t ON t.id = r.task_id AND t.corp_id = r.corp_id
@@ -8410,7 +8393,19 @@ impl PgStore {
         if event_type == "run.verification_evidence" {
             payload = sanitize_verification_evidence_tx(&mut tx, run_id, payload).await?;
         }
-        if event_type == "run.usage" {
+        let mut cancellation_cause = None;
+        if event_type == "run.cancelled" {
+            let (cause, normalized) = control_accounting::admit_cancellation_tx(
+                &mut tx,
+                corp_id,
+                run_id,
+                row.get("timed_mission"),
+                payload,
+            )
+            .await?;
+            cancellation_cause = Some(cause);
+            payload = normalized;
+        } else if event_type == "run.usage" {
             (event_type, payload) = control_accounting::admit_usage_tx(
                 &mut tx,
                 corp_id,
@@ -9417,10 +9412,11 @@ impl PgStore {
                 .await?;
             }
             "run.cancelled" => {
+                let cause = cancellation_cause.context("cancellation was not normalized")?;
                 let summary = payload
                     .get("reason")
                     .and_then(Value::as_str)
-                    .unwrap_or("Run cancelled by an authorized operator");
+                    .unwrap_or("Native run cancelled");
                 let recovery_id: Option<Uuid> = sqlx::query_scalar(
                     r#"
                     SELECT id
@@ -9444,7 +9440,7 @@ impl PgStore {
                         room_id,
                         summary,
                         "cancelled",
-                        "recovery_run_cancelled",
+                        cause.as_str(),
                     )
                     .await?
                     {
@@ -9452,30 +9448,59 @@ impl PgStore {
                     }
                 } else {
                     sqlx::query(
-                        "UPDATE runs SET status = 'cancelled', summary = $1, updated_at = now() WHERE id = $2",
+                        "UPDATE runs SET status = 'cancelled', summary = $1, updated_at = now() WHERE id = $2 AND corp_id=$3",
                     )
                     .bind(summary)
                     .bind(run_id)
+                    .bind(corp_id)
                     .execute(&mut *tx)
                     .await?;
                     sqlx::query(
-                        "UPDATE tasks SET status = 'cancelled', updated_at = now() WHERE id = $1",
+                        "UPDATE tasks SET status = 'cancelled', updated_at = now()
+                         WHERE id = $1 AND corp_id=$2 AND status NOT IN ('completed','failed','cancelled')",
                     )
                     .bind(task_id)
+                    .bind(corp_id)
                     .execute(&mut *tx)
                     .await?;
                     sqlx::query(
-                        "UPDATE missions SET status = 'cancelled', updated_at = now() WHERE id = $1",
+                        "UPDATE missions SET status = $2, updated_at = now()
+                         WHERE id = $1 AND corp_id=$3 AND status IN ('ready','running') AND NOT $4",
                     )
                     .bind(mission_id)
+                    .bind(
+                        if cause == control_accounting::CancellationCause::DeadlineExpired {
+                            "failed"
+                        } else {
+                            "cancelled"
+                        },
+                    )
+                    .bind(corp_id)
+                    .bind(cause == control_accounting::CancellationCause::DeadlineObserved)
                     .execute(&mut *tx)
                     .await?;
+                    if matches!(
+                        cause,
+                        control_accounting::CancellationCause::DeadlineExpired
+                            | control_accounting::CancellationCause::DeadlineObserved
+                    ) && matches!(row.get::<&str, _>("mission_status"), "ready" | "running")
+                        && let Some(scope) = &factory_scope
+                        && let Some(event) = factory_run_failure::block_control_tx(
+                            &mut tx,
+                            scope,
+                            corp_id,
+                            room_id,
+                            summary,
+                            cause.as_str(),
+                        )
+                        .await?
+                    {
+                        related_events.push(event);
+                    }
                 }
-                sqlx::query(
-                    "UPDATE agents SET status = 'idle', station = NULL, current_run_id = NULL WHERE id = $1",
+                factory_run_failure::release_failed_run_agent_tx(
+                    &mut tx, corp_id, agent_id, run_id,
                 )
-                .bind(agent_id)
-                .execute(&mut *tx)
                 .await?;
             }
             _ => {}
@@ -9487,6 +9512,12 @@ impl PgStore {
             CircuitBreakerOutcome::default()
         };
         related_events.extend(breaker.events);
+        // Projection and dependency writes may wait on more locks after initial
+        // admission. Late progress must roll back with those writes, including
+        // any child readiness or accepted completion produced by this event.
+        if runner_event_advances_run(&event_type) {
+            mission_deadline::for_run_tx(&mut tx, corp_id, run_id).await?;
+        }
         tx.commit().await?;
         Ok(RunnerEventOutcome {
             event: Some(event),
@@ -10494,6 +10525,9 @@ impl PgStore {
         let mut events = vec![event];
         events.extend(related_events);
         let events = ordered_events(events);
+        if approved {
+            mission_deadline::for_run_tx(&mut tx, corp_id, run_id).await?;
+        }
         tx.commit().await?;
         Ok(VerificationDecisionOutcome {
             run_id,
@@ -11790,6 +11824,7 @@ async fn mission_creation_admission_tx(
         Some(room_id) => room_id,
         None => mission_room_for_actor_tx(tx, corp_id, requested_by).await?,
     };
+    mission_deadline::admit_plan_tx(tx, plan).await?;
     Ok((title, description, room_id))
 }
 
@@ -11809,8 +11844,8 @@ async fn create_mission_tx(
         INSERT INTO missions
             (id, corp_id, room_id, requested_by, title, description, strategy,
              max_nodes, max_depth, original_budget_tokens,
-             original_budget_cost_microusd, budget_tokens, budget_cost_microusd, status)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $10, $11, 'ready')
+             original_budget_cost_microusd, budget_tokens, budget_cost_microusd, status, deadline_policy)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $10, $11, 'ready', $12)
         "#,
     )
     .bind(mission_id)
@@ -11824,6 +11859,7 @@ async fn create_mission_tx(
     .bind(plan.max_depth)
     .bind(plan.budget_tokens)
     .bind(plan.budget_cost_microusd)
+    .bind(plan.deadline.as_ref().map(serde_json::to_value).transpose()?)
     .execute(&mut **tx)
     .await?;
 
@@ -11849,6 +11885,7 @@ async fn create_mission_tx(
                     "max_depth": plan.max_depth,
                     "budget_tokens": plan.budget_tokens,
                     "budget_cost_microusd": plan.budget_cost_microusd,
+                    "deadline": plan.deadline,
                     "status": "ready"
                 }),
             )
@@ -12010,6 +12047,7 @@ async fn create_mission_tx(
     .await?
     .context("mission planned event unexpectedly existed")?;
     events.push(planned_event);
+    mission_deadline::admit_plan_tx(tx, plan).await?;
     Ok((
         MissionPlanIds {
             mission_id,
@@ -14002,42 +14040,77 @@ async fn terminalize_factory_recovery_run_tx(
             "factory recovery terminal run status {run_status} is unsupported"
         ));
     }
+    // Cancellation was normalized from durable control before its event was
+    // appended. Failed/lost recovery still needs the database retry fence.
+    let deadline_expired = if run_status == "cancelled" {
+        cause == "mission_deadline_expired"
+    } else {
+        mission_deadline::obsolete_if_expired(
+            mission_deadline::for_run_tx(tx, corp_id, run_id).await,
+        )?
+        .is_err()
+    };
+    let deadline_observed = run_status == "cancelled" && cause == "mission_deadline_elapsed";
+    let previous_mission_status: String =
+        sqlx::query_scalar("SELECT status FROM missions WHERE id=$1 AND corp_id=$2")
+            .bind(mission_id)
+            .bind(corp_id)
+            .fetch_one(&mut **tx)
+            .await?;
     sqlx::query(
         r#"
         UPDATE runs
         SET status = $1,
-            verification_status = 'failed',
+            verification_status = CASE
+                WHEN $1 = 'cancelled' OR $4 THEN verification_status ELSE 'failed' END,
             verification_summary = $2,
             summary = $2,
             workspace_detail = CASE
-                WHEN workspace_path IS NULL AND $1 <> 'lost' THEN 'dispatch_not_started'
+                WHEN workspace_path IS NULL AND $1 = 'failed' AND NOT $4
+                    THEN 'dispatch_not_started'
                 ELSE workspace_detail
             END,
             updated_at = now()
-        WHERE id = $3
+        WHERE id = $3 AND corp_id = $5
         "#,
     )
     .bind(run_status)
     .bind(summary)
     .bind(run_id)
+    .bind(deadline_expired)
+    .bind(corp_id)
     .execute(&mut **tx)
     .await?;
     sqlx::query(
         r#"
         UPDATE tasks
-        SET status = 'verification_failed',
-            verification_status = 'failed',
+        SET status = CASE WHEN $2='cancelled' OR $3 THEN 'cancelled' ELSE 'verification_failed' END,
+            verification_status = CASE
+                WHEN $2='cancelled' OR $3 THEN verification_status ELSE 'failed' END,
             updated_at = now()
-        WHERE id = $1
+        WHERE id = $1 AND corp_id = $4 AND status NOT IN ('completed','failed','cancelled')
         "#,
     )
     .bind(task_id)
+    .bind(run_status)
+    .bind(deadline_expired)
+    .bind(corp_id)
     .execute(&mut **tx)
     .await?;
-    sqlx::query("UPDATE missions SET status = 'failed', updated_at = now() WHERE id = $1")
-        .bind(mission_id)
-        .execute(&mut **tx)
-        .await?;
+    sqlx::query(
+        "UPDATE missions SET status = $3, updated_at = now()
+         WHERE id = $1 AND corp_id = $2 AND status IN ('ready','running') AND NOT $4",
+    )
+    .bind(mission_id)
+    .bind(corp_id)
+    .bind(if run_status == "cancelled" && !deadline_expired {
+        "cancelled"
+    } else {
+        "failed"
+    })
+    .bind(deadline_observed)
+    .execute(&mut **tx)
+    .await?;
     sqlx::query(
         r#"
         UPDATE verification_requests
@@ -14078,6 +14151,31 @@ async fn terminalize_factory_recovery_run_tx(
     .bind(run_id)
     .execute(&mut **tx)
     .await?;
+    if matches!(
+        previous_mission_status.as_str(),
+        "completed" | "failed" | "cancelled"
+    ) {
+        return Ok(None);
+    }
+    if run_status == "cancelled" || deadline_expired {
+        // Native delivery proves the cancellation/failure, never that dispatch
+        // did not happen. An exhausted clock cannot create verifier-retry or
+        // ordinary-failure authority. The caller already holds Factory gates.
+        let scope = factory_run_failure::RunScope::read_tx(tx, corp_id, run_id).await?;
+        return factory_run_failure::block_control_tx(
+            tx,
+            &scope,
+            corp_id,
+            room_id,
+            summary,
+            if deadline_expired {
+                "mission_deadline_expired"
+            } else {
+                cause
+            },
+        )
+        .await;
+    }
     Ok(reconcile_factory_verification_failure_tx(
         tx, corp_id, mission_id, room_id, run_id, None, summary, cause,
     )
@@ -14972,6 +15070,10 @@ fn map_agent(row: sqlx::postgres::PgRow) -> Result<Agent> {
 
 fn map_mission(row: sqlx::postgres::PgRow) -> Result<Mission> {
     Ok(Mission {
+        deadline: row
+            .get::<Option<Value>, _>("deadline_policy")
+            .map(serde_json::from_value)
+            .transpose()?,
         id: row.get("id"),
         corp_id: row.get("corp_id"),
         room_id: row.get("room_id"),
@@ -15870,6 +15972,7 @@ async fn ensure_run_not_hard_blocked_tx(
             "{action} is blocked because current budget or loop metrics require a hard breaker"
         ));
     }
+    mission_deadline::for_run_tx(tx, corp_id, run_id).await?;
     Ok(())
 }
 
@@ -16082,9 +16185,9 @@ mod tests {
         sqlx::raw_sql(
             r#"
             CREATE TABLE missions (id UUID PRIMARY KEY, corp_id UUID, room_id UUID,
-                status TEXT, updated_at TIMESTAMPTZ DEFAULT now());
+                status TEXT, updated_at TIMESTAMPTZ DEFAULT now(), deadline_policy JSONB);
             CREATE TABLE tasks (id UUID PRIMARY KEY, corp_id UUID, mission_id UUID,
-                status TEXT, updated_at TIMESTAMPTZ DEFAULT now());
+                status TEXT, updated_at TIMESTAMPTZ DEFAULT now(), plan_key TEXT, contract JSONB);
             CREATE TABLE runs (id UUID PRIMARY KEY, corp_id UUID, task_id UUID, agent_id UUID,
                 status TEXT, summary TEXT, workspace_detail TEXT,
                 workspace_path TEXT DEFAULT 'preserved-source', budget_tokens_limit BIGINT DEFAULT 100,
@@ -16106,7 +16209,7 @@ mod tests {
                 correlation_id UUID, causation_id UUID, idempotency_key TEXT,
                 visibility TEXT, payload JSONB, created_at TIMESTAMPTZ DEFAULT now(),
                 UNIQUE(corp_id, idempotency_key));
-            INSERT INTO missions VALUES
+            INSERT INTO missions (id,corp_id,room_id,status,updated_at) VALUES
                 ('00000000-0000-0000-0000-000000000002',
                  '00000000-0000-0000-0000-000000000001',
                  '00000000-0000-0000-0000-000000000006', 'running', now());
@@ -17486,6 +17589,7 @@ mod tests {
             "budget_cost_microusd": 1_000_000
         });
         let plan = TaskGraphPlan {
+            deadline: None,
             strategy: "single".to_owned(),
             max_nodes: 1,
             max_depth: 0,

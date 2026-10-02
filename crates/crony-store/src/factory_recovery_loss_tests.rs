@@ -18,6 +18,14 @@ const EPOCH: Uuid = Uuid::from_u128(13);
 const RUNNER: &str = "issue183-runner";
 
 async fn fixture(pool: PgPool, mode: &str) -> PgStore {
+    fixture_with_deadline(pool, mode, None).await
+}
+
+async fn fixture_with_deadline(
+    pool: PgPool,
+    mode: &str,
+    deadline: Option<chrono::DateTime<Utc>>,
+) -> PgStore {
     sqlx::raw_sql(
         r#"
         INSERT INTO corps(id,slug,name) VALUES
@@ -33,13 +41,21 @@ async fn fixture(pool: PgPool, mode: &str) -> PgStore {
           ('00000000-0000-0000-0000-000000000004','00000000-0000-0000-0000-000000000001',
            '00000000-0000-0000-0000-000000000014','Worker','worker','openai-codex','working',
            '00000000-0000-0000-0000-000000000008','#123456');
-        INSERT INTO missions(id,corp_id,room_id,requested_by,title,status,budget_tokens,
-                             original_budget_tokens,original_budget_cost_microusd) VALUES
-          ('00000000-0000-0000-0000-000000000005','00000000-0000-0000-0000-000000000001',
-           '00000000-0000-0000-0000-000000000003','00000000-0000-0000-0000-000000000002',
-           'Recovery loss','running',1000000,1000000,5000000);
         "#,
     )
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO missions(id,corp_id,room_id,requested_by,title,status,budget_tokens,
+                              original_budget_tokens,original_budget_cost_microusd,deadline_policy)
+         VALUES($1,$2,$3,$4,'Recovery loss','running',1000000,1000000,5000000,$5)",
+    )
+    .bind(MISSION)
+    .bind(CORP)
+    .bind(ROOM)
+    .bind(OWNER)
+    .bind(deadline.map(|deadline_at| json!({"deadline_at":deadline_at})))
     .execute(&pool)
     .await
     .unwrap();
@@ -49,7 +65,7 @@ async fn fixture(pool: PgPool, mode: &str) -> PgStore {
         "source_base_commit":"a".repeat(40), "acceptance_tests":["result.md exists"],
         "allowed_tools":["filesystem"], "prohibited_actions":["outside worktree"],
         "references":[], "write_scope":["result.md"], "budget_tokens":100000,
-        "budget_cost_microusd":1000000, "deadline_at":null, "escalation":"ask owner"
+        "budget_cost_microusd":1000000, "deadline_at":deadline, "escalation":"ask owner"
     });
     let policy = json!({
         "checks":[{"type":"file","path":"result.md","min_bytes":1}],
@@ -207,6 +223,416 @@ async fn acknowledge_and_lose(store: &PgStore) -> Vec<DomainEvent> {
         .mark_unclaimed_runner_runs_lost(RUNNER, EPOCH, &[])
         .await
         .unwrap()
+}
+
+async fn timed_recovery(pool: PgPool, mode: &str) -> PgStore {
+    let now: chrono::DateTime<Utc> = sqlx::query_scalar("SELECT clock_timestamp()")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    fixture_with_deadline(pool, mode, Some(now + Duration::seconds(3))).await
+}
+
+async fn wait_for_deadline(store: &PgStore) {
+    sqlx::query("SELECT pg_sleep((GREATEST(0, EXTRACT(EPOCH FROM
+        ((deadline_policy->>'deadline_at')::timestamptz-clock_timestamp()))) + 0.015)::double precision)
+        FROM missions WHERE id=$1")
+        .bind(MISSION).execute(&store.pool).await.unwrap();
+}
+
+async fn assert_expired_recovery(store: &PgStore, before: &Value) {
+    let after = state(store).await;
+    assert_eq!(
+        after["source"], before["source"],
+        "retained source is unchanged"
+    );
+    assert_eq!(
+        after["run"]["verification_status"],
+        before["run"]["verification_status"]
+    );
+    assert_eq!(
+        after["task"]["verification_status"],
+        before["task"]["verification_status"]
+    );
+    assert_eq!(after["task"]["status"], "cancelled");
+    assert_eq!(after["mission"]["status"], "failed");
+    assert_eq!(after["item"]["state"], "blocked");
+    assert_eq!(after["recovery"]["status"], "failed");
+    assert_ne!(after["run"]["workspace_detail"], "dispatch_not_started");
+    for field in [
+        "deadline_policy",
+        "budget_tokens",
+        "original_budget_tokens",
+        "budget_cost_microusd",
+        "original_budget_cost_microusd",
+    ] {
+        assert_eq!(after["mission"][field], before["mission"][field], "{field}");
+    }
+    let events = after["events"].as_array().unwrap();
+    assert_eq!(
+        events
+            .iter()
+            .filter(|event| event["type"] == "factory.blocked"
+                && event["payload"]["cause"] == "mission_deadline_expired")
+            .count(),
+        1
+    );
+    assert!(
+        !events
+            .iter()
+            .any(|event| event["type"] == "factory.verification_failed"
+                || event["payload"]["cause"] == "ordinary_run_failure")
+    );
+    let mut tx = store.pool.begin().await.unwrap();
+    let (item, claim) = factory_work_item_tx(&mut tx, CORP, ITEM, false)
+        .await
+        .unwrap()
+        .unwrap();
+    assert!(
+        !factory_run_failure::owns_block_tx(&mut tx, &item, claim, RUN)
+            .await
+            .unwrap()
+    );
+    assert!(
+        mission_deadline::for_run_tx(&mut tx, CORP, RUN)
+            .await
+            .is_err()
+    );
+    tx.rollback().await.unwrap();
+}
+
+async fn expired_recovery_loss(pool: PgPool, mode: &str) {
+    let store = timed_recovery(pool, mode).await;
+    started(&store).await;
+    let before = state(&store).await;
+    wait_for_deadline(&store).await;
+    acknowledge_and_lose(&store).await;
+    assert_expired_recovery(&store, &before).await;
+    assert_eq!(state(&store).await["run"]["status"], "lost");
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_expired_source_recovery_loss_cannot_grant_retry(pool: PgPool) {
+    expired_recovery_loss(pool, "source_correction").await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_expired_verifier_recovery_loss_cannot_grant_retry(pool: PgPool) {
+    expired_recovery_loss(pool, "verifier_only").await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_expired_native_recovery_cancellation_preserves_verifier_verdict(pool: PgPool) {
+    let store = timed_recovery(pool, "verifier_only").await;
+    started(&store).await;
+    sqlx::query("UPDATE runs SET verification_status='passed' WHERE id=$1")
+        .bind(RUN)
+        .execute(&store.pool)
+        .await
+        .unwrap();
+    let before = state(&store).await;
+    wait_for_deadline(&store).await;
+    store.expire_mission_deadline(CORP, MISSION).await.unwrap();
+    store
+        .apply_runner_event(event(
+            "run.cancelled",
+            json!({"reason":"native deadline stop"}),
+        ))
+        .await
+        .unwrap();
+    assert_expired_recovery(&store, &before).await;
+    assert_eq!(state(&store).await["run"]["status"], "cancelled");
+}
+
+async fn assert_cancelled_recovery_preserves_authority(store: &PgStore, before: &Value) {
+    let after = state(store).await;
+    assert_eq!(after["source"], before["source"]);
+    assert_eq!(after["run"]["status"], "cancelled");
+    assert_eq!(after["task"]["status"], "cancelled");
+    assert_eq!(after["item"]["state"], "blocked");
+    assert_eq!(after["recovery"]["status"], "failed");
+    for field in [
+        "verification_status",
+        "input_tokens",
+        "output_tokens",
+        "cost_microusd",
+        "workspace_run_id",
+        "workspace_path",
+        "workspace_fingerprint",
+    ] {
+        assert_eq!(after["run"][field], before["run"][field], "run {field}");
+    }
+    assert_eq!(
+        after["task"]["verification_status"],
+        before["task"]["verification_status"]
+    );
+    for field in [
+        "deadline_policy",
+        "budget_tokens",
+        "original_budget_tokens",
+        "budget_cost_microusd",
+        "original_budget_cost_microusd",
+    ] {
+        assert_eq!(
+            after["mission"][field], before["mission"][field],
+            "mission {field}"
+        );
+    }
+    assert!(
+        !after["events"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|e| e["type"] == "factory.verification_failed"
+                || e["payload"]["cause"] == "ordinary_run_failure")
+    );
+    let mut tx = store.pool.begin().await.unwrap();
+    let (item, claim) = factory_work_item_tx(&mut tx, CORP, ITEM, false)
+        .await
+        .unwrap()
+        .unwrap();
+    assert!(
+        !factory_run_failure::owns_block_tx(&mut tx, &item, claim, RUN)
+            .await
+            .unwrap()
+    );
+    tx.rollback().await.unwrap();
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_early_recovery_timer_does_not_assert_database_expiry(pool: PgPool) {
+    let store = timed_recovery(pool, "source_correction").await;
+    started(&store).await;
+    let before = state(&store).await;
+    store
+        .apply_runner_event(event(
+            "run.cancelled",
+            json!({"cause":"mission_deadline_elapsed",
+        "reason":"Runner monotonic timer elapsed"}),
+        ))
+        .await
+        .unwrap();
+    assert_cancelled_recovery_preserves_authority(&store, &before).await;
+    let early = state(&store).await;
+    assert_eq!(early["mission"]["status"], "running");
+    assert_eq!(
+        early["events"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|e| e["type"] == "factory.blocked")
+            .unwrap()["payload"]["cause"],
+        "mission_deadline_elapsed"
+    );
+    assert!(
+        store
+            .expire_mission_deadline(CORP, MISSION)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    wait_for_deadline(&store).await;
+    let events = store.expire_mission_deadline(CORP, MISSION).await.unwrap();
+    assert_eq!(
+        events
+            .iter()
+            .filter(|e| e.event_type == "mission.deadline_expired")
+            .count(),
+        1
+    );
+    assert_cancelled_recovery_preserves_authority(&store, &before).await;
+    let expired = state(&store).await;
+    assert_eq!(expired["mission"]["status"], "failed");
+    assert_eq!(
+        expired["item"], early["item"],
+        "reconciliation must preserve the existing Factory block"
+    );
+    assert!(
+        store
+            .expire_mission_deadline(CORP, MISSION)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(state(&store).await, expired);
+}
+
+async fn delayed_recovery_operator_stop(pool: PgPool, sweep_first: bool) {
+    let store = timed_recovery(pool, "verifier_only").await;
+    started(&store).await;
+    store
+        .request_emergency_stop(CORP, AGENT, OWNER, "Original recovery operator stop")
+        .await
+        .unwrap();
+    let before = state(&store).await;
+    wait_for_deadline(&store).await;
+    if sweep_first {
+        store.expire_mission_deadline(CORP, MISSION).await.unwrap();
+    }
+    store
+        .apply_runner_event(event(
+            "run.cancelled",
+            json!({"cause":"mission_deadline_elapsed",
+        "reason":"Delayed timer observation"}),
+        ))
+        .await
+        .unwrap();
+    assert_cancelled_recovery_preserves_authority(&store, &before).await;
+    let after = state(&store).await;
+    let cancellation = after["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| e["type"] == "run.cancelled")
+        .unwrap();
+    assert_eq!(cancellation["payload"]["cause"], "operator_stop");
+    assert_eq!(
+        cancellation["payload"]["reason"],
+        "Original recovery operator stop"
+    );
+    assert_eq!(
+        cancellation["payload"]["cancellation"]["database_expiry_confirmed"],
+        false
+    );
+    assert_eq!(
+        after["mission"]["status"],
+        if sweep_first { "failed" } else { "cancelled" }
+    );
+    assert!(
+        store
+            .expire_mission_deadline(CORP, MISSION)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(state(&store).await, after);
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_late_recovery_operator_ack_preserves_cause_without_sweep(pool: PgPool) {
+    delayed_recovery_operator_stop(pool, false).await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_late_recovery_operator_ack_preserves_cause_after_sweep(pool: PgPool) {
+    delayed_recovery_operator_stop(pool, true).await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_expired_predispatch_recovery_fails_deadline_without_retry_authority(
+    pool: PgPool,
+) {
+    let store = timed_recovery(pool, "verifier_only").await;
+    let before = state(&store).await;
+    wait_for_deadline(&store).await;
+    store
+        .fail_factory_recovery_before_dispatch(CORP, RUN, "Owned expired dispatch fixture")
+        .await
+        .unwrap();
+    assert_expired_recovery(&store, &before).await;
+    let after = state(&store).await;
+    assert_eq!(after["run"]["status"], "failed");
+    assert_eq!(after["agent"]["status"], "idle");
+    assert!(after["agent"]["current_run_id"].is_null());
+    assert_eq!(after["command"]["status"], "dispatched");
+    let run_event = after["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|event| event["type"] == "run.failed")
+        .unwrap();
+    assert_eq!(run_event["payload"]["dispatch_not_started"], false);
+    assert!(
+        store
+            .fail_factory_recovery_before_dispatch(CORP, RUN, "Owned expired dispatch fixture")
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(state(&store).await, after, "replay has no new effects");
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue298_verifier_dispatch_uses_remaining_deadline_and_rejects_expired(pool: PgPool) {
+    let store = timed_recovery(pool, "verifier_only").await;
+    let initial = state(&store).await;
+    let payload = json!({
+        "mode":"verifier_only", "corp_id":CORP, "run_id":RUN, "task_id":TASK,
+        "mission_id":MISSION, "room_id":ROOM, "agent_id":AGENT, "assignment_token":TOKEN,
+        "workspace_run_id":SOURCE, "source_run_id":SOURCE, "source_repository":"fixture/source",
+        "source_base_ref":"main", "source_base_commit":"a".repeat(40),
+        "workspace_base_commit":"a".repeat(40), "expected_workspace_fingerprint":"b".repeat(64),
+        "expected_head_commit":null, "workspace_connection_id":null,
+        "verification_policy":initial["task"]["verification_policy"], "write_scope":["result.md"],
+        "deliverable":null, "secret_refs":[]
+    });
+    sqlx::query("UPDATE runner_commands SET payload=$2 WHERE id=$1")
+        .bind(COMMAND)
+        .bind(&payload)
+        .execute(&store.pool)
+        .await
+        .unwrap();
+    let command = PendingRunnerCommand {
+        id: COMMAND,
+        corp_id: CORP,
+        run_id: RUN,
+        runner_id: RUNNER.into(),
+        command_kind: "factory_verification_recovery".into(),
+        payload,
+    };
+    assert!(
+        store
+            .verification_recovery_dispatch_authorized(&command)
+            .await
+            .unwrap()
+    );
+    let before = state(&store).await;
+    let first = store
+        .with_verification_recovery_dispatch(&command, |allowance| {
+            let allowance = allowance.expect("verification shares the persisted deadline");
+            assert!(allowance.remaining_ms > 0 && allowance.remaining_ms <= 3000);
+            assert_eq!(
+                json!(allowance.mission_deadline_at),
+                before["mission"]["deadline_policy"]["deadline_at"]
+            );
+            Ok(true)
+        })
+        .await
+        .unwrap();
+    assert_eq!(first.transport_result, RunnerCommandDispatchOutcome::Sent);
+    assert!(first.commit_error.is_none());
+    assert_eq!(
+        state(&store).await,
+        before,
+        "synchronous transport probe changes no durable authority"
+    );
+    wait_for_deadline(&store).await;
+    assert!(
+        !store
+            .verification_recovery_dispatch_authorized(&command)
+            .await
+            .unwrap()
+    );
+    let expired = store
+        .with_verification_recovery_dispatch(&command, |_| {
+            panic!("expired verifier must never enter transport")
+        })
+        .await
+        .unwrap();
+    assert_eq!(
+        expired.transport_result,
+        RunnerCommandDispatchOutcome::Obsolete
+    );
+    assert!(expired.commit_error.is_none());
+    assert_eq!(state(&store).await, before);
 }
 
 #[sqlx::test(migrations = "../../db/migrations")]

@@ -363,6 +363,7 @@ async fn expire_operation(f: &Fixture, operation_id: Uuid) -> Result<()> {
 fn plan(f: &Fixture, connection_id: Uuid) -> TaskGraphPlan {
     let source = source();
     TaskGraphPlan {
+        deadline: None,
         strategy: "single".to_owned(),
         max_nodes: 2,
         max_depth: 1,
