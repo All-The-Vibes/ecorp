@@ -493,7 +493,7 @@ fn issue87_cumulative_regressions_cannot_charge_again() {
     assert!(record_usage(&usage_frame("thread-1", 12), &mut parsed).is_some());
     assert!(record_usage(&usage_frame("thread-1", 10), &mut parsed).is_none());
     assert!(record_usage(&usage_frame("thread-1", 12), &mut parsed).is_none());
-    assert_eq!(parsed.usage.input_tokens, 10);
+    assert_eq!(parsed.usage.input_tokens, Some(10));
 }
 
 #[test]

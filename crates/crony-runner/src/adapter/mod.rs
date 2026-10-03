@@ -7,6 +7,7 @@ mod external;
 mod fake;
 mod permission;
 pub(crate) mod process_tree;
+mod usage;
 
 #[cfg(test)]
 use std::path::Path;
@@ -189,7 +190,7 @@ pub enum AdapterEvent {
     },
     Artifact(AdapterArtifact),
     #[allow(dead_code)] // Real model adapters emit usage; fake-process reports it unsupported.
-    Usage(UsageSnapshot),
+    Usage(Box<UsageSnapshot>),
     ApprovalRequested {
         approval_id: Uuid,
         action_key: String,
@@ -223,12 +224,7 @@ pub enum AdapterEvent {
     },
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct UsageSnapshot {
-    pub input_tokens: u64,
-    pub output_tokens: u64,
-    pub cost_microusd: u64,
-}
+pub use crony_domain::UsageReport as UsageSnapshot;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AdapterExit {

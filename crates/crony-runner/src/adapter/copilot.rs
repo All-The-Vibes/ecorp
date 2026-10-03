@@ -32,7 +32,6 @@ use uuid::Uuid;
 use super::{
     AdapterArtifact, AdapterCapabilities, AdapterControl, AdapterError, AdapterEvent,
     AdapterEventSink, AdapterExit, AdapterModel, AdapterRunRequest, AgentAdapter, FeatureSupport,
-    UsageSnapshot,
     copilot_fs::ContainedSessionFs,
     permission::{path_is_inside, path_is_inside_workspace},
 };
@@ -558,11 +557,9 @@ impl CopilotSdkAdapter {
                                 });
                             }
                         }
-                        "assistant.usage" => sink.emit(AdapterEvent::Usage(UsageSnapshot {
-                            input_tokens: event.data.get("inputTokens").and_then(Value::as_u64).unwrap_or_default(),
-                            output_tokens: event.data.get("outputTokens").and_then(Value::as_u64).unwrap_or_default(),
-                            cost_microusd: 0,
-                        })),
+                        "assistant.usage" => sink.emit(AdapterEvent::Usage(Box::new(super::usage::copilot(
+                            &event.data, &event.id, &session_id,
+                        )))),
                         "tool.execution_start" => {
                             tool_calls += 1;
                             let tool_call_id = event.data.get("toolCallId").and_then(Value::as_str).unwrap_or("unknown");
@@ -666,11 +663,10 @@ impl CopilotSdkAdapter {
             format!("# GitHub Copilot result\n\n{}\n", request.mission_title),
         )
         .await?;
-        sink.emit(AdapterEvent::Usage(UsageSnapshot {
-            input_tokens: 321,
-            output_tokens: 123,
-            cost_microusd: 0,
-        }));
+        sink.emit(AdapterEvent::Usage(Box::new(super::usage::external(
+            &json!({"input_tokens":321,"output_tokens":123}),
+            "copilot_fixture_v1",
+        ))));
         let artifact = write_evidence(&request, &session_id, 1, 1, fixture_models().len()).await?;
         sink.emit(AdapterEvent::Artifact(artifact));
         sink.emit(AdapterEvent::Completed {
