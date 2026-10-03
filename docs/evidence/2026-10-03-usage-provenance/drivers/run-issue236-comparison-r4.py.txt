@@ -1,0 +1,224 @@
+"""Execute only frozen local test binaries, with a global first-mismatch stop."""
+import json
+from pathlib import Path
+import re
+import secrets
+import socket
+import subprocess
+import time
+from importlib.util import spec_from_file_location, module_from_spec
+
+RUN = Path(__file__).resolve().parent
+spec = spec_from_file_location('comparison_preparation',RUN/'prepare-issue236-comparison-r4.py')
+prep = module_from_spec(spec)
+spec.loader.exec_module(prep)
+QA = prep.QA
+PG = Path(r'<operator-home>\AppData\Local\Programs\ecorp-tools\postgresql-17.10\pgsql\bin')
+
+def main():
+    preparation = json.loads((QA/'preparation.json').read_text())
+    freeze = json.loads((QA/'freeze.json').read_text())
+    if preparation['status'] != 'prepared' or preparation['freeze_sha256'] != prep.sha(QA/'freeze.json'):
+        raise RuntimeError('Comparison preparation is incomplete or no longer matches its freeze.')
+    total_ceiling = freeze['fixture_runtime_ceiling_seconds']
+    execution_ceiling = freeze['fixture_execution_ceiling_seconds']
+    cleanup_reserve = freeze['cleanup_reserve_seconds']
+    if (total_ceiling,execution_ceiling,cleanup_reserve) != (1800,1700,100):
+        raise RuntimeError('Frozen comparison runtime and cleanup limits do not match the reviewed procedure.')
+    for entry in freeze['protected_files']:
+        if prep.sha(entry['path']) != entry['sha256']:
+            raise RuntimeError('A protected driver, fixture or expectation changed.')
+    for arm, entry in freeze['arms'].items():
+        if (prep.git(entry['source'],'rev-parse','HEAD').decode().strip() != entry['head']
+                or prep.fingerprint(Path(entry['source'])) != entry['physical_source']):
+            raise RuntimeError('Instrumented source differs from its frozen revision.')
+    binaries = {}
+    for build in preparation['builds']:
+        if build['exit_code'] or prep.sha(build['binary']) != build['binary_sha256']:
+            raise RuntimeError('A reviewed test binary changed or did not build.')
+        binaries[(build['arm'],build['kind'])] = build['binary']
+    receipt = {'repository':'All-The-Vibes/ecorp','issue':236,'started_at_utc':prep.now(),'status':'running',
+        'freeze_sha256':prep.sha(QA/'freeze.json'),'preparation_sha256':prep.sha(QA/'preparation.json'),
+        'fixture_runtime_ceiling_seconds':total_ceiling,'fixture_execution_ceiling_seconds':execution_ceiling,
+        'cleanup_reserve_seconds':cleanup_reserve,'rows':[], 'owned_clusters':{},
+        'completion_claimed':False,'independent_review_claimed':False,'provider_inference':False,'cleanup':[]}
+    receipt_path = QA/'execution.json'
+    prep.save(receipt_path,receipt,True)
+    started = time.monotonic()
+    clusters = {}
+
+    def remaining():
+        seconds = execution_ceiling-(time.monotonic()-started)
+        if seconds <= 0:
+            raise TimeoutError('Frozen execution ceiling reached; stop both arms and use the reserved cleanup interval.')
+        return seconds
+
+    def cleanup_remaining(maximum):
+        seconds = total_ceiling-(time.monotonic()-started)
+        if seconds <= 0:
+            raise TimeoutError('Total fixture-runtime ceiling reached; owned cleanup remains unverified.')
+        return min(maximum,seconds)
+
+    def cluster(arm):
+        if arm in clusters:
+            return clusters[arm]
+        port = 59378 if arm == 'baseline' else 59379
+        # Refuse occupied ports; never stop a process we did not create.
+        with socket.socket() as s:
+            if s.connect_ex(('127.0.0.1',port)) == 0:
+                raise RuntimeError('Comparison PostgreSQL port already occupied.')
+        root = QA/f'{arm}-postgres'
+        root.mkdir()
+        (root/'credentials').mkdir()
+        secret = secrets.token_hex(32)
+        password_file = root/'credentials/password.txt'
+        password_file.write_text(secret,encoding='utf-8')
+        env = prep.clean_env()
+        initlog = root/'initdb.log'
+        with initlog.open('xb') as log:
+            result = subprocess.run([str(PG/'initdb.exe'),'-D',str(root/'database'),'-U','issue236_compare',
+                '--auth=scram-sha-256','--encoding=UTF8','--locale=C','--pwfile='+str(password_file)],
+                env=env,stdout=log,stderr=subprocess.STDOUT,timeout=remaining(),creationflags=prep.CREATE_NO_WINDOW)
+        if result.returncode:
+            raise RuntimeError('Fresh comparison PostgreSQL initialization failed.')
+        serverlog = (root/'postgres.log').open('xb')
+        proc = subprocess.Popen([str(PG/'postgres.exe'),'-D',str(root/'database'),'-h','127.0.0.1','-p',str(port)],
+            env=env,stdout=serverlog,stderr=subprocess.STDOUT,creationflags=prep.CREATE_NO_WINDOW)
+        entry = {'process':proc,'secret':secret,'root':root,'log':serverlog,'port':port}
+        clusters[arm] = entry
+        receipt['owned_clusters'][arm] = {'pid':proc.pid,'root':str(root),'port':port,'executable':str(PG/'postgres.exe'),
+            'executable_sha256':prep.sha(PG/'postgres.exe'),'started_at_utc':prep.now(),'fresh_owned':True,'authentication':'scram-sha-256',
+            'secret_delivery':'Private ephemeral fixture password; SQLx environment-only delivery remains reduced assurance.'}
+        prep.save(receipt_path,receipt)
+        deadline = time.monotonic()+min(30,remaining())
+        while time.monotonic() < deadline:
+            if proc.poll() is not None:
+                raise RuntimeError('Owned comparison PostgreSQL exited during startup.')
+            ready = subprocess.run([str(PG/'pg_isready.exe'),'-h','127.0.0.1','-p',str(port)],
+                stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=remaining(),creationflags=prep.CREATE_NO_WINDOW)
+            if ready.returncode == 0:
+                break
+            time.sleep(.2)
+        else:
+            raise RuntimeError('Owned comparison database readiness timeout.')
+        command = [str(PG/'psql.exe'),'-X','-w','-h','127.0.0.1','-p',str(port),'-U','issue236_compare','-d','postgres','-c','SELECT 1']
+        auth = dict(env,PGPASSWORD='invalid-owned-fixture-probe',PGPASSFILE=str(root/'absent.pgpass'))
+        bad = subprocess.run(command,env=auth,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=remaining(),creationflags=prep.CREATE_NO_WINDOW)
+        auth['PGPASSWORD'] = secret
+        good = subprocess.run(command,env=auth,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=remaining(),creationflags=prep.CREATE_NO_WINDOW)
+        auth.clear()
+        if bad.returncode == 0 or good.returncode != 0:
+            raise RuntimeError('Owned comparison database authentication check failed.')
+        receipt['owned_clusters'][arm]['wrong_password_rejected'] = True
+        prep.save(receipt_path,receipt)
+        return entry
+
+    try:
+        for index,row in enumerate(freeze['row_order']):
+            for arm in freeze['arm_order']:
+                env = prep.clean_env()
+                env['ISSUE236_COMPARE_CASE'] = str(row.get('case_index',0))
+                secret = None
+                if row['kind'] == 'store':
+                    owned = cluster(arm)
+                    secret = owned['secret']
+                    env['DATABASE_URL'] = f"postgres://issue236_compare:{secret}@127.0.0.1:{owned['port']}/postgres"
+                command = [binaries[(arm,row['kind'])],'--exact',row['test'],'--nocapture','--test-threads=1']
+                if row['kind'] == 'store':
+                    command.append('--ignored')
+                tick = time.monotonic()
+                try:
+                    result = subprocess.run(command,cwd=freeze['arms'][arm]['source'],env=env,stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,timeout=remaining(),creationflags=prep.CREATE_NO_WINDOW)
+                except subprocess.TimeoutExpired as exc:
+                    output = (exc.stdout or b'').decode('utf-8',errors='replace')
+                    if secret:
+                        output = output.replace(secret,'[ephemeral fixture credential]')
+                    logpath = QA/f'{index+1:02}-{arm}-{row["kind"]}-timeout.log'
+                    with logpath.open('x',encoding='utf-8',newline='\n') as f:
+                        f.write(output)
+                    receipt['rows'].append({'row':row['id'],'arm':arm,'kind':row['kind'],'test':row['test'],
+                        'exit_code':None,'status':'timed_out','duration_seconds':time.monotonic()-tick,
+                        'log':str(logpath),'sha256':prep.sha(logpath),'counts':None,'passed':False})
+                    prep.save(receipt_path,receipt)
+                    raise
+                finally:
+                    env.clear()
+                output = result.stdout.decode('utf-8',errors='replace')
+                if secret:
+                    output = output.replace(secret,'[ephemeral fixture credential]')
+                secret = None
+                logpath = QA/f'{index+1:02}-{arm}-{row["kind"]}.log'
+                with logpath.open('x',encoding='utf-8',newline='\n') as f:
+                    f.write(output)
+                counts = re.search(r'test result: \w+\. (\d+) passed; (\d+) failed; (\d+) ignored;',output)
+                observed = []
+                for match in re.finditer(r'ISSUE236_OBSERVATION=(\{[^\r\n]+\})',output):
+                    observed.append(json.loads(match.group(1)))
+                passed = result.returncode == 0 and counts is not None and counts.groups() == ('1','0','0')
+                entry = {'row':row['id'],'arm':arm,'kind':row['kind'],'test':row['test'],'exit_code':result.returncode,
+                    'duration_seconds':time.monotonic()-tick,'log':str(logpath),'sha256':prep.sha(logpath),
+                    'counts':dict(zip(['passed','failed','ignored'],map(int,counts.groups()))) if counts else None,
+                    'observations':observed,'passed':passed}
+                receipt['rows'].append(entry)
+                prep.save(receipt_path,receipt)
+                if not passed:
+                    raise RuntimeError(f'First accounting mismatch or failed fixture: {arm}/{row["id"]}; both arms stopped.')
+        receipt['status'] = 'passed'
+    except (subprocess.TimeoutExpired, TimeoutError):
+        receipt['status'] = 'stopped_at_execution_ceiling'
+        receipt['failure'] = 'Frozen 1700-second execution ceiling reached; both arms stopped with 100 seconds reserved for cleanup within the 1800-second total ceiling.'
+        # TimeoutExpired output is not printed: it can include a database URL.
+    except Exception as exc:
+        receipt['status'] = 'stopped'
+        receipt['failure'] = re.sub(r'postgres(?:ql)?://\S+','[database URL withheld]',str(exc))
+        for owned in clusters.values():
+            receipt['failure'] = receipt['failure'].replace(owned['secret'],'[ephemeral fixture credential]')
+    finally:
+        receipt['execution_duration_seconds'] = time.monotonic()-started
+        completed = {(r['row'],r['arm']) for r in receipt['rows']}
+        receipt['unexecuted'] = [{'row':r['id'],'arm':arm,'reason':'Comparison stopped; not a pass.'}
+            for r in freeze['row_order'] for arm in freeze['arm_order'] if (r['id'],arm) not in completed]
+        for arm,owned in clusters.items():
+            proc = owned['process']
+            try:
+                if proc.poll() is None:
+                    database = (owned['root']/'database').resolve(strict=True)
+                    if owned['root'].resolve(strict=True).parent != QA.resolve(strict=True):
+                        raise RuntimeError('Owned database is outside the frozen comparison root; preserve it.')
+                    pid_path = database/'postmaster.pid'
+                    pid_lines = pid_path.read_text(encoding='utf-8').splitlines()
+                    if (len(pid_lines) < 4 or int(pid_lines[0]) != proc.pid
+                            or Path(pid_lines[1]).resolve(strict=True) != database
+                            or int(pid_lines[3]) != owned['port']):
+                        raise RuntimeError('PostgreSQL pid, database path or port differs from the captured owned process; preserve it.')
+                    receipt['owned_clusters'][arm]['pid_file_verified_before_stop'] = True
+                    prep.save(receipt_path,receipt)
+                    with (owned['root']/'stop.log').open('xb') as log:
+                        result = subprocess.run([str(PG/'pg_ctl.exe'),'-D',str(database),'-m','fast','-w','stop'],
+                            env=prep.clean_env(),stdout=log,stderr=subprocess.STDOUT,
+                            timeout=cleanup_remaining(30),creationflags=prep.CREATE_NO_WINDOW)
+                    proc.wait(timeout=cleanup_remaining(10))
+                    if result.returncode:
+                        raise RuntimeError('Owned PostgreSQL orderly stop failed.')
+                with socket.socket() as s:
+                    if s.connect_ex(('127.0.0.1',owned['port'])) == 0:
+                        raise RuntimeError('Owned fixture port still has a listener; do not stop unknown processes.')
+                receipt['cleanup'].append({'arm':arm,'stopped':True,'files_preserved':True})
+            except Exception as exc:
+                receipt['cleanup'].append({'arm':arm,'stopped':False,'failure':str(exc),'files_preserved':True})
+                receipt['status'] = 'cleanup_unverified'
+            owned['secret'] = None
+            owned['log'].close()
+        receipt['fixture_runtime_seconds'] = time.monotonic()-started
+        receipt['total_ceiling_satisfied'] = receipt['fixture_runtime_seconds'] <= total_ceiling
+        if not receipt['total_ceiling_satisfied']:
+            receipt['status'] = 'total_ceiling_exceeded'
+        receipt['finished_at_utc'] = prep.now()
+        prep.save(receipt_path,receipt)
+    print(json.dumps({k:receipt.get(k) for k in ['status','failure','fixture_runtime_seconds','completion_claimed']}))
+    if receipt['status'] != 'passed':
+        raise SystemExit(1)
+
+if __name__ == '__main__':
+    main()

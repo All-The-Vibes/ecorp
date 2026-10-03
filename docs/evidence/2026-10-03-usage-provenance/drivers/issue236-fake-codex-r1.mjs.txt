@@ -1,0 +1,131 @@
+// Synthetic native app-server transport for a new, owned usage acceptance stack.
+// No provider calls, network client, source writes, tools, or budget experiments.
+import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { lstat, readFile, realpath } from 'node:fs/promises'
+import path from 'node:path'
+import { createInterface } from 'node:readline'
+import { fileURLToPath } from 'node:url'
+
+const args = process.argv.slice(2)
+assert.equal(args.shift(), '--usage-provenance-fixture', 'Explicit synthetic transport opt-in required')
+if (args.length === 1 && args[0] === '--version') {
+  console.log('codex-cli 0.0.0-ecorp-usage-fixture')
+  process.exit(0)
+}
+assert.equal(args[0], 'app-server')
+assert.ok(args.includes('--listen') && args[args.indexOf('--listen') + 1] === 'stdio://')
+const corpusPath = fileURLToPath(new URL('./issue236-acceptance-corpus-r1.json', import.meta.url))
+const corpusBytes = await readFile(corpusPath)
+assert.equal(createHash('sha256').update(corpusBytes).digest('hex'),
+  '58f005cb45216ef73792aa8ffa6b79fa443a8bf01db0e4ae078de902f2adf225',
+  'Frozen native corpus changed')
+const corpus = JSON.parse(corpusBytes)
+assert.equal(corpus.schema_version, 1)
+let phase = 'created'
+let threadId
+const turnId = 'turn-1'
+let finished = false
+const write = value => new Promise((resolve, reject) =>
+  process.stdout.write(JSON.stringify(value) + '\n', error => error ? reject(error) : resolve()))
+const timer = setTimeout(() => {
+  process.stderr.write('Owned usage fixture reached its 90 second transport ceiling.\n')
+  process.exit(2)
+}, 90_000)
+
+async function verifyWorkspace(cwd) {
+  assert.ok(path.isAbsolute(cwd), 'Assigned workspace must be absolute')
+  const declared = path.resolve(cwd)
+  const actual = path.resolve(await realpath(declared))
+  assert.equal(actual.toLowerCase(), declared.toLowerCase(), 'Workspace aliases are forbidden')
+  assert.ok((await lstat(declared)).isDirectory())
+  assert.ok((await lstat(path.join(declared, '.git'))).isFile(), 'An assigned Git worktree is required')
+  let ancestor = declared
+  while (path.dirname(ancestor) !== ancestor && !/^issue236-usage-provenance-[a-z0-9-]+$/iu.test(path.basename(ancestor))) {
+    ancestor = path.dirname(ancestor)
+  }
+  assert.match(path.basename(ancestor), /^issue236-usage-provenance-[a-z0-9-]+$/iu)
+  assert.equal(path.basename(path.dirname(ancestor)).toLowerCase(), 'qa')
+  const relative = path.relative(path.join(ancestor, 'runner'), declared)
+  assert.ok(relative && relative !== '..' && !relative.startsWith('..' + path.sep) && !path.isAbsolute(relative),
+    'Only the exact owned runner workspace may receive a fixture')
+  const state = JSON.parse(await readFile(path.join(ancestor, 'ownership.json'), 'utf8'))
+  assert.equal(state.purpose, 'issue236-usage-provenance')
+  assert.equal(state.test_owned, true)
+  const gitEnvironment = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
+    /^(PATH|PATHEXT|SYSTEMROOT|WINDIR|COMSPEC|TEMP|TMP)$/iu.test(key)))
+  Object.assign(gitEnvironment, { GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: 'NUL',
+    GIT_TERMINAL_PROMPT: '0', GIT_ALLOW_PROTOCOL: 'file' })
+  const top = execFileSync('git', ['-C', declared, 'rev-parse', '--show-toplevel'],
+    { encoding: 'utf8', env: gitEnvironment, windowsHide: true }).trim()
+  assert.equal(path.resolve(top).toLowerCase(), declared.toLowerCase())
+  return 'thread-issue236-' + createHash('sha256').update(declared.toLowerCase()).digest('hex').slice(0, 24)
+}
+
+try {
+  for await (const line of createInterface({ input: process.stdin, crlfDelay: Infinity })) {
+    assert.ok(Buffer.byteLength(line) <= 1024 * 1024, 'Oversized fixture request')
+    const request = JSON.parse(line)
+    switch (request.method) {
+      case 'initialize':
+        assert.equal(phase, 'created')
+        assert.equal(request.id, 1)
+        phase = 'initialized-response'
+        await write({ id: request.id, result: { userAgent: 'ecorp-owned-usage-fixture' } })
+        break
+      case 'initialized':
+        assert.equal(phase, 'initialized-response')
+        phase = 'ready'
+        break
+      case 'thread/start':
+        assert.equal(phase, 'ready')
+        assert.equal(request.id, 2)
+        threadId = await verifyWorkspace(request.params.cwd)
+        phase = 'thread'
+        await write({ id: request.id, result: { thread: { id: threadId } } })
+        break
+      case 'turn/start': {
+        assert.equal(phase, 'thread')
+        assert.equal(request.id, 3)
+        assert.equal(request.params.threadId, threadId)
+        const text = request.params.input.filter(item => item.type === 'text').map(item => item.text).join('\n')
+        const markers = [...text.matchAll(/\[issue236:([a-z0-9-]+)\]/gu)].map(match => match[1])
+        assert.ok(markers.length > 0 && new Set(markers).size === 1, 'One explicit fixture scenario is required')
+        const scenario = corpus.cases.find(item => item.id === markers[0])
+        assert.ok(scenario, 'Unknown usage fixture scenario')
+        phase = 'turn'
+        await write({ id: request.id, result: { turn: { id: turnId } } })
+        await write({ method: 'turn/started', params: { threadId, turn: { id: turnId } } })
+        for (const observation of scenario.notifications) {
+          const params = structuredClone(observation)
+          if (params.threadId === scenario.thread_id) params.threadId = threadId
+          if (params.turnId === scenario.turn_id) params.turnId = turnId
+          await write({ method: 'thread/tokenUsage/updated', params })
+        }
+        await write({ method: 'item/completed', params: { threadId, turnId,
+          item: { id: 'fixture-final-message', type: 'agentMessage',
+            text: 'Owned usage fixture ' + scenario.id + ' completed without source changes.' } } })
+        await write({ method: 'turn/completed', params: { threadId, turn: { id: turnId, status: 'completed' } } })
+        finished = true
+        phase = 'completed'
+        break
+      }
+      case 'turn/interrupt':
+        assert.equal(request.params.threadId, threadId)
+        assert.equal(request.params.turnId, turnId)
+        await write({ id: request.id, result: {} })
+        if (!finished) {
+          await write({ method: 'turn/completed', params: { threadId, turn: { id: turnId, status: 'interrupted' } } })
+        }
+        finished = true
+        phase = 'completed'
+        break
+      default:
+        throw new Error('Unsupported native method in owned usage fixture')
+    }
+  }
+  assert.ok(finished, 'Fixture stdin closed before a terminal result')
+} finally {
+  clearTimeout(timer)
+}

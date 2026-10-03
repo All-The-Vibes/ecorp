@@ -1,0 +1,742 @@
+{
+  "schema_version": 1,
+  "issue": 236,
+  "status": "passed",
+  "started_at_utc": "2026-10-03T06:21:42.505Z",
+  "source_binding": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T06:21:19.682Z",
+    "source": "<candidate-checkout>",
+    "head": "fb13446f099ddc550a653ed6c4b13800169ba599",
+    "tree": "78370df4797a84ae363b5df9d2cafd3e898887de",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "",
+    "source_file_count": 7421,
+    "source_fingerprint": "243ad077f92ffb062da5761a182d51cfd0f7c38ecd32680b896aa4dc5817c32b",
+    "manifest": "<run-records>\\issue236-source-before-browser-r3.json",
+    "manifest_sha256": "7562ae3cde5361af94c9081d8621557115dc8dea0dfeab51c39409f31e1971b8"
+  },
+  "corpus_sha256": "58f005cb45216ef73792aa8ffa6b79fa443a8bf01db0e4ae078de902f2adf225",
+  "assertions": [
+    {
+      "name": "Configured synthetic source starts clean at the recorded commit",
+      "passed": true
+    },
+    {
+      "name": "The owned runner is connected in the fixture Corp with an available Codex adapter",
+      "passed": true
+    },
+    {
+      "name": "Runner workspace capability advertises the exact immutable fixture source",
+      "passed": true
+    },
+    {
+      "name": "POST /api/corps/00000000-0000-4000-8000-000000000001/missions: HTTP status",
+      "passed": true
+    },
+    {
+      "name": "codex-duplicate-and-foreign-turn: browser launches through the authoritative server",
+      "passed": true
+    },
+    {
+      "name": "codex-duplicate-and-foreign-turn: persisted verifier precedes accepted task and run completion",
+      "passed": true
+    },
+    {
+      "name": "codex-duplicate-and-foreign-turn: native counts and unknown quantities survive the full journal path",
+      "passed": true
+    },
+    {
+      "name": "codex-duplicate-and-foreign-turn: assigned clean worktree is distinct from the preserved configured source",
+      "passed": true
+    },
+    {
+      "name": "POST /api/corps/00000000-0000-4000-8000-000000000001/missions: HTTP status",
+      "passed": true
+    },
+    {
+      "name": "codex-cache-and-reasoning-subsets: browser launches through the authoritative server",
+      "passed": true
+    },
+    {
+      "name": "codex-cache-and-reasoning-subsets: persisted verifier precedes accepted task and run completion",
+      "passed": true
+    },
+    {
+      "name": "codex-cache-and-reasoning-subsets: native counts and unknown quantities survive the full journal path",
+      "passed": true
+    },
+    {
+      "name": "codex-cache-and-reasoning-subsets: assigned clean worktree is distinct from the preserved configured source",
+      "passed": true
+    },
+    {
+      "name": "POST /api/corps/00000000-0000-4000-8000-000000000001/missions: HTTP status",
+      "passed": true
+    },
+    {
+      "name": "codex-missing-input-explicit-zero-output: browser launches through the authoritative server",
+      "passed": true
+    },
+    {
+      "name": "codex-missing-input-explicit-zero-output: persisted verifier precedes accepted task and run completion",
+      "passed": true
+    },
+    {
+      "name": "codex-missing-input-explicit-zero-output: native counts and unknown quantities survive the full journal path",
+      "passed": true
+    },
+    {
+      "name": "codex-missing-input-explicit-zero-output: assigned clean worktree is distinct from the preserved configured source",
+      "passed": true
+    },
+    {
+      "name": "Owned browser made no out-of-scope requests and raised no page errors",
+      "passed": true
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "codex-duplicate-and-foreign-turn",
+      "status": "passed",
+      "expected": {
+        "emitted": 2,
+        "input_tokens": 16,
+        "output_tokens": 4,
+        "cost_microusd": null,
+        "token_coverage": "reported",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false
+      },
+      "title": "Usage provenance codex-duplicate-and-foreign-turn",
+      "mission_id": "242d7056-ed04-4900-a623-f226a87ec4b2",
+      "run_id": "60c532a5-b325-4d84-89f1-e9bcece562bb",
+      "agent_id": "bf3567cd-a02e-4f26-9a29-c6db0e01c6f5",
+      "run": {
+        "id": "60c532a5-b325-4d84-89f1-e9bcece562bb",
+        "task_id": "3e4d7e90-1570-4812-8c6d-0dde9f7f7edf",
+        "status": "completed",
+        "workspace_path": "<browser-fixture>\\runner\\worktrees\\3e4d7e90157048128c6d0dde9f7f7edf\\60c532a5b3254d8489f1e9bcece562bb",
+        "workspace_disposition": "removed",
+        "input_tokens": 16,
+        "output_tokens": 4,
+        "cost_microusd": 0,
+        "breaker_stage": "healthy",
+        "provider_session_id": "thread-issue236-2d6090ce28e94ef08cc21961"
+      },
+      "usage_events": [
+        {
+          "id": "3307e601-568d-4073-9f4d-ca818b187ff8",
+          "type": "run.usage",
+          "aggregate_id": "60c532a5-b325-4d84-89f1-e9bcece562bb",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T06:21:47.264180Z",
+              "charged": true,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": null
+            },
+            "cost_microusd": null,
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "usage_coverage": {
+              "call_identity": "reported",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "reported",
+              "usd": "unavailable"
+            },
+            "usage_identity_keys": [
+              "[\"codex_app_server_last_v1\",\"thread-issue236-2d6090ce28e94ef08cc21961\",\"cumulative_report\",\"turn-1\",12]"
+            ],
+            "usage_origin_event_id": "3307e601-568d-4073-9f4d-ca818b187ff8",
+            "usage_provenance": {
+              "api_call_id": null,
+              "cache_tokens_are_input_subsets": true,
+              "cache_write_input_tokens": null,
+              "cached_input_tokens": null,
+              "cli_version": null,
+              "cumulative_total_tokens": 12,
+              "invalid_fields": [],
+              "mapping": "codex_app_server_last_v1",
+              "model": null,
+              "model_multiplier": null,
+              "nano_aiu": null,
+              "native_event_id": null,
+              "provider_call_id": null,
+              "provider_session_id": "thread-issue236-2d6090ce28e94ef08cc21961",
+              "reasoning_output_tokens": null,
+              "reasoning_tokens_are_output_subsets": true,
+              "schema_version": 1,
+              "scope": "last_call",
+              "sdk_version": null,
+              "source_event": "thread/tokenUsage/updated",
+              "turn_id": "turn-1"
+            },
+            "usage_validation": {
+              "disposition": "accepted",
+              "policy": "native_usage_v1",
+              "reason": null
+            }
+          }
+        },
+        {
+          "id": "f8bf4149-4a4d-40ef-9bf3-05db2388842f",
+          "type": "run.usage",
+          "aggregate_id": "60c532a5-b325-4d84-89f1-e9bcece562bb",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T06:21:47.287898Z",
+              "charged": true,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": null
+            },
+            "cost_microusd": null,
+            "input_tokens": 6,
+            "output_tokens": 2,
+            "usage_coverage": {
+              "call_identity": "reported",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "reported",
+              "usd": "unavailable"
+            },
+            "usage_identity_keys": [
+              "[\"codex_app_server_last_v1\",\"thread-issue236-2d6090ce28e94ef08cc21961\",\"cumulative_report\",\"turn-1\",20]"
+            ],
+            "usage_origin_event_id": "f8bf4149-4a4d-40ef-9bf3-05db2388842f",
+            "usage_provenance": {
+              "api_call_id": null,
+              "cache_tokens_are_input_subsets": true,
+              "cache_write_input_tokens": null,
+              "cached_input_tokens": null,
+              "cli_version": null,
+              "cumulative_total_tokens": 20,
+              "invalid_fields": [],
+              "mapping": "codex_app_server_last_v1",
+              "model": null,
+              "model_multiplier": null,
+              "nano_aiu": null,
+              "native_event_id": null,
+              "provider_call_id": null,
+              "provider_session_id": "thread-issue236-2d6090ce28e94ef08cc21961",
+              "reasoning_output_tokens": null,
+              "reasoning_tokens_are_output_subsets": true,
+              "schema_version": 1,
+              "scope": "last_call",
+              "sdk_version": null,
+              "source_event": "thread/tokenUsage/updated",
+              "turn_id": "turn-1"
+            },
+            "usage_validation": {
+              "disposition": "accepted",
+              "policy": "native_usage_v1",
+              "reason": null
+            }
+          }
+        }
+      ],
+      "completion_events": [
+        {
+          "id": "0beecd02-7154-4b01-ba3c-bda99266355d",
+          "type": "run.verification_passed",
+          "aggregate_id": "60c532a5-b325-4d84-89f1-e9bcece562bb",
+          "payload": {
+            "summary": "all 1 verifier checks passed"
+          }
+        },
+        {
+          "id": "6cbebf17-7b78-4274-ac6a-5965e31751c1",
+          "type": "run.completed",
+          "aggregate_id": "60c532a5-b325-4d84-89f1-e9bcece562bb",
+          "payload": {
+            "completion_receipt_requested": true,
+            "summary": "Owned usage fixture codex-duplicate-and-foreign-turn completed without source changes."
+          }
+        },
+        {
+          "id": "988a816b-79b3-4983-bb42-debb4a309644",
+          "type": "run.workspace_removed",
+          "aggregate_id": "60c532a5-b325-4d84-89f1-e9bcece562bb",
+          "payload": {
+            "branch_deleted": true,
+            "commits_ahead": 0,
+            "detail": "clean worktree has no commits ahead of main; branch deletion=true",
+            "dirty": false,
+            "workspace": "<browser-fixture>\\runner\\worktrees\\3e4d7e90157048128c6d0dde9f7f7edf\\60c532a5b3254d8489f1e9bcece562bb",
+            "workspace_base_commit": "8f4230258ba7013b0e92d63c0b8fe0b47935ef84",
+            "workspace_base_ref": "main",
+            "workspace_branch": "crony/task-3e4d7e90157048128c6d0dde9f7f7edf/run-60c532a5b3254d8489f1e9bcece562bb",
+            "workspace_fingerprint": null
+          }
+        }
+      ],
+      "visible_result": "Result / next step\nThe mission is complete\nCompleted\n\nInspect the selected run’s recorded evidence or download its output. A completed mission is not a deployed application.\n\nInspect run evidence\nDiscuss this work\nTask progress\n1/1 complete\nSelected run checks\n1/1 passed\nOutcome review\nReview details unavailable"
+    },
+    {
+      "id": "codex-cache-and-reasoning-subsets",
+      "status": "passed",
+      "expected": {
+        "emitted": 1,
+        "input_tokens": 100,
+        "output_tokens": 20,
+        "cost_microusd": null,
+        "token_coverage": "reported",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false
+      },
+      "title": "Usage provenance codex-cache-and-reasoning-subsets",
+      "mission_id": "b8a5392c-623e-4c50-9f12-508832f2bca0",
+      "run_id": "ccd9f328-43c4-4c41-9844-02bf52a3bf10",
+      "agent_id": "d9a1e511-ff60-4f4a-8ab9-12e37ca95042",
+      "run": {
+        "id": "ccd9f328-43c4-4c41-9844-02bf52a3bf10",
+        "task_id": "9d957e79-ff8a-40b0-a26d-ab1f40f7787b",
+        "status": "completed",
+        "workspace_path": "<browser-fixture>\\runner\\worktrees\\9d957e79ff8a40b0a26dab1f40f7787b\\ccd9f32843c44c41984402bf52a3bf10",
+        "workspace_disposition": "removed",
+        "input_tokens": 100,
+        "output_tokens": 20,
+        "cost_microusd": 0,
+        "breaker_stage": "healthy",
+        "provider_session_id": "thread-issue236-ee7ce7c0b174f66bd2afaa14"
+      },
+      "usage_events": [
+        {
+          "id": "f9c087e9-3329-4786-bb6c-95d1faf62d7b",
+          "type": "run.usage",
+          "aggregate_id": "ccd9f328-43c4-4c41-9844-02bf52a3bf10",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T06:21:51.107417Z",
+              "charged": true,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": null
+            },
+            "cost_microusd": null,
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "usage_coverage": {
+              "call_identity": "reported",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "reported",
+              "usd": "unavailable"
+            },
+            "usage_identity_keys": [
+              "[\"codex_app_server_last_v1\",\"thread-issue236-ee7ce7c0b174f66bd2afaa14\",\"cumulative_report\",\"turn-1\",120]"
+            ],
+            "usage_origin_event_id": "f9c087e9-3329-4786-bb6c-95d1faf62d7b",
+            "usage_provenance": {
+              "api_call_id": null,
+              "cache_tokens_are_input_subsets": true,
+              "cache_write_input_tokens": 10,
+              "cached_input_tokens": 40,
+              "cli_version": null,
+              "cumulative_total_tokens": 120,
+              "invalid_fields": [],
+              "mapping": "codex_app_server_last_v1",
+              "model": null,
+              "model_multiplier": null,
+              "nano_aiu": null,
+              "native_event_id": null,
+              "provider_call_id": null,
+              "provider_session_id": "thread-issue236-ee7ce7c0b174f66bd2afaa14",
+              "reasoning_output_tokens": 5,
+              "reasoning_tokens_are_output_subsets": true,
+              "schema_version": 1,
+              "scope": "last_call",
+              "sdk_version": null,
+              "source_event": "thread/tokenUsage/updated",
+              "turn_id": "turn-1"
+            },
+            "usage_validation": {
+              "disposition": "accepted",
+              "policy": "native_usage_v1",
+              "reason": null
+            }
+          }
+        }
+      ],
+      "completion_events": [
+        {
+          "id": "775b4c1d-9ddf-4866-8eb5-78153516ca22",
+          "type": "run.verification_passed",
+          "aggregate_id": "ccd9f328-43c4-4c41-9844-02bf52a3bf10",
+          "payload": {
+            "summary": "all 1 verifier checks passed"
+          }
+        },
+        {
+          "id": "e208848a-4ac0-437c-92d6-e1fad748c14d",
+          "type": "run.completed",
+          "aggregate_id": "ccd9f328-43c4-4c41-9844-02bf52a3bf10",
+          "payload": {
+            "completion_receipt_requested": true,
+            "summary": "Owned usage fixture codex-cache-and-reasoning-subsets completed without source changes."
+          }
+        },
+        {
+          "id": "c658d5fd-8e83-4189-bbd3-dc3a538049ab",
+          "type": "run.workspace_removed",
+          "aggregate_id": "ccd9f328-43c4-4c41-9844-02bf52a3bf10",
+          "payload": {
+            "branch_deleted": true,
+            "commits_ahead": 0,
+            "detail": "clean worktree has no commits ahead of main; branch deletion=true",
+            "dirty": false,
+            "workspace": "<browser-fixture>\\runner\\worktrees\\9d957e79ff8a40b0a26dab1f40f7787b\\ccd9f32843c44c41984402bf52a3bf10",
+            "workspace_base_commit": "8f4230258ba7013b0e92d63c0b8fe0b47935ef84",
+            "workspace_base_ref": "main",
+            "workspace_branch": "crony/task-9d957e79ff8a40b0a26dab1f40f7787b/run-ccd9f32843c44c41984402bf52a3bf10",
+            "workspace_fingerprint": null
+          }
+        }
+      ],
+      "visible_result": "Result / next step\nThe mission is complete\nCompleted\n\nInspect the selected run’s recorded evidence or download its output. A completed mission is not a deployed application.\n\nInspect run evidence\nDiscuss this work\nTask progress\n1/1 complete\nSelected run checks\n1/1 passed\nOutcome review\nReview details unavailable"
+    },
+    {
+      "id": "codex-missing-input-explicit-zero-output",
+      "status": "passed",
+      "expected": {
+        "emitted": 1,
+        "input_tokens": null,
+        "output_tokens": 0,
+        "cost_microusd": null,
+        "token_coverage": "partial",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false
+      },
+      "title": "Usage provenance codex-missing-input-explicit-zero-output",
+      "mission_id": "92194fb5-e449-4ec8-a1bd-543ace159ccb",
+      "run_id": "d7355481-84d4-4466-80cb-acd17b33b5fc",
+      "agent_id": "64fa65eb-7c28-4f13-b8c8-4b09132609f4",
+      "run": {
+        "id": "d7355481-84d4-4466-80cb-acd17b33b5fc",
+        "task_id": "71da879c-0fb9-4b3d-9664-99e0897242c6",
+        "status": "completed",
+        "workspace_path": "<browser-fixture>\\runner\\worktrees\\71da879c0fb94b3d966499e0897242c6\\d735548184d4446680cbacd17b33b5fc",
+        "workspace_disposition": "removed",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cost_microusd": 0,
+        "breaker_stage": "healthy",
+        "provider_session_id": "thread-issue236-c95375c1e0fdeafd5b6320b8"
+      },
+      "usage_events": [
+        {
+          "id": "4e85875c-73a0-421c-8ac9-022e24a9b147",
+          "type": "run.usage",
+          "aggregate_id": "d7355481-84d4-4466-80cb-acd17b33b5fc",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T06:21:54.770495Z",
+              "charged": true,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": null
+            },
+            "cost_microusd": null,
+            "input_tokens": null,
+            "output_tokens": 0,
+            "usage_coverage": {
+              "call_identity": "reported",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "partial",
+              "usd": "unavailable"
+            },
+            "usage_identity_keys": [
+              "[\"codex_app_server_last_v1\",\"thread-issue236-c95375c1e0fdeafd5b6320b8\",\"cumulative_report\",\"turn-1\",0]"
+            ],
+            "usage_origin_event_id": "4e85875c-73a0-421c-8ac9-022e24a9b147",
+            "usage_provenance": {
+              "api_call_id": null,
+              "cache_tokens_are_input_subsets": true,
+              "cache_write_input_tokens": null,
+              "cached_input_tokens": null,
+              "cli_version": null,
+              "cumulative_total_tokens": 0,
+              "invalid_fields": [],
+              "mapping": "codex_app_server_last_v1",
+              "model": null,
+              "model_multiplier": null,
+              "nano_aiu": null,
+              "native_event_id": null,
+              "provider_call_id": null,
+              "provider_session_id": "thread-issue236-c95375c1e0fdeafd5b6320b8",
+              "reasoning_output_tokens": null,
+              "reasoning_tokens_are_output_subsets": true,
+              "schema_version": 1,
+              "scope": "last_call",
+              "sdk_version": null,
+              "source_event": "thread/tokenUsage/updated",
+              "turn_id": "turn-1"
+            },
+            "usage_validation": {
+              "disposition": "accepted",
+              "policy": "native_usage_v1",
+              "reason": null
+            }
+          }
+        }
+      ],
+      "completion_events": [
+        {
+          "id": "f1625ed0-8fe5-406e-b502-bcc7a88b3d80",
+          "type": "run.verification_passed",
+          "aggregate_id": "d7355481-84d4-4466-80cb-acd17b33b5fc",
+          "payload": {
+            "summary": "all 1 verifier checks passed"
+          }
+        },
+        {
+          "id": "b9b51519-ba2a-462e-9304-73444c9df990",
+          "type": "run.completed",
+          "aggregate_id": "d7355481-84d4-4466-80cb-acd17b33b5fc",
+          "payload": {
+            "completion_receipt_requested": true,
+            "summary": "Owned usage fixture codex-missing-input-explicit-zero-output completed without source changes."
+          }
+        },
+        {
+          "id": "b442ec4b-aada-4b17-9125-82bd2e699b1f",
+          "type": "run.workspace_removed",
+          "aggregate_id": "d7355481-84d4-4466-80cb-acd17b33b5fc",
+          "payload": {
+            "branch_deleted": true,
+            "commits_ahead": 0,
+            "detail": "clean worktree has no commits ahead of main; branch deletion=true",
+            "dirty": false,
+            "workspace": "<browser-fixture>\\runner\\worktrees\\71da879c0fb94b3d966499e0897242c6\\d735548184d4446680cbacd17b33b5fc",
+            "workspace_base_commit": "8f4230258ba7013b0e92d63c0b8fe0b47935ef84",
+            "workspace_base_ref": "main",
+            "workspace_branch": "crony/task-71da879c0fb94b3d966499e0897242c6/run-d735548184d4446680cbacd17b33b5fc",
+            "workspace_fingerprint": null
+          }
+        }
+      ],
+      "visible_result": "Result / next step\nThe mission is complete\nCompleted\n\nInspect the selected run’s recorded evidence or download its output. A completed mission is not a deployed application.\n\nInspect run evidence\nDiscuss this work\nTask progress\n1/1 complete\nSelected run checks\n1/1 passed\nOutcome review\nReview details unavailable"
+    }
+  ],
+  "http_results": [
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "method": "POST",
+      "status": 200
+    }
+  ],
+  "execution_errors": [],
+  "blocked_requests": [],
+  "page_errors": [],
+  "screenshots": [
+    {
+      "path": "<browser-fixture>\\evidence\\usage-codex-duplicate-and-foreign-turn.png",
+      "sha256": "38f26118ea417036b5d631e5a7d4819c54c0c9b3ff574325a9af9c93ebb69ff2"
+    },
+    {
+      "path": "<browser-fixture>\\evidence\\usage-codex-cache-and-reasoning-subsets.png",
+      "sha256": "5950eb3b4ed2277684412c40b911cc52cff2a66bf6b05fbb3c5daa28d62d2e51"
+    },
+    {
+      "path": "<browser-fixture>\\evidence\\usage-codex-missing-input-explicit-zero-output.png",
+      "sha256": "76c25f16aa1b5e2f474c1cc4c291364bc31a4998ae786575b11cede845fb2e11"
+    }
+  ],
+  "assurance": "Owned deterministic transport in actual Edge, native server/runner and fresh SCRAM PostgreSQL. No provider inference, billing verification, auditor decision, hosted gate or independent outcome review.",
+  "runner_capabilities": [
+    {
+      "id": "issue236-usage-qa",
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "connected": true,
+      "status": "connected",
+      "capabilities": [
+        {
+          "name": "claude-code",
+          "available": false,
+          "detail": "Anthropic Claude Code; spawn=yes, stream=yes, steer=no, interrupt=yes, stop=yes, resume=yes, usage=yes, artifacts=yes; model discovery failed: Anthropic Claude Code availability probe failed: The system cannot find the file specified. (os error 2)",
+          "models": []
+        },
+        {
+          "name": "codex",
+          "available": true,
+          "detail": "OpenAI Codex app-server; spawn=yes, stream=yes, steer=yes, interrupt=yes, stop=yes, resume=yes, usage=yes, artifacts=yes",
+          "models": []
+        },
+        {
+          "name": "delegated-resource",
+          "available": true,
+          "detail": "Native delegated protected-resource read; spawn=yes, stream=yes, steer=no, interrupt=yes, stop=yes, resume=no, usage=no, artifacts=yes",
+          "models": []
+        },
+        {
+          "name": "fake-process",
+          "available": true,
+          "detail": "Deterministic process; spawn=yes, stream=yes, steer=yes, interrupt=no, stop=yes, resume=no, usage=no, artifacts=yes",
+          "models": []
+        },
+        {
+          "name": "github-copilot",
+          "available": true,
+          "detail": "GitHub Copilot SDK; spawn=yes, stream=yes, steer=yes, interrupt=yes, stop=yes, resume=yes, usage=yes, artifacts=yes",
+          "models": [
+            {
+              "id": "copilot-test-fast",
+              "name": "Copilot Test Fast",
+              "policy_state": "enabled",
+              "policy_terms": null,
+              "supports_vision": false,
+              "supports_reasoning_effort": false,
+              "max_prompt_tokens": null,
+              "max_context_window_tokens": 64000,
+              "supported_reasoning_efforts": [],
+              "default_reasoning_effort": null,
+              "billing_multiplier": 1
+            },
+            {
+              "id": "copilot-test-reasoning",
+              "name": "Copilot Test Reasoning",
+              "policy_state": "enabled",
+              "policy_terms": null,
+              "supports_vision": true,
+              "supports_reasoning_effort": true,
+              "max_prompt_tokens": 120000,
+              "max_context_window_tokens": 128000,
+              "supported_reasoning_efforts": [
+                "low",
+                "medium",
+                "high"
+              ],
+              "default_reasoning_effort": "medium",
+              "billing_multiplier": 1.5
+            },
+            {
+              "id": "copilot-test-disabled",
+              "name": "Copilot Test Disabled",
+              "policy_state": "disabled",
+              "policy_terms": "fixture policy",
+              "supports_vision": false,
+              "supports_reasoning_effort": false,
+              "max_prompt_tokens": null,
+              "max_context_window_tokens": 32000,
+              "supported_reasoning_efforts": [],
+              "default_reasoning_effort": null,
+              "billing_multiplier": null
+            }
+          ]
+        },
+        {
+          "name": "opencode",
+          "available": false,
+          "detail": "OpenCode; spawn=yes, stream=yes, steer=no, interrupt=yes, stop=yes, resume=yes, usage=yes, artifacts=yes; model discovery failed: OpenCode availability probe failed: The system cannot find the file specified. (os error 2)",
+          "models": []
+        },
+        {
+          "name": "workspace-isolation",
+          "available": true,
+          "detail": "root=<browser-fixture>\\runner; repository=<browser-fixture>\\source; remote=ecorp-fixture/usage-provenance-fixture; base=main; commit=8f4230258ba7013b0e92d63c0b8fe0b47935ef84",
+          "models": [],
+          "source_repository": "ecorp-fixture/usage-provenance-fixture",
+          "source_base_ref": "main",
+          "source_base_commit": "8f4230258ba7013b0e92d63c0b8fe0b47935ef84"
+        },
+        {
+          "name": "durable-control-v1",
+          "available": true,
+          "detail": "control messages use command ids, runner deduplication, and explicit acknowledgment",
+          "models": []
+        },
+        {
+          "name": "verification-artifact-transfer-v1",
+          "available": true,
+          "detail": "bounded, digest-checked provider evidence isolated from source and check snapshots",
+          "models": []
+        },
+        {
+          "name": "verifier-cache-suppression-v1",
+          "available": true,
+          "detail": "Explicit verifier child cache controls",
+          "models": []
+        },
+        {
+          "name": "checkpoint-verification-v1",
+          "available": true,
+          "detail": "exact stopped-source admission and runner-owned verification commit without a provider",
+          "models": []
+        },
+        {
+          "name": "canonical-source-verification-v1",
+          "available": true,
+          "detail": "Persisted checks and exports share a frozen native Git tree",
+          "models": []
+        },
+        {
+          "name": "retained-provider-receipt-v1",
+          "available": true,
+          "detail": "explicit historical receipt collection from sealed source with a new durable artifact acknowledgment",
+          "models": []
+        },
+        {
+          "name": "secret-delivery",
+          "available": true,
+          "detail": "task-scoped, expiring broker grants; environment injection is reduced assurance",
+          "models": []
+        },
+        {
+          "name": "workspace-setup-v1",
+          "available": true,
+          "detail": "Native repository and coding-agent connections with runner-private state",
+          "models": []
+        },
+        {
+          "name": "verified-dependency-files-v1",
+          "available": true,
+          "detail": "bounded verified dependency files materialized before provider startup",
+          "models": []
+        }
+      ]
+    }
+  ],
+  "finished_at_utc": "2026-10-03T06:21:57.338Z",
+  "counts": {
+    "passed": 19,
+    "failed": 0,
+    "execution_errors": 0,
+    "scenarios_failed": 0,
+    "scenarios_passed": 3,
+    "scenarios_unexecuted": 0
+  }
+}

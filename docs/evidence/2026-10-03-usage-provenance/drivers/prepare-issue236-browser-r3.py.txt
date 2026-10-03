@@ -1,0 +1,182 @@
+"""Correct only the owned acceptance harness; retain all executed revisions."""
+import hashlib
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+RUN = Path(__file__).resolve().parent
+
+
+def sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def read(name):
+    return json.loads((RUN / name).read_text(encoding='utf-8-sig'))
+
+
+def save(name, value):
+    with (RUN / name).open('x', encoding='utf-8', newline='\n') as stream:
+        if isinstance(value, (dict, list)):
+            value = json.dumps(value, indent=2) + '\n'
+        stream.write(value)
+
+
+def replace_once(text, old, new):
+    assert text.count(old) == 1, old
+    return text.replace(old, new)
+
+
+native = read('issue236-native-build-r2.json')
+failed = read('issue236-browser-r2.json')
+assert native['status'] == 'passed' and native['source_unchanged']
+assert failed['status'] == 'failed' and failed['source_unchanged']
+assert native['expected_head'] == failed['source_before']['head']
+
+stack = (RUN / 'issue236-stack-r2.ps1').read_text(encoding='utf-8-sig')
+stack = replace_once(stack, "+' --usage-provenance-fixture')", "+';--usage-provenance-fixture')")
+save('issue236-stack-r3.ps1', stack)
+
+driver = (RUN / 'issue236-browser-r1.mjs').read_text(encoding='utf-8-sig')
+driver = replace_once(driver, 'http_results: [], blocked_requests:', 'http_results: [], execution_errors: [], blocked_requests:')
+old = """  if (method !== 'GET' || response.status !== 200) report.http_results.push({ route, method, status: response.status })
+  assert.equal(response.status, 200, route + ': unexpected HTTP status')
+  return response.json()
+"""
+new = """  let detail
+  if (response.status !== 200) detail = await boundedError(response)
+  if (method !== 'GET' || response.status !== 200) {
+    report.http_results.push({ route, method, status: response.status, error: detail })
+    verify(method + ' ' + route + ': HTTP status', () =>
+      assert.equal(response.status, 200, route + ': ' + (detail?.message ?? 'unexpected HTTP status')))
+  }
+  return response.json()
+"""
+driver = replace_once(driver, old, new)
+marker = "async function request(route, body, method = body === undefined ? 'GET' : 'POST') {"
+helper = r"""function safeDiagnostic(value) {
+  return String(value).slice(0, 4096)
+    .replace(/\b(?:postgres(?:ql)?|https?):\/\/[^\s/@]+:[^\s/@]+@/giu, '[credential-bearing URL withheld]@')
+    .replace(/\bBearer\s+\S+/giu, 'Bearer [withheld]')
+    .replace(/\b((?:access[_-]?)?token|password|secret|credential|api[_-]?key)\b\s*[:=]\s*["']?[^\s,"'}]+/giu, '$1=[withheld]')
+    .slice(0, 2048)
+}
+async function boundedError(response) {
+  const reader = response.body.getReader()
+  const pieces = []
+  let size = 0, truncated = false
+  try {
+    while (size < 16384) {
+      const { value, done } = await reader.read()
+      if (done) break
+      const remaining = 16384 - size
+      pieces.push(value.subarray(0, remaining))
+      size += Math.min(value.length, remaining)
+      if (value.length >= remaining) { truncated = true; break }
+    }
+  } finally { await reader.cancel() }
+  const bytes = Buffer.concat(pieces)
+  const result = { bytes_retained_for_digest: bytes.length, truncated,
+    bounded_body_sha256: createHash('sha256').update(bytes).digest('hex') }
+  try {
+    const parsed = JSON.parse(bytes.toString('utf8'))
+    const message = typeof parsed.error === 'string' ? parsed.error :
+      typeof parsed.message === 'string' ? parsed.message : parsed.error?.message
+    if (typeof message === 'string') result.message = safeDiagnostic(message)
+  } catch { result.message = 'Non-JSON error body withheld; bounded digest recorded' }
+  return result
+}
+"""
+driver = replace_once(driver, marker, helper + marker)
+driver = replace_once(driver,
+    "  verify('Configured synthetic source starts clean at the recorded commit', sourcePreserved)\n",
+    """  verify('Configured synthetic source starts clean at the recorded commit', sourcePreserved)
+  const initial = await snapshot()
+  report.runner_capabilities = initial.runners.map(runner => ({
+    id: runner.id, corp_id: runner.corp_id, connected: runner.connected, status: runner.status,
+    capabilities: runner.capabilities.map(capability => ({ ...capability,
+      detail: capability.detail == null ? null : safeDiagnostic(capability.detail) })),
+  }))
+  await save()
+  const runner = report.runner_capabilities.find(item => item.id === fixture.runner_id)
+  verify('The owned runner is connected in the fixture Corp with an available Codex adapter', () => {
+    assert.ok(runner?.connected)
+    assert.equal(runner.corp_id, demo.corp_id)
+    assert.ok(runner.capabilities.some(item => item.name === 'codex' && item.available))
+  })
+  verify('Runner workspace capability advertises the exact immutable fixture source', () => {
+    assert.ok(runner.capabilities.some(item => item.name === 'workspace-isolation' && item.available &&
+      item.workspace_connection_id == null && item.source_repository === fixture.source_repository &&
+      item.source_base_ref === 'main' && item.source_base_commit === fixture.source_commit))
+  })
+""")
+driver = replace_once(driver,
+    "  report.failure = error.message\n",
+    "  report.failure = safeDiagnostic(error.message)\n  report.execution_errors.push({ scenario: active?.id ?? null, message: report.failure })\n")
+driver = replace_once(driver,
+    "    scenarios_passed: report.scenarios.filter(item => item.status === 'passed').length,\n",
+    "    execution_errors: report.execution_errors.length,\n    scenarios_failed: report.scenarios.filter(item => item.status === 'failed').length,\n    scenarios_passed: report.scenarios.filter(item => item.status === 'passed').length,\n")
+save('issue236-browser-r2.mjs', driver)
+
+wrapper = (RUN / 'run-issue236-browser-r2.ps1').read_text(encoding='utf-8-sig')
+wrapper = wrapper.replace('issue236-browser-r2', 'issue236-browser-r3')
+wrapper = wrapper.replace('issue236-browser-r1.mjs', 'issue236-browser-r2.mjs')
+wrapper = wrapper.replace('issue236-stack-r2.ps1', 'issue236-stack-r3.ps1')
+wrapper = wrapper.replace('issue236-usage-provenance-20261003-r1', 'issue236-usage-provenance-20261003-r2')
+wrapper = wrapper.replace('issue236-source-before-browser-r2.json', 'issue236-source-before-browser-r3.json')
+wrapper = wrapper.replace('issue236-source-after-browser-r2.json', 'issue236-source-after-browser-r3.json')
+wrapper = replace_once(wrapper, '$browserReport.counts.failed -or',
+    '$browserReport.counts.failed -or $browserReport.counts.execution_errors -or $browserReport.counts.scenarios_failed -or')
+assert 'issue236-native-build-r2.json' in wrapper
+save('run-issue236-browser-r3.ps1', wrapper)
+
+record = {
+    'recorded_at_utc': datetime.now(timezone.utc).isoformat(),
+    'issue': 236, 'status': 'prepared_not_executed',
+    'head': native['expected_head'],
+    'failure_retained': {'path': str(RUN / 'issue236-browser-r2.json'),
+                         'sha256': sha(RUN / 'issue236-browser-r2.json'),
+                         'counts': failed['browser_report']['counts']},
+    'confirmed_configuration_defect': {
+        'runner_parser': 'crates/crony-runner/src/main.rs:108-113; value_delimiter is semicolon',
+        'old_fixture_value': 'script path plus flag separated by a space became a single argument',
+        'new_fixture_value': 'script path;--usage-provenance-fixture',
+        'original_http_error_body': 'Not captured; do not invent it.',
+    },
+    'other_harness_changes': [
+        'Record scoped runner capabilities and verify exact source and available Codex before scenarios.',
+        'Record bounded sanitized HTTP error messages/digests; count mutation HTTP assertions.',
+        'Record execution errors and failed/unexecuted scenarios independently of assertion counts.',
+    ],
+    'product_source_changed': False,
+    'native_binaries_reused_from': 'issue236-native-build-r2.json',
+    'comparison': 'Frozen stopped comparison R4 is unchanged and must not be rerun.',
+    'files': [{'name': name, 'sha256': sha(RUN / name)} for name in
+              ['issue236-stack-r3.ps1', 'issue236-browser-r2.mjs', 'run-issue236-browser-r3.ps1']],
+}
+save('issue236-browser-fixture-correction-r1.json', record)
+
+checkpoint = read('completion-checkpoint-r70.json')
+checkpoint['recorded_at_utc'] = datetime.now(timezone.utc).isoformat()
+checkpoint['previous_checkpoint'] = 'completion-checkpoint-r70.json'
+checkpoint['previous_checkpoint_sha256'] = sha(RUN / 'completion-checkpoint-r70.json')
+checkpoint['queue_receipt'] = 'queue-reconciliation-r50.json'
+checkpoint['active_jobs'] = []
+checkpoint['issue236']['native_build'] = {'status': 'passed', 'revision': 2, 'session_id': 17884,
+    'session_consumed': True, 'exit_code': 0, 'receipt': 'issue236-native-build-r2.json',
+    'sha256': sha(RUN / 'issue236-native-build-r2.json')}
+checkpoint['issue236']['browser_acceptance'] = {'status': 'failed', 'revision': 2, 'session_id': 39545,
+    'session_consumed': True, 'exit_code': 1, 'receipt': 'issue236-browser-r2.json',
+    'sha256': sha(RUN / 'issue236-browser-r2.json'), 'counts': failed['browser_report']['counts'],
+    'failure': failed['browser_report']['failure'], 'cleanup': failed['cleanup'],
+    'next_revision': 'run-issue236-browser-r3.ps1', 'next_status': 'prepared_not_executed'}
+checkpoint['remote_mutations_since_r70'] = []
+checkpoint['candidate_source_edits_since_r70'] = False
+checkpoint['next_steps'] = [
+    'Review and syntax-check acceptance R3, prove the fixture argument correction, then execute the new owned fixture.',
+    'Inspect actual screenshots and package honest evidence, preserving all failed attempts and the stopped comparison.',
+    'Validate publication artifacts and scans, refresh remote context, publish only a partial draft stacked PR; issue236 remains open.',
+]
+save('completion-checkpoint-r71.json', checkpoint)
+print(json.dumps({'status': 'prepared', 'product_source_changed': False,
+                  'checkpoint': 'completion-checkpoint-r71.json'}))

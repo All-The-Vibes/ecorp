@@ -1,0 +1,286 @@
+"""Freeze and build test-only comparison arms; never executes a fixture."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import time
+from datetime import datetime, timezone
+
+RUN = Path(__file__).resolve().parent
+SOURCE = Path(r'<candidate-checkout>')
+QA = Path(r'<paired-fixture>')
+BASE = '878a1774774b0630c904cbaf4b05e1b346777817'
+CREATE_NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+
+def now():
+    return datetime.now(timezone.utc).isoformat()
+
+def sha(path):
+    h = hashlib.sha256()
+    with Path(path).open('rb') as f:
+        for block in iter(lambda: f.read(1024 * 1024), b''):
+            h.update(block)
+    return h.hexdigest()
+
+def save(path, obj, exclusive=False):
+    with Path(path).open('x' if exclusive else 'w', encoding='utf-8', newline='\n') as f:
+        json.dump(obj, f, indent=2)
+        f.write('\n')
+
+def clean_env():
+    env = dict(os.environ)
+    for k in list(env):
+        if re.match(r'^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|GIT_|ISSUE236_)', k, re.I) or k.upper() in {
+            'DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN',
+            'NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN','RUSTFLAGS','RUSTDOCFLAGS',
+        }:
+            del env[k]
+    env.update(CARGO_BUILD_JOBS='2', CARGO_INCREMENTAL='0', CARGO_NET_OFFLINE='true',
+               CARGO_PROFILE_DEV_DEBUG='0', CARGO_PROFILE_TEST_DEBUG='0', RUST_TEST_THREADS='1')
+    return env
+
+def git(root, *args):
+    result = subprocess.run(['git','-c','core.longpaths=true','-C',str(root),*args],
+                            capture_output=True, check=True, creationflags=CREATE_NO_WINDOW)
+    return result.stdout
+
+def physical_manifest(root):
+    names = sorted(set(git(root, 'ls-files','--cached','--others','--exclude-standard','-z').decode('utf-8').split('\0')) - {''})
+    return [[name, sha(Path(root) / name)] for name in names]
+
+def fingerprint(root):
+    files = physical_manifest(root)
+    h = hashlib.sha256()
+    for name, digest in files:
+        h.update(name.encode('utf-8') + b'\0' + digest.encode('ascii') + b'\n')
+    return {'algorithm':'sha256(path NUL file-sha256 LF), sorted nonignored physical files', 'sha256':h.hexdigest(),'files':len(files)}
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--candidate', required=True)
+    args = parser.parse_args()
+    if not re.fullmatch('[0-9a-f]{40}', args.candidate):
+        raise RuntimeError('An exact committed candidate is required.')
+    canonical_path = RUN / 'issue236-canonical-r2.json'
+    canonical = json.loads(canonical_path.read_text(encoding='utf-8-sig'))
+    if canonical['status'] != 'passed' or canonical['source_unchanged'] is not True:
+        raise RuntimeError('Preserve active or failed canonical validation; do not build competing native targets.')
+    if git(SOURCE,'rev-parse','HEAD').decode().strip() != args.candidate or git(SOURCE,'status','--porcelain=v1','--untracked-files=all').strip():
+        raise RuntimeError('Candidate must be clean and match the reviewed committed revision.')
+    validated = canonical['source_after']
+    manifest_path = Path(validated['manifest'])
+    if sha(manifest_path) != validated['manifest_sha256']:
+        raise RuntimeError('Canonical source manifest changed after validation.')
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8-sig'))
+    if (manifest['source_fingerprint'] != validated['source_fingerprint']
+            or physical_manifest(SOURCE) != manifest['files']):
+        raise RuntimeError('Committed candidate physical bytes differ from the successful canonical source.')
+    commit_path = RUN / 'issue236-prerequisite-commit-r1.json'
+    commit = json.loads(commit_path.read_text(encoding='utf-8-sig'))
+    if (commit['status'] != 'committed' or commit['head'] != args.candidate
+            or commit['tree'] != git(SOURCE,'rev-parse','HEAD^{tree}').decode().strip()
+            or commit['validated_source_fingerprint'] != validated['source_fingerprint']
+            or commit['canonical_receipt_sha256'] != sha(canonical_path)):
+        raise RuntimeError('Candidate commit is not bound to the successful canonical validation receipt.')
+    if QA.exists():
+        raise RuntimeError('Preserve the existing comparison; use its durable receipt.')
+    QA.mkdir()
+    identity = subprocess.run(['whoami','/user','/fo','csv','/nh'],capture_output=True,check=True,creationflags=CREATE_NO_WINDOW).stdout.decode()
+    sid_match = re.search(r'\bS-1-\d+(?:-\d+)+\b',identity)
+    if sid_match is None:
+        raise RuntimeError('Cannot identify the current Windows account SID; no fixture or build started.')
+    sid = sid_match.group(0)
+    subprocess.run(['icacls.exe',str(QA),'/inheritance:r','/grant:r',f'*{sid}:(OI)(CI)F','*S-1-5-18:(OI)(CI)F'],stdout=subprocess.DEVNULL,check=True,creationflags=CREATE_NO_WINDOW)
+    started = time.monotonic()
+    receipt = {'repository':'All-The-Vibes/ecorp','issue':236,'status':'preparing','started_at_utc':now(),'qa_root':str(QA),
+        'candidate':args.candidate,'baseline':BASE,'fixture_executed':False,'builds':[],
+        'scope':'Frozen synthetic comparison only. No provider inference, grants, retained database, stopped #193/#235 experiments or independence claim.',
+        'cost_boundary':'Preparation/build wall time measured separately. Total engineering/review/inference cost remains unknown; no zero-total-cost claim.'}
+    save(QA/'preparation.json',receipt,True)
+    corpus = (SOURCE/'crates/crony-runner/tests/fixtures/usage-provenance-v1.json').read_bytes()
+    probe = (RUN/'issue236-paired-probe-r1.rs').read_bytes()
+    store = (SOURCE/'crates/crony-store/src/usage_accounting_tests.rs').read_text(encoding='utf-8')
+    store = store.replace('use crony_domain::{UsageProvenance, UsageReport, UsageScope};\n','')
+    a, b = store.index('fn report('), store.index('\nasync fn observe(')
+    store = store[:a] + '''fn report(input: Option<u64>, output: Option<u64>, native_event: Option<&str>, api_call: Option<&str>) -> Value {
+    json!({"input_tokens":input,"output_tokens":output,"cost_microusd":null,"usage_provenance":{
+        "schema_version":1,"mapping":"fixture_usage_v1","scope":"per_call",
+        "model":null,"sdk_version":null,"cli_version":null,"source_event":null,
+        "native_event_id":native_event,"api_call_id":api_call,"provider_call_id":null,
+        "provider_session_id":"usage-session","turn_id":null,"cumulative_total_tokens":null,
+        "cached_input_tokens":null,"cache_write_input_tokens":null,"reasoning_output_tokens":null,
+        "model_multiplier":null,"nano_aiu":null,"cache_tokens_are_input_subsets":false,
+        "reasoning_tokens_are_output_subsets":false,"invalid_fields":[]
+    }})
+}
+''' + store[b:]
+    if 'UsageReport' in store or 'UsageProvenance' in store or 'UsageScope' in store:
+        raise RuntimeError('Comparison instrumentation must use the same literal wire observations in both arms.')
+    (QA/'store-probe.rs').write_text(store,encoding='utf-8',newline='\n')
+    shutil.copyfile(RUN/'issue236-paired-probe-r1.rs',QA/'native-probe.rs')
+    (QA/'corpus.json').write_bytes(corpus)
+    rows = [{'id':c['id'],'kind':'native','case_index':i,
+             'test':'adapter::codex::issue236_comparison_probe::issue236_frozen_native_case','expected':c['expected']}
+            for i,c in enumerate(json.loads(corpus)['cases'])]
+    for test in re.findall(r'async fn (issue236_\w+)\(',store):
+        rows.append({'id':test,'kind':'store','test':'aggregate_breaker_tests::issue236_comparison_store::'+test,
+                     'expected':'Every frozen assertion passes; 1 passed, 0 failed/ignored. Assertions are preserved in store-probe.rs.'})
+    # Existing serial gates only. Deliberately excludes all race/lock-order experiments.
+    for test in ['issue56_exhausted_dispatch_has_no_assignment_side_effects',
+                 'issue56_all_active_states_but_no_terminal_or_unproven_verifier_exemption']:
+        rows.append({'id':test,'kind':'store','test':'aggregate_breaker_tests::'+test,
+                     'expected':'Existing fixed assertions pass; no changed cap, allowance, verifier or approval policy.'})
+    prior_root = Path(r'<operator-home>\code\qa\issue236-paired-usage-20261003-r3')
+    prior = json.loads((prior_root/'preparation.json').read_text(encoding='utf-8'))
+    if prior['status'] != 'prepared' or prior['fixture_executed'] is not False or (prior_root/'execution.json').exists():
+        raise RuntimeError('R4 repairs only an unexecuted preparation; preserve any executed comparison.')
+    prior_freeze = json.loads((prior_root/'freeze.json').read_text(encoding='utf-8'))
+    expected_rows = json.loads(json.dumps(prior_freeze['row_order']))
+    for row in expected_rows:
+        if row['test'].startswith('issue236_comparison_store::'):
+            row['test'] = 'aggregate_breaker_tests::' + row['test']
+    if rows != expected_rows or corpus != (prior_root/'corpus.json').read_bytes() or probe != (prior_root/'native-probe.rs').read_bytes():
+        raise RuntimeError('Frozen cases, values, native probe or corpus changed during the placement repair.')
+    if store != (prior_root/'store-probe.rs').read_text(encoding='utf-8'):
+        raise RuntimeError('Literal SQL observations or assertions changed during the placement repair.')
+    if (prior_freeze['baseline'], prior_freeze['candidate'], prior_freeze['fixture_runtime_ceiling_seconds'],
+            prior_freeze['fixture_execution_ceiling_seconds'], prior_freeze['cleanup_reserve_seconds']) != (BASE, args.candidate, 1800, 1700, 100):
+        raise RuntimeError('Source identity or stopping limits changed during the preparation repair.')
+    freeze = {'schema_version':1,'repository':'All-The-Vibes/ecorp','issue':236,'frozen_at_utc':now(),
+              'baseline':BASE,'candidate':args.candidate,'arm_order':['baseline','candidate'],'row_order':rows,
+              'fixture_runtime_ceiling_seconds':1800,'fixture_execution_ceiling_seconds':1700,'cleanup_reserve_seconds':100,
+              'stop':'Stop both arms immediately on first accounting mismatch, scope leak, failed/unavailable fixture or the 1700-second execution ceiling. Reserve 100 seconds for cleanup within the 1800-second total ceiling. All remaining rows are unexecuted, never passes.',
+              'validated_candidate':{'canonical_receipt':str(canonical_path),'canonical_receipt_sha256':sha(canonical_path),
+                  'source_manifest':str(manifest_path),'source_manifest_sha256':sha(manifest_path),
+                  'source_fingerprint':validated['source_fingerprint'],'commit_receipt':str(commit_path),
+                  'commit_receipt_sha256':sha(commit_path),'tree':commit['tree']},
+              'equivalence':'Identical frozen native probe, corpus and literal SQL observation/assertion overlay. Each native invocation constructs fresh ParsedRun. Each SQLx case creates a fresh migrated database in its arm-specific owned SCRAM PostgreSQL cluster.',
+              'attribution':'Candidate includes PR392 at ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01. Thread correlation changes are not attributed solely to the new usage prerequisite.',
+              'cache_policy':'Separate owned target directories; remove all local path package artifacts from each copied cache before compiling. Primary artifacts must be fresh:false and source-bound to their arm.',
+              'protected_files':[], 'arms':{}}
+    for p in [Path(__file__),RUN/'run-issue236-comparison-r4.py',RUN/'issue236-comparison-source-binding-r1.json',QA/'native-probe.rs',QA/'store-probe.rs',QA/'corpus.json',canonical_path,manifest_path,commit_path]:
+        freeze['protected_files'].append({'path':str(p),'sha256':sha(p)})
+    env = clean_env()
+    # Each arm owns a separate copied cache. All local packages are removed from
+    # that copy before building; the validated source cache is only read.
+    seed_target = SOURCE/'target'
+    receipt['cache_preparations'] = []
+    try:
+        for arm, head in [('baseline',BASE),('candidate',args.candidate)]:
+            root = QA/arm
+            with (QA/f'{arm}-clone.log').open('xb') as log:
+                subprocess.run(['git','-c','core.longpaths=true','clone','--shared','--no-checkout',str(SOURCE),str(root)],
+                               stdout=log,stderr=subprocess.STDOUT,check=True,env=env,creationflags=CREATE_NO_WINDOW)
+                subprocess.run(['git','-c','core.longpaths=true','-C',str(root),'checkout','--detach',head],
+                               stdout=log,stderr=subprocess.STDOUT,check=True,env=env,creationflags=CREATE_NO_WINDOW)
+            (root/'crates/crony-runner/src/adapter/issue236_comparison_probe.rs').write_bytes(probe)
+            (root/'crates/crony-runner/src/adapter/issue236-paired-corpus-r1.json').write_bytes(corpus)
+            with (root/'crates/crony-runner/src/adapter/codex.rs').open('ab') as f:
+                f.write(b'\n#[cfg(test)]\n#[path = "issue236_comparison_probe.rs"]\nmod issue236_comparison_probe;\n')
+            (root/'crates/crony-store/src/issue236_comparison_store.rs').write_text(store,encoding='utf-8',newline='\n')
+            # A child may use its parent's private fixture helpers in both revisions.
+            # This changes only test registration, not production visibility or assertions.
+            with (root/'crates/crony-store/src/aggregate_breaker_tests.rs').open('ab') as f:
+                f.write(b'\n#[path = "issue236_comparison_store.rs"]\nmod issue236_comparison_store;\n')
+            freeze['arms'][arm] = {'source':str(root),'head':head,'tree':git(root,'rev-parse','HEAD^{tree}').decode().strip(),
+                'physical_source':fingerprint(root),'lockfiles':{p:sha(root/p) for p in ['Cargo.lock','rust-toolchain.toml','pnpm-lock.yaml']},
+                'static_safety_test_source_sha256':sha(root/'crates/crony-store/src/aggregate_breaker_tests.rs')}
+        save(QA/'freeze.json',freeze,True)
+        receipt['freeze_sha256'] = sha(QA/'freeze.json')
+        receipt['status'] = 'building'
+        save(QA/'preparation.json',receipt)
+        for arm in freeze['arm_order']:
+            root = Path(freeze['arms'][arm]['source'])
+            target = QA/(arm+'-target')
+            if target.exists() or target.parent.resolve(strict=True) != QA.resolve(strict=True):
+                raise RuntimeError('Only a new target inside the current owned QA directory is eligible.')
+            cache_log = QA/(arm+'-cache-copy.log')
+            with cache_log.open('xb') as log:
+                copied = subprocess.run(['robocopy.exe',str(seed_target),str(target),'/E','/XJ','/R:1','/W:1','/NFL','/NDL'],
+                    env=env,stdout=log,stderr=subprocess.STDOUT,creationflags=CREATE_NO_WINDOW)
+            if copied.returncode >= 8 or target.resolve(strict=True).parent != QA.resolve(strict=True):
+                raise RuntimeError('Owned build-cache copy failed; preserve its files.')
+            env['CARGO_TARGET_DIR'] = str(target)
+            metadata_cmd = ['cargo','metadata','--format-version','1','--locked','--offline']
+            metadata_result = subprocess.run(metadata_cmd,cwd=root,env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,creationflags=CREATE_NO_WINDOW)
+            if metadata_result.returncode:
+                raise RuntimeError('Cannot establish local package identities; no cache clean allowed.')
+            metadata = json.loads(metadata_result.stdout)
+            local = [item for item in metadata['packages'] if item.get('source') is None]
+            for item in local:
+                Path(item['manifest_path']).resolve(strict=True).relative_to(root.resolve(strict=True))
+            names = sorted({item['name'] for item in local})
+            if not names or any(not re.fullmatch(r'crony-[a-z-]+', name) for name in names):
+                raise RuntimeError('Unexpected local path dependency; preserve copied cache for review.')
+            clean_cmd = ['cargo','clean','--locked','--offline','--target-dir',str(target)]
+            for name in names:
+                clean_cmd.extend(['--package',name])
+            clean_log = QA/(arm+'-local-package-clean.log')
+            with clean_log.open('xb') as log:
+                cleaned = subprocess.run(clean_cmd,cwd=root,env=env,stdout=log,stderr=subprocess.STDOUT,creationflags=CREATE_NO_WINDOW)
+            cache = {'arm':arm,'target':str(target),'seed_read_only':str(seed_target),
+                     'copy_exit_code':copied.returncode,'copy_log':str(cache_log),'copy_log_sha256':sha(cache_log),
+                     'local_packages':names,'clean_command':clean_cmd,'clean_exit_code':cleaned.returncode,
+                     'clean_log':str(clean_log),'clean_log_sha256':sha(clean_log)}
+            receipt['cache_preparations'].append(cache)
+            save(QA/'preparation.json',receipt)
+            if cleaned.returncode:
+                raise RuntimeError('Owned local-package invalidation failed; no fixture execution allowed.')
+            for kind, package, targets in [('native','crony-runner',['--bin','crony-runner']),('store','crony-store',['--lib'])]:
+                cmd = ['cargo','test','--locked','--offline','-p',package,*targets,'--no-run','--message-format=json']
+                logpath = QA/f'{arm}-{kind}-build.jsonl'
+                tick = time.monotonic()
+                with logpath.open('xb') as log:
+                    result = subprocess.run(cmd,cwd=root,env=env,stdout=log,stderr=subprocess.STDOUT,creationflags=CREATE_NO_WINDOW)
+                entry = {'arm':arm,'kind':kind,'command':cmd,'exit_code':result.returncode,'log':str(logpath),'sha256':sha(logpath),'duration_seconds':time.monotonic()-tick}
+                receipt['builds'].append(entry)
+                save(QA/'preparation.json',receipt)
+                if result.returncode:
+                    raise RuntimeError(f'{arm}/{kind} preparation failed; no comparison fixture ran.')
+                executables = []
+                primary_artifacts = []
+                for line in logpath.read_text(encoding='utf-8',errors='replace').splitlines():
+                    try:
+                        row = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if row.get('reason') == 'compiler-artifact' and row.get('package_id','').startswith('path+'):
+                        Path(row['target']['src_path']).resolve(strict=True).relative_to(root.resolve(strict=True))
+                        if row.get('executable'):
+                            if row.get('fresh') is not False:
+                                raise RuntimeError('Primary executable was reused; exact arm source was not compiled.')
+                            Path(row['executable']).resolve(strict=True).relative_to(target.resolve(strict=True))
+                            primary_artifacts.append({k:row.get(k) for k in ['package_id','fresh','executable','target']})
+                    if row.get('reason') == 'compiler-artifact' and row.get('profile',{}).get('test') and row.get('executable') and row.get('target',{}).get('name') == package.replace('-','_'):
+                        executables.append(row['executable'])
+                    elif row.get('reason') == 'compiler-artifact' and row.get('profile',{}).get('test') and row.get('executable') and row.get('target',{}).get('name') == package:
+                        executables.append(row['executable'])
+                if len(set(executables)) != 1:
+                    raise RuntimeError('Expected exactly one instrumented executable per arm/package.')
+                binary = QA/f'{arm}-{kind}.exe'
+                shutil.copyfile(executables[0],binary)
+                entry.update(binary=str(binary),binary_sha256=sha(binary),target_directory=str(target),source_artifacts=primary_artifacts)
+                save(QA/'preparation.json',receipt)
+            if fingerprint(root) != freeze['arms'][arm]['physical_source']:
+                raise RuntimeError('Instrumented source changed while building.')
+        for kind in ['native','store']:
+            pair = [entry for entry in receipt['builds'] if entry['kind'] == kind]
+            if len(pair) != 2 or pair[0]['binary_sha256'] == pair[1]['binary_sha256']:
+                raise RuntimeError('Distinct source arms unexpectedly produced identical binaries; inspect before executing.')
+        receipt['status'] = 'prepared'
+    except Exception as exc:
+        receipt['status'] = 'failed'
+        receipt['failure'] = str(exc)
+        raise
+    finally:
+        receipt['finished_at_utc'] = now()
+        receipt['preparation_duration_seconds'] = time.monotonic()-started
+        save(QA/'preparation.json',receipt)
+        print(json.dumps({k:receipt.get(k) for k in ['status','failure','fixture_executed','preparation_duration_seconds']}))
+
+if __name__ == '__main__':
+    main()

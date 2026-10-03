@@ -1,0 +1,53 @@
+import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
+import { spawnSync } from 'node:child_process'
+import { readFile, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { usageFixtureEnvironment } from './issue236-fixture-environment-r1.mjs'
+
+const run = path.dirname(fileURLToPath(import.meta.url))
+const output = path.join(run, 'issue236-browser-harness-review-r3.json')
+await writeFile(output, '{}\n', { flag: 'wx' })
+const environment = await usageFixtureEnvironment(process.env, path.join(run, 'issue236-cli-probe-r1'))
+const fixture = path.join(run, 'issue236-fake-codex-r1.mjs')
+const digest = bytes => createHash('sha256').update(bytes).digest('hex')
+const report = { issue: 236, started_at_utc: new Date().toISOString(), status: 'running', checks: [],
+  scope: 'Syntax and exact equivalent --version argument probes only; no services or provider inference.',
+  product_source_changed: false }
+try {
+  for (const name of ['issue236-browser-r2.mjs', 'issue236-fake-codex-r1.mjs', 'issue236-prepare-fixture-r1.mjs']) {
+    const file = path.join(run, name)
+    const result = spawnSync(process.execPath, ['--check', file],
+      { env: environment, windowsHide: true, timeout: 10000 })
+    report.checks.push({ name, kind: 'node syntax', exit_code: result.status,
+      source_sha256: digest(await readFile(file)), error_code: result.error?.code ?? null })
+    assert.equal(result.status, 0, name)
+  }
+  for (const [name, raw, expectedExit] of [
+    ['original single argument', fixture + ' --usage-provenance-fixture', 1],
+    ['corrected semicolon-delimited arguments', fixture + ';--usage-provenance-fixture', 0],
+  ]) {
+    const args = raw.split(';')
+    const result = spawnSync(process.execPath, [...args, '--version'],
+      { env: environment, windowsHide: true, timeout: 10000, maxBuffer: 65536 })
+    const entry = { name, native_prefix_argument_count: args.length, actual_exit_code: result.status,
+      expected_exit_code: expectedExit, stdout_sha256: digest(result.stdout), stderr_sha256: digest(result.stderr),
+      passed: result.status === expectedExit }
+    if (expectedExit === 1) entry.module_not_found = result.stderr.toString().includes('MODULE_NOT_FOUND')
+    else entry.observed_version = result.stdout.toString().trim()
+    report.checks.push(entry)
+    assert.equal(result.status, expectedExit)
+    if (expectedExit === 1) assert.equal(entry.module_not_found, true)
+    else assert.equal(entry.observed_version, 'codex-cli 0.0.0-ecorp-usage-fixture')
+  }
+  report.status = 'passed'
+} catch (error) {
+  report.status = 'failed'
+  report.failure = error.message
+} finally {
+  report.finished_at_utc = new Date().toISOString()
+  await writeFile(output, JSON.stringify(report, null, 2) + '\n')
+  console.log(JSON.stringify(report))
+  process.exitCode = report.status === 'passed' ? 0 : 1
+}
