@@ -74,6 +74,13 @@ fn assert_uncharged(observed: &DomainEvent, disposition: &str) {
     );
     assert_eq!(observed.payload["accounting"]["charged"], false);
     assert_eq!(observed.payload["accounting"]["known_subtotal_only"], true);
+    if !matches!(disposition, "accepted" | "duplicate") {
+        assert_eq!(
+            observed.payload["usage_coverage"]["call_identity"],
+            "unavailable"
+        );
+        assert!(observed.payload.get("usage_identity_keys").is_none());
+    }
 }
 
 #[sqlx::test(migrations = "../../db/migrations")]
@@ -259,6 +266,7 @@ async fn issue236_usage_optional_session_uses_fenced_run_identity_without_rewrit
     omitted["usage_provenance"]["provider_session_id"] = Value::Null;
     let first = observe(&store, 0, omitted.clone()).await;
     assert_eq!(first.event_type, "run.usage");
+    assert_eq!(first.payload["usage_coverage"]["call_identity"], "reported");
     assert_eq!(
         first.payload["usage_provenance"]["provider_session_id"],
         Value::Null
@@ -268,6 +276,10 @@ async fn issue236_usage_optional_session_uses_fenced_run_identity_without_rewrit
         let replay = observe(&store, 0, payload).await;
         assert_uncharged(&replay, "duplicate");
         assert_eq!(replay.payload["usage_origin_event_id"], json!(first.id));
+        assert_eq!(
+            replay.payload["usage_coverage"]["call_identity"],
+            "reported"
+        );
     }
     let mut api_only = report(Some(10), Some(2), None, Some("api-a"));
     api_only["usage_provenance"]["provider_session_id"] = Value::Null;
@@ -291,6 +303,46 @@ async fn issue236_usage_optional_session_uses_fenced_run_identity_without_rewrit
     );
     assert!(observed.payload.get("usage_identity_keys").is_none());
     assert_eq!(counters(&store, 1).await, (0, 0, 0));
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires an explicitly owned disposable PostgreSQL database"]
+async fn issue236_usage_last_call_identity_coverage_uses_the_admitted_session(pool: PgPool) {
+    let store = usage_fixture(pool).await;
+    let mut payload = report(Some(10), Some(2), None, None);
+    payload["usage_provenance"]["scope"] = json!("last_call");
+    payload["usage_provenance"]["provider_session_id"] = Value::Null;
+    payload["usage_provenance"]["turn_id"] = json!("turn-1");
+    payload["usage_provenance"]["cumulative_total_tokens"] = json!(12);
+    let accepted = observe(&store, 0, payload.clone()).await;
+    assert_eq!(accepted.event_type, "run.usage");
+    assert_eq!(
+        accepted.payload["usage_coverage"]["call_identity"],
+        "reported"
+    );
+    assert_eq!(
+        accepted.payload["usage_identity_keys"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+    assert!(accepted.payload["usage_provenance"]["provider_session_id"].is_null());
+    let replay = observe(&store, 0, payload.clone()).await;
+    assert_uncharged(&replay, "duplicate");
+    assert_eq!(
+        replay.payload["usage_coverage"]["call_identity"],
+        "reported"
+    );
+    assert_eq!(replay.payload["usage_origin_event_id"], json!(accepted.id));
+    payload["usage_provenance"]["provider_session_id"] = json!("other-session");
+    let rejected = observe(&store, 0, payload).await;
+    assert_uncharged(&rejected, "unattributed");
+    assert_eq!(
+        rejected.payload["usage_validation"]["reason"],
+        "usage_session_mismatch"
+    );
+    assert_eq!(counters(&store, 0).await, (10, 2, 0));
 }
 
 #[sqlx::test(migrations = "../../db/migrations")]

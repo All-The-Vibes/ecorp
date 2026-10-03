@@ -59,10 +59,20 @@ the persisted session supplies only the identity comparison scope, without
 rewriting the original provenance. An absent stored session cannot establish
 native per-call attribution.
 
+Persisted `call_identity` coverage is `reported` only for an accepted or duplicate
+observation with admitted identity keys. Rejected sessions, conflicts, invalid
+reports, aggregates, overflows, and observations without native identity remain
+`unavailable`. An omitted session may still establish an identity through the
+persisted run session; the journal keeps the originally reported provenance.
+
 Journal event replay remains idempotent. Available native event/API/provider
 call aliases identify additional replays within the same assigned run. Matching
 replays may enrich aliases transitively; contradictory observations cannot claim
 new aliases or overwrite a prior quantity. Equal counts never identify a call.
+Within the active Codex turn, a regressing cumulative cursor and a contradictory
+report at the same cursor retain invalid, uncharged evidence without rewinding
+the accepted cursor. An exact duplicate at the accepted cursor is suppressed;
+a later increasing cursor can still contribute its call delta once.
 Without native IDs, distinct journal frames remain distinct and identity
 coverage stays unavailable. Four distinct worker/retry/auditor/failed-call
 observations of 100/20, 30/10, 10/5, and 7/3 total 147 input plus 38 output,

@@ -567,8 +567,9 @@
     {
       "path": "logs/browser-r3/issue236-browser-r3-stack-start.log",
       "original_sha256": "0a1700e54f47a8c6575f612ca5596b825dcbf63dbd2e641e94f7634d7c9ef956",
-      "published_sha256": "b8ac89c80c56533fe51153c8b4b28dfd2211e47aa7102b31aa5521194b448ef4",
-      "transformation": "local paths and UTF-8/LF normalization"
+      "published_sha256": "5a38a0f8b00aacd9a7beca0262694dc7fb060b6d9e39084e808f0b67b4d8b31b",
+      "transformation": "Existing UTF-8/LF and local-path normalization retained; line 23 operator name replaced with <local-user>; line 44 Windows caret quoting removed and absolute tool/QA roots replaced with <pinned-toolchain>/<owned-qa-root>. Outcomes, commands and quantities unchanged.",
+      "previous_published_sha256": "b8ac89c80c56533fe51153c8b4b28dfd2211e47aa7102b31aa5521194b448ef4"
     },
     {
       "path": "logs/browser-r3/issue236-browser-r3-stack-status.log",
@@ -609,8 +610,9 @@
     {
       "path": "history/browser-r2/logs/issue236-browser-r2-stack-start.log",
       "original_sha256": "827b30fabf19aebdea1f6c6f1b92dbce6c27a329a45a2422f95e19a6ddbf74dc",
-      "published_sha256": "711f606e4a99267e626c7eca7adfe443fb9984ba2e2c4e240c44a95ba02b08d9",
-      "transformation": "local paths and UTF-8/LF normalization"
+      "published_sha256": "9462781340a95e4244388e51697d98b9d4268b7f1285368893d951ae1e7c1404",
+      "transformation": "Existing UTF-8/LF and local-path normalization retained; line 23 operator name replaced with <local-user>; line 44 Windows caret quoting removed and absolute tool/QA roots replaced with <pinned-toolchain>/<owned-qa-root>. Outcomes, commands and quantities unchanged.",
+      "previous_published_sha256": "711f606e4a99267e626c7eca7adfe443fb9984ba2e2c4e240c44a95ba02b08d9"
     },
     {
       "path": "history/browser-r2/logs/issue236-browser-r2-stack-status.log",
@@ -873,5 +875,34 @@
     "drivers/issue236-fixture-environment-r1.mjs.txt",
     "logs/issue236-native-build-r2-cache-copy.log",
     "logs/native-sql-r1.log"
-  ]
+  ],
+  "review_path_correction": {
+    "recorded_at_utc": "2026-10-03T07:24:33.025222+00:00",
+    "scope": "Two published startup-log copies only. Original logs and historical outcomes retained.",
+    "finding": "Windows caret-escaped paths and the initdb operator line escaped the earlier normalization check.",
+    "files": [
+      {
+        "path": "history/browser-r2/logs/issue236-browser-r2-stack-start.log",
+        "original_sha256": "827b30fabf19aebdea1f6c6f1b92dbce6c27a329a45a2422f95e19a6ddbf74dc",
+        "previous_published_sha256": "711f606e4a99267e626c7eca7adfe443fb9984ba2e2c4e240c44a95ba02b08d9",
+        "published_sha256": "9462781340a95e4244388e51697d98b9d4268b7f1285368893d951ae1e7c1404",
+        "changed_lines": [
+          23,
+          44
+        ],
+        "transformation": "Existing UTF-8/LF and local-path normalization retained; line 23 operator name replaced with <local-user>; line 44 Windows caret quoting removed and absolute tool/QA roots replaced with <pinned-toolchain>/<owned-qa-root>. Outcomes, commands and quantities unchanged."
+      },
+      {
+        "path": "logs/browser-r3/issue236-browser-r3-stack-start.log",
+        "original_sha256": "0a1700e54f47a8c6575f612ca5596b825dcbf63dbd2e641e94f7634d7c9ef956",
+        "previous_published_sha256": "b8ac89c80c56533fe51153c8b4b28dfd2211e47aa7102b31aa5521194b448ef4",
+        "published_sha256": "5a38a0f8b00aacd9a7beca0262694dc7fb060b6d9e39084e808f0b67b4d8b31b",
+        "changed_lines": [
+          23,
+          44
+        ],
+        "transformation": "Existing UTF-8/LF and local-path normalization retained; line 23 operator name replaced with <local-user>; line 44 Windows caret quoting removed and absolute tool/QA roots replaced with <pinned-toolchain>/<owned-qa-root>. Outcomes, commands and quantities unchanged."
+      }
+    ]
+  }
 }

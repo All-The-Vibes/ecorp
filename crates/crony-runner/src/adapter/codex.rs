@@ -592,29 +592,29 @@ fn record_usage(params: &Value, parsed: &mut ParsedRun) -> Option<UsageSnapshot>
         add_usage(&mut parsed.usage, &usage);
         return Some(usage);
     };
-    if let Some(previous) = parsed.last_usage_total {
-        if total_tokens < previous {
-            return None;
-        }
-        if total_tokens == previous {
-            if parsed
+    if let Some(previous) = parsed.last_usage_total
+        && total_tokens <= previous
+    {
+        if total_tokens == previous
+            && parsed
                 .last_usage_report
                 .as_ref()
                 .is_some_and(|previous| previous.same_observation(&usage))
-            {
-                return None;
-            }
-            usage
-                .usage_provenance
-                .as_mut()
-                .expect("native usage provenance")
-                .invalidate(
-                    "cumulative_total_tokens",
-                    crony_domain::InvalidUsageReason::ConflictingObservation,
-                );
-            add_usage(&mut parsed.usage, &usage);
-            return Some(usage);
+        {
+            return None;
         }
+        // Retain regressions and contradictory equal-cursor reports without
+        // rewinding the accepted cursor or charging their quantities.
+        usage
+            .usage_provenance
+            .as_mut()
+            .expect("native usage provenance")
+            .invalidate(
+                "cumulative_total_tokens",
+                crony_domain::InvalidUsageReason::ConflictingObservation,
+            );
+        add_usage(&mut parsed.usage, &usage);
+        return Some(usage);
     }
     // App-server reports `last` for the latest model API call and `total` cumulatively for the
     // thread. Use the monotonic total as the duplicate cursor, but account and emit `last` once.
@@ -1410,6 +1410,46 @@ mod tests {
                 .validate()
                 .is_ok()
         );
+        assert_eq!(parsed.usage.input_tokens, Some(16));
+        assert_eq!(parsed.usage.output_tokens, Some(4));
+        assert_eq!(parsed.usage.coverage()["tokens"], "invalid");
+    }
+
+    #[test]
+    fn regressing_usage_cursor_is_retained_without_charging_or_rewinding() {
+        let mut parsed = ParsedRun {
+            thread_id: Some("thread-1".to_owned()),
+            turn_id: Some("turn-1".to_owned()),
+            ..ParsedRun::default()
+        };
+        let first_frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":12},"last":{"inputTokens":10,"outputTokens":2}
+        }});
+        let first = record_usage(&first_frame, &mut parsed).unwrap();
+        for lower in [10, 0] {
+            let mut frame = first_frame.clone();
+            frame["tokenUsage"] =
+                json!({"total":{"totalTokens":lower},"last":{"inputTokens":8,"outputTokens":2}});
+            let conflict = record_usage(&frame, &mut parsed)
+                .expect("retain the active turn's regressing cursor as evidence");
+            assert!(conflict.validate().is_err());
+            assert_eq!(conflict.coverage()["tokens"], "invalid");
+            assert_eq!(
+                serde_json::to_value(&conflict).unwrap()["usage_provenance"]["invalid_fields"],
+                json!([{"field":"cumulative_total_tokens","reason":"conflicting_observation"}])
+            );
+            assert_eq!(parsed.last_usage_total, Some(12));
+            assert_eq!(parsed.last_usage_report.as_ref(), Some(&first));
+            assert_eq!(parsed.usage.input_tokens, Some(10));
+            assert_eq!(parsed.usage.output_tokens, Some(2));
+            assert!(record_usage(&first_frame, &mut parsed).is_none());
+        }
+        let next = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":20},"last":{"inputTokens":6,"outputTokens":2}
+        }});
+        assert!(record_usage(&next, &mut parsed).unwrap().validate().is_ok());
+        assert!(record_usage(&next, &mut parsed).is_none());
+        assert_eq!(parsed.last_usage_total, Some(20));
         assert_eq!(parsed.usage.input_tokens, Some(16));
         assert_eq!(parsed.usage.output_tokens, Some(4));
         assert_eq!(parsed.usage.coverage()["tokens"], "invalid");

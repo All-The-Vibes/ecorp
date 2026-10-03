@@ -118,3 +118,10 @@ versions remove trailing spaces/tabs and final blank lines, as listed in
 `evidence.json`; original logs, reference drivers, rejected copies and the failed
 check remain preserved in the durable records. No outcomes, quantities or
 screenshot bytes changed.
+
+A later review found that both retained startup logs still contained an initdb
+operator name and Windows caret-escaped local paths. Only published lines 23
+and 44 were normalized; `evidence.json` records the original, previous published,
+and corrected hashes and exact transformations. The original logs and historical
+validation outcomes remain retained. This correction does not upgrade historical
+acceptance to the subsequently reviewed implementation.

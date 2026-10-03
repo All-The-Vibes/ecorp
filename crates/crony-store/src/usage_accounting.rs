@@ -160,6 +160,15 @@ pub(super) async fn admit_usage_tx(
     }
     payload["usage_validation"] =
         json!({"policy":"native_usage_v1","disposition":disposition,"reason":reason});
+    // Call identity describes the admitted, persisted session scope, not merely
+    // an identifier supplied by the runner. Keep quantity coverage and original
+    // provenance separate from this structural admission and from hard controls.
+    payload["usage_coverage"]["call_identity"] =
+        if matches!(disposition, "accepted" | "duplicate") && !identity_keys.is_empty() {
+            json!("reported")
+        } else {
+            json!("unavailable")
+        };
     if matches!(disposition, "accepted" | "duplicate") {
         payload["usage_identity_keys"] = json!(identity_keys);
         payload["usage_origin_event_id"] = json!(origin_event_id);
