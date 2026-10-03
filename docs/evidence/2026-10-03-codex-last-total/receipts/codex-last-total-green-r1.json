@@ -1,0 +1,88 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "comment": 4174776187,
+  "phase": "green",
+  "status": "passed",
+  "wrapper_pid": 14116,
+  "started_at_utc": "2026-10-03T20:59:45.6067553Z",
+  "checks": [
+    {
+      "command": "cargo test --locked --offline -p crony-runner --bin crony-runner usage_last_total_ -- --test-threads=1",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-03T20:59:48.5652533Z",
+      "name": "last-total",
+      "sha256": "51323bc46fe9be6b75423174eec4b6fc8b95930ee5ff499b0df08976a42218c2",
+      "finished_at_utc": "2026-10-03T21:00:28.7442080Z",
+      "counts": {
+        "failed": 0,
+        "passed": 5,
+        "ignored": 0,
+        "filtered": 326
+      },
+      "log": "<current-run-records>\\codex-last-total-green-r1-last-total.log"
+    },
+    {
+      "command": "cargo test --locked --offline -p crony-domain usage::tests -- --test-threads=1",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-03T21:00:28.7516244Z",
+      "name": "domain-usage",
+      "sha256": "28ab5e88debac1207f67a4b26462cf745e5a6c6306feaa133f07c9be1faf69b7",
+      "finished_at_utc": "2026-10-03T21:00:34.9817985Z",
+      "counts": {
+        "failed": 0,
+        "passed": 19,
+        "ignored": 0,
+        "filtered": 25
+      },
+      "log": "<current-run-records>\\codex-last-total-green-r1-domain-usage.log"
+    },
+    {
+      "command": "cargo test --locked --offline -p crony-runner --bin crony-runner usage -- --test-threads=1",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-03T21:00:34.9846752Z",
+      "name": "all-runner-usage",
+      "sha256": "c09a10f4868e963330525f8c0eb116b2cd1ae218a182ee525bbfd36a1ef6b073",
+      "finished_at_utc": "2026-10-03T21:00:44.1745025Z",
+      "counts": {
+        "failed": 0,
+        "passed": 25,
+        "ignored": 0,
+        "filtered": 306
+      },
+      "log": "<current-run-records>\\codex-last-total-green-r1-all-runner-usage.log"
+    }
+  ],
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T20:59:47.983Z",
+    "source": "<candidate-checkout>",
+    "head": "9cbac5bb6fd5892799f1ec668c9cd6955e20ec6c",
+    "tree": "8374dfc972872a54616181b4eded7c6c0976955f",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-domain/src/usage.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/adapter/usage.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md",
+    "source_file_count": 7806,
+    "source_fingerprint": "2f37a7a62a224147a18a20706e735322f27cbd09254cdfb478771eeedac029af",
+    "manifest": "<current-run-records>\\codex-last-total-green-r1-source-before.json",
+    "manifest_sha256": "b9859d60909eedf29cb4e0a4144b329c76229f22ba73a345a8bc2b5af94d8f3b"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T21:00:46.557Z",
+    "source": "<candidate-checkout>",
+    "head": "9cbac5bb6fd5892799f1ec668c9cd6955e20ec6c",
+    "tree": "8374dfc972872a54616181b4eded7c6c0976955f",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-domain/src/usage.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/adapter/usage.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md",
+    "source_file_count": 7806,
+    "source_fingerprint": "2f37a7a62a224147a18a20706e735322f27cbd09254cdfb478771eeedac029af",
+    "manifest": "<current-run-records>\\codex-last-total-green-r1-source-after.json",
+    "manifest_sha256": "4afd06e2497311a4795f645cec7b929bf1ea896176ab3276ed3d454984d6d1a3"
+  },
+  "source_unchanged": true,
+  "reference_manifest": "<current-run-records>\\codex-last-total-green-source-r1.json",
+  "reference_sha256": "25dd11fb949c96f02cb990a7e4c62790416a2fa2292c99edb5199c6c068e9345",
+  "purpose": "Reproduce and correct ignored Codex latest-call totals: retain the native quantity, reject malformed and conflicting values without charging or advancing accepted cursors, preserve exact duplicates and unknown quantities, and validate initial/incremental lower bounds.",
+  "finished_at_utc": "2026-10-03T21:00:47.1272087Z"
+}

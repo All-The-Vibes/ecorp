@@ -166,6 +166,13 @@ pub(super) fn codex(params: &Value) -> UsageReport {
     if !last.is_object() {
         provenance.invalidate("last", InvalidUsageReason::InvalidNumber);
     }
+    provenance.last_total_tokens =
+        count(last, &["totalTokens"], "last_total_tokens", &mut provenance);
+    // Codex 0.159.2 requires this field and adds it to the cumulative total.
+    // Legacy partial observations may omit it; a present null is malformed.
+    if last.get("totalTokens").is_some_and(Value::is_null) {
+        provenance.invalidate("last_total_tokens", InvalidUsageReason::InvalidNumber);
+    }
     provenance.cached_input_tokens = count(
         last,
         &["cachedInputTokens"],

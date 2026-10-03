@@ -78,11 +78,14 @@ new aliases or overwrite a prior quantity. Equal counts never identify a call.
 Within the active Codex turn, a regressing cumulative cursor, a contradictory
 report at the same cursor, and an impossible cumulative increase retain invalid,
 uncharged evidence without changing the accepted cursor. The initial total and
-each accepted increase must cover the known last-call quantity: the largest
-known input/cache subset plus the largest known output/reasoning subset, using
-checked arithmetic. Missing quantities stay unknown; subsets are never added to
-their parents or assumed disjoint. A larger cumulative gap remains valid because
-the thread may include prior or unobserved calls. An exact duplicate at the
+each accepted increase must cover both the reported native `last.totalTokens`
+and the largest known input/cache subset plus the largest known output/reasoning
+subset, using checked arithmetic. The latest-call total is retained as
+`last_total_tokens` for validation and replay comparison, never charged or used
+to supply missing input/output quantities. A malformed present total, including
+null, stays invalid; omission in a legacy partial observation remains unknown.
+Subsets are never added to their parents or assumed disjoint. A larger cumulative
+gap remains valid because the thread may include prior or unobserved calls. An exact duplicate at the
 accepted cursor is suppressed; a later consistent report can still contribute
 its call delta once, while the invalid coverage remains visible.
 Without native IDs, distinct journal frames remain distinct and identity

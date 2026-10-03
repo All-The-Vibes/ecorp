@@ -36,6 +36,10 @@ pub struct UsageProvenance {
     pub provider_session_id: Option<String>,
     pub turn_id: Option<String>,
     pub cumulative_total_tokens: Option<u64>,
+    /// Native latest-call total: consistency evidence, not a charge or a
+    /// replacement for unknown input/output quantities in legacy observations.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_total_tokens: Option<u64>,
     pub cached_input_tokens: Option<u64>,
     pub cache_write_input_tokens: Option<u64>,
     pub reasoning_output_tokens: Option<u64>,
@@ -181,6 +185,7 @@ impl UsageReport {
         }
         for quantity in [
             provenance.cumulative_total_tokens,
+            provenance.last_total_tokens,
             provenance.cached_input_tokens,
             provenance.cache_write_input_tokens,
             provenance.reasoning_output_tokens,
@@ -415,6 +420,40 @@ mod tests {
         assert!(usage.validate().is_err());
         usage.usage_provenance.as_mut().unwrap().nano_aiu = Some(f64::INFINITY);
         assert!(usage.validate().is_err());
+    }
+
+    #[test]
+    fn last_total_is_bounded_replay_evidence_without_inventing_quantities() {
+        let legacy = report(None, Some(0));
+        let legacy_json = serde_json::to_value(&legacy).unwrap();
+        assert!(
+            legacy_json["usage_provenance"]
+                .get("last_total_tokens")
+                .is_none()
+        );
+        let restored: UsageReport = serde_json::from_value(legacy_json).unwrap();
+        assert!(legacy.same_observation(&restored));
+
+        let mut with_total = restored.clone();
+        with_total
+            .usage_provenance
+            .as_mut()
+            .unwrap()
+            .last_total_tokens = Some(i64::MAX as u64);
+        assert!(with_total.validate().is_ok());
+        assert_eq!(with_total.input_tokens, None);
+        assert_eq!(with_total.output_tokens, Some(0));
+        assert_eq!(with_total.coverage()["tokens"], "partial");
+        assert!(!with_total.same_observation(&restored));
+        let round_trip: UsageReport =
+            serde_json::from_value(serde_json::to_value(&with_total).unwrap()).unwrap();
+        assert!(with_total.same_observation(&round_trip));
+        with_total
+            .usage_provenance
+            .as_mut()
+            .unwrap()
+            .last_total_tokens = Some(u64::MAX);
+        assert!(with_total.validate().is_err());
     }
 
     #[test]
