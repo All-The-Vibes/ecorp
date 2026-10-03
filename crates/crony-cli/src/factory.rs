@@ -16,9 +16,9 @@ use anyhow::{Context, Result, anyhow, bail};
 use chrono::{DateTime, Utc};
 use clap::{Args, ValueEnum};
 use crony_domain::{
-    FactoryVerificationRecoveryMode, MAX_TASK_ATTEMPTS, TaskContract, VerificationPolicy,
-    factory_max_task_attempts, strategy_cost_budgets, validate_factory_cost_policy,
-    write_scope_is_valid,
+    ActiveCheckpointPolicy, FactoryVerificationRecoveryMode, MAX_TASK_ATTEMPTS, TaskContract,
+    VerificationPolicy, factory_max_task_attempts, strategy_cost_budgets,
+    validate_factory_cost_policy, write_scope_is_valid,
 };
 use crony_protocol::FactoryVerificationRecoveryContextResponse;
 use reqwest::{Client, Method, StatusCode};
@@ -112,6 +112,11 @@ pub struct FactoryArgs {
 
     #[arg(long, env = "ECORP_FACTORY_VERIFICATION_POLICY_FILE")]
     pub verification_policy_file: Option<PathBuf>,
+
+    /// Opt into draft checkpoints using these zero-based final verifier indices.
+    /// Repeat in increasing order; selected command timeouts total at most 120 seconds.
+    #[arg(long = "checkpoint-check-index")]
+    pub checkpoint_check_indices: Vec<usize>,
 
     #[arg(long)]
     pub issue: Option<i64>,
@@ -610,6 +615,8 @@ pub async fn run(client: &Client, server: &str, mut args: FactoryArgs) -> Result
                     preview_verification_policy.as_ref(),
                     preview_max_task_attempts,
                 );
+                ActiveCheckpointPolicy::validate_factory_policy(&policy)
+                    .map_err(anyhow::Error::msg)?;
                 Some(preflight_factory_mission(client, server, &args, policy, mission_body).await?)
             }
         } else {
@@ -771,6 +778,7 @@ pub async fn run(client: &Client, server: &str, mut args: FactoryArgs) -> Result
         verification_policy.as_ref(),
         max_task_attempts,
     );
+    ActiveCheckpointPolicy::validate_factory_policy(&policy).map_err(anyhow::Error::msg)?;
     let preflight = if persisted
         .as_ref()
         .and_then(|item| item.mission_id)
@@ -1558,6 +1566,11 @@ fn new_factory_policy(
     if let Some(max_task_attempts) = args.max_task_attempts {
         policy["max_task_attempts"] = json!(max_task_attempts);
     }
+    if !args.checkpoint_check_indices.is_empty() {
+        policy["active_checkpoint"] = json!(ActiveCheckpointPolicy {
+            check_indices: args.checkpoint_check_indices.clone(),
+        });
+    }
     policy
 }
 
@@ -1855,6 +1868,16 @@ fn resolve_explicit_recovery_verification_policy(
     requested: Option<&VerificationPolicy>,
 ) -> Result<Option<VerificationPolicy>> {
     if let Some(requested) = requested {
+        if let Some(checkpoint) =
+            ActiveCheckpointPolicy::from_factory_policy(&item.policy).map_err(anyhow::Error::msg)?
+        {
+            let previous: VerificationPolicy =
+                serde_json::from_value(item.policy["verification_policy"].clone())
+                    .context("decode persisted checkpoint verification policy")?;
+            checkpoint
+                .validate_verification_replacement(&previous, requested)
+                .map_err(anyhow::Error::msg)?;
+        }
         return Ok(Some(requested.clone()));
     }
     item.policy
@@ -2010,6 +2033,14 @@ fn resolve_recovery_source_base_commit_from_item(
 
 fn ensure_recovery_selectors_match<'a>(args: &FactoryArgs, policy: &'a Value) -> Result<&'a str> {
     ensure_recovery_connection_matches(args, policy)?;
+    let checkpoint =
+        ActiveCheckpointPolicy::validate_factory_policy(policy).map_err(anyhow::Error::msg)?;
+    if !args.checkpoint_check_indices.is_empty()
+        && checkpoint.as_ref().map(|p| p.check_indices.as_slice())
+            != Some(args.checkpoint_check_indices.as_slice())
+    {
+        bail!("factory recovery cannot add or change its recorded checkpoint check indices");
+    }
     let policy = policy
         .as_object()
         .context("persisted factory policy is not a JSON object")?;
@@ -4965,6 +4996,7 @@ mod tests {
                 lease_seconds: 300,
                 write_scope: vec!["src/**".to_owned()],
                 verification_policy_file: None,
+                checkpoint_check_indices: Vec::new(),
                 issue: Some(113),
                 verification_recovery: Some(VerificationRecoveryModeArg::SourceCorrection),
                 verification_recovery_reason: Some("Correct the reviewed check".to_owned()),
@@ -7344,6 +7376,7 @@ Blocked by #999 outside the section.
             lease_seconds: 30,
             write_scope: vec!["**".to_owned()],
             verification_policy_file: None,
+            checkpoint_check_indices: Vec::new(),
             issue: None,
             verification_recovery: None,
             verification_recovery_reason: None,
@@ -7406,6 +7439,7 @@ Blocked by #999 outside the section.
             lease_seconds: 30,
             write_scope: vec!["**".to_owned()],
             verification_policy_file: None,
+            checkpoint_check_indices: Vec::new(),
             issue: None,
             verification_recovery: None,
             verification_recovery_reason: None,

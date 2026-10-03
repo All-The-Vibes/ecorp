@@ -6,9 +6,11 @@ pub(super) fn observe(
     state: &AppState,
     corp_id: Uuid,
     plan: &TaskGraphPlan,
+    active_checkpoint: bool,
 ) -> FactoryDispatchReadiness {
     for task in &plan.tasks {
-        let requirements = RunnerRequirements::for_planned_task(task, plan);
+        let mut requirements = RunnerRequirements::for_planned_task(task, plan);
+        requirements.active_checkpoint = active_checkpoint;
         if select_runner(state, corp_id, &requirements).is_none() {
             // Diagnostics must not borrow capabilities from another account or an
             // unreconciled connection, even when the native selector rejects it.
@@ -21,7 +23,7 @@ pub(super) fn observe(
                 .collect::<Vec<_>>();
             return FactoryDispatchReadiness::NotReady {
                 reason: format!(
-                    "task {} {}",
+                    "task {} {}{}",
                     task.key,
                     runner_requirement_mismatch(
                         &capabilities,
@@ -31,7 +33,12 @@ pub(super) fn observe(
                         requirements.source_repository,
                         requirements.source_base_ref,
                         requirements.source_base_commit,
-                    )
+                    ),
+                    if active_checkpoint {
+                        "; active checkpoints also require active-source-checkpoint-v1"
+                    } else {
+                        ""
+                    }
                 ),
             };
         }

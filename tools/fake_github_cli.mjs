@@ -71,6 +71,18 @@ function assertPublisherCredential() {
   }
 }
 
+function requestedPullRequest() {
+  assertPublisherCredential()
+  if (option('--repo') !== state.repository) fail('unknown pull request repository')
+  // The publisher always uses a known positive PR number. Do not silently choose
+  // the current branch or a different PR when a recorded identity disappeared.
+  const number = Number(args[2])
+  if (!Number.isSafeInteger(number) || number <= 0) fail('invalid pull request number')
+  const pullRequest = (state.pull_requests ?? []).find((candidate) => candidate.number === number)
+  if (!pullRequest) fail('unknown pull request number')
+  return pullRequest
+}
+
 function observeProjectItemRead() {
   state.project_item_read_calls = (state.project_item_read_calls ?? 0) + 1
   // Legacy fixture name: this hook schedules a source change at an item-read
@@ -473,7 +485,7 @@ if (args[0] === 'api' && args.slice(1).includes('graphql')) {
     id: `PR_FAKE_${number}`,
     url: `https://github.com/${canonicalRepository}/pull/${number}`,
     state: 'OPEN',
-    isDraft: false,
+    isDraft: args.includes('--draft'),
     headRefName: head,
     baseRefName: base,
     headRefOid: state.branch_heads?.[head],
@@ -505,6 +517,52 @@ if (args[0] === 'api' && args.slice(1).includes('graphql')) {
       (state.pr_create_external_success_failures ?? 0) + 1
     await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`)
     fail('injected local failure after remote pull request creation')
+  }
+  console.log(pullRequest.url)
+} else if (args[0] === 'pr' && args[1] === 'view') {
+  const pullRequest = requestedPullRequest()
+  state.pr_view_calls = (state.pr_view_calls ?? 0) + 1
+  const mutation = state.pr_view_mutation
+  if (mutation && mutation.call === state.pr_view_calls) {
+    if (mutation.number !== pullRequest.number) fail('scheduled pr-view mutation references another PR')
+    Object.assign(pullRequest, mutation.patch ?? {})
+    state.pr_view_mutations_applied = (state.pr_view_mutations_applied ?? 0) + 1
+    state.pr_view_mutation = null
+  }
+  await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`)
+  console.log(JSON.stringify(pullRequest))
+} else if (args[0] === 'pr' && args[1] === 'edit') {
+  const pullRequest = requestedPullRequest()
+  const title = option('--title')
+  const bodyFile = option('--body-file')
+  if (title === undefined || !bodyFile) fail('fake PR edit requires title and body-file')
+  const body = await readFile(bodyFile, 'utf8')
+  pullRequest.title = title
+  pullRequest.body = body
+  state.pr_edit_calls = (state.pr_edit_calls ?? 0) + 1
+  state.effect_log = [...(state.effect_log ?? []), { kind: 'pull_request_edited', number: pullRequest.number }]
+  await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`)
+  if (state.fail_pr_edit_after_success) {
+    state.fail_pr_edit_after_success = false
+    state.pr_edit_external_success_failures = (state.pr_edit_external_success_failures ?? 0) + 1
+    await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`)
+    fail('injected local failure after remote pull request edit')
+  }
+  console.log(pullRequest.url)
+} else if (args[0] === 'pr' && args[1] === 'ready') {
+  const pullRequest = requestedPullRequest()
+  if (pullRequest.state !== 'OPEN') fail('cannot change draft state of a non-open pull request')
+  pullRequest.isDraft = args.includes('--undo')
+  state.pr_ready_calls = (state.pr_ready_calls ?? 0) + 1
+  state.effect_log = [...(state.effect_log ?? []), {
+    kind: 'pull_request_draft_state', number: pullRequest.number, is_draft: pullRequest.isDraft,
+  }]
+  await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`)
+  if (state.fail_pr_ready_after_success) {
+    state.fail_pr_ready_after_success = false
+    state.pr_ready_external_success_failures = (state.pr_ready_external_success_failures ?? 0) + 1
+    await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`)
+    fail('injected local failure after remote pull request draft-state change')
   }
   console.log(pullRequest.url)
 } else {

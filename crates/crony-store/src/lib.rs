@@ -20,7 +20,9 @@ use sha2::{Digest, Sha256};
 use sqlx::{Acquire, PgPool, Postgres, Row, Transaction, postgres::PgPoolOptions};
 use uuid::Uuid;
 
+mod active_checkpoint;
 mod agent_pinning;
+pub use active_checkpoint::{ActiveCheckpointMutation, ActiveCheckpointMutationOutcome};
 mod aggregate_breaker;
 use crate::state_audit::native_policy;
 
@@ -7411,6 +7413,7 @@ impl PgStore {
         let expected_role = match input.event_type.as_str() {
             "run.artifact_upload" => "provider_evidence",
             "run.deliverable_upload" => "source_deliverable",
+            "run.checkpoint_upload" => "source_checkpoint",
             _ => return Err(anyhow!("unsupported artifact upload event")),
         };
         if artifact.artifact_role != expected_role
@@ -7469,6 +7472,9 @@ impl PgStore {
             .await?;
         if artifact.task_id != task_id {
             return Err(anyhow!("artifact task does not match the active run"));
+        }
+        if artifact.artifact_role == "source_checkpoint" {
+            active_checkpoint::validate_artifact_intake_tx(&mut tx, &artifact).await?;
         }
 
         let existing_by_id = sqlx::query(
@@ -7640,6 +7646,9 @@ impl PgStore {
         let room_id: Uuid = row.get("room_id");
         let breaker_stage: String = row.get("breaker_stage");
         let artifact = map_stored_artifact(row);
+        if artifact.artifact_role == "source_checkpoint" {
+            active_checkpoint::validate_artifact_intake_tx(&mut tx, &artifact).await?;
+        }
         let authority = if retained_upload {
             retained_provider_receipt::validate_artifact_tx(&mut tx, &artifact, false).await
         } else if artifact.metadata.get("retained_provider_receipt").is_some() {
@@ -7671,6 +7680,8 @@ impl PgStore {
         .await?;
         let ready_event_type = if artifact.artifact_role == "source_deliverable" {
             "run.deliverable"
+        } else if artifact.artifact_role == "source_checkpoint" {
+            "run.checkpoint_stored"
         } else {
             "run.artifact"
         };
@@ -7784,7 +7795,7 @@ impl PgStore {
             .bind(artifact.run_id)
             .execute(&mut *tx)
             .await?;
-        } else {
+        } else if artifact.artifact_role == "provider_evidence" {
             sqlx::query(
                 r#"
                 UPDATE runs
@@ -7807,7 +7818,7 @@ impl PgStore {
             .execute(&mut *tx)
             .await?;
         }
-        if run_active {
+        if run_active && artifact.artifact_role != "source_checkpoint" {
             sqlx::query("UPDATE runs SET status = 'verifying', updated_at = now() WHERE id = $1")
                 .bind(artifact.run_id)
                 .execute(&mut *tx)
@@ -12506,6 +12517,8 @@ fn normalize_factory_policy(policy: Value) -> Result<Value> {
         _ => return Err(anyhow!("factory policy snapshot must be a JSON object")),
     };
     let connection_id = factory_workspace_connection_id(&policy).map_err(anyhow::Error::msg)?;
+    crony_domain::ActiveCheckpointPolicy::validate_factory_policy(&policy)
+        .map_err(anyhow::Error::msg)?;
     let claim_authority_id =
         crony_domain::factory_claim_authority_id(&policy).map_err(anyhow::Error::msg)?;
     crony_domain::factory_max_task_attempts(&policy).map_err(anyhow::Error::msg)?;
@@ -13583,6 +13596,16 @@ fn ensure_factory_recovery_policy(
     }
     contract_revision::validate_mission_verification_policy(verification_policy)
         .context("factory recovery verification policy is invalid")?;
+    if let Some(checkpoint) =
+        crony_domain::ActiveCheckpointPolicy::validate_factory_policy(&work_item.policy)
+            .map_err(anyhow::Error::msg)?
+    {
+        let original: VerificationPolicy =
+            serde_json::from_value(work_item.policy["verification_policy"].clone())?;
+        checkpoint
+            .validate_verification_replacement(&original, verification_policy)
+            .map_err(anyhow::Error::msg)?;
+    }
     Ok(())
 }
 
