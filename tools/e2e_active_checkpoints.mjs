@@ -65,9 +65,44 @@ export async function validateCheckpointPaths(setup) {
   return output
 }
 export function checkpointChildEnvironment(inherited) {
-  return Object.fromEntries(Object.entries(inherited).filter(([key]) =>
-    !/^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|AWS_|GIT_)/iu.test(key) &&
-    !/(SECRET|TOKEN|PASSWORD|API_KEY)/iu.test(key) && !['NODE_OPTIONS', 'DATABASE_URL'].includes(key)))
+  const names = new Map([['PATH', 'PATH'], ['PATHEXT', 'PATHEXT'], ['SYSTEMROOT', 'SystemRoot'],
+    ['SYSTEMDRIVE', 'SystemDrive'], ['WINDIR', 'WINDIR'], ['COMSPEC', 'ComSpec']])
+  const environment = {}
+  for (const [key, value] of Object.entries(inherited)) {
+    const name = names.get(key.toUpperCase())
+    if (!name) continue
+    assert.ok(!Object.hasOwn(environment, name), 'Ambiguous environment variable casing')
+    assert.equal(typeof value, 'string', 'Executable lookup and OS variables must be strings')
+    environment[name] = value
+  }
+  return environment
+}
+export async function checkpointFixtureEnvironment(inherited, directory) {
+  const environment = checkpointChildEnvironment(inherited)
+  assert.ok(path.isAbsolute(directory), 'An absolute owned environment directory is required')
+  const parent = await canonicalDirectory(path.dirname(directory))
+  const root = path.resolve(directory)
+  assert.equal(path.dirname(root), parent)
+  // No recursive mkdir: an existing directory, file or link must never be adopted.
+  await mkdir(root, { mode: 0o700 })
+  await canonicalDirectory(root)
+  for (const name of ['home', 'config', 'cache', 'data', 'state', 'runtime', 'tmp']) {
+    await mkdir(path.join(root, name), { mode: 0o700 })
+  }
+  // Windows native known-folder lookup expands USERPROFILE, not APPDATA overrides.
+  const appData = path.join(root, 'home', 'AppData')
+  await mkdir(appData, { mode: 0o700 })
+  for (const name of ['Roaming', 'Local']) await mkdir(path.join(appData, name), { mode: 0o700 })
+  const globalConfig = path.join(root, 'empty-gitconfig')
+  await writeFile(globalConfig, '', { flag: 'wx', mode: 0o600 })
+  return { ...environment, HOME: path.join(root, 'home'), USERPROFILE: path.join(root, 'home'),
+    APPDATA: path.join(appData, 'Roaming'), LOCALAPPDATA: path.join(appData, 'Local'),
+    XDG_CONFIG_HOME: path.join(root, 'config'), XDG_CACHE_HOME: path.join(root, 'cache'),
+    XDG_DATA_HOME: path.join(root, 'data'), XDG_STATE_HOME: path.join(root, 'state'),
+    XDG_RUNTIME_DIR: path.join(root, 'runtime'), TEMP: path.join(root, 'tmp'),
+    TMP: path.join(root, 'tmp'), TMPDIR: path.join(root, 'tmp'),
+    GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: globalConfig,
+    GIT_TERMINAL_PROMPT: '0', GIT_ALLOW_PROTOCOL: 'file' }
 }
 
 export async function runCheckpointAcceptance(setupPath, optIn) {
@@ -87,11 +122,7 @@ export async function runCheckpointAcceptance(setupPath, optIn) {
     try { fn(); report.checks.push({ name, passed: true, ...details }) }
     catch (error) { report.checks.push({ name, passed: false, error: scrub(error.message) }); throw error }
   }
-  const baseEnvironment = checkpointChildEnvironment(process.env)
-  const globalConfig = path.join(setup.qa_root, 'credentials', 'empty-gitconfig')
-  await writeFile(globalConfig, '', { flag: 'wx' })
-  Object.assign(baseEnvironment, { GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: globalConfig,
-    GIT_TERMINAL_PROMPT: '0', GIT_ALLOW_PROTOCOL: 'file' })
+  const baseEnvironment = await checkpointFixtureEnvironment(process.env, path.join(setup.qa_root, 'checkpoint-environment'))
   const statePath = path.join(output, 'fake-github.json'), remotePath = path.join(setup.qa_root, 'remote.git')
   const fakeGithub = path.join(setup.repository, 'tools', 'fake_github_cli.mjs')
   const binary = path.join(setup.repository, 'target', 'debug', `crony-cli${process.platform === 'win32' ? '.exe' : ''}`)
@@ -297,7 +328,7 @@ export async function runCheckpointAcceptance(setupPath, optIn) {
     publisherEnvironment = { ...environment, GH_TOKEN: syntheticToken, ECORP_FAKE_GITHUB_EXPECT_TOKEN: syntheticToken,
       ECORP_PUBLICATION_TEST_REMOTE_URL: remotePath }
     const { chromium } = createRequire(import.meta.url)(process.env.CRONY_PLAYWRIGHT_MODULE || 'playwright')
-    browser = await chromium.launch({ channel: 'msedge', headless: true })
+    browser = await chromium.launch({ channel: 'msedge', headless: true, env: baseEnvironment })
     const browserContext = await browser.newContext({ viewport: { width: 1440, height: 1000 }, timezoneId: 'UTC',
       reducedMotion: 'reduce', serviceWorkers: 'block' })
     await browserContext.route('**/*', async route => {

@@ -71,6 +71,20 @@ runner and CLI, and a real Edge browser. The supervisor must bind binary hashes 
 tested physical source, verify native process ownership and stop only its owned services.
 Never reset an existing database or reuse a retained fixture directory.
 
+The driver passes command and browser children only explicit executable-lookup and
+required OS variables, plus its synthetic fixture settings. Home, configuration and
+temporary paths point to freshly created empty directories under the owned QA root;
+SSH agent sockets, tool credentials, caller configuration and interpreter injection
+variables are not inherited. Native Git uses an empty global config, disables system
+config and prompting, and permits only the local fixture transport. Existing or aliased
+environment directories are rejected and preserved. Windows application-data paths use
+the native `USERPROFILE/AppData/Local` and `Roaming` layout so native lookup agrees with
+the explicit environment. The supervisor must likewise give
+the driver and native services explicit environments and owned home/configuration paths.
+This boundary prevents ambient environment delivery; it does not prevent same-user
+processes from reading other files or using operating-system credential services. The
+Windows token still identifies its original registered profile.
+
 The driver uses the existing deterministic `fake-process` adapter, a local bare Git
 remote and fake GitHub. It exercises branch-push and draft-create crashes, natural
 lease expiry, idempotent restart, pending/passed/failed gates, final draft adoption and

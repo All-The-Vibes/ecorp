@@ -3514,7 +3514,10 @@ for (const consumer of ['published', 'progress-published', 'deploy', 'post-activ
       if (consumer === 'progress-published') run(dir, 'progress-rubric', progressBinding(claim, snapshot))
       else bindRubric(dir, snapshot)
       input = progressInput(claim, snapshot)
-      if (consumer === 'published') input.reviewers = reviewers({ ...claim, head: snapshot.head })
+      if (consumer === 'published') {
+        input.reviewers = reviewers({ ...claim, head: snapshot.head })
+        input.push.pushedAt = new Date().toISOString()
+      }
     } else if (consumer === 'deploy') input = deploymentInput(dir)
     else {
       bindRubric(dir, snapshot)
