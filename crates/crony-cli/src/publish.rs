@@ -21,6 +21,8 @@ use crate::factory::{
 };
 
 pub mod active_checkpoint;
+mod evidence_comment;
+mod readiness;
 
 #[derive(Debug, Args)]
 pub struct FactoryPublishArgs {
@@ -170,6 +172,26 @@ struct PullRequestRepositoryOwner {
     login: String,
 }
 
+impl From<&PullRequestView> for crony_domain::PublicationPullRequestSnapshot {
+    fn from(pr: &PullRequestView) -> Self {
+        Self {
+            number: pr.number,
+            node_id: pr.id.clone(),
+            url: pr.url.clone(),
+            state: pr.state.clone(),
+            draft: pr.is_draft,
+            title: pr.title.clone(),
+            body: pr.body.clone(),
+            head_ref: pr.head_ref_name.clone(),
+            base_ref: pr.base_ref_name.clone(),
+            head_sha: pr.head_ref_oid.clone(),
+            head_repository_owner: pr.head_repository_owner.login.clone(),
+            is_cross_repository: pr.is_cross_repository,
+            auto_merge: pr.auto_merge_request.is_some(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct ResolvedRemoteBase {
     commit: String,
@@ -290,8 +312,29 @@ impl Drop for TemporaryPublisherWorkspace {
 }
 
 pub async fn run(client: &Client, server: &str, args: FactoryPublishArgs) -> Result<Value> {
+    let mut context = publication_context(client, server, &args).await?;
+    if !args.dry_run
+        && let Some(value) = context.get("publication").filter(|value| !value.is_null())
+    {
+        let existing: PullRequestPublication = serde_json::from_value(value.clone())
+            .context("decode retained publication before recovery")?;
+        if readiness::journal(&existing)?.is_some_and(|intent| intent.pending()) {
+            readiness::recover_pending(client, server, &args, None).await?;
+            context = publication_context(client, server, &args).await?;
+        }
+    }
+    // Forward-only input (including a vanished body file) must not prevent
+    // repair of an already dispatched native ready operation.
     validate_args(&args)?;
-    let context = server_json(
+    run_with_context(client, server, args, context).await
+}
+
+async fn publication_context(
+    client: &Client,
+    server: &str,
+    args: &FactoryPublishArgs,
+) -> Result<Value> {
+    server_json(
         client,
         Method::GET,
         format!(
@@ -300,7 +343,15 @@ pub async fn run(client: &Client, server: &str, args: FactoryPublishArgs) -> Res
         ),
         None,
     )
-    .await?;
+    .await
+}
+
+async fn run_with_context(
+    client: &Client,
+    server: &str,
+    args: FactoryPublishArgs,
+    context: Value,
+) -> Result<Value> {
     let publication_is_complete = published_publication_exists(&context, args.work_item_id);
     let plan = publication_plan(&args, &context)?;
     validate_publication_branch(&plan.branch)?;
@@ -345,6 +396,12 @@ pub async fn run(client: &Client, server: &str, args: FactoryPublishArgs) -> Res
             Some(&response.publication),
         )),
         Err(error) => {
+            let recovery =
+                readiness::recover_pending(client, server, &args, Some(publisher_token)).await;
+            if let Ok(latest) = get_publication(client, server, &args).await {
+                // This authenticated readback never returns a forward token.
+                response.publication = latest.publication;
+            }
             let detail = sanitize_failure_detail(&format!("{error:#}"));
             let _ = record_failure(
                 client,
@@ -356,6 +413,11 @@ pub async fn run(client: &Client, server: &str, args: FactoryPublishArgs) -> Res
                 &detail,
             )
             .await;
+            if let Err(recovery) = recovery {
+                return Err(error).context(format!(
+                    "Draft reconciliation remains incomplete: {recovery:#}"
+                ));
+            }
             Err(error)
         }
     }
@@ -604,12 +666,11 @@ async fn execute_publication(
         .await?;
         test_crash("after_pull_request_checkpoint");
     } else {
-        let pull_request = find_pull_request(args, plan, &resolved_base.pull_request_base_ref)?
-            .context("persisted publication pull request no longer exists")?;
-        ensure_remote_pull_request_matches(
-            &pull_request,
+        revalidate_durable_pull_request(
+            args,
             plan,
             &resolved_base.pull_request_base_ref,
+            &response.publication,
         )?;
     }
 
@@ -1461,6 +1522,18 @@ fn revalidate_durable_pull_request(
     pull_request_base_ref: &str,
     publication: &PullRequestPublication,
 ) -> Result<()> {
+    if readiness::journal(publication)?.is_some() {
+        let number = publication
+            .pull_request_number
+            .context("durable PR number is missing")?;
+        let remote = active_checkpoint::read_repository_pull_request(
+            &args.github_cli,
+            &plan.target_repository,
+            number,
+        )?;
+        readiness::validate_final(args, publication, &remote)?;
+        return ensure_pull_request_matches_publication(&remote, publication);
+    }
     let pull_request = find_pull_request(args, plan, pull_request_base_ref)?
         .context("persisted publication pull request no longer matches its durable identity")?;
     ensure_remote_pull_request_matches(&pull_request, plan, pull_request_base_ref)?;

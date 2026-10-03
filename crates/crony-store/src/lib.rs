@@ -399,6 +399,24 @@ pub struct RenewPullRequestPublicationInput {
 }
 
 #[derive(Debug, Clone)]
+pub struct PublicationReadinessInput {
+    pub corp_id: Uuid,
+    pub publication_id: Uuid,
+    pub publisher_id: String,
+    pub publisher_credential_hash: String,
+    pub request: crony_domain::PublicationReadinessRequest,
+}
+
+#[derive(Debug, Clone)]
+pub struct PublicationReadinessOutcome {
+    pub publication: PullRequestPublication,
+    pub recovery_token: Option<Uuid>,
+    pub events: Vec<DomainEvent>,
+    pub replayed: bool,
+    pub busy: bool,
+}
+
+#[derive(Debug, Clone)]
 pub enum PullRequestPublicationCheckpointInput {
     BranchPushed {
         commit_sha: String,

@@ -1,5 +1,7 @@
 use super::*;
 
+mod readiness;
+
 const PUBLICATION_SELECT: &str = r#"
     SELECT publication.id, publication.corp_id, publication.factory_work_item_id,
            publication.mission_id, publication.source_deliverable_id,
@@ -313,6 +315,7 @@ impl PgStore {
             ensure_publication_matches_start(&publication, &normalized)?;
             assert_publication_room_membership_tx(&mut tx, &publication, normalized.actor_id)
                 .await?;
+            readiness::ensure_settled(&publication)?;
             if publication.state == PullRequestPublicationState::Published {
                 record_publication_operation_tx(
                     &mut tx,
@@ -736,6 +739,7 @@ impl PgStore {
                 publication_by_id_tx(&mut tx, input.corp_id, input.publication_id, true)
                     .await?
                     .context("idempotent publication renewal references a missing publication")?;
+            readiness::ensure_settled(&publication)?;
             revalidate_publication_authority_tx(&mut tx, &publication, input.actor_id).await?;
             let (publication, current_token) =
                 publication_by_id_tx(&mut tx, input.corp_id, input.publication_id, false)
@@ -769,6 +773,7 @@ impl PgStore {
             },
         )
         .await?;
+        readiness::ensure_settled(&current)?;
         revalidate_publication_authority_tx(&mut tx, &current, input.actor_id).await?;
         let row = sqlx::query(&format!(
             r#"
@@ -933,6 +938,13 @@ impl PgStore {
         )
         .await?;
 
+        if !matches!(
+            &checkpoint,
+            PullRequestPublicationCheckpointInput::PullRequestCreated { .. }
+                | PullRequestPublicationCheckpointInput::Failed { .. }
+        ) {
+            readiness::ensure_settled(&current)?;
+        }
         let current = if matches!(
             &checkpoint,
             PullRequestPublicationCheckpointInput::Failed { .. }
@@ -1087,6 +1099,24 @@ impl PgStore {
                     is_cross_repository,
                     auto_merge_enabled,
                 )?;
+                let accepted_readiness = readiness::accept(
+                    &current,
+                    &crony_domain::PublicationPullRequestSnapshot {
+                        number,
+                        node_id: node_id.clone(),
+                        url: url.clone(),
+                        state: state.clone(),
+                        draft,
+                        title: title.clone(),
+                        body: body.clone(),
+                        head_ref: head_ref.clone(),
+                        base_ref: base_ref.clone(),
+                        head_sha: head_sha.clone(),
+                        head_repository_owner: head_repository_owner.clone(),
+                        is_cross_repository,
+                        auto_merge: auto_merge_enabled,
+                    },
+                )?;
                 if publication_state_rank(current.state)
                     >= publication_state_rank(PullRequestPublicationState::PullRequestCreated)
                 {
@@ -1124,6 +1154,7 @@ impl PgStore {
                         ));
                     }
                     let mut provenance = current.provenance.clone();
+                    readiness::record_accepted(&mut provenance, accepted_readiness)?;
                     provenance["pull_request"] = json!({
                         "number": number,
                         "node_id": node_id,
@@ -1555,6 +1586,17 @@ fn normalize_publication_body(value: &str) -> Result<String> {
         return Err(anyhow!("pull request body cannot contain NUL bytes"));
     }
     Ok(value.to_owned())
+}
+
+fn validate_observed_publication_text(title: &str, body: &str) -> Result<()> {
+    normalize_factory_text(title, "pull request title", 256)?;
+    normalize_publication_body(body)?;
+    if title.len() > 256 || body.len() > 65_536 {
+        return Err(anyhow!(
+            "observed pull request text exceeds publication bounds"
+        ));
+    }
+    Ok(())
 }
 
 fn validate_publication_lease_seconds(value: i64) -> Result<i64> {
@@ -2404,8 +2446,10 @@ fn normalize_checkpoint(
             let url = normalize_factory_text(&url, "pull request URL", 500)?;
             let state = normalize_factory_identifier(&state, "pull request state", 40)?
                 .to_ascii_uppercase();
-            let title = normalize_factory_text(&title, "pull request title", 256)?;
-            let body = normalize_publication_body(&body)?;
+            // These are observations of shared remote text. Validate their
+            // bounds but retain the exact bytes frozen by a readiness intent.
+            // Normalizing whitespace here would hide a concurrent remote edit.
+            validate_observed_publication_text(&title, &body)?;
             let head_ref = normalize_factory_identifier(&head_ref, "pull request head ref", 500)?;
             let base_ref = normalize_factory_identifier(&base_ref, "pull request base ref", 500)?;
             validate_factory_base_ref(&base_ref)?;
@@ -2524,7 +2568,12 @@ fn validate_pull_request_identity(
             "factory publication requires an open pull request, not {state}"
         ));
     }
-    if title != publication.title || body != publication.body {
+    let readiness = readiness::journal(publication)?;
+    let (expected_title, expected_body) = readiness
+        .as_ref()
+        .map(|journal| (&journal.pull_request.title, &journal.pull_request.body))
+        .unwrap_or((&publication.title, &publication.body));
+    if title != expected_title || body != expected_body {
         return Err(anyhow!(
             "pull request title or body does not match the authorized publication content"
         ));
@@ -2809,6 +2858,9 @@ fn replayable_publication_token(
     operation: &PublicationOperation,
     now: chrono::DateTime<Utc>,
 ) -> Option<Uuid> {
+    // Replays are readbacks while an unaccepted native ready may still execute.
+    // A compensation capability must never become forward effect authority.
+    readiness::ensure_settled(publication).ok()?;
     let operation_token = operation.publisher_token?;
     (publication.state != PullRequestPublicationState::Published
         && publication.version >= operation.resulting_version

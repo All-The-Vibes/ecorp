@@ -718,6 +718,10 @@ async fn run_server() -> anyhow::Result<()> {
             post(record_pull_request_publication_checkpoint),
         )
         .route(
+            "/api/corps/{corp_id}/factory/publications/{publication_id}/readiness",
+            post(mutate_publication_readiness),
+        )
+        .route(
             "/api/corps/{corp_id}/rooms/{room_id}/messages",
             post(create_room_message),
         )
@@ -4702,6 +4706,56 @@ async fn renew_pull_request_publication(
     Ok(Json(publication_response(outcome)))
 }
 
+fn publication_readiness_permission(
+    action: &crony_domain::PublicationReadinessAction,
+) -> Permission {
+    match action {
+        crony_domain::PublicationReadinessAction::Prepare { .. } => Permission::Publish,
+        // The store restricts acknowledgement and compensation to the original
+        // scoped actor, publisher credential, intent and private capabilities.
+        // Loss of forward publish permission must not prevent draft restoration.
+        _ => Permission::Read,
+    }
+}
+
+async fn mutate_publication_readiness(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path((corp_id, publication_id)): Path<(Uuid, Uuid)>,
+    headers: HeaderMap,
+    Json(mut request): Json<crony_domain::PublicationReadinessRequest>,
+) -> Result<Json<crony_protocol::PublicationReadinessResponse>, ApiError> {
+    request.actor_id = authorize_actor(
+        &state,
+        &principal,
+        corp_id,
+        Some(request.actor_id),
+        publication_readiness_permission(&request.action),
+    )
+    .await?;
+    let publisher = authenticate_publication_publisher(&state, &headers, corp_id).await?;
+    let outcome = state
+        .store
+        .mutate_publication_readiness(crony_store::PublicationReadinessInput {
+            corp_id,
+            publication_id,
+            publisher_id: publisher.publisher_id,
+            publisher_credential_hash: publisher.credential_hash,
+            request,
+        })
+        .await
+        .map_err(map_store_error)?;
+    for event in outcome.events {
+        publish(&state, event);
+    }
+    Ok(Json(crony_protocol::PublicationReadinessResponse {
+        publication: outcome.publication,
+        recovery_token: outcome.recovery_token,
+        replayed: outcome.replayed,
+        busy: outcome.busy,
+    }))
+}
+
 fn publication_checkpoint_permission(checkpoint: &PullRequestPublicationCheckpoint) -> Permission {
     match checkpoint {
         // A demoted actor may close its already-owned attempt, not publish.
@@ -4717,6 +4771,43 @@ fn publication_checkpoint_permission(checkpoint: &PullRequestPublicationCheckpoi
 #[cfg(test)]
 mod publication_checkpoint_permission_tests {
     use super::*;
+
+    #[test]
+    fn readiness_recovery_permissions_do_not_authorize_forward_promotion() {
+        use crony_domain::PublicationReadinessAction;
+        let token = Uuid::new_v4();
+        let draft = json!({"number":72,"node_id":"PR_fixture72",
+            "url":"https://github.com/fixture/source/pull/72","state":"OPEN","draft":true,
+            "title":"Retained title","body":"Retained text","head_ref":"codex/fixture72",
+            "base_ref":"main","head_sha":"a".repeat(40),"head_repository_owner":"fixture",
+            "is_cross_repository":false,"auto_merge":false});
+        let prepare: PublicationReadinessAction = serde_json::from_value(json!({
+            "kind":"prepare","publisher_token":token,"expected_version":1,
+            "pull_request":draft,"evidence_comment":{"id":1,"node_id":"IC_fixture1",
+                "url":"https://github.com/fixture/source/pull/72#issuecomment-1",
+                "author_id":1,"author_login":"fixture","body":"source evidence"}
+        }))
+        .unwrap();
+        assert!(matches!(
+            publication_readiness_permission(&prepare),
+            Permission::Publish
+        ));
+        assert!(!CorpRole::Member.allows(publication_readiness_permission(&prepare)));
+        for action in [
+            json!({"kind":"ready_succeeded","publisher_token":token}),
+            json!({"kind":"recover","publisher_token":null,"expected_version":1,"acquisition_id":Uuid::new_v4()}),
+            json!({"kind":"undo_prepared","recovery_token":token,"expected_version":1,"dispatch_id":Uuid::new_v4()}),
+            json!({"kind":"undo_succeeded","recovery_token":token,"dispatch_id":Uuid::new_v4()}),
+            json!({"kind":"draft_observed","recovery_token":token,"expected_version":1,"pull_request":draft}),
+        ] {
+            let action: PublicationReadinessAction = serde_json::from_value(action).unwrap();
+            assert!(matches!(
+                publication_readiness_permission(&action),
+                Permission::Read
+            ));
+            assert!(CorpRole::Member.allows(publication_readiness_permission(&action)));
+        }
+    }
 
     #[test]
     fn owned_failure_reporting_does_not_grant_effect_permission() {

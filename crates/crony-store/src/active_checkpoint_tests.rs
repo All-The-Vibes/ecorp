@@ -318,6 +318,7 @@ fn draft_action(p: &ActiveCheckpointPublication) -> ActiveCheckpointAction {
         auto_merge_enabled: false,
         title: p.title.clone(),
         body: p.body.clone(),
+        evidence_comment: None,
     }
 }
 
@@ -384,6 +385,115 @@ fn active_checkpoint_draft_proof_rejects_wrong_identity_authority_or_human_edits
     }
     p.previous_pull_request = Some(json!({"number":71,"node_id":"PR_other"}));
     assert!(apply_action(&mut p, &serde_json::from_value(action).unwrap(), &item).is_err());
+}
+
+fn draft_with_comment(p: &ActiveCheckpointPublication, body: String) -> ActiveCheckpointAction {
+    let mut action = draft_action(p);
+    if let ActiveCheckpointAction::DraftPublished {
+        body: observed,
+        evidence_comment,
+        ..
+    } = &mut action
+    {
+        *observed = body;
+        *evidence_comment = Some(Box::new(crony_domain::PublicationEvidenceComment {
+            id: 72001,
+            node_id: "IC_fixture72001".into(),
+            url: "https://github.com/fixture/source/pull/72#issuecomment-72001".into(),
+            author_id: 73,
+            author_login: "fixture-publisher".into(),
+            body: p.evidence_body(),
+        }));
+    }
+    action
+}
+
+#[test]
+fn active_checkpoint_comments_refresh_gates_without_replacing_shared_pr_text() {
+    let item = item();
+    let mut p = publication();
+    p.phase = "branch_pushed".into();
+    p.pull_request_base_ref = Some("main".into());
+    let initial = p.initial_pull_request_body();
+    let action = draft_with_comment(&p, initial.clone());
+    apply_action(&mut p, &action, &item).unwrap();
+    apply_action(&mut p, &project_action(), &item).unwrap();
+    assert!(p.gates_synchronized());
+    let remote_before = p.pull_request.clone().unwrap();
+    p.body.push_str("\nA later verification observation.\n");
+    assert_eq!(p.initial_pull_request_body(), initial);
+    assert!(!p.gates_synchronized());
+    let stale = serde_json::to_value(&p).unwrap();
+    assert!(apply_action(&mut p, &action, &item).is_err());
+    assert_eq!(serde_json::to_value(&p).unwrap(), stale);
+    let refresh = draft_with_comment(&p, initial);
+    apply_action(&mut p, &refresh, &item).unwrap();
+    assert!(p.gates_synchronized());
+    let remote = p.pull_request.as_ref().unwrap();
+    for field in [
+        "number", "node_id", "url", "title", "body", "head_sha", "draft",
+    ] {
+        assert_eq!(remote[field], remote_before[field], "{field}");
+    }
+    assert_ne!(
+        remote["evidence_comment"]["body"],
+        remote_before["evidence_comment"]["body"]
+    );
+}
+
+#[test]
+fn active_checkpoint_creation_text_needs_current_comment_and_cannot_adopt_collaborator_text() {
+    let item = item();
+    let mut p = publication();
+    p.phase = "branch_pushed".into();
+    p.pull_request_base_ref = Some("main".into());
+    let action =
+        serde_json::to_value(draft_with_comment(&p, p.initial_pull_request_body())).unwrap();
+    for (field, value) in [
+        ("evidence_comment", Value::Null),
+        ("body", json!("Unrelated collaborator notes\r\n")),
+        ("title", json!("Unrelated collaborator title")),
+    ] {
+        let mut bad = action.clone();
+        bad[field] = value;
+        let before = serde_json::to_value(&p).unwrap();
+        assert!(
+            apply_action(&mut p, &serde_json::from_value(bad).unwrap(), &item).is_err(),
+            "{field}"
+        );
+        assert_eq!(serde_json::to_value(&p).unwrap(), before);
+    }
+    // A lost-create response can still adopt the stable initial text after the
+    // dynamic gates changed, provided the new exact comment was observed.
+    let initial = p.initial_pull_request_body();
+    p.body
+        .push_str("\nFull validation changed while native create was in flight.\n");
+    let recovered = draft_with_comment(&p, initial);
+    apply_action(&mut p, &recovered, &item).unwrap();
+    apply_action(&mut p, &project_action(), &item).unwrap();
+    assert!(p.gates_synchronized());
+}
+
+#[test]
+fn active_checkpoint_legacy_receipts_keep_their_exact_text_contract() {
+    let item = item();
+    let mut p = publication();
+    p.phase = "branch_pushed".into();
+    p.pull_request_base_ref = Some("main".into());
+    let legacy = draft_action(&p);
+    apply_action(&mut p, &legacy, &item).unwrap();
+    apply_action(&mut p, &project_action(), &item).unwrap();
+    assert!(p.gates_synchronized());
+    p.body.push('\n');
+    assert!(!p.gates_synchronized());
+    let retained_body = p.pull_request.as_ref().unwrap()["body"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let upgraded = draft_with_comment(&p, retained_body.clone());
+    apply_action(&mut p, &upgraded, &item).unwrap();
+    assert_eq!(p.pull_request.as_ref().unwrap()["body"], retained_body);
+    assert!(p.gates_synchronized());
 }
 
 #[test]

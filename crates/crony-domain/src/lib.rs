@@ -17,6 +17,13 @@ pub use planning_cost::{
     validate_factory_cost_policy,
 };
 mod active_checkpoint;
+mod publication_readiness;
+pub use publication_readiness::{
+    PublicationEvidenceComment, PublicationEvidenceKind, PublicationPullRequestSnapshot,
+    PublicationReadiness, PublicationReadinessAction, PublicationReadinessRecovery,
+    PublicationReadinessRequest, PublicationReadinessState, PublicationReadinessUndo,
+    publication_evidence_body,
+};
 mod retained_provider_receipt;
 mod source_verification;
 pub use active_checkpoint::{

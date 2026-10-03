@@ -171,6 +171,18 @@ export async function runCheckpointAcceptance(setupPath, optIn) {
   let browser, page, lastState, currentScenario, phase = 'owned process identity'
   const snapshot = async () => (lastState = await request(api(`/snapshot?actor_id=${setup.demo.alice_actor_id}`)))
   const context = scenario => request(api(`/factory/work-items/${scenario.work_item_id}/active-checkpoint?actor_id=${setup.demo.alice_actor_id}`))
+  const finalPublication = async scenario => {
+    const response = await request(api(`/factory/work-items/${scenario.work_item_id}/publication?actor_id=${setup.demo.alice_actor_id}`))
+    assert.equal(response.publisher_token, null, 'Read-only publication evidence must not disclose a forward token')
+    return response.publication
+  }
+  const remoteFor = (state, scenario) => {
+    const matches = state.pull_requests.filter(pr => pr.headRefName === scenario.branch)
+    assert.equal(matches.length, 1, 'The checkpoint must retain one PR')
+    return matches[0]
+  }
+  const draftEffects = (state, scenario) => state.effect_log.filter(effect =>
+    effect.kind === 'pull_request_draft_state' && effect.number === remoteFor(state, scenario).number)
   const runs = (state, scenario) => {
     const taskIds = new Set(state.snapshot.tasks.filter(task => task.mission_id === scenario.mission_id).map(task => task.id))
     return state.snapshot.runs.filter(run => taskIds.has(run.task_id))
@@ -215,6 +227,18 @@ export async function runCheckpointAcceptance(setupPath, optIn) {
     '--authorization-id', scenario.authorization_id, '--authorization-reason', 'Synthetic fixture review publication; no merge or deployment.',
     '--publisher-id', 'owned-checkpoint-publisher', '--publisher-credential-file', credentialPath,
     '--lease-seconds', '5', '--wait-seconds', '60', '--github-cli', process.execPath]
+  const promote = (scenario, expected = [0], crashAfter) => command(`${scenario.name}-final-publisher`,
+    binary, finalArgs(scenario), { ...publisherEnvironment,
+      ...(crashAfter ? { ECORP_PUBLICATION_TEST_CRASH_AFTER: crashAfter } : {}) }, expected)
+  async function waitForPublicationLease(scenario) {
+    const publication = await finalPublication(scenario)
+    const expiry = Date.parse(publication.publisher_lease_expires_at)
+    assert.ok(Number.isFinite(expiry) && expiry - Date.now() <= 120_000)
+    scenario.natural_lease_expiry = { publication_id: publication.id, expires_at: publication.publisher_lease_expires_at }
+    await save()
+    // Do not rewrite stored clocks to manufacture restart authority.
+    while (Date.now() <= expiry + 400) await delay(Math.min(1000, expiry + 401 - Date.now()))
+  }
   async function launch(issue, name, focusedPass, fullPass, manual) {
     phase = `launch ${name}`
     const scenario = { issue, name, authorization_id: randomUUID(),
@@ -233,6 +257,49 @@ export async function runCheckpointAcceptance(setupPath, optIn) {
     const state = await until('owned active run', snapshot, value => runs(value, scenario).length === 1)
     scenario.run_id = runs(state, scenario)[0].id
     await save(); return scenario
+  }
+  async function completedDraft(issue, name) {
+    const scenario = await launch(issue, name, true, true, false)
+    const stored = await until('signed source checkpoint', () => context(scenario), value => value.artifacts.length === 1)
+    scenario.artifact = stored.artifacts[0]
+    scenario.commit = scenario.artifact.metadata.head_commit
+    scenario.branch = `${stored.work_item.policy.publication.branch_prefix}issue-${scenario.issue}-${scenario.work_item_id.slice(0, 8)}`
+    const fake = await readFake(); fake.branch_heads[scenario.branch] = scenario.commit; await writeFake(fake)
+    await publish(scenario)
+    await until('persisted completed verification', snapshot, state => runs(state, scenario)[0]?.status === 'completed')
+    await command(`${name}-factory-refresh`, binary, factoryArgs(scenario), environment)
+    await publish(scenario)
+    const observed = await context(scenario), remote = await readFake()
+    scenario.initial_pr = structuredClone(remoteFor(remote, scenario))
+    check(`${name}: completed verification alone retains the source-bound draft`, () => {
+      assert.equal(observed.publication.phase, 'project_synchronized')
+      assert.equal(scenario.initial_pr.isDraft, true)
+      assert.equal(scenario.initial_pr.headRefOid, scenario.commit)
+      assert.equal(remote.items.find(item => item.content.number === issue).status, 'In Progress')
+      assert.ok(observed.publication.pull_request.evidence_comment)
+    })
+    assert.equal(await git(['--git-dir', remotePath, 'rev-list', '--count', `${setup.source_commit}..refs/heads/${scenario.branch}`]), '1')
+    await showMission(scenario); await screenshot(`${name}-verified-draft`); await save()
+    return scenario
+  }
+  async function assertUnacceptedDraft(scenario, expectedState, expectedAcknowledgement, expectedUndo) {
+    const publication = await finalPublication(scenario), fake = await readFake(), remote = remoteFor(fake, scenario)
+    const journal = publication.provenance.active_checkpoint_readiness
+    scenario.readiness_observations ??= []
+    scenario.readiness_observations.push(structuredClone(publication))
+    check(`${scenario.name}: observed draft is ${expectedState} with truthful command receipts`, () => {
+      assert.equal(publication.state, 'branch_pushed')
+      assert.equal(journal.state, expectedState)
+      assert.equal(journal.ready_succeeded, expectedAcknowledgement)
+      assert.equal(journal.undo.length, expectedUndo)
+      assert.equal(journal.pull_request.number, scenario.initial_pr.number)
+      assert.equal(journal.pull_request.node_id, scenario.initial_pr.id)
+      assert.equal(remote.isDraft, true)
+      assert.equal(fake.items.find(item => item.content.number === scenario.issue).status, 'In Progress')
+      assert.equal(remote.autoMergeRequest, null)
+      assert.equal(remote.state, 'OPEN')
+    })
+    await save(); return { publication, journal, fake, remote }
   }
   async function checkpointAndCrash(scenario, crashAfter) {
     phase = `${scenario.name}: authentic checkpoint and ${crashAfter}`
@@ -305,7 +372,7 @@ export async function runCheckpointAcceptance(setupPath, optIn) {
     await assert.rejects(lstat(remotePath), { code: 'ENOENT' })
     await git(['clone', '--quiet', '--bare', '--no-hardlinks', setup.source, remotePath])
     assert.equal(await git(['--git-dir', remotePath, 'symbolic-ref', '--short', 'HEAD']), 'main')
-    const issues = [7201, 7202, 7203].map((number, index) => ({ id: `I_ACTIVE_${number}`, number,
+    const issues = Array.from({ length: 9 }, (_, index) => 7201 + index).map((number, index) => ({ id: `I_ACTIVE_${number}`, number,
       title: `Owned active checkpoint scenario ${index + 1}`, state: 'OPEN',
       body: '## Outcome\n\nExercise owned native source checkpoint acceptance. [active-checkpoint-credentials]\n\n## Acceptance criteria\n\n- [ ] Keep a source-bound draft without granting merge authority.\n\n## Dependencies\n\nNo blockers.\n',
       url: `https://github.com/${setup.source_repository}/issues/${number}`,
@@ -354,12 +421,33 @@ export async function runCheckpointAcceptance(setupPath, optIn) {
     await until('persisted manual verification wait', snapshot, state =>
       runs(state, success)[0]?.status === 'waiting_for_approval' &&
       runs(state, success)[0]?.verification_status === 'waiting_for_approval')
+    // Put the real receipt on page two. A different author can copy its entire
+    // payload; that must not replace the authenticated publisher's receipt.
+    const beforeRefresh = await readFake(), firstPr = remoteFor(beforeRefresh, success)
+    success.initial_pr = structuredClone(firstPr)
+    const originalComments = beforeRefresh.pull_request_comments[firstPr.number]
+    assert.ok(originalComments.length > 0)
+    beforeRefresh.pull_request_comments[firstPr.number] = [
+      ...Array.from({ length: 100 }, (_, index) => ({ id: 8_000_000 + index, node_id: `IC_COLLAB_${index}`,
+        html_url: `${firstPr.url}#issuecomment-${8_000_000 + index}`,
+        user: { id: 72002, login: 'fixture-collaborator' },
+        body: index === 0 ? originalComments[0].body : `Retained collaborator note ${index}\r\n` })),
+      ...originalComments,
+    ]
+    beforeRefresh.fail_pr_comment_after_success = true
+    await writeFake(beforeRefresh)
     await publish(success)
     let observed = await context(success), fake = await readFake()
     check('Automated verification refresh preserves the pending manual gate and draft authority', () => {
       assert.match(observed.publication.body, /\| Complete immutable verification policy \| passed \|/u)
       assert.match(observed.publication.body, /\| Persisted manual verification gate \| pending \|/u)
       assert.equal(fake.pull_requests[0].isDraft, true)
+      assert.equal(fake.pr_comment_external_success_failures, 1)
+      assert.equal(observed.publication.pull_request.evidence_comment.author_id, 72001)
+      assert.ok(fake.comment_list_pages.some(page => page.number === firstPr.number && page.page === 2))
+      assert.equal(fake.pr_edit_calls ?? 0, 0)
+      assert.equal(fake.pull_requests[0].title, firstPr.title)
+      assert.equal(fake.pull_requests[0].body, firstPr.body)
     })
     await showMission(success)
     const accepted = page.waitForResponse(response => response.url() === server + api(`/runs/${success.run_id}/verification-decision`) && response.request().method() === 'POST')
@@ -390,6 +478,16 @@ export async function runCheckpointAcceptance(setupPath, optIn) {
     })
     const afterFinal = await publish(success)
     assert.equal(JSON.parse(afterFinal.stdout).status, 'final_publication_owns_branch')
+    const acceptedPublication = await finalPublication(success)
+    const acceptedEffects = draftEffects(await readFake(), success)
+    await promote(success)
+    check('An accepted readiness intent is never compensated by a restarted final publisher', () => {
+      assert.equal(acceptedPublication.provenance.active_checkpoint_readiness.state, 'accepted')
+      assert.equal(acceptedPublication.provenance.active_checkpoint_readiness.ready_succeeded, true)
+      assert.deepEqual(acceptedPublication.provenance.active_checkpoint_readiness.undo, [])
+      assert.equal(acceptedEffects.filter(effect => effect.is_draft === true).length, 0)
+    })
+    assert.deepEqual(draftEffects(await readFake(), success), acceptedEffects)
     assert.equal(await git(['--git-dir', remotePath, 'rev-list', '--count', `${setup.source_commit}..refs/heads/${success.branch}`]), '1')
     await showMission(success); await screenshot('manual-gate-final'); await save()
     const failure = await launch(7202, 'full-failure', true, false, false)
@@ -426,11 +524,142 @@ export async function runCheckpointAcceptance(setupPath, optIn) {
     assert.equal(await git(['-C', focusedRun.workspace_path, 'rev-parse', 'HEAD']), setup.source_commit)
     assert.notEqual(await git(['-C', focusedRun.workspace_path, 'status', '--porcelain']), '')
     await showMission(focused); await screenshot('focused-failure-preserved')
+
+    const editRace = await completedDraft(7204, 'concurrent-comment-edit')
+    phase = 'collaborator text changes during native comment append'
+    fake = await readFake()
+    const collaboratorText = { title: 'Collaborator review title', body: 'Keep these review notes.\r\nRésumé 🚀\n' }
+    fake.pr_comment_mutation = { number: editRace.initial_pr.number, patch: collaboratorText }
+    await writeFake(fake)
+    await promote(editRace, [1])
+    fake = await readFake()
+    const editPublication = await finalPublication(editRace)
+    check('Concurrent comment publication preserves collaborator bytes and cannot promote', () => {
+      assert.equal(remoteFor(fake, editRace).title, collaboratorText.title)
+      assert.equal(remoteFor(fake, editRace).body, collaboratorText.body)
+      assert.equal(remoteFor(fake, editRace).isDraft, true)
+      assert.deepEqual(draftEffects(fake, editRace), [])
+      assert.equal(editPublication.provenance.active_checkpoint_readiness ?? null, null)
+      assert.equal(fake.items.find(item => item.content.number === editRace.issue).status, 'In Progress')
+      assert.equal(fake.pr_edit_calls ?? 0, 0)
+    })
+    // The fixture collaborator explicitly restores their own text so the same
+    // contribution can finish. The product never edits that shared surface.
+    Object.assign(remoteFor(fake, editRace), { title: editRace.initial_pr.title, body: editRace.initial_pr.body })
+    await writeFake(fake)
+    await promote(editRace)
+    assert.equal(remoteFor(await readFake(), editRace).isDraft, false)
+    await showMission(editRace); await screenshot('concurrent-comment-edit-recovered')
+
+    const readyRace = await completedDraft(7205, 'concurrent-ready-change')
+    phase = 'native ready changes source and shared text before its success response'
+    fake = await readFake()
+    const changedReady = { headRefOid: 'b'.repeat(40), title: 'Concurrent ready title', body: 'Retained concurrent body\r\n' }
+    fake.pr_ready_mutation = { number: readyRace.initial_pr.number, patch: changedReady }
+    await writeFake(fake)
+    await promote(readyRace, [1])
+    let recovery = await assertUnacceptedDraft(readyRace, 'compensated', true, 1)
+    check('Successful native ready is durably undone without overwriting changed source or text', () => {
+      for (const [key, value] of Object.entries(changedReady)) assert.equal(recovery.remote[key], value)
+      assert.equal(recovery.journal.undo[0].succeeded, true)
+      assert.deepEqual(draftEffects(recovery.fake, readyRace).map(effect => effect.is_draft), [false, true])
+    })
+    await promote(readyRace, [1])
+    assert.deepEqual(draftEffects(await readFake(), readyRace), draftEffects(recovery.fake, readyRace))
+    await showMission(readyRace); await screenshot('concurrent-ready-change-compensated')
+
+    const crash = await completedDraft(7206, 'acknowledged-ready-crash')
+    phase = 'process crash after durable successful ready acknowledgement'
+    await promote(crash, [86], 'after_checkpoint_ready_remote')
+    let crashedFinal = await finalPublication(crash)
+    check('An acknowledged remote ready is still unaccepted across a publisher crash', () => {
+      assert.equal(crashedFinal.state, 'branch_pushed')
+      assert.equal(crashedFinal.provenance.active_checkpoint_readiness.state, 'prepared')
+      assert.equal(crashedFinal.provenance.active_checkpoint_readiness.ready_succeeded, true)
+    })
+    assert.equal(remoteFor(await readFake(), crash).isDraft, false)
+    await waitForPublicationLease(crash)
+    // A vanished forward-only input must not skip recovery of the old effect.
+    const missingBody = path.join(output, 'absent-forward-body.md')
+    await assert.rejects(lstat(missingBody), { code: 'ENOENT' })
+    const repairedBeforePlan = await command('restart-repairs-before-invalid-input', binary,
+      [...finalArgs(crash), '--body-file', missingBody], publisherEnvironment, [1])
+    assert.match(repairedBeforePlan.stderr, /body file does not exist/u)
+    await assertUnacceptedDraft(crash, 'compensated', true, 1)
+    await promote(crash)
+    fake = await readFake()
+    const repairedPublication = await finalPublication(crash)
+    check('The repaired contribution can finish with its original PR and source', () => {
+      const repairedPr = remoteFor(fake, crash)
+      assert.equal(repairedPr.number, crash.initial_pr.number)
+      assert.equal(repairedPr.id, crash.initial_pr.id)
+      assert.equal(repairedPr.headRefOid, crash.commit)
+      assert.equal(repairedPr.isDraft, false)
+      assert.equal(repairedPublication.provenance.active_checkpoint_readiness.state, 'accepted')
+      assert.equal(fake.items.find(item => item.content.number === crash.issue).status, 'In Review')
+    })
+    await showMission(crash); await screenshot('acknowledged-ready-crash-recovered')
+
+    const delayed = await completedDraft(7207, 'delayed-unknown-ready')
+    phase = 'native failure followed by a delayed GitHub ready effect'
+    fake = await readFake(); fake.defer_next_pr_ready = { undo: false, after_views: 2 }; await writeFake(fake)
+    await promote(delayed, [1])
+    recovery = await assertUnacceptedDraft(delayed, 'recovering', false, 0)
+    assert.ok(recovery.fake.deferred_draft_effect, 'The first draft observation precedes the pending provider effect')
+    await promote(delayed, [1])
+    recovery = await assertUnacceptedDraft(delayed, 'recovering', false, 1)
+    check('A later ready effect is undone, but the unknown original command never grants retry authority', () => {
+      assert.equal(recovery.journal.undo[0].succeeded, true)
+      assert.equal(draftEffects(recovery.fake, delayed).filter(effect => effect.delayed).length, 1)
+      assert.equal(recovery.fake.pr_ready_deferred_calls, 1)
+    })
+    await promote(delayed, [1])
+    assert.deepEqual(draftEffects(await readFake(), delayed), draftEffects(recovery.fake, delayed))
+    await showMission(delayed); await screenshot('delayed-unknown-ready-blocked')
+
+    const unknownUndo = await completedDraft(7208, 'unknown-undo-response')
+    phase = 'native undo succeeds remotely but its success response is lost'
+    fake = await readFake()
+    fake.pr_ready_mutation = { number: unknownUndo.initial_pr.number, patch: { body: 'Keep this changed body.\n' } }
+    fake.fail_pr_undo_after_success = true
+    await writeFake(fake)
+    await promote(unknownUndo, [1])
+    recovery = await assertUnacceptedDraft(unknownUndo, 'recovering', true, 1)
+    check('An observed draft never invents an acknowledgement for a lost undo response', () => {
+      assert.equal(recovery.journal.undo[0].succeeded, false)
+      assert.equal(recovery.remote.body, 'Keep this changed body.\n')
+    })
+    await promote(unknownUndo, [1])
+    assert.deepEqual(draftEffects(await readFake(), unknownUndo), draftEffects(recovery.fake, unknownUndo))
+    await showMission(unknownUndo); await screenshot('unknown-undo-response-blocked')
+
+    const unacknowledged = await completedDraft(7209, 'unacknowledged-ready-crash')
+    phase = 'process crash after remote ready and before durable acknowledgement'
+    await promote(unacknowledged, [86], 'after_checkpoint_ready_unacknowledged')
+    crashedFinal = await finalPublication(unacknowledged)
+    assert.equal(crashedFinal.provenance.active_checkpoint_readiness.ready_succeeded, false)
+    assert.equal(remoteFor(await readFake(), unacknowledged).isDraft, false)
+    await waitForPublicationLease(unacknowledged)
+    await promote(unacknowledged, [1])
+    recovery = await assertUnacceptedDraft(unacknowledged, 'recovering', false, 1)
+    await promote(unacknowledged, [1])
+    assert.deepEqual(draftEffects(await readFake(), unacknowledged), draftEffects(recovery.fake, unacknowledged))
+    await showMission(unacknowledged); await screenshot('unacknowledged-ready-crash-blocked')
+
     const finalState = await snapshot()
     check('Fixture is bounded and leaves the configured source and native base unchanged', () => {
-      assert.equal(finalState.snapshot.missions.length, 3); assert.equal(finalState.snapshot.runs.length, 3)
+      assert.equal(finalState.snapshot.missions.length, 9); assert.equal(finalState.snapshot.runs.length, 9)
       assert.deepEqual(report.page_errors, []); assert.deepEqual(report.blocked_requests, [])
     })
+    fake = await readFake()
+    check('All scenarios keep one PR and one commit per successful checkpoint without PR body edits or merges', () => {
+      assert.equal(fake.pull_requests.length, 8); assert.equal(fake.pr_create_calls, 8)
+      assert.equal(fake.pr_edit_calls ?? 0, 0)
+      assert.ok(fake.pull_requests.every(pr => pr.state === 'OPEN' && pr.autoMergeRequest === null))
+    })
+    for (const scenario of report.scenarios.filter(item => item.commit)) {
+      assert.equal(await git(['--git-dir', remotePath, 'rev-list', '--count', `${setup.source_commit}..refs/heads/${scenario.branch}`]), '1')
+    }
     assert.equal(await git(['-C', setup.source, 'rev-parse', 'HEAD']), setup.source_commit)
     assert.equal(await git(['-C', setup.source, 'status', '--porcelain']), '')
     assert.equal(await git(['--git-dir', remotePath, 'rev-parse', 'refs/heads/main']), setup.source_commit)

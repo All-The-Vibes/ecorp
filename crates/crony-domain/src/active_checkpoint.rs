@@ -1,6 +1,9 @@
 //! Focused source verification for a draft checkpoint. This is never completion authority.
 
-use crate::{VerificationPolicy, VerifierCheck};
+use crate::{
+    PublicationEvidenceComment, PublicationEvidenceKind, VerificationPolicy, VerifierCheck,
+    publication_evidence_body,
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -55,12 +58,47 @@ pub struct ActiveCheckpointPublication {
 }
 
 impl ActiveCheckpointPublication {
+    /// Stable creation text survives gate changes and a lost create response.
+    /// Current gate evidence is published separately without editing shared text.
+    pub fn initial_pull_request_body(&self) -> String {
+        format!(
+            "Draft source checkpoint for `{}`.\n\nInitial source commit: `{}`\nCheckpoint: `{}`\n\nCurrent verification and review evidence is recorded in source-bound comments. This draft is not an accepted final publication.\n",
+            self.target_repository, self.commit_sha, self.id
+        )
+    }
+
     pub fn gates_synchronized(&self) -> bool {
         self.phase == "project_synchronized"
             && self.pull_request.as_ref().is_some_and(|remote| {
-                remote["body"].as_str() == Some(self.body.as_str())
-                    && remote["title"].as_str() == Some(self.title.as_str())
+                if let Some(comment) = remote.get("evidence_comment").filter(|v| !v.is_null()) {
+                    serde_json::from_value::<PublicationEvidenceComment>(comment.clone()).is_ok_and(
+                        |comment| {
+                            comment
+                                .validate(
+                                    &self.target_repository,
+                                    remote["number"].as_i64().unwrap_or_default(),
+                                    &self.evidence_body(),
+                                )
+                                .is_ok()
+                        },
+                    )
+                } else {
+                    // Retained legacy receipts still require their exact PR text.
+                    remote["body"].as_str() == Some(self.body.as_str())
+                        && remote["title"].as_str() == Some(self.title.as_str())
+                }
             })
+    }
+
+    pub fn evidence_body(&self) -> String {
+        publication_evidence_body(
+            PublicationEvidenceKind::Checkpoint,
+            self.id,
+            &self.target_repository,
+            &self.commit_sha,
+            &self.title,
+            &self.body,
+        )
     }
 
     pub fn receipt(&self) -> Option<ActiveCheckpointReceipt> {
@@ -124,6 +162,8 @@ pub enum ActiveCheckpointAction {
         auto_merge_enabled: bool,
         title: String,
         body: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        evidence_comment: Option<Box<PublicationEvidenceComment>>,
     },
     ProjectSynchronized {
         status: String,

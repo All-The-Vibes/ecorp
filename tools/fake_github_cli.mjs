@@ -72,15 +72,35 @@ function assertPublisherCredential() {
 }
 
 function requestedPullRequest() {
+  return knownPullRequest(option('--repo'), args[2])
+}
+
+function knownPullRequest(repository, selector) {
   assertPublisherCredential()
-  if (option('--repo') !== state.repository) fail('unknown pull request repository')
+  if (repository !== state.repository) fail('unknown pull request repository')
   // The publisher always uses a known positive PR number. Do not silently choose
   // the current branch or a different PR when a recorded identity disappeared.
-  const number = Number(args[2])
+  const number = Number(selector)
   if (!Number.isSafeInteger(number) || number <= 0) fail('invalid pull request number')
   const pullRequest = (state.pull_requests ?? []).find((candidate) => candidate.number === number)
   if (!pullRequest) fail('unknown pull request number')
   return pullRequest
+}
+
+function publisherActor() {
+  assertPublisherCredential()
+  const actor = state.publisher_actor ?? { id: 72001, login: 'fixture-publisher' }
+  if (!Number.isSafeInteger(actor.id) || actor.id <= 0 || !actor.login) fail('invalid publisher actor')
+  return actor
+}
+
+function mutatePullRequest(pullRequest, key) {
+  const mutation = state[key]
+  if (!mutation) return
+  if (mutation.number !== pullRequest.number) fail('scheduled mutation references another PR')
+  Object.assign(pullRequest, mutation.patch ?? {})
+  state[`${key}_applied`] = (state[`${key}_applied`] ?? 0) + 1
+  state[key] = null
 }
 
 function observeProjectItemRead() {
@@ -324,7 +344,23 @@ async function graphql() {
   return respond({ node: item ? projectItemNode(item, true) : null })
 }
 
-if (args[0] === 'api' && args.slice(1).includes('graphql')) {
+if (args[0] === 'api' && args[1] === 'user') {
+  console.log(JSON.stringify(publisherActor()))
+} else if (args[0] === 'api' && args[1]?.startsWith('repos/')) {
+  const match = /^repos\/([^/?#]+\/[^/?#]+)\/issues\/([1-9]\d*)\/comments(?:\?(.*))?$/.exec(args[1])
+  if (!match) fail('unsupported REST endpoint')
+  const pullRequest = knownPullRequest(match[1], match[2])
+  const query = new URLSearchParams(match[3])
+  const page = Number(query.get('page') ?? 1)
+  const perPage = Number(query.get('per_page') ?? 30)
+  if (!Number.isSafeInteger(page) || page <= 0 || !Number.isSafeInteger(perPage) || perPage <= 0 || perPage > 100) {
+    fail('invalid comment page')
+  }
+  const comments = state.pull_request_comments?.[pullRequest.number] ?? []
+  state.comment_list_pages = [...(state.comment_list_pages ?? []), { number: pullRequest.number, page, per_page: perPage }].slice(-1000)
+  await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`)
+  console.log(JSON.stringify(comments.slice((page - 1) * perPage, page * perPage)))
+} else if (args[0] === 'api' && args.slice(1).includes('graphql')) {
   await graphql()
 } else if (args[0] === 'project' && args[1] === 'item-list') {
   assertProject()
@@ -522,6 +558,16 @@ if (args[0] === 'api' && args.slice(1).includes('graphql')) {
 } else if (args[0] === 'pr' && args[1] === 'view') {
   const pullRequest = requestedPullRequest()
   state.pr_view_calls = (state.pr_view_calls ?? 0) + 1
+  // Deterministic provider-side delayed effect. The earlier CLI request already
+  // failed; a later read observes that it was not cancelled by that failure.
+  const deferred = state.deferred_draft_effect
+  if (deferred && deferred.after_view_call <= state.pr_view_calls && deferred.number === pullRequest.number) {
+    pullRequest.isDraft = deferred.draft
+    state.effect_log = [...(state.effect_log ?? []), {
+      kind: 'pull_request_draft_state', number: pullRequest.number, is_draft: deferred.draft, delayed: true,
+    }]
+    state.deferred_draft_effect = null
+  }
   const mutation = state.pr_view_mutation
   if (mutation && mutation.call === state.pr_view_calls) {
     if (mutation.number !== pullRequest.number) fail('scheduled pr-view mutation references another PR')
@@ -531,6 +577,32 @@ if (args[0] === 'api' && args.slice(1).includes('graphql')) {
   }
   await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`)
   console.log(JSON.stringify(pullRequest))
+} else if (args[0] === 'pr' && args[1] === 'comment') {
+  const pullRequest = requestedPullRequest()
+  const bodyFile = option('--body-file')
+  if (!bodyFile || args.some(arg => ['--edit-last', '--delete-last', '--create-if-none', '--body'].includes(arg))) {
+    fail('fixture evidence comments require append-only body-file publication')
+  }
+  const body = await readFile(bodyFile, 'utf8')
+  mutatePullRequest(pullRequest, 'pr_comment_mutation')
+  const id = state.next_comment_id ?? 7200001
+  const comment = {
+    id, node_id: `IC_FAKE_${id}`, html_url: `${pullRequest.url}#issuecomment-${id}`,
+    user: publisherActor(), body,
+  }
+  state.next_comment_id = id + 1
+  state.pull_request_comments ??= {}
+  state.pull_request_comments[pullRequest.number] = [...(state.pull_request_comments[pullRequest.number] ?? []), comment]
+  state.pr_comment_calls = (state.pr_comment_calls ?? 0) + 1
+  state.effect_log = [...(state.effect_log ?? []), { kind: 'pull_request_comment_added', number: pullRequest.number, id }]
+  await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`)
+  if (state.fail_pr_comment_after_success) {
+    state.fail_pr_comment_after_success = false
+    state.pr_comment_external_success_failures = (state.pr_comment_external_success_failures ?? 0) + 1
+    await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`)
+    fail('injected local failure after remote evidence comment creation')
+  }
+  console.log(comment.html_url)
 } else if (args[0] === 'pr' && args[1] === 'edit') {
   const pullRequest = requestedPullRequest()
   const title = option('--title')
@@ -552,14 +624,36 @@ if (args[0] === 'api' && args.slice(1).includes('graphql')) {
 } else if (args[0] === 'pr' && args[1] === 'ready') {
   const pullRequest = requestedPullRequest()
   if (pullRequest.state !== 'OPEN') fail('cannot change draft state of a non-open pull request')
-  pullRequest.isDraft = args.includes('--undo')
+  const undo = args.includes('--undo')
+  const deferred = state.defer_next_pr_ready
+  if (deferred && Boolean(deferred.undo) === undo) {
+    if (!Number.isSafeInteger(deferred.after_views) || deferred.after_views < 1 || deferred.after_views > 100) {
+      fail('invalid delayed draft-state fixture')
+    }
+    state.deferred_draft_effect = {
+      number: pullRequest.number, draft: undo, after_view_call: (state.pr_view_calls ?? 0) + deferred.after_views,
+    }
+    state.defer_next_pr_ready = null
+    state.pr_ready_deferred_calls = (state.pr_ready_deferred_calls ?? 0) + 1
+    await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`)
+    fail('injected unknown native outcome before a delayed provider effect')
+  }
+  if (!undo) mutatePullRequest(pullRequest, 'pr_ready_mutation')
+  pullRequest.isDraft = undo
   state.pr_ready_calls = (state.pr_ready_calls ?? 0) + 1
   state.effect_log = [...(state.effect_log ?? []), {
     kind: 'pull_request_draft_state', number: pullRequest.number, is_draft: pullRequest.isDraft,
   }]
   await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`)
-  if (state.fail_pr_ready_after_success) {
-    state.fail_pr_ready_after_success = false
+  if (state.pr_ready_delay_ms) {
+    if (!Number.isSafeInteger(state.pr_ready_delay_ms) || state.pr_ready_delay_ms < 0 || state.pr_ready_delay_ms > 5000) {
+      fail('invalid ready response delay')
+    }
+    await new Promise(resolve => setTimeout(resolve, state.pr_ready_delay_ms))
+  }
+  const failureKey = undo && state.fail_pr_undo_after_success ? 'fail_pr_undo_after_success' : 'fail_pr_ready_after_success'
+  if (state[failureKey]) {
+    state[failureKey] = false
     state.pr_ready_external_success_failures = (state.pr_ready_external_success_failures ?? 0) + 1
     await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`)
     fail('injected local failure after remote pull request draft-state change')

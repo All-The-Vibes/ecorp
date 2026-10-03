@@ -902,9 +902,22 @@ fn apply_action(
             auto_merge_enabled,
             title,
             body,
+            evidence_comment,
         } => {
             let owner = p.target_repository.split('/').next().unwrap_or("");
             let refreshing = p.phase == "project_synchronized";
+            let desired_text = title == &p.title && body == &p.body;
+            let creation_text = title == &p.title && body == &p.initial_pull_request_body();
+            let retained_text = p
+                .pull_request
+                .as_ref()
+                .or(p.previous_pull_request.as_ref())
+                .is_some_and(|previous| previous["title"] == *title && previous["body"] == *body);
+            if let Some(comment) = evidence_comment {
+                comment
+                    .validate(&p.target_repository, *number, &p.evidence_body())
+                    .map_err(anyhow::Error::msg)?;
+            }
             if (!refreshing && p.phase != "branch_pushed")
                 || *number <= 0
                 || node_id.is_empty()
@@ -917,8 +930,8 @@ fn apply_action(
                 || !*draft
                 || !state.eq_ignore_ascii_case("open")
                 || *auto_merge_enabled
-                || title != &p.title
-                || body != &p.body
+                || (!desired_text
+                    && (evidence_comment.is_none() || (!retained_text && !creation_text)))
                 || p.previous_pull_request.as_ref().is_some_and(|previous| {
                     previous["number"] != *number || previous["node_id"] != *node_id
                 })
@@ -932,7 +945,8 @@ fn apply_action(
             }
             p.pull_request = Some(json!({"number":number,"node_id":node_id,"url":url,
                 "head_sha":head_sha,"head_ref":head_ref,"base_ref":base_ref,"title":title,"body":body,
-                "draft":true,"auto_merge_enabled":false,"state":"OPEN"}));
+                "draft":true,"auto_merge_enabled":false,"state":"OPEN",
+                "evidence_comment":evidence_comment}));
             if !refreshing {
                 p.phase = "draft_published".into();
             }

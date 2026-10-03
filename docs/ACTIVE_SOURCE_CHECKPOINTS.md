@@ -35,24 +35,56 @@ crony-cli factory-checkpoint CORP_ID ACTOR_ID FACTORY_WORK_ITEM_ID --publisher-i
 This bounded watcher uses native Git and the configured GitHub CLI. It pushes without
 force to the stable factory branch, creates or recovers one draft PR, and records the
 remote source identity before synchronizing Project evidence. It retains the intake
-Project status (normally In Progress). Its 120-second publisher lease fences concurrent
-mutations. Successful synchronization and recorded failures release the lease; a crashed
+Project status (normally In Progress). Its 120-second publisher lease serializes ECorp
+publishers; it cannot fence collaborator changes at GitHub. Successful synchronization
+and recorded failures release the lease; a crashed
 publisher can be restarted after natural lease expiry to reconcile the exact partial
 effect. The watcher never treats its own deadline as proof that a draft was published.
 
 Read `/api/corps/CORP_ID/factory/work-items/FACTORY_WORK_ITEM_ID/active-checkpoint?actor_id=ACTOR_ID`
 for the authenticated checkpoint artifact, publication phase, current gate body and
-whether final publication has taken ownership. The draft distinguishes focused passes,
-full-policy results, manual-gate status and run state. Re-running the watcher refreshes
-those persisted facts, including verification failure, without granting review, merge
-or deployment authority. Collaborator edits, changed branch identity and ambiguous PRs
-are preserved and reported rather than overwritten or replaced with a duplicate PR.
+whether final publication has taken ownership. Source-bound comments distinguish focused
+passes, full-policy results, manual-gate status and run state. The initial draft body stays
+stable. Re-running the watcher appends current evidence, including verification failure,
+without granting review, merge or deployment authority. It reads all comment pages and
+reuses an exact matching comment only from its authenticated GitHub actor. Existing PR
+titles, bodies and comments are never edited by the checkpoint publisher. Collaborator
+changes during append remain intact and block synchronization if the observed PR no
+longer matches. A lost append response can leave another matching evidence comment;
+GitHub does not provide an idempotency key for that mutation. It does not create another
+branch, commit or PR. Legacy receipts retain their original exact-text requirements.
 
 After full verification and any persisted manual gate pass, reconcile the factory item
 with the same factory command. The separately authorized `factory-publish` flow can
 adopt and promote the same draft and commit using its existing prerequisites. Only this
 final flow moves the Project into review. Auto-merge remains disabled. Starting final
-publication fences further active-checkpoint mutations.
+publication fences further active-checkpoint mutations. Final evidence is another
+append-only source-bound comment; promotion preserves the observed shared PR text.
+
+Native GitHub ready/draft operations do not accept an expected head or content fence.
+Before invoking native ready, the final publisher persists the adopted PR identity,
+exact head and text, and evidence comment in the existing publication ledger. It records
+a successful command acknowledgement separately, then rechecks the branch, complete PR
+snapshot, comments and current authorization before atomically accepting final publication.
+This closes the local acceptance race; it does not make GitHub mutations conditional.
+
+If those checks fail, or a publisher restarts with an unresolved intent, reconciliation
+runs before forward source and argument validation. A separate short-lived capability
+can only restore that same open PR to draft. Changed head, base or text is preserved.
+The original scoped human actor and publisher credential are still required, but revoked
+forward publish permission does not prevent compensation. Compensation abandons forward
+authority and cannot be replayed through start, renew or final publication checkpoints.
+An accepted publication is never reverted by this recovery path. The ledger retains
+every dispatch and permits at most 32 undo dispatches, one per recovery lease.
+
+A timeout or process crash before a durable native-success acknowledgement is an unknown
+remote outcome. Observing draft once, terminating the child, or waiting for the local
+lease cannot prove a submitted GitHub request was cancelled. Such an intent blocks new
+forward promotion even after draft is observed. A subsequent invocation rechecks and
+restores any late ready effect. Only acknowledgements of all original dispatched effects
+and a fresh draft observation settle that intent; otherwise it remains unresolved for
+operator reconciliation. Unavailable or revoked publisher credentials likewise leave
+explicit unresolved evidence. No fallback grants account permissions or bypasses gates.
 
 The additional ECorp state is needed for Corp and actor authorization, immutable
 source/gate binding, fenced restart receipts and Project synchronization. It reuses the
@@ -88,7 +120,9 @@ Windows token still identifies its original registered profile.
 The driver uses the existing deterministic `fake-process` adapter, a local bare Git
 remote and fake GitHub. It exercises branch-push and draft-create crashes, natural
 lease expiry, idempotent restart, pending/passed/failed gates, final draft adoption and
-preservation of uncommittable work. A fixture owner clicks Accept evidence through the
+preservation of uncommittable work. Readiness recovery tests also cover retained shared
+text, changed source, uncertain remote effects and compensation authority. A fixture
+owner clicks Accept evidence through the
 actual browser; that is a synthetic test decision, never evidence of a human or an
 independent review. A boolean-only credential probe checks the producer environment.
 Reports retain actual commands, exit codes, source identity, screenshots and failures.

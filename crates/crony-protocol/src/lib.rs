@@ -986,6 +986,14 @@ pub struct PullRequestPublicationResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PublicationReadinessResponse {
+    pub publication: PullRequestPublication,
+    pub recovery_token: Option<Uuid>,
+    pub replayed: bool,
+    pub busy: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct LaunchMissionRequest {
     pub requested_by: Uuid,

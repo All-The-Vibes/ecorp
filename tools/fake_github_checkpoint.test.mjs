@@ -152,3 +152,86 @@ test('ordinary creation remains ready while missing branch evidence prevents any
   assert.equal(f.view().isDraft, false)
   assert.equal(f.view().autoMergeRequest, null)
 })
+
+test('append-only evidence retains exact authored bytes after a lost comment response', t => {
+  const f = fixture(t, { fail_pr_comment_after_success: true })
+  f.run([...f.createArgs, '--draft'])
+  const original = f.view()
+  const body = '<!-- source-bound fixture -->\r\nRésumé 🚀\nFull: pending\n'
+  writeFileSync(f.bodyPath, body)
+  f.run(['pr', 'comment', '1', '--repo', repository, '--body-file', f.bodyPath], { status: 1 })
+  const comments = JSON.parse(f.run(['api', `repos/${repository}/issues/1/comments?per_page=100&page=1`]).stdout)
+  const actor = JSON.parse(f.run(['api', 'user']).stdout)
+  assert.equal(comments.length, 1)
+  assert.equal(comments[0].body, body)
+  assert.deepEqual(comments[0].user, actor)
+  assert.equal(comments[0].html_url, `${original.url}#issuecomment-${comments[0].id}`)
+  assert.equal(f.read().pr_comment_external_success_failures, 1)
+  assert.equal(f.read().pr_comment_calls, 1)
+  assert.equal(f.read().pr_edit_calls, undefined)
+  assert.deepEqual(f.view(), original)
+})
+
+test('comment inventory exposes every page and keeps other authors distinct', t => {
+  const comments = Array.from({ length: 101 }, (_, index) => ({
+    id: index + 1, node_id: `IC_PAGE_${index}`, html_url: `https://github.com/${repository}/pull/1#issuecomment-${index + 1}`,
+    body: 'Identical content is not proof of publisher authorship.',
+    user: index < 100 ? { id: 72002, login: 'collaborator' } : { id: 72001, login: 'fixture-publisher' },
+  }))
+  const f = fixture(t, { pull_request_comments: { 1: comments } })
+  f.run([...f.createArgs, '--draft'])
+  const readPage = page => JSON.parse(f.run(['api', `repos/${repository}/issues/1/comments?per_page=100&page=${page}`]).stdout)
+  assert.deepEqual(readPage(1), comments.slice(0, 100))
+  assert.deepEqual(readPage(2), comments.slice(100))
+  assert.deepEqual(readPage(3), [])
+  assert.equal(f.read().pr_comment_calls, undefined)
+})
+
+test('a collaborator edit concurrent with an evidence append is preserved', t => {
+  const f = fixture(t, { pr_comment_mutation: { number: 1, patch: { title: 'Collaborator title', body: 'Keep these review notes.\r\n' } } })
+  f.run([...f.createArgs, '--draft'])
+  const original = f.view()
+  f.run(['pr', 'comment', '1', '--repo', repository, '--body-file', f.bodyPath])
+  assert.deepEqual(f.view(), { ...original, title: 'Collaborator title', body: 'Keep these review notes.\r\n' })
+  assert.equal(f.read().pr_edit_calls, undefined)
+  assert.equal(f.read().pr_comment_mutation_applied, 1)
+})
+
+test('native undo preserves changed source and shared text after an unconditional ready', t => {
+  const changed = { headRefOid: 'b'.repeat(40), title: 'Concurrent title', body: 'Concurrent body\n' }
+  const f = fixture(t, { pr_ready_mutation: { number: 1, patch: changed } })
+  f.run([...f.createArgs, '--draft'])
+  const original = f.view()
+  f.run(['pr', 'ready', '1', '--repo', repository])
+  assert.deepEqual(f.view(), { ...original, ...changed, isDraft: false })
+  f.run(['pr', 'ready', '1', '--repo', repository, '--undo'])
+  assert.deepEqual(f.view(), { ...original, ...changed })
+  assert.equal(f.read().pr_ready_mutation_applied, 1)
+})
+
+test('a failed native request can still become ready after an earlier draft read', t => {
+  const f = fixture(t, { defer_next_pr_ready: { undo: false, after_views: 2 } })
+  f.run([...f.createArgs, '--draft'])
+  f.run(['pr', 'ready', '1', '--repo', repository], { status: 1 })
+  assert.equal(f.view().isDraft, true)
+  assert.equal(f.view().isDraft, false)
+  assert.equal(f.read().pr_ready_deferred_calls, 1)
+  assert.equal(f.read().effect_log.filter(effect => effect.delayed).length, 1)
+  f.run(['pr', 'ready', '1', '--repo', repository, '--undo'])
+  assert.equal(f.view().isDraft, true)
+})
+
+test('comment publication rejects scope, credential and mutation options without effects', t => {
+  const f = fixture(t)
+  f.run([...f.createArgs, '--draft'])
+  const before = f.read()
+  const args = ['pr', 'comment', '1', '--repo', repository, '--body-file', f.bodyPath]
+  for (const flag of ['--edit-last', '--delete-last', '--create-if-none', '--body']) {
+    f.run([...args, flag], { status: 1 })
+  }
+  f.run(['pr', 'comment', '1', '--repo', 'Other/Repo', '--body-file', f.bodyPath], { status: 1 })
+  f.run(['api', `repos/${repository}/issues/2/comments?per_page=100&page=1`], { status: 1 })
+  f.run(args, { status: 1, environment: { GH_TOKEN: 'different-synthetic-credential' } })
+  f.run(['api', 'user'], { status: 1, environment: { GH_TOKEN: '' } })
+  assert.deepEqual(f.read(), before)
+})

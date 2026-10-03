@@ -346,7 +346,6 @@ async fn execute(
     token: Uuid,
     failure: &mut ActiveCheckpointFailureReason,
 ) -> Result<()> {
-    let plan = target(item, &outcome.publication)?;
     advance(
         client,
         server,
@@ -356,6 +355,7 @@ async fn execute(
         ActiveCheckpointAction::Renew,
     )
     .await?;
+    let plan = target(item, &outcome.publication)?;
     let bytes = download_deliverable(
         client,
         server,
@@ -367,7 +367,10 @@ async fn execute(
     let (document, bundle) = validate_document(&bytes, &outcome.publication)?;
     let workspace = TemporaryPublisherWorkspace::create()?;
     fs::write(&workspace.bundle, bundle)?;
-    fs::write(&workspace.body, plan.body.as_bytes())?;
+    fs::write(
+        &workspace.body,
+        outcome.publication.initial_pull_request_body(),
+    )?;
     let base = prepare_repository(&workspace, &plan, &document)?;
     ensure_distinct_publication_branch(&plan.branch, &base.pull_request_base_ref)?;
     if outcome
@@ -470,36 +473,6 @@ async fn execute(
             {
                 return Err(error).context("create checkpoint draft");
             }
-        } else if existing
-            .as_ref()
-            .is_some_and(|pr| pr.title != plan.title || pr.body != plan.body)
-        {
-            advance(
-                client,
-                server,
-                args,
-                outcome,
-                token,
-                ActiveCheckpointAction::Renew,
-            )
-            .await?;
-            let remote =
-                find_checkpoint_pull_request(&args.github_cli, &plan, &outcome.publication)?
-                    .context("checkpoint draft disappeared before updating its gates")?;
-            validate_draft(
-                &remote,
-                &plan,
-                &base.pull_request_base_ref,
-                &outcome.publication,
-                false,
-            )?;
-            let edit = edit_pull_request(&args.github_cli, &plan, remote.number, &workspace.body);
-            let observed = read_pull_request(&args.github_cli, &plan, remote.number)?;
-            if let Err(error) = edit
-                && (observed.title != plan.title || observed.body != plan.body)
-            {
-                return Err(error);
-            }
         }
         let remote = find_checkpoint_pull_request(&args.github_cli, &plan, &outcome.publication)?
             .context("remote checkpoint draft was not created")?;
@@ -510,12 +483,24 @@ async fn execute(
             &outcome.publication,
             false,
         )?;
-        if remote.title != plan.title || remote.body != plan.body {
-            bail!("remote checkpoint gates differ from desired evidence");
-        }
+        let comment = evidence_comment::append_or_observe(
+            &args.github_cli,
+            &plan.target_repository,
+            &remote,
+            &outcome.publication.evidence_body(),
+            &workspace,
+        )?;
         ensure_remote_branch(&workspace.repository, &plan)?;
         test_crash("after_active_checkpoint_draft_remote");
-        advance(client, server, args, outcome, token, draft_action(&remote)).await?;
+        advance(
+            client,
+            server,
+            args,
+            outcome,
+            token,
+            draft_action(&remote, comment),
+        )
+        .await?;
     }
     if outcome.publication.gates_synchronized() {
         return Ok(());
@@ -539,9 +524,7 @@ async fn execute(
         &outcome.publication,
         false,
     )?;
-    if remote.body != plan.body || remote.title != plan.title {
-        bail!("checkpoint draft gates changed before Project synchronization");
-    }
+    verify_checkpoint_evidence(&args.github_cli, &outcome.publication, &remote)?;
     // Intake already placed the item In Progress. Do not overwrite a human's
     // status change or advance it into review under draft-only authority.
     let (_, field_id, option_id, status) =
@@ -558,6 +541,7 @@ async fn execute(
         &outcome.publication,
         false,
     )?;
+    verify_checkpoint_evidence(&args.github_cli, &outcome.publication, &remote)?;
     test_crash("after_active_checkpoint_project_observation");
     advance(
         client,
@@ -616,6 +600,14 @@ fn read_pull_request(
     plan: &PublicationTarget,
     number: i64,
 ) -> Result<PullRequestView> {
+    read_repository_pull_request(github_cli, &plan.target_repository, number)
+}
+
+pub(super) fn read_repository_pull_request(
+    github_cli: &Path,
+    repository: &str,
+    number: i64,
+) -> Result<PullRequestView> {
     if number <= 0 {
         bail!("checkpoint PR number is invalid");
     }
@@ -626,7 +618,7 @@ fn read_pull_request(
             "view",
             &number.to_string(),
             "--repo",
-            &plan.target_repository,
+            repository,
             "--json",
             PR_FIELDS,
         ],
@@ -715,7 +707,8 @@ fn validate_draft(
     validate_identity(pr, plan, base)?;
     let prior_head =
         allow_previous_head && p.previous_commit_sha.as_deref() == Some(pr.head_ref_oid.as_str());
-    let desired_content = pr.title == plan.title && pr.body == plan.body;
+    let desired_content = pr.title == plan.title
+        && (pr.body == plan.body || pr.body == p.initial_pull_request_body());
     if !pr.is_draft
         || (pr.head_ref_oid != plan.commit_sha && !prior_head)
         || (!desired_content && !known_pull_request(p).is_some_and(|v| content_matches(pr, v)))
@@ -727,29 +720,38 @@ fn validate_draft(
     Ok(())
 }
 
-fn edit_pull_request(
+fn verify_checkpoint_evidence(
     github_cli: &Path,
-    plan: &PublicationTarget,
-    number: i64,
-    body_file: &Path,
+    publication: &ActiveCheckpointPublication,
+    pr: &PullRequestView,
 ) -> Result<()> {
-    gh_run(
-        github_cli,
-        &[
-            "pr",
-            "edit",
-            &number.to_string(),
-            "--repo",
-            &plan.target_repository,
-            "--title",
-            &plan.title,
-            "--body-file",
-            path_text(body_file)?,
-        ],
-    )
+    if let Some(value) = publication
+        .pull_request
+        .as_ref()
+        .and_then(|remote| remote.get("evidence_comment"))
+        .filter(|value| !value.is_null())
+    {
+        let comment =
+            serde_json::from_value(value.clone()).context("decode checkpoint evidence comment")?;
+        evidence_comment::verify(
+            github_cli,
+            &publication.target_repository,
+            pr.number,
+            &comment,
+            &publication.evidence_body(),
+        )
+    } else if pr.title == publication.title && pr.body == publication.body {
+        // Historical snapshots retain their original, strict text contract.
+        Ok(())
+    } else {
+        bail!("checkpoint evidence no longer matches the persisted gate observation")
+    }
 }
 
-fn draft_action(pr: &PullRequestView) -> ActiveCheckpointAction {
+fn draft_action(
+    pr: &PullRequestView,
+    evidence_comment: crony_domain::PublicationEvidenceComment,
+) -> ActiveCheckpointAction {
     ActiveCheckpointAction::DraftPublished {
         number: pr.number,
         node_id: pr.id.clone(),
@@ -764,6 +766,7 @@ fn draft_action(pr: &PullRequestView) -> ActiveCheckpointAction {
         auto_merge_enabled: pr.auto_merge_request.is_some(),
         title: pr.title.clone(),
         body: pr.body.clone(),
+        evidence_comment: Some(Box::new(evidence_comment)),
     }
 }
 
@@ -787,72 +790,113 @@ pub(super) async fn promote(
         .pull_request
         .as_ref()
         .context("adopted checkpoint omitted its draft PR")?;
-    let mut pr = read_known_pull_request(&args.github_cli, plan, known)?;
+    let pr = read_known_pull_request(&args.github_cli, plan, known)?;
     validate_promotion(&pr, plan, base, known)?;
-    if pr.title != plan.title || pr.body != plan.body {
-        renew_publication(
-            client,
-            server,
-            args,
-            plan,
-            response,
-            token,
-            "checkpoint-final-body",
-        )
-        .await?;
-        ensure_remote_branch(&workspace.repository, plan)?;
-        pr = read_known_pull_request(&args.github_cli, plan, known)?;
-        validate_promotion(&pr, plan, base, known)?;
-        let edit = edit_pull_request(&args.github_cli, plan, pr.number, &workspace.body);
-        pr = read_known_pull_request(&args.github_cli, plan, known)?;
-        if let Err(error) = edit
-            && (pr.title != plan.title || pr.body != plan.body)
-        {
-            return Err(error);
-        }
-        validate_promotion(&pr, plan, base, known)?;
-        test_crash("after_checkpoint_final_body");
-    }
-    if pr.title != plan.title || pr.body != plan.body {
-        bail!("final PR text does not match authorized completion evidence");
-    }
-    if pr.is_draft {
-        renew_publication(
-            client,
-            server,
-            args,
-            plan,
-            response,
-            token,
-            "checkpoint-ready-for-review",
-        )
-        .await?;
-        ensure_remote_branch(&workspace.repository, plan)?;
-        pr = read_known_pull_request(&args.github_cli, plan, known)?;
-        validate_promotion(&pr, plan, base, known)?;
-        if pr.title != plan.title || pr.body != plan.body {
-            bail!("final PR text changed before promotion");
-        }
-        let ready = gh_run(
-            &args.github_cli,
-            &[
-                "pr",
-                "ready",
-                &pr.number.to_string(),
-                "--repo",
-                &plan.target_repository,
-            ],
+    if !pr.is_draft {
+        bail!(
+            "adopted PR is ready without an accepted readiness intent; retain it for reconciliation"
         );
-        pr = read_known_pull_request(&args.github_cli, plan, known)?;
-        if let Err(error) = ready
-            && pr.is_draft
-        {
-            return Err(error);
-        }
-        test_crash("after_checkpoint_ready_remote");
     }
-    ensure_remote_pull_request_matches(&pr, plan, base)?;
-    Ok(pr)
+    verify_checkpoint_evidence(&args.github_cli, &checkpoint, &pr)?;
+    let comment = evidence_comment::append_or_observe(
+        &args.github_cli,
+        &plan.target_repository,
+        &pr,
+        &readiness::final_evidence_body(&response.publication),
+        workspace,
+    )?;
+    test_crash("after_checkpoint_final_comment");
+    renew_publication(
+        client,
+        server,
+        args,
+        plan,
+        response,
+        token,
+        "checkpoint-ready-for-review",
+    )
+    .await?;
+    ensure_remote_branch(&workspace.repository, plan)?;
+    let pr = read_known_pull_request(&args.github_cli, plan, known)?;
+    validate_promotion(&pr, plan, base, known)?;
+    verify_checkpoint_evidence(&args.github_cli, &checkpoint, &pr)?;
+    evidence_comment::verify(
+        &args.github_cli,
+        &plan.target_repository,
+        pr.number,
+        &comment,
+        &readiness::final_evidence_body(&response.publication),
+    )?;
+    let intent_id = Uuid::new_v4();
+    let prepared = readiness::mutate(
+        client,
+        server,
+        args,
+        response.publication.id,
+        intent_id,
+        crony_domain::PublicationReadinessAction::Prepare {
+            publisher_token: token,
+            expected_version: response.publication.version,
+            pull_request: crony_domain::PublicationPullRequestSnapshot::from(&pr),
+            evidence_comment: comment.clone(),
+        },
+    )
+    .await?;
+    response.publication = prepared.publication;
+    if prepared.replayed || prepared.busy {
+        bail!("readiness intent was already recorded; no native ready dispatched");
+    }
+    test_crash("after_checkpoint_ready_intent");
+    gh_run(
+        &args.github_cli,
+        &[
+            "pr",
+            "ready",
+            &pr.number.to_string(),
+            "--repo",
+            &plan.target_repository,
+        ],
+    )
+    .context("native ready result is unknown; reconcile the retained draft before retrying")?;
+    test_crash("after_checkpoint_ready_unacknowledged");
+    response.publication = readiness::mutate(
+        client,
+        server,
+        args,
+        response.publication.id,
+        intent_id,
+        crony_domain::PublicationReadinessAction::ReadySucceeded {
+            publisher_token: token,
+        },
+    )
+    .await?
+    .publication;
+    test_crash("after_checkpoint_ready_remote");
+    ensure_remote_branch(&workspace.repository, plan)?;
+    let observed = read_known_pull_request(&args.github_cli, plan, known)?;
+    let intent =
+        readiness::journal(&response.publication)?.context("readiness intent disappeared")?;
+    if intent.state != crony_domain::PublicationReadinessState::Prepared
+        || !intent.ready_succeeded
+        || !intent
+            .pull_request
+            .matches_ready(&crony_domain::PublicationPullRequestSnapshot::from(
+                &observed,
+            ))
+    {
+        bail!(
+            "PR source or shared text changed during native ready; draft reconciliation is required"
+        );
+    }
+    verify_checkpoint_evidence(&args.github_cli, &checkpoint, &observed)?;
+    evidence_comment::verify(
+        &args.github_cli,
+        &plan.target_repository,
+        observed.number,
+        &comment,
+        &readiness::final_evidence_body(&response.publication),
+    )?;
+    Ok(observed)
 }
 
 fn validate_promotion(
