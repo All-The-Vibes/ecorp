@@ -1,0 +1,2008 @@
+{
+  "schema_version": 1,
+  "issue": 236,
+  "status": "passed",
+  "started_at_utc": "2026-10-03T15:32:34.399Z",
+  "source_binding": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T15:32:10.008Z",
+    "source": "<candidate-checkout>",
+    "head": "53ff7a6d2fc394a98cb438806f653c1254bbe976",
+    "tree": "62e12242edcb8a316cbcff9defae3b2c7606b836",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-store/src/usage_accounting.rs\n M crates/crony-store/src/usage_accounting_tests.rs",
+    "source_file_count": 7667,
+    "source_fingerprint": "b800aafc22d25e718466021669803fc771b00da96ac855630af0c8bbd8177a66",
+    "manifest": "<run-records>\\issue236-source-before-browser-late-replay-r1.json",
+    "manifest_sha256": "b710bfe651d5b83fdf2cfcb798c0901e8484ca728270cfc919fe61c838f3bdc1"
+  },
+  "corpus_sha256": "b1b89df4ffc3df1f67a883d3534e9287e58e1c7276a3cb7126e12f14cac6b02e",
+  "assertions": [
+    {
+      "name": "Configured synthetic source starts clean at the recorded commit",
+      "passed": true
+    },
+    {
+      "name": "The owned runner is connected in the fixture Corp with an available Codex adapter",
+      "passed": true
+    },
+    {
+      "name": "Runner workspace capability advertises the exact immutable fixture source",
+      "passed": true
+    },
+    {
+      "name": "POST /api/corps/00000000-0000-4000-8000-000000000001/missions: HTTP status",
+      "passed": true
+    },
+    {
+      "name": "codex-duplicate-and-foreign-turn: browser launches through the authoritative server",
+      "passed": true
+    },
+    {
+      "name": "codex-duplicate-and-foreign-turn: persisted verifier precedes accepted task and run completion",
+      "passed": true
+    },
+    {
+      "name": "codex-duplicate-and-foreign-turn: native counts and unknown quantities survive the full journal path",
+      "passed": true
+    },
+    {
+      "name": "codex-duplicate-and-foreign-turn: persisted runner shutdown retains accepted native subtotals",
+      "passed": true
+    },
+    {
+      "name": "codex-duplicate-and-foreign-turn: exactly one provider artifact belongs to the completed run",
+      "passed": true
+    },
+    {
+      "name": "codex-duplicate-and-foreign-turn: authorized server download returns the exact provider artifact",
+      "passed": true
+    },
+    {
+      "name": "codex-duplicate-and-foreign-turn: downloaded provider bytes match the authoritative artifact digest",
+      "passed": true
+    },
+    {
+      "name": "codex-duplicate-and-foreign-turn: persisted provider evidence retains subtotals and truthful coverage",
+      "passed": true
+    },
+    {
+      "name": "codex-duplicate-and-foreign-turn: assigned clean worktree is distinct from the preserved configured source",
+      "passed": true
+    },
+    {
+      "name": "POST /api/corps/00000000-0000-4000-8000-000000000001/missions: HTTP status",
+      "passed": true
+    },
+    {
+      "name": "codex-cache-and-reasoning-subsets: browser launches through the authoritative server",
+      "passed": true
+    },
+    {
+      "name": "codex-cache-and-reasoning-subsets: persisted verifier precedes accepted task and run completion",
+      "passed": true
+    },
+    {
+      "name": "codex-cache-and-reasoning-subsets: native counts and unknown quantities survive the full journal path",
+      "passed": true
+    },
+    {
+      "name": "codex-cache-and-reasoning-subsets: persisted runner shutdown retains accepted native subtotals",
+      "passed": true
+    },
+    {
+      "name": "codex-cache-and-reasoning-subsets: exactly one provider artifact belongs to the completed run",
+      "passed": true
+    },
+    {
+      "name": "codex-cache-and-reasoning-subsets: authorized server download returns the exact provider artifact",
+      "passed": true
+    },
+    {
+      "name": "codex-cache-and-reasoning-subsets: downloaded provider bytes match the authoritative artifact digest",
+      "passed": true
+    },
+    {
+      "name": "codex-cache-and-reasoning-subsets: persisted provider evidence retains subtotals and truthful coverage",
+      "passed": true
+    },
+    {
+      "name": "codex-cache-and-reasoning-subsets: assigned clean worktree is distinct from the preserved configured source",
+      "passed": true
+    },
+    {
+      "name": "POST /api/corps/00000000-0000-4000-8000-000000000001/missions: HTTP status",
+      "passed": true
+    },
+    {
+      "name": "codex-missing-input-explicit-zero-output: browser launches through the authoritative server",
+      "passed": true
+    },
+    {
+      "name": "codex-missing-input-explicit-zero-output: persisted verifier precedes accepted task and run completion",
+      "passed": true
+    },
+    {
+      "name": "codex-missing-input-explicit-zero-output: native counts and unknown quantities survive the full journal path",
+      "passed": true
+    },
+    {
+      "name": "codex-missing-input-explicit-zero-output: persisted runner shutdown retains accepted native subtotals",
+      "passed": true
+    },
+    {
+      "name": "codex-missing-input-explicit-zero-output: exactly one provider artifact belongs to the completed run",
+      "passed": true
+    },
+    {
+      "name": "codex-missing-input-explicit-zero-output: authorized server download returns the exact provider artifact",
+      "passed": true
+    },
+    {
+      "name": "codex-missing-input-explicit-zero-output: downloaded provider bytes match the authoritative artifact digest",
+      "passed": true
+    },
+    {
+      "name": "codex-missing-input-explicit-zero-output: persisted provider evidence retains subtotals and truthful coverage",
+      "passed": true
+    },
+    {
+      "name": "codex-missing-input-explicit-zero-output: assigned clean worktree is distinct from the preserved configured source",
+      "passed": true
+    },
+    {
+      "name": "POST /api/corps/00000000-0000-4000-8000-000000000001/missions: HTTP status",
+      "passed": true
+    },
+    {
+      "name": "codex-regressing-and-contradictory-cursors: browser launches through the authoritative server",
+      "passed": true
+    },
+    {
+      "name": "codex-regressing-and-contradictory-cursors: persisted verifier precedes accepted task and run completion",
+      "passed": true
+    },
+    {
+      "name": "codex-regressing-and-contradictory-cursors: native counts and unknown quantities survive the full journal path",
+      "passed": true
+    },
+    {
+      "name": "codex-regressing-and-contradictory-cursors: persisted runner shutdown retains accepted native subtotals",
+      "passed": true
+    },
+    {
+      "name": "codex-regressing-and-contradictory-cursors: exactly one provider artifact belongs to the completed run",
+      "passed": true
+    },
+    {
+      "name": "codex-regressing-and-contradictory-cursors: authorized server download returns the exact provider artifact",
+      "passed": true
+    },
+    {
+      "name": "codex-regressing-and-contradictory-cursors: downloaded provider bytes match the authoritative artifact digest",
+      "passed": true
+    },
+    {
+      "name": "codex-regressing-and-contradictory-cursors: persisted provider evidence retains subtotals and truthful coverage",
+      "passed": true
+    },
+    {
+      "name": "codex-regressing-and-contradictory-cursors: assigned clean worktree is distinct from the preserved configured source",
+      "passed": true
+    },
+    {
+      "name": "POST /api/corps/00000000-0000-4000-8000-000000000001/missions: HTTP status",
+      "passed": true
+    },
+    {
+      "name": "codex-invalid-first-retains-subtotals: browser launches through the authoritative server",
+      "passed": true
+    },
+    {
+      "name": "codex-invalid-first-retains-subtotals: persisted verifier precedes accepted task and run completion",
+      "passed": true
+    },
+    {
+      "name": "codex-invalid-first-retains-subtotals: native counts and unknown quantities survive the full journal path",
+      "passed": true
+    },
+    {
+      "name": "codex-invalid-first-retains-subtotals: persisted runner shutdown retains accepted native subtotals",
+      "passed": true
+    },
+    {
+      "name": "codex-invalid-first-retains-subtotals: exactly one provider artifact belongs to the completed run",
+      "passed": true
+    },
+    {
+      "name": "codex-invalid-first-retains-subtotals: authorized server download returns the exact provider artifact",
+      "passed": true
+    },
+    {
+      "name": "codex-invalid-first-retains-subtotals: downloaded provider bytes match the authoritative artifact digest",
+      "passed": true
+    },
+    {
+      "name": "codex-invalid-first-retains-subtotals: persisted provider evidence retains subtotals and truthful coverage",
+      "passed": true
+    },
+    {
+      "name": "codex-invalid-first-retains-subtotals: assigned clean worktree is distinct from the preserved configured source",
+      "passed": true
+    },
+    {
+      "name": "Owned browser made no out-of-scope requests and raised no page errors",
+      "passed": true
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "codex-duplicate-and-foreign-turn",
+      "status": "passed",
+      "expected": {
+        "emitted": 2,
+        "input_tokens": 16,
+        "output_tokens": 4,
+        "cost_microusd": null,
+        "token_coverage": "reported",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false,
+        "accepted": 2,
+        "invalid": 0,
+        "dispositions": [
+          "accepted",
+          "accepted"
+        ],
+        "artifact_token_coverage": "reported",
+        "artifact_usd_coverage": "unavailable"
+      },
+      "title": "Usage provenance codex-duplicate-and-foreign-turn",
+      "mission_id": "4b9e5beb-6293-4c26-9ab0-25af8843bc14",
+      "run_id": "13d15757-4262-4474-9f40-04d5f762628d",
+      "agent_id": "2028c385-2ecc-4c33-9122-9656ebde137c",
+      "run": {
+        "id": "13d15757-4262-4474-9f40-04d5f762628d",
+        "task_id": "2bfef5b6-8d22-486f-986c-6d693bd91ca4",
+        "status": "completed",
+        "workspace_path": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\runner\\worktrees\\2bfef5b68d22486f986c6d693bd91ca4\\13d15757426244749f4004d5f762628d",
+        "workspace_disposition": "removed",
+        "input_tokens": 16,
+        "output_tokens": 4,
+        "cost_microusd": 0,
+        "breaker_stage": "healthy",
+        "provider_session_id": "thread-issue236-aebbfece2d81218c77e83d2e"
+      },
+      "usage_events": [
+        {
+          "id": "833ee1e6-da09-487f-8d17-ab43a81d43fb",
+          "seq": 13,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.usage",
+          "aggregate_type": "run",
+          "aggregate_id": "13d15757-4262-4474-9f40-04d5f762628d",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T15:32:39.459379Z",
+              "charged": true,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": null
+            },
+            "cost_microusd": null,
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "usage_coverage": {
+              "call_identity": "reported",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "reported",
+              "usd": "unavailable"
+            },
+            "usage_identity_keys": [
+              "[\"codex_app_server_last_v1\",\"thread-issue236-aebbfece2d81218c77e83d2e\",\"cumulative_report\",\"turn-1\",12]"
+            ],
+            "usage_origin_event_id": "833ee1e6-da09-487f-8d17-ab43a81d43fb",
+            "usage_provenance": {
+              "api_call_id": null,
+              "cache_tokens_are_input_subsets": true,
+              "cache_write_input_tokens": null,
+              "cached_input_tokens": null,
+              "cli_version": null,
+              "cumulative_total_tokens": 12,
+              "invalid_fields": [],
+              "mapping": "codex_app_server_last_v1",
+              "model": null,
+              "model_multiplier": null,
+              "nano_aiu": null,
+              "native_event_id": null,
+              "provider_call_id": null,
+              "provider_session_id": "thread-issue236-aebbfece2d81218c77e83d2e",
+              "reasoning_output_tokens": null,
+              "reasoning_tokens_are_output_subsets": true,
+              "schema_version": 1,
+              "scope": "last_call",
+              "sdk_version": null,
+              "source_event": "thread/tokenUsage/updated",
+              "turn_id": "turn-1"
+            },
+            "usage_validation": {
+              "disposition": "accepted",
+              "policy": "native_usage_v1",
+              "reason": null
+            }
+          }
+        },
+        {
+          "id": "ea334c98-b290-4a83-b12b-7329ed06b8dc",
+          "seq": 16,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.usage",
+          "aggregate_type": "run",
+          "aggregate_id": "13d15757-4262-4474-9f40-04d5f762628d",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T15:32:39.484664Z",
+              "charged": true,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": null
+            },
+            "cost_microusd": null,
+            "input_tokens": 6,
+            "output_tokens": 2,
+            "usage_coverage": {
+              "call_identity": "reported",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "reported",
+              "usd": "unavailable"
+            },
+            "usage_identity_keys": [
+              "[\"codex_app_server_last_v1\",\"thread-issue236-aebbfece2d81218c77e83d2e\",\"cumulative_report\",\"turn-1\",20]"
+            ],
+            "usage_origin_event_id": "ea334c98-b290-4a83-b12b-7329ed06b8dc",
+            "usage_provenance": {
+              "api_call_id": null,
+              "cache_tokens_are_input_subsets": true,
+              "cache_write_input_tokens": null,
+              "cached_input_tokens": null,
+              "cli_version": null,
+              "cumulative_total_tokens": 20,
+              "invalid_fields": [],
+              "mapping": "codex_app_server_last_v1",
+              "model": null,
+              "model_multiplier": null,
+              "nano_aiu": null,
+              "native_event_id": null,
+              "provider_call_id": null,
+              "provider_session_id": "thread-issue236-aebbfece2d81218c77e83d2e",
+              "reasoning_output_tokens": null,
+              "reasoning_tokens_are_output_subsets": true,
+              "schema_version": 1,
+              "scope": "last_call",
+              "sdk_version": null,
+              "source_event": "thread/tokenUsage/updated",
+              "turn_id": "turn-1"
+            },
+            "usage_validation": {
+              "disposition": "accepted",
+              "policy": "native_usage_v1",
+              "reason": null
+            }
+          }
+        }
+      ],
+      "completion_events": [
+        {
+          "id": "4be765ec-d9ac-4540-94c4-afb09b128a30",
+          "seq": 25,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.verification_passed",
+          "aggregate_type": "run",
+          "aggregate_id": "13d15757-4262-4474-9f40-04d5f762628d",
+          "payload": {
+            "summary": "all 1 verifier checks passed"
+          }
+        },
+        {
+          "id": "3dda6cc4-9e4a-4970-bc40-3c558328d5e2",
+          "seq": 26,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.completed",
+          "aggregate_type": "run",
+          "aggregate_id": "13d15757-4262-4474-9f40-04d5f762628d",
+          "payload": {
+            "completion_receipt_requested": true,
+            "summary": "Owned usage fixture codex-duplicate-and-foreign-turn completed without source changes."
+          }
+        },
+        {
+          "id": "163168b3-4f19-4c2b-adad-1f689a59c3af",
+          "seq": 27,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.workspace_removed",
+          "aggregate_type": "run",
+          "aggregate_id": "13d15757-4262-4474-9f40-04d5f762628d",
+          "payload": {
+            "branch_deleted": true,
+            "commits_ahead": 0,
+            "detail": "clean worktree has no commits ahead of main; branch deletion=true",
+            "dirty": false,
+            "workspace": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\runner\\worktrees\\2bfef5b68d22486f986c6d693bd91ca4\\13d15757426244749f4004d5f762628d",
+            "workspace_base_commit": "cc3780cd5ed75f40768d745060c739ab070d267d",
+            "workspace_base_ref": "main",
+            "workspace_branch": "crony/task-2bfef5b68d22486f986c6d693bd91ca4/run-13d15757426244749f4004d5f762628d",
+            "workspace_fingerprint": null
+          }
+        }
+      ],
+      "verification_order": {
+        "verification_seqs": [
+          25
+        ],
+        "accepted_completion_seq": 26,
+        "all_verifications_precede_completion": true
+      },
+      "shutdown_evidence": {
+        "id": "09b56a14-b5b5-47ac-9bac-ed75f282a2e2",
+        "seq": 20,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "aggregate_id": "13d15757-4262-4474-9f40-04d5f762628d",
+        "payload": {
+          "adapter": "codex",
+          "clock_authority": "runner_observation_only",
+          "detail": {
+            "adapter_input_tokens": 16,
+            "adapter_output_tokens": 4,
+            "exit_status": "exit code: 0",
+            "last_usage_observed_at": "2026-10-03T15:32:39.426074+00:00",
+            "scope": "windows_job_object"
+          },
+          "observed_at": "2026-10-03T15:32:39.885141100Z",
+          "phase": "process_terminated",
+          "server_recorded_at": "2026-10-03T15:32:39.900995Z"
+        }
+      },
+      "provider_artifact": {
+        "id": "d2612351-cb5c-461f-aaf7-f9c066c60a81",
+        "event_id": "51fa9553-3d90-4963-899a-fe23c45c955e",
+        "event_seq": 21,
+        "file_name": "codex-13d15757-4262-4474-9f40-04d5f762628d.json",
+        "bytes": 1749,
+        "sha256": "171fe438ae0b9b71f8fa90e792614f5c54f516d91a3e5285d6811136c6084a18",
+        "path": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\evidence\\provider-artifact-codex-duplicate-and-foreign-turn.json",
+        "server_role": "provider_evidence",
+        "server_digest_verified": true,
+        "usage": {
+          "cost_microusd": null,
+          "input_tokens": 16,
+          "output_tokens": 4,
+          "usage_coverage": {
+            "call_identity": "unavailable",
+            "complete_provider_bill": false,
+            "native_billing_is_usd": false,
+            "token_denominator": "input_plus_output",
+            "tokens": "reported",
+            "usd": "unavailable"
+          },
+          "usage_provenance": {
+            "api_call_id": null,
+            "cache_tokens_are_input_subsets": false,
+            "cache_write_input_tokens": null,
+            "cached_input_tokens": null,
+            "cli_version": null,
+            "cumulative_total_tokens": null,
+            "invalid_fields": [],
+            "mapping": "retained_usage_aggregate_v1",
+            "model": null,
+            "model_multiplier": null,
+            "nano_aiu": null,
+            "native_event_id": null,
+            "provider_call_id": null,
+            "provider_session_id": null,
+            "reasoning_output_tokens": null,
+            "reasoning_tokens_are_output_subsets": false,
+            "schema_version": 1,
+            "scope": "retained_aggregate",
+            "sdk_version": null,
+            "source_event": null,
+            "turn_id": null
+          }
+        }
+      },
+      "visible_result": "Result / next step\nThe mission is complete\nCompleted\n\nInspect the selected run’s recorded evidence or download its output. A completed mission is not a deployed application.\n\nInspect run evidence\nDiscuss this work\nTask progress\n1/1 complete\nSelected run checks\n1/1 passed\nOutcome review\nReview details unavailable"
+    },
+    {
+      "id": "codex-cache-and-reasoning-subsets",
+      "status": "passed",
+      "expected": {
+        "emitted": 1,
+        "input_tokens": 100,
+        "output_tokens": 20,
+        "cost_microusd": null,
+        "token_coverage": "reported",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false,
+        "accepted": 1,
+        "invalid": 0,
+        "dispositions": [
+          "accepted"
+        ],
+        "artifact_token_coverage": "reported",
+        "artifact_usd_coverage": "unavailable"
+      },
+      "title": "Usage provenance codex-cache-and-reasoning-subsets",
+      "mission_id": "0ebfdcba-2a02-4d2a-83da-be7d71ae59b6",
+      "run_id": "193d2a55-4d07-4402-b09a-ff9fdd51c6d2",
+      "agent_id": "fd945289-cf3e-4e45-aeac-4095f0a4c38c",
+      "run": {
+        "id": "193d2a55-4d07-4402-b09a-ff9fdd51c6d2",
+        "task_id": "9c90869f-dfe5-4ef4-b406-9c13bcab14d1",
+        "status": "completed",
+        "workspace_path": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\runner\\worktrees\\9c90869fdfe54ef4b4069c13bcab14d1\\193d2a554d074402b09aff9fdd51c6d2",
+        "workspace_disposition": "removed",
+        "input_tokens": 100,
+        "output_tokens": 20,
+        "cost_microusd": 0,
+        "breaker_stage": "healthy",
+        "provider_session_id": "thread-issue236-a2bba98d148b4214482d7be7"
+      },
+      "usage_events": [
+        {
+          "id": "850c4039-5663-4a9b-8b8d-5ab451bfdbed",
+          "seq": 37,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.usage",
+          "aggregate_type": "run",
+          "aggregate_id": "193d2a55-4d07-4402-b09a-ff9fdd51c6d2",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T15:32:43.448775Z",
+              "charged": true,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": null
+            },
+            "cost_microusd": null,
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "usage_coverage": {
+              "call_identity": "reported",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "reported",
+              "usd": "unavailable"
+            },
+            "usage_identity_keys": [
+              "[\"codex_app_server_last_v1\",\"thread-issue236-a2bba98d148b4214482d7be7\",\"cumulative_report\",\"turn-1\",120]"
+            ],
+            "usage_origin_event_id": "850c4039-5663-4a9b-8b8d-5ab451bfdbed",
+            "usage_provenance": {
+              "api_call_id": null,
+              "cache_tokens_are_input_subsets": true,
+              "cache_write_input_tokens": 10,
+              "cached_input_tokens": 40,
+              "cli_version": null,
+              "cumulative_total_tokens": 120,
+              "invalid_fields": [],
+              "mapping": "codex_app_server_last_v1",
+              "model": null,
+              "model_multiplier": null,
+              "nano_aiu": null,
+              "native_event_id": null,
+              "provider_call_id": null,
+              "provider_session_id": "thread-issue236-a2bba98d148b4214482d7be7",
+              "reasoning_output_tokens": 5,
+              "reasoning_tokens_are_output_subsets": true,
+              "schema_version": 1,
+              "scope": "last_call",
+              "sdk_version": null,
+              "source_event": "thread/tokenUsage/updated",
+              "turn_id": "turn-1"
+            },
+            "usage_validation": {
+              "disposition": "accepted",
+              "policy": "native_usage_v1",
+              "reason": null
+            }
+          }
+        }
+      ],
+      "completion_events": [
+        {
+          "id": "55e726a2-aeb6-4448-9fcf-1082750d9c4b",
+          "seq": 46,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.verification_passed",
+          "aggregate_type": "run",
+          "aggregate_id": "193d2a55-4d07-4402-b09a-ff9fdd51c6d2",
+          "payload": {
+            "summary": "all 1 verifier checks passed"
+          }
+        },
+        {
+          "id": "6c10d7d7-e9f8-44f6-8381-a3de7c32ce21",
+          "seq": 47,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.completed",
+          "aggregate_type": "run",
+          "aggregate_id": "193d2a55-4d07-4402-b09a-ff9fdd51c6d2",
+          "payload": {
+            "completion_receipt_requested": true,
+            "summary": "Owned usage fixture codex-cache-and-reasoning-subsets completed without source changes."
+          }
+        },
+        {
+          "id": "b4a6bbde-e447-444e-b3e1-71b72758afd6",
+          "seq": 48,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.workspace_removed",
+          "aggregate_type": "run",
+          "aggregate_id": "193d2a55-4d07-4402-b09a-ff9fdd51c6d2",
+          "payload": {
+            "branch_deleted": true,
+            "commits_ahead": 0,
+            "detail": "clean worktree has no commits ahead of main; branch deletion=true",
+            "dirty": false,
+            "workspace": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\runner\\worktrees\\9c90869fdfe54ef4b4069c13bcab14d1\\193d2a554d074402b09aff9fdd51c6d2",
+            "workspace_base_commit": "cc3780cd5ed75f40768d745060c739ab070d267d",
+            "workspace_base_ref": "main",
+            "workspace_branch": "crony/task-9c90869fdfe54ef4b4069c13bcab14d1/run-193d2a554d074402b09aff9fdd51c6d2",
+            "workspace_fingerprint": null
+          }
+        }
+      ],
+      "verification_order": {
+        "verification_seqs": [
+          46
+        ],
+        "accepted_completion_seq": 47,
+        "all_verifications_precede_completion": true
+      },
+      "shutdown_evidence": {
+        "id": "8341da0b-7140-46b2-9c39-13739e789072",
+        "seq": 41,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "aggregate_id": "193d2a55-4d07-4402-b09a-ff9fdd51c6d2",
+        "payload": {
+          "adapter": "codex",
+          "clock_authority": "runner_observation_only",
+          "detail": {
+            "adapter_input_tokens": 100,
+            "adapter_output_tokens": 20,
+            "exit_status": "exit code: 0",
+            "last_usage_observed_at": "2026-10-03T15:32:43.418250600+00:00",
+            "scope": "windows_job_object"
+          },
+          "observed_at": "2026-10-03T15:32:43.874364700Z",
+          "phase": "process_terminated",
+          "server_recorded_at": "2026-10-03T15:32:43.883002Z"
+        }
+      },
+      "provider_artifact": {
+        "id": "b65339e3-68ce-4a3a-a766-1909bf74eeaf",
+        "event_id": "cbaf3c12-b318-4b7f-941f-8a74ccfeb50f",
+        "event_seq": 42,
+        "file_name": "codex-193d2a55-4d07-4402-b09a-ff9fdd51c6d2.json",
+        "bytes": 1752,
+        "sha256": "5798192e54ef5bc58a7ca45384c6f44cd561137ed475feb8eaae4a5551056e71",
+        "path": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\evidence\\provider-artifact-codex-cache-and-reasoning-subsets.json",
+        "server_role": "provider_evidence",
+        "server_digest_verified": true,
+        "usage": {
+          "cost_microusd": null,
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "usage_coverage": {
+            "call_identity": "unavailable",
+            "complete_provider_bill": false,
+            "native_billing_is_usd": false,
+            "token_denominator": "input_plus_output",
+            "tokens": "reported",
+            "usd": "unavailable"
+          },
+          "usage_provenance": {
+            "api_call_id": null,
+            "cache_tokens_are_input_subsets": false,
+            "cache_write_input_tokens": null,
+            "cached_input_tokens": null,
+            "cli_version": null,
+            "cumulative_total_tokens": null,
+            "invalid_fields": [],
+            "mapping": "retained_usage_aggregate_v1",
+            "model": null,
+            "model_multiplier": null,
+            "nano_aiu": null,
+            "native_event_id": null,
+            "provider_call_id": null,
+            "provider_session_id": null,
+            "reasoning_output_tokens": null,
+            "reasoning_tokens_are_output_subsets": false,
+            "schema_version": 1,
+            "scope": "retained_aggregate",
+            "sdk_version": null,
+            "source_event": null,
+            "turn_id": null
+          }
+        }
+      },
+      "visible_result": "Result / next step\nThe mission is complete\nCompleted\n\nInspect the selected run’s recorded evidence or download its output. A completed mission is not a deployed application.\n\nInspect run evidence\nDiscuss this work\nTask progress\n1/1 complete\nSelected run checks\n1/1 passed\nOutcome review\nReview details unavailable"
+    },
+    {
+      "id": "codex-missing-input-explicit-zero-output",
+      "status": "passed",
+      "expected": {
+        "emitted": 1,
+        "input_tokens": null,
+        "output_tokens": 0,
+        "cost_microusd": null,
+        "token_coverage": "partial",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false,
+        "accepted": 1,
+        "invalid": 0,
+        "dispositions": [
+          "accepted"
+        ],
+        "artifact_token_coverage": "partial",
+        "artifact_usd_coverage": "unavailable"
+      },
+      "title": "Usage provenance codex-missing-input-explicit-zero-output",
+      "mission_id": "877726c4-5009-42ca-96bc-9584471f9ec3",
+      "run_id": "baab75dc-7285-4d53-99e7-0351f783fed0",
+      "agent_id": "7af62ec0-73a4-4614-9209-ba1cb195cce1",
+      "run": {
+        "id": "baab75dc-7285-4d53-99e7-0351f783fed0",
+        "task_id": "560219c7-4884-4fd3-b505-c3187dff8412",
+        "status": "completed",
+        "workspace_path": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\runner\\worktrees\\560219c748844fd3b505c3187dff8412\\baab75dc72854d5399e70351f783fed0",
+        "workspace_disposition": "removed",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cost_microusd": 0,
+        "breaker_stage": "healthy",
+        "provider_session_id": "thread-issue236-819a9ef054de2030e68f688b"
+      },
+      "usage_events": [
+        {
+          "id": "2dfd66ad-8a37-4dec-a4b5-12f3500ecab9",
+          "seq": 58,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.usage",
+          "aggregate_type": "run",
+          "aggregate_id": "baab75dc-7285-4d53-99e7-0351f783fed0",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T15:32:47.188003Z",
+              "charged": true,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": null
+            },
+            "cost_microusd": null,
+            "input_tokens": null,
+            "output_tokens": 0,
+            "usage_coverage": {
+              "call_identity": "reported",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "partial",
+              "usd": "unavailable"
+            },
+            "usage_identity_keys": [
+              "[\"codex_app_server_last_v1\",\"thread-issue236-819a9ef054de2030e68f688b\",\"cumulative_report\",\"turn-1\",0]"
+            ],
+            "usage_origin_event_id": "2dfd66ad-8a37-4dec-a4b5-12f3500ecab9",
+            "usage_provenance": {
+              "api_call_id": null,
+              "cache_tokens_are_input_subsets": true,
+              "cache_write_input_tokens": null,
+              "cached_input_tokens": null,
+              "cli_version": null,
+              "cumulative_total_tokens": 0,
+              "invalid_fields": [],
+              "mapping": "codex_app_server_last_v1",
+              "model": null,
+              "model_multiplier": null,
+              "nano_aiu": null,
+              "native_event_id": null,
+              "provider_call_id": null,
+              "provider_session_id": "thread-issue236-819a9ef054de2030e68f688b",
+              "reasoning_output_tokens": null,
+              "reasoning_tokens_are_output_subsets": true,
+              "schema_version": 1,
+              "scope": "last_call",
+              "sdk_version": null,
+              "source_event": "thread/tokenUsage/updated",
+              "turn_id": "turn-1"
+            },
+            "usage_validation": {
+              "disposition": "accepted",
+              "policy": "native_usage_v1",
+              "reason": null
+            }
+          }
+        }
+      ],
+      "completion_events": [
+        {
+          "id": "87e460b6-3db7-4fc5-96b8-ac955449d8c3",
+          "seq": 67,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.verification_passed",
+          "aggregate_type": "run",
+          "aggregate_id": "baab75dc-7285-4d53-99e7-0351f783fed0",
+          "payload": {
+            "summary": "all 1 verifier checks passed"
+          }
+        },
+        {
+          "id": "ed2f5cdd-f8ea-4b13-aa56-97c176133f89",
+          "seq": 68,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.completed",
+          "aggregate_type": "run",
+          "aggregate_id": "baab75dc-7285-4d53-99e7-0351f783fed0",
+          "payload": {
+            "completion_receipt_requested": true,
+            "summary": "Owned usage fixture codex-missing-input-explicit-zero-output completed without source changes."
+          }
+        },
+        {
+          "id": "5c64d941-e4a1-494e-8c55-6c48b8b75e29",
+          "seq": 69,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.workspace_removed",
+          "aggregate_type": "run",
+          "aggregate_id": "baab75dc-7285-4d53-99e7-0351f783fed0",
+          "payload": {
+            "branch_deleted": true,
+            "commits_ahead": 0,
+            "detail": "clean worktree has no commits ahead of main; branch deletion=true",
+            "dirty": false,
+            "workspace": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\runner\\worktrees\\560219c748844fd3b505c3187dff8412\\baab75dc72854d5399e70351f783fed0",
+            "workspace_base_commit": "cc3780cd5ed75f40768d745060c739ab070d267d",
+            "workspace_base_ref": "main",
+            "workspace_branch": "crony/task-560219c748844fd3b505c3187dff8412/run-baab75dc72854d5399e70351f783fed0",
+            "workspace_fingerprint": null
+          }
+        }
+      ],
+      "verification_order": {
+        "verification_seqs": [
+          67
+        ],
+        "accepted_completion_seq": 68,
+        "all_verifications_precede_completion": true
+      },
+      "shutdown_evidence": {
+        "id": "134f6690-7262-43a6-8339-07e6a9533d43",
+        "seq": 62,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "aggregate_id": "baab75dc-7285-4d53-99e7-0351f783fed0",
+        "payload": {
+          "adapter": "codex",
+          "clock_authority": "runner_observation_only",
+          "detail": {
+            "adapter_input_tokens": null,
+            "adapter_output_tokens": 0,
+            "exit_status": "exit code: 0",
+            "last_usage_observed_at": "2026-10-03T15:32:47.160246600+00:00",
+            "scope": "windows_job_object"
+          },
+          "observed_at": "2026-10-03T15:32:47.618812900Z",
+          "phase": "process_terminated",
+          "server_recorded_at": "2026-10-03T15:32:47.626226Z"
+        }
+      },
+      "provider_artifact": {
+        "id": "65215069-eef8-4221-888f-e449f38dbb52",
+        "event_id": "23bea267-948d-4836-ad93-9d474b19771a",
+        "event_seq": 63,
+        "file_name": "codex-baab75dc-7285-4d53-99e7-0351f783fed0.json",
+        "bytes": 1758,
+        "sha256": "54c656693eb1359482bb20093c8cf25b35048307f516288ea5040196adf3b939",
+        "path": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\evidence\\provider-artifact-codex-missing-input-explicit-zero-output.json",
+        "server_role": "provider_evidence",
+        "server_digest_verified": true,
+        "usage": {
+          "cost_microusd": null,
+          "input_tokens": null,
+          "output_tokens": 0,
+          "usage_coverage": {
+            "call_identity": "unavailable",
+            "complete_provider_bill": false,
+            "native_billing_is_usd": false,
+            "token_denominator": "input_plus_output",
+            "tokens": "partial",
+            "usd": "unavailable"
+          },
+          "usage_provenance": {
+            "api_call_id": null,
+            "cache_tokens_are_input_subsets": false,
+            "cache_write_input_tokens": null,
+            "cached_input_tokens": null,
+            "cli_version": null,
+            "cumulative_total_tokens": null,
+            "invalid_fields": [],
+            "mapping": "retained_usage_aggregate_v1",
+            "model": null,
+            "model_multiplier": null,
+            "nano_aiu": null,
+            "native_event_id": null,
+            "provider_call_id": null,
+            "provider_session_id": null,
+            "reasoning_output_tokens": null,
+            "reasoning_tokens_are_output_subsets": false,
+            "schema_version": 1,
+            "scope": "retained_aggregate",
+            "sdk_version": null,
+            "source_event": null,
+            "turn_id": null
+          }
+        }
+      },
+      "visible_result": "Result / next step\nThe mission is complete\nCompleted\n\nInspect the selected run’s recorded evidence or download its output. A completed mission is not a deployed application.\n\nInspect run evidence\nDiscuss this work\nTask progress\n1/1 complete\nSelected run checks\n1/1 passed\nOutcome review\nReview details unavailable"
+    },
+    {
+      "id": "codex-regressing-and-contradictory-cursors",
+      "status": "passed",
+      "expected": {
+        "emitted": 5,
+        "accepted": 2,
+        "invalid": 3,
+        "dispositions": [
+          "accepted",
+          "invalid",
+          "invalid",
+          "invalid",
+          "accepted"
+        ],
+        "accepted_cursors": [
+          12,
+          20
+        ],
+        "accepted_quantities": [
+          [
+            10,
+            2
+          ],
+          [
+            6,
+            2
+          ]
+        ],
+        "input_tokens": 16,
+        "output_tokens": 4,
+        "cost_microusd": null,
+        "token_coverage": "reported",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false,
+        "artifact_token_coverage": "invalid",
+        "artifact_usd_coverage": "invalid"
+      },
+      "title": "Usage provenance codex-regressing-and-contradictory-cursors",
+      "mission_id": "1619469b-3f34-4f5c-af81-95e00e7cb89d",
+      "run_id": "0d1b865d-c883-4613-9eaa-89ba29f26f39",
+      "agent_id": "d4df95f9-613f-4895-bb90-ccb1a181defe",
+      "run": {
+        "id": "0d1b865d-c883-4613-9eaa-89ba29f26f39",
+        "task_id": "f534d018-6339-41c6-b992-b616397b59b8",
+        "status": "completed",
+        "workspace_path": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\runner\\worktrees\\f534d018633941c6b992b616397b59b8\\0d1b865dc88346139eaa89ba29f26f39",
+        "workspace_disposition": "removed",
+        "input_tokens": 16,
+        "output_tokens": 4,
+        "cost_microusd": 0,
+        "breaker_stage": "healthy",
+        "provider_session_id": "thread-issue236-572711b5557a536557f3011d"
+      },
+      "usage_events": [
+        {
+          "id": "752771b9-1515-4973-9dfe-59c251de9bd4",
+          "seq": 79,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.usage",
+          "aggregate_type": "run",
+          "aggregate_id": "0d1b865d-c883-4613-9eaa-89ba29f26f39",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T15:32:52.582855Z",
+              "charged": true,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": null
+            },
+            "cost_microusd": null,
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "usage_coverage": {
+              "call_identity": "reported",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "reported",
+              "usd": "unavailable"
+            },
+            "usage_identity_keys": [
+              "[\"codex_app_server_last_v1\",\"thread-issue236-572711b5557a536557f3011d\",\"cumulative_report\",\"turn-1\",12]"
+            ],
+            "usage_origin_event_id": "752771b9-1515-4973-9dfe-59c251de9bd4",
+            "usage_provenance": {
+              "api_call_id": null,
+              "cache_tokens_are_input_subsets": true,
+              "cache_write_input_tokens": null,
+              "cached_input_tokens": null,
+              "cli_version": null,
+              "cumulative_total_tokens": 12,
+              "invalid_fields": [],
+              "mapping": "codex_app_server_last_v1",
+              "model": null,
+              "model_multiplier": null,
+              "nano_aiu": null,
+              "native_event_id": null,
+              "provider_call_id": null,
+              "provider_session_id": "thread-issue236-572711b5557a536557f3011d",
+              "reasoning_output_tokens": null,
+              "reasoning_tokens_are_output_subsets": true,
+              "schema_version": 1,
+              "scope": "last_call",
+              "sdk_version": null,
+              "source_event": "thread/tokenUsage/updated",
+              "turn_id": "turn-1"
+            },
+            "usage_validation": {
+              "disposition": "accepted",
+              "policy": "native_usage_v1",
+              "reason": null
+            }
+          }
+        },
+        {
+          "id": "159f1def-8a78-4108-9f2c-088c31da3466",
+          "seq": 81,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.usage_observed",
+          "aggregate_type": "run",
+          "aggregate_id": "0d1b865d-c883-4613-9eaa-89ba29f26f39",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T15:32:52.592403Z",
+              "charged": false,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": "invalid_usage"
+            },
+            "cost_microusd": null,
+            "input_tokens": null,
+            "output_tokens": null,
+            "usage_coverage": {
+              "call_identity": "unavailable",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "invalid",
+              "usd": "invalid"
+            },
+            "usage_validation": {
+              "disposition": "invalid",
+              "policy": "native_usage_v1",
+              "reason": "invalid_usage"
+            }
+          }
+        },
+        {
+          "id": "3b507e6e-2c8f-489f-839a-c0c5b48b7128",
+          "seq": 83,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.usage_observed",
+          "aggregate_type": "run",
+          "aggregate_id": "0d1b865d-c883-4613-9eaa-89ba29f26f39",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T15:32:52.598845Z",
+              "charged": false,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": "invalid_usage"
+            },
+            "cost_microusd": null,
+            "input_tokens": null,
+            "output_tokens": null,
+            "usage_coverage": {
+              "call_identity": "unavailable",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "invalid",
+              "usd": "invalid"
+            },
+            "usage_validation": {
+              "disposition": "invalid",
+              "policy": "native_usage_v1",
+              "reason": "invalid_usage"
+            }
+          }
+        },
+        {
+          "id": "e7ca34c3-41cd-4334-aee5-64d212fc14c2",
+          "seq": 85,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.usage_observed",
+          "aggregate_type": "run",
+          "aggregate_id": "0d1b865d-c883-4613-9eaa-89ba29f26f39",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T15:32:52.604562Z",
+              "charged": false,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": "invalid_usage"
+            },
+            "cost_microusd": null,
+            "input_tokens": null,
+            "output_tokens": null,
+            "usage_coverage": {
+              "call_identity": "unavailable",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "invalid",
+              "usd": "invalid"
+            },
+            "usage_validation": {
+              "disposition": "invalid",
+              "policy": "native_usage_v1",
+              "reason": "invalid_usage"
+            }
+          }
+        },
+        {
+          "id": "be6710a6-ee0e-47db-84fb-5e2a16697f1c",
+          "seq": 88,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.usage",
+          "aggregate_type": "run",
+          "aggregate_id": "0d1b865d-c883-4613-9eaa-89ba29f26f39",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T15:32:52.616475Z",
+              "charged": true,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": null
+            },
+            "cost_microusd": null,
+            "input_tokens": 6,
+            "output_tokens": 2,
+            "usage_coverage": {
+              "call_identity": "reported",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "reported",
+              "usd": "unavailable"
+            },
+            "usage_identity_keys": [
+              "[\"codex_app_server_last_v1\",\"thread-issue236-572711b5557a536557f3011d\",\"cumulative_report\",\"turn-1\",20]"
+            ],
+            "usage_origin_event_id": "be6710a6-ee0e-47db-84fb-5e2a16697f1c",
+            "usage_provenance": {
+              "api_call_id": null,
+              "cache_tokens_are_input_subsets": true,
+              "cache_write_input_tokens": null,
+              "cached_input_tokens": null,
+              "cli_version": null,
+              "cumulative_total_tokens": 20,
+              "invalid_fields": [],
+              "mapping": "codex_app_server_last_v1",
+              "model": null,
+              "model_multiplier": null,
+              "nano_aiu": null,
+              "native_event_id": null,
+              "provider_call_id": null,
+              "provider_session_id": "thread-issue236-572711b5557a536557f3011d",
+              "reasoning_output_tokens": null,
+              "reasoning_tokens_are_output_subsets": true,
+              "schema_version": 1,
+              "scope": "last_call",
+              "sdk_version": null,
+              "source_event": "thread/tokenUsage/updated",
+              "turn_id": "turn-1"
+            },
+            "usage_validation": {
+              "disposition": "accepted",
+              "policy": "native_usage_v1",
+              "reason": null
+            }
+          }
+        }
+      ],
+      "completion_events": [
+        {
+          "id": "8322ee5a-1a25-4d43-8838-21d406f56fac",
+          "seq": 98,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.verification_passed",
+          "aggregate_type": "run",
+          "aggregate_id": "0d1b865d-c883-4613-9eaa-89ba29f26f39",
+          "payload": {
+            "summary": "all 1 verifier checks passed"
+          }
+        },
+        {
+          "id": "64f21513-cf04-44b6-9f10-791fa219f4f2",
+          "seq": 99,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.completed",
+          "aggregate_type": "run",
+          "aggregate_id": "0d1b865d-c883-4613-9eaa-89ba29f26f39",
+          "payload": {
+            "completion_receipt_requested": true,
+            "summary": "Owned usage fixture codex-regressing-and-contradictory-cursors completed without source changes."
+          }
+        },
+        {
+          "id": "657de7b1-48f5-465d-9fc8-927e06c005f2",
+          "seq": 100,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.workspace_removed",
+          "aggregate_type": "run",
+          "aggregate_id": "0d1b865d-c883-4613-9eaa-89ba29f26f39",
+          "payload": {
+            "branch_deleted": true,
+            "commits_ahead": 0,
+            "detail": "clean worktree has no commits ahead of main; branch deletion=true",
+            "dirty": false,
+            "workspace": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\runner\\worktrees\\f534d018633941c6b992b616397b59b8\\0d1b865dc88346139eaa89ba29f26f39",
+            "workspace_base_commit": "cc3780cd5ed75f40768d745060c739ab070d267d",
+            "workspace_base_ref": "main",
+            "workspace_branch": "crony/task-f534d018633941c6b992b616397b59b8/run-0d1b865dc88346139eaa89ba29f26f39",
+            "workspace_fingerprint": null
+          }
+        }
+      ],
+      "verification_order": {
+        "verification_seqs": [
+          98
+        ],
+        "accepted_completion_seq": 99,
+        "all_verifications_precede_completion": true
+      },
+      "cursor_admission_evidence": {
+        "ordered_dispositions": [
+          "accepted",
+          "invalid",
+          "invalid",
+          "invalid",
+          "accepted"
+        ],
+        "accepted_cursors": [
+          12,
+          20
+        ],
+        "invalid_observations": 3,
+        "later_increasing_cursor_charged_once": true,
+        "duplicates_suppressed": true
+      },
+      "shutdown_evidence": {
+        "id": "e75c348a-bd61-4dc3-ba08-d34618fa3ecf",
+        "seq": 93,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "aggregate_id": "0d1b865d-c883-4613-9eaa-89ba29f26f39",
+        "payload": {
+          "adapter": "codex",
+          "clock_authority": "runner_observation_only",
+          "detail": {
+            "adapter_input_tokens": 16,
+            "adapter_output_tokens": 4,
+            "exit_status": "exit code: 0",
+            "last_usage_observed_at": "2026-10-03T15:32:52.563097400+00:00",
+            "scope": "windows_job_object"
+          },
+          "observed_at": "2026-10-03T15:32:53.018581700Z",
+          "phase": "process_terminated",
+          "server_recorded_at": "2026-10-03T15:32:53.027346Z"
+        }
+      },
+      "provider_artifact": {
+        "id": "4554c9d8-2bfe-4556-851a-e27391ca1231",
+        "event_id": "f7e3dc12-0ca4-4c0d-8db1-7e0c64c30c39",
+        "event_seq": 94,
+        "file_name": "codex-0d1b865d-c883-4613-9eaa-89ba29f26f39.json",
+        "bytes": 1965,
+        "sha256": "b638796acc51f4f2d9dcd7d3df37de00becb5703122735372b0a90ab02f9cce5",
+        "path": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\evidence\\provider-artifact-codex-regressing-and-contradictory-cursors.json",
+        "server_role": "provider_evidence",
+        "server_digest_verified": true,
+        "usage": {
+          "cost_microusd": null,
+          "input_tokens": 16,
+          "output_tokens": 4,
+          "usage_coverage": {
+            "call_identity": "unavailable",
+            "complete_provider_bill": false,
+            "native_billing_is_usd": false,
+            "token_denominator": "input_plus_output",
+            "tokens": "invalid",
+            "usd": "invalid"
+          },
+          "usage_provenance": {
+            "api_call_id": null,
+            "cache_tokens_are_input_subsets": false,
+            "cache_write_input_tokens": null,
+            "cached_input_tokens": null,
+            "cli_version": null,
+            "cumulative_total_tokens": null,
+            "invalid_fields": [
+              {
+                "field": "cumulative_total_tokens",
+                "reason": "conflicting_observation"
+              },
+              {
+                "field": "observation",
+                "reason": "invalid_number"
+              }
+            ],
+            "mapping": "retained_usage_aggregate_v1",
+            "model": null,
+            "model_multiplier": null,
+            "nano_aiu": null,
+            "native_event_id": null,
+            "provider_call_id": null,
+            "provider_session_id": null,
+            "reasoning_output_tokens": null,
+            "reasoning_tokens_are_output_subsets": false,
+            "schema_version": 1,
+            "scope": "retained_aggregate",
+            "sdk_version": null,
+            "source_event": null,
+            "turn_id": null
+          }
+        }
+      },
+      "visible_result": "Result / next step\nThe mission is complete\nCompleted\n\nInspect the selected run’s recorded evidence or download its output. A completed mission is not a deployed application.\n\nInspect run evidence\nDiscuss this work\nTask progress\n1/1 complete\nSelected run checks\n1/1 passed\nOutcome review\nReview details unavailable"
+    },
+    {
+      "id": "codex-invalid-first-retains-subtotals",
+      "status": "passed",
+      "expected": {
+        "emitted": 3,
+        "accepted": 2,
+        "invalid": 1,
+        "dispositions": [
+          "invalid",
+          "accepted",
+          "accepted"
+        ],
+        "accepted_cursors": [
+          12,
+          20
+        ],
+        "accepted_quantities": [
+          [
+            10,
+            2
+          ],
+          [
+            6,
+            2
+          ]
+        ],
+        "input_tokens": 16,
+        "output_tokens": 4,
+        "cost_microusd": null,
+        "token_coverage": "reported",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false,
+        "artifact_token_coverage": "invalid",
+        "artifact_usd_coverage": "invalid"
+      },
+      "title": "Usage provenance codex-invalid-first-retains-subtotals",
+      "mission_id": "01b2995a-9a67-4943-abc6-9c7f539bc162",
+      "run_id": "35dafc6f-7ba6-4c72-9725-3538cdcea44a",
+      "agent_id": "f85157ed-31c3-49a9-8f95-7b27bc5af73f",
+      "run": {
+        "id": "35dafc6f-7ba6-4c72-9725-3538cdcea44a",
+        "task_id": "03b7c3cc-e7bc-47e6-bf3f-def4578a530e",
+        "status": "completed",
+        "workspace_path": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\runner\\worktrees\\03b7c3cce7bc47e6bf3fdef4578a530e\\35dafc6f7ba64c7297253538cdcea44a",
+        "workspace_disposition": "removed",
+        "input_tokens": 16,
+        "output_tokens": 4,
+        "cost_microusd": 0,
+        "breaker_stage": "healthy",
+        "provider_session_id": "thread-issue236-44741fdc0a4fc38ce19c00b8"
+      },
+      "usage_events": [
+        {
+          "id": "d78b5489-6aa8-4c9b-961b-6db34ed269ed",
+          "seq": 110,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.usage_observed",
+          "aggregate_type": "run",
+          "aggregate_id": "35dafc6f-7ba6-4c72-9725-3538cdcea44a",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T15:32:56.256877Z",
+              "charged": false,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": "invalid_usage"
+            },
+            "cost_microusd": null,
+            "input_tokens": null,
+            "output_tokens": null,
+            "usage_coverage": {
+              "call_identity": "unavailable",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "invalid",
+              "usd": "invalid"
+            },
+            "usage_validation": {
+              "disposition": "invalid",
+              "policy": "native_usage_v1",
+              "reason": "invalid_usage"
+            }
+          }
+        },
+        {
+          "id": "3dcf90b6-b756-4ad3-8eb1-8a25306bee07",
+          "seq": 112,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.usage",
+          "aggregate_type": "run",
+          "aggregate_id": "35dafc6f-7ba6-4c72-9725-3538cdcea44a",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T15:32:56.265166Z",
+              "charged": true,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": null
+            },
+            "cost_microusd": null,
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "usage_coverage": {
+              "call_identity": "reported",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "reported",
+              "usd": "unavailable"
+            },
+            "usage_identity_keys": [
+              "[\"codex_app_server_last_v1\",\"thread-issue236-44741fdc0a4fc38ce19c00b8\",\"cumulative_report\",\"turn-1\",12]"
+            ],
+            "usage_origin_event_id": "3dcf90b6-b756-4ad3-8eb1-8a25306bee07",
+            "usage_provenance": {
+              "api_call_id": null,
+              "cache_tokens_are_input_subsets": true,
+              "cache_write_input_tokens": null,
+              "cached_input_tokens": null,
+              "cli_version": null,
+              "cumulative_total_tokens": 12,
+              "invalid_fields": [],
+              "mapping": "codex_app_server_last_v1",
+              "model": null,
+              "model_multiplier": null,
+              "nano_aiu": null,
+              "native_event_id": null,
+              "provider_call_id": null,
+              "provider_session_id": "thread-issue236-44741fdc0a4fc38ce19c00b8",
+              "reasoning_output_tokens": null,
+              "reasoning_tokens_are_output_subsets": true,
+              "schema_version": 1,
+              "scope": "last_call",
+              "sdk_version": null,
+              "source_event": "thread/tokenUsage/updated",
+              "turn_id": "turn-1"
+            },
+            "usage_validation": {
+              "disposition": "accepted",
+              "policy": "native_usage_v1",
+              "reason": null
+            }
+          }
+        },
+        {
+          "id": "ccff3cd2-dc5c-4e81-94ef-fa8763587c2f",
+          "seq": 115,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.usage",
+          "aggregate_type": "run",
+          "aggregate_id": "35dafc6f-7ba6-4c72-9725-3538cdcea44a",
+          "payload": {
+            "accounting": {
+              "admitted_at": "2026-10-03T15:32:56.278653Z",
+              "charged": true,
+              "cutoff_at": null,
+              "generation_time_known": false,
+              "grace_seconds": 5,
+              "hard_boundary_at": null,
+              "known_subtotal_only": true,
+              "policy": "hard_control_grace_v1",
+              "reason": null
+            },
+            "cost_microusd": null,
+            "input_tokens": 6,
+            "output_tokens": 2,
+            "usage_coverage": {
+              "call_identity": "reported",
+              "complete_provider_bill": false,
+              "native_billing_is_usd": false,
+              "token_denominator": "input_plus_output",
+              "tokens": "reported",
+              "usd": "unavailable"
+            },
+            "usage_identity_keys": [
+              "[\"codex_app_server_last_v1\",\"thread-issue236-44741fdc0a4fc38ce19c00b8\",\"cumulative_report\",\"turn-1\",20]"
+            ],
+            "usage_origin_event_id": "ccff3cd2-dc5c-4e81-94ef-fa8763587c2f",
+            "usage_provenance": {
+              "api_call_id": null,
+              "cache_tokens_are_input_subsets": true,
+              "cache_write_input_tokens": null,
+              "cached_input_tokens": null,
+              "cli_version": null,
+              "cumulative_total_tokens": 20,
+              "invalid_fields": [],
+              "mapping": "codex_app_server_last_v1",
+              "model": null,
+              "model_multiplier": null,
+              "nano_aiu": null,
+              "native_event_id": null,
+              "provider_call_id": null,
+              "provider_session_id": "thread-issue236-44741fdc0a4fc38ce19c00b8",
+              "reasoning_output_tokens": null,
+              "reasoning_tokens_are_output_subsets": true,
+              "schema_version": 1,
+              "scope": "last_call",
+              "sdk_version": null,
+              "source_event": "thread/tokenUsage/updated",
+              "turn_id": "turn-1"
+            },
+            "usage_validation": {
+              "disposition": "accepted",
+              "policy": "native_usage_v1",
+              "reason": null
+            }
+          }
+        }
+      ],
+      "completion_events": [
+        {
+          "id": "9ce7ff0e-9188-4b7b-919d-bce3e4751a4c",
+          "seq": 125,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.verification_passed",
+          "aggregate_type": "run",
+          "aggregate_id": "35dafc6f-7ba6-4c72-9725-3538cdcea44a",
+          "payload": {
+            "summary": "all 1 verifier checks passed"
+          }
+        },
+        {
+          "id": "35524c47-aa1f-41cf-b5ae-aff49b2443fc",
+          "seq": 126,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.completed",
+          "aggregate_type": "run",
+          "aggregate_id": "35dafc6f-7ba6-4c72-9725-3538cdcea44a",
+          "payload": {
+            "completion_receipt_requested": true,
+            "summary": "Owned usage fixture codex-invalid-first-retains-subtotals completed without source changes."
+          }
+        },
+        {
+          "id": "e45570f9-12c4-4762-b304-a4e61505a283",
+          "seq": 127,
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "type": "run.workspace_removed",
+          "aggregate_type": "run",
+          "aggregate_id": "35dafc6f-7ba6-4c72-9725-3538cdcea44a",
+          "payload": {
+            "branch_deleted": true,
+            "commits_ahead": 0,
+            "detail": "clean worktree has no commits ahead of main; branch deletion=true",
+            "dirty": false,
+            "workspace": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\runner\\worktrees\\03b7c3cce7bc47e6bf3fdef4578a530e\\35dafc6f7ba64c7297253538cdcea44a",
+            "workspace_base_commit": "cc3780cd5ed75f40768d745060c739ab070d267d",
+            "workspace_base_ref": "main",
+            "workspace_branch": "crony/task-03b7c3cce7bc47e6bf3fdef4578a530e/run-35dafc6f7ba64c7297253538cdcea44a",
+            "workspace_fingerprint": null
+          }
+        }
+      ],
+      "verification_order": {
+        "verification_seqs": [
+          125
+        ],
+        "accepted_completion_seq": 126,
+        "all_verifications_precede_completion": true
+      },
+      "cursor_admission_evidence": {
+        "ordered_dispositions": [
+          "invalid",
+          "accepted",
+          "accepted"
+        ],
+        "accepted_cursors": [
+          12,
+          20
+        ],
+        "invalid_observations": 1,
+        "later_increasing_cursor_charged_once": true,
+        "duplicates_suppressed": true
+      },
+      "shutdown_evidence": {
+        "id": "fec5b1bb-b8ba-41c5-8325-b5a3b3bb5ec4",
+        "seq": 120,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "aggregate_id": "35dafc6f-7ba6-4c72-9725-3538cdcea44a",
+        "payload": {
+          "adapter": "codex",
+          "clock_authority": "runner_observation_only",
+          "detail": {
+            "adapter_input_tokens": 16,
+            "adapter_output_tokens": 4,
+            "exit_status": "exit code: 0",
+            "last_usage_observed_at": "2026-10-03T15:32:56.247464500+00:00",
+            "scope": "windows_job_object"
+          },
+          "observed_at": "2026-10-03T15:32:56.702702700Z",
+          "phase": "process_terminated",
+          "server_recorded_at": "2026-10-03T15:32:56.711936Z"
+        }
+      },
+      "provider_artifact": {
+        "id": "452abd81-db24-461e-82c5-bba1de9c0f73",
+        "event_id": "348db7ec-31e9-492f-abe0-6a3db300140a",
+        "event_seq": 121,
+        "file_name": "codex-35dafc6f-7ba6-4c72-9725-3538cdcea44a.json",
+        "bytes": 1940,
+        "sha256": "55d79404d7471cd3e338a1187b89991c0567c027de2b4e8c85ee855f31f52220",
+        "path": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\evidence\\provider-artifact-codex-invalid-first-retains-subtotals.json",
+        "server_role": "provider_evidence",
+        "server_digest_verified": true,
+        "usage": {
+          "cost_microusd": null,
+          "input_tokens": 16,
+          "output_tokens": 4,
+          "usage_coverage": {
+            "call_identity": "unavailable",
+            "complete_provider_bill": false,
+            "native_billing_is_usd": false,
+            "token_denominator": "input_plus_output",
+            "tokens": "invalid",
+            "usd": "invalid"
+          },
+          "usage_provenance": {
+            "api_call_id": null,
+            "cache_tokens_are_input_subsets": false,
+            "cache_write_input_tokens": null,
+            "cached_input_tokens": null,
+            "cli_version": null,
+            "cumulative_total_tokens": null,
+            "invalid_fields": [
+              {
+                "field": "input_tokens",
+                "reason": "invalid_number"
+              },
+              {
+                "field": "observation",
+                "reason": "invalid_number"
+              }
+            ],
+            "mapping": "retained_usage_aggregate_v1",
+            "model": null,
+            "model_multiplier": null,
+            "nano_aiu": null,
+            "native_event_id": null,
+            "provider_call_id": null,
+            "provider_session_id": null,
+            "reasoning_output_tokens": null,
+            "reasoning_tokens_are_output_subsets": false,
+            "schema_version": 1,
+            "scope": "retained_aggregate",
+            "sdk_version": null,
+            "source_event": null,
+            "turn_id": null
+          }
+        }
+      },
+      "visible_result": "Result / next step\nThe mission is complete\nCompleted\n\nInspect the selected run’s recorded evidence or download its output. A completed mission is not a deployed application.\n\nInspect run evidence\nDiscuss this work\nTask progress\n1/1 complete\nSelected run checks\n1/1 passed\nOutcome review\nReview details unavailable"
+    }
+  ],
+  "http_results": [
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/d2612351-cb5c-461f-aaf7-f9c066c60a81?actor_id=00000000-0000-4000-8000-000000000011",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b65339e3-68ce-4a3a-a766-1909bf74eeaf?actor_id=00000000-0000-4000-8000-000000000011",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/65215069-eef8-4221-888f-e449f38dbb52?actor_id=00000000-0000-4000-8000-000000000011",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/4554c9d8-2bfe-4556-851a-e27391ca1231?actor_id=00000000-0000-4000-8000-000000000011",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/452abd81-db24-461e-82c5-bba1de9c0f73?actor_id=00000000-0000-4000-8000-000000000011",
+      "method": "GET",
+      "status": 200
+    }
+  ],
+  "execution_errors": [],
+  "blocked_requests": [],
+  "page_errors": [],
+  "screenshots": [
+    {
+      "path": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\evidence\\usage-codex-duplicate-and-foreign-turn.png",
+      "sha256": "e3b9640ef3fc94bc35e6f674dbbe98d230d8fc2840a247ee42974706f6af45e6"
+    },
+    {
+      "path": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\evidence\\usage-codex-cache-and-reasoning-subsets.png",
+      "sha256": "7ffdec4a46f0ad2d557a888ae76c0f0698510653473470c245fe2bbc7e2f723b"
+    },
+    {
+      "path": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\evidence\\usage-codex-missing-input-explicit-zero-output.png",
+      "sha256": "f0b32d0014f3a81dac6ebd70934787f2ead0de1faee5ea54f6522124b9405ff7"
+    },
+    {
+      "path": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\evidence\\usage-codex-regressing-and-contradictory-cursors.png",
+      "sha256": "26ac16fed44f2d31f385ee5d802aa6a5e3413a3a60cd2a81675e0837141b31f5"
+    },
+    {
+      "path": "<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\evidence\\usage-codex-invalid-first-retains-subtotals.png",
+      "sha256": "b51c0189c00d882681c80284e10efbe1937b99065e749ff7e72b9e15b1e397cb"
+    }
+  ],
+  "assurance": "Owned deterministic transport in actual Edge, native server/runner and fresh SCRAM PostgreSQL. No provider inference, billing verification, auditor decision, hosted gate or independent outcome review.",
+  "runner_capabilities": [
+    {
+      "id": "issue236-usage-qa",
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "connected": true,
+      "status": "connected",
+      "capabilities": [
+        {
+          "name": "claude-code",
+          "available": false,
+          "detail": "Anthropic Claude Code; spawn=yes, stream=yes, steer=no, interrupt=yes, stop=yes, resume=yes, usage=yes, artifacts=yes; model discovery failed: Anthropic Claude Code availability probe failed: The system cannot find the file specified. (os error 2)",
+          "models": []
+        },
+        {
+          "name": "codex",
+          "available": true,
+          "detail": "OpenAI Codex app-server; spawn=yes, stream=yes, steer=yes, interrupt=yes, stop=yes, resume=yes, usage=yes, artifacts=yes",
+          "models": []
+        },
+        {
+          "name": "delegated-resource",
+          "available": true,
+          "detail": "Native delegated protected-resource read; spawn=yes, stream=yes, steer=no, interrupt=yes, stop=yes, resume=no, usage=no, artifacts=yes",
+          "models": []
+        },
+        {
+          "name": "fake-process",
+          "available": true,
+          "detail": "Deterministic process; spawn=yes, stream=yes, steer=yes, interrupt=no, stop=yes, resume=no, usage=no, artifacts=yes",
+          "models": []
+        },
+        {
+          "name": "github-copilot",
+          "available": true,
+          "detail": "GitHub Copilot SDK; spawn=yes, stream=yes, steer=yes, interrupt=yes, stop=yes, resume=yes, usage=yes, artifacts=yes",
+          "models": [
+            {
+              "id": "copilot-test-fast",
+              "name": "Copilot Test Fast",
+              "policy_state": "enabled",
+              "policy_terms": null,
+              "supports_vision": false,
+              "supports_reasoning_effort": false,
+              "max_prompt_tokens": null,
+              "max_context_window_tokens": 64000,
+              "supported_reasoning_efforts": [],
+              "default_reasoning_effort": null,
+              "billing_multiplier": 1
+            },
+            {
+              "id": "copilot-test-reasoning",
+              "name": "Copilot Test Reasoning",
+              "policy_state": "enabled",
+              "policy_terms": null,
+              "supports_vision": true,
+              "supports_reasoning_effort": true,
+              "max_prompt_tokens": 120000,
+              "max_context_window_tokens": 128000,
+              "supported_reasoning_efforts": [
+                "low",
+                "medium",
+                "high"
+              ],
+              "default_reasoning_effort": "medium",
+              "billing_multiplier": 1.5
+            },
+            {
+              "id": "copilot-test-disabled",
+              "name": "Copilot Test Disabled",
+              "policy_state": "disabled",
+              "policy_terms": "fixture policy",
+              "supports_vision": false,
+              "supports_reasoning_effort": false,
+              "max_prompt_tokens": null,
+              "max_context_window_tokens": 32000,
+              "supported_reasoning_efforts": [],
+              "default_reasoning_effort": null,
+              "billing_multiplier": null
+            }
+          ]
+        },
+        {
+          "name": "opencode",
+          "available": false,
+          "detail": "OpenCode; spawn=yes, stream=yes, steer=no, interrupt=yes, stop=yes, resume=yes, usage=yes, artifacts=yes; model discovery failed: OpenCode availability probe failed: The system cannot find the file specified. (os error 2)",
+          "models": []
+        },
+        {
+          "name": "workspace-isolation",
+          "available": true,
+          "detail": "root=<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\runner; repository=<owned-qa-root>\\issue236-usage-provenance-late-replay-20261003-r1\\source; remote=ecorp-fixture/usage-provenance-fixture; base=main; commit=cc3780cd5ed75f40768d745060c739ab070d267d",
+          "models": [],
+          "source_repository": "ecorp-fixture/usage-provenance-fixture",
+          "source_base_ref": "main",
+          "source_base_commit": "cc3780cd5ed75f40768d745060c739ab070d267d"
+        },
+        {
+          "name": "durable-control-v1",
+          "available": true,
+          "detail": "control messages use command ids, runner deduplication, and explicit acknowledgment",
+          "models": []
+        },
+        {
+          "name": "verification-artifact-transfer-v1",
+          "available": true,
+          "detail": "bounded, digest-checked provider evidence isolated from source and check snapshots",
+          "models": []
+        },
+        {
+          "name": "verifier-cache-suppression-v1",
+          "available": true,
+          "detail": "Explicit verifier child cache controls",
+          "models": []
+        },
+        {
+          "name": "checkpoint-verification-v1",
+          "available": true,
+          "detail": "exact stopped-source admission and runner-owned verification commit without a provider",
+          "models": []
+        },
+        {
+          "name": "canonical-source-verification-v1",
+          "available": true,
+          "detail": "Persisted checks and exports share a frozen native Git tree",
+          "models": []
+        },
+        {
+          "name": "retained-provider-receipt-v1",
+          "available": true,
+          "detail": "explicit historical receipt collection from sealed source with a new durable artifact acknowledgment",
+          "models": []
+        },
+        {
+          "name": "secret-delivery",
+          "available": true,
+          "detail": "task-scoped, expiring broker grants; environment injection is reduced assurance",
+          "models": []
+        },
+        {
+          "name": "workspace-setup-v1",
+          "available": true,
+          "detail": "Native repository and coding-agent connections with runner-private state",
+          "models": []
+        },
+        {
+          "name": "verified-dependency-files-v1",
+          "available": true,
+          "detail": "bounded verified dependency files materialized before provider startup",
+          "models": []
+        }
+      ]
+    }
+  ],
+  "finished_at_utc": "2026-10-03T15:32:58.983Z",
+  "counts": {
+    "passed": 54,
+    "failed": 0,
+    "execution_errors": 0,
+    "scenarios_failed": 0,
+    "scenarios_passed": 5,
+    "scenarios_unexecuted": 0
+  }
+}

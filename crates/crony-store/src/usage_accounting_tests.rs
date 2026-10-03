@@ -162,6 +162,21 @@ async fn issue236_usage_four_scoped_calls_sum_once_with_replays_and_terminal_evi
     .await;
     assert_uncharged(&terminal, "accepted");
     assert_eq!(terminal.payload["accounting"]["reason"], "run_terminal");
+    let terminal_replay = observe(
+        &store,
+        3,
+        report(Some(50), Some(5), Some("late-event"), Some("late-call")),
+    )
+    .await;
+    assert_uncharged(&terminal_replay, "duplicate");
+    assert_eq!(
+        terminal_replay.payload["usage_origin_event_id"],
+        json!(terminal.id)
+    );
+    assert_eq!(
+        terminal_replay.payload["accounting"]["reason"],
+        "run_terminal"
+    );
     assert_eq!(counters(&store, 3).await, (7, 3, 0));
     let replay = observe(
         &store,
@@ -171,6 +186,139 @@ async fn issue236_usage_four_scoped_calls_sum_once_with_replays_and_terminal_evi
     .await;
     assert_uncharged(&replay, "duplicate");
     assert_eq!(replay.payload["accounting"]["reason"], "run_terminal");
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires an explicitly owned disposable PostgreSQL database"]
+async fn issue236_usage_uncharged_replays_preserve_origins_aliases_and_hard_boundaries(
+    pool: PgPool,
+) {
+    let store = usage_fixture(pool).await;
+    for (index, (status, stage, expired, reason)) in [
+        ("completed", "healthy", false, "run_terminal"),
+        ("failed", "healthy", false, "run_terminal"),
+        ("cancelled", "healthy", false, "run_terminal"),
+        ("lost", "healthy", false, "run_terminal"),
+        ("running", "stop", false, "hard_boundary_time_unavailable"),
+        ("running", "stop", true, "hard_control_grace_expired"),
+        ("running", "suspend", true, "hard_control_grace_expired"),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let index = index as u128;
+        if index >= 2 {
+            add_run(&store, index, CORP, MISSION).await;
+            bind_session(&store, index).await;
+        }
+        // Backdate only this owned fixture's durable boundary; production uses
+        // the database clock and keeps its original five-second grace unchanged.
+        sqlx::query("UPDATE runs SET status=$1,breaker_stage=$2 WHERE id=$3 AND corp_id=$4")
+            .bind(status)
+            .bind(stage)
+            .bind(run_id(index))
+            .bind(CORP)
+            .execute(&store.pool)
+            .await
+            .unwrap();
+        if expired {
+            sqlx::query(
+                "INSERT INTO circuit_breaker_incidents
+                 (id,corp_id,mission_id,task_id,run_id,stage,reason,input,created_at)
+                 SELECT $1,corp_id,$2,task_id,id,$3,'usage replay fixture','{}',
+                        clock_timestamp()-interval '1 minute'
+                 FROM runs WHERE id=$4 AND corp_id=$5",
+            )
+            .bind(Uuid::new_v4())
+            .bind(MISSION)
+            .bind(stage)
+            .bind(run_id(index))
+            .bind(CORP)
+            .execute(&store.pool)
+            .await
+            .unwrap();
+        }
+
+        let frame = event(
+            index,
+            "run.usage",
+            report(Some(10), Some(2), Some("late-event"), None),
+        );
+        let first = store
+            .apply_runner_event(frame.clone())
+            .await
+            .unwrap()
+            .event
+            .unwrap();
+        assert_uncharged(&first, "accepted");
+        assert_eq!(first.payload["accounting"]["reason"], reason);
+        assert_eq!(first.payload["usage_origin_event_id"], json!(first.id));
+        assert!(
+            store
+                .apply_runner_event(frame.clone())
+                .await
+                .unwrap()
+                .event
+                .is_none()
+        );
+        let enriched = report(Some(10), Some(2), Some("late-event"), Some("late-call"));
+        let mut alias_only = report(Some(10), Some(2), None, Some("late-call"));
+        alias_only["usage_provenance"]["provider_session_id"] = Value::Null;
+        for payload in [frame.payload, enriched, alias_only] {
+            let replay = observe(&store, index, payload).await;
+            assert_uncharged(&replay, "duplicate");
+            assert_ne!(replay.id, first.id);
+            assert_eq!(replay.payload["usage_origin_event_id"], json!(first.id));
+            assert_eq!(
+                replay.payload["usage_validation"]["reason"],
+                "native_usage_replay"
+            );
+            assert_eq!(
+                replay.payload["usage_coverage"]["call_identity"],
+                "reported"
+            );
+            assert_eq!(replay.payload["accounting"]["reason"], reason);
+            for field in ["hard_boundary_at", "cutoff_at"] {
+                assert_eq!(
+                    replay.payload["accounting"][field],
+                    first.payload["accounting"][field]
+                );
+            }
+        }
+        let conflict = observe(
+            &store,
+            index,
+            report(
+                Some(11),
+                Some(2),
+                Some("late-event"),
+                Some("unclaimed-call"),
+            ),
+        )
+        .await;
+        assert_uncharged(&conflict, "conflict");
+        assert_eq!(conflict.payload["accounting"]["reason"], reason);
+        let separate = observe(
+            &store,
+            index,
+            report(Some(11), Some(2), None, Some("unclaimed-call")),
+        )
+        .await;
+        assert_uncharged(&separate, "accepted");
+        assert_eq!(
+            separate.payload["usage_origin_event_id"],
+            json!(separate.id)
+        );
+        assert_eq!(counters(&store, index).await, (0, 0, 0));
+        let state: (String, String) =
+            sqlx::query_as("SELECT status,breaker_stage FROM runs WHERE id=$1 AND corp_id=$2")
+                .bind(run_id(index))
+                .bind(CORP)
+                .fetch_one(&store.pool)
+                .await
+                .unwrap();
+        assert_eq!(state, (status.to_owned(), stage.to_owned()));
+    }
 }
 
 #[sqlx::test(migrations = "../../db/migrations")]

@@ -1,0 +1,164 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$product = '<candidate-checkout>'
+$qa = '<owned-qa-root>\issue236-usage-provenance-late-replay-20261003-r1'
+$prefix = 'issue236-browser-late-replay-r1'
+$nativePath = Join-Path $PSScriptRoot 'issue236-native-build-late-replay-r1.json'
+$snapshot = Join-Path $PSScriptRoot 'issue236-source-snapshot-r1.mjs'
+$receiptPath = Join-Path $PSScriptRoot "$prefix.json"
+$driver = Join-Path $PSScriptRoot 'issue236-browser-r1.mjs'
+$supervisor = Join-Path $PSScriptRoot 'issue236-stack-late-replay-r1.ps1'
+$corpus = Join-Path $PSScriptRoot 'issue236-acceptance-corpus-r1.json'
+$pg = '<pinned-toolchain>\postgresql-17.10\pgsql\bin'
+$nodeDirectory = '<pinned-toolchain>\node-v24.21.0-win-x64'
+$node = Join-Path $nodeDirectory 'node.exe'
+$playwright = '<operator-home>\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright'
+if ((Test-Path -LiteralPath $qa) -or (Test-Path -LiteralPath $receiptPath)) { throw 'Retain existing fixtures and evidence; use a new explicit revision.' }
+foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|GIT_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN','RUSTFLAGS','RUSTDOCFLAGS')) {
+        [Environment]::SetEnvironmentVariable($name,$null,'Process')
+    }
+}
+$env:PATH = "$nodeDirectory;$pg;$env:PATH"
+$beforeText = & $node $snapshot $product (Join-Path $PSScriptRoot 'issue236-source-before-browser-late-replay-r1.json')
+if ($LASTEXITCODE) { throw 'Cannot establish acceptance source; no service started.' }
+$before = $beforeText | ConvertFrom-Json -AsHashtable
+$native = Get-Content -LiteralPath $nativePath -Raw | ConvertFrom-Json -AsHashtable -Depth 60
+if ($native.status -ne 'passed' -or !$native.source_unchanged -or
+    $before.head -cne $native.expected_head -or
+    $before.source_fingerprint -cne $native.source_before.source_fingerprint) { throw 'Native binary source does not match the current reviewed physical source.' }
+$dirty = @(& git -C $product status --porcelain=v1 --untracked-files=all)
+if ($LASTEXITCODE) { throw 'Cannot inspect acceptance source.' }
+$expectedDirty = @(' M crates/crony-store/src/usage_accounting.rs',' M crates/crony-store/src/usage_accounting_tests.rs')
+if (Compare-Object @($dirty | Sort-Object) @($expectedDirty | Sort-Object)) { throw 'Only the exact reviewed uncommitted late-replay source may enter acceptance.' }
+function Verify-Binaries {
+    if ($native.binaries.Count -ne 2) { throw 'Matching server and runner binary receipts are required.' }
+    foreach ($binary in $native.binaries) {
+        if (!(Test-Path -LiteralPath $binary.path -PathType Leaf) -or
+            (Get-FileHash -LiteralPath $binary.path).Hash.ToLowerInvariant() -cne $binary.sha256) {
+            throw 'Native binary changed since its source-bound build; no adoption permitted.'
+        }
+    }
+}
+Verify-Binaries
+$receipt = [ordered]@{
+    issue=236;repository='All-The-Vibes/ecorp';source=$product;source_before=$before;qa_root=$qa;
+    started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');status='running';wrapper_pid=$PID;
+    checks=@();cleanup='pending';source_unchanged=$null;binaries=$native.binaries;
+    inherited_native_build=@{path=$nativePath;sha256=(Get-FileHash -LiteralPath $nativePath).Hash.ToLowerInvariant()};
+    harness=@();corpus_sha256=(Get-FileHash -LiteralPath $corpus).Hash.ToLowerInvariant();
+    scope='Reviewed uncommitted source is identified by parent commit, exact physical manifest and two-file patch; final commit must preserve those runtime bytes. Actual Edge browser, fresh owned SCRAM PostgreSQL, native server/runner and deterministic Codex protocol corpus. Exercises usage admission, persisted verification and disposable workspace cleanup. No provider inference, grants, budget-race experiments, hosted gates or independent outcome review. This is separate candidate acceptance, not the stopped paired comparison.'
+}
+foreach ($name in @('issue236-stack-late-replay-r1.ps1','issue236-browser-r1.mjs','issue236-fake-codex-r1.mjs','issue236-prepare-fixture-r1.mjs','issue236-fixture-environment-r1.mjs','issue236-fixture-environment-r1.ps1','issue236-acceptance-corpus-r1.json')) {
+    $file = Join-Path $PSScriptRoot $name
+    $receipt.harness += @{path=$file;sha256=(Get-FileHash -LiteralPath $file).Hash.ToLowerInvariant()}
+}
+function Save-Receipt { [IO.File]::WriteAllText($receiptPath,($receipt | ConvertTo-Json -Depth 60)+"`n") }
+function Record-Check([string]$Name,[string]$Log,[int]$Code) {
+    $receipt.checks += @{name=$Name;exit_code=$Code;log=$Log;sha256=(Get-FileHash -LiteralPath $Log).Hash.ToLowerInvariant()}
+    Save-Receipt
+    Write-Output "$Name exit=$Code"
+    if ($Code) { throw "$Name failed; preserve all evidence and fixture files." }
+}
+function Collect-BrowserReport {
+    $browserPath = Join-Path $qa 'evidence/usage-browser.json'
+    if (Test-Path -LiteralPath $browserPath -PathType Leaf) {
+        $browserReport = Get-Content -LiteralPath $browserPath -Raw | ConvertFrom-Json -AsHashtable -Depth 100
+        $receipt.browser_report = @{path=$browserPath;sha256=(Get-FileHash -LiteralPath $browserPath).Hash.ToLowerInvariant();status=$browserReport.status;counts=$browserReport.counts;failure=$browserReport.failure}
+        Save-Receipt
+        return $browserReport
+    }
+    return $null
+}
+Save-Receipt
+try {
+    foreach ($name in @('issue236-browser-r1.mjs','issue236-fake-codex-r1.mjs','issue236-prepare-fixture-r1.mjs','issue236-fixture-environment-r1.mjs')) {
+        $log = Join-Path $PSScriptRoot "$prefix-$name-check.log"
+        & $node --check (Join-Path $PSScriptRoot $name) *> $log
+        Record-Check "$name syntax" $log $LASTEXITCODE
+    }
+    $log = Join-Path $PSScriptRoot "$prefix-stack-start.log"
+    & $supervisor -Phase Start -Repository $product -QaRoot $qa -PostgresBin $pg -ServerPort 19388 -WebPort 16388 -DatabasePort 59413 *> $log
+    Record-Check 'owned-stack-start' $log 0
+    $log = Join-Path $PSScriptRoot "$prefix-stack-status.log"
+    & $supervisor -Phase Status -Repository $product -QaRoot $qa -PostgresBin $pg *> $log
+    Record-Check 'owned-stack-process-identities' $log 0
+    $state = Get-Content -LiteralPath (Join-Path $qa 'ownership.json') -Raw | ConvertFrom-Json -AsHashtable -Depth 60
+    if (!$state.test_owned -or !$state.database_authentication.wrong_password_rejected -or !$state.database_authentication.authenticated_creation) { throw 'Owned authenticated database setup was not established.' }
+    $receipt.database_authentication = $state.database_authentication
+    $setupPath = Join-Path $qa 'evidence/usage-setup.json'
+    @{
+        test_owned=$true;provider_fixture='native-codex-usage-corpus';repository=$product;qa_root=$qa;
+        source=(Join-Path $qa 'source');source_repository=$state.source.repository;source_commit=$state.source.base_commit;
+        source_binding=$before;server_url=$state.plan.server;web_url=$state.plan.web;demo=$state.demo;
+        runner_id=$state.plan.runner_id;processes=$state.processes;corpus_sha256=$receipt.corpus_sha256
+    } | ConvertTo-Json -Depth 40 | Set-Content -LiteralPath $setupPath -Encoding utf8
+    $receipt.setup = @{path=$setupPath;sha256=(Get-FileHash -LiteralPath $setupPath).Hash.ToLowerInvariant()}
+    Save-Receipt
+    $fixtureEnvironment = & (Join-Path $PSScriptRoot 'issue236-fixture-environment-r1.ps1') -Repository $product -Directory (Join-Path $qa 'driver-environment')
+    $fixtureEnvironment.ECORP_USAGE_PROVENANCE_TEST = '1'
+    $fixtureEnvironment.ECORP_USAGE_PROVENANCE_SETUP = $setupPath
+    $fixtureEnvironment.CRONY_PLAYWRIGHT_MODULE = $playwright
+    $receipt.owned_environments = @{supervisor=$state.owned_environment;driver=(Join-Path $qa 'driver-environment');assurance='explicit environment plus owned homes/configuration/temp; no OS isolation'}
+    Save-Receipt
+    $browserLog = Join-Path $PSScriptRoot "$prefix-driver.log"
+    $previousEnvironment = [Environment]::GetEnvironmentVariables('Process')
+    try {
+        foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) { [Environment]::SetEnvironmentVariable($name,$null,'Process') }
+        foreach ($name in $fixtureEnvironment.Keys) { [Environment]::SetEnvironmentVariable($name,[string]$fixtureEnvironment[$name],'Process') }
+        & $node $driver *> $browserLog
+        $browserCode = $LASTEXITCODE
+    } finally {
+        foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) { [Environment]::SetEnvironmentVariable($name,$null,'Process') }
+        foreach ($name in $previousEnvironment.Keys) { [Environment]::SetEnvironmentVariable($name,[string]$previousEnvironment[$name],'Process') }
+        $previousEnvironment.Clear()
+    }
+    $browserReport = Collect-BrowserReport
+    Record-Check 'browser-server-runner-usage-acceptance' $browserLog $browserCode
+    if (!$browserReport -or $browserReport.status -ne 'passed' -or $browserReport.blocked_requests.Count -or $browserReport.page_errors.Count -or
+        $browserReport.counts.failed -or $browserReport.counts.execution_errors -or $browserReport.counts.scenarios_failed -or $browserReport.counts.scenarios_passed -ne 5 -or $browserReport.counts.scenarios_unexecuted) {
+        throw 'Browser acceptance did not establish all five complete usage scenarios.'
+    }
+    $receipt.status = 'passed'
+} catch {
+    $receipt.status = 'failed'
+    $receipt.failure = ($_.Exception.Message -replace '\bpostgres(?:ql)?://\S+', '[database URL withheld]')
+} finally {
+    try { $null = Collect-BrowserReport } catch { $receipt.status='failed'; $receipt.browser_receipt_error=$_.Exception.Message }
+    try {
+        $afterText = & $node $snapshot $product (Join-Path $PSScriptRoot 'issue236-source-after-browser-late-replay-r1.json')
+        if ($LASTEXITCODE) { throw 'Final source snapshot failed.' }
+        $receipt.source_after = $afterText | ConvertFrom-Json -AsHashtable
+        Verify-Binaries
+        $receipt.source_unchanged = $receipt.source_after.source_fingerprint -ceq $before.source_fingerprint -and $receipt.source_after.head -ceq $before.head
+        if (!$receipt.source_unchanged) { throw 'Source changed during acceptance.' }
+        foreach ($file in $receipt.harness) {
+            if ((Get-FileHash -LiteralPath $file.path).Hash.ToLowerInvariant() -cne $file.sha256) { throw 'Frozen acceptance harness changed during execution.' }
+        }
+    } catch {
+        $receipt.status = 'failed'
+        $receipt.source_verification_failure = $_.Exception.Message
+    }
+    try {
+        if (Test-Path -LiteralPath (Join-Path $qa 'ownership.json')) {
+            $log = Join-Path $PSScriptRoot "$prefix-stack-stop.log"
+            & $supervisor -Phase Stop -Repository $product -QaRoot $qa -PostgresBin $pg *> $log
+            Import-Module (Join-Path $product 'tools/local_stack.psm1') -Force
+            $stopped = Read-LocalStackState -Path (Join-Path $qa 'ownership.json') -Workspace $qa
+            foreach ($role in @('web','runner','server','postgres')) {
+                if ($stopped.processes[$role] -and (Test-LocalOwnedProcess -Record $stopped.processes[$role] -Workspace $qa)) { throw "Owned $role process remains active." }
+            }
+            $receipt.cleanup = 'Verified every exact owned process stopped. Database, synthetic source, credentials, ownership and evidence retained.'
+        } else { $receipt.cleanup = 'No service ownership established; any preparation files retained.' }
+    } catch {
+        $receipt.status = 'failed'
+        $receipt.cleanup = 'Cleanup could not be verified; preserve fixture and ownership.'
+        $receipt.cleanup_error = $_.Exception.Message
+    }
+    foreach ($name in @('ECORP_USAGE_PROVENANCE_TEST','ECORP_USAGE_PROVENANCE_SETUP','CRONY_PLAYWRIGHT_MODULE')) { [Environment]::SetEnvironmentVariable($name,$null,'Process') }
+    $receipt.finished_at_utc = [DateTimeOffset]::UtcNow.ToString('o')
+    Save-Receipt
+}
+[pscustomobject]$receipt | Select-Object issue,status,source_unchanged,browser_report,cleanup,failure | ConvertTo-Json -Depth 8
+if ($receipt.status -ne 'passed') { exit 1 }

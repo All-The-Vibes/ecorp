@@ -78,14 +78,15 @@ pub(super) async fn admit_usage_tx(
             }
         }
         if reason.is_none() && !identity_keys.is_empty() {
-            // Duplicate observations retain newly supplied identity aliases, so a
-            // later replay using only an enriched alias still finds its original.
+            // Accepted observations retain their origin even when hard controls
+            // prevent charging. Duplicates retain newly supplied identity aliases,
+            // so a later replay using only an enriched alias finds its original.
             // Conflicting observations never acquire new accounting identities.
             let previous = sqlx::query(
                 "SELECT id,payload FROM events
                  WHERE corp_id=$1 AND aggregate_type='run' AND aggregate_id=$2
                    AND (type='run.usage' OR
-                        (type='run.usage_observed' AND payload->'usage_validation'->>'disposition'='duplicate'))
+                        (type='run.usage_observed' AND payload->'usage_validation'->>'disposition' IN ('accepted','duplicate')))
                    AND EXISTS (
                      SELECT 1 FROM jsonb_array_elements_text(
                        CASE WHEN jsonb_typeof(payload->'usage_identity_keys')='array'
