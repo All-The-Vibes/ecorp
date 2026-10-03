@@ -1,0 +1,69 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "status": "completed_with_observed_failures",
+  "wrapper_pid": 8352,
+  "purpose": "Standalone new caret-escape regressions before scanner correction. Accounting fixes are present but not under test in this receipt. Preserve actual failing tests; no historical or comparative outcome is inferred.",
+  "started_at_utc": "2026-10-03T07:23:03.3774220Z",
+  "source": "<candidate-checkout>",
+  "checks": [
+    {
+      "command": "cargo.exe test --locked --offline -p crony-runner --bin crony-evidence-paths -- --test-threads=1",
+      "counts": {
+        "failed": 2,
+        "ignored": 0,
+        "passed": 23,
+        "filtered": 0
+      },
+      "log": "<run-records>\\issue236-path-regressions-r1-native-scanner.log",
+      "sha256": "d37e2699d9c81ee5ba43322fb15250011e6f6206ddbc134607564609f2f36017",
+      "exit_code": 101,
+      "name": "native-scanner"
+    },
+    {
+      "command": "node.exe --test --test-reporter=tap tools/check_evidence_personal_paths.test.mjs",
+      "counts": {
+        "todo": 0,
+        "fail": 2,
+        "cancelled": 0,
+        "tests": 11,
+        "skipped": 0,
+        "pass": 9
+      },
+      "log": "<run-records>\\issue236-path-regressions-r1-node-scanner.log",
+      "sha256": "50d72b35adc2e7c23c1d135b6fec16a952b8a5e346d64a645e04f6aa2280d591",
+      "exit_code": 1,
+      "name": "node-scanner"
+    }
+  ],
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T07:23:05.368Z",
+    "source": "<candidate-checkout>",
+    "head": "ffe61f19e6a5f309f363102f0e76aea8a96e3bf2",
+    "tree": "d8233b76147023e50dd9d0fc2e4c8a18844999b4",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/bin/crony-evidence-paths.rs\n M crates/crony-store/src/usage_accounting.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md\n M tools/check_evidence_personal_paths.test.mjs",
+    "source_file_count": 7498,
+    "source_fingerprint": "f091635945b902d89e3d38693e686c2dc7f5d1e5b2013af957581d521151a92e",
+    "manifest": "<run-records>\\issue236-source-before-path-regressions-r1.json",
+    "manifest_sha256": "39ead087200137be7658e7820f15b9ced93bad5ea96a3645fe457b7b09ebf86d"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T07:23:18.537Z",
+    "source": "<candidate-checkout>",
+    "head": "ffe61f19e6a5f309f363102f0e76aea8a96e3bf2",
+    "tree": "d8233b76147023e50dd9d0fc2e4c8a18844999b4",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/bin/crony-evidence-paths.rs\n M crates/crony-store/src/usage_accounting.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md\n M tools/check_evidence_personal_paths.test.mjs",
+    "source_file_count": 7498,
+    "source_fingerprint": "f091635945b902d89e3d38693e686c2dc7f5d1e5b2013af957581d521151a92e",
+    "manifest": "<run-records>\\issue236-source-after-path-regressions-r1.json",
+    "manifest_sha256": "bf908d2c7b788a2407fb2e938391f3789a1f7f6749a4b9bd88966f36797d0bc2"
+  },
+  "source_unchanged": true,
+  "failure": null,
+  "finished_at_utc": "2026-10-03T07:23:19.0822004Z"
+}

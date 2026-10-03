@@ -1,0 +1,194 @@
+"""Repair only owned, unpublished copies of synthetic path examples.
+
+Keep the entire prior packet and every original receipt immutable. This does not
+change implementation, run tests, stage, commit, or access GitHub. Published
+historical source excerpts are explicitly normalized, non-executable records.
+"""
+import copy
+import importlib.util
+import json
+from pathlib import Path
+import re
+from datetime import datetime, timezone
+
+RUN = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location('prior_packet', RUN / 'package-issue236-review-corrections-r2.py')
+prior = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(prior)
+helpers = prior.helpers
+sha = prior.sha
+normalize = prior.normalize
+bound_receipt = prior.bound_receipt
+WT = prior.WT
+DEST = prior.DEST
+PREFIX = prior.PREFIX
+TRANSFORMATION = 'local roots including caret escapes; standalone operator name; synthetic path examples replaced with explicit placeholders; UTF-8/LF; trailing whitespace and final blank lines'
+TARGETS = {
+    'history/logs/issue236-path-regressions-r1-native-scanner.log',
+    'history/source/issue236-review-corrections-before-r4-test-fix.patch.txt',
+    'history/source/issue236-source-before-clippy-r3.patch.txt',
+}
+
+
+def normalize_examples(value):
+    value = normalize(value)
+    # These are the exact synthetic names present in the retained scanner tests.
+    # Real operator roots are already handled by the original normalizer.
+    value = value.replace('fixture^-user', '<synthetic-user>')
+    value = value.replace('fixture-user', '<synthetic-user>')
+    value = re.sub(r'(?i)((?:[a-z]:)?[/\\]+Users[/\\]+)\^(?=["`])',
+                   lambda match: match.group(1) + '<literal-caret-fixture>', value)
+    value = re.sub(r'(?i)([/]Users[/])\\u(?:\{[0-9a-f]+\}|[0-9a-f]{4})name',
+                   lambda match: match.group(1) + '<unicode-fixture>', value)
+    return value
+
+
+def main():
+    spec_v = importlib.util.spec_from_file_location('prior_validation', RUN / 'validate-issue236-correction-publication-r2.py')
+    v = importlib.util.module_from_spec(spec_v)
+    spec_v.loader.exec_module(v)
+    output = RUN / 'issue236-correction-evidence-package-r3.json'
+    repair_path = RUN / 'issue236-correction-publication-normalization-r3.json'
+    failed_path = RUN / 'issue236-correction-publication-validation-r2.json'
+    backup = RUN / 'issue236-correction-packet-before-normalization-r3'
+    v.require(not any(p.exists() for p in (output, repair_path, failed_path, backup)),
+              'Preserve any prior repair, failure receipt, or packet backup.')
+    commit, files, paths, _ = v.packet()
+    v.require(not v.git('diff', '--cached', '--name-only', '-z').strip(), 'Preserve staged work.')
+    old = v.read(RUN / v.PACKAGE)
+    checks = [v.read(RUN / (name + '.json')) for name in (
+        'issue236-correction-doc-contract-r2', 'issue236-correction-generated-docs-r2',
+        'issue236-correction-personal-paths-r2')]
+    v.require([c['exit_code'] for c in checks] == [0, 0, 1], 'Unexpected failed validation result.')
+    for check in checks:
+        v.require(sha(check['log']) == check['sha256'], 'Original validation log changed.')
+    findings = v.read(RUN / 'issue236-correction-personal-paths-r2.log')
+    expected_findings = sorted(DEST.name + '/' + path for path in TARGETS)
+    v.require(findings['status'] == 'failed' and sorted(findings['files']) == expected_findings,
+              'Publication failure differs from the reviewed synthetic examples.')
+    v.write(failed_path, {
+        'repository': 'All-The-Vibes/ecorp', 'issue': 236, 'pr': 402, 'status': 'failed',
+        'recorded_at_utc': v.now(), 'head': commit['head'], 'tree': commit['tree'],
+        'packet_receipt': v.PACKAGE, 'packet_receipt_sha256': sha(RUN / v.PACKAGE),
+        'wrapper_exit_code': 1, 'checks': checks,
+        'failed_check': 'issue236-correction-personal-paths-r2',
+        'not_run': ['gitleaks'], 'implementation_unchanged': True,
+        'diagnosis': 'Three unpublished historical files retain synthetic scanner path examples. Normalize copies explicitly and preserve original bytes; do not change the detector or test outcomes.',
+    })
+    backup_rows = []
+    for row in old['files']:
+        src = v.safe_file(WT, row['path'])
+        v.require(sha(src) == row['sha256'], 'Prior packet changed before backup.')
+        name = src.relative_to(DEST)
+        v.write(backup / name, src.read_bytes())
+        v.require(sha(backup / name) == row['sha256'], 'Packet backup is not exact.')
+        backup_rows.append({'path': name.as_posix(), 'sha256': row['sha256']})
+    records = copy.deepcopy(old['captures'])
+    changes = []
+    for row in records:
+        if row['path'] not in TARGETS:
+            continue
+        original = Path(row['original'])
+        destination = v.safe_file(DEST, row['path'])
+        v.require(sha(original) == row['original_sha256'], 'Immutable original changed.')
+        before = destination.read_bytes()
+        source_text = original.read_text(encoding='utf-8-sig')
+        v.require(before == normalize(source_text).encode('utf-8'), 'Unexpected prior normalization.')
+        after = normalize_examples(source_text).encode('utf-8')
+        before_lines = before.decode().splitlines()
+        after_lines = after.decode().splitlines()
+        v.require(before != after and len(before_lines) == len(after_lines), 'Expected line-preserving example redaction.')
+        changed_lines = [i + 1 for i, (a, b) in enumerate(zip(before_lines, after_lines)) if a != b]
+        prior_hash = sha(destination)
+        destination.write_bytes(after)
+        row['previous_published_sha256'] = prior_hash
+        row['published_sha256'] = sha(destination)
+        row['transformation'] = TRANSFORMATION
+        changes.append({'path': row['path'], 'original_sha256': row['original_sha256'],
+                        'previous_published_sha256': prior_hash, 'published_sha256': row['published_sha256'],
+                        'changed_lines': changed_lines, 'transformation': TRANSFORMATION,
+                        'published_source_excerpt_replayable': False})
+    v.require({c['path'] for c in changes} == TARGETS, 'Unexpected repair scope.')
+    repair = {
+        'repository': 'All-The-Vibes/ecorp', 'issue': 236, 'pr': 402, 'status': 'repaired_unpublished_copies',
+        'recorded_at_utc': v.now(), 'head': commit['head'], 'tree': commit['tree'],
+        'prior_packet_receipt': v.PACKAGE, 'prior_packet_receipt_sha256': sha(RUN / v.PACKAGE),
+        'failed_validation': failed_path.name, 'failed_validation_sha256': sha(failed_path),
+        'backup_directory': str(backup), 'backup_files': backup_rows, 'changes': changes,
+        'original_artifacts_unchanged': True, 'test_results_unchanged': True,
+        'implementation_unchanged': True, 'scanner_policy_unchanged': True,
+        'source_excerpt_limit': 'Only published historical examples are replaced by explicit synthetic placeholders. The normalized .patch.txt records are not executable replay fixtures. Original source/log bytes and hashes remain retained, and current committed scanner tests keep their exact fixtures.',
+    }
+    v.write(repair_path, repair)
+
+    def capture(src, name):
+        src = Path(src)
+        v.require(name not in {row['path'] for row in records}, 'Duplicate new capture.')
+        v.write(DEST / name, normalize(src.read_text(encoding='utf-8-sig')).encode())
+        records.append({'path': name, 'original': str(src), 'original_sha256': sha(src),
+                        'published_sha256': sha(DEST / name),
+                        'transformation': 'local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines'})
+
+    for name in [failed_path.name, repair_path.name,
+                 'issue236-correction-doc-contract-r2.json', 'issue236-correction-doc-contract-r2.log',
+                 'issue236-correction-generated-docs-r2.json', 'issue236-correction-generated-docs-r2.log',
+                 'issue236-correction-personal-paths-r2.json', 'issue236-correction-personal-paths-r2.log']:
+        capture(RUN / name, 'history/publication/' + name)
+    for name in [Path(__file__).name, 'validate-issue236-correction-publication-r3.py',
+                 'publish-issue236-correction-evidence-r3.py', 'run-issue236-canonical-r8.ps1']:
+        capture(RUN / name, 'drivers/' + name + '.txt')
+    manifest = v.read(DEST / 'evidence.json')
+    manifest['publication_path_repair'] = {
+        'receipt': 'history/publication/' + repair_path.name,
+        'failed_attempt': 'history/publication/' + failed_path.name,
+        'changes': changes, 'originals_and_test_outcomes_unchanged': True,
+        'source_excerpt_limit': repair['source_excerpt_limit'],
+        'current_publication_driver': 'drivers/validate-issue236-correction-publication-r3.py.txt',
+        'final_canonical_required_before_commit': 'issue236-canonical-r8.json',
+    }
+    manifest['files'] = [{k: val for k, val in row.items() if k != 'original'} for row in records]
+    (DEST / 'evidence.json').write_bytes(normalize(json.dumps(manifest, indent=2) + '\n').encode())
+    readme = (DEST / 'README.md').read_text(encoding='utf-8')
+    readme += '''
+## Publication normalization after a failed path check
+
+The first publication validation (R2) passed documentation checks, then failed
+the personal-path gate on three historical files containing synthetic scanner
+test examples. Gitleaks did not execute in that attempt. Its actual result,
+check logs, original hashes and the complete prior packet remain retained.
+
+Only published copies replace the synthetic username, literal-caret username and
+Unicode whitespace examples with explicit placeholders. Line numbers, failure
+outcomes, quantities and timestamps remain unchanged. The normalization receipt
+lists each changed line and the original, prior published and corrected hashes.
+These normalized historical `.patch.txt` excerpts are non-executable records;
+their original bytes remain retained, and the committed scanner test source
+keeps its exact test fixtures. No replay fixture or scanner policy was changed.
+
+The current publication driver is R3, and the final staged canonical validation
+driver is R8. Earlier R2 and R7 driver copies remain as preparation history and
+are not claims of successful execution. New publication results must be observed
+before staging or committing this packet.
+'''
+    (DEST / 'README.md').write_bytes(normalize(readme).encode())
+    v.require(v.source() == (commit, files), 'Implementation changed during publication repair.')
+    for row in backup_rows:
+        v.require(sha(backup / row['path']) == row['sha256'], 'Immutable prior packet changed.')
+    for row in records:
+        v.require(sha(row['original']) == row['original_sha256'], 'Original capture changed.')
+    package = copy.deepcopy(old)
+    package.update(recorded_at_utc=v.now(), captures=records,
+                   previous_package_receipt=v.PACKAGE,
+                   previous_package_receipt_sha256=sha(RUN / v.PACKAGE),
+                   normalization_receipt=repair_path.name,
+                   normalization_receipt_sha256=sha(repair_path),
+                   files=[{'path': p.relative_to(WT).as_posix(), 'sha256': sha(p)}
+                          for p in sorted(DEST.rglob('*')) if p.is_file()])
+    v.write(output, package)
+    print(json.dumps({'status': 'packaged', 'files': len(package['files']),
+                      'historical_files_normalized': len(changes), 'prior_files_preserved': len(backup_rows),
+                      'receipt': output.name, 'head': commit['head']}))
+
+
+if __name__ == '__main__':
+    main()

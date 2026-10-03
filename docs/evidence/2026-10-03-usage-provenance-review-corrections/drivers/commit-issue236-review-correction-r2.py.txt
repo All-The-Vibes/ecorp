@@ -1,0 +1,143 @@
+"""Commit only the reviewed bytes after all eleven canonical gates pass."""
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+
+RUN = Path(__file__).resolve().parent
+SOURCE = Path(r'<candidate-checkout>')
+PARENT = 'ffe61f19e6a5f309f363102f0e76aea8a96e3bf2'
+FINGERPRINT = 'b1d4132764082865e29abfb7096333e67c79e85daac04935905a6dffb81b6f55'
+FILES = sorted([
+    'crates/crony-runner/src/adapter/codex.rs',
+    'crates/crony-runner/src/adapter/codex_stop_tests.rs',
+    'crates/crony-runner/src/bin/crony-evidence-paths.rs',
+    'crates/crony-store/src/usage_accounting.rs',
+    'crates/crony-store/src/usage_accounting_tests.rs',
+    'docs/USAGE_PROVENANCE.md',
+    'docs/evidence/2026-10-03-usage-provenance/README.md',
+    'docs/evidence/2026-10-03-usage-provenance/evidence.json',
+    'docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-start.log',
+    'docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-start.log',
+    'tools/check_evidence_personal_paths.mjs',
+    'tools/check_evidence_personal_paths.test.mjs',
+])
+CHECKS = ['migrations', 'state-audit-compatibility', 'state-audit-evm', 'docs',
+          'repository-docs', 'node-tests', 'format', 'clippy', 'rust-tests',
+          'web-build', 'web-lint']
+spec = importlib.util.spec_from_file_location('issue236_receipt_helpers', RUN / 'prepare-issue236-comparison-r1.py')
+helpers = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(helpers)
+git = lambda *args: helpers.git(SOURCE, *args)
+sha = helpers.sha
+
+
+def read(path):
+    return json.loads(Path(path).read_text(encoding='utf-8-sig'))
+
+
+def identity():
+    return {'head': git('rev-parse', 'HEAD').decode().strip(),
+            'tree': git('rev-parse', 'HEAD^{tree}').decode().strip(),
+            'branch': git('branch', '--show-current').decode().strip()}
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('phase', choices=['stage', 'commit'])
+    phase = parser.parse_args().phase
+    canonical_path = RUN / 'issue236-canonical-r6.json'
+    canonical = read(canonical_path)
+    if (canonical['status'] != 'passed' or canonical['source_unchanged'] is not True
+            or canonical['canonical']['exit_code'] != 0
+            or canonical['canonical']['source_changed'] is not False
+            or canonical['canonical']['not_run']
+            or [c['name'] for c in canonical['canonical']['checks']] != CHECKS
+            or any(not c['passed'] or c['exitCode'] != 0 for c in canonical['canonical']['checks'])):
+        raise RuntimeError('The complete successful canonical R6 result is required before staging or committing.')
+    for kind in ['log', 'report']:
+        if sha(canonical['canonical'][kind]) != canonical['canonical'][kind + '_sha256']:
+            raise RuntimeError('Canonical evidence changed after validation.')
+    validated = canonical['source_after']
+    manifest_path = Path(validated['manifest'])
+    manifest = read(manifest_path)
+    if (sha(manifest_path) != validated['manifest_sha256']
+            or validated['source_fingerprint'] != FINGERPRINT
+            or manifest['source_fingerprint'] != FINGERPRINT
+            or helpers.physical_manifest(SOURCE) != manifest['files']):
+        raise RuntimeError('Candidate physical bytes differ from the validated source.')
+    review_path = RUN / 'issue236-review-correction-r2.json'
+    review = read(review_path)
+    if (review['status'] != 'reviewed_for_commit'
+            or review['source_fingerprint'] != FINGERPRINT
+            or review['parent'] != PARENT
+            or review['canonical_receipt_sha256'] != sha(canonical_path)):
+        raise RuntimeError('Current source-bound local correction review is required.')
+    for reference in review['validation_receipts']:
+        if sha(RUN / reference['file']) != reference['sha256']:
+            raise RuntimeError('A reviewed validation receipt changed.')
+    before = identity()
+    if before['head'] != PARENT or before['branch'] != 'codex/issue236-usage-provenance':
+        raise RuntimeError('Candidate parent or branch changed; preserve all work.')
+    dirty = git('status', '--porcelain=v1', '--untracked-files=all', '-z').decode().split('\0')
+    if sorted(row[3:] for row in dirty if row) != FILES:
+        raise RuntimeError('Unexpected candidate changes; preserve the index and working tree.')
+    receipt = {'repository': 'All-The-Vibes/ecorp', 'issue': 236, 'pr': 402,
+               'recorded_at_utc': datetime.now(timezone.utc).isoformat(),
+               'source': str(SOURCE), 'parent': PARENT, 'branch': before['branch'],
+               'files': FILES, 'validated_source_fingerprint': FINGERPRINT,
+               'canonical_receipt': str(canonical_path),
+               'canonical_receipt_sha256': sha(canonical_path),
+               'review_receipt': str(review_path), 'review_receipt_sha256': sha(review_path),
+               'source_manifest': str(manifest_path), 'source_manifest_sha256': sha(manifest_path),
+               'scope': 'Corrections to usage-provenance prerequisite and evidence publication. Local source review; expanded browser acceptance follows. No full #236 completion, provider inference, budget grants, independent outcome review or hosted-gate claim.'}
+    stage_path = RUN / 'issue236-review-correction-stage-r2.json'
+    if phase == 'stage':
+        if stage_path.exists() or git('diff', '--cached', '--name-only', '-z').strip():
+            raise RuntimeError('Preserve and inspect existing staged work.')
+        git('add', '--', *FILES)
+        git('diff', '--cached', '--check')
+        staged = sorted(filter(None, git('diff', '--cached', '--name-only', '-z').decode().split('\0')))
+        if staged != FILES or helpers.physical_manifest(SOURCE) != manifest['files']:
+            raise RuntimeError('Staging changed unexpected files; preserve the index for inspection.')
+        receipt.update(status='staged', tree=git('write-tree').decode().strip(),
+                       staged_diff_sha256=hashlib.sha256(git('diff', '--cached', '--binary')).hexdigest())
+        helpers.save(stage_path, receipt, True)
+        print(json.dumps({'status': 'staged', 'files': len(FILES), 'tree': receipt['tree']}))
+        return
+    stage = read(stage_path)
+    if (stage['status'] != 'staged' or stage['canonical_receipt_sha256'] != sha(canonical_path)
+            or stage['review_receipt_sha256'] != sha(review_path)
+            or stage['tree'] != git('write-tree').decode().strip()
+            or stage['staged_diff_sha256'] != hashlib.sha256(git('diff', '--cached', '--binary')).hexdigest()):
+        raise RuntimeError('The staged source differs from its reviewed receipt.')
+    git('diff', '--cached', '--check')
+    commit_path = RUN / 'issue236-review-correction-commit-r2.json'
+    receipt.update(status='committing', stage_receipt_sha256=sha(stage_path))
+    helpers.save(commit_path, receipt, True)
+    try:
+        result = git('commit', '-m', 'Retain contradictory usage evidence and scope admitted identities')
+        log = RUN / 'issue236-review-correction-commit-r2.log'
+        log.write_bytes(result)
+        after = identity()
+        receipt.update(after)
+        if (git('rev-parse', 'HEAD^').decode().strip() != PARENT
+                or after['tree'] != stage['tree'] or after['branch'] != before['branch']
+                or git('status', '--porcelain=v1', '--untracked-files=all').strip()
+                or helpers.physical_manifest(SOURCE) != manifest['files']):
+            raise RuntimeError('Post-commit source requires inspection; preserve the new commit.')
+        receipt.update(status='committed', physical_source_unchanged=True,
+                       commit_log=str(log), commit_log_sha256=sha(log))
+    except Exception as exc:
+        receipt.update(status='failed', failure=str(exc), observed_source=identity())
+        raise
+    finally:
+        receipt['finished_at_utc'] = datetime.now(timezone.utc).isoformat()
+        helpers.save(commit_path, receipt)
+    print(json.dumps({k: receipt[k] for k in ['status', 'head', 'tree', 'validated_source_fingerprint']}))
+
+
+if __name__ == '__main__':
+    main()

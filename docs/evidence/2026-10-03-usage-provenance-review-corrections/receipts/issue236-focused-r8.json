@@ -1,0 +1,140 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "status": "passed",
+  "wrapper_pid": 43868,
+  "purpose": "Correct the existing lower-cursor regression exposed by canonical R4 and rerun it explicitly alongside the new runner usage and domain coverage. Reuse the verified fresh R5 target. This validation is separate from the permanently stopped comparison epoch.",
+  "started_at_utc": "2026-10-03T09:45:32.2495155Z",
+  "source": "<candidate-checkout>",
+  "parent": "ffe61f19e6a5f309f363102f0e76aea8a96e3bf2",
+  "dependency_pr": 392,
+  "source_before_format": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T09:45:34.305Z",
+    "source": "<candidate-checkout>",
+    "head": "ffe61f19e6a5f309f363102f0e76aea8a96e3bf2",
+    "tree": "d8233b76147023e50dd9d0fc2e4c8a18844999b4",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/adapter/codex_stop_tests.rs\n M crates/crony-runner/src/bin/crony-evidence-paths.rs\n M crates/crony-store/src/usage_accounting.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md\n M docs/evidence/2026-10-03-usage-provenance/README.md\n M docs/evidence/2026-10-03-usage-provenance/evidence.json\n M docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-start.log\n M docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-start.log\n M tools/check_evidence_personal_paths.mjs\n M tools/check_evidence_personal_paths.test.mjs",
+    "source_file_count": 7498,
+    "source_fingerprint": "b1d4132764082865e29abfb7096333e67c79e85daac04935905a6dffb81b6f55",
+    "manifest": "<run-records>\\issue236-source-before-format-focused-r8.json",
+    "manifest_sha256": "fcb3ec422f6a87050c97c5487f31594ff1e36f03d3267b8f89c32740336da1ca"
+  },
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T09:45:41.174Z",
+    "source": "<candidate-checkout>",
+    "head": "ffe61f19e6a5f309f363102f0e76aea8a96e3bf2",
+    "tree": "d8233b76147023e50dd9d0fc2e4c8a18844999b4",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/adapter/codex_stop_tests.rs\n M crates/crony-runner/src/bin/crony-evidence-paths.rs\n M crates/crony-store/src/usage_accounting.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md\n M docs/evidence/2026-10-03-usage-provenance/README.md\n M docs/evidence/2026-10-03-usage-provenance/evidence.json\n M docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-start.log\n M docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-start.log\n M tools/check_evidence_personal_paths.mjs\n M tools/check_evidence_personal_paths.test.mjs",
+    "source_file_count": 7498,
+    "source_fingerprint": "b1d4132764082865e29abfb7096333e67c79e85daac04935905a6dffb81b6f55",
+    "manifest": "<run-records>\\issue236-source-before-focused-r8.json",
+    "manifest_sha256": "b0bc50cb2fb9d44bc8abdec231c56f2318892e965af5b34dd4682eafab72893d"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T09:47:12.907Z",
+    "source": "<candidate-checkout>",
+    "head": "ffe61f19e6a5f309f363102f0e76aea8a96e3bf2",
+    "tree": "d8233b76147023e50dd9d0fc2e4c8a18844999b4",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/adapter/codex_stop_tests.rs\n M crates/crony-runner/src/bin/crony-evidence-paths.rs\n M crates/crony-store/src/usage_accounting.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md\n M docs/evidence/2026-10-03-usage-provenance/README.md\n M docs/evidence/2026-10-03-usage-provenance/evidence.json\n M docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-start.log\n M docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-start.log\n M tools/check_evidence_personal_paths.mjs\n M tools/check_evidence_personal_paths.test.mjs",
+    "source_file_count": 7498,
+    "source_fingerprint": "b1d4132764082865e29abfb7096333e67c79e85daac04935905a6dffb81b6f55",
+    "manifest": "<run-records>\\issue236-source-after-focused-r8.json",
+    "manifest_sha256": "54653d4cd15fdc4857611a5e60b7b18725486292d33e67fba7bd9a8d409d0791"
+  },
+  "source_unchanged": true,
+  "environment": {
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "RUST_TEST_THREADS": "1",
+    "CARGO_TARGET_DIR": "<candidate-checkout>\\target\\issue236-review-r5"
+  },
+  "checks": [
+    {
+      "name": "format-check",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0,
+        "summaries": 0
+      },
+      "exit_code": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "cargo fmt --check",
+      "log": "<run-records>\\issue236-focused-r8-format.log"
+    },
+    {
+      "name": "strict-clippy",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0,
+        "summaries": 0
+      },
+      "exit_code": 0,
+      "sha256": "dc79b20ecfa8e83dd6de79495fc79be2ef67cc77389343eaa242732e661cd48f",
+      "command": "cargo clippy --workspace --all-targets --locked -- -D warnings",
+      "log": "<run-records>\\issue236-focused-r8-strict-clippy.log"
+    },
+    {
+      "name": "existing-cumulative-regression",
+      "counts": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 345,
+        "summaries": 2
+      },
+      "exit_code": 0,
+      "sha256": "b3d5c5ff0848e92b42462b328618d4bdae9d16098093a27ccd08be28d3389229",
+      "command": "cargo test --locked --offline -p crony-runner adapter::codex::stop_tests::issue87_cumulative_regressions_cannot_charge_again -- --exact --test-threads=1",
+      "log": "<run-records>\\issue236-focused-r8-existing-cumulative-regression.log"
+    },
+    {
+      "name": "runner-usage",
+      "counts": {
+        "passed": 15,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 331,
+        "summaries": 2
+      },
+      "exit_code": 0,
+      "sha256": "d146ac558e9d621e14f8b5c3554c12874f9780e4d429b06a84a14ce280744e93",
+      "command": "cargo test --locked --offline -p crony-runner usage -- --test-threads=1",
+      "log": "<run-records>\\issue236-focused-r8-runner-usage.log"
+    },
+    {
+      "name": "domain-usage",
+      "counts": {
+        "passed": 9,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 25,
+        "summaries": 1
+      },
+      "exit_code": 0,
+      "sha256": "878ea8f7a125908c6e4a0d52653474bf8a01e5d8c8ad805122d8fef2777838bd",
+      "command": "cargo test --locked --offline -p crony-domain usage -- --test-threads=1",
+      "log": "<run-records>\\issue236-focused-r8-domain-usage.log"
+    }
+  ],
+  "failure": null,
+  "active_check": null,
+  "finished_at_utc": "2026-10-03T09:47:13.4931395Z"
+}

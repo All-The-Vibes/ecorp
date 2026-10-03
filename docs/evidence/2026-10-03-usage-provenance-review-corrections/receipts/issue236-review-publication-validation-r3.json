@@ -1,0 +1,1011 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "started_at_utc": "2026-10-03T09:50:16.386263+00:00",
+  "status": "passed",
+  "source": "<candidate-checkout>",
+  "checks": [
+    {
+      "name": "issue236-review-diff-check-r3",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "<run-records>\\issue236-review-diff-check-r3.log",
+      "sha256": "ae68b8ce3bd590304fc1dfdaaa830dd16d58859b9b02ecf4d3fb5f2df7358254"
+    },
+    {
+      "name": "issue236-review-gitleaks-r3",
+      "command": [
+        "<operator-home>\\code\\ecorp\\output\\pr-completion\\20260922T123548Z\\gitleaks-8.30.1\\gitleaks.exe",
+        "dir",
+        "<run-records>\\issue236-review-secret-scan-input-r3",
+        "--redact=100",
+        "--no-banner",
+        "--no-color",
+        "--ignore-gitleaks-allow",
+        "--gitleaks-ignore-path",
+        "<candidate-checkout>\\.gitleaksignore",
+        "--exit-code=42",
+        "--timeout=300",
+        "--report-format=json",
+        "--report-path",
+        "<run-records>\\issue236-review-gitleaks-r3-report.json"
+      ],
+      "exit_code": 0,
+      "log": "<run-records>\\issue236-review-gitleaks-r3.log",
+      "sha256": "f7ff7f0d0b7dc77007f60216190a3a37b68e26885315bde9b71a38626134fb93",
+      "scanner_sha256": "17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c",
+      "findings": 0,
+      "files": 95,
+      "report_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "ignore_policy_sha256": "a8d6e15fa76e0c88f4266bca6d12f909f494a0ff646ef8699e88b8d9daec0ada"
+    }
+  ],
+  "captures": [
+    {
+      "path": "receipts/issue236-canonical-r2.json",
+      "original_sha256": "77f7e87ac99448d0660a52a02a80ee15105a67aebaec3b47e509eddc6a5949fe",
+      "published_sha256": "862df8e16615d41e07af8ef61907d4230e34e7b082ac0e7d8d0dfd93cca1d02f",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "receipts/issue236-prerequisite-commit-r1.json",
+      "original_sha256": "918b4af69f845f1babbed6769d907ec65a6e99975af775ea3fb304c064a9d2f5",
+      "published_sha256": "afc435a709dc57d7a4377f7f1fbb3ec7ee89513e509d7254578230b5143d9d18",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "receipts/issue236-native-database-r1.json",
+      "original_sha256": "62891b6cbd5dd6ff12e9da31b44446f49648cc6050783431cc15f541c58f36d0",
+      "published_sha256": "022f9da15d3adb2b409b113b0e20fb5cf885ecc8327bd1b3e245e34800f408f6",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "receipts/issue236-browser-r3.json",
+      "original_sha256": "eabfe9d63e823b92df5b08457ea33012d124d4001d87a7ff7149282f0995ee9a",
+      "published_sha256": "ee1a2db8742fb6cfc6d96a5216e3550e81adc608cb7c39a670c3ecb965d76aa0",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "receipts/issue236-native-applicability-r1.json",
+      "original_sha256": "8cffa6b176a85fd1e849379269450ec11435fcb41445dacc466af2bce12d2093",
+      "published_sha256": "54f71738232786ea43296f9d28b1caf60f92641d2fa5ce99c6aac86f35b40fc0",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "receipts/issue236-browser-fixture-correction-r1.json",
+      "original_sha256": "65be00b29c27972862eb9c56519c139d9959e2c8f263f65d0058cce503d93613",
+      "published_sha256": "3bc5ceb879749224e4ef7d52335e8e5540b6feb9bbec6a180d743113eb3cdafa",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "receipts/issue236-browser-harness-review-r3.json",
+      "original_sha256": "50dca649673ba9bb2e2365a15d28a5f42fecb9f8206e1186259ca39f512bd544",
+      "published_sha256": "50dca649673ba9bb2e2365a15d28a5f42fecb9f8206e1186259ca39f512bd544",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "receipts/issue236-native-build-r2.json",
+      "original_sha256": "e10f021d901793c884e513ff96c82898b283e8d2aac8a8c3421738e644e6eb4f",
+      "published_sha256": "b142630d2f98ec6060411bd74183187d272a29c81d32168212173255ef5d393f",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "receipts/issue236-focused-r3.json",
+      "original_sha256": "f2e44129d0917828060768ab5db5318b05574fbff8f44f453a8b0fdfcbaecc2f",
+      "published_sha256": "6f9962ac741acd0bfb7a6429620d03f73627e6917d23bdde766591c6471e2dcf",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "receipts/issue236-event-size-fix-r1.json",
+      "original_sha256": "ef7fb854fea4e628626fdef58e4e705c608af1925fc85669777ec76592c88765",
+      "published_sha256": "ef7fb854fea4e628626fdef58e4e705c608af1925fc85669777ec76592c88765",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "receipts/issue236-screenshot-review-r1.json",
+      "original_sha256": "8135b1bf447c359a3a4ae496b7b8abd3c54fbbd3536a75838b518b5d6a24e5a4",
+      "published_sha256": "f2452f7e20489a1310f358cfc61cbdf568fc7e70db4625ee43fc3792fac633ce",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "receipts/issue236-comparison-source-binding-r1.json",
+      "original_sha256": "ae1954e7466b69467ab09710bfce273c899a73a1f2cfb09ddae53ba01572ef46",
+      "published_sha256": "7d8186dc3ef866398d7b39cbf1ffb6f6bef18e3eccac4b98ed13b2598cdcd05c",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "logs/native-build-r2.jsonl",
+      "original_sha256": "cdd0f28a0e5efe29f7b4f4bc65e619f168f46fc6692a01b0ddf3922d8d8ab7cb",
+      "published_sha256": "e28de44563a34670ff0dbdb47f415964da9a5ddbe4f219acb4d5454958992292",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "logs/issue236-native-build-r2-cache-copy.log",
+      "original_sha256": "a301d172bc3418747e7ca991401441ebd224752e246d8237b0d0b516d8c5356b",
+      "published_sha256": "e351d796083b82c971446fc40d0c4e37260564c4eb12e062c8fa0544c010b0b4",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "logs/issue236-native-build-r2-local-package-clean.log",
+      "original_sha256": "386247134ee0e62447d9ceaab1a7d4dbd7eefd0a83839c01dc30e1ded6129269",
+      "published_sha256": "1b12180d91a82f0bc0145628098bdb0511521d72b6a91f2e38c64e9b42701fdd",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "logs/canonical-r2.log",
+      "original_sha256": "a402d151ddaa2b324cf6b4ed0461a75fcf58a7c0c8e4661cfbcd54b068c5df6e",
+      "published_sha256": "b02e880d1066c5b28f6e0db72966f8cc0b7ad6dbe52de5aef20d5c817a6078b7",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "logs/native-sql-r1.log",
+      "original_sha256": "38ed7c5669649b9aacc78478c94c2cb4e4c137b1d0024d899f6e61cc5f3993be",
+      "published_sha256": "d607bf4a06006117972ba2de18f2a4d670aab872e5205e77e9ed4de29816ed29",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "receipts/browser-observations.json",
+      "original_sha256": "bcafbcf1b99fb5cc6094f9694a20e2c08a2ac1741b68223b6fc7533d93d3e0f4",
+      "published_sha256": "cd91e196e2737e442247b638539be53e00729dc97d6fef356d944656dd31982c",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "history/browser-r2/wrapper-receipt.json",
+      "original_sha256": "edc6a4b992f23acad10285f8f7a3fd3a65bb9bc1f353819a91fefb0b373af157",
+      "published_sha256": "94edab1c491974c847b4686e695958648d7f94f2bc6d3c40b56073f60bd81a24",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "history/browser-r2/browser-observations.json",
+      "original_sha256": "dee52a738653212bdf89ce62fe39119592cf2824ae66c59548c0d22e9f9e4fed",
+      "published_sha256": "0e949b641c751525ccfcaf9cc3a729f8e6632a040f60d222e52b51c2a071da52",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "history/browser-r2/usage-failure.png",
+      "original_sha256": "0cf0a9b3befae57dedda7ac4740c7e59faf792ae88cd431c06b62e83f06ff143",
+      "published_sha256": "0cf0a9b3befae57dedda7ac4740c7e59faf792ae88cd431c06b62e83f06ff143",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "logs/browser-r3/issue236-browser-r3-issue236-browser-r2.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "logs/browser-r3/issue236-browser-r3-issue236-fake-codex-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "logs/browser-r3/issue236-browser-r3-issue236-prepare-fixture-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "logs/browser-r3/issue236-browser-r3-issue236-fixture-environment-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "logs/browser-r3/issue236-browser-r3-stack-start.log",
+      "original_sha256": "0a1700e54f47a8c6575f612ca5596b825dcbf63dbd2e641e94f7634d7c9ef956",
+      "published_sha256": "5a38a0f8b00aacd9a7beca0262694dc7fb060b6d9e39084e808f0b67b4d8b31b",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "logs/browser-r3/issue236-browser-r3-stack-status.log",
+      "original_sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+      "published_sha256": "966c9259b3b566cbe8b61427223cdc5679afcabc998acac1a04abf93a5fa164f",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "logs/browser-r3/issue236-browser-r3-driver.log",
+      "original_sha256": "92083c1bf5af572dc1cbe8be8c70bfa949c9099418f2c2d8faf6d14ba2e1c867",
+      "published_sha256": "704f67a79481ee85536a6bbd80c58f88f2cdacf4e60d64b186f37e76e768d9c5",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "history/browser-r2/logs/issue236-browser-r2-issue236-browser-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "history/browser-r2/logs/issue236-browser-r2-issue236-fake-codex-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "history/browser-r2/logs/issue236-browser-r2-issue236-prepare-fixture-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "history/browser-r2/logs/issue236-browser-r2-issue236-fixture-environment-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "history/browser-r2/logs/issue236-browser-r2-stack-start.log",
+      "original_sha256": "827b30fabf19aebdea1f6c6f1b92dbce6c27a329a45a2422f95e19a6ddbf74dc",
+      "published_sha256": "9462781340a95e4244388e51697d98b9d4268b7f1285368893d951ae1e7c1404",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "history/browser-r2/logs/issue236-browser-r2-stack-status.log",
+      "original_sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+      "published_sha256": "966c9259b3b566cbe8b61427223cdc5679afcabc998acac1a04abf93a5fa164f",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "history/browser-r2/logs/issue236-browser-r2-driver.log",
+      "original_sha256": "2f9da0754ee0f2ec33edb69dfa40ce12044b64cd5773b4debdbbda9384fd283e",
+      "published_sha256": "d37ef422cb390136b6401bfdbd69f8e5d512037019d04623ba22c4a980b866b3",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "receipts/browser-setup.json",
+      "original_sha256": "d1b018da343fba32d3618173104d1dd8987234c3e03bf929b952de6440d88c64",
+      "published_sha256": "bef7407d04f9ca6c545014a42d1389b8316c09af2e6c68685fd1bd84eb9ac5aa",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "history/canonical-r1/receipt.json",
+      "original_sha256": "fe54ec1059bfb6270f548d8d94526a51f3a071409c74cdfa9e7c3e0c7c02a92f",
+      "published_sha256": "89bd099ef6018189370648df29e937e4f961549e0a5c59e303bc9290f37d3280",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "history/canonical-r1/canonical.log",
+      "original_sha256": "6f7abbca3ee1158ea8493857134bf86877ec24b58e92a451c9c455847bf4432c",
+      "published_sha256": "51f87632e7659ed7e472f30092fd5eb341092781eb41de09efac281ae592a2f0",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "comparison/freeze.json",
+      "original_sha256": "afe5544469a275d5ecf0256ff8edb866633a1b01a0449ad793b36cd477b80609",
+      "published_sha256": "7fbb819d07c8d9e93063daff572bd10c8d0895c4d86fab51d95999d1da5a50da",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "comparison/preparation.json",
+      "original_sha256": "7c18980ee0da724df004d2081aac7bf71dacccb84aae7b1b27f3b3bff28e8f16",
+      "published_sha256": "83f22f8e2a10a17de1f8104d6c95b146188e8e17b3fbaeb205d1ad333149c09f",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "comparison/execution.json",
+      "original_sha256": "a1f6f37c9a9b26f72e3ddea20b276dd3627121a50fe8bb47c01ab5a0717c570d",
+      "published_sha256": "eac918dfd922ac60a5ec47d36db618b033d45eeaac72f3b34db63ef1112529b2",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "comparison/native-probe.rs.txt",
+      "original_sha256": "ec09432121f62500c1168d5200c552c7461127620f51b2491188797ffba7bb42",
+      "published_sha256": "ec09432121f62500c1168d5200c552c7461127620f51b2491188797ffba7bb42",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "comparison/store-probe.rs.txt",
+      "original_sha256": "cedb3d627fc1b4783546ec03c643fa7ea7ee826bb6d6bad63415a5d480220150",
+      "published_sha256": "cedb3d627fc1b4783546ec03c643fa7ea7ee826bb6d6bad63415a5d480220150",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "comparison/corpus.json",
+      "original_sha256": "58f005cb45216ef73792aa8ffa6b79fa443a8bf01db0e4ae078de902f2adf225",
+      "published_sha256": "58f005cb45216ef73792aa8ffa6b79fa443a8bf01db0e4ae078de902f2adf225",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "comparison/builds/baseline-native-build.jsonl",
+      "original_sha256": "725db4da0c94f0daf5202475f67d755293f6085d8afedd2f3fa1e3785651f8be",
+      "published_sha256": "4a5c8c30ea5d584ee5926047a5d8aaf5a60124eac4786057665cd35496f4f039",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "comparison/builds/baseline-store-build.jsonl",
+      "original_sha256": "afa0b322c14697315f43d4a392d049f5fb66b180a5057e184807f06133418bd5",
+      "published_sha256": "617418c80d09f43cb96b0a6a860e618d00604e0a8736a9037544a9860c194d2f",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "comparison/builds/candidate-native-build.jsonl",
+      "original_sha256": "ae6b3610eeb50fd70bf388152d51046107627fc6afa640e882c319cbea1c8599",
+      "published_sha256": "574863650cccc8cf4e20c3b4c2de79ee74f24ccc4bf84e47570e8e0db228fa7c",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "comparison/builds/candidate-store-build.jsonl",
+      "original_sha256": "0a41a5e784885046c6d759096c19965c1d0bf94fe8d63d55304e75098ff3bb5f",
+      "published_sha256": "b09b6dffc9a11c9bb0783f0c32c4a04afc481c7477e7a1572249d56b1fe25ca4",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "comparison/builds/baseline-cache-copy.log",
+      "original_sha256": "500180295ed1327d39ec10e8693c7ba4008ec1df7440543683ccc6f7b344c31b",
+      "published_sha256": "3dceb3cf178e76d7ba9259d65eace3e50e90a6c6fa69f30f26391bd459740be5",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "comparison/builds/candidate-cache-copy.log",
+      "original_sha256": "9472914b0780731c206d215ab320b76f2382c2c629462739b337c228b123b96d",
+      "published_sha256": "6db52b78b737b2abf9d3a37a65202350a186d3727700eb1724ac046ee6000551",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "comparison/builds/baseline-local-package-clean.log",
+      "original_sha256": "1b12180d91a82f0bc0145628098bdb0511521d72b6a91f2e38c64e9b42701fdd",
+      "published_sha256": "1b12180d91a82f0bc0145628098bdb0511521d72b6a91f2e38c64e9b42701fdd",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "comparison/builds/candidate-local-package-clean.log",
+      "original_sha256": "1b12180d91a82f0bc0145628098bdb0511521d72b6a91f2e38c64e9b42701fdd",
+      "published_sha256": "1b12180d91a82f0bc0145628098bdb0511521d72b6a91f2e38c64e9b42701fdd",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "comparison/01-baseline-native.log",
+      "original_sha256": "16e1abddb714c5c0c5d165490b1a792ab493374ee9a49f6e266306dee5955b72",
+      "published_sha256": "be1fc16d9454937253aed52ed4dd24dc52e4a5f47cd61d617efd1a114d87f79b",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "usage-codex-duplicate-and-foreign-turn.png",
+      "original_sha256": "38f26118ea417036b5d631e5a7d4819c54c0c9b3ff574325a9af9c93ebb69ff2",
+      "published_sha256": "38f26118ea417036b5d631e5a7d4819c54c0c9b3ff574325a9af9c93ebb69ff2",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "usage-codex-cache-and-reasoning-subsets.png",
+      "original_sha256": "5950eb3b4ed2277684412c40b911cc52cff2a66bf6b05fbb3c5daa28d62d2e51",
+      "published_sha256": "5950eb3b4ed2277684412c40b911cc52cff2a66bf6b05fbb3c5daa28d62d2e51",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "usage-codex-missing-input-explicit-zero-output.png",
+      "original_sha256": "76c25f16aa1b5e2f474c1cc4c291364bc31a4998ae786575b11cede845fb2e11",
+      "published_sha256": "76c25f16aa1b5e2f474c1cc4c291364bc31a4998ae786575b11cede845fb2e11",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/issue236-browser-r2.mjs.txt",
+      "original_sha256": "dc64714b4f66e4362cc9b398a985e535ae83fcd674597c7e289ebf4545a9d47d",
+      "published_sha256": "dc64714b4f66e4362cc9b398a985e535ae83fcd674597c7e289ebf4545a9d47d",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/issue236-fake-codex-r1.mjs.txt",
+      "original_sha256": "e52c5dd1ac360601df5d91ff9842df1710a5c8bc327fc800d70dd579a07bee1e",
+      "published_sha256": "e52c5dd1ac360601df5d91ff9842df1710a5c8bc327fc800d70dd579a07bee1e",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/issue236-prepare-fixture-r1.mjs.txt",
+      "original_sha256": "0b2088abf98aec948041b5a381f1e8dd77b7cc57670ebd21ca076723b609a1ff",
+      "published_sha256": "0b2088abf98aec948041b5a381f1e8dd77b7cc57670ebd21ca076723b609a1ff",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/issue236-fixture-environment-r1.mjs.txt",
+      "original_sha256": "dec8204cea74646da860998fd749603dfdd1e9e44d149d7404201687dad744a4",
+      "published_sha256": "a4c490b0a369270c37fb280a8649d15ed2bfe75adef91ee46e799b83aa1c7b21",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/issue236-fixture-environment-r1.ps1.txt",
+      "original_sha256": "03316c1fcd1d9830a98a3aa6e212335084386084a12356ed307070719416a448",
+      "published_sha256": "28c1ef4a8e81690784c3913aac3b4966671f7f4223a65d01d74f2f81596989c7",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/issue236-stack-r3.ps1.txt",
+      "original_sha256": "5fda401f0b35ea314cee13803ed124f907256c70b81fa47fcb830e89785ffde7",
+      "published_sha256": "145d144600a58526db53ee88d3316af636e749ac7e756add7866d94b4506b3cd",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/run-issue236-browser-r3.ps1.txt",
+      "original_sha256": "22e407bcaf97e23d1d5d9aa9ce091ddac0d417058f012fb9c62b409937c1f9c0",
+      "published_sha256": "9680e27b8179913acc289b47836ac292bb0f64b59327ecc4c062ff6b288df60e",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/run-issue236-native-build-r2.ps1.txt",
+      "original_sha256": "12d5a78c8809c64f83d4f9bb711ff1b36c1eeda5178afc64e9265fcfdb53f35e",
+      "published_sha256": "6cee03b5e9cafeffc612cea3b0eb2624a376c3066177c9f834af29ce3577a96c",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/check-issue236-browser-harness-r3.mjs.txt",
+      "original_sha256": "5120cf6c7238a9ab046cf36f3acbd630626b6a3bf138a25571c99028e7d3c977",
+      "published_sha256": "5120cf6c7238a9ab046cf36f3acbd630626b6a3bf138a25571c99028e7d3c977",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/prepare-issue236-browser-r3.py.txt",
+      "original_sha256": "857f0222a5956a1a7ee24ece7d30ac1362141100db79c0091aa1c481f4ca6221",
+      "published_sha256": "857f0222a5956a1a7ee24ece7d30ac1362141100db79c0091aa1c481f4ca6221",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/issue236-source-snapshot-r1.mjs.txt",
+      "original_sha256": "1658bc1a3bedaa0413c438e536880fb213600357a0314a9d23d3d08841fd3b07",
+      "published_sha256": "befc9dfaf5cc21aa729f3c6a14f743df9eb581fcc3677aa2ba32330ee8b1ce17",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/prepare-issue236-comparison-r4.py.txt",
+      "original_sha256": "4b0efc0e5a82b6bb272b472a40fb6e840baecda5e0d3afc207b229f6c8a859ad",
+      "published_sha256": "ae7c3dcba96d47094a04eaa571d198688723a7badd413ee8ddd8eac949a3bf2d",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/run-issue236-comparison-r4.py.txt",
+      "original_sha256": "d1ee7513586517312a28e8a22042bcf3b45b89e101254050cc5a686fd9c136ce",
+      "published_sha256": "3d4ad6491bf0cf8daf38e190bd24b04b977547d1b22245c5fc6ad75c5bbba2d7",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/issue236-paired-probe-r1.rs.txt",
+      "original_sha256": "ec09432121f62500c1168d5200c552c7461127620f51b2491188797ffba7bb42",
+      "published_sha256": "ec09432121f62500c1168d5200c552c7461127620f51b2491188797ffba7bb42",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/run-issue236-native-db-r1.ps1.txt",
+      "original_sha256": "d969ffd6bf4669e934c06724218cf09fc2c849bdbb7313e0d48c22bd1d09fbb9",
+      "published_sha256": "7c06cab51d5a1cd45e88d5d431cca57fc889410de299137de4c63e34eb8ebe22",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "history/browser-r2/drivers/issue236-browser-r1.mjs.txt",
+      "original_sha256": "ce2449e4caf0fbdf5270ad0ac88f0ac63cffdd77ab628545f18c16410bf7f134",
+      "published_sha256": "ce2449e4caf0fbdf5270ad0ac88f0ac63cffdd77ab628545f18c16410bf7f134",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "history/browser-r2/drivers/issue236-stack-r2.ps1.txt",
+      "original_sha256": "7fd51d37b57526740426ef18210febccf7a4494d7bb55b2b58da86a9b17cf9bf",
+      "published_sha256": "dacb497904769e83e5bcd94a80089a992b1f82b460df5e6b3e5f85a97bbda126",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "history/browser-r2/drivers/run-issue236-browser-r2.ps1.txt",
+      "original_sha256": "12fa2e54df4658471a5360e2aa3053a4f11afb97cfd79d64788ecacafd237763",
+      "published_sha256": "006e840971d01e30d1260f16ac07a9c794738b60f35bb682e580585317e5d5be",
+      "declared_transformation_verified": true
+    },
+    {
+      "path": "drivers/issue236-acceptance-corpus-r1.json",
+      "original_sha256": "58f005cb45216ef73792aa8ffa6b79fa443a8bf01db0e4ae078de902f2adf225",
+      "published_sha256": "58f005cb45216ef73792aa8ffa6b79fa443a8bf01db0e4ae078de902f2adf225",
+      "declared_transformation_verified": true
+    }
+  ],
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T09:50:18.543Z",
+    "source": "<candidate-checkout>",
+    "head": "ffe61f19e6a5f309f363102f0e76aea8a96e3bf2",
+    "tree": "d8233b76147023e50dd9d0fc2e4c8a18844999b4",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/adapter/codex_stop_tests.rs\n M crates/crony-runner/src/bin/crony-evidence-paths.rs\n M crates/crony-store/src/usage_accounting.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md\n M docs/evidence/2026-10-03-usage-provenance/README.md\n M docs/evidence/2026-10-03-usage-provenance/evidence.json\n M docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-start.log\n M docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-start.log\n M tools/check_evidence_personal_paths.mjs\n M tools/check_evidence_personal_paths.test.mjs",
+    "source_file_count": 7498,
+    "source_fingerprint": "b1d4132764082865e29abfb7096333e67c79e85daac04935905a6dffb81b6f55",
+    "manifest": "<run-records>\\issue236-source-before-review-publication-r3.json",
+    "manifest_sha256": "05281df48ab0930a7ac700e3d829405f274fb3782e1961ea6bf10731c09a4794"
+  },
+  "historical_outcomes_unchanged": true,
+  "packet_files": 77,
+  "scan_input": {
+    "directory": "<run-records>\\issue236-review-secret-scan-input-r3",
+    "owned_by_this_run": true,
+    "files": [
+      {
+        "path": "crates/crony-domain/src/lib.rs",
+        "sha256": "e16009900ea4d99baa253f38624e51e8c8355ef3f4734aa97c177a1011a1be5c",
+        "bytes": 43040
+      },
+      {
+        "path": "crates/crony-domain/src/usage.rs",
+        "sha256": "07046f15d64aaae2cd6aa4375dcde0c4a3c4be8b92cf2a6724d7a056be7219e6",
+        "bytes": 17472
+      },
+      {
+        "path": "crates/crony-runner/src/adapter/codex.rs",
+        "sha256": "d3c14655d880ab5dfaf8c78c3f3ca6f920722ea0db21dbbb24cd9c0f85c35c2a",
+        "bytes": 54224
+      },
+      {
+        "path": "crates/crony-runner/src/adapter/codex_stop_tests.rs",
+        "sha256": "4f0605c87eb7da866a736fbb83d8d4eacabb200d0c24929bff414f2df5d0b948",
+        "bytes": 18301
+      },
+      {
+        "path": "crates/crony-runner/src/adapter/copilot.rs",
+        "sha256": "7e6342484c5cf573f993cadc33ad942f3301c350d8a105c5c2a01f9b98c31fca",
+        "bytes": 74346
+      },
+      {
+        "path": "crates/crony-runner/src/adapter/external.rs",
+        "sha256": "933d20d5389b11b38bf24b2197b551603b8249337b3557b6b2c1e82f1b3822cf",
+        "bytes": 103635
+      },
+      {
+        "path": "crates/crony-runner/src/adapter/fake.rs",
+        "sha256": "efc0e01666f984e2f4140adf63c6a063d4a505ad7997bf1ac69229aec80d6731",
+        "bytes": 16530
+      },
+      {
+        "path": "crates/crony-runner/src/adapter/mod.rs",
+        "sha256": "fb541a6998246a8068fb00b8847389d7003544255ce62d4e5018a9b93d09444b",
+        "bytes": 17260
+      },
+      {
+        "path": "crates/crony-runner/src/adapter/usage.rs",
+        "sha256": "67cd0c20a31cbd46275431d93325520d3c7144065dd0dc8eb9fba3e8e7badc19",
+        "bytes": 13860
+      },
+      {
+        "path": "crates/crony-runner/src/bin/crony-evidence-paths.rs",
+        "sha256": "2c0386e430e17af4521955fdc05abf63385edfbefa34989718e4f184d987ef79",
+        "bytes": 47642
+      },
+      {
+        "path": "crates/crony-runner/src/main.rs",
+        "sha256": "45034a043379d1c7ba85c598818171f74c4f02e17d01bcf298186fe23b765a99",
+        "bytes": 244858
+      },
+      {
+        "path": "crates/crony-runner/tests/fixtures/usage-provenance-v1.json",
+        "sha256": "58f005cb45216ef73792aa8ffa6b79fa443a8bf01db0e4ae078de902f2adf225",
+        "bytes": 2160
+      },
+      {
+        "path": "crates/crony-store/src/lib.rs",
+        "sha256": "123172bbe8a2bb27d3ec285f6e789b6f498fee6730d9e7b099bd6294ba46d804",
+        "bytes": 708117
+      },
+      {
+        "path": "crates/crony-store/src/usage_accounting.rs",
+        "sha256": "618f6dcc366320e07c25823513369b2fbef0ea5af09d58f8224d9dda4d84cb59",
+        "bytes": 12081
+      },
+      {
+        "path": "crates/crony-store/src/usage_accounting_tests.rs",
+        "sha256": "b81ce12bb59168a7a9eb25e0031e25de2da5d44186c32bfdf58a2b56db0f357f",
+        "bytes": 28946
+      },
+      {
+        "path": "docs/USAGE_PROVENANCE.md",
+        "sha256": "046fda663c389ec5598a3c536883c51a47ef49853b0e8d03cb831f58405e08ec",
+        "bytes": 8915
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/README.md",
+        "sha256": "f3350a073d2746d1f6d3c20417c625e8f0a55758c4389196a88c84616e9f3794",
+        "bytes": 7432
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/comparison/01-baseline-native.log",
+        "sha256": "be1fc16d9454937253aed52ed4dd24dc52e4a5f47cd61d617efd1a114d87f79b",
+        "bytes": 1445
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/comparison/builds/baseline-cache-copy.log",
+        "sha256": "3dceb3cf178e76d7ba9259d65eace3e50e90a6c6fa69f30f26391bd459740be5",
+        "bytes": 1095
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/comparison/builds/baseline-local-package-clean.log",
+        "sha256": "1b12180d91a82f0bc0145628098bdb0511521d72b6a91f2e38c64e9b42701fdd",
+        "bytes": 37
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/comparison/builds/baseline-native-build.jsonl",
+        "sha256": "4a5c8c30ea5d584ee5926047a5d8aaf5a60124eac4786057665cd35496f4f039",
+        "bytes": 246243
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/comparison/builds/baseline-store-build.jsonl",
+        "sha256": "617418c80d09f43cb96b0a6a860e618d00604e0a8736a9037544a9860c194d2f",
+        "bytes": 287403
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/comparison/builds/candidate-cache-copy.log",
+        "sha256": "6db52b78b737b2abf9d3a37a65202350a186d3727700eb1724ac046ee6000551",
+        "bytes": 1094
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/comparison/builds/candidate-local-package-clean.log",
+        "sha256": "1b12180d91a82f0bc0145628098bdb0511521d72b6a91f2e38c64e9b42701fdd",
+        "bytes": 37
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/comparison/builds/candidate-native-build.jsonl",
+        "sha256": "574863650cccc8cf4e20c3b4c2de79ee74f24ccc4bf84e47570e8e0db228fa7c",
+        "bytes": 246870
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/comparison/builds/candidate-store-build.jsonl",
+        "sha256": "b09b6dffc9a11c9bb0783f0c32c4a04afc481c7477e7a1572249d56b1fe25ca4",
+        "bytes": 288149
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/comparison/corpus.json",
+        "sha256": "58f005cb45216ef73792aa8ffa6b79fa443a8bf01db0e4ae078de902f2adf225",
+        "bytes": 2160
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/comparison/execution.json",
+        "sha256": "eac918dfd922ac60a5ec47d36db618b033d45eeaac72f3b34db63ef1112529b2",
+        "bytes": 7727
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/comparison/freeze.json",
+        "sha256": "7fbb819d07c8d9e93063daff572bd10c8d0895c4d86fab51d95999d1da5a50da",
+        "bytes": 11853
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/comparison/native-probe.rs.txt",
+        "sha256": "ec09432121f62500c1168d5200c552c7461127620f51b2491188797ffba7bb42",
+        "bytes": 1718
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/comparison/preparation.json",
+        "sha256": "83f22f8e2a10a17de1f8104d6c95b146188e8e17b3fbaeb205d1ad333149c09f",
+        "bytes": 9247
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/comparison/store-probe.rs.txt",
+        "sha256": "cedb3d627fc1b4783546ec03c643fa7ea7ee826bb6d6bad63415a5d480220150",
+        "bytes": 26965
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/check-issue236-browser-harness-r3.mjs.txt",
+        "sha256": "5120cf6c7238a9ab046cf36f3acbd630626b6a3bf138a25571c99028e7d3c977",
+        "bytes": 2910
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/issue236-acceptance-corpus-r1.json",
+        "sha256": "58f005cb45216ef73792aa8ffa6b79fa443a8bf01db0e4ae078de902f2adf225",
+        "bytes": 2160
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/issue236-browser-r2.mjs.txt",
+        "sha256": "dc64714b4f66e4362cc9b398a985e535ae83fcd674597c7e289ebf4545a9d47d",
+        "bytes": 17517
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/issue236-fake-codex-r1.mjs.txt",
+        "sha256": "e52c5dd1ac360601df5d91ff9842df1710a5c8bc327fc800d70dd579a07bee1e",
+        "bytes": 6645
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/issue236-fixture-environment-r1.mjs.txt",
+        "sha256": "a4c490b0a369270c37fb280a8649d15ed2bfe75adef91ee46e799b83aa1c7b21",
+        "bytes": 2864
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/issue236-fixture-environment-r1.ps1.txt",
+        "sha256": "28c1ef4a8e81690784c3913aac3b4966671f7f4223a65d01d74f2f81596989c7",
+        "bytes": 2019
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/issue236-paired-probe-r1.rs.txt",
+        "sha256": "ec09432121f62500c1168d5200c552c7461127620f51b2491188797ffba7bb42",
+        "bytes": 1718
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/issue236-prepare-fixture-r1.mjs.txt",
+        "sha256": "0b2088abf98aec948041b5a381f1e8dd77b7cc57670ebd21ca076723b609a1ff",
+        "bytes": 2408
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/issue236-source-snapshot-r1.mjs.txt",
+        "sha256": "befc9dfaf5cc21aa729f3c6a14f743df9eb581fcc3677aa2ba32330ee8b1ce17",
+        "bytes": 1449
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/issue236-stack-r3.ps1.txt",
+        "sha256": "145d144600a58526db53ee88d3316af636e749ac7e756add7866d94b4506b3cd",
+        "bytes": 13302
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/prepare-issue236-browser-r3.py.txt",
+        "sha256": "857f0222a5956a1a7ee24ece7d30ac1362141100db79c0091aa1c481f4ca6221",
+        "bytes": 9983
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/prepare-issue236-comparison-r4.py.txt",
+        "sha256": "ae7c3dcba96d47094a04eaa571d198688723a7badd413ee8ddd8eac949a3bf2d",
+        "bytes": 20933
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/run-issue236-browser-r3.ps1.txt",
+        "sha256": "9680e27b8179913acc289b47836ac292bb0f64b59327ecc4c062ff6b288df60e",
+        "bytes": 11778
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/run-issue236-comparison-r4.py.txt",
+        "sha256": "3d4ad6491bf0cf8daf38e190bd24b04b977547d1b22245c5fc6ad75c5bbba2d7",
+        "bytes": 13976
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/run-issue236-native-build-r2.ps1.txt",
+        "sha256": "6cee03b5e9cafeffc612cea3b0eb2624a376c3066177c9f834af29ce3577a96c",
+        "bytes": 7970
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/drivers/run-issue236-native-db-r1.ps1.txt",
+        "sha256": "7c06cab51d5a1cd45e88d5d431cca57fc889410de299137de4c63e34eb8ebe22",
+        "bytes": 12433
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/evidence.json",
+        "sha256": "168e08f3206331f3c5e32843bafa137978f864abb64dccb771bc207e792794b7",
+        "bytes": 42165
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/history/browser-r2/browser-observations.json",
+        "sha256": "0e949b641c751525ccfcaf9cc3a729f8e6632a040f60d222e52b51c2a071da52",
+        "bytes": 2259
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/history/browser-r2/drivers/issue236-browser-r1.mjs.txt",
+        "sha256": "ce2449e4caf0fbdf5270ad0ac88f0ac63cffdd77ab628545f18c16410bf7f134",
+        "bytes": 14459
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/history/browser-r2/drivers/issue236-stack-r2.ps1.txt",
+        "sha256": "dacb497904769e83e5bcd94a80089a992b1f82b460df5e6b3e5f85a97bbda126",
+        "bytes": 13302
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/history/browser-r2/drivers/run-issue236-browser-r2.ps1.txt",
+        "sha256": "006e840971d01e30d1260f16ac07a9c794738b60f35bb682e580585317e5d5be",
+        "bytes": 11699
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-driver.log",
+        "sha256": "d37ef422cb390136b6401bfdbd69f8e5d512037019d04623ba22c4a980b866b3",
+        "bytes": 209
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-issue236-browser-r1.mjs-check.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-issue236-fake-codex-r1.mjs-check.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-issue236-fixture-environment-r1.mjs-check.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-issue236-prepare-fixture-r1.mjs-check.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-start.log",
+        "sha256": "9462781340a95e4244388e51697d98b9d4268b7f1285368893d951ae1e7c1404",
+        "bytes": 2032
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-status.log",
+        "sha256": "966c9259b3b566cbe8b61427223cdc5679afcabc998acac1a04abf93a5fa164f",
+        "bytes": 66
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/history/browser-r2/usage-failure.png",
+        "sha256": "0cf0a9b3befae57dedda7ac4740c7e59faf792ae88cd431c06b62e83f06ff143",
+        "bytes": 6807
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/history/browser-r2/wrapper-receipt.json",
+        "sha256": "94edab1c491974c847b4686e695958648d7f94f2bc6d3c40b56073f60bd81a24",
+        "bytes": 9543
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/history/canonical-r1/canonical.log",
+        "sha256": "51f87632e7659ed7e472f30092fd5eb341092781eb41de09efac281ae592a2f0",
+        "bytes": 20566
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/history/canonical-r1/receipt.json",
+        "sha256": "89bd099ef6018189370648df29e937e4f961549e0a5c59e303bc9290f37d3280",
+        "bytes": 13703
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-driver.log",
+        "sha256": "704f67a79481ee85536a6bbd80c58f88f2cdacf4e60d64b186f37e76e768d9c5",
+        "bytes": 142
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-issue236-browser-r2.mjs-check.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-issue236-fake-codex-r1.mjs-check.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-issue236-fixture-environment-r1.mjs-check.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-issue236-prepare-fixture-r1.mjs-check.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-start.log",
+        "sha256": "5a38a0f8b00aacd9a7beca0262694dc7fb060b6d9e39084e808f0b67b4d8b31b",
+        "bytes": 2011
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-status.log",
+        "sha256": "966c9259b3b566cbe8b61427223cdc5679afcabc998acac1a04abf93a5fa164f",
+        "bytes": 66
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/logs/canonical-r2.log",
+        "sha256": "b02e880d1066c5b28f6e0db72966f8cc0b7ad6dbe52de5aef20d5c817a6078b7",
+        "bytes": 18540
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/logs/issue236-native-build-r2-cache-copy.log",
+        "sha256": "e351d796083b82c971446fc40d0c4e37260564c4eb12e062c8fa0544c010b0b4",
+        "bytes": 1125
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/logs/issue236-native-build-r2-local-package-clean.log",
+        "sha256": "1b12180d91a82f0bc0145628098bdb0511521d72b6a91f2e38c64e9b42701fdd",
+        "bytes": 37
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/logs/native-build-r2.jsonl",
+        "sha256": "e28de44563a34670ff0dbdb47f415964da9a5ddbe4f219acb4d5454958992292",
+        "bytes": 469637
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/logs/native-sql-r1.log",
+        "sha256": "d607bf4a06006117972ba2de18f2a4d670aab872e5205e77e9ed4de29816ed29",
+        "bytes": 1552
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/receipts/browser-observations.json",
+        "sha256": "cd91e196e2737e442247b638539be53e00729dc97d6fef356d944656dd31982c",
+        "bytes": 29845
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/receipts/browser-setup.json",
+        "sha256": "bef7407d04f9ca6c545014a42d1389b8316c09af2e6c68685fd1bd84eb9ac5aa",
+        "bytes": 3659
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/receipts/issue236-browser-fixture-correction-r1.json",
+        "sha256": "3bc5ceb879749224e4ef7d52335e8e5540b6feb9bbec6a180d743113eb3cdafa",
+        "bytes": 1762
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/receipts/issue236-browser-harness-review-r3.json",
+        "sha256": "50dca649673ba9bb2e2365a15d28a5f42fecb9f8206e1186259ca39f512bd544",
+        "bytes": 1804
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/receipts/issue236-browser-r3.json",
+        "sha256": "ee1a2db8742fb6cfc6d96a5216e3550e81adc608cb7c39a670c3ecb965d76aa0",
+        "bytes": 9367
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/receipts/issue236-canonical-r2.json",
+        "sha256": "862df8e16615d41e07af8ef61907d4230e34e7b082ac0e7d8d0dfd93cca1d02f",
+        "bytes": 14750
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/receipts/issue236-comparison-source-binding-r1.json",
+        "sha256": "7d8186dc3ef866398d7b39cbf1ffb6f6bef18e3eccac4b98ed13b2598cdcd05c",
+        "bytes": 1610
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/receipts/issue236-event-size-fix-r1.json",
+        "sha256": "ef7fb854fea4e628626fdef58e4e705c608af1925fc85669777ec76592c88765",
+        "bytes": 1262
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/receipts/issue236-focused-r3.json",
+        "sha256": "6f9962ac741acd0bfb7a6429620d03f73627e6917d23bdde766591c6471e2dcf",
+        "bytes": 6009
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/receipts/issue236-native-applicability-r1.json",
+        "sha256": "54f71738232786ea43296f9d28b1caf60f92641d2fa5ce99c6aac86f35b40fc0",
+        "bytes": 3550
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/receipts/issue236-native-build-r2.json",
+        "sha256": "b142630d2f98ec6060411bd74183187d272a29c81d32168212173255ef5d393f",
+        "bytes": 6453
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/receipts/issue236-native-database-r1.json",
+        "sha256": "022f9da15d3adb2b409b113b0e20fb5cf885ecc8327bd1b3e245e34800f408f6",
+        "bytes": 7626
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/receipts/issue236-prerequisite-commit-r1.json",
+        "sha256": "afc435a709dc57d7a4377f7f1fbb3ec7ee89513e509d7254578230b5143d9d18",
+        "bytes": 2048
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/receipts/issue236-screenshot-review-r1.json",
+        "sha256": "f2452f7e20489a1310f358cfc61cbdf568fc7e70db4625ee43fc3792fac633ce",
+        "bytes": 2826
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/usage-codex-cache-and-reasoning-subsets.png",
+        "sha256": "5950eb3b4ed2277684412c40b911cc52cff2a66bf6b05fbb3c5daa28d62d2e51",
+        "bytes": 242796
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/usage-codex-duplicate-and-foreign-turn.png",
+        "sha256": "38f26118ea417036b5d631e5a7d4819c54c0c9b3ff574325a9af9c93ebb69ff2",
+        "bytes": 235688
+      },
+      {
+        "path": "docs/evidence/2026-10-03-usage-provenance/usage-codex-missing-input-explicit-zero-output.png",
+        "sha256": "76c25f16aa1b5e2f474c1cc4c291364bc31a4998ae786575b11cede845fb2e11",
+        "bytes": 249217
+      },
+      {
+        "path": "tools/check_evidence_personal_paths.mjs",
+        "sha256": "e72860698e955fbdab7de2a56fb9b562cc6d0aef9a0386016bcfb5f039a5d8f2",
+        "bytes": 5365
+      },
+      {
+        "path": "tools/check_evidence_personal_paths.test.mjs",
+        "sha256": "534a0172bc8b90b920d63c1a35b1105306f19836ded11c1eb9ac78503b818f95",
+        "bytes": 9384
+      }
+    ]
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T09:50:24.912Z",
+    "source": "<candidate-checkout>",
+    "head": "ffe61f19e6a5f309f363102f0e76aea8a96e3bf2",
+    "tree": "d8233b76147023e50dd9d0fc2e4c8a18844999b4",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/adapter/codex_stop_tests.rs\n M crates/crony-runner/src/bin/crony-evidence-paths.rs\n M crates/crony-store/src/usage_accounting.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md\n M docs/evidence/2026-10-03-usage-provenance/README.md\n M docs/evidence/2026-10-03-usage-provenance/evidence.json\n M docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-start.log\n M docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-start.log\n M tools/check_evidence_personal_paths.mjs\n M tools/check_evidence_personal_paths.test.mjs",
+    "source_file_count": 7498,
+    "source_fingerprint": "b1d4132764082865e29abfb7096333e67c79e85daac04935905a6dffb81b6f55",
+    "manifest": "<run-records>\\issue236-source-after-review-publication-r3.json",
+    "manifest_sha256": "5e148d8b0c5ad63696b7b26590a2919029890d09d4ecfd923f8f31772364f950"
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-10-03T09:50:25.475117+00:00"
+}

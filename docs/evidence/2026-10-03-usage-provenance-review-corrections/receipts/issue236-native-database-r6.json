@@ -1,0 +1,127 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "related_issues": [
+    56,
+    87,
+    261
+  ],
+  "status": "passed",
+  "wrapper_pid": 39312,
+  "purpose": "Fresh owned PostgreSQL usage presence, units, exact-assignment identity, replay, aliases, overflow, redaction, hard-control and revoked-read regressions. Synthetic accounting observations only; no budget grant, auditor execution, stopped experiment, real-provider, browser or hosted acceptance claimed.",
+  "source": "<candidate-checkout>",
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T10:47:12.748Z",
+    "source": "<candidate-checkout>",
+    "head": "ffe61f19e6a5f309f363102f0e76aea8a96e3bf2",
+    "tree": "d8233b76147023e50dd9d0fc2e4c8a18844999b4",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/adapter/codex_stop_tests.rs\n M crates/crony-runner/src/bin/crony-evidence-paths.rs\n M crates/crony-store/src/usage_accounting.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md\n M docs/evidence/2026-10-03-usage-provenance/README.md\n M docs/evidence/2026-10-03-usage-provenance/evidence.json\n M docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-start.log\n M docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-start.log\n M tools/check_evidence_personal_paths.mjs\n M tools/check_evidence_personal_paths.test.mjs",
+    "source_file_count": 7498,
+    "source_fingerprint": "b1d4132764082865e29abfb7096333e67c79e85daac04935905a6dffb81b6f55",
+    "manifest": "<run-records>\\issue236-source-before-native-db-r6.json",
+    "manifest_sha256": "265fb3cf9e49b9c0df018d3232ec765912ae3df46165d8a44bb1821897cdfa18"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T10:47:58.219Z",
+    "source": "<candidate-checkout>",
+    "head": "ffe61f19e6a5f309f363102f0e76aea8a96e3bf2",
+    "tree": "d8233b76147023e50dd9d0fc2e4c8a18844999b4",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/adapter/codex_stop_tests.rs\n M crates/crony-runner/src/bin/crony-evidence-paths.rs\n M crates/crony-store/src/usage_accounting.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md\n M docs/evidence/2026-10-03-usage-provenance/README.md\n M docs/evidence/2026-10-03-usage-provenance/evidence.json\n M docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-start.log\n M docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-start.log\n M tools/check_evidence_personal_paths.mjs\n M tools/check_evidence_personal_paths.test.mjs",
+    "source_file_count": 7498,
+    "source_fingerprint": "b1d4132764082865e29abfb7096333e67c79e85daac04935905a6dffb81b6f55",
+    "manifest": "<run-records>\\issue236-source-after-native-db-r6.json",
+    "manifest_sha256": "2764992c1fbc73f4af1f6f1a89f983270f5577c24db537287b6ed95546ddc9ae"
+  },
+  "source_unchanged": true,
+  "qa_root": "<owned-qa-root>\\issue236-native-usage-20261003-r6",
+  "started_at_utc": "2026-10-03T10:47:13.3632096Z",
+  "environment": {
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_TARGET_DIR": "<candidate-checkout>\\target\\issue236-review-r5",
+    "CARGO_NET_OFFLINE": "true",
+    "RUST_TEST_THREADS": "1",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_BUILD_JOBS": "2"
+  },
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "command": "initdb --auth=scram-sha-256 (private pwfile)",
+      "exit_code": 0,
+      "log": "<run-records>\\issue236-native-database-r6-initdb.log",
+      "sha256": "402f7efd103774977f06426d8eb33b0a306b18369d823fb51bd76c9ede83e2de",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0,
+        "summaries": 0
+      },
+      "passed_test_names": []
+    },
+    {
+      "name": "usage-provenance-transactions",
+      "command": "cargo test --locked --offline -p crony-store issue236_ -- --ignored --test-threads=1",
+      "exit_code": 0,
+      "log": "<run-records>\\issue236-native-database-r6-crony-store-issue236.log",
+      "sha256": "094795393bcea92cb67d8485c6ef6a6986c2860cacc2bf598701a5bcc2241cf7",
+      "counts": {
+        "passed": 13,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 571,
+        "summaries": 1
+      },
+      "passed_test_names": [
+        "usage_accounting_tests::issue236_usage_aggregate_range_uses_the_existing_rolling_window",
+        "usage_accounting_tests::issue236_usage_alias_enrichment_is_transitive_and_conflicts_cannot_claim_aliases",
+        "usage_accounting_tests::issue236_usage_equal_counts_and_missing_ids_do_not_collapse_calls",
+        "usage_accounting_tests::issue236_usage_four_scoped_calls_sum_once_with_replays_and_terminal_evidence",
+        "usage_accounting_tests::issue236_usage_hard_control_still_prevents_new_charges",
+        "usage_accounting_tests::issue236_usage_integer_subtotal_overflow_never_partially_updates_counters",
+        "usage_accounting_tests::issue236_usage_invalid_reports_are_redacted_without_any_partial_charge",
+        "usage_accounting_tests::issue236_usage_last_call_identity_coverage_uses_the_admitted_session",
+        "usage_accounting_tests::issue236_usage_mission_aggregate_overflow_keeps_the_journal_frame",
+        "usage_accounting_tests::issue236_usage_optional_session_uses_fenced_run_identity_without_rewriting_provenance",
+        "usage_accounting_tests::issue236_usage_partial_tokens_and_native_units_never_fabricate_free_usd",
+        "usage_accounting_tests::issue236_usage_requires_exact_assignment_and_matching_native_session",
+        "usage_accounting_tests::issue236_usage_room_revocation_hides_evidence_without_deleting_accounting"
+      ],
+      "package": "crony-store",
+      "discovery_log": "<run-records>\\issue236-native-database-r6-crony-store-issue236-list.log",
+      "discovery_sha256": "4ca8d03ff74187782d01108b5f8c2bb79d145b19b6e22567401da629d3f4f0b9",
+      "discovered_test_names": [
+        "usage_accounting_tests::issue236_usage_aggregate_range_uses_the_existing_rolling_window",
+        "usage_accounting_tests::issue236_usage_alias_enrichment_is_transitive_and_conflicts_cannot_claim_aliases",
+        "usage_accounting_tests::issue236_usage_equal_counts_and_missing_ids_do_not_collapse_calls",
+        "usage_accounting_tests::issue236_usage_four_scoped_calls_sum_once_with_replays_and_terminal_evidence",
+        "usage_accounting_tests::issue236_usage_hard_control_still_prevents_new_charges",
+        "usage_accounting_tests::issue236_usage_integer_subtotal_overflow_never_partially_updates_counters",
+        "usage_accounting_tests::issue236_usage_invalid_reports_are_redacted_without_any_partial_charge",
+        "usage_accounting_tests::issue236_usage_last_call_identity_coverage_uses_the_admitted_session",
+        "usage_accounting_tests::issue236_usage_mission_aggregate_overflow_keeps_the_journal_frame",
+        "usage_accounting_tests::issue236_usage_optional_session_uses_fenced_run_identity_without_rewriting_provenance",
+        "usage_accounting_tests::issue236_usage_partial_tokens_and_native_units_never_fabricate_free_usd",
+        "usage_accounting_tests::issue236_usage_requires_exact_assignment_and_matching_native_session",
+        "usage_accounting_tests::issue236_usage_room_revocation_hides_evidence_without_deleting_accounting"
+      ],
+      "complete_discovered_lane_executed": true
+    }
+  ],
+  "cleanup": "Exact owned PostgreSQL stopped and fixture port verified inactive; database, private credentials and logs preserved.",
+  "failure": null,
+  "authentication": {
+    "wrong_password_rejected": true,
+    "delivery": "Private fixture credential files for PostgreSQL clients. SQLx environment-only delivery is reduced assurance.",
+    "method": "scram-sha-256",
+    "authenticated_query": true
+  },
+  "finished_at_utc": "2026-10-03T10:47:59.6035736Z"
+}
