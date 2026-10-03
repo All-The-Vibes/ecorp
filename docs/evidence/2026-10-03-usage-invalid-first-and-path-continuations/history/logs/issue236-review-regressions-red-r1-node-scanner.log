@@ -1,0 +1,148 @@
+TAP version 13
+# Subtest: personal paths include drive-relative, prefixed, escaped and alternate separators
+ok 1 - personal paths include drive-relative, prefixed, escaped and alternate separators
+  ---
+  duration_ms: 2.4433
+  type: 'test'
+  ...
+# Subtest: normalized placeholders and ordinary prose remain valid
+ok 2 - normalized placeholders and ordinary prose remain valid
+  ---
+  duration_ms: 0.3723
+  type: 'test'
+  ...
+# Subtest: personal paths include caret-LF continuations
+not ok 3 - personal paths include caret-LF continuations
+  ---
+  duration_ms: 1.0318
+  type: 'test'
+  location: '<candidate-checkout>\\tools\\check_evidence_personal_paths.test.mjs:33:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    false !== true
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<candidate-checkout>/tools/check_evidence_personal_paths.test.mjs:34:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: personal paths include caret-CRLF continuations
+not ok 4 - personal paths include caret-CRLF continuations
+  ---
+  duration_ms: 0.2465
+  type: 'test'
+  location: '<candidate-checkout>\\tools\\check_evidence_personal_paths.test.mjs:40:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    false !== true
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<candidate-checkout>/tools/check_evidence_personal_paths.test.mjs:41:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: recursive packet scan and CLI reject a leak without printing its value
+not ok 5 - recursive packet scan and CLI reject a leak without printing its value
+  ---
+  duration_ms: 2591.22
+  type: 'test'
+  location: '<candidate-checkout>\\tools\\check_evidence_personal_paths.test.mjs:47:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    2 !== 4
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 4
+  actual: 2
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<candidate-checkout>/tools/check_evidence_personal_paths.test.mjs:59:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: every retained PR226 packet including the latest correction is scanned
+ok 6 - every retained PR226 packet including the latest correction is scanned
+  ---
+  duration_ms: 1827.5772
+  type: 'test'
+  ...
+# Subtest: root and ancestor directory links cannot redirect an evidence scan
+ok 7 - root and ancestor directory links cannot redirect an evidence scan
+  ---
+  duration_ms: 634.8308
+  type: 'test'
+  ...
+# Subtest: nested and dangling directory links fail closed
+ok 8 - nested and dangling directory links fail closed
+  ---
+  duration_ms: 431.633
+  type: 'test'
+  ...
+# Subtest: canonical containment rejects absolute cross-drive and UNC relative results
+ok 9 - canonical containment rejects absolute cross-drive and UNC relative results
+  ---
+  duration_ms: 0.4512
+  type: 'test'
+  ...
+# Subtest: actual Windows short alias succeeds while a linked ancestor still fails
+ok 10 - actual Windows short alias succeeds while a linked ancestor still fails
+  ---
+  duration_ms: 909.8518
+  type: 'test'
+  ...
+# Subtest: native scanner rejects oversize sparse evidence
+ok 11 - native scanner rejects oversize sparse evidence
+  ---
+  duration_ms: 227.4222
+  type: 'test'
+  ...
+# Subtest: empty evidence and a file at the byte limit are accepted
+ok 12 - empty evidence and a file at the byte limit are accepted
+  ---
+  duration_ms: 695.6948
+  type: 'test'
+  ...
+# Subtest: native scanner rejects hard-linked evidence and preserves the shared file
+ok 13 - native scanner rejects hard-linked evidence and preserves the shared file
+  ---
+  duration_ms: 227.3319
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 10
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7701.8226

@@ -1,0 +1,44 @@
+{
+  "recorded_at_utc": "2026-10-03T06:20:34.234594+00:00",
+  "issue": 236,
+  "status": "prepared_not_executed",
+  "head": "fb13446f099ddc550a653ed6c4b13800169ba599",
+  "failure_retained": {
+    "path": "<run-records>\\issue236-browser-r2.json",
+    "sha256": "edc6a4b992f23acad10285f8f7a3fd3a65bb9bc1f353819a91fefb0b373af157",
+    "counts": {
+      "passed": 1,
+      "failed": 0,
+      "scenarios_passed": 0,
+      "scenarios_unexecuted": 2
+    }
+  },
+  "confirmed_configuration_defect": {
+    "runner_parser": "crates/crony-runner/src/main.rs:108-113; value_delimiter is semicolon",
+    "old_fixture_value": "script path plus flag separated by a space became a single argument",
+    "new_fixture_value": "script path;--usage-provenance-fixture",
+    "original_http_error_body": "Not captured; do not invent it."
+  },
+  "other_harness_changes": [
+    "Record scoped runner capabilities and verify exact source and available Codex before scenarios.",
+    "Record bounded sanitized HTTP error messages/digests; count mutation HTTP assertions.",
+    "Record execution errors and failed/unexecuted scenarios independently of assertion counts."
+  ],
+  "product_source_changed": false,
+  "native_binaries_reused_from": "issue236-native-build-r2.json",
+  "comparison": "Frozen stopped comparison R4 is unchanged and must not be rerun.",
+  "files": [
+    {
+      "name": "issue236-stack-r3.ps1",
+      "sha256": "5fda401f0b35ea314cee13803ed124f907256c70b81fa47fcb830e89785ffde7"
+    },
+    {
+      "name": "issue236-browser-r2.mjs",
+      "sha256": "dc64714b4f66e4362cc9b398a985e535ae83fcd674597c7e289ebf4545a9d47d"
+    },
+    {
+      "name": "run-issue236-browser-r3.ps1",
+      "sha256": "22e407bcaf97e23d1d5d9aa9ce091ddac0d417058f012fb9c62b409937c1f9c0"
+    }
+  ]
+}

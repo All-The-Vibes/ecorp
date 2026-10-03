@@ -58,6 +58,9 @@ mod retained_provider_receipt;
 mod staffing;
 pub use staffing::FactoryPlanningSource;
 mod terminal_accounting;
+mod usage_accounting;
+#[cfg(test)]
+mod usage_accounting_tests;
 mod verification_dispatch;
 mod workspace_connections;
 pub use workspace_connections::{
@@ -8411,10 +8414,11 @@ impl PgStore {
             payload = sanitize_verification_evidence_tx(&mut tx, run_id, payload).await?;
         }
         if event_type == "run.usage" {
-            (event_type, payload) = control_accounting::admit_usage_tx(
+            (event_type, payload) = usage_accounting::admit_usage_tx(
                 &mut tx,
                 corp_id,
                 run_id,
+                event_id,
                 &breaker_stage,
                 &row.get::<String, _>("run_status"),
                 payload,
@@ -8717,21 +8721,14 @@ impl PgStore {
                 ));
             }
             "run.usage" => {
-                let input_tokens = payload
-                    .get("input_tokens")
-                    .and_then(Value::as_i64)
-                    .unwrap_or(0)
-                    .max(0);
-                let output_tokens = payload
-                    .get("output_tokens")
-                    .and_then(Value::as_i64)
-                    .unwrap_or(0)
-                    .max(0);
-                let cost_microusd = payload
-                    .get("cost_microusd")
-                    .and_then(Value::as_i64)
-                    .unwrap_or(0)
-                    .max(0);
+                let usage: crony_domain::UsageReport = serde_json::from_value(payload.clone())
+                    .context("decode admitted usage report")?;
+                usage.validate().map_err(anyhow::Error::msg)?;
+                // These integer columns are known subtotals. Missing components
+                // make no addition; their uncertainty remains in immutable events.
+                let input_tokens = usage.input_tokens.unwrap_or(0) as i64;
+                let output_tokens = usage.output_tokens.unwrap_or(0) as i64;
+                let cost_microusd = usage.cost_microusd.unwrap_or(0) as i64;
                 sqlx::query(
                     r#"
                     UPDATE runs
@@ -8739,13 +8736,14 @@ impl PgStore {
                         output_tokens = output_tokens + $2,
                         cost_microusd = cost_microusd + $3,
                         updated_at = now()
-                    WHERE id = $4
+                    WHERE id = $4 AND corp_id = $5
                     "#,
                 )
                 .bind(input_tokens)
                 .bind(output_tokens)
                 .bind(cost_microusd)
                 .bind(run_id)
+                .bind(corp_id)
                 .execute(&mut *tx)
                 .await?;
             }

@@ -1,0 +1,33 @@
+{
+  "recorded_at_utc": "2026-10-03T05:56:36.359530+00:00",
+  "status": "invalid_source_binding",
+  "fixture_executed": false,
+  "preparation": "<operator-home>\\code\\qa\\issue236-paired-usage-20261003-r3\\preparation.json",
+  "preparation_sha256": "9d591c82a92b24b26da379dea84560c6409c3b19e0be711fcf296d33f51c7d8f",
+  "findings": [
+    {
+      "kind": "native",
+      "identical_binary_sha256": "9304837a6e2b672f438b143577c1520b6e2e3b713dc11b92c840cfd3f4ecd791",
+      "candidate_artifacts": [
+        {
+          "package_id": "path+file:///<operator-home>/code/qa/issue236-paired-usage-20261003-r3/candidate/crates/crony-runner#0.1.0",
+          "fresh": true,
+          "executable": "<candidate-checkout>\\target\\debug\\deps\\crony_runner-02b0585a373d56cb.exe"
+        }
+      ]
+    },
+    {
+      "kind": "store",
+      "identical_binary_sha256": "1d400a8910b29e535c947a5b1dda4ddd703bad3f1cf98d99648916e8a4d7c9d5",
+      "candidate_artifacts": [
+        {
+          "package_id": "path+file:///<operator-home>/code/qa/issue236-paired-usage-20261003-r3/candidate/crates/crony-store#0.1.0",
+          "fresh": true,
+          "executable": "<candidate-checkout>\\target\\debug\\deps\\crony_store-55cb383881a956a4.exe"
+        }
+      ]
+    }
+  ],
+  "effect": "No comparative product outcome can be inferred. Candidate binaries reused the baseline artifacts. R3 remains preserved and must not execute.",
+  "repair": "Seed separate owned target directories, then clean every local path package only in each owned target. Require freshly compiled primary artifacts and source paths under the correct arm."
+}

@@ -1,0 +1,1163 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "candidate": "49a5c47d3fda8ca9e3925647639677f912bdeef2",
+  "candidate_tree": "47a09075cbd44f8dc9e47ad2e143e71de291a2a1",
+  "previous_head": "ac3a6764638406af0e13fa118ea68767a093324b",
+  "main": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "dependency_pr": 392,
+  "dependency_head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+  "physical_source_fingerprint": "da95d33bc3706d1a67ec8cc260392780f466b6d0866f2009326225ace87707ce",
+  "recorded_at_utc": "2026-10-03T13:50:14.537791+00:00",
+  "review_comment_ids": [
+    4173113909,
+    4173113933,
+    4173113950
+  ],
+  "canonical": {
+    "status": "passed",
+    "command": "pnpm check",
+    "checks": [
+      {
+        "name": "migrations",
+        "argv": [
+          "node",
+          "tools/check_migrations.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 702,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-compatibility",
+        "argv": [
+          "node",
+          "tools/check_state_audit_compatibility.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 130,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-evm",
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "crony-audit",
+          "--test",
+          "ethereum_local_chain"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 18587,
+        "counts": {
+          "rust": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "summaries": 1
+          },
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "docs",
+        "argv": [
+          "node",
+          "tools/check_docs.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 139,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "repository-docs",
+        "argv": [
+          "node",
+          "tools/check_documentation.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 302,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "node-tests",
+        "argv": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "--test-timeout=180000",
+          "--test-reporter=tap",
+          ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+          ".github/skills/code-review/tests/executor-state.test.mjs",
+          ".github/skills/code-review/tests/package.test.mjs",
+          "apps/web/src/AgentPinControl.test.mjs",
+          "apps/web/src/DelegatedPanel.test.mjs",
+          "apps/web/src/VerificationPolicyEditor.test.mjs",
+          "apps/web/src/agentPinOperation.test.mjs",
+          "apps/web/src/evidenceNavigation.test.mjs",
+          "apps/web/src/evidenceSelection.test.mjs",
+          "apps/web/src/factoryAuthority.test.mjs",
+          "apps/web/src/factoryAuthorityConnection.test.mjs",
+          "apps/web/src/factoryCheckpointRecovery.test.mjs",
+          "apps/web/src/factoryControllerSelection.test.mjs",
+          "apps/web/src/factoryPolling.test.mjs",
+          "apps/web/src/formText.test.mjs",
+          "apps/web/src/missionCollaboration.test.mjs",
+          "apps/web/src/missionComposer.test.mjs",
+          "apps/web/src/missionOriginContext.test.mjs",
+          "apps/web/src/missionPreview.test.mjs",
+          "apps/web/src/missionProjection.test.mjs",
+          "apps/web/src/missionResultContext.test.mjs",
+          "apps/web/src/missionReviewSummary.test.mjs",
+          "apps/web/src/missionRuntime.test.mjs",
+          "apps/web/src/office/characterAssets.test.mjs",
+          "apps/web/src/office/officeModel.test.mjs",
+          "apps/web/src/runActivity.test.mjs",
+          "apps/web/src/snapshotRefresh.test.mjs",
+          "apps/web/src/verificationPolicy.test.mjs",
+          "apps/web/src/workResultCard.test.mjs",
+          "apps/web/src/workflowContext.test.mjs",
+          "apps/web/src/workspaceConnections.test.mjs",
+          "scenarios/repo-steward/actions.test.mjs",
+          "scenarios/repo-steward/feedback-cli.test.mjs",
+          "scenarios/repo-steward/feedback.test.mjs",
+          "scenarios/repo-steward/maintenance.test.mjs",
+          "scenarios/repo-steward/recurring-audit.test.mjs",
+          "scenarios/repo-steward/steward.test.mjs",
+          "scenarios/repo-steward/teams-host.test.mjs",
+          "tests/readiness/cli.test.js",
+          "tools/budget_fixture.test.mjs",
+          "tools/check_deliverable_diff.test.mjs",
+          "tools/check_documentation.test.mjs",
+          "tools/check_evidence_launch.test.mjs",
+          "tools/check_evidence_native_build.test.mjs",
+          "tools/check_evidence_personal_paths.test.mjs",
+          "tools/check_migrations.test.mjs",
+          "tools/check_replay_source.test.mjs",
+          "tools/checkpoint_application_fixture.test.mjs",
+          "tools/ci_external_adapters_windows.test.mjs",
+          "tools/ci_factory_repository.test.mjs",
+          "tools/ci_maintenance.test.mjs",
+          "tools/ci_owned_test_server.test.mjs",
+          "tools/ci_runner_tests.test.mjs",
+          "tools/consume_operation_receipt.test.mjs",
+          "tools/controlled_runner_fixture.test.mjs",
+          "tools/copilot_fs_wire_observer.test.mjs",
+          "tools/copilot_fs_wire_process.test.mjs",
+          "tools/copilot_probe_boundaries.test.mjs",
+          "tools/copilot_probe_environment.test.mjs",
+          "tools/copilot_probe_native_read.test.mjs",
+          "tools/copilot_probe_process.test.mjs",
+          "tools/coverage_web_models.test.mjs",
+          "tools/delegated_lifecycle.test.mjs",
+          "tools/delegated_qa_root.test.mjs",
+          "tools/e2e_agent_pinning.test.mjs",
+          "tools/e2e_checkpoint_verification.test.mjs",
+          "tools/e2e_evidence_selection.test.mjs",
+          "tools/e2e_external_adapters.test.mjs",
+          "tools/e2e_external_adapters_http.test.mjs",
+          "tools/e2e_factory_budget_recovery.test.mjs",
+          "tools/e2e_late_termination.test.mjs",
+          "tools/e2e_predispatch_failure.test.mjs",
+          "tools/e2e_stopped_source_checkpoint.test.mjs",
+          "tools/e2e_verifier_browser_retention.test.mjs",
+          "tools/e2e_verifier_browser_scope.test.mjs",
+          "tools/factory_budget_fixture_config.test.mjs",
+          "tools/factory_budget_git.test.mjs",
+          "tools/factory_budget_process.test.mjs",
+          "tools/factory_budget_provenance.test.mjs",
+          "tools/factory_budget_start.test.mjs",
+          "tools/fake_codex_budget_stream.test.mjs",
+          "tools/fake_github_quota.test.mjs",
+          "tools/fixture_source_identity.test.mjs",
+          "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+          "tools/identity_fixture.test.mjs",
+          "tools/import_operation_behavior.test.mjs",
+          "tools/issue161/qa-api-provenance.test.mjs",
+          "tools/issue161/qa-plan.test.mjs",
+          "tools/local_source_commit.test.mjs",
+          "tools/local_stack_lifecycle.test.mjs",
+          "tools/local_stack_operation.test.mjs",
+          "tools/native_qualification_attempt.test.mjs",
+          "tools/native_qualification_finality.test.mjs",
+          "tools/native_qualification_trust.test.mjs",
+          "tools/office_model.test.mjs",
+          "tools/operation_feedback.test.mjs",
+          "tools/operation_receipt.test.mjs",
+          "tools/owned_test_stack.test.mjs",
+          "tools/probe_mcp.test.mjs",
+          "tools/qa_multiplayer_object_sources.test.mjs",
+          "tools/readiness_contract.test.mjs",
+          "tools/readiness_replay_contract.test.mjs",
+          "tools/redact_evidence_capabilities.test.mjs",
+          "tools/research_handoff_adversarial.test.mjs",
+          "tools/research_handoff_browser.test.mjs",
+          "tools/research_handoff_native.test.mjs",
+          "tools/runner_ack_fault_relay.test.mjs",
+          "tools/secret_scan.test.mjs",
+          "tools/secret_scan_native.test.mjs",
+          "tools/security_fixtures.test.mjs",
+          "tools/startup_validation_harness.test.mjs",
+          "tools/task_graph_fixture.test.mjs",
+          "tools/verifier_browser.test.mjs",
+          "tools/verify_toolchain.test.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2325791,
+        "counts": {
+          "rust": null,
+          "node": {
+            "tests": 3105,
+            "passed": 3040,
+            "failed": 0,
+            "skipped": 65,
+            "todo": 0,
+            "cancelled": 0
+          }
+        },
+        "errorCode": null
+      },
+      {
+        "name": "format",
+        "argv": [
+          "cargo",
+          "fmt",
+          "--check"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 3964,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "clippy",
+        "argv": [
+          "cargo",
+          "clippy",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 140147,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "rust-tests",
+        "argv": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--locked"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 1232434,
+        "counts": {
+          "rust": {
+            "passed": 937,
+            "failed": 0,
+            "ignored": 595,
+            "summaries": 41
+          },
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "web-build",
+        "argv": [
+          "pnpm",
+          "build:web"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 6940,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "web-lint",
+        "argv": [
+          "pnpm",
+          "lint:web"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2497,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      }
+    ]
+  },
+  "focused": [
+    {
+      "name": "native-scanner",
+      "exit_code": 0,
+      "counts": {
+        "filtered": 0,
+        "ignored": 0,
+        "failed": 0,
+        "passed": 27
+      }
+    },
+    {
+      "name": "node-scanner",
+      "exit_code": 0,
+      "counts": {
+        "tests": 13,
+        "todo": 0,
+        "cancelled": 0,
+        "fail": 0,
+        "skipped": 0,
+        "pass": 13
+      }
+    },
+    {
+      "name": "domain-usage",
+      "exit_code": 0,
+      "counts": {
+        "filtered": 25,
+        "ignored": 0,
+        "failed": 0,
+        "passed": 18
+      }
+    },
+    {
+      "name": "codex-invalid-first",
+      "exit_code": 0,
+      "counts": {
+        "filtered": 321,
+        "ignored": 0,
+        "failed": 0,
+        "passed": 1
+      }
+    },
+    {
+      "name": "codex-retained-session",
+      "exit_code": 0,
+      "counts": {
+        "filtered": 321,
+        "ignored": 0,
+        "failed": 0,
+        "passed": 1
+      }
+    }
+  ],
+  "before_correction": {
+    "status": "regressions_reproduced",
+    "source": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-03T12:29:08.956Z",
+      "source": "<candidate-checkout>",
+      "head": "ac3a6764638406af0e13fa118ea68767a093324b",
+      "tree": "2247b049815efda2708f1c2d4e234bf082c70dce",
+      "branch": "codex/issue236-usage-provenance",
+      "status": "M crates/crony-domain/src/usage.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/bin/crony-evidence-paths.rs\n M tools/check_evidence_personal_paths.test.mjs",
+      "source_file_count": 7597,
+      "source_fingerprint": "6cfbc338f03fa31e26a69326a14f3590217d85c3bf754262daa321fa71d1b618",
+      "manifest": "<run-records>\\issue236-review-regressions-red-r1-source-after.json",
+      "manifest_sha256": "6f518345c2a9ae75d1dba96458d87411153a0a12e5e414a221fa9448006ffef2"
+    },
+    "checks": [
+      {
+        "name": "native-scanner",
+        "exit_code": 101,
+        "counts": {
+          "filtered": 0,
+          "ignored": 0,
+          "failed": 3,
+          "passed": 24
+        }
+      },
+      {
+        "name": "node-scanner",
+        "exit_code": 1,
+        "counts": {
+          "cancelled": 0,
+          "skipped": 0,
+          "fail": 3,
+          "todo": 0,
+          "pass": 10,
+          "tests": 13
+        }
+      },
+      {
+        "name": "domain-usage",
+        "exit_code": 101,
+        "counts": {
+          "filtered": 25,
+          "ignored": 0,
+          "failed": 4,
+          "passed": 10
+        }
+      },
+      {
+        "name": "codex-invalid-first",
+        "exit_code": 101,
+        "counts": {
+          "filtered": 320,
+          "ignored": 0,
+          "failed": 1,
+          "passed": 0
+        }
+      }
+    ]
+  },
+  "native_sql": {
+    "counts": {
+      "passed": 13,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 571,
+      "summaries": 1
+    },
+    "discovered": 13,
+    "complete_discovered_lane_executed": true,
+    "authentication": {
+      "authenticated_query": true,
+      "delivery": "Private fixture credential files for PostgreSQL clients. SQLx environment-only delivery is reduced assurance.",
+      "method": "scram-sha-256",
+      "wrong_password_rejected": true
+    },
+    "cleanup": "Exact owned PostgreSQL stopped and fixture port verified inactive; database, private credentials and logs preserved."
+  },
+  "browser": {
+    "counts": {
+      "passed": 54,
+      "failed": 0,
+      "execution_errors": 0,
+      "scenarios_failed": 0,
+      "scenarios_passed": 5,
+      "scenarios_unexecuted": 0
+    },
+    "cleanup": "Verified every exact owned process stopped. Database, synthetic source, credentials, ownership and evidence retained.",
+    "transport": "Deterministic Codex protocol transport through actual Edge, server, runner and fresh SCRAM PostgreSQL.",
+    "provider_artifacts": [
+      {
+        "id": "a1bd53ef-ca99-4a76-8d1a-99934ff8c61a",
+        "event_id": "8612686e-38fc-4950-b7ce-51e6b94bc11b",
+        "event_seq": 21,
+        "file_name": "codex-fc88202a-94ce-4f5a-9b37-bcab92025d66.json",
+        "bytes": 1749,
+        "sha256": "2f6e142031fbd2b0650b06e042093467cb4bfdf82147a89916c36703c8e75c18",
+        "path": "<browser-fixture>\\evidence\\provider-artifact-codex-duplicate-and-foreign-turn.json",
+        "server_role": "provider_evidence",
+        "server_digest_verified": true,
+        "usage": {
+          "cost_microusd": null,
+          "input_tokens": 16,
+          "output_tokens": 4,
+          "usage_coverage": {
+            "call_identity": "unavailable",
+            "complete_provider_bill": false,
+            "native_billing_is_usd": false,
+            "token_denominator": "input_plus_output",
+            "tokens": "reported",
+            "usd": "unavailable"
+          },
+          "usage_provenance": {
+            "api_call_id": null,
+            "cache_tokens_are_input_subsets": false,
+            "cache_write_input_tokens": null,
+            "cached_input_tokens": null,
+            "cli_version": null,
+            "cumulative_total_tokens": null,
+            "invalid_fields": [],
+            "mapping": "retained_usage_aggregate_v1",
+            "model": null,
+            "model_multiplier": null,
+            "nano_aiu": null,
+            "native_event_id": null,
+            "provider_call_id": null,
+            "provider_session_id": null,
+            "reasoning_output_tokens": null,
+            "reasoning_tokens_are_output_subsets": false,
+            "schema_version": 1,
+            "scope": "retained_aggregate",
+            "sdk_version": null,
+            "source_event": null,
+            "turn_id": null
+          }
+        }
+      },
+      {
+        "id": "be9f7229-fa19-49dd-8451-6d53321eb997",
+        "event_id": "55e6ffb3-6059-4e2d-8ff5-439d265f79e7",
+        "event_seq": 42,
+        "file_name": "codex-b09e1542-1525-48b4-ba1b-acbd6cf9b519.json",
+        "bytes": 1752,
+        "sha256": "e87d8d2d8fdb1e08d58d524e2af29a11312b007c361c5b7a07f6e081350a969e",
+        "path": "<browser-fixture>\\evidence\\provider-artifact-codex-cache-and-reasoning-subsets.json",
+        "server_role": "provider_evidence",
+        "server_digest_verified": true,
+        "usage": {
+          "cost_microusd": null,
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "usage_coverage": {
+            "call_identity": "unavailable",
+            "complete_provider_bill": false,
+            "native_billing_is_usd": false,
+            "token_denominator": "input_plus_output",
+            "tokens": "reported",
+            "usd": "unavailable"
+          },
+          "usage_provenance": {
+            "api_call_id": null,
+            "cache_tokens_are_input_subsets": false,
+            "cache_write_input_tokens": null,
+            "cached_input_tokens": null,
+            "cli_version": null,
+            "cumulative_total_tokens": null,
+            "invalid_fields": [],
+            "mapping": "retained_usage_aggregate_v1",
+            "model": null,
+            "model_multiplier": null,
+            "nano_aiu": null,
+            "native_event_id": null,
+            "provider_call_id": null,
+            "provider_session_id": null,
+            "reasoning_output_tokens": null,
+            "reasoning_tokens_are_output_subsets": false,
+            "schema_version": 1,
+            "scope": "retained_aggregate",
+            "sdk_version": null,
+            "source_event": null,
+            "turn_id": null
+          }
+        }
+      },
+      {
+        "id": "d6d198bb-9d30-41bc-ac56-2fd8c8001f86",
+        "event_id": "67ea94db-5a65-4b82-ad3c-56e5f3863933",
+        "event_seq": 63,
+        "file_name": "codex-cf99ed7d-4670-4791-b2e5-9063bfbe5486.json",
+        "bytes": 1758,
+        "sha256": "bacfd037b97026ad576c26fcefdd7d061086db1564d2833b66f5839c4c0a6346",
+        "path": "<browser-fixture>\\evidence\\provider-artifact-codex-missing-input-explicit-zero-output.json",
+        "server_role": "provider_evidence",
+        "server_digest_verified": true,
+        "usage": {
+          "cost_microusd": null,
+          "input_tokens": null,
+          "output_tokens": 0,
+          "usage_coverage": {
+            "call_identity": "unavailable",
+            "complete_provider_bill": false,
+            "native_billing_is_usd": false,
+            "token_denominator": "input_plus_output",
+            "tokens": "partial",
+            "usd": "unavailable"
+          },
+          "usage_provenance": {
+            "api_call_id": null,
+            "cache_tokens_are_input_subsets": false,
+            "cache_write_input_tokens": null,
+            "cached_input_tokens": null,
+            "cli_version": null,
+            "cumulative_total_tokens": null,
+            "invalid_fields": [],
+            "mapping": "retained_usage_aggregate_v1",
+            "model": null,
+            "model_multiplier": null,
+            "nano_aiu": null,
+            "native_event_id": null,
+            "provider_call_id": null,
+            "provider_session_id": null,
+            "reasoning_output_tokens": null,
+            "reasoning_tokens_are_output_subsets": false,
+            "schema_version": 1,
+            "scope": "retained_aggregate",
+            "sdk_version": null,
+            "source_event": null,
+            "turn_id": null
+          }
+        }
+      },
+      {
+        "id": "2828b3b0-278c-4437-a174-5a0171e0eb4c",
+        "event_id": "51f60a2f-fb9e-4c1a-92e0-697a55c7ca35",
+        "event_seq": 94,
+        "file_name": "codex-67344273-5ff1-45ca-b81a-a85d5fb5d3b7.json",
+        "bytes": 1965,
+        "sha256": "c1786fdd1b771c5889d33a5d346b2998e02c353638b62a5aa7e50302dee3247d",
+        "path": "<browser-fixture>\\evidence\\provider-artifact-codex-regressing-and-contradictory-cursors.json",
+        "server_role": "provider_evidence",
+        "server_digest_verified": true,
+        "usage": {
+          "cost_microusd": null,
+          "input_tokens": 16,
+          "output_tokens": 4,
+          "usage_coverage": {
+            "call_identity": "unavailable",
+            "complete_provider_bill": false,
+            "native_billing_is_usd": false,
+            "token_denominator": "input_plus_output",
+            "tokens": "invalid",
+            "usd": "invalid"
+          },
+          "usage_provenance": {
+            "api_call_id": null,
+            "cache_tokens_are_input_subsets": false,
+            "cache_write_input_tokens": null,
+            "cached_input_tokens": null,
+            "cli_version": null,
+            "cumulative_total_tokens": null,
+            "invalid_fields": [
+              {
+                "field": "cumulative_total_tokens",
+                "reason": "conflicting_observation"
+              },
+              {
+                "field": "observation",
+                "reason": "invalid_number"
+              }
+            ],
+            "mapping": "retained_usage_aggregate_v1",
+            "model": null,
+            "model_multiplier": null,
+            "nano_aiu": null,
+            "native_event_id": null,
+            "provider_call_id": null,
+            "provider_session_id": null,
+            "reasoning_output_tokens": null,
+            "reasoning_tokens_are_output_subsets": false,
+            "schema_version": 1,
+            "scope": "retained_aggregate",
+            "sdk_version": null,
+            "source_event": null,
+            "turn_id": null
+          }
+        }
+      },
+      {
+        "id": "d8b5743f-68c8-4283-831b-65572f00c7e5",
+        "event_id": "fa1c44ea-0de4-4920-a69f-9795a69dc1d7",
+        "event_seq": 121,
+        "file_name": "codex-28c7a138-b507-4143-a283-32de993807bd.json",
+        "bytes": 1940,
+        "sha256": "9d437b572e153dcb8b0b74af592ec8c965bd04da7239575c3b0cee1c7b6f89dc",
+        "path": "<browser-fixture>\\evidence\\provider-artifact-codex-invalid-first-retains-subtotals.json",
+        "server_role": "provider_evidence",
+        "server_digest_verified": true,
+        "usage": {
+          "cost_microusd": null,
+          "input_tokens": 16,
+          "output_tokens": 4,
+          "usage_coverage": {
+            "call_identity": "unavailable",
+            "complete_provider_bill": false,
+            "native_billing_is_usd": false,
+            "token_denominator": "input_plus_output",
+            "tokens": "invalid",
+            "usd": "invalid"
+          },
+          "usage_provenance": {
+            "api_call_id": null,
+            "cache_tokens_are_input_subsets": false,
+            "cache_write_input_tokens": null,
+            "cached_input_tokens": null,
+            "cli_version": null,
+            "cumulative_total_tokens": null,
+            "invalid_fields": [
+              {
+                "field": "input_tokens",
+                "reason": "invalid_number"
+              },
+              {
+                "field": "observation",
+                "reason": "invalid_number"
+              }
+            ],
+            "mapping": "retained_usage_aggregate_v1",
+            "model": null,
+            "model_multiplier": null,
+            "nano_aiu": null,
+            "native_event_id": null,
+            "provider_call_id": null,
+            "provider_session_id": null,
+            "reasoning_output_tokens": null,
+            "reasoning_tokens_are_output_subsets": false,
+            "schema_version": 1,
+            "scope": "retained_aggregate",
+            "sdk_version": null,
+            "source_event": null,
+            "turn_id": null
+          }
+        }
+      }
+    ]
+  },
+  "hosted_validation_observation": {
+    "receipt": "receipts/actions-organization-restriction-observation-r1.json",
+    "recorded_at_utc": "2026-10-03T08:59:28.0113929Z",
+    "original_sha256": "2e084bf93db72aa0b90ff5fb61fdd91176edf2c7147fdc06cb77961010c1a8d1"
+  },
+  "issue_completed": false,
+  "provider_inference": false,
+  "independent_review": false,
+  "limitations": [
+    "Full #236 auditor delegation, early audits/headroom, decisions, grants, continuation, UI and concurrency/revocation acceptance remain incomplete.",
+    "Known accepted subtotals and invalid coverage do not establish a complete provider bill or the $10 assurance.",
+    "Environment-only fixture delivery has reduced assurance; no operating-system isolation claim.",
+    "Required hosted CI/CodeQL/quality/security is unavailable while Actions is disabled by organization administrators.",
+    "Dependency #392 and independent outcome review remain unresolved. Keep #402 draft and #236 open.",
+    "Historical Cargo advisory debt is not a clean audit. The stopped #193/#235 paired R4 remains permanently stopped."
+  ],
+  "files": [
+    {
+      "path": "receipts/issue236-canonical-code-r1.json",
+      "original_sha256": "7a2b467df71f4eb1e4e5e347fa3228fc6b4cbb085358e71ee0ce335ee02662af",
+      "published_sha256": "6b675c8b3c0e2d83059adc8d126bfe5ec1e7b28cc01c8a2cc06e4a161a0a56ef",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-review-fixes-review-r1.json",
+      "original_sha256": "5d30467bb73704e107ef6bff5ec373c32d21eba921fcafd14b5d88e5e3062a14",
+      "published_sha256": "18fef3fc978672c8376d461e8a69fbb6b3d8f4667cbc83fecba519fb37aa5fe7",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-review-fixes-stage-r1.json",
+      "original_sha256": "6ecca24fe1c1986902073aa09a47c0530293606a4c40597e98dce312527f27a2",
+      "published_sha256": "0775cc9b9e98c1677458d07fb854cff6ac8f638688ae2052c9a17ef919f9f895",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-review-fixes-commit-r1.json",
+      "original_sha256": "3f46e1490b183fc802624ced70aeb44b5cc32d8be71604e34515eec7e1ce170d",
+      "published_sha256": "ea94ee8b3e846cb45349878f1259af8fa92a2bea79f571da8430e4d6efd85b2b",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-review-regressions-green-r2.json",
+      "original_sha256": "31ac8c2ec6fd30ff676c697b4e74af489d0c146b2e41e442fb3854308071ab49",
+      "published_sha256": "45987f8b6feaf3c67fd6e2f1a2d5ce3d5b503cff2867c8e7cc93a061b1eba45f",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-native-database-r1.json",
+      "original_sha256": "6eca01319ce1dac78a88731548fca9e6eb15568881e7ba6fb153fe5deaf7407b",
+      "published_sha256": "9b66ae48ae952b44dbf58649764187cbd237147528679f683e9c0391bf8142da",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-native-build-r1.json",
+      "original_sha256": "017bc9848b3c2274fe99c49eef937b9ac20967f7d3f09bcf12e72323fe96092f",
+      "published_sha256": "b6b3002467a818beed420bf27349b9956b003f49b12bb14b8cd012520f8791c0",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-browser-r1.json",
+      "original_sha256": "f0544e5ac671d2ce00f5e7b44eaf949eeeca8e4ac2e16934d4b9fa79ba0bdd14",
+      "published_sha256": "aae202c13d562956517dd2ade3e3641e259c29c4dc0a723bf28eabe00caa88ac",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-screenshot-review-r1.json",
+      "original_sha256": "86673491a7d3e6dbc373ecee673adb88dd0aa47643a1d64dc99d8c5621292d11",
+      "published_sha256": "48aa826f5b6f3bf11b2c522cc5ca56b6242032dd5950993817150fdd5c9e6a3e",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-acceptance-harness-preparation-r1.json",
+      "original_sha256": "3ebac17b92af1b1fb83ff554ea96de0d54861b528ad2a5a81c6392a530937561",
+      "published_sha256": "f16631cb65b5f7dbe533dbaa78a5d708d83a3a979e24fd0140827088b317709d",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/actions-organization-restriction-observation-r1.json",
+      "original_sha256": "2e084bf93db72aa0b90ff5fb61fdd91176edf2c7147fdc06cb77961010c1a8d1",
+      "published_sha256": "819a67b2a1d748ccb91f0e9aa52d7910976ee0b242d35c2e28120f7b7c3790ae",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/canonical-code-r1.log",
+      "original_sha256": "5b19d14f822b30f53269bb34d52669e482f4d8ecaba2ddb34d9e1a0aeeb9aaea",
+      "published_sha256": "8d5d0b8fd93c5059301f66070ad71ca957725ca8edbbaba2c5d8fa9234fd7d4f",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/canonical-readiness-code-r1.json",
+      "original_sha256": "a9ecd13ad1b7ad1de85ce240c1cdaf2f8fe7a65a080c45d6b94fea9b728a674b",
+      "published_sha256": "a9ecd13ad1b7ad1de85ce240c1cdaf2f8fe7a65a080c45d6b94fea9b728a674b",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/validated-source-manifest.json",
+      "original_sha256": "f094f0a7583b8141d6257f95261565df0661c8bd5357759daea0d6d62456a450",
+      "published_sha256": "57f043cd99fb40f3e3bfe47cdad9107fc0cd8bab01c05e61b006e742fbc0f978",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-canonical-code-r1-install.log",
+      "original_sha256": "7f0bc0d76245cb658615b58c9ef63316b8c15db9a42ebac7d23163d70c2f2606",
+      "published_sha256": "62ac20a837d95d9511818796b68a1d6ba8b28df8585fe053b3af720e63951f1b",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-canonical-code-r1-steward-install-offline.log",
+      "original_sha256": "a4ea6a5b4ef4ee7c94c343a445a8c4ce77ae5baa79292f89c9c51d64949d559a",
+      "published_sha256": "52995698c9c366ce4723898c79ca26b45e8d26d73587d12fc1135e85227c8915",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-review-regressions-green-r2-native-scanner.log",
+      "original_sha256": "ee269e28c7bbb9233caf674188708690a67042078ac35a89485d29fe6781113f",
+      "published_sha256": "802e2072f0cd270c6fe8cfdd0d2a5690556afc479cbb40b62dc415b1fda0b6fe",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-review-regressions-green-r2-node-scanner.log",
+      "original_sha256": "03b7aed722ea9f2ac55199511d7fa804803514b1cf3bdf3e6b58891342c8d3d4",
+      "published_sha256": "6f3de45686fa6e871e6281c0068b60173b10205e5a6eabce90b0facf8c806f82",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-review-regressions-green-r2-domain-usage.log",
+      "original_sha256": "fa8f54dc785202f2e5c5e203712298d65bf42f69fef54d6bbabe7a79af43efb0",
+      "published_sha256": "6955be02294eec59b952108d3e0efbfae3ea4d2a2031dbfed039db0f63d0629d",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-review-regressions-green-r2-codex-invalid-first.log",
+      "original_sha256": "7fbd46e2f2058988b5a21c80cd37fc8ae1f5bfbc592bc14d4729e94881443d0c",
+      "published_sha256": "26f9cd4e35afbacee00b1e1919920c0ed9dc8d3da6553c9540f6b9566e6cd72e",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-review-regressions-green-r2-codex-retained-session.log",
+      "original_sha256": "4c900b3335ec737292f6926b597104db047a5522e4232505ade29a08d326b9f8",
+      "published_sha256": "6a318d2781e5c785e754e2a0196f77b1d0cb5faa4337218f3933c4b16c235a79",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-database-r1-initdb.log",
+      "original_sha256": "9b4b068381e893b38ff8ea6c39ae44dfaebaf574c4c5ccbcfb9ff9a12a24c3a5",
+      "published_sha256": "5d27051cafa788d218fae58978405b0e8911667e85754bba0a4bd0cde828720b",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-database-r1-crony-store-issue236.log",
+      "original_sha256": "442a11396bfce7c8736e5aa645bfd0e7284afe2154c88cb934740833d3376310",
+      "published_sha256": "718016a3eaa50abb6813a78712c809864464e84282b999321dffe3146435dac7",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r1-issue236-browser-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r1-issue236-fake-codex-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r1-issue236-prepare-fixture-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r1-issue236-fixture-environment-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r1-stack-start.log",
+      "original_sha256": "d417893dc99bbe34a97d22ae3a637302a9c184c8636099d6ef2d1ff9ed3c62bf",
+      "published_sha256": "43edfe7e6448437863d073efeb5e23890d4f7e0d2f472a27f79b68fe9aa0f252",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r1-stack-status.log",
+      "original_sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+      "published_sha256": "966c9259b3b566cbe8b61427223cdc5679afcabc998acac1a04abf93a5fa164f",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r1-driver.log",
+      "original_sha256": "ae1d90586679974dbd5ec2b890e374764cb72f0562c20025dd4dc541504a62d9",
+      "published_sha256": "37e8ff74bc1dbf31a2c9fbecd5d2f2c4b05d9c8def89f06eaf7f43545f0bc4ee",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-build-r1-cache-copy.log",
+      "original_sha256": "67e69477b700edf66894ab62b67ca467a8d27c8731cb1f09f113f37386f60d5d",
+      "published_sha256": "70fa5c94eb533dbc261a7043764787c53d03978d5479e8ca70653b25f3b9b5b2",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-build-r1-local-package-clean.log",
+      "original_sha256": "422b075a516c7b22c298824f236cc512001679c1ea127fc409666845105142de",
+      "published_sha256": "6e00800adbaf0e20f3d8e4a2aa156dba858b89c3ef49a40a763c52130929dcea",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-build-r1.jsonl",
+      "original_sha256": "9c020f8154612f583bb4c9df8faa0d9edc8c9bd2c5cd79f5257a9771c6a22570",
+      "published_sha256": "bbed28fc40e42f2f9c852fd2abab91f2120f715c3b2a557f864995201e1aedd3",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-database-r1-crony-store-issue236-list.log",
+      "original_sha256": "54042bc61fc397c16429383e07c2216fde0ff260903de3dc4bc107fc4a82a89a",
+      "published_sha256": "35edc9291394ca3c9c6e2ab9390958767c31a1f4bcc8ae532301db6994b1afa8",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/browser-observations.json",
+      "original_sha256": "3a939873ee047b98d045ac874b8b681ed5cf53ae9b008442eb8adc788fa73d8e",
+      "published_sha256": "6df7ed2e66c7c55c9ec9e6079ee8db008efecd913ac5547890d0bc628789d140",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/browser-setup.json",
+      "original_sha256": "814b8eb23b866a056a5261360e9966a8271e635486f89da0e2313b1048126505",
+      "published_sha256": "3e636dc3bd98450fc9fbe042a8989e69bede9e2abb2d598259e85cf635215d46",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r1-stack-stop.log",
+      "original_sha256": "65abe6fe9cb60eacc967eff94e7f98a3a958644944f9ce7caffa07021c10ae9e",
+      "published_sha256": "bc62835e86fcb405eb6122ad5603e60ac28b75f0640f2e2f4df1681a1744c9e2",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/issue236-review-regressions-red-r1.json",
+      "original_sha256": "2239801c068b45477a2c98a807c546469bc542ed7babe9b95e7a9036f1c96c3f",
+      "published_sha256": "f09e41a7adac72e727720aa93247b6fa0b39b144c8402a1e49964918868878be",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/logs/issue236-review-regressions-red-r1-native-scanner.log",
+      "original_sha256": "e0c4b996dcd28aa63086329f3352bbb00ea9f2809b2874661c4c8709691b98b3",
+      "published_sha256": "c4bfa8f658649dce82fa14715ac9cb7ecc815a625cafb3df0c06499913df8aa7",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/logs/issue236-review-regressions-red-r1-node-scanner.log",
+      "original_sha256": "f5a1726b430c082de1b32c4a12b996021353815c5a2ef49f28580cfa24678a82",
+      "published_sha256": "0e10150173855287b4a66c9e96fea6f83f7d065d830cbbea7328564a79545cf4",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/logs/issue236-review-regressions-red-r1-domain-usage.log",
+      "original_sha256": "c7255b198a7f8b98b144f086258fd14c2d646f6f1470a923e91cc1856b77b960",
+      "published_sha256": "6f1a4d59c6414dee3fbfb9335921f04206a2d71942e33735e58aefbc7763cc8b",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/logs/issue236-review-regressions-red-r1-codex-invalid-first.log",
+      "original_sha256": "13dc28a0405109cfb6b144211fcc0fa21dab9a23c3129b4dd3513912d0388e3c",
+      "published_sha256": "898ff308d46fdb3e239fad83618610d787cfc27863ac746bf25b0192d6a55179",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/source_before.json",
+      "original_sha256": "509414488d6ffca33803881b7c3580e6dbffd18522bf7cbf1863813c1d537c40",
+      "published_sha256": "2913dc4685887abe4a4b538d8cc95a8e029daeb34fd503668a6158c42b7d44b8",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/source_after.json",
+      "original_sha256": "6f518345c2a9ae75d1dba96458d87411153a0a12e5e414a221fa9448006ffef2",
+      "published_sha256": "31a885d4a0f4b72e0d45e3ac3591a39c4c3d91bd007fa5712c7fb5b83a3f7580",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-duplicate-and-foreign-turn.json",
+      "original_sha256": "2f6e142031fbd2b0650b06e042093467cb4bfdf82147a89916c36703c8e75c18",
+      "published_sha256": "2f6e142031fbd2b0650b06e042093467cb4bfdf82147a89916c36703c8e75c18",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-cache-and-reasoning-subsets.json",
+      "original_sha256": "e87d8d2d8fdb1e08d58d524e2af29a11312b007c361c5b7a07f6e081350a969e",
+      "published_sha256": "e87d8d2d8fdb1e08d58d524e2af29a11312b007c361c5b7a07f6e081350a969e",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-missing-input-explicit-zero-output.json",
+      "original_sha256": "bacfd037b97026ad576c26fcefdd7d061086db1564d2833b66f5839c4c0a6346",
+      "published_sha256": "bacfd037b97026ad576c26fcefdd7d061086db1564d2833b66f5839c4c0a6346",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-regressing-and-contradictory-cursors.json",
+      "original_sha256": "c1786fdd1b771c5889d33a5d346b2998e02c353638b62a5aa7e50302dee3247d",
+      "published_sha256": "c1786fdd1b771c5889d33a5d346b2998e02c353638b62a5aa7e50302dee3247d",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-invalid-first-retains-subtotals.json",
+      "original_sha256": "9d437b572e153dcb8b0b74af592ec8c965bd04da7239575c3b0cee1c7b6f89dc",
+      "published_sha256": "9d437b572e153dcb8b0b74af592ec8c965bd04da7239575c3b0cee1c7b6f89dc",
+      "transformation": "none"
+    },
+    {
+      "path": "usage-codex-duplicate-and-foreign-turn.png",
+      "original_sha256": "90268270734fdf9823706fa51708c2056cadf487bc47675b1fda2aaeee884b0e",
+      "published_sha256": "90268270734fdf9823706fa51708c2056cadf487bc47675b1fda2aaeee884b0e",
+      "transformation": "none"
+    },
+    {
+      "path": "usage-codex-cache-and-reasoning-subsets.png",
+      "original_sha256": "9eefc92c81b0f467743aad8dc0924e0ef991de2897debe14f703c9a90be6e399",
+      "published_sha256": "9eefc92c81b0f467743aad8dc0924e0ef991de2897debe14f703c9a90be6e399",
+      "transformation": "none"
+    },
+    {
+      "path": "usage-codex-missing-input-explicit-zero-output.png",
+      "original_sha256": "3780847349d834ab13395f6b866c08e850dd4117b1e60bd484827df48e2af28b",
+      "published_sha256": "3780847349d834ab13395f6b866c08e850dd4117b1e60bd484827df48e2af28b",
+      "transformation": "none"
+    },
+    {
+      "path": "usage-codex-regressing-and-contradictory-cursors.png",
+      "original_sha256": "9984822558a239ad8dd612c98fed317cfdfbbe708af8e7e2f4ef9fe5ecfe69df",
+      "published_sha256": "9984822558a239ad8dd612c98fed317cfdfbbe708af8e7e2f4ef9fe5ecfe69df",
+      "transformation": "none"
+    },
+    {
+      "path": "usage-codex-invalid-first-retains-subtotals.png",
+      "original_sha256": "267cbcc0a251491b5083d56c650ebeb24327fcd245bb33e14a189f80c8cf462e",
+      "published_sha256": "267cbcc0a251491b5083d56c650ebeb24327fcd245bb33e14a189f80c8cf462e",
+      "transformation": "none"
+    },
+    {
+      "path": "drivers/issue236-acceptance-corpus-r1.json",
+      "original_sha256": "b1b89df4ffc3df1f67a883d3534e9287e58e1c7276a3cb7126e12f14cac6b02e",
+      "published_sha256": "b1b89df4ffc3df1f67a883d3534e9287e58e1c7276a3cb7126e12f14cac6b02e",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-browser-r1.mjs.txt",
+      "original_sha256": "9337b83812de217bd9b64f5c0c91fa42800fcf901923df20fbcff2ed0a53abdb",
+      "published_sha256": "9337b83812de217bd9b64f5c0c91fa42800fcf901923df20fbcff2ed0a53abdb",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-fake-codex-r1.mjs.txt",
+      "original_sha256": "dc51f98a970a638133c9eaf39cffe3ddb227958eb5e35f481464234df2e447d7",
+      "published_sha256": "dc51f98a970a638133c9eaf39cffe3ddb227958eb5e35f481464234df2e447d7",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-stack-r1.ps1.txt",
+      "original_sha256": "909747dc381a000bb40c15da089dc952aecf788d022e9fc25e757fb8d8cceb47",
+      "published_sha256": "940482905ab7ebf76a28ceabc83540e11625b47161beca0febadf2f8b1f40a27",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-issue236-native-build-r1.ps1.txt",
+      "original_sha256": "e0eec704ab09d42cc9d5d8a8b9dda3bacd1fbaf29f6f8f350cb180cc913bc78c",
+      "published_sha256": "53638ff7bb0ab398d8afd4196ee20037ed0be1c6bd7fdcd3e38e0ead06e7ef8e",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-issue236-native-db-r1.ps1.txt",
+      "original_sha256": "72094a6ebce0a8cd1697779b457d65c7c05436436b871907376018a71006630a",
+      "published_sha256": "292509ac48624ea1bf9b4c46c32474d6267fd9cbb9dece1814f115cc7f3c18d4",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-issue236-browser-r1.ps1.txt",
+      "original_sha256": "c897c36ce2f0d7be821fc11acbccf74e54c756b2cafe23ff52b751ae652126ca",
+      "published_sha256": "4b9c9e30fe30cad12bf6cdf07f9a118bbc50365a6742477932a9324f071c3055",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-issue236-canonical-r1.ps1.txt",
+      "original_sha256": "b60f52ddee5626955172a5bc60c970d12e9f4d1b95812d790f74ad7b306e493b",
+      "published_sha256": "dce6ee1c6a2c7e7e85b92accd45ecd88b7fc18cc8144eac9052cdc1cb4ae7b05",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/commit-issue236-review-fixes-r1.py.txt",
+      "original_sha256": "956387ffe5124812ee3385be12fc5bfbd4300d2600dbbf37f3eaa92a8d29baee",
+      "published_sha256": "46e5c6e915b1cab912fe43097f21dc093bd31bdfdbe893f913234187c8d76cbc",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-source-snapshot-r1.mjs.txt",
+      "original_sha256": "1658bc1a3bedaa0413c438e536880fb213600357a0314a9d23d3d08841fd3b07",
+      "published_sha256": "befc9dfaf5cc21aa729f3c6a14f743df9eb581fcc3677aa2ba32330ee8b1ce17",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-fixture-environment-r1.mjs.txt",
+      "original_sha256": "dec8204cea74646da860998fd749603dfdd1e9e44d149d7404201687dad744a4",
+      "published_sha256": "a4c490b0a369270c37fb280a8649d15ed2bfe75adef91ee46e799b83aa1c7b21",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-fixture-environment-r1.ps1.txt",
+      "original_sha256": "03316c1fcd1d9830a98a3aa6e212335084386084a12356ed307070719416a448",
+      "published_sha256": "ffdfeb106ad0a707cfe0899ebe909d515040bef3b4264dd2674d8eb1f85a5897",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-prepare-fixture-r1.mjs.txt",
+      "original_sha256": "0b2088abf98aec948041b5a381f1e8dd77b7cc57670ebd21ca076723b609a1ff",
+      "published_sha256": "0b2088abf98aec948041b5a381f1e8dd77b7cc57670ebd21ca076723b609a1ff",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/package-issue236-review-fixes-r1.py.txt",
+      "original_sha256": "c3239fd6fcc510ee354902deda3fe1042f6e6a23530ab07f15b19134e02ac70e",
+      "published_sha256": "8270b9f5d592aeba60f096e3f9f1b044a8fc590410d3bfbbc911a5144a064435",
+      "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    }
+  ]
+}

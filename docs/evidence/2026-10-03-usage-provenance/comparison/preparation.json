@@ -1,0 +1,295 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "status": "prepared",
+  "started_at_utc": "2026-10-03T05:56:55.441015+00:00",
+  "qa_root": "<paired-fixture>",
+  "candidate": "fb13446f099ddc550a653ed6c4b13800169ba599",
+  "baseline": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "fixture_executed": false,
+  "builds": [
+    {
+      "arm": "baseline",
+      "kind": "native",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "-p",
+        "crony-runner",
+        "--bin",
+        "crony-runner",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "<paired-fixture>\\baseline-native-build.jsonl",
+      "sha256": "725db4da0c94f0daf5202475f67d755293f6085d8afedd2f3fa1e3785651f8be",
+      "duration_seconds": 47.438000000081956,
+      "binary": "<paired-fixture>\\baseline-native.exe",
+      "binary_sha256": "7806420555af0cb4cdcc0c3d063043f04b3fddc2e7558d32af30f9b5105b4d5e",
+      "target_directory": "<paired-fixture>\\baseline-target",
+      "source_artifacts": [
+        {
+          "package_id": "path+file:///<paired-fixture>/baseline/crates/crony-runner#0.1.0",
+          "fresh": false,
+          "executable": "<paired-fixture>\\baseline-target\\debug\\deps\\crony_runner-02b0585a373d56cb.exe",
+          "target": {
+            "kind": [
+              "bin"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "crony-runner",
+            "src_path": "<paired-fixture>\\baseline\\crates\\crony-runner\\src\\main.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": false,
+            "test": true
+          }
+        }
+      ]
+    },
+    {
+      "arm": "baseline",
+      "kind": "store",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "-p",
+        "crony-store",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "<paired-fixture>\\baseline-store-build.jsonl",
+      "sha256": "afa0b322c14697315f43d4a392d049f5fb66b180a5057e184807f06133418bd5",
+      "duration_seconds": 119.03100000007544,
+      "binary": "<paired-fixture>\\baseline-store.exe",
+      "binary_sha256": "d235c3982815127e829455c84d49f8b6da7f02e7b1a2fdb7e90e949eb5139bbb",
+      "target_directory": "<paired-fixture>\\baseline-target",
+      "source_artifacts": [
+        {
+          "package_id": "path+file:///<paired-fixture>/baseline/crates/crony-store#0.1.0",
+          "fresh": false,
+          "executable": "<paired-fixture>\\baseline-target\\debug\\deps\\crony_store-55cb383881a956a4.exe",
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "crony_store",
+            "src_path": "<paired-fixture>\\baseline\\crates\\crony-store\\src\\lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          }
+        }
+      ]
+    },
+    {
+      "arm": "candidate",
+      "kind": "native",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "-p",
+        "crony-runner",
+        "--bin",
+        "crony-runner",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "<paired-fixture>\\candidate-native-build.jsonl",
+      "sha256": "ae6b3610eeb50fd70bf388152d51046107627fc6afa640e882c319cbea1c8599",
+      "duration_seconds": 49.875,
+      "binary": "<paired-fixture>\\candidate-native.exe",
+      "binary_sha256": "9a06fa8d44993eddc62e0a3fcd00dad3aeff6363000a8282dbf91710c8e00790",
+      "target_directory": "<paired-fixture>\\candidate-target",
+      "source_artifacts": [
+        {
+          "package_id": "path+file:///<paired-fixture>/candidate/crates/crony-runner#0.1.0",
+          "fresh": false,
+          "executable": "<paired-fixture>\\candidate-target\\debug\\deps\\crony_runner-02b0585a373d56cb.exe",
+          "target": {
+            "kind": [
+              "bin"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "crony-runner",
+            "src_path": "<paired-fixture>\\candidate\\crates\\crony-runner\\src\\main.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": false,
+            "test": true
+          }
+        }
+      ]
+    },
+    {
+      "arm": "candidate",
+      "kind": "store",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "-p",
+        "crony-store",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "<paired-fixture>\\candidate-store-build.jsonl",
+      "sha256": "0a41a5e784885046c6d759096c19965c1d0bf94fe8d63d55304e75098ff3bb5f",
+      "duration_seconds": 126.42199999990407,
+      "binary": "<paired-fixture>\\candidate-store.exe",
+      "binary_sha256": "c1dbc9acc65ce81dcc0aa86ffd320c096150ca75113dc84de3c293869ed140ff",
+      "target_directory": "<paired-fixture>\\candidate-target",
+      "source_artifacts": [
+        {
+          "package_id": "path+file:///<paired-fixture>/candidate/crates/crony-store#0.1.0",
+          "fresh": false,
+          "executable": "<paired-fixture>\\candidate-target\\debug\\deps\\crony_store-55cb383881a956a4.exe",
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "crony_store",
+            "src_path": "<paired-fixture>\\candidate\\crates\\crony-store\\src\\lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          }
+        }
+      ]
+    }
+  ],
+  "scope": "Frozen synthetic comparison only. No provider inference, grants, retained database, stopped #193/#235 experiments or independence claim.",
+  "cost_boundary": "Preparation/build wall time measured separately. Total engineering/review/inference cost remains unknown; no zero-total-cost claim.",
+  "cache_preparations": [
+    {
+      "arm": "baseline",
+      "target": "<paired-fixture>\\baseline-target",
+      "seed_read_only": "<candidate-checkout>\\target",
+      "copy_exit_code": 1,
+      "copy_log": "<paired-fixture>\\baseline-cache-copy.log",
+      "copy_log_sha256": "500180295ed1327d39ec10e8693c7ba4008ec1df7440543683ccc6f7b344c31b",
+      "local_packages": [
+        "crony-audit",
+        "crony-base",
+        "crony-base-gateway",
+        "crony-cli",
+        "crony-domain",
+        "crony-gateways",
+        "crony-protocol",
+        "crony-runner",
+        "crony-server",
+        "crony-store"
+      ],
+      "clean_command": [
+        "cargo",
+        "clean",
+        "--locked",
+        "--offline",
+        "--target-dir",
+        "<paired-fixture>\\baseline-target",
+        "--package",
+        "crony-audit",
+        "--package",
+        "crony-base",
+        "--package",
+        "crony-base-gateway",
+        "--package",
+        "crony-cli",
+        "--package",
+        "crony-domain",
+        "--package",
+        "crony-gateways",
+        "--package",
+        "crony-protocol",
+        "--package",
+        "crony-runner",
+        "--package",
+        "crony-server",
+        "--package",
+        "crony-store"
+      ],
+      "clean_exit_code": 0,
+      "clean_log": "<paired-fixture>\\baseline-local-package-clean.log",
+      "clean_log_sha256": "1b12180d91a82f0bc0145628098bdb0511521d72b6a91f2e38c64e9b42701fdd"
+    },
+    {
+      "arm": "candidate",
+      "target": "<paired-fixture>\\candidate-target",
+      "seed_read_only": "<candidate-checkout>\\target",
+      "copy_exit_code": 1,
+      "copy_log": "<paired-fixture>\\candidate-cache-copy.log",
+      "copy_log_sha256": "9472914b0780731c206d215ab320b76f2382c2c629462739b337c228b123b96d",
+      "local_packages": [
+        "crony-audit",
+        "crony-base",
+        "crony-base-gateway",
+        "crony-cli",
+        "crony-domain",
+        "crony-gateways",
+        "crony-protocol",
+        "crony-runner",
+        "crony-server",
+        "crony-store"
+      ],
+      "clean_command": [
+        "cargo",
+        "clean",
+        "--locked",
+        "--offline",
+        "--target-dir",
+        "<paired-fixture>\\candidate-target",
+        "--package",
+        "crony-audit",
+        "--package",
+        "crony-base",
+        "--package",
+        "crony-base-gateway",
+        "--package",
+        "crony-cli",
+        "--package",
+        "crony-domain",
+        "--package",
+        "crony-gateways",
+        "--package",
+        "crony-protocol",
+        "--package",
+        "crony-runner",
+        "--package",
+        "crony-server",
+        "--package",
+        "crony-store"
+      ],
+      "clean_exit_code": 0,
+      "clean_log": "<paired-fixture>\\candidate-local-package-clean.log",
+      "clean_log_sha256": "1b12180d91a82f0bc0145628098bdb0511521d72b6a91f2e38c64e9b42701fdd"
+    }
+  ],
+  "freeze_sha256": "afe5544469a275d5ecf0256ff8edb866633a1b01a0449ad793b36cd477b80609",
+  "finished_at_utc": "2026-10-03T06:08:00.829660+00:00",
+  "preparation_duration_seconds": 665.390000000014
+}

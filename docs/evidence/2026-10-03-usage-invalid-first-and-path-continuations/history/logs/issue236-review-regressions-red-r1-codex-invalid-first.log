@@ -1,0 +1,24 @@
+   Compiling crony-runner v0.1.0 (<candidate-checkout>\crates\crony-runner)
+    Finished `test` profile [unoptimized] target(s) in 36.03s
+     Running unittests src\main.rs (target\issue236-review-r5\debug\deps\crony_runner-02b0585a373d56cb.exe)
+
+running 1 test
+test adapter::codex::tests::invalid_usage_does_not_advance_the_cursor_and_explicit_zero_is_reported ... FAILED
+
+failures:
+
+---- adapter::codex::tests::invalid_usage_does_not_advance_the_cursor_and_explicit_zero_is_reported stdout ----
+
+thread 'adapter::codex::tests::invalid_usage_does_not_advance_the_cursor_and_explicit_zero_is_reported' (36036) panicked at crates\crony-runner\src\adapter\codex.rs:1488:13:
+assertion `left == right` failed
+  left: None
+ right: Some(10)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    adapter::codex::tests::invalid_usage_does_not_advance_the_cursor_and_explicit_zero_is_reported
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 320 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p crony-runner --bin crony-runner`

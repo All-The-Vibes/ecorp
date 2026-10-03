@@ -1,0 +1,117 @@
+#requires -Version 7.5
+[CmdletBinding()]
+param([Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string]$ExpectedHead)
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$product = '<candidate-checkout>'
+$node = '<operator-home>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe'
+$qa = '<operator-home>\code\qa\issue236-native-build-20261003-r2'
+$target = Join-Path $qa 'target'
+$snapshot = Join-Path $PSScriptRoot 'issue236-source-snapshot-r1.mjs'
+$prefix = 'issue236-native-build-r2'
+$receiptPath = Join-Path $PSScriptRoot "$prefix.json"
+$log = Join-Path $PSScriptRoot "$prefix.jsonl"
+if ((Test-Path -LiteralPath $receiptPath) -or (Test-Path -LiteralPath $log) -or (Test-Path -LiteralPath $qa)) { throw 'Preserve existing build evidence and resources.' }
+foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|GIT_|ISSUE236_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN','RUSTFLAGS','RUSTDOCFLAGS')) {
+        [Environment]::SetEnvironmentVariable($name,$null,'Process')
+    }
+}
+$env:CARGO_BUILD_JOBS = '2'
+$env:CARGO_PROFILE_DEV_DEBUG = '0'
+$env:CARGO_PROFILE_TEST_DEBUG = '0'
+$env:CARGO_INCREMENTAL = '0'
+$env:CARGO_NET_OFFLINE = 'true'
+$beforeText = & $node $snapshot $product (Join-Path $PSScriptRoot 'issue236-source-before-native-build-r2.json')
+if ($LASTEXITCODE) { throw 'Cannot establish native build source.' }
+$before = $beforeText | ConvertFrom-Json -AsHashtable
+if ($before.head -cne $ExpectedHead) { throw 'Native build requires the exact committed candidate.' }
+$dirty = @(& git -C $product status --porcelain=v1 --untracked-files=all)
+if ($LASTEXITCODE -or $dirty.Count) { throw 'Native build requires a clean committed candidate.' }
+$receipt = [ordered]@{
+    repository='All-The-Vibes/ecorp';issue=236;source=$product;source_before=$before;
+    started_at_utc=[DateTime]::UtcNow.ToString('o');pid=$PID;status='running';source_unchanged=$null;
+    expected_head=$ExpectedHead;command='cargo build --locked --offline -p crony-server -p crony-runner --message-format=json';binaries=@();
+    qa_root=$qa;target_directory=$target;
+    scope='Exact candidate executables for owned usage-provenance acceptance. Separate owned cache; invalidate all local path packages. Build only, with no acceptance or provider inference claim.'
+}
+function Save { [IO.File]::WriteAllText($receiptPath,($receipt | ConvertTo-Json -Depth 60)+[Environment]::NewLine) }
+Save
+Push-Location -LiteralPath $product
+try {
+    $qaParent = [IO.Path]::GetFullPath('<operator-home>\code\qa')
+    if ([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($qa)) -cne $qaParent) { throw 'Unexpected build resource path.' }
+    $null = New-Item -ItemType Directory -Path $qa
+    $copyLog = Join-Path $PSScriptRoot "$prefix-cache-copy.log"
+    & robocopy.exe (Join-Path $product 'target') $target /E /XJ /R:1 /W:1 /NFL /NDL *> $copyLog
+    $copyCode = $LASTEXITCODE
+    $receipt.cache_copy = @{exit_code=$copyCode;log=$copyLog;sha256=(Get-FileHash -LiteralPath $copyLog).Hash.ToLowerInvariant();seed_read_only=(Join-Path $product 'target')}
+    Save
+    if ($copyCode -ge 8 -or !(Test-Path -LiteralPath $target -PathType Container)) { throw 'Build cache copy failed.' }
+    $resolvedTarget = (Resolve-Path -LiteralPath $target).ProviderPath
+    if ([IO.Path]::GetDirectoryName($resolvedTarget) -cne (Resolve-Path -LiteralPath $qa).ProviderPath -or $resolvedTarget -ceq (Join-Path $product 'target')) {
+        throw 'Only the new owned target may be cleaned.'
+    }
+    $env:CARGO_TARGET_DIR = $resolvedTarget
+    $metadataError = Join-Path $PSScriptRoot "$prefix-metadata-stderr.log"
+    $metadataText = & cargo metadata --format-version 1 --locked --offline 2> $metadataError
+    if ($LASTEXITCODE) { throw 'Cannot establish local package identities; cache not cleaned.' }
+    $metadata = ($metadataText -join [Environment]::NewLine) | ConvertFrom-Json -AsHashtable -Depth 100
+    $localPackages = @($metadata.packages | Where-Object { $null -eq $_.source })
+    if (!$localPackages.Count) { throw 'No local packages found; cache not cleaned.' }
+    $prefixPath = [IO.Path]::GetFullPath($product).TrimEnd('\') + '\'
+    foreach ($package in $localPackages) {
+        $manifest = [IO.Path]::GetFullPath($package.manifest_path)
+        if (!$manifest.StartsWith($prefixPath,[StringComparison]::OrdinalIgnoreCase) -or $package.name -notmatch '^crony-[a-z-]+$') {
+            throw 'Unexpected local dependency; cache not cleaned.'
+        }
+    }
+    $names = @($localPackages.name | Sort-Object -Unique)
+    $cleanArgs = @('clean','--locked','--offline','--target-dir',$resolvedTarget)
+    foreach ($name in $names) { $cleanArgs += @('--package',$name) }
+    $cleanLog = Join-Path $PSScriptRoot "$prefix-local-package-clean.log"
+    & cargo @cleanArgs *> $cleanLog
+    $cleanCode = $LASTEXITCODE
+    $receipt.local_package_clean = @{packages=$names;command=$cleanArgs;exit_code=$cleanCode;log=$cleanLog;sha256=(Get-FileHash -LiteralPath $cleanLog).Hash.ToLowerInvariant();verified_owned_target=$resolvedTarget}
+    Save
+    if ($cleanCode) { throw 'Owned local-package invalidation failed.' }
+    & cargo build --locked --offline -p crony-server -p crony-runner --message-format=json *> $log
+    $code = $LASTEXITCODE
+    $receipt.build = @{exit_code=$code;log=$log;sha256=(Get-FileHash -LiteralPath $log).Hash.ToLowerInvariant()}
+    Save
+    if ($code) { throw 'Native build failed; preserve its output.' }
+    $artifacts = @()
+    foreach ($line in Get-Content -LiteralPath $log) {
+        try { $entry = $line | ConvertFrom-Json -AsHashtable -Depth 100 -ErrorAction Stop } catch { continue }
+        if ($entry.reason -eq 'compiler-artifact' -and $entry.package_id.StartsWith('path+') -and $entry.executable) {
+            $binaryPath = [IO.Path]::GetFullPath($entry.executable)
+            $sourcePath = [IO.Path]::GetFullPath($entry.target.src_path)
+            if ($entry.fresh -ne $false -or !$sourcePath.StartsWith($prefixPath,[StringComparison]::OrdinalIgnoreCase) -or
+                !$binaryPath.StartsWith($resolvedTarget.TrimEnd('\')+'\',[StringComparison]::OrdinalIgnoreCase)) {
+                throw 'A reused or incorrectly scoped native executable cannot establish source identity.'
+            }
+            $artifacts += $entry
+        }
+    }
+    foreach ($name in @('crony-server','crony-runner')) {
+        $binaryMatches = @($artifacts | Where-Object { $_.target.name -ceq $name -and 'bin' -in $_.target.kind -and !$_.profile.test })
+        if ($binaryMatches.Count -ne 1) { throw 'Exactly one freshly compiled native binary is required per component.' }
+        $binary = $binaryMatches[0].executable
+        $receipt.binaries += @{path=$binary;sha256=(Get-FileHash -LiteralPath $binary).Hash.ToLowerInvariant();compiler_artifact=$binaryMatches[0]}
+    }
+    $receipt.status = 'passed'
+} catch { $receipt.status='failed'; $receipt.failure=$_.Exception.Message }
+finally {
+    try {
+        $afterText = & $node $snapshot $product (Join-Path $PSScriptRoot 'issue236-source-after-native-build-r2.json')
+        if ($LASTEXITCODE) { throw 'Cannot capture post-build source.' }
+        $receipt.source_after = $afterText | ConvertFrom-Json -AsHashtable
+        $receipt.source_unchanged = $receipt.source_after.source_fingerprint -ceq $before.source_fingerprint -and $receipt.source_after.head -ceq $ExpectedHead
+        if (!$receipt.source_unchanged) { throw 'Source changed during native build.' }
+    } catch { $receipt.status='failed'; $receipt.source_failure=$_.Exception.Message }
+    Pop-Location
+    $receipt.finished_at_utc=[DateTime]::UtcNow.ToString('o')
+    Save
+}
+[pscustomobject]$receipt | Select-Object issue,status,source_unchanged,build,failure | ConvertTo-Json -Depth 5
+if ($receipt.status -ne 'passed') { exit 1 }

@@ -1,0 +1,265 @@
+"""Verify correction packet bytes and their applicability before staging.
+
+This performs documentation, personal-path and secret checks. Canonical R6 is
+bound to the unchanged correction source; final canonical R8 runs after staging.
+No remote mutation, experiment replay, staging or commit occurs here.
+"""
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import stat
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+RUN = Path(__file__).resolve().parent
+WT = Path(r'<candidate-checkout>')
+PACKET = WT / 'docs/evidence/2026-10-03-usage-provenance-review-corrections'
+PREFIX = PACKET.relative_to(WT).as_posix() + '/'
+BRANCH = 'codex/issue236-usage-provenance'
+BASE = 'ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01'
+FINGERPRINT = 'b1d4132764082865e29abfb7096333e67c79e85daac04935905a6dffb81b6f55'
+PACKAGE = 'issue236-correction-evidence-package-r3.json'
+VALIDATION = 'issue236-correction-publication-validation-r3.json'
+NODE = Path(r'<pinned-toolchain>\node-v24.21.0-win-x64\node.exe')
+SCANNER = Path(r'<operator-home>\code\ecorp\output\pr-completion\20260922T123548Z\gitleaks-8.30.1\gitleaks.exe')
+SCANNER_SHA = '17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c'
+PLAN = ['migrations', 'state-audit-compatibility', 'state-audit-evm', 'docs',
+        'repository-docs', 'node-tests', 'format', 'clippy', 'rust-tests',
+        'web-build', 'web-lint']
+spec = importlib.util.spec_from_file_location('correction_packet', RUN / 'normalize-issue236-correction-examples-r3.py')
+packet_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(packet_module)
+helpers = packet_module.helpers
+sha = helpers.sha
+ENV = helpers.clean_env()
+for key in list(ENV):
+    if key.startswith('GITLEAKS_'):
+        del ENV[key]
+ENV['GIT_LITERAL_PATHSPECS'] = '1'
+ENV['PATH'] = str(NODE.parent) + os.pathsep + str(Path(sys.executable).parent) + os.pathsep + ENV['PATH']
+ENV['CARGO_TARGET_DIR'] = str(WT / 'target/issue236-review-r5')
+
+
+def require(ok, message):
+    if not ok:
+        raise RuntimeError(message)
+
+
+def now():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def read(path):
+    return json.loads(Path(path).read_text(encoding='utf-8-sig'))
+
+
+def write(path, value):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    raw = value if isinstance(value, bytes) else (json.dumps(value, indent=2) + '\n').encode()
+    with path.open('xb') as stream:
+        stream.write(raw)
+
+
+def run(argv, timeout=600, data=None):
+    return subprocess.run([str(arg) for arg in argv], cwd=WT, env=ENV,
+                          capture_output=True, input=data, timeout=timeout,
+                          creationflags=subprocess.CREATE_NO_WINDOW)
+
+
+def git(*args):
+    result = run(['git', '--no-optional-locks', '-c', 'core.longpaths=true', *args])
+    require(result.returncode == 0, 'Git operation failed: ' + args[0])
+    return result.stdout
+
+
+def text(*args):
+    return git(*args).decode().strip()
+
+
+def safe_file(root, name):
+    root = Path(root)
+    relative = Path(name)
+    require(not relative.is_absolute() and '..' not in relative.parts, 'Unsafe artifact name.')
+    path = root / relative
+    require(path.resolve(strict=True).is_relative_to(root.resolve()), 'Artifact escaped its root.')
+    for current in [path, *path.parents]:
+        metadata = current.lstat()
+        require(not stat.S_ISLNK(metadata.st_mode)
+                and not getattr(metadata, 'st_file_attributes', 0) & 0x400,
+                'Redirected artifact path; preserve and inspect.')
+        if current == root:
+            break
+    require(path.is_file(), 'Artifact is not a regular file.')
+    return path
+
+
+def canonical(name, expected_fingerprint):
+    receipt = read(RUN / name)
+    result = receipt['canonical']
+    require(receipt['status'] == 'passed' and receipt['source_unchanged'] is True
+            and result['exit_code'] == 0 and result['source_changed'] is False
+            and not result['not_run'] and [c['name'] for c in result['checks']] == PLAN
+            and all(c['passed'] and c['exitCode'] == 0 for c in result['checks']),
+            'Complete passing canonical validation required: ' + name)
+    require(receipt['dependency_install']['exit_code'] == 0
+            and '--frozen-lockfile' in receipt['dependency_install']['command'],
+            'Locked dependency installation required.')
+    for kind in ('log', 'report'):
+        require(sha(result[kind]) == result[kind + '_sha256'], 'Canonical artifact changed.')
+    for side in ('source_before', 'source_after'):
+        source = receipt[side]
+        require(source['source_fingerprint'] == expected_fingerprint
+                and sha(source['manifest']) == source['manifest_sha256'],
+                'Canonical physical source binding changed.')
+    return receipt
+
+
+def source():
+    owner = read(RUN / 'issue236-start-r1.json')
+    require(owner['created_by_this_run'] and owner['checkout'] == str(WT)
+            and owner['branch'] == BRANCH, 'Worktree ownership changed.')
+    commit = read(RUN / 'issue236-review-correction-commit-r2.json')
+    require(commit['status'] == 'committed' and commit['physical_source_unchanged'] is True
+            and commit['validated_source_fingerprint'] == FINGERPRINT,
+            'Reviewed correction commit required.')
+    require(text('rev-parse', 'HEAD') == commit['head']
+            and text('rev-parse', 'HEAD^{tree}') == commit['tree']
+            and text('branch', '--show-current') == BRANCH,
+            'Candidate head, tree or branch changed; preserve it.')
+    prior = canonical('issue236-canonical-r6.json', FINGERPRINT)
+    require(commit['canonical_receipt_sha256'] == sha(RUN / 'issue236-canonical-r6.json'),
+            'Correction commit no longer binds canonical R6.')
+    files = read(prior['source_after']['manifest'])['files']
+    current = helpers.physical_manifest(WT)
+    require([row for row in current if not row[0].startswith(PREFIX)] == files,
+            'Previously validated correction source changed.')
+    changed = [p for p in git('diff', 'HEAD', '--name-only', '-z').decode().split('\0') if p]
+    require(all(p.startswith(PREFIX) for p in changed), 'Unexpected tracked source changes.')
+    return commit, files
+
+
+def packet():
+    value = read(RUN / PACKAGE)
+    commit, files = source()
+    require(value['status'] == 'packaged' and value['existing_source_unchanged'] is True
+            and value['head'] == commit['head'] and value['tree'] == commit['tree']
+            and value['physical_source_fingerprint'] == FINGERPRINT,
+            'Package binding changed.')
+    paths = sorted(row['path'] for row in value['files'])
+    actual = sorted(p.relative_to(WT).as_posix() for p in PACKET.rglob('*') if p.is_file())
+    require(actual == paths and len(set(paths)) == len(paths), 'Packet inventory differs.')
+    for row in value['files']:
+        require(sha(safe_file(WT, row['path'])) == row['sha256'], 'Packaged artifact changed.')
+    evidence = read(PACKET / 'evidence.json')
+    require(evidence['candidate'] == commit['head'] and evidence['candidate_tree'] == commit['tree']
+            and evidence['physical_source_fingerprint'] == FINGERPRINT
+            and evidence['dependency_head'] == BASE and not evidence['issue_completed']
+            and not evidence['independent_review'] and not evidence['provider_inference'],
+            'Packet source or completion claim differs.')
+    require(evidence['files'] == [{k: v for k, v in row.items() if k != 'original'}
+                                 for row in value['captures']], 'Capture mapping differs.')
+    require(sorted([PREFIX + row['path'] for row in value['captures']]
+                   + [PREFIX + 'README.md', PREFIX + 'evidence.json']) == paths,
+            'Packet capture inventory is incomplete.')
+    roots = [RUN, WT, Path(r'<owned-qa-root>')]
+    captures = []
+    for row in value['captures']:
+        original = Path(row['original'])
+        root = next((r for r in roots if original.is_relative_to(r)), None)
+        require(root is not None, 'Unexpected original artifact root.')
+        original = safe_file(root, original.relative_to(root))
+        published = safe_file(PACKET, row['path'])
+        require(sha(original) == row['original_sha256']
+                and sha(published) == row['published_sha256'], 'Capture hashes changed.')
+        require(row['transformation'] in ('none', 'local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines', packet_module.TRANSFORMATION),
+                'Unknown artifact transformation.')
+        normalizer = (packet_module.normalize_examples if row['transformation'] == packet_module.TRANSFORMATION
+                      else packet_module.normalize)
+        expected = original.read_bytes() if row['transformation'] == 'none' else normalizer(
+            original.read_text(encoding='utf-8-sig')).encode('utf-8')
+        require(published.read_bytes() == expected, 'Publication exceeded its declared transformation.')
+        captures.append({'path': row['path'], 'original_sha256': sha(original),
+                         'published_sha256': sha(published), 'declared_transformation_verified': True})
+    return commit, files, paths, captures
+
+
+def check(name, argv, timeout=600):
+    log = RUN / (name + '.log')
+    require(not log.exists(), 'Preserve the earlier check log.')
+    result = run(argv, timeout)
+    write(log, result.stdout + result.stderr)
+    row = {'name': name, 'command': [str(arg) for arg in argv], 'exit_code': result.returncode,
+           'log': str(log), 'sha256': sha(log)}
+    write(RUN / (name + '.json'), row)
+    require(result.returncode == 0, name + ' failed; preserve its recorded log.')
+    print(json.dumps({'check': name, 'exit_code': result.returncode}), flush=True)
+    return row
+
+
+def validate():
+    require(not (RUN / VALIDATION).exists(), 'Preserve the existing validation receipt.')
+    commit, files, paths, captures = packet()
+    require(not git('diff', '--cached', '--name-only', '-z').strip(), 'Preserve existing staged work.')
+    for name in ['issue236-focused-r8.json', 'issue236-path-regressions-r4.json',
+                 'issue236-native-database-r6.json', 'issue236-review-publication-validation-r3.json',
+                 'issue236-native-build-r3.json', 'issue236-browser-r4.json']:
+        value = packet_module.bound_receipt(name)
+        require(value['source_after']['source_fingerprint'] == FINGERPRINT, 'Regression applicability changed.')
+    browser = read(RUN / 'issue236-browser-r4.json')
+    require(browser['source_after']['head'] == commit['head']
+            and browser['database_authentication']['wrong_password_rejected'] is True
+            and browser['cleanup'].startswith('Verified every exact owned process stopped.'),
+            'Browser source or fixture cleanup differs.')
+    visual = read(RUN / 'issue236-screenshot-review-r2.json')
+    require(visual['status'] == 'reviewed' and visual['head'] == commit['head'], 'Screenshot review binding differs.')
+    checks = [check('issue236-correction-doc-contract-r3', [NODE, 'tools/check_documentation.mjs']),
+              check('issue236-correction-generated-docs-r3', [NODE, 'tools/check_docs.mjs']),
+              check('issue236-correction-personal-paths-r3', [NODE, 'tools/check_evidence_personal_paths.mjs',
+                    PACKET, WT / 'docs/evidence/2026-10-03-usage-provenance'], 900)]
+    product_paths = [p for p in git('diff', '--name-only', '-z', BASE, commit['head']).decode().split('\0') if p]
+    scan_paths = sorted(set(product_paths + paths))
+    scan_root = RUN / 'issue236-correction-publication-scan-input-r3'
+    require(not scan_root.exists(), 'Preserve existing scanner inputs.')
+    scan_files = []
+    for name in scan_paths:
+        value = safe_file(WT, name).read_bytes()
+        write(scan_root / name, value)
+        scan_files.append({'path': name, 'sha256': hashlib.sha256(value).hexdigest(), 'bytes': len(value)})
+    write(RUN / 'issue236-correction-publication-scan-input-r3.json', {
+        'repository': 'All-The-Vibes/ecorp', 'created_by_this_run': True,
+        'directory': str(scan_root), 'head': commit['head'], 'files': scan_files})
+    require(sha(SCANNER) == SCANNER_SHA, 'Pinned scanner identity differs.')
+    require((WT / '.gitleaksignore').read_bytes().replace(b'\r\n', b'\n') ==
+            git('show', commit['head'] + ':.gitleaksignore').replace(b'\r\n', b'\n'),
+            'Secret ignore policy changed.')
+    report = RUN / 'issue236-correction-gitleaks-r3-report.json'
+    require(not report.exists(), 'Preserve existing scanner report.')
+    scan = check('issue236-correction-gitleaks-r3', [SCANNER, 'dir', scan_root,
+        '--redact=100', '--no-banner', '--no-color', '--ignore-gitleaks-allow',
+        '--gitleaks-ignore-path', WT / '.gitleaksignore', '--exit-code=42', '--timeout=300',
+        '--report-format=json', '--report-path', report], 330)
+    require(report.exists() and not read(report), 'Secret report is unavailable or contains findings.')
+    scan.update(scanner_sha256=SCANNER_SHA, finding_count=0, files=len(scan_paths),
+                report_sha256=sha(report), ignore_policy_sha256=sha(WT / '.gitleaksignore'))
+    checks.append(scan)
+    require(packet() == (commit, files, paths, captures), 'Source or evidence changed during validation.')
+    write(RUN / VALIDATION, {
+        'repository': 'All-The-Vibes/ecorp', 'issue': 236, 'pr': 402, 'status': 'passed',
+        'recorded_at_utc': now(), 'head': commit['head'], 'tree': commit['tree'],
+        'physical_source_fingerprint': FINGERPRINT, 'implementation_files': len(files),
+        'packet_files': len(paths), 'captures': captures, 'checks': checks,
+        'packet_receipt': PACKAGE, 'packet_receipt_sha256': sha(RUN / PACKAGE),
+        'canonical_applicability': 'issue236-canonical-r6.json',
+        'canonical_receipt_sha256': sha(RUN / 'issue236-canonical-r6.json'),
+        'full_execution_repeated': False, 'implementation_unchanged': True,
+        'final_canonical_required_before_commit': 'issue236-canonical-r8.json'})
+    print(json.dumps({'status': 'passed', 'packet_files': len(paths),
+                      'secret_scan_files': len(scan_paths), 'secret_findings': 0}), flush=True)
+
+
+if __name__ == '__main__':
+    validate()

@@ -1,0 +1,74 @@
+{
+  "test_owned": true,
+  "demo": {
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "room_id": "00000000-0000-4000-8000-000000000041",
+    "alice_actor_id": "00000000-0000-4000-8000-000000000011",
+    "bob_actor_id": "00000000-0000-4000-8000-000000000012",
+    "eve_actor_id": "00000000-0000-4000-8000-000000000013",
+    "manager_agent_id": "00000000-0000-4000-8000-000000000031",
+    "worker_agent_id": "00000000-0000-4000-8000-000000000032",
+    "codex_agent_id": "00000000-0000-4000-8000-000000000033"
+  },
+  "provider_fixture": "native-codex-usage-corpus",
+  "repository": "<candidate-checkout>",
+  "runner_id": "issue236-usage-qa",
+  "web_url": "http://127.0.0.1:16389",
+  "source_repository": "ecorp-fixture/usage-provenance-fixture",
+  "source": "<owned-qa-root>\\issue236-usage-provenance-cumulative-bounds-20261003-r1\\source",
+  "source_commit": "56558163cc5e38dc952b33e412bf4046b14b6361",
+  "server_url": "http://127.0.0.1:19389",
+  "processes": {
+    "server": {
+      "executable": "<owned-qa-root>\\issue236-native-build-cumulative-bounds-20261003-r1\\target\\debug\\crony-server.exe",
+      "pid": 39860,
+      "stderr": "<owned-qa-root>\\issue236-usage-provenance-cumulative-bounds-20261003-r1\\logs\\server-20261003T171754248-21cbb71c5f0140a8b6bc5805377062b9.stderr.log",
+      "started_utc": "2026-10-03T17:17:55.2978911Z",
+      "role": "server",
+      "workspace": "<owned-qa-root>\\issue236-usage-provenance-cumulative-bounds-20261003-r1",
+      "stdout": "<owned-qa-root>\\issue236-usage-provenance-cumulative-bounds-20261003-r1\\logs\\server-20261003T171754248-21cbb71c5f0140a8b6bc5805377062b9.stdout.log"
+    },
+    "web": {
+      "executable": "<pinned-toolchain>\\node-v24.21.0-win-x64\\node.exe",
+      "pid": 17360,
+      "stderr": "<owned-qa-root>\\issue236-usage-provenance-cumulative-bounds-20261003-r1\\logs\\web-20261003T171758399-b7aaa0fd1a58430e8d85f11b6638a6c0.stderr.log",
+      "started_utc": "2026-10-03T17:17:58.4093233Z",
+      "role": "web",
+      "workspace": "<owned-qa-root>\\issue236-usage-provenance-cumulative-bounds-20261003-r1",
+      "stdout": "<owned-qa-root>\\issue236-usage-provenance-cumulative-bounds-20261003-r1\\logs\\web-20261003T171758399-b7aaa0fd1a58430e8d85f11b6638a6c0.stdout.log"
+    },
+    "runner": {
+      "executable": "<owned-qa-root>\\issue236-native-build-cumulative-bounds-20261003-r1\\target\\debug\\crony-runner.exe",
+      "pid": 39648,
+      "stderr": "<owned-qa-root>\\issue236-usage-provenance-cumulative-bounds-20261003-r1\\logs\\runner-20261003T171757216-45aee2a3c93c4c9797767bd30da3a753.stderr.log",
+      "started_utc": "2026-10-03T17:17:58.3701163Z",
+      "role": "runner",
+      "workspace": "<owned-qa-root>\\issue236-usage-provenance-cumulative-bounds-20261003-r1",
+      "stdout": "<owned-qa-root>\\issue236-usage-provenance-cumulative-bounds-20261003-r1\\logs\\runner-20261003T171757216-45aee2a3c93c4c9797767bd30da3a753.stdout.log"
+    },
+    "postgres": {
+      "executable": "<pinned-toolchain>\\postgresql-17.10\\pgsql\\bin\\postgres.exe",
+      "pid": 23572,
+      "stderr": "<owned-qa-root>\\issue236-usage-provenance-cumulative-bounds-20261003-r1\\logs\\postgres-20261003T171752763-2938a1f722a946bfa9bfd5ba4b3e8587.stderr.log",
+      "started_utc": "2026-10-03T17:17:52.8318746Z",
+      "role": "postgres",
+      "workspace": "<owned-qa-root>\\issue236-usage-provenance-cumulative-bounds-20261003-r1",
+      "stdout": "<owned-qa-root>\\issue236-usage-provenance-cumulative-bounds-20261003-r1\\logs\\postgres-20261003T171752763-2938a1f722a946bfa9bfd5ba4b3e8587.stdout.log"
+    }
+  },
+  "corpus_sha256": "fa8cf9eaa418bda759c0032efe0051fae1a87d84af6fcb1e9fd5329ba67dcb42",
+  "qa_root": "<owned-qa-root>\\issue236-usage-provenance-cumulative-bounds-20261003-r1",
+  "source_binding": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T17:17:40.635Z",
+    "source": "<candidate-checkout>",
+    "head": "03f4629fc57c33f2d91da95240a9da6d6db47256",
+    "tree": "4fdc55f3c244ce790625dcbadf72f781c9cc8c30",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M docs/USAGE_PROVENANCE.md\n M docs/evidence/2026-10-03-late-usage-replay/README.md\n M docs/evidence/2026-10-03-late-usage-replay/evidence.json\n?? docs/evidence/2026-10-03-late-usage-replay/canonical/",
+    "source_file_count": 7733,
+    "source_fingerprint": "2fbf6e80bbf152a6852be805517445b64598df29a624d1ab971cee748edb2fde",
+    "manifest": "<current-run-records>\\issue236-source-before-browser-cumulative-bounds-r1.json",
+    "manifest_sha256": "bce5d2094ff63ab031fc2319678e3ccd39e649fc4528c499d8d9ddae8fedfae8"
+  }
+}

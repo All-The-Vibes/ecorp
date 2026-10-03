@@ -1,0 +1,58 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "comment": 4174016149,
+  "phase": "red",
+  "status": "reproduced",
+  "wrapper_pid": 6676,
+  "started_at_utc": "2026-10-03T17:02:53.5000374Z",
+  "checks": [
+    {
+      "command": "cargo test --locked --offline -p crony-runner --bin crony-runner usage_cumulative_total_ -- --test-threads=1",
+      "name": "cumulative-bound",
+      "counts": {
+        "ignored": 0,
+        "filtered": 322,
+        "passed": 1,
+        "failed": 3
+      },
+      "finished_at_utc": "2026-10-03T17:03:48.1281002Z",
+      "started_at_utc": "2026-10-03T17:02:56.3313358Z",
+      "log": "<current-run-records>\\codex-cumulative-red-r1-cumulative-bound.log",
+      "exit_code": 101,
+      "sha256": "b7faba0da6c39748888d6639b76ee00c0f4467317e8bc8f9b8f529bc0cff3e65"
+    }
+  ],
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T17:02:55.745Z",
+    "source": "<candidate-checkout>",
+    "head": "03f4629fc57c33f2d91da95240a9da6d6db47256",
+    "tree": "4fdc55f3c244ce790625dcbadf72f781c9cc8c30",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs",
+    "source_file_count": 7723,
+    "source_fingerprint": "acd992f9c32c5dafdd86262fc021396a1e2734f1625c0ead46925f3bb69b7143",
+    "manifest": "<current-run-records>\\codex-cumulative-red-r1-source-before.json",
+    "manifest_sha256": "d8a8437f1921d4cc8e0af0a4334d01f49a27650ce8ccca15fb215a5fac40526c"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T17:03:50.355Z",
+    "source": "<candidate-checkout>",
+    "head": "03f4629fc57c33f2d91da95240a9da6d6db47256",
+    "tree": "4fdc55f3c244ce790625dcbadf72f781c9cc8c30",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs",
+    "source_file_count": 7723,
+    "source_fingerprint": "acd992f9c32c5dafdd86262fc021396a1e2734f1625c0ead46925f3bb69b7143",
+    "manifest": "<current-run-records>\\codex-cumulative-red-r1-source-after.json",
+    "manifest_sha256": "71002dd1c8a31d000594a77a2f97a3700236cfd09fde116c76028fbe67267f38"
+  },
+  "source_unchanged": true,
+  "reference_manifest": "<current-run-records>\\codex-cumulative-red-source-r1.json",
+  "reference_sha256": "be99ffcc2ca6c0008fb012a2bc94b0462cdbc8468864f7d9eb1001312227a719",
+  "purpose": "Reproduce and correct impossible cumulative Codex totals while preserving invalid evidence, accepted cursors, recovery, duplicates, missing quantities, subset semantics and checked accounting bounds.",
+  "finished_at_utc": "2026-10-03T17:03:50.9916693Z"
+}

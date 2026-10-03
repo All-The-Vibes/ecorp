@@ -1,0 +1,350 @@
+"""Publish a separate, source-bound evidence packet after observed acceptance.
+
+No validation, staging, commit, push, or GitHub mutation occurs in this helper.
+All source and receipt guards run before a new packet is written.
+"""
+from datetime import datetime, timezone
+import importlib.util
+import json
+from pathlib import Path
+import re
+
+RUN = Path(__file__).resolve().parent
+HISTORY = RUN.parent / '20261002T023252Z'
+WT = Path(r'<candidate-checkout>')
+QA = Path(r'<browser-fixture>')
+DEST = WT / 'docs/evidence/2026-10-03-usage-invalid-first-and-path-continuations'
+PREFIX = DEST.relative_to(WT).as_posix() + '/'
+PARENT = 'ac3a6764638406af0e13fa118ea68767a093324b'
+BASE = 'ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01'
+MAIN = '878a1774774b0630c904cbaf4b05e1b346777817'
+BRANCH = 'codex/issue236-usage-provenance'
+FINGERPRINT = 'da95d33bc3706d1a67ec8cc260392780f466b6d0866f2009326225ace87707ce'
+PLAN = ['migrations', 'state-audit-compatibility', 'state-audit-evm', 'docs',
+        'repository-docs', 'node-tests', 'format', 'clippy', 'rust-tests',
+        'web-build', 'web-lint']
+TRANSFORMATION = ('exact local roots including caret escapes; standalone local operator name; '
+                  'explicit synthetic-user placeholders in copied examples; UTF-8/LF; '
+                  'trailing whitespace and final blank lines')
+spec = importlib.util.spec_from_file_location('issue236_evidence_helpers', HISTORY / 'prepare-issue236-comparison-r1.py')
+helpers = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(helpers)
+sha = helpers.sha
+
+
+def require(ok, message):
+    if not ok:
+        raise RuntimeError(message)
+
+
+def read(path):
+    return json.loads(Path(path).read_text(encoding='utf-8-sig'))
+
+
+def git(*args):
+    return helpers.git(WT, *args).decode().strip()
+
+
+def normalize(value):
+    replacements = [
+        (str(WT), '<candidate-checkout>'),
+        (str(RUN), '<run-records>'), (str(HISTORY), '<prior-run-records>'),
+        (str(QA), '<browser-fixture>'),
+        (r'<native-build-fixture>', '<native-build-fixture>'),
+        (r'<native-database-fixture>', '<native-database-fixture>'),
+        (r'<owned-qa-root>', '<owned-qa-root>'),
+        (r'<pinned-toolchain>', '<pinned-toolchain>'),
+        (r'<operator-home>', '<operator-home>'),
+    ]
+    for original, replacement in replacements:
+        for variant in (original.replace('\\', '\\\\'), original, original.replace('\\', '/')):
+            expression = ''.join(r'\^*' + re.escape(character) for character in variant)
+            value = re.sub(expression, lambda match: replacement, value, flags=re.IGNORECASE)
+    value = re.sub(r'(?<!\w)<local-user>(?!\w)', '<local-user>', value, flags=re.IGNORECASE)
+    # These are copied historical assertions/driver examples, never executable
+    # product fixtures. Their unmodified originals and hashes remain retained.
+    value = value.replace('<synthetic-user>', '<synthetic-user>').replace('<synthetic-user>', '<synthetic-user>')
+    lines = [line.rstrip(' \t') for line in value.splitlines()]
+    while lines and not lines[-1]:
+        lines.pop()
+    return ('\n'.join(lines) + '\n') if lines else ''
+
+
+def write(path, value):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not isinstance(value, bytes):
+        if not isinstance(value, str):
+            value = json.dumps(value, indent=2, ensure_ascii=False) + '\n'
+        value = normalize(value).encode('utf-8')
+    with path.open('xb') as stream:
+        stream.write(value)
+
+
+def bound_receipt(name):
+    value = read(RUN / name)
+    require(value['status'] == 'passed' and value['source_unchanged'] is True,
+            'Passing unchanged-source validation required: ' + name)
+    for side in ('source_before', 'source_after'):
+        source = value[side]
+        require(source['source_fingerprint'] == FINGERPRINT
+                and sha(source['manifest']) == source['manifest_sha256'],
+                'Validation source binding changed: ' + name)
+    return value
+
+
+def main():
+    receipt_path = RUN / 'issue236-review-fixes-package-r1.json'
+    require(not receipt_path.exists() and not DEST.exists(), 'Preserve all earlier publication packets.')
+    canonical = bound_receipt('issue236-canonical-code-r1.json')
+    execution = canonical['canonical']
+    require(execution['exit_code'] == 0 and execution['source_changed'] is False
+            and not execution['not_run'] and [c['name'] for c in execution['checks']] == PLAN
+            and all(c['passed'] and c['exitCode'] == 0 for c in execution['checks']),
+            'All eleven canonical contributor gates must pass.')
+    require(canonical['dependency_install']['exit_code'] == 0
+            and '--frozen-lockfile' in canonical['dependency_install']['command']
+            and canonical['standalone_steward_installs'][-1]['exit_code'] == 0,
+            'Locked workspace and standalone fixture installations are required.')
+    for kind in ('log', 'report'):
+        require(sha(execution[kind]) == execution[kind + '_sha256'], 'Canonical evidence changed.')
+    commit = read(RUN / 'issue236-review-fixes-commit-r1.json')
+    require(commit['status'] == 'committed' and commit['parent'] == PARENT
+            and commit['physical_source_unchanged'] is True
+            and commit['canonical_receipt_sha256'] == sha(RUN / 'issue236-canonical-code-r1.json'),
+            'The correction commit must bind complete observed validation.')
+    head = commit['head']
+    require(git('rev-parse', 'HEAD') == head and git('rev-parse', 'HEAD^{tree}') == commit['tree']
+            and git('branch', '--show-current') == BRANCH
+            and not git('status', '--porcelain=v1', '--untracked-files=all'),
+            'A clean, exact committed correction candidate is required.')
+    files = read(canonical['source_after']['manifest'])['files']
+    require(helpers.physical_manifest(WT) == files, 'Previously validated physical source changed.')
+    focused = bound_receipt('issue236-review-regressions-green-r2.json')
+    sql = bound_receipt('issue236-native-database-r1.json')
+    native = bound_receipt('issue236-native-build-r1.json')
+    browser = bound_receipt('issue236-browser-r1.json')
+    require(native['expected_head'] == sql['source_before']['head']
+            == browser['source_before']['head'] == head, 'Acceptance must bind the committed candidate.')
+    require(browser['inherited_native_build']['sha256'] == sha(RUN / 'issue236-native-build-r1.json'),
+            'Browser native build receipt changed.')
+    for binary in native['binaries']:
+        require(sha(binary['path']) == binary['sha256'], 'Acceptance native executable changed.')
+    observations = read(browser['browser_report']['path'])
+    require(sha(browser['browser_report']['path']) == browser['browser_report']['sha256'],
+            'Browser observation bytes changed.')
+    counts = observations['counts']
+    require(observations['status'] == 'passed' and counts['scenarios_passed'] == 5
+            and all(counts[key] == 0 for key in ('failed', 'execution_errors', 'scenarios_failed', 'scenarios_unexecuted'))
+            and not observations['blocked_requests'] and not observations['page_errors'],
+            'All five full-stack scenarios must be observed passing.')
+    require(browser['database_authentication']['wrong_password_rejected'] is True
+            and browser['cleanup'].startswith('Verified every exact owned process stopped.'),
+            'Fresh authenticated fixtures and verified shutdown are required.')
+    lane = next(c for c in sql['checks'] if c['name'] == 'usage-provenance-transactions')
+    require(lane['exit_code'] == 0 and lane['counts']['passed'] == 13
+            and lane['counts']['failed'] == lane['counts']['ignored'] == 0
+            and lane['complete_discovered_lane_executed'] is True,
+            'The complete discovered native SQL lane must pass.')
+    visual = read(RUN / 'issue236-screenshot-review-r1.json')
+    require(visual['status'] == 'reviewed' and visual['head'] == head
+            and len(visual['screenshots']) == len(observations['screenshots']),
+            'Source-bound inspection of all actual screenshots is required.')
+    for shot in observations['screenshots']:
+        require(any(s['sha256'] == shot['sha256'] and s['visually_inspected'] is True
+                    for s in visual['screenshots']), 'An actual screenshot has not been inspected.')
+    red = read(RUN / 'issue236-review-regressions-red-r1.json')
+    require(red['status'] == 'regressions_reproduced' and red['source_unchanged'] is True
+            and len(red['checks']) == 4 and all(c['exit_code'] != 0 for c in red['checks']),
+            'Preserve all four observed failing reproduction lanes.')
+    actions_path = HISTORY / 'actions-organization-restriction-observation-r1.json'
+    actions = read(actions_path)
+    require(actions['repository'] == 'All-The-Vibes/ecorp'
+            and actions['observed_text'] == 'This setting has been disabled by organization administrators.'
+            and actions['selected_option'] == 'Disable actions' and actions['mutations'] == [],
+            'The retained Actions limitation must have observed support.')
+    records = []
+
+    def capture(source, name, expected=None, binary=False):
+        source = Path(source)
+        original_sha = sha(source)
+        require(expected is None or original_sha == expected, 'Evidence changed: ' + name)
+        require(not Path(name).is_absolute() and '..' not in Path(name).parts, 'Unsafe packet path.')
+        value = source.read_bytes() if binary else normalize(source.read_text(encoding='utf-8-sig')).encode('utf-8')
+        write(DEST / name, value)
+        records.append({'path': name, 'original': str(source), 'original_sha256': original_sha,
+                        'published_sha256': sha(DEST / name),
+                        'transformation': 'none' if binary else TRANSFORMATION})
+
+    for name in [
+        'issue236-canonical-code-r1.json', 'issue236-review-fixes-review-r1.json',
+        'issue236-review-fixes-stage-r1.json', 'issue236-review-fixes-commit-r1.json',
+        'issue236-review-regressions-green-r2.json', 'issue236-native-database-r1.json',
+        'issue236-native-build-r1.json', 'issue236-browser-r1.json',
+        'issue236-screenshot-review-r1.json', 'issue236-acceptance-harness-preparation-r1.json',
+    ]:
+        capture(RUN / name, 'receipts/' + name)
+    capture(actions_path, 'receipts/' + actions_path.name)
+    capture(execution['log'], 'logs/canonical-code-r1.log', execution['log_sha256'])
+    capture(execution['report'], 'receipts/canonical-readiness-code-r1.json', execution['report_sha256'])
+    source = canonical['source_after']
+    capture(source['manifest'], 'receipts/validated-source-manifest.json', source['manifest_sha256'])
+    for item in [canonical['dependency_install'], *canonical['standalone_steward_installs'],
+                 *focused['checks'], *sql['checks'], *browser['checks'],
+                 native['cache_copy'], native['local_package_clean'], native['build']]:
+        capture(item['log'], 'logs/' + Path(item['log']).name, item['sha256'])
+    capture(lane['discovery_log'], 'logs/' + Path(lane['discovery_log']).name, lane['discovery_sha256'])
+    capture(browser['browser_report']['path'], 'receipts/browser-observations.json', browser['browser_report']['sha256'])
+    capture(browser['setup']['path'], 'receipts/browser-setup.json', browser['setup']['sha256'])
+    capture(RUN / 'issue236-browser-r1-stack-stop.log', 'logs/issue236-browser-r1-stack-stop.log')
+    capture(RUN / 'issue236-review-regressions-red-r1.json', 'history/issue236-review-regressions-red-r1.json')
+    for check in red['checks']:
+        capture(check['log'], 'history/logs/' + Path(check['log']).name, check['sha256'])
+    for side in ('source_before', 'source_after'):
+        source = red[side]
+        capture(source['manifest'], 'history/' + side + '.json', source['manifest_sha256'])
+    for scenario in observations['scenarios']:
+        artifact = scenario['provider_artifact']
+        # Preserve the exact downloaded bytes and the authoritative server hash.
+        capture(artifact['path'], 'provider-artifacts/' + Path(artifact['path']).name,
+                artifact['sha256'], binary=True)
+    for shot in observations['screenshots']:
+        capture(shot['path'], Path(shot['path']).name, shot['sha256'], binary=True)
+    for name in [
+        'issue236-acceptance-corpus-r1.json', 'issue236-browser-r1.mjs',
+        'issue236-fake-codex-r1.mjs', 'issue236-stack-r1.ps1',
+        'run-issue236-native-build-r1.ps1', 'run-issue236-native-db-r1.ps1',
+        'run-issue236-browser-r1.ps1', 'run-issue236-canonical-r1.ps1',
+        'commit-issue236-review-fixes-r1.py', 'issue236-source-snapshot-r1.mjs',
+        'issue236-fixture-environment-r1.mjs', 'issue236-fixture-environment-r1.ps1',
+        'issue236-prepare-fixture-r1.mjs',
+    ]:
+        capture(RUN / name, 'drivers/' + name + ('' if name.endswith('.json') else '.txt'))
+    capture(Path(__file__), 'drivers/' + Path(__file__).name + '.txt')
+    summary = {
+        'repository': 'All-The-Vibes/ecorp', 'issue': 236, 'pr': 402,
+        'candidate': head, 'candidate_tree': commit['tree'], 'previous_head': PARENT,
+        'main': MAIN, 'dependency_pr': 392, 'dependency_head': BASE,
+        'physical_source_fingerprint': FINGERPRINT,
+        'recorded_at_utc': datetime.now(timezone.utc).isoformat(),
+        'review_comment_ids': [4173113909, 4173113933, 4173113950],
+        'canonical': {'status': 'passed', 'command': 'pnpm check', 'checks': execution['checks']},
+        'focused': [{'name': c['name'], 'exit_code': c['exit_code'], 'counts': c['counts']} for c in focused['checks']],
+        'before_correction': {'status': red['status'], 'source': red['source_after'],
+                              'checks': [{'name': c['name'], 'exit_code': c['exit_code'], 'counts': c['counts']} for c in red['checks']]},
+        'native_sql': {'counts': lane['counts'], 'discovered': len(lane['discovered_test_names']),
+                       'complete_discovered_lane_executed': True,
+                       'authentication': sql['authentication'], 'cleanup': sql['cleanup']},
+        'browser': {'counts': counts, 'cleanup': browser['cleanup'],
+                    'transport': 'Deterministic Codex protocol transport through actual Edge, server, runner and fresh SCRAM PostgreSQL.',
+                    'provider_artifacts': [s['provider_artifact'] for s in observations['scenarios']]},
+        'hosted_validation_observation': {'receipt': 'receipts/' + actions_path.name,
+            'recorded_at_utc': actions['recorded_at_utc'], 'original_sha256': sha(actions_path)},
+        'issue_completed': False, 'provider_inference': False, 'independent_review': False,
+        'limitations': [
+            'Full #236 auditor delegation, early audits/headroom, decisions, grants, continuation, UI and concurrency/revocation acceptance remain incomplete.',
+            'Known accepted subtotals and invalid coverage do not establish a complete provider bill or the $10 assurance.',
+            'Environment-only fixture delivery has reduced assurance; no operating-system isolation claim.',
+            'Required hosted CI/CodeQL/quality/security is unavailable while Actions is disabled by organization administrators.',
+            'Dependency #392 and independent outcome review remain unresolved. Keep #402 draft and #236 open.',
+            'Historical Cargo advisory debt is not a clean audit. The stopped #193/#235 paired R4 remains permanently stopped.',
+        ],
+        'files': [{k: v for k, v in row.items() if k != 'original'} for row in records],
+    }
+    write(DEST / 'evidence.json', summary)
+    gates = '\n'.join('| ' + c['name'] + ' | passed |' for c in execution['checks'])
+    shots = '\n\n'.join('![' + Path(s['path']).stem + '](' + Path(s['path']).name + ')' for s in observations['screenshots'])
+    write(DEST / 'README.md', f'''# Invalid-first usage and CMD continuation corrections
+
+This packet records observed corrections to review comments 4173113909,
+4173113933 and 4173113950 on draft PR #402. It is a partial prerequisite for #236.
+
+Implementation: `{head}`. Tree: `{commit['tree']}`.
+Previous published head: `{PARENT}`. Dependency #392: `{BASE}`.
+Physical validated source fingerprint: `{FINGERPRINT}`.
+
+Both evidence scanners join caret-LF and caret-CRLF continuations before removing
+remaining carets. Literal matching, placeholder handling and retained-handle
+containment remain in place. The nonserialized usage accumulator distinguishes
+empty state from accepted unknown values and invalid-only observations. Invalid
+evidence keeps coverage invalid without erasing later accepted subtotals. Trusted
+session merges retain accepted usage from an invalid-marked run. Overflow and
+unknown quantities remain monotonic; the serialized UsageReport contract is unchanged.
+
+## Observed validation
+
+Locked dependencies and all eleven canonical `pnpm check` gates passed before
+the implementation commit. The commit receipt binds the same physical bytes.
+
+| Gate | Result |
+| --- | --- |
+{gates}
+
+Exact full Node, Rust and ignored/skipped counts are retained in `evidence.json`
+and the canonical receipt and log. Focused native scanner: 27 passed; Node
+scanner: 13 passed; domain usage: 18 passed (25 filtered); Codex invalid-first:
+1 passed (321 filtered); retained-session execute/resume: 1 passed (321 filtered).
+All five lanes had zero failed, ignored or skipped tests. Two synthetic runs in
+one retained session each preserve 10 input / 2 output tokens, with 20 input / 4
+output retained across the session and invalid coverage.
+
+The fresh native SQL lane discovered and passed all 13 tests. Its exact filtered
+count, wrong-password rejection and owned shutdown are in the receipt. Five
+browser scenarios passed {counts['passed']} assertions, with zero failed assertions,
+execution errors or unexecuted scenarios. Actual Edge, server, runner and fresh
+SCRAM PostgreSQL used a deterministic Codex transport. Every scenario downloads
+the authorized provider artifact, verifies its server digest and identities,
+and checks persisted termination subtotals, verification before completion,
+source preservation and disposable workspace cleanup.
+
+The added invalid-first scenario sends a malformed input count at cursor 12,
+then valid 10/2 at cursor 12, its duplicate, valid 6/2 at cursor 20 and its
+duplicate. It retains invalid / accepted / accepted observations and 16 input /
+4 output tokens, with unknown cost and invalid aggregate coverage. Downloaded
+provider artifacts in this packet preserve their exact authoritative bytes.
+This is deterministic integration acceptance, not provider inference or billing.
+
+## Retained failures and remaining work
+
+Before correction, the new retrospective native scanner reproduction had 24
+passed / 3 failed; Node had 10 passed / 3 failed; domain usage had 10 passed /
+4 failed / 25 filtered; Codex invalid-first had 0 passed / 1 failed / 320
+filtered. The original logs and source hashes remain in `history/`. The wrapper
+status means the failures were reproduced; it does not label failed tests passed.
+The expanded retained-session tests were added afterward and have no claimed
+before-correction execution. Previous packets and failures remain preserved.
+
+At {actions['recorded_at_utc']}, repository settings reported Actions disabled by
+organization administrators. Required hosted CI, CodeQL, security and quality
+remain unavailable; local checks cannot replace them. No gate or review policy
+was bypassed. Historical Cargo advisory debt remains unresolved, and the stopped
+#193/#235 paired R4 experiment was not rerun.
+
+Full #236 still needs delegated independent audits, early headroom, durable
+decisions, atomic bounded grants, same-lineage recoverable continuation, operating
+UI and concurrency/revocation acceptance. The $10 assurance remains unknown.
+Dependency #392 and independent outcome review are outstanding. Keep #402 draft
+and #236 open. Environment-only fixture delivery is reduced assurance.
+
+Text copies normalize only declared local roots, the local operator name,
+synthetic-user examples, line endings and trailing whitespace. Original and
+published hashes are recorded for every copy. Executable tests and retained
+logs are untouched. Screenshots and downloaded artifacts are byte-for-byte copies.
+
+{shots}
+''')
+    require([row for row in helpers.physical_manifest(WT) if not row[0].startswith(PREFIX)] == files,
+            'Existing source changed during capture; preserve all work.')
+    helpers.save(receipt_path, {
+        'repository': 'All-The-Vibes/ecorp', 'issue': 236, 'pr': 402, 'status': 'packaged',
+        'recorded_at_utc': datetime.now(timezone.utc).isoformat(), 'source': str(WT),
+        'head': head, 'tree': commit['tree'], 'physical_source_fingerprint': FINGERPRINT,
+        'destination': str(DEST), 'existing_source_unchanged': True, 'captures': records,
+        'files': [{'path': p.relative_to(WT).as_posix(), 'sha256': sha(p)}
+                  for p in sorted(DEST.rglob('*')) if p.is_file()],
+    }, True)
+    print(json.dumps({'status': 'packaged', 'files': len(records) + 2, 'head': head}))
+
+
+if __name__ == '__main__':
+    main()

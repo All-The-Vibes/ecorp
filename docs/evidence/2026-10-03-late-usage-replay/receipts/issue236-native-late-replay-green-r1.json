@@ -1,0 +1,183 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "review_comment_id": 4173665178,
+  "phase": "green",
+  "related_issues": [
+    56,
+    87,
+    261
+  ],
+  "status": "passed",
+  "wrapper_pid": 39120,
+  "purpose": "Source-bound late replay regression (red retains real failures; green must pass full discovery). Fresh owned PostgreSQL usage presence, units, exact-assignment identity, replay, aliases, overflow, redaction, hard-control and revoked-read regressions. Synthetic accounting observations only; no budget grant, auditor execution, stopped experiment, real-provider, browser or hosted acceptance claimed.",
+  "source": "<candidate-checkout>",
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T15:21:36.015Z",
+    "source": "<candidate-checkout>",
+    "head": "53ff7a6d2fc394a98cb438806f653c1254bbe976",
+    "tree": "62e12242edcb8a316cbcff9defae3b2c7606b836",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-store/src/usage_accounting.rs\n M crates/crony-store/src/usage_accounting_tests.rs",
+    "source_file_count": 7667,
+    "source_fingerprint": "b800aafc22d25e718466021669803fc771b00da96ac855630af0c8bbd8177a66",
+    "manifest": "<run-records>\\issue236-native-late-replay-green-r1-source-before.json",
+    "manifest_sha256": "ea13a59de725a292a4ad109fd722cdb3e735b8e2c3c238e5cd430b4ce0f117f6"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T15:24:50.809Z",
+    "source": "<candidate-checkout>",
+    "head": "53ff7a6d2fc394a98cb438806f653c1254bbe976",
+    "tree": "62e12242edcb8a316cbcff9defae3b2c7606b836",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-store/src/usage_accounting.rs\n M crates/crony-store/src/usage_accounting_tests.rs",
+    "source_file_count": 7667,
+    "source_fingerprint": "b800aafc22d25e718466021669803fc771b00da96ac855630af0c8bbd8177a66",
+    "manifest": "<run-records>\\issue236-native-late-replay-green-r1-source-after.json",
+    "manifest_sha256": "8d91de2356ae0562e1209984d090e56eb67e91c0a1903e1a14954881f524e6ba"
+  },
+  "source_unchanged": true,
+  "qa_root": "<owned-qa-root>\\issue236-native-usage-late-replay-20261003-green-r1",
+  "started_at_utc": "2026-10-03T15:21:36.7797130Z",
+  "environment": {
+    "RUST_TEST_THREADS": "1",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "<candidate-checkout>\\target\\issue236-review-r5"
+  },
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "command": "initdb --auth=scram-sha-256 (private pwfile)",
+      "exit_code": 0,
+      "log": "<run-records>\\issue236-native-late-replay-green-r1-initdb.log",
+      "sha256": "1c226210fce2ced2957ae9777168fc8c57357844fd4f6c00ffcc3e12d73b670b",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0,
+        "summaries": 0
+      },
+      "passed_test_names": []
+    },
+    {
+      "name": "usage-provenance-transactions",
+      "command": "cargo test --locked --offline -p crony-store issue236_ -- --ignored --test-threads=1",
+      "exit_code": 0,
+      "log": "<run-records>\\issue236-native-late-replay-green-r1-crony-store-issue236.log",
+      "sha256": "67f8c17a746d5460bb481143857268b75a39abbd1c231da5b9179cedcd550db8",
+      "counts": {
+        "passed": 14,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 571,
+        "summaries": 1
+      },
+      "passed_test_names": [
+        "usage_accounting_tests::issue236_usage_aggregate_range_uses_the_existing_rolling_window",
+        "usage_accounting_tests::issue236_usage_alias_enrichment_is_transitive_and_conflicts_cannot_claim_aliases",
+        "usage_accounting_tests::issue236_usage_equal_counts_and_missing_ids_do_not_collapse_calls",
+        "usage_accounting_tests::issue236_usage_four_scoped_calls_sum_once_with_replays_and_terminal_evidence",
+        "usage_accounting_tests::issue236_usage_hard_control_still_prevents_new_charges",
+        "usage_accounting_tests::issue236_usage_integer_subtotal_overflow_never_partially_updates_counters",
+        "usage_accounting_tests::issue236_usage_invalid_reports_are_redacted_without_any_partial_charge",
+        "usage_accounting_tests::issue236_usage_last_call_identity_coverage_uses_the_admitted_session",
+        "usage_accounting_tests::issue236_usage_mission_aggregate_overflow_keeps_the_journal_frame",
+        "usage_accounting_tests::issue236_usage_optional_session_uses_fenced_run_identity_without_rewriting_provenance",
+        "usage_accounting_tests::issue236_usage_partial_tokens_and_native_units_never_fabricate_free_usd",
+        "usage_accounting_tests::issue236_usage_requires_exact_assignment_and_matching_native_session",
+        "usage_accounting_tests::issue236_usage_room_revocation_hides_evidence_without_deleting_accounting",
+        "usage_accounting_tests::issue236_usage_uncharged_replays_preserve_origins_aliases_and_hard_boundaries"
+      ],
+      "package": "crony-store",
+      "discovery_log": "<run-records>\\issue236-native-late-replay-green-r1-crony-store-issue236-list.log",
+      "discovery_sha256": "734c25da8e2dc35cbda3b9c87399546c665391f305dfb29be12fa02d501ee7bf",
+      "discovered_test_names": [
+        "usage_accounting_tests::issue236_usage_aggregate_range_uses_the_existing_rolling_window",
+        "usage_accounting_tests::issue236_usage_alias_enrichment_is_transitive_and_conflicts_cannot_claim_aliases",
+        "usage_accounting_tests::issue236_usage_equal_counts_and_missing_ids_do_not_collapse_calls",
+        "usage_accounting_tests::issue236_usage_four_scoped_calls_sum_once_with_replays_and_terminal_evidence",
+        "usage_accounting_tests::issue236_usage_hard_control_still_prevents_new_charges",
+        "usage_accounting_tests::issue236_usage_integer_subtotal_overflow_never_partially_updates_counters",
+        "usage_accounting_tests::issue236_usage_invalid_reports_are_redacted_without_any_partial_charge",
+        "usage_accounting_tests::issue236_usage_last_call_identity_coverage_uses_the_admitted_session",
+        "usage_accounting_tests::issue236_usage_mission_aggregate_overflow_keeps_the_journal_frame",
+        "usage_accounting_tests::issue236_usage_optional_session_uses_fenced_run_identity_without_rewriting_provenance",
+        "usage_accounting_tests::issue236_usage_partial_tokens_and_native_units_never_fabricate_free_usd",
+        "usage_accounting_tests::issue236_usage_requires_exact_assignment_and_matching_native_session",
+        "usage_accounting_tests::issue236_usage_room_revocation_hides_evidence_without_deleting_accounting",
+        "usage_accounting_tests::issue236_usage_uncharged_replays_preserve_origins_aliases_and_hard_boundaries"
+      ],
+      "complete_discovered_lane_executed": true
+    },
+    {
+      "name": "hard-control-transactions",
+      "command": "cargo test --locked --offline -p crony-store control_accounting_tests::issue87_ -- --ignored --test-threads=1",
+      "exit_code": 0,
+      "log": "<run-records>\\issue236-native-late-replay-green-r1-crony-store-control_accounting_tests-issue87.log",
+      "sha256": "263d0aabb7792e8e7109c601157d8ebed0e19cac5b89bb0f93bf86fc2ce1fead",
+      "counts": {
+        "passed": 14,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 571,
+        "summaries": 1
+      },
+      "passed_test_names": [
+        "control_accounting_tests::issue87_accounting_reads_database_time_after_an_observed_lock_wait",
+        "control_accounting_tests::issue87_artifact_verification_keeps_run_visible_until_completed",
+        "control_accounting_tests::issue87_artifact_verification_keeps_stop_visible_until_cancelled",
+        "control_accounting_tests::issue87_completion_commits_before_contending_stop",
+        "control_accounting_tests::issue87_emergency_stop_is_durable_offline_and_reuses_its_first_command",
+        "control_accounting_tests::issue87_hard_control_grace_preserves_reports_without_late_charges",
+        "control_accounting_tests::issue87_historical_operator_stop_fences_artifacts_and_completion",
+        "control_accounting_tests::issue87_observations_preserve_scope_and_cannot_spoof_server_authority",
+        "control_accounting_tests::issue87_operator_stop_uses_transition_time_after_lock_wait",
+        "control_accounting_tests::issue87_stop_commits_before_contending_completion",
+        "control_accounting_tests::issue87_suspend_to_stop_preserves_the_first_cutoff",
+        "control_accounting_tests::issue87_terminal_and_unverifiable_hard_states_cannot_reopen_charging",
+        "control_accounting_tests::issue87_unconfirmed_completion_persists_failure_without_retry",
+        "control_accounting_tests::issue87_usage_replays_remain_idempotent_across_the_cutoff"
+      ],
+      "package": "crony-store",
+      "discovery_log": "<run-records>\\issue236-native-late-replay-green-r1-crony-store-control_accounting_tests-issue87-list.log",
+      "discovery_sha256": "ffbcdb48e9d83473fa1ed59355e9f426799fd1f86d13e2f8259e5d86f19e2390",
+      "discovered_test_names": [
+        "control_accounting_tests::issue87_accounting_reads_database_time_after_an_observed_lock_wait",
+        "control_accounting_tests::issue87_artifact_verification_keeps_run_visible_until_completed",
+        "control_accounting_tests::issue87_artifact_verification_keeps_stop_visible_until_cancelled",
+        "control_accounting_tests::issue87_completion_commits_before_contending_stop",
+        "control_accounting_tests::issue87_emergency_stop_is_durable_offline_and_reuses_its_first_command",
+        "control_accounting_tests::issue87_hard_control_grace_preserves_reports_without_late_charges",
+        "control_accounting_tests::issue87_historical_operator_stop_fences_artifacts_and_completion",
+        "control_accounting_tests::issue87_observations_preserve_scope_and_cannot_spoof_server_authority",
+        "control_accounting_tests::issue87_operator_stop_uses_transition_time_after_lock_wait",
+        "control_accounting_tests::issue87_stop_commits_before_contending_completion",
+        "control_accounting_tests::issue87_suspend_to_stop_preserves_the_first_cutoff",
+        "control_accounting_tests::issue87_terminal_and_unverifiable_hard_states_cannot_reopen_charging",
+        "control_accounting_tests::issue87_unconfirmed_completion_persists_failure_without_retry",
+        "control_accounting_tests::issue87_usage_replays_remain_idempotent_across_the_cutoff"
+      ],
+      "complete_discovered_lane_executed": true
+    }
+  ],
+  "cleanup": "Exact owned PostgreSQL stopped and fixture port verified inactive; database, private credentials and logs preserved.",
+  "failure": null,
+  "authentication": {
+    "authenticated_query": true,
+    "wrong_password_rejected": true,
+    "method": "scram-sha-256",
+    "delivery": "Private fixture credential files for PostgreSQL clients. SQLx environment-only delivery is reduced assurance."
+  },
+  "finished_at_utc": "2026-10-03T15:24:52.1346935Z"
+}

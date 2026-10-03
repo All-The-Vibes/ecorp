@@ -1,0 +1,1718 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "candidate": "609463ae65771b0763ae9de563c5f25cb1332f8b",
+  "candidate_tree": "05b2f80f369e7d07a89c7ea8e53c4b41c836b397",
+  "previous_head": "ffe61f19e6a5f309f363102f0e76aea8a96e3bf2",
+  "dependency_pr": 392,
+  "dependency_head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+  "physical_source_fingerprint": "b1d4132764082865e29abfb7096333e67c79e85daac04935905a6dffb81b6f55",
+  "recorded_at_utc": "2026-10-03T10:57:21.468024+00:00",
+  "canonical": {
+    "status": "passed",
+    "command": "pnpm check",
+    "checks": [
+      {
+        "name": "migrations",
+        "argv": [
+          "node",
+          "tools/check_migrations.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 132,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-compatibility",
+        "argv": [
+          "node",
+          "tools/check_state_audit_compatibility.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 104,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-evm",
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "crony-audit",
+          "--test",
+          "ethereum_local_chain"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 3312,
+        "counts": {
+          "rust": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "summaries": 1
+          },
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "docs",
+        "argv": [
+          "node",
+          "tools/check_docs.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 100,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "repository-docs",
+        "argv": [
+          "node",
+          "tools/check_documentation.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 114,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "node-tests",
+        "argv": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "--test-timeout=180000",
+          "--test-reporter=tap",
+          ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+          ".github/skills/code-review/tests/executor-state.test.mjs",
+          ".github/skills/code-review/tests/package.test.mjs",
+          "apps/web/src/AgentPinControl.test.mjs",
+          "apps/web/src/DelegatedPanel.test.mjs",
+          "apps/web/src/VerificationPolicyEditor.test.mjs",
+          "apps/web/src/agentPinOperation.test.mjs",
+          "apps/web/src/evidenceNavigation.test.mjs",
+          "apps/web/src/evidenceSelection.test.mjs",
+          "apps/web/src/factoryAuthority.test.mjs",
+          "apps/web/src/factoryAuthorityConnection.test.mjs",
+          "apps/web/src/factoryCheckpointRecovery.test.mjs",
+          "apps/web/src/factoryControllerSelection.test.mjs",
+          "apps/web/src/factoryPolling.test.mjs",
+          "apps/web/src/formText.test.mjs",
+          "apps/web/src/missionCollaboration.test.mjs",
+          "apps/web/src/missionComposer.test.mjs",
+          "apps/web/src/missionOriginContext.test.mjs",
+          "apps/web/src/missionPreview.test.mjs",
+          "apps/web/src/missionProjection.test.mjs",
+          "apps/web/src/missionResultContext.test.mjs",
+          "apps/web/src/missionReviewSummary.test.mjs",
+          "apps/web/src/missionRuntime.test.mjs",
+          "apps/web/src/office/characterAssets.test.mjs",
+          "apps/web/src/office/officeModel.test.mjs",
+          "apps/web/src/runActivity.test.mjs",
+          "apps/web/src/snapshotRefresh.test.mjs",
+          "apps/web/src/verificationPolicy.test.mjs",
+          "apps/web/src/workResultCard.test.mjs",
+          "apps/web/src/workflowContext.test.mjs",
+          "apps/web/src/workspaceConnections.test.mjs",
+          "scenarios/repo-steward/actions.test.mjs",
+          "scenarios/repo-steward/feedback-cli.test.mjs",
+          "scenarios/repo-steward/feedback.test.mjs",
+          "scenarios/repo-steward/maintenance.test.mjs",
+          "scenarios/repo-steward/recurring-audit.test.mjs",
+          "scenarios/repo-steward/steward.test.mjs",
+          "scenarios/repo-steward/teams-host.test.mjs",
+          "tests/readiness/cli.test.js",
+          "tools/budget_fixture.test.mjs",
+          "tools/check_deliverable_diff.test.mjs",
+          "tools/check_documentation.test.mjs",
+          "tools/check_evidence_launch.test.mjs",
+          "tools/check_evidence_native_build.test.mjs",
+          "tools/check_evidence_personal_paths.test.mjs",
+          "tools/check_migrations.test.mjs",
+          "tools/check_replay_source.test.mjs",
+          "tools/checkpoint_application_fixture.test.mjs",
+          "tools/ci_external_adapters_windows.test.mjs",
+          "tools/ci_factory_repository.test.mjs",
+          "tools/ci_maintenance.test.mjs",
+          "tools/ci_owned_test_server.test.mjs",
+          "tools/ci_runner_tests.test.mjs",
+          "tools/consume_operation_receipt.test.mjs",
+          "tools/controlled_runner_fixture.test.mjs",
+          "tools/copilot_fs_wire_observer.test.mjs",
+          "tools/copilot_fs_wire_process.test.mjs",
+          "tools/copilot_probe_boundaries.test.mjs",
+          "tools/copilot_probe_environment.test.mjs",
+          "tools/copilot_probe_native_read.test.mjs",
+          "tools/copilot_probe_process.test.mjs",
+          "tools/coverage_web_models.test.mjs",
+          "tools/delegated_lifecycle.test.mjs",
+          "tools/delegated_qa_root.test.mjs",
+          "tools/e2e_agent_pinning.test.mjs",
+          "tools/e2e_checkpoint_verification.test.mjs",
+          "tools/e2e_evidence_selection.test.mjs",
+          "tools/e2e_external_adapters.test.mjs",
+          "tools/e2e_external_adapters_http.test.mjs",
+          "tools/e2e_factory_budget_recovery.test.mjs",
+          "tools/e2e_late_termination.test.mjs",
+          "tools/e2e_predispatch_failure.test.mjs",
+          "tools/e2e_stopped_source_checkpoint.test.mjs",
+          "tools/e2e_verifier_browser_retention.test.mjs",
+          "tools/e2e_verifier_browser_scope.test.mjs",
+          "tools/factory_budget_fixture_config.test.mjs",
+          "tools/factory_budget_git.test.mjs",
+          "tools/factory_budget_process.test.mjs",
+          "tools/factory_budget_provenance.test.mjs",
+          "tools/factory_budget_start.test.mjs",
+          "tools/fake_codex_budget_stream.test.mjs",
+          "tools/fake_github_quota.test.mjs",
+          "tools/fixture_source_identity.test.mjs",
+          "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+          "tools/identity_fixture.test.mjs",
+          "tools/import_operation_behavior.test.mjs",
+          "tools/issue161/qa-api-provenance.test.mjs",
+          "tools/issue161/qa-plan.test.mjs",
+          "tools/local_source_commit.test.mjs",
+          "tools/local_stack_lifecycle.test.mjs",
+          "tools/local_stack_operation.test.mjs",
+          "tools/native_qualification_attempt.test.mjs",
+          "tools/native_qualification_finality.test.mjs",
+          "tools/native_qualification_trust.test.mjs",
+          "tools/office_model.test.mjs",
+          "tools/operation_feedback.test.mjs",
+          "tools/operation_receipt.test.mjs",
+          "tools/owned_test_stack.test.mjs",
+          "tools/probe_mcp.test.mjs",
+          "tools/qa_multiplayer_object_sources.test.mjs",
+          "tools/readiness_contract.test.mjs",
+          "tools/readiness_replay_contract.test.mjs",
+          "tools/redact_evidence_capabilities.test.mjs",
+          "tools/research_handoff_adversarial.test.mjs",
+          "tools/research_handoff_browser.test.mjs",
+          "tools/research_handoff_native.test.mjs",
+          "tools/runner_ack_fault_relay.test.mjs",
+          "tools/secret_scan.test.mjs",
+          "tools/secret_scan_native.test.mjs",
+          "tools/security_fixtures.test.mjs",
+          "tools/startup_validation_harness.test.mjs",
+          "tools/task_graph_fixture.test.mjs",
+          "tools/verifier_browser.test.mjs",
+          "tools/verify_toolchain.test.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2318916,
+        "counts": {
+          "rust": null,
+          "node": {
+            "tests": 3103,
+            "passed": 3038,
+            "failed": 0,
+            "skipped": 65,
+            "todo": 0,
+            "cancelled": 0
+          }
+        },
+        "errorCode": null
+      },
+      {
+        "name": "format",
+        "argv": [
+          "cargo",
+          "fmt",
+          "--check"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 3957,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "clippy",
+        "argv": [
+          "cargo",
+          "clippy",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 29383,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "rust-tests",
+        "argv": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--locked"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 1067333,
+        "counts": {
+          "rust": {
+            "passed": 925,
+            "failed": 0,
+            "ignored": 595,
+            "summaries": 41
+          },
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "web-build",
+        "argv": [
+          "pnpm",
+          "build:web"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 7335,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "web-lint",
+        "argv": [
+          "pnpm",
+          "lint:web"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2520,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      }
+    ]
+  },
+  "failed_canonical_r3": {
+    "status": "failed",
+    "exit_code": 1,
+    "source_fingerprint": "ec9952611c59626eff67c371e9bf40c5156bb5217e0146aab9edc16b3daa65b8",
+    "checks": [
+      {
+        "name": "migrations",
+        "argv": [
+          "node",
+          "tools/check_migrations.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 141,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-compatibility",
+        "argv": [
+          "node",
+          "tools/check_state_audit_compatibility.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 107,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-evm",
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "crony-audit",
+          "--test",
+          "ethereum_local_chain"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 88836,
+        "counts": {
+          "rust": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "summaries": 1
+          },
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "docs",
+        "argv": [
+          "node",
+          "tools/check_docs.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 165,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "repository-docs",
+        "argv": [
+          "node",
+          "tools/check_documentation.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 287,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "node-tests",
+        "argv": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "--test-timeout=180000",
+          "--test-reporter=tap",
+          ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+          ".github/skills/code-review/tests/executor-state.test.mjs",
+          ".github/skills/code-review/tests/package.test.mjs",
+          "apps/web/src/AgentPinControl.test.mjs",
+          "apps/web/src/DelegatedPanel.test.mjs",
+          "apps/web/src/VerificationPolicyEditor.test.mjs",
+          "apps/web/src/agentPinOperation.test.mjs",
+          "apps/web/src/evidenceNavigation.test.mjs",
+          "apps/web/src/evidenceSelection.test.mjs",
+          "apps/web/src/factoryAuthority.test.mjs",
+          "apps/web/src/factoryAuthorityConnection.test.mjs",
+          "apps/web/src/factoryCheckpointRecovery.test.mjs",
+          "apps/web/src/factoryControllerSelection.test.mjs",
+          "apps/web/src/factoryPolling.test.mjs",
+          "apps/web/src/formText.test.mjs",
+          "apps/web/src/missionCollaboration.test.mjs",
+          "apps/web/src/missionComposer.test.mjs",
+          "apps/web/src/missionOriginContext.test.mjs",
+          "apps/web/src/missionPreview.test.mjs",
+          "apps/web/src/missionProjection.test.mjs",
+          "apps/web/src/missionResultContext.test.mjs",
+          "apps/web/src/missionReviewSummary.test.mjs",
+          "apps/web/src/missionRuntime.test.mjs",
+          "apps/web/src/office/characterAssets.test.mjs",
+          "apps/web/src/office/officeModel.test.mjs",
+          "apps/web/src/runActivity.test.mjs",
+          "apps/web/src/snapshotRefresh.test.mjs",
+          "apps/web/src/verificationPolicy.test.mjs",
+          "apps/web/src/workResultCard.test.mjs",
+          "apps/web/src/workflowContext.test.mjs",
+          "apps/web/src/workspaceConnections.test.mjs",
+          "scenarios/repo-steward/actions.test.mjs",
+          "scenarios/repo-steward/feedback-cli.test.mjs",
+          "scenarios/repo-steward/feedback.test.mjs",
+          "scenarios/repo-steward/maintenance.test.mjs",
+          "scenarios/repo-steward/recurring-audit.test.mjs",
+          "scenarios/repo-steward/steward.test.mjs",
+          "scenarios/repo-steward/teams-host.test.mjs",
+          "tests/readiness/cli.test.js",
+          "tools/budget_fixture.test.mjs",
+          "tools/check_deliverable_diff.test.mjs",
+          "tools/check_documentation.test.mjs",
+          "tools/check_evidence_launch.test.mjs",
+          "tools/check_evidence_native_build.test.mjs",
+          "tools/check_evidence_personal_paths.test.mjs",
+          "tools/check_migrations.test.mjs",
+          "tools/check_replay_source.test.mjs",
+          "tools/checkpoint_application_fixture.test.mjs",
+          "tools/ci_external_adapters_windows.test.mjs",
+          "tools/ci_factory_repository.test.mjs",
+          "tools/ci_maintenance.test.mjs",
+          "tools/ci_owned_test_server.test.mjs",
+          "tools/ci_runner_tests.test.mjs",
+          "tools/consume_operation_receipt.test.mjs",
+          "tools/controlled_runner_fixture.test.mjs",
+          "tools/copilot_fs_wire_observer.test.mjs",
+          "tools/copilot_fs_wire_process.test.mjs",
+          "tools/copilot_probe_boundaries.test.mjs",
+          "tools/copilot_probe_environment.test.mjs",
+          "tools/copilot_probe_native_read.test.mjs",
+          "tools/copilot_probe_process.test.mjs",
+          "tools/coverage_web_models.test.mjs",
+          "tools/delegated_lifecycle.test.mjs",
+          "tools/delegated_qa_root.test.mjs",
+          "tools/e2e_agent_pinning.test.mjs",
+          "tools/e2e_checkpoint_verification.test.mjs",
+          "tools/e2e_evidence_selection.test.mjs",
+          "tools/e2e_external_adapters.test.mjs",
+          "tools/e2e_external_adapters_http.test.mjs",
+          "tools/e2e_factory_budget_recovery.test.mjs",
+          "tools/e2e_late_termination.test.mjs",
+          "tools/e2e_predispatch_failure.test.mjs",
+          "tools/e2e_stopped_source_checkpoint.test.mjs",
+          "tools/e2e_verifier_browser_retention.test.mjs",
+          "tools/e2e_verifier_browser_scope.test.mjs",
+          "tools/factory_budget_fixture_config.test.mjs",
+          "tools/factory_budget_git.test.mjs",
+          "tools/factory_budget_process.test.mjs",
+          "tools/factory_budget_provenance.test.mjs",
+          "tools/factory_budget_start.test.mjs",
+          "tools/fake_codex_budget_stream.test.mjs",
+          "tools/fake_github_quota.test.mjs",
+          "tools/fixture_source_identity.test.mjs",
+          "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+          "tools/identity_fixture.test.mjs",
+          "tools/import_operation_behavior.test.mjs",
+          "tools/issue161/qa-api-provenance.test.mjs",
+          "tools/issue161/qa-plan.test.mjs",
+          "tools/local_source_commit.test.mjs",
+          "tools/local_stack_lifecycle.test.mjs",
+          "tools/local_stack_operation.test.mjs",
+          "tools/native_qualification_attempt.test.mjs",
+          "tools/native_qualification_finality.test.mjs",
+          "tools/native_qualification_trust.test.mjs",
+          "tools/office_model.test.mjs",
+          "tools/operation_feedback.test.mjs",
+          "tools/operation_receipt.test.mjs",
+          "tools/owned_test_stack.test.mjs",
+          "tools/probe_mcp.test.mjs",
+          "tools/qa_multiplayer_object_sources.test.mjs",
+          "tools/readiness_contract.test.mjs",
+          "tools/readiness_replay_contract.test.mjs",
+          "tools/redact_evidence_capabilities.test.mjs",
+          "tools/research_handoff_adversarial.test.mjs",
+          "tools/research_handoff_browser.test.mjs",
+          "tools/research_handoff_native.test.mjs",
+          "tools/runner_ack_fault_relay.test.mjs",
+          "tools/secret_scan.test.mjs",
+          "tools/secret_scan_native.test.mjs",
+          "tools/security_fixtures.test.mjs",
+          "tools/startup_validation_harness.test.mjs",
+          "tools/task_graph_fixture.test.mjs",
+          "tools/verifier_browser.test.mjs",
+          "tools/verify_toolchain.test.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2315420,
+        "counts": {
+          "rust": null,
+          "node": {
+            "tests": 3103,
+            "passed": 3038,
+            "failed": 0,
+            "skipped": 65,
+            "todo": 0,
+            "cancelled": 0
+          }
+        },
+        "errorCode": null
+      },
+      {
+        "name": "format",
+        "argv": [
+          "cargo",
+          "fmt",
+          "--check"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 4105,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "clippy",
+        "argv": [
+          "cargo",
+          "clippy",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exitCode": 101,
+        "passed": false,
+        "durationMs": 379174,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      }
+    ],
+    "not_run": [
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ],
+    "diagnostic": "clippy::collapsible-if",
+    "correction": "Collapse nested cursor guard without changing the body; revalidate the complete R6 source."
+  },
+  "failed_canonical_r4": {
+    "status": "failed",
+    "exit_code": 1,
+    "source_fingerprint": "8621e8ff9c0cd001a29dc1a05dbe453e34276d1ad6c5f1359717a4c498bfaa0a",
+    "checks": [
+      {
+        "name": "migrations",
+        "argv": [
+          "node",
+          "tools/check_migrations.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 133,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-compatibility",
+        "argv": [
+          "node",
+          "tools/check_state_audit_compatibility.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 108,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-evm",
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "crony-audit",
+          "--test",
+          "ethereum_local_chain"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 3247,
+        "counts": {
+          "rust": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "summaries": 1
+          },
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "docs",
+        "argv": [
+          "node",
+          "tools/check_docs.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 99,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "repository-docs",
+        "argv": [
+          "node",
+          "tools/check_documentation.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 115,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "node-tests",
+        "argv": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "--test-timeout=180000",
+          "--test-reporter=tap",
+          ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+          ".github/skills/code-review/tests/executor-state.test.mjs",
+          ".github/skills/code-review/tests/package.test.mjs",
+          "apps/web/src/AgentPinControl.test.mjs",
+          "apps/web/src/DelegatedPanel.test.mjs",
+          "apps/web/src/VerificationPolicyEditor.test.mjs",
+          "apps/web/src/agentPinOperation.test.mjs",
+          "apps/web/src/evidenceNavigation.test.mjs",
+          "apps/web/src/evidenceSelection.test.mjs",
+          "apps/web/src/factoryAuthority.test.mjs",
+          "apps/web/src/factoryAuthorityConnection.test.mjs",
+          "apps/web/src/factoryCheckpointRecovery.test.mjs",
+          "apps/web/src/factoryControllerSelection.test.mjs",
+          "apps/web/src/factoryPolling.test.mjs",
+          "apps/web/src/formText.test.mjs",
+          "apps/web/src/missionCollaboration.test.mjs",
+          "apps/web/src/missionComposer.test.mjs",
+          "apps/web/src/missionOriginContext.test.mjs",
+          "apps/web/src/missionPreview.test.mjs",
+          "apps/web/src/missionProjection.test.mjs",
+          "apps/web/src/missionResultContext.test.mjs",
+          "apps/web/src/missionReviewSummary.test.mjs",
+          "apps/web/src/missionRuntime.test.mjs",
+          "apps/web/src/office/characterAssets.test.mjs",
+          "apps/web/src/office/officeModel.test.mjs",
+          "apps/web/src/runActivity.test.mjs",
+          "apps/web/src/snapshotRefresh.test.mjs",
+          "apps/web/src/verificationPolicy.test.mjs",
+          "apps/web/src/workResultCard.test.mjs",
+          "apps/web/src/workflowContext.test.mjs",
+          "apps/web/src/workspaceConnections.test.mjs",
+          "scenarios/repo-steward/actions.test.mjs",
+          "scenarios/repo-steward/feedback-cli.test.mjs",
+          "scenarios/repo-steward/feedback.test.mjs",
+          "scenarios/repo-steward/maintenance.test.mjs",
+          "scenarios/repo-steward/recurring-audit.test.mjs",
+          "scenarios/repo-steward/steward.test.mjs",
+          "scenarios/repo-steward/teams-host.test.mjs",
+          "tests/readiness/cli.test.js",
+          "tools/budget_fixture.test.mjs",
+          "tools/check_deliverable_diff.test.mjs",
+          "tools/check_documentation.test.mjs",
+          "tools/check_evidence_launch.test.mjs",
+          "tools/check_evidence_native_build.test.mjs",
+          "tools/check_evidence_personal_paths.test.mjs",
+          "tools/check_migrations.test.mjs",
+          "tools/check_replay_source.test.mjs",
+          "tools/checkpoint_application_fixture.test.mjs",
+          "tools/ci_external_adapters_windows.test.mjs",
+          "tools/ci_factory_repository.test.mjs",
+          "tools/ci_maintenance.test.mjs",
+          "tools/ci_owned_test_server.test.mjs",
+          "tools/ci_runner_tests.test.mjs",
+          "tools/consume_operation_receipt.test.mjs",
+          "tools/controlled_runner_fixture.test.mjs",
+          "tools/copilot_fs_wire_observer.test.mjs",
+          "tools/copilot_fs_wire_process.test.mjs",
+          "tools/copilot_probe_boundaries.test.mjs",
+          "tools/copilot_probe_environment.test.mjs",
+          "tools/copilot_probe_native_read.test.mjs",
+          "tools/copilot_probe_process.test.mjs",
+          "tools/coverage_web_models.test.mjs",
+          "tools/delegated_lifecycle.test.mjs",
+          "tools/delegated_qa_root.test.mjs",
+          "tools/e2e_agent_pinning.test.mjs",
+          "tools/e2e_checkpoint_verification.test.mjs",
+          "tools/e2e_evidence_selection.test.mjs",
+          "tools/e2e_external_adapters.test.mjs",
+          "tools/e2e_external_adapters_http.test.mjs",
+          "tools/e2e_factory_budget_recovery.test.mjs",
+          "tools/e2e_late_termination.test.mjs",
+          "tools/e2e_predispatch_failure.test.mjs",
+          "tools/e2e_stopped_source_checkpoint.test.mjs",
+          "tools/e2e_verifier_browser_retention.test.mjs",
+          "tools/e2e_verifier_browser_scope.test.mjs",
+          "tools/factory_budget_fixture_config.test.mjs",
+          "tools/factory_budget_git.test.mjs",
+          "tools/factory_budget_process.test.mjs",
+          "tools/factory_budget_provenance.test.mjs",
+          "tools/factory_budget_start.test.mjs",
+          "tools/fake_codex_budget_stream.test.mjs",
+          "tools/fake_github_quota.test.mjs",
+          "tools/fixture_source_identity.test.mjs",
+          "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+          "tools/identity_fixture.test.mjs",
+          "tools/import_operation_behavior.test.mjs",
+          "tools/issue161/qa-api-provenance.test.mjs",
+          "tools/issue161/qa-plan.test.mjs",
+          "tools/local_source_commit.test.mjs",
+          "tools/local_stack_lifecycle.test.mjs",
+          "tools/local_stack_operation.test.mjs",
+          "tools/native_qualification_attempt.test.mjs",
+          "tools/native_qualification_finality.test.mjs",
+          "tools/native_qualification_trust.test.mjs",
+          "tools/office_model.test.mjs",
+          "tools/operation_feedback.test.mjs",
+          "tools/operation_receipt.test.mjs",
+          "tools/owned_test_stack.test.mjs",
+          "tools/probe_mcp.test.mjs",
+          "tools/qa_multiplayer_object_sources.test.mjs",
+          "tools/readiness_contract.test.mjs",
+          "tools/readiness_replay_contract.test.mjs",
+          "tools/redact_evidence_capabilities.test.mjs",
+          "tools/research_handoff_adversarial.test.mjs",
+          "tools/research_handoff_browser.test.mjs",
+          "tools/research_handoff_native.test.mjs",
+          "tools/runner_ack_fault_relay.test.mjs",
+          "tools/secret_scan.test.mjs",
+          "tools/secret_scan_native.test.mjs",
+          "tools/security_fixtures.test.mjs",
+          "tools/startup_validation_harness.test.mjs",
+          "tools/task_graph_fixture.test.mjs",
+          "tools/verifier_browser.test.mjs",
+          "tools/verify_toolchain.test.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2317030,
+        "counts": {
+          "rust": null,
+          "node": {
+            "tests": 3103,
+            "passed": 3038,
+            "failed": 0,
+            "skipped": 65,
+            "todo": 0,
+            "cancelled": 0
+          }
+        },
+        "errorCode": null
+      },
+      {
+        "name": "format",
+        "argv": [
+          "cargo",
+          "fmt",
+          "--check"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2980,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "clippy",
+        "argv": [
+          "cargo",
+          "clippy",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 16774,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "rust-tests",
+        "argv": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--locked"
+        ],
+        "exitCode": 101,
+        "passed": false,
+        "durationMs": 1428618,
+        "counts": {
+          "rust": {
+            "passed": 657,
+            "failed": 1,
+            "ignored": 9,
+            "summaries": 31
+          },
+          "node": null
+        },
+        "errorCode": null
+      }
+    ],
+    "not_run": [
+      "web-build",
+      "web-lint"
+    ],
+    "diagnostic": "Existing cumulative regression expected a lower cursor to be discarded.",
+    "correction": "Require invalid uncharged evidence while retaining accepted cursor, report and token totals; keep duplicate suppression assertions."
+  },
+  "native_sql": {
+    "counts": {
+      "passed": 13,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 571,
+      "summaries": 1
+    },
+    "discovered": 13,
+    "complete_discovered_lane_executed": true,
+    "authentication": {
+      "wrong_password_rejected": true,
+      "delivery": "Private fixture credential files for PostgreSQL clients. SQLx environment-only delivery is reduced assurance.",
+      "method": "scram-sha-256",
+      "authenticated_query": true
+    },
+    "cleanup": "Exact owned PostgreSQL stopped and fixture port verified inactive; database, private credentials and logs preserved."
+  },
+  "focused": [
+    {
+      "name": "format-check",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0,
+        "summaries": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "name": "strict-clippy",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0,
+        "summaries": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "name": "existing-cumulative-regression",
+      "counts": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 345,
+        "summaries": 2
+      },
+      "exit_code": 0
+    },
+    {
+      "name": "runner-usage",
+      "counts": {
+        "passed": 15,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 331,
+        "summaries": 2
+      },
+      "exit_code": 0
+    },
+    {
+      "name": "domain-usage",
+      "counts": {
+        "passed": 9,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 25,
+        "summaries": 1
+      },
+      "exit_code": 0
+    }
+  ],
+  "scanners": [
+    {
+      "name": "native-scanner",
+      "counts": {
+        "passed": 25,
+        "ignored": 0,
+        "failed": 0,
+        "filtered": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "name": "node-scanner",
+      "counts": {
+        "pass": 11,
+        "tests": 11,
+        "cancelled": 0,
+        "todo": 0,
+        "fail": 0,
+        "skipped": 0
+      },
+      "exit_code": 0
+    }
+  ],
+  "browser": {
+    "revision": 4,
+    "counts": {
+      "passed": 24,
+      "failed": 0,
+      "execution_errors": 0,
+      "scenarios_failed": 0,
+      "scenarios_passed": 4,
+      "scenarios_unexecuted": 0
+    },
+    "cleanup": "Verified every exact owned process stopped. Database, synthetic source, credentials, ownership and evidence retained.",
+    "transport": "Synthetic Codex transport through actual Edge, server, runner and fresh SCRAM PostgreSQL."
+  },
+  "earlier_packet": {
+    "path": "../2026-10-03-usage-provenance/",
+    "validated_files": 77,
+    "historical_outcomes_unchanged": true
+  },
+  "issue_completed": false,
+  "provider_inference": false,
+  "independent_review": false,
+  "hosted_validation": "Unavailable: ECorp repository settings state that Actions were disabled by organization administrators. An organization administrator must restore Actions eligibility before required hosted checks can run; no gate bypassed.",
+  "hosted_validation_observation": {
+    "receipt": "receipts/actions-organization-restriction-observation-r1.json",
+    "original_sha256": "2e084bf93db72aa0b90ff5fb61fdd91176edf2c7147fdc06cb77961010c1a8d1",
+    "recorded_at_utc": "2026-10-03T08:59:28.0113929Z",
+    "screenshot_retained_as_file": false,
+    "scope_limit": "No organization settings were visited or changed. This observation identifies the organization-controlled restriction; it does not identify the administrator, date, motivation or broader organization policy."
+  },
+  "limitations": [
+    "Full #236 auditor, bounded grants, continuation/waiting and operating UI acceptance remains open.",
+    "Known token subtotals do not establish a complete provider bill or the $10 assurance.",
+    "Paired comparison R4 remains stopped after one failed baseline row; candidate never executed.",
+    "Original packet and failed reproduction outcomes are retained; this is retrospective correction evidence."
+  ],
+  "files": [
+    {
+      "path": "receipts/issue236-canonical-r6.json",
+      "original_sha256": "8c2fff7d00db39b14b8085cd887feae1f34972be3a78263116a5647efd4ecaec",
+      "published_sha256": "c31f3928914c6b6369badf06513bbbc161dc0b45ac8f1017bf2cfe136e2b204e",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-review-correction-r2.json",
+      "original_sha256": "f7cb281b9d4b269fb797cea3a003124fadc060b03da783cdeb6e4a7f18bd9c16",
+      "published_sha256": "1a353ddd07b37ac3ec4fba56dd5217b30cd4dfd8460a45de12bb6a49e4ae9c74",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-review-correction-commit-r2.json",
+      "original_sha256": "54ae5ee844a50a15eb5fd970ce6df5cbbb72f1258d4ed3350223bfc8ec954041",
+      "published_sha256": "4e40cdca04b40cc8bba642c985568ef1d068ebf1975e737dcea4a10426614a5f",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-focused-r8.json",
+      "original_sha256": "39c55cc0896909b27726272ac9ed08131fa9252f26a5c1c7cd50781bc7a5f4da",
+      "published_sha256": "54c406c0c4ba8c46fd953177a4a5cdfa326a54eef3a1788465b4c8f2dd0ff419",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-path-regressions-r4.json",
+      "original_sha256": "410edc2ac9f2512572e497b155fdf91f1a25d4a07f14d5b19cd35b1e27877661",
+      "published_sha256": "e958a14dee27df96a8afd2f5cf4aa6a9d87ab16a36550bc6f9316abc31b883b0",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-native-database-r6.json",
+      "original_sha256": "a4d74cd0fdf0d2a89958144937dada8e4b1e60e17e981b4a13e831c090668e16",
+      "published_sha256": "cf50f21dc327a76dde5c29af6b75b4a47ef24e41d68e48e1416d85433e94a2fb",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-review-publication-repair-r1.json",
+      "original_sha256": "a8f6733b07db26bf3f84296e4cfa08ba79417646f0d06a5c6fe7697fa36f2ba2",
+      "published_sha256": "da13d6ead0335768f72e44f87313998aeee9220506aed87ce91af9b323dfbb3d",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-review-publication-validation-r3.json",
+      "original_sha256": "5362101f1fe859bb842cdf0caed3329aa79aa12175f41aa412bea804a9e1a8a8",
+      "published_sha256": "a9c34d8ff08bd155183b79fa361811d97c3d2b2acaa61d42ca136989e1b75ff2",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-native-build-r3.json",
+      "original_sha256": "5612953400f13e4dbd7c14e3c7e910d708986efea6670f5972f36a18b5fa7777",
+      "published_sha256": "8764ad674d978be80201c44251da4c059e319d8427cb76acfc7c597208534241",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-browser-r4.json",
+      "original_sha256": "df3f8dbc70e881df0edae587e2b00a3665dd57d872aa90aaf9e49c3568e97b92",
+      "published_sha256": "76bfb5ce9bad177f187b9394f2e39926db4dcaba781c813f86ba7858356e1c0e",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-screenshot-review-r2.json",
+      "original_sha256": "cbaef90d54ca54cce5d7560b1227372e16441b97d334c65048096a419a7979e4",
+      "published_sha256": "bcc055e9dae21c8ed9b64a672460990f0fdb47cb9beb7f94dfad3b0de0baeb68",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-browser-review-preparation-r1.json",
+      "original_sha256": "829c8d67b9b756bcf896c4eb1f02aec316051e0167d7ed3341bd4dea84c4e695",
+      "published_sha256": "829c8d67b9b756bcf896c4eb1f02aec316051e0167d7ed3341bd4dea84c4e695",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/actions-organization-restriction-observation-r1.json",
+      "original_sha256": "2e084bf93db72aa0b90ff5fb61fdd91176edf2c7147fdc06cb77961010c1a8d1",
+      "published_sha256": "819a67b2a1d748ccb91f0e9aa52d7910976ee0b242d35c2e28120f7b7c3790ae",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/canonical-r6.log",
+      "original_sha256": "fb292a21b0dca7db371f9b8e3b39f37bbb67e8e378602bc2c4e959afeda36d40",
+      "published_sha256": "df3e9d71bb4fd01224af8df75c54270e414f41415512774a1bc91bf0b15d910a",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/canonical-readiness-r6.json",
+      "original_sha256": "a1f6b65d79057769fbed612bb3ad9a9f27bfe1131939919f040be9a7b507664e",
+      "published_sha256": "a1f6b65d79057769fbed612bb3ad9a9f27bfe1131939919f040be9a7b507664e",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/validated-source-manifest.json",
+      "original_sha256": "2fd548c68a8db0fc05d4c56a498db182432385b91c6cc9904beeb4b4fa91aeea",
+      "published_sha256": "0c1ab28ada2f2ece108391fd76243d2c464a28afaa0169fcbca4af913caefcd1",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-install-r6.log",
+      "original_sha256": "eb0f2352f7d1409b2cc41621aac08ac6d3f185ed7bb2b6d4ac87e4ac6ce4e8be",
+      "published_sha256": "71a7b4d4f322c818a97b258588e0cfb7c44779f31831fe054cd45de607e50e93",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-steward-install-offline-r6.log",
+      "original_sha256": "731fccdffdae6f9a256697d9912e6532e6efdf35b3456d2402db2d054341740b",
+      "published_sha256": "61fb5649faeddc87babff00e0a36d5f0213bdcbe8021a366ed1e8babe0b931d3",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-focused-r8-format.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-focused-r8-strict-clippy.log",
+      "original_sha256": "dc79b20ecfa8e83dd6de79495fc79be2ef67cc77389343eaa242732e661cd48f",
+      "published_sha256": "dbe1973de78486776b3d8fb9e3a0ab8f84e23fb6d3e71ae059234d7b73d74118",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-focused-r8-existing-cumulative-regression.log",
+      "original_sha256": "b3d5c5ff0848e92b42462b328618d4bdae9d16098093a27ccd08be28d3389229",
+      "published_sha256": "c6ba9cf58a3a7be848ee792ff5601b9c2f44ec6ed1f922ce866f0a21d1aa0a77",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-focused-r8-runner-usage.log",
+      "original_sha256": "d146ac558e9d621e14f8b5c3554c12874f9780e4d429b06a84a14ce280744e93",
+      "published_sha256": "295e4ac113ba528e5d437e03850572ef8efd76b4d0c0cdda7f143d632b596878",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-focused-r8-domain-usage.log",
+      "original_sha256": "878ea8f7a125908c6e4a0d52653474bf8a01e5d8c8ad805122d8fef2777838bd",
+      "published_sha256": "99339cc6a885d84c0924ee1275b778384f2daeaafbbc7b1a0301b5af08ca0b5e",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-path-regressions-r4-native-scanner.log",
+      "original_sha256": "7bf2301435b8998f2b037977cf73aa3eaa03cefacfc08d6eeb8894c57560da4e",
+      "published_sha256": "fb2f9a0d586e90b25af7395b3e4ec8dae614fe875b10b0934cccde4f400e2402",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-path-regressions-r4-node-scanner.log",
+      "original_sha256": "749921c272689b37c3ae51a452d143af057b56a2d34c6588f106fdbf6aba00d3",
+      "published_sha256": "b612f6b1316c7e65f3deb74ff07f948fa4045a712fb021792ef8cfcc9f3ae21e",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-database-r6-initdb.log",
+      "original_sha256": "402f7efd103774977f06426d8eb33b0a306b18369d823fb51bd76c9ede83e2de",
+      "published_sha256": "ebeafd4322db296353ec3ad82cfff00c47ec4ccb1626e23b3f2214b6b4ed55eb",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-database-r6-crony-store-issue236.log",
+      "original_sha256": "094795393bcea92cb67d8485c6ef6a6986c2860cacc2bf598701a5bcc2241cf7",
+      "published_sha256": "69f7063182d27f0beae705f21c079e274520d8114a9496b0bd04f56afe23803d",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r4-issue236-browser-r3.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r4-issue236-fake-codex-r2.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r4-issue236-prepare-fixture-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r4-issue236-fixture-environment-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r4-stack-start.log",
+      "original_sha256": "21743e7ed97b88785b2b977b992225bce0d2ee54aa4cfbb9f7bc577132ac2c3e",
+      "published_sha256": "a035ab1f25e9b6a3ca3067c7cf2a43f6df1bebc0348876e5bab903876feb5b15",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r4-stack-status.log",
+      "original_sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+      "published_sha256": "966c9259b3b566cbe8b61427223cdc5679afcabc998acac1a04abf93a5fa164f",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r4-driver.log",
+      "original_sha256": "bad41e89629431c3d0ac9aec75ec83ba7870e577f5fa91d24dbf7d75df2e650c",
+      "published_sha256": "54fe20a4a4f4d832b806be758e2026e54f2e591f79a092f807aa3134611bbbeb",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-build-r3-cache-copy.log",
+      "original_sha256": "0909bd3ef822302b825cbba1281182804eb2694e83e238ee55c8648ac35d3b55",
+      "published_sha256": "eedd06451b2247548c8dc391a8efe144f9edbf37fc5f5ef10d3a8aee6bbd1c05",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-build-r3-local-package-clean.log",
+      "original_sha256": "422b075a516c7b22c298824f236cc512001679c1ea127fc409666845105142de",
+      "published_sha256": "6e00800adbaf0e20f3d8e4a2aa156dba858b89c3ef49a40a763c52130929dcea",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-build-r3.jsonl",
+      "original_sha256": "b20403f400fac33828db502fe7e83a8e01b2b63480d3917ff57ea779fc7e77ea",
+      "published_sha256": "09e1e017ebc7c913671c258a5066dd2d78d7cc4b6cabdef9729ddeacfe1133f2",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-database-r6-crony-store-issue236-list.log",
+      "original_sha256": "4ca8d03ff74187782d01108b5f8c2bb79d145b19b6e22567401da629d3f4f0b9",
+      "published_sha256": "8ece1a351333dee9a2fb090cdfc703daeedd9c5f63a2a385c20ba72023865926",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/browser-observations.json",
+      "original_sha256": "fd3c54a6d5de3c83b872f8ab8ff9a283d3b7296524fe7c5d4b9a4d5eaf9a8ead",
+      "published_sha256": "b08de21d8ce7b5e83972c4272b0ef74642c26b12cee3956fa3d394803a8d8a5c",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/browser-setup.json",
+      "original_sha256": "769eea59a14a27dbdeec7dd85a82adf96b662a9f5bca36cdb1e0ed5810275295",
+      "published_sha256": "8756a971f716076b875bb36a4e02161ac467e54e0ab10e14d46ab6fef0058bb0",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-r4-stack-stop.log",
+      "original_sha256": "65abe6fe9cb60eacc967eff94e7f98a3a958644944f9ce7caffa07021c10ae9e",
+      "published_sha256": "bc62835e86fcb405eb6122ad5603e60ac28b75f0640f2e2f4df1681a1744c9e2",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/issue236-focused-r5.json",
+      "original_sha256": "6fecee9414374cbcd054ab07839d49e7044d5458648411c242156d9848ebceea",
+      "published_sha256": "01e19562917e0fd13c822222909f8076d36d92cc326c218a4b98ea67f66a064f",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/logs/issue236-focused-r5-format.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/logs/issue236-focused-r5-runner-usage.log",
+      "original_sha256": "006c28203fc15a42a67c4341c8b3afea5a2b5db5ec024514afba4651fae8d061",
+      "published_sha256": "e9cbf5b834900bfc01f08895a92015fdd6ac75247798904646fd163f75b03440",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/issue236-path-regressions-r1.json",
+      "original_sha256": "dc8c477e5a23cb27fdc9d01f13f2fb450574ded5a26acb2ae6d94bc356304977",
+      "published_sha256": "c9cd7b7f36a5d86b09cbb93311f8e6c21fc1ab870231ad2894ab16f45786197b",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/logs/issue236-path-regressions-r1-native-scanner.log",
+      "original_sha256": "d37e2699d9c81ee5ba43322fb15250011e6f6206ddbc134607564609f2f36017",
+      "published_sha256": "ff6871f7e47d233e677341f457fc0b88d17454b4dbfe263ce1e03c483829d667",
+      "transformation": "local roots including caret escapes; standalone operator name; synthetic path examples replaced with explicit placeholders; UTF-8/LF; trailing whitespace and final blank lines",
+      "previous_published_sha256": "221a105d3682db63c510fee5902446563545d8b9764d4c83144d2f9f5e355ccb"
+    },
+    {
+      "path": "history/logs/issue236-path-regressions-r1-node-scanner.log",
+      "original_sha256": "50d72b35adc2e7c23c1d135b6fec16a952b8a5e346d64a645e04f6aa2280d591",
+      "published_sha256": "2d980e1ed65af0c90ba00401d98e3dc6e2c4f155fbf529303ef9fe63a088bb08",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/issue236-native-database-r3.json",
+      "original_sha256": "1cc9652b6431a02c9297e084ba917f4aff847758873ed736076a8851a6c466b4",
+      "published_sha256": "b63814f0e25acd80dd2111ebcbee22b711b591931cd3ad2c855a4202b03a9692",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/logs/issue236-native-database-r3-initdb.log",
+      "original_sha256": "5d108e90184231567adc8464f5867f27a8eee49d5c9580154e1c6c0d23cd2243",
+      "published_sha256": "e13e9c2fc8f3e4a2835eddd176f398646383a2ceb30c763f8d606cde42885cd5",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/logs/issue236-native-database-r3-crony-store-issue236.log",
+      "original_sha256": "83fff895da70bc3b83f3f978bfcfdbdc0baf6a4a0f4031e6a6c5eaf905ab99f0",
+      "published_sha256": "db69a578ff4f8da98f745f839af03e9c52d0b269bd1c55818de26d8b2442aa43",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/issue236-canonical-r3.json",
+      "original_sha256": "822ad7f7c7ccb0b63898b6976a101efcadf4f7eceb24aac02e7d7ca47bd34865",
+      "published_sha256": "87fcfa227715241bb8eef38ad7ac057460afb608e1b26173c8bc79bcb6ad3c50",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/logs/canonical-r3.log",
+      "original_sha256": "b7f49525eb7f887f63546fd4cd000351f1541c0644f6906127ec75abd16b3506",
+      "published_sha256": "e7ba1475e82bca9574e8c63e1af7938c6dd86850e27a139e741bd52968a77d68",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/receipts/canonical-readiness-r3.json",
+      "original_sha256": "66a9b7f64edfc18f5843ebbeaa0f7ea565c59a9c7e451cbb0f4e339963a45050",
+      "published_sha256": "66a9b7f64edfc18f5843ebbeaa0f7ea565c59a9c7e451cbb0f4e339963a45050",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/receipts/canonical-r3-source-manifest.json",
+      "original_sha256": "17f79af0f810bc180af2f8731cf2d66352f0893c8cf1429adfee94d81d68b6c9",
+      "published_sha256": "b2f383ed36a3a7da625307f899207db3570003bd1d92c4727283e1383d1e7676",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/source/run-issue236-canonical-r3.ps1.txt",
+      "original_sha256": "4efeeb2cc3e07f2e67d1e1e12f6027603bfa4fdd18bff5f788c4fabaa23dd5f2",
+      "published_sha256": "846b8cc69c16e2cf1061a423f4746a74afbb10c240f74720de7ad88fc16a0cc2",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/source/issue236-codex-before-clippy-r3.rs.txt",
+      "original_sha256": "ff88e2530471c09e3881c72af03a544d2ea197854f2a8c9877946e8c59b72e2f",
+      "published_sha256": "ff88e2530471c09e3881c72af03a544d2ea197854f2a8c9877946e8c59b72e2f",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/source/issue236-source-before-clippy-r3.patch.txt",
+      "original_sha256": "81ea36a1a87b96c7177f23eb1320a3a265f65b16d1849ecf731f9263c1578663",
+      "published_sha256": "60c5a3ff8eb6a2bacf3689bc3ad7613378bcede8dcb32895d990a08303606f43",
+      "transformation": "local roots including caret escapes; standalone operator name; synthetic path examples replaced with explicit placeholders; UTF-8/LF; trailing whitespace and final blank lines",
+      "previous_published_sha256": "63de752f62b573eb8ffce6fd1b3df95c0984d746cfcfd4b3e88174fdaa6fde9e"
+    },
+    {
+      "path": "history/issue236-canonical-r4.json",
+      "original_sha256": "661dd16572b0b9d606497bac8c70704d6c69c8ab999091ea5bc34604dd83e911",
+      "published_sha256": "86074f10b74ad203f44dc7626d7f96cd5e70622ae57644709f9901577d8eb00e",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/logs/canonical-r4.log",
+      "original_sha256": "cc062ba482703c734de1bb2ab867f021711870362625ffe3acb2d5833c77631f",
+      "published_sha256": "bfc577f3f7e363f24c9ec10045cf8d05f1df26502a09c353d3dbd89c83406f5a",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/receipts/canonical-readiness-r4.json",
+      "original_sha256": "60e2abdbfcbfc8572c7f39986fcb437cab678deb83e167a4a4f18d2816d734f4",
+      "published_sha256": "60e2abdbfcbfc8572c7f39986fcb437cab678deb83e167a4a4f18d2816d734f4",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/receipts/canonical-r4-source-manifest.json",
+      "original_sha256": "083725e7f55c4cfcb5202e8c891a4e5eb5ed33d2c9fbd4efa8af4815452879b9",
+      "published_sha256": "7eca66e832feb27e4efc707f9ea4fca5f953e36cd3d169ee378422eb62d4759d",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/source/run-issue236-canonical-r4.ps1.txt",
+      "original_sha256": "d2b85a52e16b2af44406b5166730f93969de2e01bb21e87152b77af2bf97a4cb",
+      "published_sha256": "100c951cbcae2f64a494f13c38f4805b8c5a80aa447d4691c2ea6d17ed8649f3",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/source/issue236-canonical-r4-regression-original.rs.txt",
+      "original_sha256": "abcf1d077cc8bc950e4b61dec39832b2b837bbe3f561b27fee5db5dfedae1fcf",
+      "published_sha256": "eb33b6105caf9746ee2dbc0950a3d6bf19b01e9f4c1b5238dbde02e255a25a2e",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/source/issue236-review-corrections-before-r4-test-fix.patch.txt",
+      "original_sha256": "4d548a550be6dede4bcad4b03b45b3b12b19ea03b20bf8ce243115787bda6caf",
+      "published_sha256": "04ed94cd3c78457d2a87aa80af8aaca0778a8c5ec65dfd8b98b28abb9b914936",
+      "transformation": "local roots including caret escapes; standalone operator name; synthetic path examples replaced with explicit placeholders; UTF-8/LF; trailing whitespace and final blank lines",
+      "previous_published_sha256": "f3adbe20b7c9a7f3f52126de2efda9e2f16f065bfb0836b3249e565031d3e6b6"
+    },
+    {
+      "path": "history/source/issue236-source-before-r4-test-fix.json.txt",
+      "original_sha256": "d40b4eed1f0f9e73f8e57629b59691fac245de8aae53f37d3e844c0f4a8e3b63",
+      "published_sha256": "c3a49830132786675cf297273230548f5d510b222f7dc795c1ffafaa416b9ed6",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "usage-codex-duplicate-and-foreign-turn.png",
+      "original_sha256": "d69fc7cfae6c115c3e9c197a55b4ac03eb8f91cac2b6da810044d50f6949082c",
+      "published_sha256": "d69fc7cfae6c115c3e9c197a55b4ac03eb8f91cac2b6da810044d50f6949082c",
+      "transformation": "none"
+    },
+    {
+      "path": "usage-codex-cache-and-reasoning-subsets.png",
+      "original_sha256": "97b02269571affd6d781606dd9b07d3b15ea2f26bf24d0583693555dd81d296f",
+      "published_sha256": "97b02269571affd6d781606dd9b07d3b15ea2f26bf24d0583693555dd81d296f",
+      "transformation": "none"
+    },
+    {
+      "path": "usage-codex-missing-input-explicit-zero-output.png",
+      "original_sha256": "c6e4e223f55af1625c39bfb0ea0afd38f9878531ee52098546c1b33c66127093",
+      "published_sha256": "c6e4e223f55af1625c39bfb0ea0afd38f9878531ee52098546c1b33c66127093",
+      "transformation": "none"
+    },
+    {
+      "path": "usage-codex-regressing-and-contradictory-cursors.png",
+      "original_sha256": "da9e87799050bb5b0bf247f0e4ebdb562d29363540a3dd847636b248d76243d8",
+      "published_sha256": "da9e87799050bb5b0bf247f0e4ebdb562d29363540a3dd847636b248d76243d8",
+      "transformation": "none"
+    },
+    {
+      "path": "drivers/issue236-acceptance-corpus-r2.json",
+      "original_sha256": "434c1de12c928ae7a7484e970e01694feeaaa7ddd450e6fa81e9f031156325d1",
+      "published_sha256": "434c1de12c928ae7a7484e970e01694feeaaa7ddd450e6fa81e9f031156325d1",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-browser-r3.mjs.txt",
+      "original_sha256": "b7a59fff4038a65e29e1feff70794d951a2a110a5316bf81c9648d45d72f0cae",
+      "published_sha256": "b7a59fff4038a65e29e1feff70794d951a2a110a5316bf81c9648d45d72f0cae",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-fake-codex-r2.mjs.txt",
+      "original_sha256": "fd7c1ab611c7e890f0c2a87269356ca9c6ac7b1a6a7a41f92916fb7ab78490d6",
+      "published_sha256": "fd7c1ab611c7e890f0c2a87269356ca9c6ac7b1a6a7a41f92916fb7ab78490d6",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-stack-r4.ps1.txt",
+      "original_sha256": "57a9a3a44dbb71a5d2dad13b8b99515358fe6f64d73f233d29ce5d9e744d7380",
+      "published_sha256": "92f0a9fc2d69188c4c6b6f1fc93822888a425401b2c39dca65208f9a0d02528a",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-issue236-native-build-r3.ps1.txt",
+      "original_sha256": "9830dcfdb4713dbb4643b8975459096032f2b5b3dd338f03361b140185d43d91",
+      "published_sha256": "d05e015db3ad3a2f561f98e82aaf8e5c56eac38e688ddd254b957112175590c0",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-issue236-browser-r4.ps1.txt",
+      "original_sha256": "fc7c14b4f1d83bda9b0c6f67d8886a2d25951bbc703f7ccb2758fd55cd93b0db",
+      "published_sha256": "05a46d540b67c83d2c7d92554aed53e42b3d93191ecdef4af3ed58f995733bae",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-issue236-canonical-r6.ps1.txt",
+      "original_sha256": "89df294f02523a6eb926fc619b0114643dab1606bd027c9f51c95b59d811764c",
+      "published_sha256": "ceb3ee1076af6536795a60171a323d20b4d7606f78ef85139f34490e6b98829b",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/commit-issue236-review-correction-r2.py.txt",
+      "original_sha256": "f725c249b0b8320caa574c7624aaaf3ad7b946ad4b4706885dc13c5b8b330379",
+      "published_sha256": "dfea96de36a0a561215138928e4177d82c20e877759023a6cfcbc1eef7b8fc19",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-issue236-canonical-r7.ps1.txt",
+      "original_sha256": "d01bef922cb56d09b1cad00ed4fa84ba53914a0e6700d5c136a91479e289e928",
+      "published_sha256": "4f38ec14a356b108e96d7b510d51acd0c03441f23d188b8dc8db22e180605683",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/validate-issue236-correction-publication-r2.py.txt",
+      "original_sha256": "4273a5895d5aa5b716ffdacd66bc0eba6a14d5f045646b68685e4e4abbb6a374",
+      "published_sha256": "1408be636de37b4f0defb5e654d42f40460637c6517cfe4663cf95b80fe93ed1",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/publish-issue236-correction-evidence-r2.py.txt",
+      "original_sha256": "92159a9f7e4cdd172dc88f2fbb97ec0dfd395f591d701e6705738b5bc0b648ec",
+      "published_sha256": "92159a9f7e4cdd172dc88f2fbb97ec0dfd395f591d701e6705738b5bc0b648ec",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-source-snapshot-r1.mjs.txt",
+      "original_sha256": "1658bc1a3bedaa0413c438e536880fb213600357a0314a9d23d3d08841fd3b07",
+      "published_sha256": "befc9dfaf5cc21aa729f3c6a14f743df9eb581fcc3677aa2ba32330ee8b1ce17",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-fixture-environment-r1.mjs.txt",
+      "original_sha256": "dec8204cea74646da860998fd749603dfdd1e9e44d149d7404201687dad744a4",
+      "published_sha256": "a4c490b0a369270c37fb280a8649d15ed2bfe75adef91ee46e799b83aa1c7b21",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-fixture-environment-r1.ps1.txt",
+      "original_sha256": "03316c1fcd1d9830a98a3aa6e212335084386084a12356ed307070719416a448",
+      "published_sha256": "ffdfeb106ad0a707cfe0899ebe909d515040bef3b4264dd2674d8eb1f85a5897",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-prepare-fixture-r1.mjs.txt",
+      "original_sha256": "0b2088abf98aec948041b5a381f1e8dd77b7cc57670ebd21ca076723b609a1ff",
+      "published_sha256": "0b2088abf98aec948041b5a381f1e8dd77b7cc57670ebd21ca076723b609a1ff",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/package-issue236-review-corrections-r2.py.txt",
+      "original_sha256": "c699b6693d3ce05660202a83cdd3548f52eaf08f33282c7e2e48ac030515d141",
+      "published_sha256": "ba0ff0f5f476df944dc767d12b3770d12d5e4f9938d1c6f04ef8d621a816d12f",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/publication/issue236-correction-publication-validation-r2.json",
+      "original_sha256": "710a7569ae5ea4df6d10cbaed7fde19b470d8cbf64eb7132500470dc4b9014ae",
+      "published_sha256": "462d68af44d2c42555b47ff444f2f440423d23724dc8495f0b1d67cc753168fd",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/publication/issue236-correction-publication-normalization-r3.json",
+      "original_sha256": "bcd300babe900ce6a178bf541fdafb98784aa38759a60534552b4a83d602a42e",
+      "published_sha256": "db4696cabe0d15c35f29df7302bcb74d29d2c295bd25c56ef19452bfaecb522f",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/publication/issue236-correction-doc-contract-r2.json",
+      "original_sha256": "b903e4996e6b144d3918e23233cdb4327d96cd2b04341eb6be7b3c8ca0adc47e",
+      "published_sha256": "d79dd4912013f895e8cd149cb2ec8c0005234ba93e7c3d03d114c4d448175308",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/publication/issue236-correction-doc-contract-r2.log",
+      "original_sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "published_sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/publication/issue236-correction-generated-docs-r2.json",
+      "original_sha256": "e76bf05ae207e13eb7445dc1e457f6dffcced310a1b608b1850195045e761296",
+      "published_sha256": "8b760bcb52df60fb916c77ef23683edc4db447036e355c58332ec914297419be",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/publication/issue236-correction-generated-docs-r2.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/publication/issue236-correction-personal-paths-r2.json",
+      "original_sha256": "ae34f14164344c8192733133a7bb6c805411cb910067805db8ade23ed3795b41",
+      "published_sha256": "a3ed6f46b2ef793c319bbf4fa84328e11617061979be4d362510dc07c0344b10",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "history/publication/issue236-correction-personal-paths-r2.log",
+      "original_sha256": "c372ba5b49d7c373803411f4d0e5112db8c47f7c98d63e68a2faa4fd4bce229a",
+      "published_sha256": "c372ba5b49d7c373803411f4d0e5112db8c47f7c98d63e68a2faa4fd4bce229a",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/normalize-issue236-correction-examples-r3.py.txt",
+      "original_sha256": "d46f10f25e3fddf21a8679e3041a62b1716be9ee55c62379b16847e9826c547e",
+      "published_sha256": "d46f10f25e3fddf21a8679e3041a62b1716be9ee55c62379b16847e9826c547e",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/validate-issue236-correction-publication-r3.py.txt",
+      "original_sha256": "dd1055b9c1117596a189a976955dadc86907a525222bdf45d7ea871e687acb5d",
+      "published_sha256": "ec419feb56405f22096ef28dd179473909209fb91058c4e836abe73d768e840e",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/publish-issue236-correction-evidence-r3.py.txt",
+      "original_sha256": "c5f621dc4a20cade6c58e12fd9e3d54b5e337e7bdd178603c95083d4b0f122f4",
+      "published_sha256": "c5f621dc4a20cade6c58e12fd9e3d54b5e337e7bdd178603c95083d4b0f122f4",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-issue236-canonical-r8.ps1.txt",
+      "original_sha256": "c85b1d628219730cee77a8fcf8ca1b83f8adfcfb3f49eb455214aebe620a18e0",
+      "published_sha256": "7b3a2bcd32912c6c8f3e6e8b8f8f416cadc9a19fd48c8c51aee4bb187434a4de",
+      "transformation": "local roots including caret escapes; standalone operator name; UTF-8/LF; trailing whitespace and final blank lines"
+    }
+  ],
+  "publication_path_repair": {
+    "receipt": "history/publication/issue236-correction-publication-normalization-r3.json",
+    "failed_attempt": "history/publication/issue236-correction-publication-validation-r2.json",
+    "changes": [
+      {
+        "path": "history/logs/issue236-path-regressions-r1-native-scanner.log",
+        "original_sha256": "d37e2699d9c81ee5ba43322fb15250011e6f6206ddbc134607564609f2f36017",
+        "previous_published_sha256": "221a105d3682db63c510fee5902446563545d8b9764d4c83144d2f9f5e355ccb",
+        "published_sha256": "ff6871f7e47d233e677341f457fc0b88d17454b4dbfe263ce1e03c483829d667",
+        "changed_lines": [
+          45
+        ],
+        "transformation": "local roots including caret escapes; standalone operator name; synthetic path examples replaced with explicit placeholders; UTF-8/LF; trailing whitespace and final blank lines",
+        "published_source_excerpt_replayable": false
+      },
+      {
+        "path": "history/source/issue236-source-before-clippy-r3.patch.txt",
+        "original_sha256": "81ea36a1a87b96c7177f23eb1320a3a265f65b16d1849ecf731f9263c1578663",
+        "previous_published_sha256": "63de752f62b573eb8ffce6fd1b3df95c0984d746cfcfd4b3e88174fdaa6fde9e",
+        "published_sha256": "60c5a3ff8eb6a2bacf3689bc3ad7613378bcede8dcb32895d990a08303606f43",
+        "changed_lines": [
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103,
+          111,
+          112,
+          113,
+          120,
+          129,
+          130,
+          408,
+          409,
+          410,
+          411,
+          412,
+          413,
+          421,
+          427,
+          430,
+          436,
+          437
+        ],
+        "transformation": "local roots including caret escapes; standalone operator name; synthetic path examples replaced with explicit placeholders; UTF-8/LF; trailing whitespace and final blank lines",
+        "published_source_excerpt_replayable": false
+      },
+      {
+        "path": "history/source/issue236-review-corrections-before-r4-test-fix.patch.txt",
+        "original_sha256": "4d548a550be6dede4bcad4b03b45b3b12b19ea03b20bf8ce243115787bda6caf",
+        "previous_published_sha256": "f3adbe20b7c9a7f3f52126de2efda9e2f16f065bfb0836b3249e565031d3e6b6",
+        "published_sha256": "04ed94cd3c78457d2a87aa80af8aaca0778a8c5ec65dfd8b98b28abb9b914936",
+        "changed_lines": [
+          120,
+          121,
+          122,
+          123,
+          124,
+          125,
+          126,
+          134,
+          135,
+          136,
+          143,
+          152,
+          153,
+          431,
+          432,
+          433,
+          434,
+          435,
+          436,
+          444,
+          450,
+          453,
+          459,
+          460
+        ],
+        "transformation": "local roots including caret escapes; standalone operator name; synthetic path examples replaced with explicit placeholders; UTF-8/LF; trailing whitespace and final blank lines",
+        "published_source_excerpt_replayable": false
+      }
+    ],
+    "originals_and_test_outcomes_unchanged": true,
+    "source_excerpt_limit": "Only published historical examples are replaced by explicit synthetic placeholders. The normalized .patch.txt records are not executable replay fixtures. Original source/log bytes and hashes remain retained, and current committed scanner tests keep their exact fixtures.",
+    "current_publication_driver": "drivers/validate-issue236-correction-publication-r3.py.txt",
+    "final_canonical_required_before_commit": "issue236-canonical-r8.json"
+  }
+}

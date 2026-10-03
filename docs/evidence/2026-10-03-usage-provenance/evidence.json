@@ -1,0 +1,908 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "candidate": "fb13446f099ddc550a653ed6c4b13800169ba599",
+  "candidate_tree": "78370df4797a84ae363b5df9d2cafd3e898887de",
+  "dependency_pr": 392,
+  "dependency_head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+  "baseline": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "physical_fingerprint": "243ad077f92ffb062da5761a182d51cfd0f7c38ecd32680b896aa4dc5817c32b",
+  "recorded_at_utc": "2026-10-03T06:25:24.469613+00:00",
+  "canonical": {
+    "command": "pnpm check",
+    "status": "passed",
+    "checks": [
+      {
+        "name": "migrations",
+        "argv": [
+          "node",
+          "tools/check_migrations.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 134,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-compatibility",
+        "argv": [
+          "node",
+          "tools/check_state_audit_compatibility.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 105,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-evm",
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "crony-audit",
+          "--test",
+          "ethereum_local_chain"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 3423,
+        "counts": {
+          "rust": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "summaries": 1
+          },
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "docs",
+        "argv": [
+          "node",
+          "tools/check_docs.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 97,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "repository-docs",
+        "argv": [
+          "node",
+          "tools/check_documentation.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 114,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "node-tests",
+        "argv": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "--test-timeout=180000",
+          "--test-reporter=tap",
+          ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+          ".github/skills/code-review/tests/executor-state.test.mjs",
+          ".github/skills/code-review/tests/package.test.mjs",
+          "apps/web/src/AgentPinControl.test.mjs",
+          "apps/web/src/DelegatedPanel.test.mjs",
+          "apps/web/src/VerificationPolicyEditor.test.mjs",
+          "apps/web/src/agentPinOperation.test.mjs",
+          "apps/web/src/evidenceNavigation.test.mjs",
+          "apps/web/src/evidenceSelection.test.mjs",
+          "apps/web/src/factoryAuthority.test.mjs",
+          "apps/web/src/factoryAuthorityConnection.test.mjs",
+          "apps/web/src/factoryCheckpointRecovery.test.mjs",
+          "apps/web/src/factoryControllerSelection.test.mjs",
+          "apps/web/src/factoryPolling.test.mjs",
+          "apps/web/src/formText.test.mjs",
+          "apps/web/src/missionCollaboration.test.mjs",
+          "apps/web/src/missionComposer.test.mjs",
+          "apps/web/src/missionOriginContext.test.mjs",
+          "apps/web/src/missionPreview.test.mjs",
+          "apps/web/src/missionProjection.test.mjs",
+          "apps/web/src/missionResultContext.test.mjs",
+          "apps/web/src/missionReviewSummary.test.mjs",
+          "apps/web/src/missionRuntime.test.mjs",
+          "apps/web/src/office/characterAssets.test.mjs",
+          "apps/web/src/office/officeModel.test.mjs",
+          "apps/web/src/runActivity.test.mjs",
+          "apps/web/src/snapshotRefresh.test.mjs",
+          "apps/web/src/verificationPolicy.test.mjs",
+          "apps/web/src/workResultCard.test.mjs",
+          "apps/web/src/workflowContext.test.mjs",
+          "apps/web/src/workspaceConnections.test.mjs",
+          "scenarios/repo-steward/actions.test.mjs",
+          "scenarios/repo-steward/feedback-cli.test.mjs",
+          "scenarios/repo-steward/feedback.test.mjs",
+          "scenarios/repo-steward/maintenance.test.mjs",
+          "scenarios/repo-steward/recurring-audit.test.mjs",
+          "scenarios/repo-steward/steward.test.mjs",
+          "scenarios/repo-steward/teams-host.test.mjs",
+          "tests/readiness/cli.test.js",
+          "tools/budget_fixture.test.mjs",
+          "tools/check_deliverable_diff.test.mjs",
+          "tools/check_documentation.test.mjs",
+          "tools/check_evidence_launch.test.mjs",
+          "tools/check_evidence_native_build.test.mjs",
+          "tools/check_evidence_personal_paths.test.mjs",
+          "tools/check_migrations.test.mjs",
+          "tools/check_replay_source.test.mjs",
+          "tools/checkpoint_application_fixture.test.mjs",
+          "tools/ci_external_adapters_windows.test.mjs",
+          "tools/ci_factory_repository.test.mjs",
+          "tools/ci_maintenance.test.mjs",
+          "tools/ci_owned_test_server.test.mjs",
+          "tools/ci_runner_tests.test.mjs",
+          "tools/consume_operation_receipt.test.mjs",
+          "tools/controlled_runner_fixture.test.mjs",
+          "tools/copilot_fs_wire_observer.test.mjs",
+          "tools/copilot_fs_wire_process.test.mjs",
+          "tools/copilot_probe_boundaries.test.mjs",
+          "tools/copilot_probe_environment.test.mjs",
+          "tools/copilot_probe_native_read.test.mjs",
+          "tools/copilot_probe_process.test.mjs",
+          "tools/coverage_web_models.test.mjs",
+          "tools/delegated_lifecycle.test.mjs",
+          "tools/delegated_qa_root.test.mjs",
+          "tools/e2e_agent_pinning.test.mjs",
+          "tools/e2e_checkpoint_verification.test.mjs",
+          "tools/e2e_evidence_selection.test.mjs",
+          "tools/e2e_external_adapters.test.mjs",
+          "tools/e2e_external_adapters_http.test.mjs",
+          "tools/e2e_factory_budget_recovery.test.mjs",
+          "tools/e2e_late_termination.test.mjs",
+          "tools/e2e_predispatch_failure.test.mjs",
+          "tools/e2e_stopped_source_checkpoint.test.mjs",
+          "tools/e2e_verifier_browser_retention.test.mjs",
+          "tools/e2e_verifier_browser_scope.test.mjs",
+          "tools/factory_budget_fixture_config.test.mjs",
+          "tools/factory_budget_git.test.mjs",
+          "tools/factory_budget_process.test.mjs",
+          "tools/factory_budget_provenance.test.mjs",
+          "tools/factory_budget_start.test.mjs",
+          "tools/fake_codex_budget_stream.test.mjs",
+          "tools/fake_github_quota.test.mjs",
+          "tools/fixture_source_identity.test.mjs",
+          "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+          "tools/identity_fixture.test.mjs",
+          "tools/import_operation_behavior.test.mjs",
+          "tools/issue161/qa-api-provenance.test.mjs",
+          "tools/issue161/qa-plan.test.mjs",
+          "tools/local_source_commit.test.mjs",
+          "tools/local_stack_lifecycle.test.mjs",
+          "tools/local_stack_operation.test.mjs",
+          "tools/native_qualification_attempt.test.mjs",
+          "tools/native_qualification_finality.test.mjs",
+          "tools/native_qualification_trust.test.mjs",
+          "tools/office_model.test.mjs",
+          "tools/operation_feedback.test.mjs",
+          "tools/operation_receipt.test.mjs",
+          "tools/owned_test_stack.test.mjs",
+          "tools/probe_mcp.test.mjs",
+          "tools/qa_multiplayer_object_sources.test.mjs",
+          "tools/readiness_contract.test.mjs",
+          "tools/readiness_replay_contract.test.mjs",
+          "tools/redact_evidence_capabilities.test.mjs",
+          "tools/research_handoff_adversarial.test.mjs",
+          "tools/research_handoff_browser.test.mjs",
+          "tools/research_handoff_native.test.mjs",
+          "tools/runner_ack_fault_relay.test.mjs",
+          "tools/secret_scan.test.mjs",
+          "tools/secret_scan_native.test.mjs",
+          "tools/security_fixtures.test.mjs",
+          "tools/startup_validation_harness.test.mjs",
+          "tools/task_graph_fixture.test.mjs",
+          "tools/verifier_browser.test.mjs",
+          "tools/verify_toolchain.test.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2218961,
+        "counts": {
+          "rust": null,
+          "node": {
+            "tests": 3103,
+            "passed": 3038,
+            "failed": 0,
+            "skipped": 65,
+            "todo": 0,
+            "cancelled": 0
+          }
+        },
+        "errorCode": null
+      },
+      {
+        "name": "format",
+        "argv": [
+          "cargo",
+          "fmt",
+          "--check"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2805,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "clippy",
+        "argv": [
+          "cargo",
+          "clippy",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 87131,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "rust-tests",
+        "argv": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--locked"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 1413289,
+        "counts": {
+          "rust": {
+            "passed": 924,
+            "failed": 0,
+            "ignored": 594,
+            "summaries": 41
+          },
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "web-build",
+        "argv": [
+          "pnpm",
+          "build:web"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 6679,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "web-lint",
+        "argv": [
+          "pnpm",
+          "lint:web"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2526,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      }
+    ],
+    "node": {
+      "tests": 3103,
+      "pass": 3038,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 65,
+      "todo": 0
+    },
+    "rust": {
+      "passed": 924,
+      "failed": 0,
+      "ignored": 594,
+      "measured": 0,
+      "filtered": 0,
+      "summaries": 41
+    }
+  },
+  "native_sql": {
+    "counts": {
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 571,
+      "summaries": 1
+    },
+    "original_source": {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-10-03T03:22:12.479Z",
+      "source": "<candidate-checkout>",
+      "head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+      "tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+      "branch": "codex/issue236-usage-provenance",
+      "status": "M crates/crony-domain/src/lib.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/adapter/codex_stop_tests.rs\n M crates/crony-runner/src/adapter/copilot.rs\n M crates/crony-runner/src/adapter/external.rs\n M crates/crony-runner/src/adapter/fake.rs\n M crates/crony-runner/src/adapter/mod.rs\n M crates/crony-runner/src/main.rs\n M crates/crony-store/src/lib.rs\n?? crates/crony-domain/src/usage.rs\n?? crates/crony-runner/src/adapter/usage.rs\n?? crates/crony-store/src/usage_accounting.rs\n?? crates/crony-store/src/usage_accounting_tests.rs",
+      "source_file_count": 7419,
+      "source_fingerprint": "170fa6f5a734cb5bcb3fd26aebc3700384053dfd0aac18ad00c403d5f3fefc77",
+      "manifest": "<run-records>\\issue236-source-after-native-db-r1.json",
+      "manifest_sha256": "0651559aac1ba14a0809958aaf03e26630cfb19c3aede85f448732d607b70164"
+    },
+    "applicability": "Executed before the final runner-only changes. All other physical source files, including store/domain and their dependencies, are unchanged.",
+    "later_changed_files": [
+      "crates/crony-runner/src/adapter/codex.rs",
+      "crates/crony-runner/src/adapter/copilot.rs",
+      "crates/crony-runner/src/adapter/external.rs",
+      "crates/crony-runner/src/adapter/fake.rs",
+      "crates/crony-runner/src/adapter/mod.rs",
+      "crates/crony-runner/tests/fixtures/usage-provenance-v1.json",
+      "docs/USAGE_PROVENANCE.md"
+    ]
+  },
+  "browser": {
+    "revision": 3,
+    "counts": {
+      "passed": 19,
+      "failed": 0,
+      "execution_errors": 0,
+      "scenarios_failed": 0,
+      "scenarios_passed": 3,
+      "scenarios_unexecuted": 0
+    },
+    "cleanup": "Verified every exact owned process stopped. Database, synthetic source, credentials, ownership and evidence retained.",
+    "transport": "synthetic Codex protocol; no provider inference",
+    "ui_limitation": "Legacy known-subtotal display does not express missing-quantity coverage."
+  },
+  "failed_browser_history": {
+    "revision": 2,
+    "status": "failed",
+    "recorded_counts": {
+      "passed": 1,
+      "failed": 0,
+      "scenarios_passed": 0,
+      "scenarios_unexecuted": 2
+    },
+    "failure": "/api/corps/00000000-0000-4000-8000-000000000001/missions: unexpected HTTP status\n\n400 !== 200\n",
+    "interpretation": "HTTP400 before first scenario launch; old driver omitted that failed assertion from its count. One scenario failed and two were unexecuted. The response body was not captured."
+  },
+  "comparison": {
+    "status": "stopped",
+    "rows_executed": 1,
+    "rows_unexecuted": 33,
+    "failure": "First accounting mismatch or failed fixture: baseline/codex-duplicate-and-foreign-turn; both arms stopped.",
+    "fixture_runtime_seconds": 1.2339999999385327
+  },
+  "issue_completed": false,
+  "independent_review": false,
+  "provider_inference": false,
+  "hosted_validation": "Unavailable while repository Actions are disabled; no required gate bypassed.",
+  "files": [
+    {
+      "path": "receipts/issue236-canonical-r2.json",
+      "original_sha256": "77f7e87ac99448d0660a52a02a80ee15105a67aebaec3b47e509eddc6a5949fe",
+      "published_sha256": "862df8e16615d41e07af8ef61907d4230e34e7b082ac0e7d8d0dfd93cca1d02f",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "receipts/issue236-prerequisite-commit-r1.json",
+      "original_sha256": "918b4af69f845f1babbed6769d907ec65a6e99975af775ea3fb304c064a9d2f5",
+      "published_sha256": "afc435a709dc57d7a4377f7f1fbb3ec7ee89513e509d7254578230b5143d9d18",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "receipts/issue236-native-database-r1.json",
+      "original_sha256": "62891b6cbd5dd6ff12e9da31b44446f49648cc6050783431cc15f541c58f36d0",
+      "published_sha256": "022f9da15d3adb2b409b113b0e20fb5cf885ecc8327bd1b3e245e34800f408f6",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "receipts/issue236-browser-r3.json",
+      "original_sha256": "eabfe9d63e823b92df5b08457ea33012d124d4001d87a7ff7149282f0995ee9a",
+      "published_sha256": "ee1a2db8742fb6cfc6d96a5216e3550e81adc608cb7c39a670c3ecb965d76aa0",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "receipts/issue236-native-applicability-r1.json",
+      "original_sha256": "8cffa6b176a85fd1e849379269450ec11435fcb41445dacc466af2bce12d2093",
+      "published_sha256": "54f71738232786ea43296f9d28b1caf60f92641d2fa5ce99c6aac86f35b40fc0",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "receipts/issue236-browser-fixture-correction-r1.json",
+      "original_sha256": "65be00b29c27972862eb9c56519c139d9959e2c8f263f65d0058cce503d93613",
+      "published_sha256": "3bc5ceb879749224e4ef7d52335e8e5540b6feb9bbec6a180d743113eb3cdafa",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "receipts/issue236-browser-harness-review-r3.json",
+      "original_sha256": "50dca649673ba9bb2e2365a15d28a5f42fecb9f8206e1186259ca39f512bd544",
+      "published_sha256": "50dca649673ba9bb2e2365a15d28a5f42fecb9f8206e1186259ca39f512bd544",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "receipts/issue236-native-build-r2.json",
+      "original_sha256": "e10f021d901793c884e513ff96c82898b283e8d2aac8a8c3421738e644e6eb4f",
+      "published_sha256": "b142630d2f98ec6060411bd74183187d272a29c81d32168212173255ef5d393f",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "receipts/issue236-focused-r3.json",
+      "original_sha256": "f2e44129d0917828060768ab5db5318b05574fbff8f44f453a8b0fdfcbaecc2f",
+      "published_sha256": "6f9962ac741acd0bfb7a6429620d03f73627e6917d23bdde766591c6471e2dcf",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "receipts/issue236-event-size-fix-r1.json",
+      "original_sha256": "ef7fb854fea4e628626fdef58e4e705c608af1925fc85669777ec76592c88765",
+      "published_sha256": "ef7fb854fea4e628626fdef58e4e705c608af1925fc85669777ec76592c88765",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "receipts/issue236-screenshot-review-r1.json",
+      "original_sha256": "8135b1bf447c359a3a4ae496b7b8abd3c54fbbd3536a75838b518b5d6a24e5a4",
+      "published_sha256": "f2452f7e20489a1310f358cfc61cbdf568fc7e70db4625ee43fc3792fac633ce",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "receipts/issue236-comparison-source-binding-r1.json",
+      "original_sha256": "ae1954e7466b69467ab09710bfce273c899a73a1f2cfb09ddae53ba01572ef46",
+      "published_sha256": "7d8186dc3ef866398d7b39cbf1ffb6f6bef18e3eccac4b98ed13b2598cdcd05c",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "logs/native-build-r2.jsonl",
+      "original_sha256": "cdd0f28a0e5efe29f7b4f4bc65e619f168f46fc6692a01b0ddf3922d8d8ab7cb",
+      "published_sha256": "e28de44563a34670ff0dbdb47f415964da9a5ddbe4f219acb4d5454958992292",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "logs/issue236-native-build-r2-cache-copy.log",
+      "original_sha256": "a301d172bc3418747e7ca991401441ebd224752e246d8237b0d0b516d8c5356b",
+      "published_sha256": "e351d796083b82c971446fc40d0c4e37260564c4eb12e062c8fa0544c010b0b4",
+      "transformation": "local paths, UTF-8/LF, trailing spaces/tabs and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-build-r2-local-package-clean.log",
+      "original_sha256": "386247134ee0e62447d9ceaab1a7d4dbd7eefd0a83839c01dc30e1ded6129269",
+      "published_sha256": "1b12180d91a82f0bc0145628098bdb0511521d72b6a91f2e38c64e9b42701fdd",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "logs/canonical-r2.log",
+      "original_sha256": "a402d151ddaa2b324cf6b4ed0461a75fcf58a7c0c8e4661cfbcd54b068c5df6e",
+      "published_sha256": "b02e880d1066c5b28f6e0db72966f8cc0b7ad6dbe52de5aef20d5c817a6078b7",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "logs/native-sql-r1.log",
+      "original_sha256": "38ed7c5669649b9aacc78478c94c2cb4e4c137b1d0024d899f6e61cc5f3993be",
+      "published_sha256": "d607bf4a06006117972ba2de18f2a4d670aab872e5205e77e9ed4de29816ed29",
+      "transformation": "local paths, UTF-8/LF, trailing spaces/tabs and final blank lines"
+    },
+    {
+      "path": "receipts/browser-observations.json",
+      "original_sha256": "bcafbcf1b99fb5cc6094f9694a20e2c08a2ac1741b68223b6fc7533d93d3e0f4",
+      "published_sha256": "cd91e196e2737e442247b638539be53e00729dc97d6fef356d944656dd31982c",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "history/browser-r2/wrapper-receipt.json",
+      "original_sha256": "edc6a4b992f23acad10285f8f7a3fd3a65bb9bc1f353819a91fefb0b373af157",
+      "published_sha256": "94edab1c491974c847b4686e695958648d7f94f2bc6d3c40b56073f60bd81a24",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "history/browser-r2/browser-observations.json",
+      "original_sha256": "dee52a738653212bdf89ce62fe39119592cf2824ae66c59548c0d22e9f9e4fed",
+      "published_sha256": "0e949b641c751525ccfcaf9cc3a729f8e6632a040f60d222e52b51c2a071da52",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "history/browser-r2/usage-failure.png",
+      "original_sha256": "0cf0a9b3befae57dedda7ac4740c7e59faf792ae88cd431c06b62e83f06ff143",
+      "published_sha256": "0cf0a9b3befae57dedda7ac4740c7e59faf792ae88cd431c06b62e83f06ff143",
+      "transformation": "none"
+    },
+    {
+      "path": "logs/browser-r3/issue236-browser-r3-issue236-browser-r2.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "logs/browser-r3/issue236-browser-r3-issue236-fake-codex-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "logs/browser-r3/issue236-browser-r3-issue236-prepare-fixture-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "logs/browser-r3/issue236-browser-r3-issue236-fixture-environment-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "logs/browser-r3/issue236-browser-r3-stack-start.log",
+      "original_sha256": "0a1700e54f47a8c6575f612ca5596b825dcbf63dbd2e641e94f7634d7c9ef956",
+      "published_sha256": "5a38a0f8b00aacd9a7beca0262694dc7fb060b6d9e39084e808f0b67b4d8b31b",
+      "transformation": "Existing UTF-8/LF and local-path normalization retained; line 23 operator name replaced with <local-user>; line 44 Windows caret quoting removed and absolute tool/QA roots replaced with <pinned-toolchain>/<owned-qa-root>. Outcomes, commands and quantities unchanged.",
+      "previous_published_sha256": "b8ac89c80c56533fe51153c8b4b28dfd2211e47aa7102b31aa5521194b448ef4"
+    },
+    {
+      "path": "logs/browser-r3/issue236-browser-r3-stack-status.log",
+      "original_sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+      "published_sha256": "966c9259b3b566cbe8b61427223cdc5679afcabc998acac1a04abf93a5fa164f",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "logs/browser-r3/issue236-browser-r3-driver.log",
+      "original_sha256": "92083c1bf5af572dc1cbe8be8c70bfa949c9099418f2c2d8faf6d14ba2e1c867",
+      "published_sha256": "704f67a79481ee85536a6bbd80c58f88f2cdacf4e60d64b186f37e76e768d9c5",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "history/browser-r2/logs/issue236-browser-r2-issue236-browser-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "history/browser-r2/logs/issue236-browser-r2-issue236-fake-codex-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "history/browser-r2/logs/issue236-browser-r2-issue236-prepare-fixture-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "history/browser-r2/logs/issue236-browser-r2-issue236-fixture-environment-r1.mjs-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "history/browser-r2/logs/issue236-browser-r2-stack-start.log",
+      "original_sha256": "827b30fabf19aebdea1f6c6f1b92dbce6c27a329a45a2422f95e19a6ddbf74dc",
+      "published_sha256": "9462781340a95e4244388e51697d98b9d4268b7f1285368893d951ae1e7c1404",
+      "transformation": "Existing UTF-8/LF and local-path normalization retained; line 23 operator name replaced with <local-user>; line 44 Windows caret quoting removed and absolute tool/QA roots replaced with <pinned-toolchain>/<owned-qa-root>. Outcomes, commands and quantities unchanged.",
+      "previous_published_sha256": "711f606e4a99267e626c7eca7adfe443fb9984ba2e2c4e240c44a95ba02b08d9"
+    },
+    {
+      "path": "history/browser-r2/logs/issue236-browser-r2-stack-status.log",
+      "original_sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+      "published_sha256": "966c9259b3b566cbe8b61427223cdc5679afcabc998acac1a04abf93a5fa164f",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "history/browser-r2/logs/issue236-browser-r2-driver.log",
+      "original_sha256": "2f9da0754ee0f2ec33edb69dfa40ce12044b64cd5773b4debdbbda9384fd283e",
+      "published_sha256": "d37ef422cb390136b6401bfdbd69f8e5d512037019d04623ba22c4a980b866b3",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "receipts/browser-setup.json",
+      "original_sha256": "d1b018da343fba32d3618173104d1dd8987234c3e03bf929b952de6440d88c64",
+      "published_sha256": "bef7407d04f9ca6c545014a42d1389b8316c09af2e6c68685fd1bd84eb9ac5aa",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "history/canonical-r1/receipt.json",
+      "original_sha256": "fe54ec1059bfb6270f548d8d94526a51f3a071409c74cdfa9e7c3e0c7c02a92f",
+      "published_sha256": "89bd099ef6018189370648df29e937e4f961549e0a5c59e303bc9290f37d3280",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "history/canonical-r1/canonical.log",
+      "original_sha256": "6f7abbca3ee1158ea8493857134bf86877ec24b58e92a451c9c455847bf4432c",
+      "published_sha256": "51f87632e7659ed7e472f30092fd5eb341092781eb41de09efac281ae592a2f0",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "comparison/freeze.json",
+      "original_sha256": "afe5544469a275d5ecf0256ff8edb866633a1b01a0449ad793b36cd477b80609",
+      "published_sha256": "7fbb819d07c8d9e93063daff572bd10c8d0895c4d86fab51d95999d1da5a50da",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "comparison/preparation.json",
+      "original_sha256": "7c18980ee0da724df004d2081aac7bf71dacccb84aae7b1b27f3b3bff28e8f16",
+      "published_sha256": "83f22f8e2a10a17de1f8104d6c95b146188e8e17b3fbaeb205d1ad333149c09f",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "comparison/execution.json",
+      "original_sha256": "a1f6f37c9a9b26f72e3ddea20b276dd3627121a50fe8bb47c01ab5a0717c570d",
+      "published_sha256": "eac918dfd922ac60a5ec47d36db618b033d45eeaac72f3b34db63ef1112529b2",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "comparison/native-probe.rs.txt",
+      "original_sha256": "ec09432121f62500c1168d5200c552c7461127620f51b2491188797ffba7bb42",
+      "published_sha256": "ec09432121f62500c1168d5200c552c7461127620f51b2491188797ffba7bb42",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "comparison/store-probe.rs.txt",
+      "original_sha256": "cedb3d627fc1b4783546ec03c643fa7ea7ee826bb6d6bad63415a5d480220150",
+      "published_sha256": "cedb3d627fc1b4783546ec03c643fa7ea7ee826bb6d6bad63415a5d480220150",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "comparison/corpus.json",
+      "original_sha256": "58f005cb45216ef73792aa8ffa6b79fa443a8bf01db0e4ae078de902f2adf225",
+      "published_sha256": "58f005cb45216ef73792aa8ffa6b79fa443a8bf01db0e4ae078de902f2adf225",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "comparison/builds/baseline-native-build.jsonl",
+      "original_sha256": "725db4da0c94f0daf5202475f67d755293f6085d8afedd2f3fa1e3785651f8be",
+      "published_sha256": "4a5c8c30ea5d584ee5926047a5d8aaf5a60124eac4786057665cd35496f4f039",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "comparison/builds/baseline-store-build.jsonl",
+      "original_sha256": "afa0b322c14697315f43d4a392d049f5fb66b180a5057e184807f06133418bd5",
+      "published_sha256": "617418c80d09f43cb96b0a6a860e618d00604e0a8736a9037544a9860c194d2f",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "comparison/builds/candidate-native-build.jsonl",
+      "original_sha256": "ae6b3610eeb50fd70bf388152d51046107627fc6afa640e882c319cbea1c8599",
+      "published_sha256": "574863650cccc8cf4e20c3b4c2de79ee74f24ccc4bf84e47570e8e0db228fa7c",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "comparison/builds/candidate-store-build.jsonl",
+      "original_sha256": "0a41a5e784885046c6d759096c19965c1d0bf94fe8d63d55304e75098ff3bb5f",
+      "published_sha256": "b09b6dffc9a11c9bb0783f0c32c4a04afc481c7477e7a1572249d56b1fe25ca4",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "comparison/builds/baseline-cache-copy.log",
+      "original_sha256": "500180295ed1327d39ec10e8693c7ba4008ec1df7440543683ccc6f7b344c31b",
+      "published_sha256": "3dceb3cf178e76d7ba9259d65eace3e50e90a6c6fa69f30f26391bd459740be5",
+      "transformation": "local paths, UTF-8/LF, trailing spaces/tabs and final blank lines"
+    },
+    {
+      "path": "comparison/builds/candidate-cache-copy.log",
+      "original_sha256": "9472914b0780731c206d215ab320b76f2382c2c629462739b337c228b123b96d",
+      "published_sha256": "6db52b78b737b2abf9d3a37a65202350a186d3727700eb1724ac046ee6000551",
+      "transformation": "local paths, UTF-8/LF, trailing spaces/tabs and final blank lines"
+    },
+    {
+      "path": "comparison/builds/baseline-local-package-clean.log",
+      "original_sha256": "1b12180d91a82f0bc0145628098bdb0511521d72b6a91f2e38c64e9b42701fdd",
+      "published_sha256": "1b12180d91a82f0bc0145628098bdb0511521d72b6a91f2e38c64e9b42701fdd",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "comparison/builds/candidate-local-package-clean.log",
+      "original_sha256": "1b12180d91a82f0bc0145628098bdb0511521d72b6a91f2e38c64e9b42701fdd",
+      "published_sha256": "1b12180d91a82f0bc0145628098bdb0511521d72b6a91f2e38c64e9b42701fdd",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "comparison/01-baseline-native.log",
+      "original_sha256": "16e1abddb714c5c0c5d165490b1a792ab493374ee9a49f6e266306dee5955b72",
+      "published_sha256": "be1fc16d9454937253aed52ed4dd24dc52e4a5f47cd61d617efd1a114d87f79b",
+      "transformation": "local paths, UTF-8/LF, trailing spaces/tabs and final blank lines"
+    },
+    {
+      "path": "usage-codex-duplicate-and-foreign-turn.png",
+      "original_sha256": "38f26118ea417036b5d631e5a7d4819c54c0c9b3ff574325a9af9c93ebb69ff2",
+      "published_sha256": "38f26118ea417036b5d631e5a7d4819c54c0c9b3ff574325a9af9c93ebb69ff2",
+      "transformation": "none"
+    },
+    {
+      "path": "usage-codex-cache-and-reasoning-subsets.png",
+      "original_sha256": "5950eb3b4ed2277684412c40b911cc52cff2a66bf6b05fbb3c5daa28d62d2e51",
+      "published_sha256": "5950eb3b4ed2277684412c40b911cc52cff2a66bf6b05fbb3c5daa28d62d2e51",
+      "transformation": "none"
+    },
+    {
+      "path": "usage-codex-missing-input-explicit-zero-output.png",
+      "original_sha256": "76c25f16aa1b5e2f474c1cc4c291364bc31a4998ae786575b11cede845fb2e11",
+      "published_sha256": "76c25f16aa1b5e2f474c1cc4c291364bc31a4998ae786575b11cede845fb2e11",
+      "transformation": "none"
+    },
+    {
+      "path": "drivers/issue236-browser-r2.mjs.txt",
+      "original_sha256": "dc64714b4f66e4362cc9b398a985e535ae83fcd674597c7e289ebf4545a9d47d",
+      "published_sha256": "dc64714b4f66e4362cc9b398a985e535ae83fcd674597c7e289ebf4545a9d47d",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "drivers/issue236-fake-codex-r1.mjs.txt",
+      "original_sha256": "e52c5dd1ac360601df5d91ff9842df1710a5c8bc327fc800d70dd579a07bee1e",
+      "published_sha256": "e52c5dd1ac360601df5d91ff9842df1710a5c8bc327fc800d70dd579a07bee1e",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "drivers/issue236-prepare-fixture-r1.mjs.txt",
+      "original_sha256": "0b2088abf98aec948041b5a381f1e8dd77b7cc57670ebd21ca076723b609a1ff",
+      "published_sha256": "0b2088abf98aec948041b5a381f1e8dd77b7cc57670ebd21ca076723b609a1ff",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "drivers/issue236-fixture-environment-r1.mjs.txt",
+      "original_sha256": "dec8204cea74646da860998fd749603dfdd1e9e44d149d7404201687dad744a4",
+      "published_sha256": "a4c490b0a369270c37fb280a8649d15ed2bfe75adef91ee46e799b83aa1c7b21",
+      "transformation": "local paths, UTF-8/LF, trailing spaces/tabs and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-fixture-environment-r1.ps1.txt",
+      "original_sha256": "03316c1fcd1d9830a98a3aa6e212335084386084a12356ed307070719416a448",
+      "published_sha256": "28c1ef4a8e81690784c3913aac3b4966671f7f4223a65d01d74f2f81596989c7",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "drivers/issue236-stack-r3.ps1.txt",
+      "original_sha256": "5fda401f0b35ea314cee13803ed124f907256c70b81fa47fcb830e89785ffde7",
+      "published_sha256": "145d144600a58526db53ee88d3316af636e749ac7e756add7866d94b4506b3cd",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "drivers/run-issue236-browser-r3.ps1.txt",
+      "original_sha256": "22e407bcaf97e23d1d5d9aa9ce091ddac0d417058f012fb9c62b409937c1f9c0",
+      "published_sha256": "9680e27b8179913acc289b47836ac292bb0f64b59327ecc4c062ff6b288df60e",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "drivers/run-issue236-native-build-r2.ps1.txt",
+      "original_sha256": "12d5a78c8809c64f83d4f9bb711ff1b36c1eeda5178afc64e9265fcfdb53f35e",
+      "published_sha256": "6cee03b5e9cafeffc612cea3b0eb2624a376c3066177c9f834af29ce3577a96c",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "drivers/check-issue236-browser-harness-r3.mjs.txt",
+      "original_sha256": "5120cf6c7238a9ab046cf36f3acbd630626b6a3bf138a25571c99028e7d3c977",
+      "published_sha256": "5120cf6c7238a9ab046cf36f3acbd630626b6a3bf138a25571c99028e7d3c977",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "drivers/prepare-issue236-browser-r3.py.txt",
+      "original_sha256": "857f0222a5956a1a7ee24ece7d30ac1362141100db79c0091aa1c481f4ca6221",
+      "published_sha256": "857f0222a5956a1a7ee24ece7d30ac1362141100db79c0091aa1c481f4ca6221",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "drivers/issue236-source-snapshot-r1.mjs.txt",
+      "original_sha256": "1658bc1a3bedaa0413c438e536880fb213600357a0314a9d23d3d08841fd3b07",
+      "published_sha256": "befc9dfaf5cc21aa729f3c6a14f743df9eb581fcc3677aa2ba32330ee8b1ce17",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "drivers/prepare-issue236-comparison-r4.py.txt",
+      "original_sha256": "4b0efc0e5a82b6bb272b472a40fb6e840baecda5e0d3afc207b229f6c8a859ad",
+      "published_sha256": "ae7c3dcba96d47094a04eaa571d198688723a7badd413ee8ddd8eac949a3bf2d",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "drivers/run-issue236-comparison-r4.py.txt",
+      "original_sha256": "d1ee7513586517312a28e8a22042bcf3b45b89e101254050cc5a686fd9c136ce",
+      "published_sha256": "3d4ad6491bf0cf8daf38e190bd24b04b977547d1b22245c5fc6ad75c5bbba2d7",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "drivers/issue236-paired-probe-r1.rs.txt",
+      "original_sha256": "ec09432121f62500c1168d5200c552c7461127620f51b2491188797ffba7bb42",
+      "published_sha256": "ec09432121f62500c1168d5200c552c7461127620f51b2491188797ffba7bb42",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "drivers/run-issue236-native-db-r1.ps1.txt",
+      "original_sha256": "d969ffd6bf4669e934c06724218cf09fc2c849bdbb7313e0d48c22bd1d09fbb9",
+      "published_sha256": "7c06cab51d5a1cd45e88d5d431cca57fc889410de299137de4c63e34eb8ebe22",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "history/browser-r2/drivers/issue236-browser-r1.mjs.txt",
+      "original_sha256": "ce2449e4caf0fbdf5270ad0ac88f0ac63cffdd77ab628545f18c16410bf7f134",
+      "published_sha256": "ce2449e4caf0fbdf5270ad0ac88f0ac63cffdd77ab628545f18c16410bf7f134",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "history/browser-r2/drivers/issue236-stack-r2.ps1.txt",
+      "original_sha256": "7fd51d37b57526740426ef18210febccf7a4494d7bb55b2b58da86a9b17cf9bf",
+      "published_sha256": "dacb497904769e83e5bcd94a80089a992b1f82b460df5e6b3e5f85a97bbda126",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "history/browser-r2/drivers/run-issue236-browser-r2.ps1.txt",
+      "original_sha256": "12fa2e54df4658471a5360e2aa3053a4f11afb97cfd79d64788ecacafd237763",
+      "published_sha256": "006e840971d01e30d1260f16ac07a9c794738b60f35bb682e580585317e5d5be",
+      "transformation": "local paths and UTF-8/LF normalization"
+    },
+    {
+      "path": "drivers/issue236-acceptance-corpus-r1.json",
+      "original_sha256": "58f005cb45216ef73792aa8ffa6b79fa443a8bf01db0e4ae078de902f2adf225",
+      "published_sha256": "58f005cb45216ef73792aa8ffa6b79fa443a8bf01db0e4ae078de902f2adf225",
+      "transformation": "local paths and UTF-8/LF normalization"
+    }
+  ],
+  "text_normalization": "UTF-8 without BOM, LF line endings, and case-insensitive explicit local-path placeholders; outcomes and quantities are unchanged. Six named reference captures additionally remove line-end spaces/tabs and final blank lines; original bytes and all observed results remain preserved.",
+  "whitespace_normalized_captures": [
+    "comparison/01-baseline-native.log",
+    "comparison/builds/baseline-cache-copy.log",
+    "comparison/builds/candidate-cache-copy.log",
+    "drivers/issue236-fixture-environment-r1.mjs.txt",
+    "logs/issue236-native-build-r2-cache-copy.log",
+    "logs/native-sql-r1.log"
+  ],
+  "review_path_correction": {
+    "recorded_at_utc": "2026-10-03T07:24:33.025222+00:00",
+    "scope": "Two published startup-log copies only. Original logs and historical outcomes retained.",
+    "finding": "Windows caret-escaped paths and the initdb operator line escaped the earlier normalization check.",
+    "files": [
+      {
+        "path": "history/browser-r2/logs/issue236-browser-r2-stack-start.log",
+        "original_sha256": "827b30fabf19aebdea1f6c6f1b92dbce6c27a329a45a2422f95e19a6ddbf74dc",
+        "previous_published_sha256": "711f606e4a99267e626c7eca7adfe443fb9984ba2e2c4e240c44a95ba02b08d9",
+        "published_sha256": "9462781340a95e4244388e51697d98b9d4268b7f1285368893d951ae1e7c1404",
+        "changed_lines": [
+          23,
+          44
+        ],
+        "transformation": "Existing UTF-8/LF and local-path normalization retained; line 23 operator name replaced with <local-user>; line 44 Windows caret quoting removed and absolute tool/QA roots replaced with <pinned-toolchain>/<owned-qa-root>. Outcomes, commands and quantities unchanged."
+      },
+      {
+        "path": "logs/browser-r3/issue236-browser-r3-stack-start.log",
+        "original_sha256": "0a1700e54f47a8c6575f612ca5596b825dcbf63dbd2e641e94f7634d7c9ef956",
+        "previous_published_sha256": "b8ac89c80c56533fe51153c8b4b28dfd2211e47aa7102b31aa5521194b448ef4",
+        "published_sha256": "5a38a0f8b00aacd9a7beca0262694dc7fb060b6d9e39084e808f0b67b4d8b31b",
+        "changed_lines": [
+          23,
+          44
+        ],
+        "transformation": "Existing UTF-8/LF and local-path normalization retained; line 23 operator name replaced with <local-user>; line 44 Windows caret quoting removed and absolute tool/QA roots replaced with <pinned-toolchain>/<owned-qa-root>. Outcomes, commands and quantities unchanged."
+      }
+    ]
+  }
+}

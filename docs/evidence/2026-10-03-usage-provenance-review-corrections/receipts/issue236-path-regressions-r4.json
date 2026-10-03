@@ -1,0 +1,69 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "status": "passed",
+  "wrapper_pid": 30864,
+  "purpose": "Corrected native and Node caret-escape scanner regressions. Accounting fixes are present but not under test in this receipt. Preserve actual counts and exact source; no historical or comparative outcome is inferred.",
+  "started_at_utc": "2026-10-03T10:46:41.6092685Z",
+  "source": "<candidate-checkout>",
+  "checks": [
+    {
+      "command": "cargo.exe test --locked --offline -p crony-runner --bin crony-evidence-paths -- --test-threads=1",
+      "counts": {
+        "passed": 25,
+        "ignored": 0,
+        "failed": 0,
+        "filtered": 0
+      },
+      "sha256": "7bf2301435b8998f2b037977cf73aa3eaa03cefacfc08d6eeb8894c57560da4e",
+      "exit_code": 0,
+      "name": "native-scanner",
+      "log": "<run-records>\\issue236-path-regressions-r4-native-scanner.log"
+    },
+    {
+      "command": "node.exe --test --test-reporter=tap tools/check_evidence_personal_paths.test.mjs",
+      "counts": {
+        "pass": 11,
+        "tests": 11,
+        "cancelled": 0,
+        "todo": 0,
+        "fail": 0,
+        "skipped": 0
+      },
+      "sha256": "749921c272689b37c3ae51a452d143af057b56a2d34c6588f106fdbf6aba00d3",
+      "exit_code": 0,
+      "name": "node-scanner",
+      "log": "<run-records>\\issue236-path-regressions-r4-node-scanner.log"
+    }
+  ],
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T10:46:43.669Z",
+    "source": "<candidate-checkout>",
+    "head": "ffe61f19e6a5f309f363102f0e76aea8a96e3bf2",
+    "tree": "d8233b76147023e50dd9d0fc2e4c8a18844999b4",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/adapter/codex_stop_tests.rs\n M crates/crony-runner/src/bin/crony-evidence-paths.rs\n M crates/crony-store/src/usage_accounting.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md\n M docs/evidence/2026-10-03-usage-provenance/README.md\n M docs/evidence/2026-10-03-usage-provenance/evidence.json\n M docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-start.log\n M docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-start.log\n M tools/check_evidence_personal_paths.mjs\n M tools/check_evidence_personal_paths.test.mjs",
+    "source_file_count": 7498,
+    "source_fingerprint": "b1d4132764082865e29abfb7096333e67c79e85daac04935905a6dffb81b6f55",
+    "manifest": "<run-records>\\issue236-source-before-path-regressions-r4.json",
+    "manifest_sha256": "265e72a86d7f669890cf3f7dd12ee25268cafbc10ff6b8d413e9b0605a28497a"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T10:47:03.632Z",
+    "source": "<candidate-checkout>",
+    "head": "ffe61f19e6a5f309f363102f0e76aea8a96e3bf2",
+    "tree": "d8233b76147023e50dd9d0fc2e4c8a18844999b4",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/adapter/codex_stop_tests.rs\n M crates/crony-runner/src/bin/crony-evidence-paths.rs\n M crates/crony-store/src/usage_accounting.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md\n M docs/evidence/2026-10-03-usage-provenance/README.md\n M docs/evidence/2026-10-03-usage-provenance/evidence.json\n M docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-start.log\n M docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-start.log\n M tools/check_evidence_personal_paths.mjs\n M tools/check_evidence_personal_paths.test.mjs",
+    "source_file_count": 7498,
+    "source_fingerprint": "b1d4132764082865e29abfb7096333e67c79e85daac04935905a6dffb81b6f55",
+    "manifest": "<run-records>\\issue236-source-after-path-regressions-r4.json",
+    "manifest_sha256": "5dcf8e0bc23218786b1dfa4b2cf19dc15de2e7275ef56bc65209b689e4e99395"
+  },
+  "source_unchanged": true,
+  "failure": null,
+  "finished_at_utc": "2026-10-03T10:47:04.1996320Z"
+}

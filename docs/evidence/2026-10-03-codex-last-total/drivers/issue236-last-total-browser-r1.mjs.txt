@@ -1,0 +1,457 @@
+// Real browser/server/runner/PostgreSQL acceptance, synthetic native notifications.
+// This lane is independent of the first-mismatch-stopped baseline comparison.
+import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { lstat, readFile, realpath, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import path from 'node:path'
+import { setTimeout as delay } from 'node:timers/promises'
+
+assert.equal(process.env.ECORP_USAGE_PROVENANCE_TEST, '1')
+const setupPath = process.env.ECORP_USAGE_PROVENANCE_SETUP
+assert.ok(path.isAbsolute(setupPath ?? ''))
+const fixture = JSON.parse(await readFile(setupPath, 'utf8'))
+assert.equal(fixture.test_owned, true)
+assert.equal(fixture.provider_fixture, 'native-codex-usage-corpus')
+assert.ok(path.isAbsolute(fixture.qa_root) && path.isAbsolute(fixture.source))
+assert.match(path.basename(fixture.qa_root), /^issue236-usage-provenance-[a-z0-9-]+$/iu)
+assert.equal(path.resolve(await realpath(fixture.qa_root)), path.resolve(fixture.qa_root))
+assert.equal(path.basename(path.dirname(fixture.qa_root)).toLowerCase(), 'qa')
+const output = path.join(fixture.qa_root, 'evidence')
+const corpusBytes = await readFile(new URL('./issue236-last-total-acceptance-corpus-r1.json', import.meta.url))
+const corpusHash = createHash('sha256').update(corpusBytes).digest('hex')
+assert.equal(corpusHash, fixture.corpus_sha256)
+const corpus = JSON.parse(corpusBytes)
+assert.equal(corpus.schema_version, 1)
+assert.equal(corpus.cases.length, 12)
+const reportPath = path.join(output, 'usage-browser.json')
+await writeFile(reportPath, '{}\n', { flag: 'wx' })
+function owned(value) {
+  assert.ok(path.isAbsolute(value))
+  const relative = path.relative(fixture.qa_root, value)
+  assert.ok(relative && relative !== '..' && !relative.startsWith('..' + path.sep) && !path.isAbsolute(relative))
+  return value
+}
+owned(fixture.source)
+assert.notEqual(path.resolve(fixture.source), path.resolve(fixture.repository))
+function origin(value) {
+  const url = new URL(value)
+  assert.equal(url.protocol, 'http:')
+  assert.equal(url.hostname, '127.0.0.1')
+  assert.ok(url.port && !url.username && !url.password && !url.search && !url.hash && url.pathname === '/')
+  return url.origin
+}
+const server = origin(fixture.server_url), web = origin(fixture.web_url)
+const allowed = new Set([server, web])
+const allowedWs = new Set([server.replace('http:', 'ws:'), web.replace('http:', 'ws:')])
+const demo = fixture.demo
+const api = suffix => '/api/corps/' + demo.corp_id + suffix
+const report = { schema_version: 1, issue: 236, status: 'running', started_at_utc: new Date().toISOString(),
+  source_binding: fixture.source_binding, corpus_sha256: corpusHash, assertions: [], scenarios: [],
+  http_results: [], execution_errors: [], blocked_requests: [], page_errors: [], screenshots: [],
+  assurance: 'Owned deterministic transport in actual Edge, native server/runner and fresh SCRAM PostgreSQL. No provider inference, billing verification, auditor decision, hosted gate or independent outcome review.' }
+const save = () => writeFile(reportPath, JSON.stringify(report, null, 2) + '\n')
+function verify(name, action) {
+  try { action(); report.assertions.push({ name, passed: true }) }
+  catch (error) { report.assertions.push({ name, passed: false, error: error.message }); throw error }
+}
+function safeDiagnostic(value) {
+  return String(value).slice(0, 4096)
+    .replace(/\b(?:postgres(?:ql)?|https?):\/\/[^\s/@]+:[^\s/@]+@/giu, '[credential-bearing URL withheld]@')
+    .replace(/\bBearer\s+\S+/giu, 'Bearer [withheld]')
+    .replace(/\b((?:access[_-]?)?token|password|secret|credential|api[_-]?key)\b\s*[:=]\s*["']?[^\s,"'}]+/giu, '$1=[withheld]')
+    .slice(0, 2048)
+}
+async function boundedError(response) {
+  const reader = response.body.getReader()
+  const pieces = []
+  let size = 0, truncated = false
+  try {
+    while (size < 16384) {
+      const { value, done } = await reader.read()
+      if (done) break
+      const remaining = 16384 - size
+      pieces.push(value.subarray(0, remaining))
+      size += Math.min(value.length, remaining)
+      if (value.length >= remaining) { truncated = true; break }
+    }
+  } finally { await reader.cancel() }
+  const bytes = Buffer.concat(pieces)
+  const result = { bytes_retained_for_digest: bytes.length, truncated,
+    bounded_body_sha256: createHash('sha256').update(bytes).digest('hex') }
+  try {
+    const parsed = JSON.parse(bytes.toString('utf8'))
+    const message = typeof parsed.error === 'string' ? parsed.error :
+      typeof parsed.message === 'string' ? parsed.message : parsed.error?.message
+    if (typeof message === 'string') result.message = safeDiagnostic(message)
+  } catch { result.message = 'Non-JSON error body withheld; bounded digest recorded' }
+  return result
+}
+async function request(route, body, method = body === undefined ? 'GET' : 'POST') {
+  assert.ok(route.startsWith('/api/'))
+  const response = await fetch(server + route, { method, redirect: 'error',
+    headers: body === undefined ? undefined : { 'content-type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(10_000) })
+  let detail
+  if (response.status !== 200) detail = await boundedError(response)
+  if (method !== 'GET' || response.status !== 200) {
+    report.http_results.push({ route, method, status: response.status, error: detail })
+    verify(method + ' ' + route + ': HTTP status', () =>
+      assert.equal(response.status, 200, route + ': ' + (detail?.message ?? 'unexpected HTTP status')))
+  }
+  return response.json()
+}
+async function downloadProviderEvidence(event, current) {
+  const artifact = event.payload
+  assert.match(artifact.artifact_id, /^[0-9a-f-]{36}$/iu)
+  const route = api('/artifacts/' + artifact.artifact_id + '?actor_id=' + demo.alice_actor_id)
+  const response = await fetch(server + route, { redirect: 'error', signal: AbortSignal.timeout(10_000) })
+  const detail = response.status === 200 ? undefined : await boundedError(response)
+  report.http_results.push({ route, method: 'GET', status: response.status, error: detail })
+  verify(current.id + ': authorized server download returns the exact provider artifact', () => {
+    assert.equal(response.status, 200, detail?.message)
+    assert.equal(response.headers.get('content-type'), 'application/json')
+    assert.equal(response.headers.get('x-crony-artifact-role'), 'provider_evidence')
+    assert.equal(response.headers.get('etag'), '"' + artifact.sha256 + '"')
+    assert.ok(response.headers.get('x-crony-artifact-signature'))
+    assert.ok(Number.isSafeInteger(artifact.bytes) && artifact.bytes > 0 && artifact.bytes <= 1024 * 1024)
+    assert.equal(Number(response.headers.get('content-length')), artifact.bytes)
+  })
+  const bytes = Buffer.from(await response.arrayBuffer())
+  verify(current.id + ': downloaded provider bytes match the authoritative artifact digest', () => {
+    assert.equal(bytes.length, artifact.bytes)
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), artifact.sha256)
+  })
+  const destination = path.join(output, 'provider-artifact-' + current.id + '.json')
+  await writeFile(destination, bytes, { flag: 'wx' })
+  current.provider_artifact = { id: artifact.artifact_id, event_id: event.id, event_seq: event.seq,
+    file_name: artifact.file_name, bytes: bytes.length, sha256: artifact.sha256, path: destination,
+    server_role: 'provider_evidence', server_digest_verified: true }
+  return JSON.parse(bytes)
+}
+const snapshot = () => request(api('/snapshot?actor_id=' + demo.alice_actor_id))
+function git(args) {
+  return execFileSync('git', ['--no-optional-locks', '-C', fixture.source, ...args],
+    { encoding: 'utf8', windowsHide: true, timeout: 10_000 }).trim()
+}
+function sourcePreserved() {
+  assert.equal(git(['rev-parse', 'HEAD']), fixture.source_commit)
+  assert.equal(git(['status', '--porcelain=v1', '--untracked-files=all', '--ignored']), '')
+}
+const deadline = Date.now() + 10 * 60_000
+async function waitFor(read, predicate, timeout = 90_000) {
+  const until = Math.min(deadline, Date.now() + timeout)
+  while (Date.now() < until) {
+    const value = await read()
+    if (predicate(value)) return value
+    await delay(125)
+  }
+  throw new Error('Owned usage acceptance reached its observation ceiling')
+}
+let browser, page, active
+const terminal = run => run && ['completed', 'failed', 'cancelled', 'lost'].includes(run.status)
+async function screenshot(name) {
+  const destination = path.join(output, name)
+  await page.screenshot({ path: destination, fullPage: true })
+  report.screenshots.push({ path: destination,
+    sha256: createHash('sha256').update(await readFile(destination)).digest('hex') })
+}
+try {
+  await save()
+  verify('Configured synthetic source starts clean at the recorded commit', sourcePreserved)
+  const initial = await snapshot()
+  report.runner_capabilities = initial.runners.map(runner => ({
+    id: runner.id, corp_id: runner.corp_id, connected: runner.connected, status: runner.status,
+    capabilities: runner.capabilities.map(capability => ({ ...capability,
+      detail: capability.detail == null ? null : safeDiagnostic(capability.detail) })),
+  }))
+  await save()
+  const runner = report.runner_capabilities.find(item => item.id === fixture.runner_id)
+  verify('The owned runner is connected in the fixture Corp with an available Codex adapter', () => {
+    assert.ok(runner?.connected)
+    assert.equal(runner.corp_id, demo.corp_id)
+    assert.ok(runner.capabilities.some(item => item.name === 'codex' && item.available))
+  })
+  verify('Runner workspace capability advertises the exact immutable fixture source', () => {
+    assert.ok(runner.capabilities.some(item => item.name === 'workspace-isolation' && item.available &&
+      item.workspace_connection_id == null && item.source_repository === fixture.source_repository &&
+      item.source_base_ref === 'main' && item.source_base_commit === fixture.source_commit))
+  })
+  const require = createRequire(import.meta.url)
+  const { chromium } = require(process.env.CRONY_PLAYWRIGHT_MODULE)
+  browser = await chromium.launch({ channel: 'msedge', headless: true })
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1050 }, reducedMotion: 'reduce' })
+  await context.route('**/*', async route => {
+    const url = new URL(route.request().url())
+    if (allowed.has(url.origin)) await route.continue()
+    else {
+      report.blocked_requests.push({ protocol: url.protocol, hostname: url.hostname })
+      await route.abort('blockedbyclient')
+    }
+  })
+  await context.routeWebSocket('**/*', socket => {
+    const url = new URL(socket.url())
+    if (allowedWs.has(url.origin)) socket.connectToServer()
+    else {
+      report.blocked_requests.push({ protocol: url.protocol, hostname: url.hostname })
+      socket.close()
+    }
+  })
+  page = await context.newPage()
+  page.setDefaultTimeout(20_000)
+  page.on('pageerror', () => report.page_errors.push('Browser pageerror'))
+  for (const scenario of corpus.cases) {
+    assert.ok(Date.now() < deadline)
+    const current = { id: scenario.id, status: 'running', expected: scenario.expected }
+    report.scenarios.push(current)
+    active = current
+    const marker = '[issue236:' + scenario.id + ']'
+    current.title = 'Usage provenance ' + scenario.id
+    const created = await request(api('/missions'), {
+      requested_by: demo.alice_actor_id, preferred_adapter: 'codex', strategy: 'single',
+      title: current.title, description: marker + ' Replay only the frozen synthetic usage corpus. Do not change source or call external services.',
+      source: { repository: fixture.source_repository, base_ref: 'main', base_commit: fixture.source_commit },
+      budget_tokens: 100_000, budget_cost_microusd: 10_000_000,
+    })
+    current.mission_id = created.mission_id
+    await page.goto(web + '/#missions', { waitUntil: 'networkidle' })
+    await page.locator('.live-indicator.live-live').waitFor()
+    await page.getByRole('button').filter({ hasText: current.title }).click()
+    const card = page.locator('[data-mission-id="' + current.mission_id + '"]')
+    const launchResponse = page.waitForResponse(response => response.url() ===
+      server + api('/missions/' + current.mission_id + '/launch') && response.request().method() === 'POST')
+    await card.getByTestId('work-result-card').getByRole('button', { name: 'Start mission', exact: true }).click()
+    const launch = await launchResponse
+    verify(scenario.id + ': browser launches through the authoritative server', () => assert.equal(launch.status(), 200))
+    current.run_id = (await launch.json()).run_id
+    assert.ok(current.run_id)
+    await save()
+    const settled = await waitFor(snapshot, state => {
+      const run = state.snapshot.runs.find(item => item.id === current.run_id)
+      return terminal(run) && ['removed', 'preserved'].includes(run.workspace_disposition)
+    })
+    const run = settled.snapshot.runs.find(item => item.id === current.run_id)
+    const events = settled.snapshot.events.filter(item => item.aggregate_id === current.run_id)
+    const task = settled.snapshot.tasks.find(item => item.id === run.task_id)
+    current.agent_id = run.agent_id
+    current.run = { id: run.id, task_id: run.task_id, status: run.status, workspace_path: run.workspace_path,
+      workspace_disposition: run.workspace_disposition, input_tokens: run.input_tokens,
+      output_tokens: run.output_tokens, cost_microusd: run.cost_microusd, breaker_stage: run.breaker_stage,
+      provider_session_id: run.provider_session_id }
+    current.usage_events = events.filter(item => item.type === 'run.usage' || item.type === 'run.usage_observed')
+      .map(item => ({ id: item.id, seq: item.seq, corp_id: item.corp_id, type: item.type,
+        aggregate_type: item.aggregate_type, aggregate_id: item.aggregate_id, payload: item.payload }))
+      .sort((left, right) => left.seq - right.seq)
+    current.completion_events = events.filter(item => ['run.verification_passed', 'run.completed',
+      'run.workspace_removed', 'run.workspace_preserved', 'run.failed', 'run.verification_failed'].includes(item.type))
+      .map(item => ({ id: item.id, seq: item.seq, corp_id: item.corp_id, type: item.type,
+        aggregate_type: item.aggregate_type, aggregate_id: item.aggregate_id, payload: item.payload }))
+      .sort((left, right) => left.seq - right.seq)
+    await save()
+    verify(scenario.id + ': persisted verifier precedes accepted task and run completion', () => {
+      assert.equal(run.status, 'completed')
+      assert.equal(task.status, 'completed')
+      assert.equal(settled.snapshot.runs.filter(item => item.task_id === task.id).length, 1)
+      const completed = events.filter(item => item.type === 'run.completed')
+      const verified = events.filter(item => item.type === 'run.verification_passed')
+      assert.equal(completed.length, 1)
+      assert.ok(verified.length > 0)
+      for (const event of [...verified, ...completed]) {
+        assert.ok(Number.isSafeInteger(event.seq) && event.seq > 0)
+        assert.equal(event.corp_id, demo.corp_id)
+        assert.equal(event.aggregate_type, 'run')
+        assert.equal(event.aggregate_id, current.run_id)
+      }
+      assert.ok(verified.every(event => event.seq < completed[0].seq))
+      current.verification_order = { verification_seqs: verified.map(event => event.seq),
+        accepted_completion_seq: completed[0].seq, all_verifications_precede_completion: true }
+      assert.ok(!events.some(item => ['run.failed', 'run.verification_failed'].includes(item.type)))
+    })
+    verify(scenario.id + ': native counts and unknown quantities survive the full journal path', () => {
+      const usage = current.usage_events
+      const accepted = usage.filter(event => event.payload.usage_validation.disposition === 'accepted')
+      const invalid = usage.filter(event => event.payload.usage_validation.disposition === 'invalid')
+      assert.equal(usage.length, scenario.expected.emitted)
+      assert.equal(accepted.length, scenario.expected.accepted)
+      assert.equal(invalid.length, scenario.expected.invalid)
+      assert.deepEqual(usage.map(event => event.payload.usage_validation.disposition), scenario.expected.dispositions)
+      assert.equal(new Set(usage.map(event => event.seq)).size, usage.length)
+      for (const event of usage) {
+        assert.ok(Number.isSafeInteger(event.seq) && event.seq > 0)
+        assert.equal(event.corp_id, demo.corp_id)
+        assert.equal(event.aggregate_type, 'run')
+        assert.equal(event.aggregate_id, current.run_id)
+        assert.equal(event.payload.usage_validation.policy, 'native_usage_v1')
+        assert.equal(event.payload.accounting.known_subtotal_only, true)
+        assert.equal(event.payload.cost_microusd, null)
+        assert.equal(event.payload.usage_coverage.complete_provider_bill, false)
+        assert.equal(event.payload.usage_coverage.native_billing_is_usd, false)
+        assert.equal(event.payload.usage_coverage.token_denominator, 'input_plus_output')
+      }
+      for (const event of accepted) {
+        assert.equal(event.type, 'run.usage')
+        assert.equal(event.payload.accounting.charged, true)
+        assert.equal(event.payload.usage_coverage.tokens, scenario.expected.token_coverage)
+        assert.equal(event.payload.usage_coverage.usd, 'unavailable')
+        assert.equal(event.payload.usage_coverage.call_identity, 'reported')
+        assert.equal(event.payload.usage_provenance.mapping, 'codex_app_server_last_v1')
+        assert.equal(event.payload.usage_provenance.provider_session_id, run.provider_session_id)
+        assert.equal(event.payload.usage_provenance.turn_id, 'turn-1')
+        assert.ok(event.payload.usage_identity_keys.length > 0)
+        assert.equal(event.payload.usage_origin_event_id, event.id)
+      }
+      for (const event of invalid) {
+        assert.equal(event.type, 'run.usage_observed')
+        assert.equal(event.payload.usage_validation.reason, 'invalid_usage')
+        assert.equal(event.payload.accounting.charged, false)
+        assert.equal(event.payload.input_tokens, null)
+        assert.equal(event.payload.output_tokens, null)
+        assert.equal(event.payload.usage_coverage.tokens, 'invalid')
+        assert.equal(event.payload.usage_coverage.usd, 'invalid')
+        assert.equal(event.payload.usage_coverage.call_identity, 'unavailable')
+        for (const field of ['usage_identity_keys', 'usage_origin_event_id', 'usage_provenance']) {
+          assert.equal(Object.hasOwn(event.payload, field), false)
+        }
+      }
+      if (scenario.expected.accepted_last_totals) {
+        assert.deepEqual(accepted.map(event => event.payload.usage_provenance.last_total_tokens),
+          scenario.expected.accepted_last_totals)
+        current.last_total_evidence = {
+          retained_latest_totals: scenario.expected.accepted_last_totals,
+          charged_quantities: accepted.map(event => [event.payload.input_tokens, event.payload.output_tokens]),
+          latest_total_never_substitutes_for_input_or_output: true,
+        }
+      }
+      assert.ok(invalid.every(event => !JSON.stringify(event.payload).includes('last-total-sensitive-sentinel')))
+      if (scenario.expected.accepted_cursors) {
+        assert.deepEqual(accepted.map(event => event.payload.usage_provenance.cumulative_total_tokens),
+          scenario.expected.accepted_cursors)
+        assert.deepEqual(accepted.map(event => [event.payload.input_tokens, event.payload.output_tokens]),
+          scenario.expected.accepted_quantities)
+        const keys = accepted.flatMap(event => event.payload.usage_identity_keys)
+        assert.equal(new Set(keys).size, keys.length)
+        for (let index = 0; index < usage.length; index++) {
+          assert.equal(usage[index].payload.usage_validation.disposition,
+            scenario.expected.dispositions[index])
+          if (index > 0) assert.ok(usage[index - 1].seq < usage[index].seq)
+        }
+        assert.ok(invalid.every(event => event.seq < accepted.at(-1).seq))
+        current.cursor_admission_evidence = { ordered_dispositions: scenario.expected.dispositions,
+          accepted_cursors: scenario.expected.accepted_cursors, invalid_observations: invalid.length,
+          later_consistent_cursor_admitted_once: true, duplicates_suppressed: true }
+      }
+      assert.equal(run.input_tokens, scenario.expected.input_tokens ?? 0)
+      assert.equal(run.output_tokens, scenario.expected.output_tokens ?? 0)
+      assert.equal(run.cost_microusd, 0)
+      if (scenario.id === 'codex-missing-input-explicit-zero-output') {
+        assert.equal(accepted[0].payload.input_tokens, null)
+        assert.equal(accepted[0].payload.output_tokens, 0)
+      }
+      if (scenario.id === 'codex-cache-and-reasoning-subsets') {
+        const provenance = accepted[0].payload.usage_provenance
+        assert.equal(provenance.cached_input_tokens, 40)
+        assert.equal(provenance.cache_write_input_tokens, 10)
+        assert.equal(provenance.reasoning_output_tokens, 5)
+        assert.equal(run.input_tokens + run.output_tokens, 120)
+      }
+    })
+    const shutdown = events.filter(event => event.type === 'run.control_observed' &&
+      event.payload.phase === 'process_terminated')
+    const artifacts = events.filter(event => event.type === 'run.artifact' &&
+      event.payload.artifact_role === 'provider_evidence' &&
+      event.payload.file_name === 'codex-' + current.run_id + '.json')
+    verify(scenario.id + ': persisted runner shutdown retains accepted native subtotals', () => {
+      assert.equal(shutdown.length, 1)
+      const event = shutdown[0]
+      assert.equal(event.corp_id, demo.corp_id)
+      assert.equal(event.aggregate_type, 'run')
+      assert.equal(event.aggregate_id, current.run_id)
+      assert.ok(Number.isSafeInteger(event.seq) && event.seq > 0)
+      assert.equal(event.payload.detail.adapter_input_tokens, scenario.expected.input_tokens)
+      assert.equal(event.payload.detail.adapter_output_tokens, scenario.expected.output_tokens)
+      current.shutdown_evidence = { id: event.id, seq: event.seq, corp_id: event.corp_id,
+        aggregate_id: event.aggregate_id, payload: event.payload }
+    })
+    verify(scenario.id + ': exactly one provider artifact belongs to the completed run', () => {
+      assert.equal(artifacts.length, 1)
+      const event = artifacts[0]
+      assert.equal(event.corp_id, demo.corp_id)
+      assert.equal(event.aggregate_type, 'run')
+      assert.equal(event.aggregate_id, current.run_id)
+      assert.equal(event.payload.producer_agent_id, current.agent_id)
+      assert.equal(event.payload.producer_runner_id, fixture.runner_id)
+      assert.ok(Number.isSafeInteger(event.seq) && event.seq > 0)
+    })
+    const evidence = await downloadProviderEvidence(artifacts[0], current)
+    verify(scenario.id + ': persisted provider evidence retains subtotals and truthful coverage', () => {
+      assert.equal(evidence.adapter, 'codex-app-server')
+      assert.equal(evidence.run_id, current.run_id)
+      assert.equal(evidence.mission_id, current.mission_id)
+      assert.equal(evidence.task_id, run.task_id)
+      assert.equal(evidence.agent_id, current.agent_id)
+      assert.equal(evidence.session_id, run.provider_session_id)
+      assert.equal(evidence.usage.input_tokens, scenario.expected.input_tokens)
+      assert.equal(evidence.usage.output_tokens, scenario.expected.output_tokens)
+      assert.equal(evidence.usage.cost_microusd, null)
+      assert.equal(evidence.usage.usage_coverage.tokens, scenario.expected.artifact_token_coverage)
+      assert.equal(evidence.usage.usage_coverage.usd, scenario.expected.artifact_usd_coverage)
+      assert.equal(evidence.usage.usage_coverage.complete_provider_bill, false)
+      assert.equal(evidence.usage.usage_coverage.native_billing_is_usd, false)
+      assert.equal(evidence.usage.usage_coverage.token_denominator, 'input_plus_output')
+      current.provider_artifact.usage = evidence.usage
+    })
+    await save()
+    verify(scenario.id + ': assigned clean worktree is distinct from the preserved configured source', () => {
+      owned(run.workspace_path)
+      assert.notEqual(path.resolve(run.workspace_path), path.resolve(fixture.source))
+      assert.equal(run.workspace_disposition, 'removed')
+      sourcePreserved()
+    })
+    await assert.rejects(lstat(run.workspace_path), { code: 'ENOENT' })
+    await page.goto(web + '/#missions', { waitUntil: 'networkidle' })
+    await page.locator('.live-indicator.live-live').waitFor()
+    await page.getByRole('button').filter({ hasText: current.title }).click()
+    const settledCard = page.locator('[data-mission-id="' + current.mission_id + '"]')
+    await settledCard.waitFor()
+    current.visible_result = await settledCard.getByTestId('work-result-card').innerText()
+    await screenshot('usage-' + scenario.id + '.png')
+    current.status = 'passed'
+    await save()
+    active = null
+  }
+  verify('Owned browser made no out-of-scope requests and raised no page errors', () => {
+    assert.deepEqual(report.blocked_requests, [])
+    assert.deepEqual(report.page_errors, [])
+  })
+  report.status = 'passed'
+} catch (error) {
+  report.status = 'failed'
+  report.failure = safeDiagnostic(error.message)
+  report.execution_errors.push({ scenario: active?.id ?? null, message: report.failure })
+  if (active) active.status = 'failed'
+  if (page) await screenshot('usage-failure.png').catch(() => {})
+  if (active?.run_id) {
+    try {
+      const state = await snapshot()
+      const run = state.snapshot.runs.find(item => item.id === active.run_id)
+      if (run && !terminal(run)) {
+        await request(api('/agents/' + run.agent_id + '/emergency-stop'), {
+          actor_id: demo.alice_actor_id, reason: 'Owned usage fixture failed; stop this exact fixture run.',
+        })
+      }
+    } catch (cleanupError) { report.failure_stop_error = cleanupError.message }
+  }
+} finally {
+  if (browser) await browser.close().catch(error => { report.status = 'failed'; report.browser_close_error = error.message })
+  report.finished_at_utc = new Date().toISOString()
+  report.counts = { passed: report.assertions.filter(item => item.passed).length,
+    failed: report.assertions.filter(item => !item.passed).length,
+    execution_errors: report.execution_errors.length,
+    scenarios_failed: report.scenarios.filter(item => item.status === 'failed').length,
+    scenarios_passed: report.scenarios.filter(item => item.status === 'passed').length,
+    scenarios_unexecuted: corpus.cases.length - report.scenarios.length }
+  await save()
+  console.log(JSON.stringify({ status: report.status, counts: report.counts, failure: report.failure }))
+  process.exitCode = report.status === 'passed' ? 0 : 1
+}

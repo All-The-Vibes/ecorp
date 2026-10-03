@@ -1,0 +1,46 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "recorded_at_utc": "2026-10-03T15:23:01.922717+00:00",
+  "status": "two_regressions_observed_failing_before_correction",
+  "failure_is_not_a_passing_check": true,
+  "red_receipt": "issue236-native-late-replay-red-r1.json",
+  "red_receipt_sha256": "5eae8c3f47272f03748dd2fe3f255f18e2f808cc73e9cf7f56bcb9db8e2d473b",
+  "test_only_fingerprint": "9d18102d76b79dd4ce0109de70e3252b7d06a6e1a6bf39763c22b425343688ae",
+  "discovery_log_sha256": "90ac571e20e59182505f3d1190d03048f622de132cb5788fd959ac09bb294662",
+  "discovered": [
+    "usage_accounting_tests::issue236_usage_aggregate_range_uses_the_existing_rolling_window",
+    "usage_accounting_tests::issue236_usage_alias_enrichment_is_transitive_and_conflicts_cannot_claim_aliases",
+    "usage_accounting_tests::issue236_usage_equal_counts_and_missing_ids_do_not_collapse_calls",
+    "usage_accounting_tests::issue236_usage_four_scoped_calls_sum_once_with_replays_and_terminal_evidence",
+    "usage_accounting_tests::issue236_usage_hard_control_still_prevents_new_charges",
+    "usage_accounting_tests::issue236_usage_integer_subtotal_overflow_never_partially_updates_counters",
+    "usage_accounting_tests::issue236_usage_invalid_reports_are_redacted_without_any_partial_charge",
+    "usage_accounting_tests::issue236_usage_last_call_identity_coverage_uses_the_admitted_session",
+    "usage_accounting_tests::issue236_usage_mission_aggregate_overflow_keeps_the_journal_frame",
+    "usage_accounting_tests::issue236_usage_optional_session_uses_fenced_run_identity_without_rewriting_provenance",
+    "usage_accounting_tests::issue236_usage_partial_tokens_and_native_units_never_fabricate_free_usd",
+    "usage_accounting_tests::issue236_usage_requires_exact_assignment_and_matching_native_session",
+    "usage_accounting_tests::issue236_usage_room_revocation_hides_evidence_without_deleting_accounting",
+    "usage_accounting_tests::issue236_usage_uncharged_replays_preserve_origins_aliases_and_hard_boundaries"
+  ],
+  "failed": [
+    "usage_accounting_tests::issue236_usage_four_scoped_calls_sum_once_with_replays_and_terminal_evidence",
+    "usage_accounting_tests::issue236_usage_uncharged_replays_preserve_origins_aliases_and_hard_boundaries"
+  ],
+  "counts": {
+    "passed": 12,
+    "failed": 2,
+    "ignored": 0,
+    "measured": 0,
+    "filtered": 571,
+    "summaries": 1
+  },
+  "assertion": "accepted was observed where duplicate was required",
+  "correction_parent": "53ff7a6d2fc394a98cb438806f653c1254bbe976",
+  "correction_fingerprint": "b800aafc22d25e718466021669803fc771b00da96ac855630af0c8bbd8177a66",
+  "correction_patch_sha256": "c5573c9beb35abab6107edf80701920011ae58a00e844eefc6893b1f76cc0af7",
+  "focused_green_validation": "running; no passing result claimed",
+  "fix_scope": "Include accepted uncharged observations alongside duplicate observations in the existing Corp/run-scoped identity lookup. Keep the existing locks, accounting controls, database clock, five-second grace and journal."
+}

@@ -1,0 +1,229 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "started_at_utc": "2026-10-03T06:09:23.425327+00:00",
+  "status": "stopped",
+  "freeze_sha256": "afe5544469a275d5ecf0256ff8edb866633a1b01a0449ad793b36cd477b80609",
+  "preparation_sha256": "7c18980ee0da724df004d2081aac7bf71dacccb84aae7b1b27f3b3bff28e8f16",
+  "fixture_runtime_ceiling_seconds": 1800,
+  "fixture_execution_ceiling_seconds": 1700,
+  "cleanup_reserve_seconds": 100,
+  "rows": [
+    {
+      "row": "codex-duplicate-and-foreign-turn",
+      "arm": "baseline",
+      "kind": "native",
+      "test": "adapter::codex::issue236_comparison_probe::issue236_frozen_native_case",
+      "exit_code": 101,
+      "duration_seconds": 1.2189999999245629,
+      "log": "<paired-fixture>\\01-baseline-native.log",
+      "sha256": "16e1abddb714c5c0c5d165490b1a792ab493374ee9a49f6e266306dee5955b72",
+      "counts": {
+        "passed": 0,
+        "failed": 1,
+        "ignored": 0
+      },
+      "observations": [
+        {
+          "actual": {
+            "complete_provider_bill": null,
+            "cost_microusd": 0,
+            "emitted": 3,
+            "input_tokens": 21,
+            "output_tokens": 7,
+            "token_coverage": null,
+            "usd_coverage": null
+          },
+          "case": "codex-duplicate-and-foreign-turn",
+          "expected": {
+            "complete_provider_bill": false,
+            "cost_microusd": null,
+            "emitted": 2,
+            "input_tokens": 16,
+            "output_tokens": 4,
+            "token_coverage": "reported",
+            "usd_coverage": "unavailable"
+          }
+        }
+      ],
+      "passed": false
+    }
+  ],
+  "owned_clusters": {},
+  "completion_claimed": false,
+  "independent_review_claimed": false,
+  "provider_inference": false,
+  "cleanup": [],
+  "failure": "First accounting mismatch or failed fixture: baseline/codex-duplicate-and-foreign-turn; both arms stopped.",
+  "execution_duration_seconds": 1.2339999999385327,
+  "unexecuted": [
+    {
+      "row": "codex-duplicate-and-foreign-turn",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "codex-cache-and-reasoning-subsets",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "codex-cache-and-reasoning-subsets",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "codex-missing-input-explicit-zero-output",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "codex-missing-input-explicit-zero-output",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_four_scoped_calls_sum_once_with_replays_and_terminal_evidence",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_four_scoped_calls_sum_once_with_replays_and_terminal_evidence",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_equal_counts_and_missing_ids_do_not_collapse_calls",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_equal_counts_and_missing_ids_do_not_collapse_calls",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_alias_enrichment_is_transitive_and_conflicts_cannot_claim_aliases",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_alias_enrichment_is_transitive_and_conflicts_cannot_claim_aliases",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_optional_session_uses_fenced_run_identity_without_rewriting_provenance",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_optional_session_uses_fenced_run_identity_without_rewriting_provenance",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_partial_tokens_and_native_units_never_fabricate_free_usd",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_partial_tokens_and_native_units_never_fabricate_free_usd",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_invalid_reports_are_redacted_without_any_partial_charge",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_invalid_reports_are_redacted_without_any_partial_charge",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_integer_subtotal_overflow_never_partially_updates_counters",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_integer_subtotal_overflow_never_partially_updates_counters",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_mission_aggregate_overflow_keeps_the_journal_frame",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_mission_aggregate_overflow_keeps_the_journal_frame",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_aggregate_range_uses_the_existing_rolling_window",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_aggregate_range_uses_the_existing_rolling_window",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_requires_exact_assignment_and_matching_native_session",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_requires_exact_assignment_and_matching_native_session",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_hard_control_still_prevents_new_charges",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_hard_control_still_prevents_new_charges",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_room_revocation_hides_evidence_without_deleting_accounting",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue236_usage_room_revocation_hides_evidence_without_deleting_accounting",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue56_exhausted_dispatch_has_no_assignment_side_effects",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue56_exhausted_dispatch_has_no_assignment_side_effects",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue56_all_active_states_but_no_terminal_or_unproven_verifier_exemption",
+      "arm": "baseline",
+      "reason": "Comparison stopped; not a pass."
+    },
+    {
+      "row": "issue56_all_active_states_but_no_terminal_or_unproven_verifier_exemption",
+      "arm": "candidate",
+      "reason": "Comparison stopped; not a pass."
+    }
+  ],
+  "fixture_runtime_seconds": 1.2339999999385327,
+  "total_ceiling_satisfied": true,
+  "finished_at_utc": "2026-10-03T06:09:24.660010+00:00"
+}

@@ -2083,6 +2083,7 @@ impl AdapterEventSink for RunnerEventSink {
                     "input_tokens": usage.input_tokens,
                     "output_tokens": usage.output_tokens,
                     "cost_microusd": usage.cost_microusd,
+                    "usage_provenance": usage.usage_provenance,
                 }),
             ),
             AdapterEvent::ApprovalRequested {

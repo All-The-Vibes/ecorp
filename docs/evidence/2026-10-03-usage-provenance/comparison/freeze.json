@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "frozen_at_utc": "2026-10-03T05:56:55.454838+00:00",
+  "baseline": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "candidate": "fb13446f099ddc550a653ed6c4b13800169ba599",
+  "arm_order": [
+    "baseline",
+    "candidate"
+  ],
+  "row_order": [
+    {
+      "id": "codex-duplicate-and-foreign-turn",
+      "kind": "native",
+      "case_index": 0,
+      "test": "adapter::codex::issue236_comparison_probe::issue236_frozen_native_case",
+      "expected": {
+        "emitted": 2,
+        "input_tokens": 16,
+        "output_tokens": 4,
+        "cost_microusd": null,
+        "token_coverage": "reported",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false
+      }
+    },
+    {
+      "id": "codex-cache-and-reasoning-subsets",
+      "kind": "native",
+      "case_index": 1,
+      "test": "adapter::codex::issue236_comparison_probe::issue236_frozen_native_case",
+      "expected": {
+        "emitted": 1,
+        "input_tokens": 100,
+        "output_tokens": 20,
+        "cost_microusd": null,
+        "token_coverage": "reported",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false
+      }
+    },
+    {
+      "id": "codex-missing-input-explicit-zero-output",
+      "kind": "native",
+      "case_index": 2,
+      "test": "adapter::codex::issue236_comparison_probe::issue236_frozen_native_case",
+      "expected": {
+        "emitted": 1,
+        "input_tokens": null,
+        "output_tokens": 0,
+        "cost_microusd": null,
+        "token_coverage": "partial",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false
+      }
+    },
+    {
+      "id": "issue236_usage_four_scoped_calls_sum_once_with_replays_and_terminal_evidence",
+      "kind": "store",
+      "test": "aggregate_breaker_tests::issue236_comparison_store::issue236_usage_four_scoped_calls_sum_once_with_replays_and_terminal_evidence",
+      "expected": "Every frozen assertion passes; 1 passed, 0 failed/ignored. Assertions are preserved in store-probe.rs."
+    },
+    {
+      "id": "issue236_usage_equal_counts_and_missing_ids_do_not_collapse_calls",
+      "kind": "store",
+      "test": "aggregate_breaker_tests::issue236_comparison_store::issue236_usage_equal_counts_and_missing_ids_do_not_collapse_calls",
+      "expected": "Every frozen assertion passes; 1 passed, 0 failed/ignored. Assertions are preserved in store-probe.rs."
+    },
+    {
+      "id": "issue236_usage_alias_enrichment_is_transitive_and_conflicts_cannot_claim_aliases",
+      "kind": "store",
+      "test": "aggregate_breaker_tests::issue236_comparison_store::issue236_usage_alias_enrichment_is_transitive_and_conflicts_cannot_claim_aliases",
+      "expected": "Every frozen assertion passes; 1 passed, 0 failed/ignored. Assertions are preserved in store-probe.rs."
+    },
+    {
+      "id": "issue236_usage_optional_session_uses_fenced_run_identity_without_rewriting_provenance",
+      "kind": "store",
+      "test": "aggregate_breaker_tests::issue236_comparison_store::issue236_usage_optional_session_uses_fenced_run_identity_without_rewriting_provenance",
+      "expected": "Every frozen assertion passes; 1 passed, 0 failed/ignored. Assertions are preserved in store-probe.rs."
+    },
+    {
+      "id": "issue236_usage_partial_tokens_and_native_units_never_fabricate_free_usd",
+      "kind": "store",
+      "test": "aggregate_breaker_tests::issue236_comparison_store::issue236_usage_partial_tokens_and_native_units_never_fabricate_free_usd",
+      "expected": "Every frozen assertion passes; 1 passed, 0 failed/ignored. Assertions are preserved in store-probe.rs."
+    },
+    {
+      "id": "issue236_usage_invalid_reports_are_redacted_without_any_partial_charge",
+      "kind": "store",
+      "test": "aggregate_breaker_tests::issue236_comparison_store::issue236_usage_invalid_reports_are_redacted_without_any_partial_charge",
+      "expected": "Every frozen assertion passes; 1 passed, 0 failed/ignored. Assertions are preserved in store-probe.rs."
+    },
+    {
+      "id": "issue236_usage_integer_subtotal_overflow_never_partially_updates_counters",
+      "kind": "store",
+      "test": "aggregate_breaker_tests::issue236_comparison_store::issue236_usage_integer_subtotal_overflow_never_partially_updates_counters",
+      "expected": "Every frozen assertion passes; 1 passed, 0 failed/ignored. Assertions are preserved in store-probe.rs."
+    },
+    {
+      "id": "issue236_usage_mission_aggregate_overflow_keeps_the_journal_frame",
+      "kind": "store",
+      "test": "aggregate_breaker_tests::issue236_comparison_store::issue236_usage_mission_aggregate_overflow_keeps_the_journal_frame",
+      "expected": "Every frozen assertion passes; 1 passed, 0 failed/ignored. Assertions are preserved in store-probe.rs."
+    },
+    {
+      "id": "issue236_usage_aggregate_range_uses_the_existing_rolling_window",
+      "kind": "store",
+      "test": "aggregate_breaker_tests::issue236_comparison_store::issue236_usage_aggregate_range_uses_the_existing_rolling_window",
+      "expected": "Every frozen assertion passes; 1 passed, 0 failed/ignored. Assertions are preserved in store-probe.rs."
+    },
+    {
+      "id": "issue236_usage_requires_exact_assignment_and_matching_native_session",
+      "kind": "store",
+      "test": "aggregate_breaker_tests::issue236_comparison_store::issue236_usage_requires_exact_assignment_and_matching_native_session",
+      "expected": "Every frozen assertion passes; 1 passed, 0 failed/ignored. Assertions are preserved in store-probe.rs."
+    },
+    {
+      "id": "issue236_usage_hard_control_still_prevents_new_charges",
+      "kind": "store",
+      "test": "aggregate_breaker_tests::issue236_comparison_store::issue236_usage_hard_control_still_prevents_new_charges",
+      "expected": "Every frozen assertion passes; 1 passed, 0 failed/ignored. Assertions are preserved in store-probe.rs."
+    },
+    {
+      "id": "issue236_usage_room_revocation_hides_evidence_without_deleting_accounting",
+      "kind": "store",
+      "test": "aggregate_breaker_tests::issue236_comparison_store::issue236_usage_room_revocation_hides_evidence_without_deleting_accounting",
+      "expected": "Every frozen assertion passes; 1 passed, 0 failed/ignored. Assertions are preserved in store-probe.rs."
+    },
+    {
+      "id": "issue56_exhausted_dispatch_has_no_assignment_side_effects",
+      "kind": "store",
+      "test": "aggregate_breaker_tests::issue56_exhausted_dispatch_has_no_assignment_side_effects",
+      "expected": "Existing fixed assertions pass; no changed cap, allowance, verifier or approval policy."
+    },
+    {
+      "id": "issue56_all_active_states_but_no_terminal_or_unproven_verifier_exemption",
+      "kind": "store",
+      "test": "aggregate_breaker_tests::issue56_all_active_states_but_no_terminal_or_unproven_verifier_exemption",
+      "expected": "Existing fixed assertions pass; no changed cap, allowance, verifier or approval policy."
+    }
+  ],
+  "fixture_runtime_ceiling_seconds": 1800,
+  "fixture_execution_ceiling_seconds": 1700,
+  "cleanup_reserve_seconds": 100,
+  "stop": "Stop both arms immediately on first accounting mismatch, scope leak, failed/unavailable fixture or the 1700-second execution ceiling. Reserve 100 seconds for cleanup within the 1800-second total ceiling. All remaining rows are unexecuted, never passes.",
+  "validated_candidate": {
+    "canonical_receipt": "<run-records>\\issue236-canonical-r2.json",
+    "canonical_receipt_sha256": "77f7e87ac99448d0660a52a02a80ee15105a67aebaec3b47e509eddc6a5949fe",
+    "source_manifest": "<run-records>\\issue236-source-after-canonical-r2.json",
+    "source_manifest_sha256": "64092db98e01f3a377f176e2977c89223146a441a5c703ce2ebd1712c2b65df1",
+    "source_fingerprint": "243ad077f92ffb062da5761a182d51cfd0f7c38ecd32680b896aa4dc5817c32b",
+    "commit_receipt": "<run-records>\\issue236-prerequisite-commit-r1.json",
+    "commit_receipt_sha256": "918b4af69f845f1babbed6769d907ec65a6e99975af775ea3fb304c064a9d2f5",
+    "tree": "78370df4797a84ae363b5df9d2cafd3e898887de"
+  },
+  "equivalence": "Identical frozen native probe, corpus and literal SQL observation/assertion overlay. Each native invocation constructs fresh ParsedRun. Each SQLx case creates a fresh migrated database in its arm-specific owned SCRAM PostgreSQL cluster.",
+  "attribution": "Candidate includes PR392 at ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01. Thread correlation changes are not attributed solely to the new usage prerequisite.",
+  "cache_policy": "Separate owned target directories; remove all local path package artifacts from each copied cache before compiling. Primary artifacts must be fresh:false and source-bound to their arm.",
+  "protected_files": [
+    {
+      "path": "<run-records>\\prepare-issue236-comparison-r4.py",
+      "sha256": "4b0efc0e5a82b6bb272b472a40fb6e840baecda5e0d3afc207b229f6c8a859ad"
+    },
+    {
+      "path": "<run-records>\\run-issue236-comparison-r4.py",
+      "sha256": "d1ee7513586517312a28e8a22042bcf3b45b89e101254050cc5a686fd9c136ce"
+    },
+    {
+      "path": "<run-records>\\issue236-comparison-source-binding-r1.json",
+      "sha256": "ae1954e7466b69467ab09710bfce273c899a73a1f2cfb09ddae53ba01572ef46"
+    },
+    {
+      "path": "<paired-fixture>\\native-probe.rs",
+      "sha256": "ec09432121f62500c1168d5200c552c7461127620f51b2491188797ffba7bb42"
+    },
+    {
+      "path": "<paired-fixture>\\store-probe.rs",
+      "sha256": "cedb3d627fc1b4783546ec03c643fa7ea7ee826bb6d6bad63415a5d480220150"
+    },
+    {
+      "path": "<paired-fixture>\\corpus.json",
+      "sha256": "58f005cb45216ef73792aa8ffa6b79fa443a8bf01db0e4ae078de902f2adf225"
+    },
+    {
+      "path": "<run-records>\\issue236-canonical-r2.json",
+      "sha256": "77f7e87ac99448d0660a52a02a80ee15105a67aebaec3b47e509eddc6a5949fe"
+    },
+    {
+      "path": "<run-records>\\issue236-source-after-canonical-r2.json",
+      "sha256": "64092db98e01f3a377f176e2977c89223146a441a5c703ce2ebd1712c2b65df1"
+    },
+    {
+      "path": "<run-records>\\issue236-prerequisite-commit-r1.json",
+      "sha256": "918b4af69f845f1babbed6769d907ec65a6e99975af775ea3fb304c064a9d2f5"
+    }
+  ],
+  "arms": {
+    "baseline": {
+      "source": "<paired-fixture>\\baseline",
+      "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+      "tree": "70ca1719de097ef9b27819acc847e9dce14b19b2",
+      "physical_source": {
+        "algorithm": "sha256(path NUL file-sha256 LF), sorted nonignored physical files",
+        "sha256": "cde8d97ba66bf611e82c59c936746af17f7528b9d245a1d8d886a3708099ba9d",
+        "files": 7149
+      },
+      "lockfiles": {
+        "Cargo.lock": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b",
+        "rust-toolchain.toml": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882",
+        "pnpm-lock.yaml": "b324edcdd1f358e09f0d3afec92a55edebefee2c33d50394ef282c6b1c1f804a"
+      },
+      "static_safety_test_source_sha256": "06e6110c10133d659e4c34e6897f43f87ad2bee232ec9e8e87ac7eafccdb0b0c"
+    },
+    "candidate": {
+      "source": "<paired-fixture>\\candidate",
+      "head": "fb13446f099ddc550a653ed6c4b13800169ba599",
+      "tree": "78370df4797a84ae363b5df9d2cafd3e898887de",
+      "physical_source": {
+        "algorithm": "sha256(path NUL file-sha256 LF), sorted nonignored physical files",
+        "sha256": "f9c616d8236c9a51889d0a1beb47de6458f7ab70af24aeda5adc86f350690242",
+        "files": 7424
+      },
+      "lockfiles": {
+        "Cargo.lock": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b",
+        "rust-toolchain.toml": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882",
+        "pnpm-lock.yaml": "b324edcdd1f358e09f0d3afec92a55edebefee2c33d50394ef282c6b1c1f804a"
+      },
+      "static_safety_test_source_sha256": "6dc09bcad06f15a8f03532b16368ff00d1db7cb90f276f45e62ee67a2d472b27"
+    }
+  }
+}

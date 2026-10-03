@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { readFile, realpath, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+
+const [input, output] = process.argv.slice(2)
+const root = await realpath(input)
+assert.equal(root.toLowerCase(), '<candidate-checkout>')
+assert.ok(path.isAbsolute(output))
+const git = args => execFileSync('git', args, { cwd: root, windowsHide: true, encoding: 'utf8' }).trim()
+const hash = bytes => createHash('sha256').update(bytes).digest('hex')
+const names = [...new Set(git(['ls-files', '-co', '--exclude-standard', '-z']).split('\0').filter(Boolean))].sort()
+const files = await Promise.all(names.map(async name => [name, hash(await readFile(path.join(root, name)))]))
+const report = { schema_version: 1, recorded_at_utc: new Date().toISOString(), source: root,
+  head: git(['rev-parse', 'HEAD']), tree: git(['rev-parse', 'HEAD^{tree}']), branch: git(['branch', '--show-current']),
+  status: git(['status', '--porcelain=v1']), source_file_count: files.length,
+  source_fingerprint: hash(JSON.stringify(files)), files }
+assert.equal(report.branch, 'codex/issue236-usage-provenance')
+await writeFile(output, `${JSON.stringify(report, null, 2)}\n`, { flag: 'wx' })
+const { files: omitted, ...summary } = report
+console.log(JSON.stringify({ ...summary, manifest: output, manifest_sha256: hash(await readFile(output)) }))

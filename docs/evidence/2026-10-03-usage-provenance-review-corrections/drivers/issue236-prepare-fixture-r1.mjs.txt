@@ -1,0 +1,37 @@
+// Small independent source for the native usage-provenance fixture.
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { readdir, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+
+const [product, source] = process.argv.slice(2)
+assert.ok(path.isAbsolute(product) && path.isAbsolute(source))
+assert.equal((await readdir(source)).length, 0, 'Never reset or adopt existing source')
+const gitEnvironment = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
+  /^(PATH|PATHEXT|SYSTEMROOT|WINDIR|COMSPEC|TEMP|TMP)$/iu.test(key)))
+Object.assign(gitEnvironment, { GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: process.platform === 'win32' ? 'NUL' : '/dev/null',
+  GIT_TERMINAL_PROMPT: '0', GIT_ALLOW_PROTOCOL: 'file' })
+function git(root, args) {
+  const result = spawnSync('git', ['-C', root, ...args], { env: gitEnvironment, windowsHide: true, maxBuffer: 4 * 1024 * 1024 })
+  assert.equal(result.status, 0, result.stderr.toString())
+  return result.stdout
+}
+const readme = Buffer.from('# Owned issue236 usage-provenance fixture\n\nA deterministic Codex transport emits the frozen usage corpus from an assigned disposable worktree. No external provider or publication.\n')
+await writeFile(path.join(source, 'README.md'), readme, { flag: 'wx' })
+await writeFile(path.join(source, '.gitattributes'), '* text eol=lf\n', { flag: 'wx' })
+git(source, ['init', '--template=', '-b', 'main'])
+git(source, ['config', 'core.autocrlf', 'false'])
+git(source, ['add', '--all'])
+git(source, ['-c', 'user.name=ECorp QA', '-c', 'user.email=qa@ecorp.invalid', 'commit', '-m', 'Prepare independent usage-provenance fixture'])
+git(source, ['remote', 'add', 'origin', 'https://github.com/ecorp-fixture/usage-provenance-fixture.git'])
+const receipt = {
+  implementation_head: git(product, ['rev-parse', 'HEAD']).toString().trim(),
+  source_repository: 'ecorp-fixture/usage-provenance-fixture',
+  source_commit: git(source, ['rev-parse', 'HEAD']).toString().trim(),
+  source_tree: git(source, ['rev-parse', 'HEAD^{tree}']).toString().trim(),
+  readme_sha256: createHash('sha256').update(readme).digest('hex'),
+  independent_synthetic_source: true,
+}
+await writeFile(path.join(path.dirname(source), 'evidence/source-fixture.json'), JSON.stringify(receipt, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify(receipt))
