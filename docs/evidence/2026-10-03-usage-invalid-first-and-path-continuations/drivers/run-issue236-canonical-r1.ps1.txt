@@ -1,0 +1,118 @@
+#requires -Version 7.5
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)][ValidatePattern('^[a-z][a-z0-9-]+$')][string]$Label,
+    [Parameter(Mandatory)][string]$ReferenceManifest
+)
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$product = '<candidate-checkout>'
+$python = '<operator-home>\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe'
+$nodeDirectory = '<pinned-toolchain>\node-v24.21.0-win-x64'
+$snapshotter = Join-Path $PSScriptRoot 'issue236-source-snapshot-r1.mjs'
+$prefix = "issue236-canonical-$Label"
+$receiptPath = Join-Path $PSScriptRoot "$prefix.json"
+if (Test-Path -LiteralPath $receiptPath) { throw 'Preserve the existing validation attempt.' }
+$reference = Get-Content -LiteralPath $ReferenceManifest -Raw | ConvertFrom-Json -AsHashtable -Depth 50
+if ($reference.branch -cne 'codex/issue236-usage-provenance' -or $reference.source -cne $product) { throw 'Unexpected reference source.' }
+$expectedHead = $reference.head
+$expectedFingerprint = $reference.source_fingerprint
+foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|GIT_|ISSUE236_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN','RUSTFLAGS','RUSTDOCFLAGS')) {
+        [Environment]::SetEnvironmentVariable($name,$null,'Process')
+    }
+}
+$env:PATH = "$(Split-Path -Parent $python);$nodeDirectory;$env:PATH"
+$env:PYTHON = $python
+$env:CARGO_TARGET_DIR = Join-Path $product 'target/issue236-review-r5'
+if (!(Test-Path -LiteralPath $env:CARGO_TARGET_DIR)) { throw 'Verified review target is missing.' }
+$env:CARGO_BUILD_JOBS = '2'
+$env:CARGO_INCREMENTAL = '0'
+$env:CARGO_PROFILE_DEV_DEBUG = '0'
+$env:CARGO_PROFILE_TEST_DEBUG = '0'
+$env:CARGO_NET_OFFLINE = 'true'
+$env:RUST_TEST_THREADS = '1'
+$receipt = [ordered]@{
+    repository='All-The-Vibes/ecorp';issue=236;pr=402;status='running';wrapper_pid=$PID;
+    purpose='Run all eleven canonical contributor gates with locked dependencies on the exact reviewed physical source. Preserve real counts, failed or skipped checks, and source identity. This is local validation, not hosted CI or product acceptance.';
+    started_at_utc=[DateTime]::UtcNow.ToString('o');source=$product;source_before=$null;source_after=$null;source_unchanged=$null;
+    reference_manifest=$ReferenceManifest;reference_manifest_sha256=(Get-FileHash -LiteralPath $ReferenceManifest).Hash.ToLowerInvariant();expected_head=$expectedHead;expected_fingerprint=$expectedFingerprint;
+    environment=@{CARGO_TARGET_DIR=$env:CARGO_TARGET_DIR;CARGO_BUILD_JOBS='2';CARGO_INCREMENTAL='0';CARGO_PROFILE_DEV_DEBUG='0';CARGO_PROFILE_TEST_DEBUG='0';CARGO_NET_OFFLINE='true';RUST_TEST_THREADS='1'};
+    dependency_install=$null;standalone_steward_installs=@();canonical=$null;failure=$null
+}
+function Save { [IO.File]::WriteAllText($receiptPath,($receipt | ConvertTo-Json -Depth 60)+[Environment]::NewLine) }
+function ValidateSource($source) {
+    if ($source.head -cne $expectedHead -or $source.branch -cne 'codex/issue236-usage-provenance' -or $source.source_fingerprint -cne $expectedFingerprint) { throw 'Candidate no longer matches the reviewed source.' }
+    if ((Get-FileHash -LiteralPath $ReferenceManifest).Hash.ToLowerInvariant() -cne $receipt.reference_manifest_sha256) { throw 'Reference manifest changed.' }
+}
+Save
+Push-Location -LiteralPath $product
+try {
+    $before = & node $snapshotter $product (Join-Path $PSScriptRoot "$prefix-source-before.json")
+    if ($LASTEXITCODE) { throw 'Cannot establish exact source before validation.' }
+    $receipt.source_before = $before | ConvertFrom-Json -AsHashtable
+    ValidateSource $receipt.source_before
+    $indexTree = & git --no-optional-locks write-tree
+    if ($LASTEXITCODE) { throw 'Cannot capture index tree.' }
+    $receipt.index_tree_before = $indexTree
+    Save
+    $installLog = Join-Path $PSScriptRoot "$prefix-install.log"
+    if (Test-Path -LiteralPath $installLog) { throw 'Preserve existing dependency log.' }
+    & pnpm.cmd install --frozen-lockfile --offline *> $installLog
+    $installCode = $LASTEXITCODE
+    $receipt.dependency_install = @{command='pnpm install --frozen-lockfile --offline';exit_code=$installCode;log=$installLog;sha256=(Get-FileHash -LiteralPath $installLog).Hash.ToLowerInvariant()}
+    Save
+    Write-Output "Locked dependency install exit=$installCode"
+    if ($installCode) { throw 'Locked dependency installation failed; preserve the failed attempt.' }
+    Push-Location -LiteralPath (Join-Path $product 'scenarios/repo-steward')
+    try {
+        foreach ($mode in @('offline','online')) {
+            $stewardLog = Join-Path $PSScriptRoot "$prefix-steward-install-$mode.log"
+            if (Test-Path -LiteralPath $stewardLog) { throw 'Preserve existing standalone dependency log.' }
+            $npmArgs = @('ci','--ignore-scripts','--no-audit','--no-fund','--workspaces=false')
+            if ($mode -eq 'offline') { $npmArgs += '--offline' }
+            & npm.cmd @npmArgs *> $stewardLog
+            $stewardCode = $LASTEXITCODE
+            $receipt.standalone_steward_installs += @{command=('npm '+($npmArgs -join ' '));exit_code=$stewardCode;log=$stewardLog;sha256=(Get-FileHash -LiteralPath $stewardLog).Hash.ToLowerInvariant()}
+            Save
+            if (!$stewardCode) { break }
+        }
+        if ($stewardCode) { throw 'Pinned standalone steward dependency install failed.' }
+    } finally { Pop-Location }
+    $checkLog = Join-Path $PSScriptRoot "$prefix.log"
+    if (Test-Path -LiteralPath $checkLog) { throw 'Preserve existing canonical log.' }
+    $readiness = Join-Path $product 'output/readiness'
+    $existingReports = @()
+    if (Test-Path -LiteralPath $readiness) { $existingReports = @(Get-ChildItem -LiteralPath $readiness -Filter '*-full.json' -File | Select-Object -ExpandProperty FullName) }
+    $receipt.prior_readiness_reports = $existingReports
+    $receipt.canonical_started_at_utc = [DateTime]::UtcNow.ToString('o')
+    Save
+    & pnpm.cmd check *> $checkLog
+    $checkCode = $LASTEXITCODE
+    $reports = @(Get-ChildItem -LiteralPath $readiness -Filter '*-full.json' -File | Where-Object FullName -NotIn $existingReports)
+    if ($reports.Count -ne 1) { throw 'Canonical report identity is ambiguous.' }
+    $report = Get-Content -LiteralPath $reports[0].FullName -Raw | ConvertFrom-Json -AsHashtable -Depth 60
+    $receipt.canonical = @{command='pnpm check';exit_code=$checkCode;log=$checkLog;log_sha256=(Get-FileHash -LiteralPath $checkLog).Hash.ToLowerInvariant();report=$reports[0].FullName;report_sha256=(Get-FileHash -LiteralPath $reports[0].FullName).Hash.ToLowerInvariant();status=$report.status;checks=$report.checks;source_changed=$report.sourceChangedDuringValidation;not_run=$report.notRun}
+    Save
+    if ($checkCode -or $report.status -cne 'passed' -or $report.sourceChangedDuringValidation -ne $false -or $report.source.commit -cne $expectedHead) { throw 'Canonical validation failed or source identity changed.' }
+    $expected = @('migrations','state-audit-compatibility','state-audit-evm','docs','repository-docs','node-tests','format','clippy','rust-tests','web-build','web-lint')
+    if (($report.checks.name -join '|') -cne ($expected -join '|') -or @($report.checks | Where-Object { !$_.passed -or $_.exitCode -ne 0 }).Count -or @($report.notRun).Count) { throw 'Incomplete canonical named check plan.' }
+    $receipt.status = 'passed'
+} catch { $receipt.status='failed'; $receipt.failure=$_.Exception.Message }
+finally {
+    try {
+        $after = & node $snapshotter $product (Join-Path $PSScriptRoot "$prefix-source-after.json")
+        if ($LASTEXITCODE) { throw 'Cannot establish source after validation.' }
+        $receipt.source_after = $after | ConvertFrom-Json -AsHashtable
+        ValidateSource $receipt.source_after
+        $receipt.index_tree_after = & git --no-optional-locks write-tree
+        if ($LASTEXITCODE -or $receipt.index_tree_after -cne $receipt.index_tree_before) { throw 'Index changed during validation.' }
+        $receipt.source_unchanged = $receipt.source_after.source_fingerprint -ceq $receipt.source_before.source_fingerprint
+        if (!$receipt.source_unchanged) { throw 'Physical source changed during validation.' }
+    } catch { $receipt.status='failed'; $receipt.source_failure=$_.Exception.Message }
+    Pop-Location
+    $receipt.finished_at_utc = [DateTime]::UtcNow.ToString('o')
+    Save
+}
+[pscustomobject]$receipt | Select-Object status,failure,source_unchanged,finished_at_utc | ConvertTo-Json
+if ($receipt.status -ne 'passed') { exit 1 }
