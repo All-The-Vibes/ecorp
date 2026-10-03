@@ -5,8 +5,8 @@ use uuid::Uuid;
 
 mod usage;
 pub use usage::{
-    InvalidUsageField, InvalidUsageReason, UsageProvenance, UsageReport, UsageScope,
-    valid_usage_identifier,
+    InvalidUsageField, InvalidUsageReason, UsageAccumulator, UsageProvenance, UsageReport,
+    UsageScope, valid_usage_identifier,
 };
 
 mod workspace_connections;

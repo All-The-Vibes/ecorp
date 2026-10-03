@@ -9,6 +9,7 @@ use std::{
 
 use anyhow::{Context, anyhow};
 use async_trait::async_trait;
+use crony_domain::UsageAccumulator;
 use dashmap::DashMap;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -43,7 +44,7 @@ pub struct CodexAdapter {
     command: PathBuf,
     prefix_args: Arc<Vec<OsString>>,
     available: bool,
-    usage: Arc<DashMap<String, UsageSnapshot>>,
+    usage: Arc<DashMap<String, UsageAccumulator>>,
     profile: Option<super::connection::ProfileEnvironment>,
 }
 
@@ -78,7 +79,7 @@ struct ParsedRun {
     thread_id: Option<String>,
     turn_id: Option<String>,
     final_message: String,
-    usage: UsageSnapshot,
+    usage: UsageAccumulator,
     last_usage_total: Option<u64>,
     last_usage_report: Option<UsageSnapshot>,
     last_usage_observed_at: Option<String>,
@@ -189,7 +190,7 @@ impl CodexAdapter {
         if let Some(thread_id) = parsed.thread_id.as_deref() {
             self.usage
                 .entry(thread_id.to_owned())
-                .and_modify(|usage| add_usage(usage, &parsed.usage))
+                .and_modify(|usage| usage.merge(&parsed.usage))
                 .or_insert_with(|| parsed.usage.clone());
         }
         let (status, summary) = match &outcome {
@@ -210,7 +211,7 @@ impl CodexAdapter {
                 parsed.thread_id.as_deref(),
                 status,
                 &summary,
-                &parsed.usage,
+                parsed.usage.report(),
             ),
             &mut controls,
             &mut controls_open,
@@ -332,7 +333,7 @@ impl AgentAdapter for CodexAdapter {
     async fn collect_usage(&self, session_id: &str) -> Result<UsageSnapshot, AdapterError> {
         self.usage
             .get(session_id)
-            .map(|entry| entry.clone())
+            .map(|entry| entry.report().clone())
             .ok_or_else(|| {
                 AdapterError::Runtime(anyhow!("no usage recorded for session {session_id}"))
             })
@@ -580,7 +581,7 @@ fn record_usage(params: &Value, parsed: &mut ParsedRun) -> Option<UsageSnapshot>
     if usage.validate().is_err() {
         // Invalid evidence must not advance the accepted cursor or increase
         // the collected subtotal, so a later valid report can still be admitted.
-        add_usage(&mut parsed.usage, &usage);
+        parsed.usage.observe(&usage);
         return Some(usage);
     }
     let Some(total_tokens) = usage
@@ -589,7 +590,7 @@ fn record_usage(params: &Value, parsed: &mut ParsedRun) -> Option<UsageSnapshot>
         .and_then(|provenance| provenance.cumulative_total_tokens)
     else {
         // Retain an invalid observation instead of silently making it free work.
-        add_usage(&mut parsed.usage, &usage);
+        parsed.usage.observe(&usage);
         return Some(usage);
     };
     if let Some(previous) = parsed.last_usage_total
@@ -613,12 +614,12 @@ fn record_usage(params: &Value, parsed: &mut ParsedRun) -> Option<UsageSnapshot>
                 "cumulative_total_tokens",
                 crony_domain::InvalidUsageReason::ConflictingObservation,
             );
-        add_usage(&mut parsed.usage, &usage);
+        parsed.usage.observe(&usage);
         return Some(usage);
     }
     // App-server reports `last` for the latest model API call and `total` cumulatively for the
     // thread. Use the monotonic total as the duplicate cursor, but account and emit `last` once.
-    add_usage(&mut parsed.usage, &usage);
+    parsed.usage.observe(&usage);
     parsed.last_usage_total = Some(total_tokens);
     parsed.last_usage_report = Some(usage.clone());
     Some(usage)
@@ -639,10 +640,6 @@ fn terminal_reason(request: &TerminationRequest) -> String {
         TerminationKind::Interrupt => format!("interrupted: {}", request.reason),
         TerminationKind::Stop => request.reason.clone(),
     }
-}
-
-fn add_usage(target: &mut UsageSnapshot, addition: &UsageSnapshot) {
-    target.accumulate(addition);
 }
 
 async fn ensure_git_workspace(workspace: &Path) -> Result<(), AdapterError> {
@@ -1032,6 +1029,77 @@ mod tests {
         let _ = std::fs::remove_dir_all(workspace);
     }
 
+    #[tokio::test]
+    async fn resumed_session_retains_subtotals_after_invalid_first_usage() {
+        let adapter = test_adapter();
+        let request = test_request("[usage-invalid-first] retain accepted usage");
+        let workspace = request.workspace.clone();
+        assert!(!workspace.exists(), "the fixture must own a new workspace");
+        let mut original_session: Option<String> = None;
+        for attempt in 0..2 {
+            let sink = Arc::new(RecordingSink::default());
+            let (_tx, rx) = mpsc::unbounded_channel();
+            let mut run_request = request.clone();
+            run_request.run_id = Uuid::new_v4();
+            let exit = tokio::time::timeout(Duration::from_secs(12), async {
+                if let Some(session) = &original_session {
+                    adapter.resume(run_request, session, rx, sink.clone()).await
+                } else {
+                    adapter.execute(run_request, rx, sink.clone()).await
+                }
+            })
+            .await
+            .expect("bounded synthetic session")
+            .expect("execute synthetic session");
+            assert_eq!(exit, AdapterExit::Completed);
+            let session = session_id(&sink);
+            if let Some(original) = &original_session {
+                assert_eq!(&session, original);
+            } else {
+                original_session = Some(session.clone());
+            }
+            let collected = adapter.collect_usage(&session).await.unwrap();
+            assert_eq!(collected.input_tokens, Some((attempt + 1) * 10));
+            assert_eq!(collected.output_tokens, Some((attempt + 1) * 2));
+            assert_eq!(collected.cost_microusd, None);
+            assert_eq!(collected.coverage()["tokens"], "invalid");
+
+            let artifact_path = {
+                let events = sink.events.lock().unwrap();
+                let observations: Vec<_> = events
+                    .iter()
+                    .filter_map(|event| match event {
+                        AdapterEvent::Usage(usage) => Some(usage),
+                        _ => None,
+                    })
+                    .collect();
+                assert_eq!(observations.len(), 2);
+                assert!(observations[0].validate().is_err());
+                assert!(observations[1].validate().is_ok());
+                assert_eq!(observations[1].input_tokens, Some(10));
+                assert_eq!(observations[1].output_tokens, Some(2));
+                assert!(events.iter().any(|event| matches!(event,
+                    AdapterEvent::ControlObservation { phase: "process_terminated", detail, .. }
+                    if detail["adapter_input_tokens"] == 10 && detail["adapter_output_tokens"] == 2
+                )));
+                events
+                    .iter()
+                    .find_map(|event| match event {
+                        AdapterEvent::Artifact(artifact) => Some(artifact.path.clone()),
+                        _ => None,
+                    })
+                    .expect("per-run evidence")
+            };
+            let evidence: Value =
+                serde_json::from_slice(&tokio::fs::read(artifact_path).await.unwrap()).unwrap();
+            assert_eq!(evidence["usage"]["input_tokens"], 10);
+            assert_eq!(evidence["usage"]["output_tokens"], 2);
+            assert!(evidence["usage"]["cost_microusd"].is_null());
+            assert_eq!(evidence["usage"]["usage_coverage"]["tokens"], "invalid");
+        }
+        std::fs::remove_dir_all(workspace).expect("remove successful owned fixture");
+    }
+
     #[cfg(windows)]
     #[tokio::test]
     async fn evidence_preserves_native_windows_long_paths() {
@@ -1343,9 +1411,9 @@ mod tests {
             )
             .is_none()
         );
-        assert_eq!(parsed.usage.input_tokens, Some(16));
-        assert_eq!(parsed.usage.output_tokens, Some(4));
-        assert_eq!(parsed.usage.cost_microusd, None);
+        assert_eq!(parsed.usage.report().input_tokens, Some(16));
+        assert_eq!(parsed.usage.report().output_tokens, Some(4));
+        assert_eq!(parsed.usage.report().cost_microusd, None);
     }
 
     #[test]
@@ -1367,12 +1435,12 @@ mod tests {
                 .iter()
                 .filter_map(|frame| record_usage(frame, &mut parsed))
                 .count();
-            let coverage = parsed.usage.coverage();
+            let coverage = parsed.usage.report().coverage();
             let actual = json!({
                 "emitted": emitted,
-                "input_tokens": parsed.usage.input_tokens,
-                "output_tokens": parsed.usage.output_tokens,
-                "cost_microusd": parsed.usage.cost_microusd,
+                "input_tokens": parsed.usage.report().input_tokens,
+                "output_tokens": parsed.usage.report().output_tokens,
+                "cost_microusd": parsed.usage.report().cost_microusd,
                 "token_coverage": coverage["tokens"],
                 "usd_coverage": coverage["usd"],
                 "complete_provider_bill": coverage["complete_provider_bill"],
@@ -1398,8 +1466,8 @@ mod tests {
         assert_eq!(conflict.coverage()["tokens"], "invalid");
         assert_eq!(parsed.last_usage_total, Some(12));
         assert_eq!(parsed.last_usage_report, Some(first));
-        assert_eq!(parsed.usage.input_tokens, Some(10));
-        assert_eq!(parsed.usage.output_tokens, Some(2));
+        assert_eq!(parsed.usage.report().input_tokens, Some(10));
+        assert_eq!(parsed.usage.report().output_tokens, Some(2));
         frame["tokenUsage"]["last"]["inputTokens"] = json!(10);
         assert!(record_usage(&frame, &mut parsed).is_none());
         frame["tokenUsage"] =
@@ -1410,9 +1478,9 @@ mod tests {
                 .validate()
                 .is_ok()
         );
-        assert_eq!(parsed.usage.input_tokens, Some(16));
-        assert_eq!(parsed.usage.output_tokens, Some(4));
-        assert_eq!(parsed.usage.coverage()["tokens"], "invalid");
+        assert_eq!(parsed.usage.report().input_tokens, Some(16));
+        assert_eq!(parsed.usage.report().output_tokens, Some(4));
+        assert_eq!(parsed.usage.report().coverage()["tokens"], "invalid");
     }
 
     #[test]
@@ -1440,8 +1508,8 @@ mod tests {
             );
             assert_eq!(parsed.last_usage_total, Some(12));
             assert_eq!(parsed.last_usage_report.as_ref(), Some(&first));
-            assert_eq!(parsed.usage.input_tokens, Some(10));
-            assert_eq!(parsed.usage.output_tokens, Some(2));
+            assert_eq!(parsed.usage.report().input_tokens, Some(10));
+            assert_eq!(parsed.usage.report().output_tokens, Some(2));
             assert!(record_usage(&first_frame, &mut parsed).is_none());
         }
         let next = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
@@ -1450,9 +1518,9 @@ mod tests {
         assert!(record_usage(&next, &mut parsed).unwrap().validate().is_ok());
         assert!(record_usage(&next, &mut parsed).is_none());
         assert_eq!(parsed.last_usage_total, Some(20));
-        assert_eq!(parsed.usage.input_tokens, Some(16));
-        assert_eq!(parsed.usage.output_tokens, Some(4));
-        assert_eq!(parsed.usage.coverage()["tokens"], "invalid");
+        assert_eq!(parsed.usage.report().input_tokens, Some(16));
+        assert_eq!(parsed.usage.report().output_tokens, Some(4));
+        assert_eq!(parsed.usage.report().coverage()["tokens"], "invalid");
     }
 
     #[test]
@@ -1473,7 +1541,7 @@ mod tests {
             assert!(invalid.validate().is_err());
             assert_eq!(parsed.last_usage_total, None);
             assert_eq!(parsed.last_usage_report, None);
-            assert_eq!(parsed.usage.input_tokens, None);
+            assert_eq!(parsed.usage.report().input_tokens, None);
             assert!(
                 !serde_json::to_string(&invalid)
                     .unwrap()
@@ -1485,7 +1553,10 @@ mod tests {
                 record_usage(&frame, &mut parsed).expect("admit the later valid native report");
             assert_eq!(recovered.validate(), Ok(()));
             assert_eq!(parsed.last_usage_total, Some(12));
-            assert_eq!(parsed.usage.coverage()["tokens"], "invalid");
+            assert_eq!(parsed.usage.report().input_tokens, Some(10));
+            assert_eq!(parsed.usage.report().output_tokens, Some(2));
+            assert_eq!(parsed.usage.report().cost_microusd, None);
+            assert_eq!(parsed.usage.report().coverage()["tokens"], "invalid");
         }
         let mut parsed = ParsedRun {
             thread_id: Some("thread-1".to_owned()),

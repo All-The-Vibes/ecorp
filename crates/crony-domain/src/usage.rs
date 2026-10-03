@@ -11,6 +11,15 @@ pub struct UsageReport {
     pub usage_provenance: Option<UsageProvenance>,
 }
 
+/// In-memory collect-only state, separate from the serialized evidence report.
+/// Unknown quantities cannot distinguish an empty accumulator from an accepted
+/// observation with missing quantities or an overflowed subtotal.
+#[derive(Debug, Clone, Default)]
+pub struct UsageAccumulator {
+    report: UsageReport,
+    has_valid_observation: bool,
+}
+
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct UsageProvenance {
@@ -247,50 +256,88 @@ impl UsageReport {
         };
         without_aliases(self) == without_aliases(other)
     }
+}
 
-    /// Collect-only evidence. An unknown component keeps its whole aggregate
-    /// unknown; individual known subtotals remain in the authoritative events.
-    pub fn accumulate(&mut self, addition: &Self) {
+impl UsageAccumulator {
+    pub fn report(&self) -> &UsageReport {
+        &self.report
+    }
+
+    /// Invalid native observations mark coverage without charging their values.
+    /// An unknown component of a valid observation keeps that component unknown;
+    /// individual known subtotals remain in the authoritative events.
+    pub fn observe(&mut self, observation: &UsageReport) {
+        self.append(observation, observation.validate().is_ok());
+    }
+
+    /// Merge trusted in-memory state. An invalid-marked run can still contain
+    /// accepted subtotals; treating its report as another native observation
+    /// would discard them. Empty runs are not all-unknown observations.
+    pub fn merge(&mut self, addition: &Self) {
+        if !addition.has_valid_observation && addition.report.usage_provenance.is_none() {
+            return;
+        }
+        self.append(&addition.report, addition.has_valid_observation);
+    }
+
+    fn append(&mut self, addition: &UsageReport, include_quantities: bool) {
         let mut aggregate =
             UsageProvenance::new("retained_usage_aggregate_v1", UsageScope::RetainedAggregate);
-        for report in [&*self, addition] {
+        for report in [&self.report, addition] {
             if let Some(provenance) = &report.usage_provenance {
                 for invalid in &provenance.invalid_fields {
                     aggregate.invalidate(&invalid.field, invalid.reason);
                 }
             }
+            if report.validate().is_err() {
+                aggregate.invalidate("observation", InvalidUsageReason::InvalidNumber);
+            }
         }
-        if self.validate().is_err() || addition.validate().is_err() {
-            aggregate.invalidate("observation", InvalidUsageReason::InvalidNumber);
+        if include_quantities {
+            if !self.has_valid_observation {
+                self.report.input_tokens = addition.input_tokens;
+                self.report.output_tokens = addition.output_tokens;
+                self.report.cost_microusd = addition.cost_microusd;
+            } else {
+                let mut add = |field, left: Option<u64>, right: Option<u64>| {
+                    left.zip(right).and_then(|(left, right)| {
+                        let total = left
+                            .checked_add(right)
+                            .filter(|total| *total <= i64::MAX as u64);
+                        if total.is_none() {
+                            aggregate.invalidate(field, InvalidUsageReason::Overflow);
+                        }
+                        total
+                    })
+                };
+                self.report.input_tokens = add(
+                    "input_tokens",
+                    self.report.input_tokens,
+                    addition.input_tokens,
+                );
+                self.report.output_tokens = add(
+                    "output_tokens",
+                    self.report.output_tokens,
+                    addition.output_tokens,
+                );
+                self.report.cost_microusd = add(
+                    "cost_microusd",
+                    self.report.cost_microusd,
+                    addition.cost_microusd,
+                );
+            }
+            self.has_valid_observation = true;
         }
-        // An invalid or conflicting observation is evidence of incomplete
-        // coverage, not another charge in the collect-only subtotal.
-        if addition.validate().is_err() {
-            self.usage_provenance = Some(aggregate);
-            return;
+        self.report.usage_provenance = Some(aggregate);
+        // Individually in-range components can still exceed the combined token
+        // denominator. Preserve that invalidity across subsequent observations.
+        if self.report.validate().is_err() {
+            self.report
+                .usage_provenance
+                .as_mut()
+                .expect("aggregate provenance")
+                .invalidate("observation", InvalidUsageReason::InvalidNumber);
         }
-        if *self == Self::default() {
-            *self = addition.clone();
-        } else {
-            let mut add = |field, left: Option<u64>, right: Option<u64>| {
-                left.zip(right).and_then(|(left, right)| {
-                    let total = left
-                        .checked_add(right)
-                        .filter(|total| *total <= i64::MAX as u64);
-                    if total.is_none() {
-                        aggregate.invalidate(field, InvalidUsageReason::Overflow);
-                    }
-                    total
-                })
-            };
-            self.input_tokens = add("input_tokens", self.input_tokens, addition.input_tokens);
-            self.output_tokens = add("output_tokens", self.output_tokens, addition.output_tokens);
-            self.cost_microusd = add("cost_microusd", self.cost_microusd, addition.cost_microusd);
-        }
-        if self.validate().is_err() {
-            aggregate.invalidate("observation", InvalidUsageReason::InvalidNumber);
-        }
-        self.usage_provenance = Some(aggregate);
     }
 }
 
@@ -392,27 +439,28 @@ mod tests {
 
     #[test]
     fn unknown_components_remain_unknown_in_collect_only_aggregates() {
-        let mut total = UsageReport::default();
-        total.accumulate(&report(Some(10), Some(2)));
-        total.accumulate(&report(Some(6), Some(2)));
-        assert_eq!(total.input_tokens, Some(16));
-        assert_eq!(total.output_tokens, Some(4));
-        assert_eq!(total.cost_microusd, None);
-        total.accumulate(&report(None, Some(0)));
-        total.accumulate(&report(Some(1), Some(1)));
-        assert_eq!(total.input_tokens, None);
-        assert_eq!(total.output_tokens, Some(5));
+        let mut total = UsageAccumulator::default();
+        total.observe(&report(Some(10), Some(2)));
+        total.observe(&report(Some(6), Some(2)));
+        assert_eq!(total.report().input_tokens, Some(16));
+        assert_eq!(total.report().output_tokens, Some(4));
+        assert_eq!(total.report().cost_microusd, None);
+        total.observe(&report(None, Some(0)));
+        total.observe(&report(Some(1), Some(1)));
+        assert_eq!(total.report().input_tokens, None);
+        assert_eq!(total.report().output_tokens, Some(5));
     }
 
     #[test]
     fn aggregate_retains_invalidity_and_never_repairs_overflow() {
-        let mut total = report(Some(i64::MAX as u64), Some(0));
-        total.accumulate(&report(Some(1), Some(0)));
-        assert_eq!(total.input_tokens, None);
-        assert!(total.validate().is_err());
-        total.accumulate(&report(Some(2), Some(0)));
-        assert_eq!(total.input_tokens, None);
-        assert!(total.validate().is_err());
+        let mut total = UsageAccumulator::default();
+        total.observe(&report(Some(i64::MAX as u64), Some(0)));
+        total.observe(&report(Some(1), Some(0)));
+        assert_eq!(total.report().input_tokens, None);
+        assert!(total.report().validate().is_err());
+        total.observe(&report(Some(2), Some(0)));
+        assert_eq!(total.report().input_tokens, None);
+        assert!(total.report().validate().is_err());
     }
 
     #[test]
@@ -441,20 +489,214 @@ mod tests {
 
     #[test]
     fn invalid_observations_do_not_increase_collect_only_subtotals() {
-        let mut total = UsageReport::default();
-        total.accumulate(&report(Some(10), Some(2)));
+        let mut total = UsageAccumulator::default();
+        total.observe(&report(Some(10), Some(2)));
         let mut invalid = report(Some(100), Some(20));
         invalid.usage_provenance.as_mut().unwrap().invalidate(
             "cumulative_total_tokens",
             InvalidUsageReason::ConflictingObservation,
         );
-        total.accumulate(&invalid);
-        assert_eq!(total.input_tokens, Some(10));
-        assert_eq!(total.output_tokens, Some(2));
-        assert_eq!(total.coverage()["tokens"], "invalid");
-        total.accumulate(&report(Some(6), Some(2)));
-        assert_eq!(total.input_tokens, Some(16));
-        assert_eq!(total.output_tokens, Some(4));
-        assert_eq!(total.coverage()["tokens"], "invalid");
+        total.observe(&invalid);
+        assert_eq!(total.report().input_tokens, Some(10));
+        assert_eq!(total.report().output_tokens, Some(2));
+        assert_eq!(total.report().coverage()["tokens"], "invalid");
+        total.observe(&report(Some(6), Some(2)));
+        assert_eq!(total.report().input_tokens, Some(16));
+        assert_eq!(total.report().output_tokens, Some(4));
+        assert_eq!(total.report().coverage()["tokens"], "invalid");
+    }
+
+    fn invalid_report() -> UsageReport {
+        let mut invalid = report(Some(100), Some(20));
+        invalid.cost_microusd = Some(500);
+        invalid.usage_provenance.as_mut().unwrap().invalidate(
+            "cumulative_total_tokens",
+            InvalidUsageReason::ConflictingObservation,
+        );
+        invalid
+    }
+
+    #[test]
+    fn invalid_first_observations_preserve_later_valid_subtotals() {
+        let mut total = UsageAccumulator::default();
+        total.observe(&invalid_report());
+        total.observe(&invalid_report());
+        assert_eq!(total.report().input_tokens, None);
+        assert_eq!(total.report().output_tokens, None);
+        assert_eq!(total.report().cost_microusd, None);
+        let mut accepted = report(Some(10), Some(2));
+        accepted.cost_microusd = Some(7);
+        total.observe(&accepted);
+        assert_eq!(total.report().input_tokens, Some(10));
+        assert_eq!(total.report().output_tokens, Some(2));
+        assert_eq!(total.report().cost_microusd, Some(7));
+        accepted.input_tokens = Some(6);
+        accepted.cost_microusd = Some(11);
+        total.observe(&accepted);
+        assert_eq!(total.report().input_tokens, Some(16));
+        assert_eq!(total.report().output_tokens, Some(4));
+        assert_eq!(total.report().cost_microusd, Some(18));
+        assert_eq!(total.report().coverage()["tokens"], "invalid");
+        assert_eq!(total.report().coverage()["usd"], "invalid");
+    }
+
+    #[test]
+    fn invalid_before_explicit_zero_keeps_zero_as_an_observation() {
+        let mut total = UsageAccumulator::default();
+        total.observe(&invalid_report());
+        let mut zero = report(Some(0), Some(0));
+        zero.cost_microusd = Some(0);
+        total.observe(&zero);
+        assert_eq!(total.report().input_tokens, Some(0));
+        assert_eq!(total.report().output_tokens, Some(0));
+        assert_eq!(total.report().cost_microusd, Some(0));
+        total.observe(&report(Some(10), Some(2)));
+        assert_eq!(total.report().input_tokens, Some(10));
+        assert_eq!(total.report().output_tokens, Some(2));
+        assert_eq!(total.report().cost_microusd, None);
+        assert_eq!(total.report().coverage()["tokens"], "invalid");
+    }
+
+    #[test]
+    fn valid_all_unknown_observation_is_not_empty_accumulator_state() {
+        let mut total = UsageAccumulator::default();
+        total.observe(&UsageReport::default());
+        total.observe(&report(Some(10), Some(2)));
+        assert_eq!(total.report().input_tokens, None);
+        assert_eq!(total.report().output_tokens, None);
+        assert_eq!(total.report().cost_microusd, None);
+        assert_eq!(total.report().coverage()["tokens"], "unavailable");
+    }
+
+    #[test]
+    fn retained_session_merge_keeps_valid_subtotals_from_invalid_run() {
+        let mut run = UsageAccumulator::default();
+        run.observe(&report(Some(6), Some(2)));
+        run.observe(&invalid_report());
+        for initial in [None, Some(10)] {
+            let mut session = UsageAccumulator::default();
+            if let Some(initial) = initial {
+                session.observe(&report(Some(initial), Some(2)));
+            }
+            session.merge(&run);
+            assert_eq!(
+                session.report().input_tokens,
+                Some(initial.unwrap_or(0) + 6)
+            );
+            assert_eq!(
+                session.report().output_tokens,
+                Some(if initial.is_some() { 4 } else { 2 })
+            );
+            assert_eq!(session.report().coverage()["tokens"], "invalid");
+        }
+    }
+
+    #[test]
+    fn invalid_only_run_does_not_erase_later_session_totals() {
+        let mut session = UsageAccumulator::default();
+        session.observe(&invalid_report());
+        let mut next_run = UsageAccumulator::default();
+        next_run.observe(&report(Some(6), Some(2)));
+        session.merge(&next_run);
+        assert_eq!(session.report().input_tokens, Some(6));
+        assert_eq!(session.report().output_tokens, Some(2));
+        assert_eq!(session.report().coverage()["tokens"], "invalid");
+    }
+
+    #[test]
+    fn empty_and_invalid_only_runs_do_not_erase_existing_session_subtotals() {
+        let empty = UsageAccumulator::default();
+        let mut session = UsageAccumulator::default();
+        session.merge(&empty);
+        assert_eq!(session.report(), &UsageReport::default());
+        let mut accepted = report(Some(10), Some(2));
+        accepted.cost_microusd = Some(7);
+        session.observe(&accepted);
+        session.merge(&empty);
+        assert_eq!(session.report().coverage()["tokens"], "reported");
+
+        let mut invalid_only = UsageAccumulator::default();
+        invalid_only.observe(&invalid_report());
+        session.merge(&invalid_only);
+        session.merge(&empty);
+        assert_eq!(session.report().input_tokens, Some(10));
+        assert_eq!(session.report().output_tokens, Some(2));
+        assert_eq!(session.report().cost_microusd, Some(7));
+        assert_eq!(session.report().coverage()["tokens"], "invalid");
+    }
+
+    #[test]
+    fn valid_all_unknown_run_stays_unknown_across_session_merges() {
+        let mut unknown_run = UsageAccumulator::default();
+        unknown_run.observe(&UsageReport::default());
+        unknown_run.merge(&UsageAccumulator::default());
+        for known_first in [false, true] {
+            let mut known = UsageAccumulator::default();
+            let mut accepted = report(Some(10), Some(2));
+            accepted.cost_microusd = Some(7);
+            known.observe(&accepted);
+            let mut session = UsageAccumulator::default();
+            if known_first {
+                session.merge(&known);
+                session.merge(&unknown_run);
+            } else {
+                session.merge(&unknown_run);
+                session.merge(&known);
+            }
+            assert_eq!(session.report().input_tokens, None);
+            assert_eq!(session.report().output_tokens, None);
+            assert_eq!(session.report().cost_microusd, None);
+            assert_eq!(session.report().coverage()["tokens"], "unavailable");
+        }
+    }
+
+    #[test]
+    fn retained_merges_cannot_repair_overflowed_tokens_or_cost() {
+        let mut run = UsageAccumulator::default();
+        let mut boundary = report(Some(i64::MAX as u64), Some(0));
+        boundary.cost_microusd = Some(i64::MAX as u64);
+        run.observe(&boundary);
+        let mut increment = report(Some(1), Some(0));
+        increment.cost_microusd = Some(1);
+        run.observe(&increment);
+        let mut session = UsageAccumulator::default();
+        session.observe(&increment);
+        session.merge(&run);
+        session.merge(&UsageAccumulator::default());
+        session.observe(&increment);
+        assert_eq!(session.report().input_tokens, None);
+        assert_eq!(session.report().output_tokens, Some(0));
+        assert_eq!(session.report().cost_microusd, None);
+        assert_eq!(session.report().coverage()["tokens"], "invalid");
+        assert_eq!(session.report().coverage()["usd"], "invalid");
+        for field in ["input_tokens", "cost_microusd"] {
+            assert!(
+                session
+                    .report()
+                    .usage_provenance
+                    .as_ref()
+                    .unwrap()
+                    .invalid_fields
+                    .contains(&InvalidUsageField {
+                        field: field.to_owned(),
+                        reason: InvalidUsageReason::Overflow
+                    })
+            );
+        }
+    }
+
+    #[test]
+    fn merged_components_cannot_exceed_the_combined_accounting_range() {
+        let mut session = UsageAccumulator::default();
+        session.observe(&report(Some(i64::MAX as u64), Some(0)));
+        let mut run = UsageAccumulator::default();
+        run.observe(&report(Some(0), Some(1)));
+        session.merge(&run);
+        assert_eq!(session.report().input_tokens, Some(i64::MAX as u64));
+        assert_eq!(session.report().output_tokens, Some(1));
+        assert_eq!(session.report().coverage()["tokens"], "invalid");
+        session.observe(&report(None, Some(0)));
+        assert_eq!(session.report().input_tokens, None);
+        assert_eq!(session.report().coverage()["tokens"], "invalid");
     }
 }

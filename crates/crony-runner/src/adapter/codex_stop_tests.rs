@@ -499,9 +499,9 @@ fn issue87_cumulative_regressions_cannot_charge_again() {
     assert_eq!(parsed.last_usage_total, Some(12));
     assert_eq!(parsed.last_usage_report.as_ref(), Some(&accepted));
     assert!(record_usage(&usage_frame("thread-1", 12), &mut parsed).is_none());
-    assert_eq!(parsed.usage.input_tokens, Some(10));
-    assert_eq!(parsed.usage.output_tokens, Some(2));
-    assert_eq!(parsed.usage.coverage()["tokens"], "invalid");
+    assert_eq!(parsed.usage.report().input_tokens, Some(10));
+    assert_eq!(parsed.usage.report().output_tokens, Some(2));
+    assert_eq!(parsed.usage.report().coverage()["tokens"], "invalid");
 }
 
 #[test]

@@ -319,8 +319,8 @@ pub(super) async fn execute(
                     json!({
                         "scope": Process::scope(), "exit_status": status.to_string(),
                         "last_usage_observed_at": parsed.last_usage_observed_at,
-                    "adapter_input_tokens": parsed.usage.input_tokens,
-                    "adapter_output_tokens": parsed.usage.output_tokens,
+                    "adapter_input_tokens": parsed.usage.report().input_tokens,
+                    "adapter_output_tokens": parsed.usage.report().output_tokens,
                     }),
                 );
                 break;

@@ -30,6 +30,20 @@ test('normalized placeholders and ordinary prose remain valid', () => {
   ]) assert.equal(hasPersonalUserPath(text), false)
 })
 
+test('personal paths include caret-LF continuations', () => {
+  assert.equal(hasPersonalUserPath('C^:^\\Us^\ners^\\fixture^-user'), true)
+  assert.equal(hasPersonalUserPath('C^:^\\Users^\\^\nfixture^-user'), true)
+  assert.equal(hasPersonalUserPath('C:\\Us\ners\\fixture-user'), false)
+  assert.equal(hasPersonalUserPath('C^:^\\Us^\ners^\\<original-user>'), false)
+})
+
+test('personal paths include caret-CRLF continuations', () => {
+  assert.equal(hasPersonalUserPath('C^:^\\Us^\r\ners^\\fixture^-user'), true)
+  assert.equal(hasPersonalUserPath('C^:^\\Users^\\^\r\nfixture^-user'), true)
+  assert.equal(hasPersonalUserPath('C:\\Us\r\ners\\fixture-user'), false)
+  assert.equal(hasPersonalUserPath('C^:^\\Us^\r\ners^\\<original-user>'), false)
+})
+
 test('recursive packet scan and CLI reject a leak without printing its value', t => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'ecorp-evidence-path-')))
   t.after(() => rmSync(root, { recursive: true, force: true }))
@@ -38,7 +52,11 @@ test('recursive packet scan and CLI reject a leak without printing its value', t
   writeFileSync(receipt, JSON.stringify({ HOMEPATH: String.raw`\Users\fixture-user` }))
   const startup = join(root, 'startup.log')
   writeFileSync(startup, String.raw`^"C^:^\Users^\fixture^-user^\source^"`)
-  assert.equal(findPersonalPathFiles([root]).length, 2)
+  const continuedLf = join(root, 'continued-lf.log')
+  const continuedCrlf = join(root, 'continued-crlf.log')
+  writeFileSync(continuedLf, 'C^:^\\Us^\ners^\\fixture^-user')
+  writeFileSync(continuedCrlf, 'C^:^\\Us^\r\ners^\\fixture^-user')
+  assert.equal(findPersonalPathFiles([root]).length, 4)
   const tool = fileURLToPath(new URL('./check_evidence_personal_paths.mjs', import.meta.url))
   const failed = spawnSync(process.execPath, [tool, root], { encoding: 'utf8', windowsHide: true })
   assert.equal(failed.status, 1, failed.stderr)
@@ -47,6 +65,8 @@ test('recursive packet scan and CLI reject a leak without printing its value', t
   assert.equal(failed.stdout.includes('fixture^-user'), false)
   writeFileSync(receipt, JSON.stringify({ HOMEPATH: '<original-user>' }))
   writeFileSync(startup, '<candidate-checkout>')
+  writeFileSync(continuedLf, '<candidate-checkout>')
+  writeFileSync(continuedCrlf, '<candidate-checkout>')
   assert.deepEqual(findPersonalPathFiles([root]), [])
   const passed = spawnSync(process.execPath, [tool, root], { encoding: 'utf8', windowsHide: true })
   assert.equal(passed.status, 0, passed.stderr)

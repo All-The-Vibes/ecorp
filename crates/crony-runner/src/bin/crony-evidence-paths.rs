@@ -207,10 +207,17 @@ impl Root {
 }
 
 fn has_personal_path(text: &str) -> bool {
-    // Captured Windows commands caret-escape separators and punctuation. Keep
+    // Captured Windows commands caret-escape separators, punctuation and line
+    // endings. Join continued lines before removing the remaining carets. Keep
     // the literal check too, including a username that itself contains a caret.
     has_literal_personal_path(text)
-        || (text.contains('^') && has_literal_personal_path(&text.replace('^', "")))
+        || (text.contains('^')
+            && has_literal_personal_path(
+                &text
+                    .replace("^\r\n", "")
+                    .replace("^\n", "")
+                    .replace('^', ""),
+            ))
 }
 
 fn has_literal_personal_path(text: &str) -> bool {
@@ -833,6 +840,22 @@ mod tests {
     }
 
     #[test]
+    fn detector_joins_caret_lf_continuations() {
+        assert!(has_personal_path("C^:^\\Us^\ners^\\fixture^-user"));
+        assert!(has_personal_path("C^:^\\Users^\\^\nfixture^-user"));
+        assert!(!has_personal_path("C:\\Us\ners\\fixture-user"));
+        assert!(!has_personal_path("C^:^\\Us^\ners^\\<original-user>"));
+    }
+
+    #[test]
+    fn detector_joins_caret_crlf_continuations() {
+        assert!(has_personal_path("C^:^\\Us^\r\ners^\\fixture^-user"));
+        assert!(has_personal_path("C^:^\\Users^\\^\r\nfixture^-user"));
+        assert!(!has_personal_path("C:\\Us\r\ners\\fixture-user"));
+        assert!(!has_personal_path("C^:^\\Us^\r\ners^\\<original-user>"));
+    }
+
+    #[test]
     fn bounded_scan_reports_names_and_never_personal_values() {
         let fixture = Fixture::new();
         fs::create_dir(fixture.path("nested")).unwrap();
@@ -847,10 +870,25 @@ mod tests {
             r#"^"C^:^\Users^\fixture^-user^\source^""#,
         )
         .unwrap();
+        fs::write(
+            fixture.path("continued-lf.log"),
+            "C^:^\\Us^\ners^\\fixture^-user",
+        )
+        .unwrap();
+        fs::write(
+            fixture.path("continued-crlf.log"),
+            "C^:^\\Us^\r\ners^\\fixture^-user",
+        )
+        .unwrap();
         let findings = scan_with_hook(&fixture.0, &mut |_, _, _| {}).unwrap();
         assert_eq!(
             findings,
-            ["packet/nested/receipt.json", "packet/startup.log"]
+            [
+                "packet/continued-crlf.log",
+                "packet/continued-lf.log",
+                "packet/nested/receipt.json",
+                "packet/startup.log"
+            ]
         );
         assert!(!findings.join(" ").contains("fixture-user"));
         assert!(!findings.join(" ").contains("fixture^-user"));
