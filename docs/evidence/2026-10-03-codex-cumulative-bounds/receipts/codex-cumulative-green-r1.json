@@ -1,0 +1,88 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "comment": 4174016149,
+  "phase": "green",
+  "status": "passed",
+  "wrapper_pid": 45480,
+  "started_at_utc": "2026-10-03T17:05:55.2410976Z",
+  "checks": [
+    {
+      "log": "<current-run-records>\\codex-cumulative-green-r1-cumulative-bound.log",
+      "command": "cargo test --locked --offline -p crony-runner --bin crony-runner usage_cumulative_total_ -- --test-threads=1",
+      "counts": {
+        "failed": 0,
+        "filtered": 322,
+        "passed": 4,
+        "ignored": 0
+      },
+      "started_at_utc": "2026-10-03T17:05:57.9887018Z",
+      "finished_at_utc": "2026-10-03T17:06:29.1329027Z",
+      "exit_code": 0,
+      "name": "cumulative-bound",
+      "sha256": "fed3b3c63d8b133307eec0e275ff96d4638c885d5a56f7090a6caa5867d4278a"
+    },
+    {
+      "log": "<current-run-records>\\codex-cumulative-green-r1-domain-usage.log",
+      "command": "cargo test --locked --offline -p crony-domain usage::tests -- --test-threads=1",
+      "counts": {
+        "failed": 0,
+        "filtered": 25,
+        "passed": 18,
+        "ignored": 0
+      },
+      "started_at_utc": "2026-10-03T17:06:29.1413478Z",
+      "finished_at_utc": "2026-10-03T17:06:30.2003523Z",
+      "exit_code": 0,
+      "name": "domain-usage",
+      "sha256": "6a0924dc3fda5744775854ff4f0afefcdce5aeec9c82a13c1d9d9f852f065cf4"
+    },
+    {
+      "log": "<current-run-records>\\codex-cumulative-green-r1-all-runner-usage.log",
+      "command": "cargo test --locked --offline -p crony-runner --bin crony-runner usage -- --test-threads=1",
+      "counts": {
+        "failed": 0,
+        "filtered": 306,
+        "passed": 20,
+        "ignored": 0
+      },
+      "started_at_utc": "2026-10-03T17:06:30.2032367Z",
+      "finished_at_utc": "2026-10-03T17:06:39.3560679Z",
+      "exit_code": 0,
+      "name": "all-runner-usage",
+      "sha256": "5d92ef20cfd9d5448f5c3a7d079f913a78ca648bb40d6afaf469e3050d7bdca2"
+    }
+  ],
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T17:05:57.405Z",
+    "source": "<candidate-checkout>",
+    "head": "03f4629fc57c33f2d91da95240a9da6d6db47256",
+    "tree": "4fdc55f3c244ce790625dcbadf72f781c9cc8c30",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M docs/USAGE_PROVENANCE.md",
+    "source_file_count": 7723,
+    "source_fingerprint": "866f55fa0262e5e41f7de36bd611774cf108373efcede2ab92a256700d5970af",
+    "manifest": "<current-run-records>\\codex-cumulative-green-r1-source-before.json",
+    "manifest_sha256": "e5d33ec7f595b037839f467e6191daa180efdfe826c31305caa3fcd2a0794825"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T17:06:41.481Z",
+    "source": "<candidate-checkout>",
+    "head": "03f4629fc57c33f2d91da95240a9da6d6db47256",
+    "tree": "4fdc55f3c244ce790625dcbadf72f781c9cc8c30",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M docs/USAGE_PROVENANCE.md",
+    "source_file_count": 7723,
+    "source_fingerprint": "866f55fa0262e5e41f7de36bd611774cf108373efcede2ab92a256700d5970af",
+    "manifest": "<current-run-records>\\codex-cumulative-green-r1-source-after.json",
+    "manifest_sha256": "6f486942d59d343dc776256cb2e70c0eb757108a0d87f882412e1dc17f28c6c6"
+  },
+  "source_unchanged": true,
+  "reference_manifest": "<current-run-records>\\codex-cumulative-green-source-r1.json",
+  "reference_sha256": "1a94cdff5721279a8ed2c25211215d229ccd77d66527913fbb967cb54f3106fc",
+  "purpose": "Reproduce and correct impossible cumulative Codex totals while preserving invalid evidence, accepted cursors, recovery, duplicates, missing quantities, subset semantics and checked accounting bounds.",
+  "finished_at_utc": "2026-10-03T17:06:42.0547612Z"
+}

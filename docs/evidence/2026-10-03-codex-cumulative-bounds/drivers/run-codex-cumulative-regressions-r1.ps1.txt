@@ -1,0 +1,83 @@
+#requires -Version 7.5
+param(
+    [Parameter(Mandatory)][ValidateSet('red','green')][string]$Phase,
+    [Parameter(Mandatory)][string]$ReferenceManifest
+)
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$product = '<candidate-checkout>'
+$prefix = "codex-cumulative-$Phase-r1"
+$receiptPath = Join-Path $PSScriptRoot "$prefix.json"
+if (Test-Path -LiteralPath $receiptPath) { throw 'Preserve prior regression attempt.' }
+$reference = Get-Content -LiteralPath $ReferenceManifest -Raw | ConvertFrom-Json -AsHashtable -Depth 30
+if ($reference.head -cne '03f4629fc57c33f2d91da95240a9da6d6db47256' -or $reference.branch -cne 'codex/issue236-usage-provenance') { throw 'Unexpected regression source.' }
+foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|GIT_|ISSUE236_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN','RUSTFLAGS','RUSTDOCFLAGS')) {
+        [Environment]::SetEnvironmentVariable($name,$null,'Process')
+    }
+}
+$env:PATH = '<pinned-toolchain>\node-v24.21.0-win-x64;'+$env:PATH
+$env:CARGO_TARGET_DIR = Join-Path $product 'target/issue236-review-r5'
+$env:CARGO_BUILD_JOBS = '2'
+$env:CARGO_INCREMENTAL = '0'
+$env:CARGO_PROFILE_DEV_DEBUG = '0'
+$env:CARGO_PROFILE_TEST_DEBUG = '0'
+$env:CARGO_NET_OFFLINE = 'true'
+$env:RUST_TEST_THREADS = '1'
+$receipt = [ordered]@{
+    repository='All-The-Vibes/ecorp';issue=236;pr=402;comment=4174016149;phase=$Phase;status='running';wrapper_pid=$PID;
+    started_at_utc=[DateTime]::UtcNow.ToString('o');checks=@();source_before=$null;source_after=$null;source_unchanged=$null;
+    reference_manifest=$ReferenceManifest;reference_sha256=(Get-FileHash -LiteralPath $ReferenceManifest).Hash.ToLowerInvariant();
+    purpose='Reproduce and correct impossible cumulative Codex totals while preserving invalid evidence, accepted cursors, recovery, duplicates, missing quantities, subset semantics and checked accounting bounds.'
+}
+function Save { [IO.File]::WriteAllText($receiptPath,($receipt | ConvertTo-Json -Depth 35)+[Environment]::NewLine) }
+function Snapshot([string]$Suffix) {
+    $value = & node (Join-Path $PSScriptRoot 'issue236-source-snapshot-r1.mjs') $product (Join-Path $PSScriptRoot "$prefix-source-$Suffix.json")
+    if ($LASTEXITCODE) { throw 'Source snapshot failed.' }
+    $parsed = $value | ConvertFrom-Json -AsHashtable
+    if ($parsed.head -cne $reference.head -or $parsed.source_fingerprint -cne $reference.source_fingerprint) { throw 'Source changed during regression.' }
+    return $parsed
+}
+Save
+Push-Location -LiteralPath $product
+try {
+    $receipt.source_before = Snapshot 'before'
+    Save
+    $lanes = @(@{name='cumulative-bound';args=@('test','--locked','--offline','-p','crony-runner','--bin','crony-runner','usage_cumulative_total_','--','--test-threads=1')})
+    if ($Phase -eq 'green') {
+        $lanes += @(
+            @{name='domain-usage';args=@('test','--locked','--offline','-p','crony-domain','usage::tests','--','--test-threads=1')},
+            @{name='all-runner-usage';args=@('test','--locked','--offline','-p','crony-runner','--bin','crony-runner','usage','--','--test-threads=1')}
+        )
+    }
+    foreach ($lane in $lanes) {
+        $log = Join-Path $PSScriptRoot "$prefix-$($lane.name).log"
+        if (Test-Path -LiteralPath $log) { throw 'Preserve prior log.' }
+        $started = [DateTime]::UtcNow.ToString('o')
+        & cargo.exe @($lane.args) *> $log
+        $code = $LASTEXITCODE
+        $raw = Get-Content -LiteralPath $log -Raw
+        $m = [regex]::Match($raw,'test result: \w+\. (\d+) passed; (\d+) failed; (\d+) ignored; (\d+) measured; (\d+) filtered out;')
+        if (!$m.Success) { throw 'Regression did not execute tests.' }
+        $counts = @{passed=[int]$m.Groups[1].Value;failed=[int]$m.Groups[2].Value;ignored=[int]$m.Groups[3].Value;filtered=[int]$m.Groups[5].Value}
+        $receipt.checks += @{name=$lane.name;command=('cargo '+($lane.args -join ' '));exit_code=$code;counts=$counts;started_at_utc=$started;finished_at_utc=[DateTime]::UtcNow.ToString('o');log=$log;sha256=(Get-FileHash -LiteralPath $log).Hash.ToLowerInvariant()}
+        Save
+        Write-Output "$($lane.name) exit=$code counts=$($counts | ConvertTo-Json -Compress)"
+    }
+    if ($Phase -eq 'red') {
+        if ($receipt.checks[0].exit_code -ne 101 -or $receipt.checks[0].counts.failed -ne 3 -or $receipt.checks[0].counts.passed -ne 1) { throw 'Red reproduction differed from the expected three failures and one passing control.' }
+        $receipt.status = 'reproduced'
+    } else {
+        if (@($receipt.checks | Where-Object { $_.exit_code -ne 0 -or $_.counts.failed -ne 0 }).Count) { throw 'Corrected regressions failed.' }
+        $receipt.status = 'passed'
+    }
+} catch { $receipt.status='failed_to_complete';$receipt.failure=$_.Exception.Message }
+finally {
+    try { $receipt.source_after = Snapshot 'after'; $receipt.source_unchanged = $true }
+    catch { $receipt.status='failed_to_complete';$receipt.source_failure=$_.Exception.Message }
+    Pop-Location
+    $receipt.finished_at_utc=[DateTime]::UtcNow.ToString('o')
+    Save
+}
+[pscustomobject]$receipt | Select-Object status,source_unchanged,failure | ConvertTo-Json
+if ($receipt.status -eq 'failed_to_complete') { exit 1 }

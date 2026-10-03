@@ -73,7 +73,8 @@
     "cleanup": "Verified every exact owned process stopped. Database, synthetic source, credentials, ownership and evidence retained."
   },
   "canonical_validation": {
-    "recorded_separately": true,
+    "kind": "historical-validation",
+    "status": "passed",
     "required_command": "pnpm check",
     "required_named_plan": [
       "migrations",
@@ -88,8 +89,16 @@
       "web-build",
       "web-lint"
     ],
-    "run_receipt": "issue236-canonical-late-replay-final-r3.json",
-    "publication": "PR #402 source-bound validation handoff"
+    "run_receipt": "canonical/issue236-canonical-late-replay-final-r3.json",
+    "report": "canonical/readiness-report.json",
+    "log": "canonical/canonical.log.txt",
+    "source_binding": "canonical/evidence.json",
+    "commit_receipt": "canonical/issue236-late-replay-commit-r3.json",
+    "validated_commit": "03f4629fc57c33f2d91da95240a9da6d6db47256",
+    "validated_tree": "4fdc55f3c244ce790625dcbadf72f781c9cc8c30",
+    "validated_source_fingerprint": "f05ee46a83843638ca854139cd9249a1e22e0b4f47ff60fba6643c42b738cc22",
+    "validation_finished_at_utc": "2026-10-03T16:45:21.7110335Z",
+    "scope": "Observed historical validation of this packet and the late-replay correction at the named commit; subsequent changes need their own validation."
   },
   "issue_completed": false,
   "ready_for_merge": false,
@@ -426,6 +435,65 @@
       "original_sha256": "b60f52ddee5626955172a5bc60c970d12e9f4d1b95812d790f74ad7b306e493b",
       "published_sha256": "dce6ee1c6a2c7e7e85b92accd45ecd88b7fc18cc8144eac9052cdc1cb4ae7b05",
       "transformation": "exact local roots including caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "canonical/issue236-canonical-late-replay-final-r3.json",
+      "original_sha256": "009c812996ca8dbaf8f04e675c851a081cd7365591738692c5e97cababd25785",
+      "published_sha256": "177a57d4e5dc12ad8e94d7a97e48345cc7d22049c319ca012b92d6c7b4d5509d",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "canonical/issue236-late-replay-commit-r3.json",
+      "original_sha256": "710c3224d7082ccdfa200d1929fec99b5db79e7dbb8dd7ba29be7a08cc43f958",
+      "published_sha256": "710c3224d7082ccdfa200d1929fec99b5db79e7dbb8dd7ba29be7a08cc43f958",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "canonical/readiness-report.json",
+      "original_sha256": "5eb96f056228160b688454d72e2cbddd4fa548beabb6a94a280ebb87f9c11706",
+      "published_sha256": "5eb96f056228160b688454d72e2cbddd4fa548beabb6a94a280ebb87f9c11706",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "canonical/canonical.log.txt",
+      "original_sha256": "2e10d359bfee3e231428e08acd138b759c53a8e7933c4cde468652f72c2a200b",
+      "published_sha256": "46bc5f88a8eba0692693208f9f1498c776dd34e2e9bac051667326b9b9559fa9",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "canonical/source-before.json",
+      "original_sha256": "01984abb9b08086f89bf1ce80b3a72c3eb1d48acfb7b2c80c2ae50e7c239b0d1",
+      "published_sha256": "1b381f0157b49c2729df6dc1224e14bd6c159add59f42da95058d459157c1ff3",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "canonical/source-after.json",
+      "original_sha256": "d34a5c35e7699646bf015d402d4e5f7156dfead19b0e6426b374a38a5cb450ab",
+      "published_sha256": "62901520cba717413de66b9986fb8ce6aada56451fa7f4d6d9daf40fad748f26",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "canonical/staged-source.json",
+      "original_sha256": "26237096fb11345d87f2f57b764b87e7433159c1e54b285deda96c23e613defa",
+      "published_sha256": "6d56d6a811d3a3f7f0b0b7ede7b66753a7633195fb70df88d9cff842d0baf877",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "canonical/install-0.log.txt",
+      "original_sha256": "7f0bc0d76245cb658615b58c9ef63316b8c15db9a42ebac7d23163d70c2f2606",
+      "published_sha256": "62ac20a837d95d9511818796b68a1d6ba8b28df8585fe053b3af720e63951f1b",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "canonical/install-1.log.txt",
+      "original_sha256": "daf9a45148579a4fd674ff756a977b2762afb94e46c5b04647f23a0501e86cb2",
+      "published_sha256": "269072b76a1864462b7c800b5a08986f9069846491d482d09038720b577ce3e1",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "canonical/evidence.json",
+      "published_sha256": "cb6ad8cf2c75aad93fe29ed67f04d0b2534e4bbf7425340035c0d73a330d30db",
+      "transformation": "new source-bound index of retained historical artifacts"
     }
   ]
 }

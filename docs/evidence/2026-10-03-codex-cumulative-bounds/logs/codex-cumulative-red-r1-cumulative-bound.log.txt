@@ -1,0 +1,37 @@
+   Compiling crony-runner v0.1.0 (<candidate-checkout>\crates\crony-runner)
+    Finished `test` profile [unoptimized] target(s) in 50.37s
+     Running unittests src\main.rs (target\issue236-review-r5\debug\deps\crony_runner-02b0585a373d56cb.exe)
+
+running 4 tests
+test adapter::codex::tests::usage_cumulative_total_bound_allows_prior_history_and_checked_limits ... FAILED
+test adapter::codex::tests::usage_cumulative_total_bound_preserves_missing_quantities_and_subsets ... ok
+test adapter::codex::tests::usage_cumulative_total_increase_must_cover_the_next_call ... FAILED
+test adapter::codex::tests::usage_cumulative_total_must_cover_an_initial_call ... FAILED
+
+failures:
+
+---- adapter::codex::tests::usage_cumulative_total_bound_allows_prior_history_and_checked_limits stdout ----
+
+thread 'adapter::codex::tests::usage_cumulative_total_bound_allows_prior_history_and_checked_limits' (43340) panicked at crates\crony-runner\src\adapter\codex.rs:1684:9:
+assertion failed: record_usage(&next, &mut parsed).unwrap().validate().is_err()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- adapter::codex::tests::usage_cumulative_total_increase_must_cover_the_next_call stdout ----
+
+thread 'adapter::codex::tests::usage_cumulative_total_increase_must_cover_the_next_call' (37616) panicked at crates\crony-runner\src\adapter\codex.rs:1590:13:
+{"threadId":"thread-1","tokenUsage":{"last":{"inputTokens":6,"outputTokens":2},"total":{"totalTokens":13}},"turnId":"turn-1"}
+
+---- adapter::codex::tests::usage_cumulative_total_must_cover_an_initial_call stdout ----
+
+thread 'adapter::codex::tests::usage_cumulative_total_must_cover_an_initial_call' (45096) panicked at crates\crony-runner\src\adapter\codex.rs:1547:13:
+{"threadId":"thread-1","tokenUsage":{"last":{"inputTokens":6,"outputTokens":2},"total":{"totalTokens":7}},"turnId":"turn-1"}
+
+
+failures:
+    adapter::codex::tests::usage_cumulative_total_bound_allows_prior_history_and_checked_limits
+    adapter::codex::tests::usage_cumulative_total_increase_must_cover_the_next_call
+    adapter::codex::tests::usage_cumulative_total_must_cover_an_initial_call
+
+test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 322 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p crony-runner --bin crony-runner`

@@ -44,10 +44,16 @@ artifact identity, source preservation and disposable workspace cleanup. This
 is deterministic integration coverage; the new late-replay case is exercised
 by the native SQL regressions above.
 
-The canonical contributor result for the final staged publication is recorded
-separately in `issue236-canonical-late-replay-final-r3.json` and the corresponding PR #402 handoff. This packet
-contains the observed native and browser runs. Its files are frozen before that
-complete `pnpm check` run so the same runtime bytes reach the commit.
+Historical canonical validation passed all eleven `pnpm check` gates on
+the staged tree `4fdc55f3c244ce790625dcbadf72f781c9cc8c30`, subsequently committed
+as `03f4629fc57c33f2d91da95240a9da6d6db47256`. The [retained receipt](canonical/issue236-canonical-late-replay-final-r3.json),
+[readiness report](canonical/readiness-report.json), [log](canonical/canonical.log.txt)
+and [source binding](canonical/evidence.json) are published in this packet.
+They record 3,105 Node tests (3,040 passed, 65 skipped), 937 passed and 596
+ignored Rust tests, and one passed EVM test, with no failed checks. The
+before/after manifests, locked-install logs and commit receipt establish the
+original source identity. This historical result does not validate subsequent
+changes, including the later cumulative-total correction.
 
 ## Remaining scope
 

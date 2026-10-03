@@ -593,19 +593,40 @@ fn record_usage(params: &Value, parsed: &mut ParsedRun) -> Option<UsageSnapshot>
         parsed.usage.observe(&usage);
         return Some(usage);
     };
-    if let Some(previous) = parsed.last_usage_total
-        && total_tokens <= previous
+    if parsed.last_usage_total == Some(total_tokens)
+        && parsed
+            .last_usage_report
+            .as_ref()
+            .is_some_and(|previous| previous.same_observation(&usage))
     {
-        if total_tokens == previous
-            && parsed
-                .last_usage_report
-                .as_ref()
-                .is_some_and(|previous| previous.same_observation(&usage))
-        {
-            return None;
-        }
-        // Retain regressions and contradictory equal-cursor reports without
-        // rewinding the accepted cursor or charging their quantities.
+        return None;
+    }
+    let provenance = usage
+        .usage_provenance
+        .as_ref()
+        .expect("native usage provenance");
+    // Native `total` includes `last`. Known subsets bound a missing parent, but
+    // do not supply that missing quantity or imply disjoint cache categories.
+    let known_input = usage
+        .input_tokens
+        .max(provenance.cached_input_tokens)
+        .max(provenance.cache_write_input_tokens)
+        .unwrap_or(0);
+    let known_output = usage
+        .output_tokens
+        .max(provenance.reasoning_output_tokens)
+        .unwrap_or(0);
+    let covers_last_call = total_tokens
+        .checked_sub(parsed.last_usage_total.unwrap_or(0))
+        .zip(known_input.checked_add(known_output))
+        .is_some_and(|(increase, known)| increase >= known);
+    if parsed
+        .last_usage_total
+        .is_some_and(|previous| total_tokens <= previous)
+        || !covers_last_call
+    {
+        // Retain regressions, contradictory equal-cursor reports and impossible
+        // totals without changing the accepted cursor or charging quantities.
         usage
             .usage_provenance
             .as_mut()
@@ -1521,6 +1542,201 @@ mod tests {
         assert_eq!(parsed.usage.report().input_tokens, Some(16));
         assert_eq!(parsed.usage.report().output_tokens, Some(4));
         assert_eq!(parsed.usage.report().coverage()["tokens"], "invalid");
+    }
+
+    #[test]
+    fn usage_cumulative_total_must_cover_an_initial_call() {
+        for (total, last) in [
+            (7, json!({"inputTokens":6,"outputTokens":2})),
+            (5, json!({"inputTokens":6})),
+            (1, json!({"outputTokens":2})),
+            (3, json!({"cachedInputTokens":4})),
+            (3, json!({"cacheWriteInputTokens":4})),
+            (1, json!({"reasoningOutputTokens":2})),
+            (7, json!({"inputTokens":6,"reasoningOutputTokens":2})),
+            (7, json!({"cachedInputTokens":6,"outputTokens":2})),
+        ] {
+            let mut parsed = ParsedRun {
+                thread_id: Some("thread-1".to_owned()),
+                turn_id: Some("turn-1".to_owned()),
+                ..ParsedRun::default()
+            };
+            let frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":total},"last":last
+            }});
+            let conflict = record_usage(&frame, &mut parsed).expect("retain impossible first call");
+            assert!(conflict.validate().is_err(), "{frame}");
+            assert_eq!(
+                serde_json::to_value(&conflict).unwrap()["usage_provenance"]["invalid_fields"],
+                json!([{"field":"cumulative_total_tokens","reason":"conflicting_observation"}])
+            );
+            assert_eq!(parsed.last_usage_total, None);
+            assert_eq!(parsed.last_usage_report, None);
+            assert_eq!(parsed.usage.report().input_tokens, None);
+            assert_eq!(parsed.usage.report().output_tokens, None);
+
+            let correction = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":12},"last":{"inputTokens":10,"outputTokens":2}
+            }});
+            assert!(
+                record_usage(&correction, &mut parsed)
+                    .unwrap()
+                    .validate()
+                    .is_ok()
+            );
+            assert!(record_usage(&correction, &mut parsed).is_none());
+            assert_eq!(parsed.last_usage_total, Some(12));
+            assert_eq!(parsed.usage.report().input_tokens, Some(10));
+            assert_eq!(parsed.usage.report().output_tokens, Some(2));
+            assert_eq!(parsed.usage.report().coverage()["tokens"], "invalid");
+        }
+    }
+
+    #[test]
+    fn usage_cumulative_total_increase_must_cover_the_next_call() {
+        let mut parsed = ParsedRun {
+            thread_id: Some("thread-1".to_owned()),
+            turn_id: Some("turn-1".to_owned()),
+            ..ParsedRun::default()
+        };
+        let first_frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":12},"last":{"inputTokens":10,"outputTokens":2}
+        }});
+        let first = record_usage(&first_frame, &mut parsed).unwrap();
+        for total in 13..20 {
+            let frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":total},"last":{"inputTokens":6,"outputTokens":2}
+            }});
+            let conflict = record_usage(&frame, &mut parsed).expect("retain contradictory delta");
+            assert!(conflict.validate().is_err(), "{frame}");
+            assert_eq!(
+                serde_json::to_value(&conflict).unwrap()["usage_provenance"]["invalid_fields"],
+                json!([{"field":"cumulative_total_tokens","reason":"conflicting_observation"}])
+            );
+            assert_eq!(parsed.last_usage_total, Some(12));
+            assert_eq!(parsed.last_usage_report.as_ref(), Some(&first));
+            assert_eq!(parsed.usage.report().input_tokens, Some(10));
+            assert_eq!(parsed.usage.report().output_tokens, Some(2));
+            assert!(record_usage(&first_frame, &mut parsed).is_none());
+        }
+        let correction = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":20},"last":{"inputTokens":6,"outputTokens":2}
+        }});
+        assert!(
+            record_usage(&correction, &mut parsed)
+                .unwrap()
+                .validate()
+                .is_ok()
+        );
+        assert!(record_usage(&correction, &mut parsed).is_none());
+        assert_eq!(parsed.last_usage_total, Some(20));
+        assert_eq!(parsed.usage.report().input_tokens, Some(16));
+        assert_eq!(parsed.usage.report().output_tokens, Some(4));
+        assert_eq!(parsed.usage.report().coverage()["tokens"], "invalid");
+    }
+
+    #[test]
+    fn usage_cumulative_total_bound_preserves_missing_quantities_and_subsets() {
+        for (total, last, input, output) in [
+            (6, json!({"inputTokens":6}), Some(6), None),
+            (2, json!({"outputTokens":2}), None, Some(2)),
+            (
+                6,
+                json!({"cachedInputTokens":6,"cacheWriteInputTokens":5}),
+                None,
+                None,
+            ),
+            (
+                5,
+                json!({"inputTokens":2,"reasoningOutputTokens":3}),
+                Some(2),
+                None,
+            ),
+            (0, json!({"outputTokens":0}), None, Some(0)),
+            (0, json!({}), None, None),
+            (
+                120,
+                json!({"inputTokens":100,"outputTokens":20,"cachedInputTokens":100,
+                "cacheWriteInputTokens":100,"reasoningOutputTokens":20}),
+                Some(100),
+                Some(20),
+            ),
+        ] {
+            let mut parsed = ParsedRun {
+                thread_id: Some("thread-1".to_owned()),
+                turn_id: Some("turn-1".to_owned()),
+                ..ParsedRun::default()
+            };
+            let frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":total},"last":last
+            }});
+            let report = record_usage(&frame, &mut parsed).expect("retain known lower bound");
+            assert!(report.validate().is_ok(), "{frame}");
+            assert_eq!(report.input_tokens, input);
+            assert_eq!(report.output_tokens, output);
+            assert_eq!(parsed.usage.report().input_tokens, input);
+            assert_eq!(parsed.usage.report().output_tokens, output);
+            assert_eq!(parsed.usage.report().cost_microusd, None);
+            assert_eq!(parsed.last_usage_total, Some(total));
+            assert!(record_usage(&frame, &mut parsed).is_none());
+        }
+    }
+
+    #[test]
+    fn usage_cumulative_total_bound_allows_prior_history_and_checked_limits() {
+        let mut parsed = ParsedRun {
+            thread_id: Some("thread-1".to_owned()),
+            turn_id: Some("turn-1".to_owned()),
+            ..ParsedRun::default()
+        };
+        let ceiling = i64::MAX as u64;
+        let frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":ceiling-8},"last":{"inputTokens":10,"outputTokens":2}
+        }});
+        assert!(
+            record_usage(&frame, &mut parsed)
+                .unwrap()
+                .validate()
+                .is_ok()
+        );
+        let mut next = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":ceiling-7},"last":{"inputTokens":6,"outputTokens":2}
+        }});
+        assert!(
+            record_usage(&next, &mut parsed)
+                .unwrap()
+                .validate()
+                .is_err()
+        );
+        assert_eq!(parsed.last_usage_total, Some(ceiling - 8));
+        next["tokenUsage"]["total"]["totalTokens"] = json!(ceiling);
+        assert!(record_usage(&next, &mut parsed).unwrap().validate().is_ok());
+        assert_eq!(parsed.usage.report().input_tokens, Some(16));
+        assert_eq!(parsed.usage.report().output_tokens, Some(4));
+
+        for last in [
+            json!({"inputTokens":ceiling,"outputTokens":1}),
+            json!({"cachedInputTokens":ceiling,"reasoningOutputTokens":ceiling}),
+            json!({"inputTokens":u64::MAX}),
+        ] {
+            let mut parsed = ParsedRun {
+                thread_id: Some("thread-1".to_owned()),
+                turn_id: Some("turn-1".to_owned()),
+                ..ParsedRun::default()
+            };
+            let frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":ceiling},"last":last
+            }});
+            assert!(
+                record_usage(&frame, &mut parsed)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+            assert_eq!(parsed.last_usage_total, None);
+            assert_eq!(parsed.usage.report().input_tokens, None);
+            assert_eq!(parsed.usage.report().output_tokens, None);
+        }
     }
 
     #[test]

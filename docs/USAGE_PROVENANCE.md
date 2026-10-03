@@ -36,7 +36,7 @@ remain unknown unless separately measured.
 | Mapping | Native evidence and limitation |
 | --- | --- |
 | `copilot_sdk_1_0_11_usage_v1` | SDK 1.0.11 with checked CLI 1.0.79; public `assistant.usage` input/output, cache, reasoning, model, event and optional call IDs. Native `cost` is a model multiplier; `copilotUsage.totalNanoAiu` is nano-AI units. Neither is USD. Reasoning is an output subset; cache inclusion is not asserted for every model. |
-| `codex_app_server_last_v1` | `thread/tokenUsage/updated` uses `last` as the call delta, scoped to the active thread/turn. The monotonic total is only a duplicate cursor. Cache/reasoning are subsets. An exact Codex binary version is not currently enforced or invented in provenance. USD is unavailable. |
+| `codex_app_server_last_v1` | `thread/tokenUsage/updated` uses `last` as the call delta, scoped to the active thread/turn. The cumulative total supplies a duplicate cursor and consistency bound, never a charge. Cache/reasoning are subsets. An exact Codex binary version is not currently enforced or invented in provenance. USD is unavailable. |
 | Generic external and synthetic fixture mappings | Preserve optional integer snake/camel-case counts; conflicting aliases are invalid. A supplied micro-USD amount has its explicit unit, but is not independently verified billing. No provider-wide identity or aggregate convention is inferred. |
 | `retained_usage_aggregate_v1` | Collect-only session evidence. A missing component keeps that aggregate component unknown. It must never be charged again as another call. |
 
@@ -48,6 +48,12 @@ The cached crate's VCS metadata says `dirty:true`; this is a file-level check,
 not a claim that the whole crate equals upstream. Optional type definitions do
 not establish that every CLI/model emits every optional field. Private billing
 objects, prompts, and quota internals are not collected.
+
+Codex's native `TokenUsageInfo::append_last_usage` adds each last call to the
+thread total. This was checked in upstream `codex-rs/protocol/src/protocol.rs`
+at tags `rust-v0.153.4` and `rust-v0.159.2`; the installed 0.159.2 app-server's
+generated JSON schema also exposes separate `total` and `last` breakdowns.
+These observations document the contract; they do not enforce a binary pin.
 
 ## Admission, identities, and controls
 
@@ -69,10 +75,16 @@ Journal event replay remains idempotent. Available native event/API/provider
 call aliases identify additional replays within the same assigned run. Matching
 replays may enrich aliases transitively; contradictory observations cannot claim
 new aliases or overwrite a prior quantity. Equal counts never identify a call.
-Within the active Codex turn, a regressing cumulative cursor and a contradictory
-report at the same cursor retain invalid, uncharged evidence without rewinding
-the accepted cursor. An exact duplicate at the accepted cursor is suppressed;
-a later increasing cursor can still contribute its call delta once.
+Within the active Codex turn, a regressing cumulative cursor, a contradictory
+report at the same cursor, and an impossible cumulative increase retain invalid,
+uncharged evidence without changing the accepted cursor. The initial total and
+each accepted increase must cover the known last-call quantity: the largest
+known input/cache subset plus the largest known output/reasoning subset, using
+checked arithmetic. Missing quantities stay unknown; subsets are never added to
+their parents or assumed disjoint. A larger cumulative gap remains valid because
+the thread may include prior or unobserved calls. An exact duplicate at the
+accepted cursor is suppressed; a later consistent report can still contribute
+its call delta once, while the invalid coverage remains visible.
 Without native IDs, distinct journal frames remain distinct and identity
 coverage stays unavailable. Four distinct worker/retry/auditor/failed-call
 observations of 100/20, 30/10, 10/5, and 7/3 total 147 input plus 38 output,

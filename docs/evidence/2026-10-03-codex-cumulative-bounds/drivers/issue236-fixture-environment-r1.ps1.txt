@@ -1,0 +1,36 @@
+#requires -Version 7.5
+# Returns only the reviewed fixture allowlist and fresh owned paths, never inherited credentials.
+[CmdletBinding()]
+param([Parameter(Mandatory)][string]$Repository,[Parameter(Mandatory)][string]$Directory)
+$ErrorActionPreference = 'Stop'
+$node = '<pinned-toolchain>\node-v24.21.0-win-x64\node.exe'
+$info = [Diagnostics.ProcessStartInfo]::new($node)
+$info.UseShellExecute = $false
+$info.CreateNoWindow = $true
+$info.RedirectStandardOutput = $true
+$info.RedirectStandardError = $true
+$info.Environment.Clear()
+foreach ($name in @('PATH','PATHEXT','SystemRoot','SystemDrive','WINDIR','ComSpec')) {
+    $value = [Environment]::GetEnvironmentVariable($name,'Process')
+    if ($null -ne $value) { $info.Environment[$name] = $value }
+}
+$code = @'
+import {pathToFileURL} from 'node:url';
+import path from 'node:path';
+const [modulePath,directory] = process.argv.slice(1);
+const {usageFixtureEnvironment} = await import(pathToFileURL(modulePath));
+console.log(JSON.stringify(await usageFixtureEnvironment(process.env,directory)));
+'@
+foreach ($argument in @('--input-type=module','-e',$code,(Join-Path $PSScriptRoot 'issue236-fixture-environment-r1.mjs'),$Directory)) { $info.ArgumentList.Add($argument) }
+$process = [Diagnostics.Process]::new()
+$process.StartInfo = $info
+try {
+    if (!$process.Start()) { throw 'Could not start fixture environment creation.' }
+    $stdout = $process.StandardOutput.ReadToEndAsync()
+    $stderr = $process.StandardError.ReadToEndAsync()
+    if (!$process.WaitForExit(15000)) { $process.Kill(); [void]$process.WaitForExit(5000); throw 'Fixture environment creation timed out.' }
+    $output = $stdout.GetAwaiter().GetResult()
+    $diagnostic = $stderr.GetAwaiter().GetResult()
+    if ($process.ExitCode -ne 0) { throw 'Fixture environment creation failed; existing paths are retained.' }
+    return ($output | ConvertFrom-Json -AsHashtable)
+} finally { $process.Dispose(); $output=$null; $diagnostic=$null; $stdout=$null; $stderr=$null }
