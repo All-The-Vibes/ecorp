@@ -20,6 +20,8 @@ use crate::factory::{
     source_git_output,
 };
 
+pub mod active_checkpoint;
+
 #[derive(Debug, Args)]
 pub struct FactoryPublishArgs {
     pub corp_id: Uuid,
@@ -82,13 +84,7 @@ pub struct FactoryPublishArgs {
 struct PublicationPlan {
     source_deliverable_id: Uuid,
     artifact_id: Uuid,
-    target_repository: String,
-    base_ref: String,
-    verified_base_commit: String,
-    branch: String,
-    commit_sha: String,
-    title: String,
-    body: String,
+    target: PublicationTarget,
     authorization_id: Uuid,
     authorization_reason: String,
     effect_key: String,
@@ -96,6 +92,32 @@ struct PublicationPlan {
     publisher_id: String,
     issue_number: i64,
     issue_url: String,
+}
+
+impl std::ops::Deref for PublicationPlan {
+    type Target = PublicationTarget;
+    fn deref(&self) -> &Self::Target {
+        &self.target
+    }
+}
+
+#[cfg(test)]
+impl std::ops::DerefMut for PublicationPlan {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.target
+    }
+}
+
+/// Native publication helpers need a target, never fabricated completion authority.
+#[derive(Debug)]
+struct PublicationTarget {
+    target_repository: String,
+    base_ref: String,
+    verified_base_commit: String,
+    branch: String,
+    commit_sha: String,
+    title: String,
+    body: String,
     project_owner: String,
     project_number: i64,
     project_item_id: String,
@@ -447,7 +469,14 @@ async fn execute_publication(
         "prepare",
     )
     .await?;
-    let bytes = download_deliverable(client, server, args, plan.artifact_id).await?;
+    let bytes = download_deliverable(
+        client,
+        server,
+        args.corp_id,
+        args.actor_id,
+        plan.artifact_id,
+    )
+    .await?;
     let document: CommitBranchDocument =
         serde_json::from_slice(&bytes).context("decode commit/branch deliverable")?;
     let bundle = validate_deliverable_document(&document, &response.publication)?;
@@ -522,12 +551,30 @@ async fn execute_publication(
             "pull-request",
         )
         .await?;
-        let pull_request = create_or_adopt_pull_request(
-            args,
-            plan,
-            &resolved_base.pull_request_base_ref,
-            &workspace.body,
-        )?;
+        let pull_request = if response
+            .publication
+            .provenance
+            .get("active_checkpoint")
+            .is_some_and(|checkpoint| !checkpoint.is_null())
+        {
+            active_checkpoint::promote(
+                client,
+                server,
+                args,
+                plan,
+                response,
+                &resolved_base.pull_request_base_ref,
+                &workspace,
+            )
+            .await?
+        } else {
+            create_or_adopt_pull_request(
+                args,
+                plan,
+                &resolved_base.pull_request_base_ref,
+                &workspace.body,
+            )?
+        };
         test_crash("after_pull_request_remote");
         checkpoint(
             client,
@@ -567,7 +614,8 @@ async fn execute_publication(
     }
 
     if response.publication.state != PullRequestPublicationState::Published {
-        let (project_id, status_field_id, review_option_id, status) = project_status(args, plan)?;
+        let (project_id, status_field_id, review_option_id, status) =
+            project_status(&args.github_cli, plan, &plan.project_review_status)?;
         if status != plan.project_status_before && status != plan.project_review_status {
             bail!(
                 "GitHub Project item status is {status}, expected {} or {}",
@@ -585,7 +633,8 @@ async fn execute_publication(
             "project-review-read",
         )
         .await?;
-        let refreshed_status = project_item_status(args, plan, &project_id, &status_field_id)?;
+        let refreshed_status =
+            project_item_status(&args.github_cli, plan, &project_id, &status_field_id)?;
         revalidate_durable_pull_request(
             args,
             plan,
@@ -621,13 +670,14 @@ async fn execute_publication(
             );
             if let Err(error) = edit_result {
                 let recovered_status =
-                    project_item_status(args, plan, &project_id, &status_field_id)?;
+                    project_item_status(&args.github_cli, plan, &project_id, &status_field_id)?;
                 if recovered_status != plan.project_review_status {
                     return Err(error).context("move GitHub Project item into review");
                 }
             }
         }
-        let final_status = project_item_status(args, plan, &project_id, &status_field_id)?;
+        let final_status =
+            project_item_status(&args.github_cli, plan, &project_id, &status_field_id)?;
         if final_status != plan.project_review_status {
             bail!(
                 "GitHub Project item status is {final_status}, not {}",
@@ -672,12 +722,12 @@ async fn execute_publication(
 }
 
 fn project_item_status(
-    args: &FactoryPublishArgs,
-    plan: &PublicationPlan,
+    github_cli: &Path,
+    plan: &PublicationTarget,
     project_id: &str,
     status_field_id: &str,
 ) -> Result<String> {
-    let item = load_project_item(args, plan)?;
+    let item = load_project_item(github_cli, plan)?;
     if item.kind != "ProjectV2Item"
         || item.id != plan.project_item_id
         || item.project.id != project_id
@@ -802,13 +852,14 @@ async fn record_failure(
 async fn download_deliverable(
     client: &Client,
     server: &str,
-    args: &FactoryPublishArgs,
+    corp_id: Uuid,
+    actor_id: Uuid,
     artifact_id: Uuid,
 ) -> Result<Vec<u8>> {
     let response = client
         .get(format!(
             "{server}/api/corps/{}/artifacts/{artifact_id}?actor_id={}",
-            args.corp_id, args.actor_id
+            corp_id, actor_id
         ))
         .send()
         .await
@@ -870,7 +921,7 @@ fn validate_deliverable_document(
 
 fn prepare_repository(
     workspace: &TemporaryPublisherWorkspace,
-    plan: &PublicationPlan,
+    plan: &PublicationTarget,
     document: &CommitBranchDocument,
 ) -> Result<ResolvedRemoteBase> {
     source_git_output(&workspace.repository, &["init", "--bare"])?;
@@ -973,6 +1024,56 @@ fn import_publication_bundle(
         ],
     )
     .context("verify publication commit descends from the authorized base")?;
+    validate_imported_parent(&workspace.repository, document, expected_commit)?;
+    Ok(())
+}
+
+fn validate_imported_parent(
+    repository: &Path,
+    document: &CommitBranchDocument,
+    head: &str,
+) -> Result<()> {
+    let Some(parent) = document.metadata.get("parent_commit") else {
+        if document.metadata.get("purpose").and_then(Value::as_str) == Some("active_checkpoint") {
+            bail!("active checkpoint omitted its original HEAD");
+        }
+        return Ok(());
+    };
+    let parent = parent
+        .as_str()
+        .filter(|parent| {
+            matches!(parent.len(), 40 | 64)
+                && parent.len() == head.len()
+                && parent.len() == document.base_commit.len()
+                && parent.bytes().all(|byte| byte.is_ascii_hexdigit())
+        })
+        .context("publication parent is not a commit identity")?;
+    let object_format = git_text(repository, &["rev-parse", "--show-object-format"])?;
+    if !matches!(
+        (object_format.as_str(), parent.len()),
+        ("sha1", 40) | ("sha256", 64)
+    ) {
+        bail!("publication parent does not match the repository object format");
+    }
+    if head.eq_ignore_ascii_case(parent) {
+        let head_tree = git_text(repository, &["rev-parse", &format!("{head}^{{tree}}")])?;
+        let base_tree = git_text(
+            repository,
+            &["rev-parse", &format!("{}^{{tree}}", document.base_commit)],
+        )?;
+        if head.eq_ignore_ascii_case(&document.base_commit) || head_tree == base_tree {
+            bail!("reused checkpoint HEAD must contain a source change from its authorized base");
+        }
+    } else {
+        let ancestry = git_text(repository, &["rev-list", "--parents", "-n", "1", head])?;
+        let commits = ancestry.split_whitespace().collect::<Vec<_>>();
+        if commits.len() != 2
+            || !commits[0].eq_ignore_ascii_case(head)
+            || !commits[1].eq_ignore_ascii_case(parent)
+        {
+            bail!("publication commit must retain exactly its declared original HEAD as parent");
+        }
+    }
     Ok(())
 }
 
@@ -1016,7 +1117,7 @@ fn parse_portable_bundle_head(output: &str, expected_commit: &str) -> Result<Str
     Ok(reference.to_owned())
 }
 
-fn preflight_publication_target(plan: &PublicationPlan) -> Result<()> {
+fn preflight_publication_target(plan: &PublicationTarget) -> Result<()> {
     let workspace = TemporaryPublisherWorkspace::create()?;
     source_git_output(&workspace.repository, &["init", "--bare"])?;
     add_publication_remote(&workspace.repository, &plan.target_repository)?;
@@ -1044,7 +1145,7 @@ fn add_publication_remote(repository: &Path, target_repository: &str) -> Result<
 
 fn ensure_remote_base(
     repository: &Path,
-    plan: &PublicationPlan,
+    plan: &PublicationTarget,
     expected_commit: &str,
 ) -> Result<ResolvedRemoteBase> {
     let resolved = resolve_remote_base(repository, &plan.base_ref)?;
@@ -1103,7 +1204,7 @@ fn pull_request_base_name(reference: &str) -> Result<String> {
         .context("remote publication base did not resolve to a branch")
 }
 
-fn push_or_adopt_branch(repository: &Path, plan: &PublicationPlan) -> Result<()> {
+fn push_or_adopt_branch(repository: &Path, plan: &PublicationTarget) -> Result<()> {
     let reference = format!("refs/heads/{}", plan.branch);
     match remote_reference_commit(repository, &reference)? {
         Some(existing) if existing.eq_ignore_ascii_case(&plan.commit_sha) => return Ok(()),
@@ -1127,7 +1228,7 @@ fn push_or_adopt_branch(repository: &Path, plan: &PublicationPlan) -> Result<()>
     ensure_remote_branch(repository, plan)
 }
 
-fn ensure_remote_branch(repository: &Path, plan: &PublicationPlan) -> Result<()> {
+fn ensure_remote_branch(repository: &Path, plan: &PublicationTarget) -> Result<()> {
     let reference = format!("refs/heads/{}", plan.branch);
     let actual = remote_reference_commit(repository, &reference)?
         .with_context(|| format!("remote publication branch {} does not exist", plan.branch))?;
@@ -1291,7 +1392,7 @@ fn find_pull_request(
 
 fn pull_request_matches_verified_head(
     pull_request: &PullRequestView,
-    plan: &PublicationPlan,
+    plan: &PublicationTarget,
 ) -> bool {
     let target_owner = plan
         .target_repository
@@ -1312,10 +1413,11 @@ fn pull_request_matches_verified_head(
 
 fn ensure_remote_pull_request_matches(
     pull_request: &PullRequestView,
-    plan: &PublicationPlan,
+    plan: &PublicationTarget,
     pull_request_base_ref: &str,
 ) -> Result<()> {
     if pull_request.state != "OPEN"
+        || pull_request.is_draft
         || pull_request.head_ref_name != plan.branch
         || pull_request.base_ref_name != pull_request_base_ref
         || !pull_request_matches_verified_head(pull_request, plan)
@@ -1366,11 +1468,12 @@ fn revalidate_durable_pull_request(
 }
 
 fn project_status(
-    args: &FactoryPublishArgs,
-    plan: &PublicationPlan,
+    github_cli: &Path,
+    plan: &PublicationTarget,
+    desired_status: &str,
 ) -> Result<(String, String, String, String)> {
     let project: ProjectView = serde_json::from_value(gh_json(
-        &args.github_cli,
+        github_cli,
         &[
             "project",
             "view",
@@ -1382,18 +1485,13 @@ fn project_status(
         ],
     )?)
     .context("decode GitHub Project")?;
-    let status_field = load_project_status_field(args, &project.id)?;
+    let status_field = load_project_status_field(github_cli, &project.id)?;
     let review_option = status_field
         .options
         .iter()
-        .find(|option| option.name == plan.project_review_status)
-        .with_context(|| {
-            format!(
-                "GitHub Project Status has no {} option",
-                plan.project_review_status
-            )
-        })?;
-    let item = load_project_item(args, plan)?;
+        .find(|option| option.name == desired_status)
+        .with_context(|| format!("GitHub Project Status has no {} option", desired_status))?;
+    let item = load_project_item(github_cli, plan)?;
     if item.kind != "ProjectV2Item"
         || item.id != plan.project_item_id
         || item.project.id != project.id
@@ -1423,15 +1521,12 @@ fn project_status(
     ))
 }
 
-fn load_project_status_field(
-    args: &FactoryPublishArgs,
-    project_id: &str,
-) -> Result<GraphQlProjectField> {
+fn load_project_status_field(github_cli: &Path, project_id: &str) -> Result<GraphQlProjectField> {
     const QUERY: &str = r#"query($id:ID!){node(id:$id){__typename ... on ProjectV2{field(name:"Status"){__typename ... on ProjectV2SingleSelectField{id name options{id name}}}}}}"#;
     let id = format!("id={project_id}");
     let query = format!("query={QUERY}");
     let envelope: GraphQlProjectFieldEnvelope = serde_json::from_value(gh_json(
-        &args.github_cli,
+        github_cli,
         &["api", "graphql", "-f", &query, "-F", &id],
     )?)
     .context("decode exact GitHub Project Status field")?;
@@ -1449,14 +1544,11 @@ fn load_project_status_field(
     Ok(field)
 }
 
-fn load_project_item(
-    args: &FactoryPublishArgs,
-    plan: &PublicationPlan,
-) -> Result<GraphQlProjectItem> {
+fn load_project_item(github_cli: &Path, plan: &PublicationTarget) -> Result<GraphQlProjectItem> {
     const QUERY: &str = r#"query($id:ID!){node(id:$id){__typename ... on ProjectV2Item{id project{id number owner{__typename ... on User{login} ... on Organization{login}}} fieldValueByName(name:"Status"){__typename ... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{id name}}}}}}}"#;
     let id = format!("id={}", plan.project_item_id);
     let envelope: GraphQlProjectItemEnvelope = serde_json::from_value(gh_json(
-        &args.github_cli,
+        github_cli,
         &["api", "graphql", "-f", &format!("query={QUERY}"), "-F", &id],
     )?)
     .context("decode exact GitHub Project item")?;
@@ -1545,17 +1637,28 @@ fn publication_plan(args: &FactoryPublishArgs, context: &Value) -> Result<Public
     let commit_sha = value_string(deliverable, "/head_commit")?;
     let verified_base_commit = value_string(deliverable, "/base_commit")?;
     let issue_number = value_i64(work_item, "/source_issue_number")?;
+    let default_branch =
+        if crony_domain::ActiveCheckpointPolicy::from_factory_policy(&work_item["policy"])
+            .map_err(anyhow::Error::msg)?
+            .is_some()
+        {
+            active_checkpoint::checkpoint_branch(
+                &work_item["policy"],
+                issue_number,
+                args.work_item_id,
+            )?
+        } else {
+            format!(
+                "ecorp/issue-{issue_number}-{}",
+                commit_sha.chars().take(12).collect::<String>()
+            )
+        };
     let branch = existing_publication
         .and_then(|publication| publication.get("branch"))
         .and_then(Value::as_str)
         .map(str::to_owned)
         .or_else(|| args.branch.clone())
-        .unwrap_or_else(|| {
-            format!(
-                "ecorp/issue-{issue_number}-{}",
-                commit_sha.chars().take(12).collect::<String>()
-            )
-        });
+        .unwrap_or(default_branch);
     let title = existing_publication
         .and_then(|publication| publication.get("title"))
         .and_then(Value::as_str)
@@ -1626,13 +1729,28 @@ fn publication_plan(args: &FactoryPublishArgs, context: &Value) -> Result<Public
     let mut plan = PublicationPlan {
         source_deliverable_id: value_uuid(deliverable, "/id")?,
         artifact_id: value_uuid(deliverable, "/artifact_id")?,
-        target_repository,
-        base_ref,
-        verified_base_commit,
-        branch,
-        commit_sha,
-        title,
-        body,
+        target: PublicationTarget {
+            target_repository,
+            base_ref,
+            verified_base_commit,
+            branch,
+            commit_sha,
+            title,
+            body,
+            project_owner: value_string(work_item, "/source_project_owner")?,
+            project_number: value_i64(work_item, "/source_project_number")?,
+            project_item_id: value_string(work_item, "/source_project_item_id")?,
+            project_status_before: publication_policy
+                .get("status_before")
+                .and_then(Value::as_str)
+                .context("publication policy omitted status_before")?
+                .to_owned(),
+            project_review_status: publication_policy
+                .get("review_status")
+                .and_then(Value::as_str)
+                .context("publication policy omitted review_status")?
+                .to_owned(),
+        },
         authorization_id,
         authorization_reason: args.authorization_reason.trim().to_owned(),
         effect_key,
@@ -1640,19 +1758,6 @@ fn publication_plan(args: &FactoryPublishArgs, context: &Value) -> Result<Public
         publisher_id,
         issue_number,
         issue_url,
-        project_owner: value_string(work_item, "/source_project_owner")?,
-        project_number: value_i64(work_item, "/source_project_number")?,
-        project_item_id: value_string(work_item, "/source_project_item_id")?,
-        project_status_before: publication_policy
-            .get("status_before")
-            .and_then(Value::as_str)
-            .context("publication policy omitted status_before")?
-            .to_owned(),
-        project_review_status: publication_policy
-            .get("review_status")
-            .and_then(Value::as_str)
-            .context("publication policy omitted review_status")?
-            .to_owned(),
     };
     plan.idempotency_key = match args.idempotency_key.clone() {
         Some(key) => key,
@@ -1884,10 +1989,25 @@ async fn publisher_server_json(
     body: Option<Value>,
     args: &FactoryPublishArgs,
 ) -> Result<Value> {
-    let path = args
-        .publisher_credential_file
-        .as_ref()
-        .context("trusted publication publisher credential file is required")?;
+    publisher_request(
+        client,
+        method,
+        url,
+        body,
+        args.publisher_credential_file.as_deref(),
+    )
+    .await
+}
+
+async fn publisher_request(
+    client: &Client,
+    method: Method,
+    url: String,
+    body: Option<Value>,
+    credential_file: Option<&Path>,
+) -> Result<Value> {
+    let path =
+        credential_file.context("trusted publication publisher credential file is required")?;
     let credential =
         fs::read_to_string(path).context("read trusted publication publisher credential file")?;
     let credential = credential.trim();
@@ -2096,6 +2216,177 @@ mod tests {
             },
         });
         (workspace, payload)
+    }
+
+    #[test]
+    fn active_checkpoint_import_preserves_its_original_parent_in_each_object_format() {
+        for format in ["sha1", "sha256"] {
+            let (workspace, mut payload) = publication_bundle_fixture("HEAD", format);
+            payload["purpose"] = json!("active_checkpoint");
+            payload["parent_commit"] = payload["base_commit"].clone();
+            assert_ne!(
+                payload["source_verification"]["candidate_commit"],
+                payload["parent_commit"]
+            );
+            let document: CommitBranchDocument = serde_json::from_value(payload).unwrap();
+            import_publication_bundle(&workspace, &document, &document.head_commit).expect(
+                "the exported commit retains its real original HEAD, not the verifier candidate",
+            );
+        }
+    }
+
+    #[test]
+    fn active_checkpoint_import_reuses_an_unchanged_nonempty_head() {
+        for format in ["sha1", "sha256"] {
+            let (workspace, mut payload) = publication_bundle_fixture("HEAD", format);
+            payload["purpose"] = json!("active_checkpoint");
+            payload["parent_commit"] = payload["head_commit"].clone();
+            let document: CommitBranchDocument = serde_json::from_value(payload).unwrap();
+            import_publication_bundle(&workspace, &document, &document.head_commit)
+                .expect("unchanged source already committed beyond the base needs no empty commit");
+        }
+    }
+
+    #[test]
+    fn active_checkpoint_import_rejects_missing_or_substituted_original_head() {
+        let (workspace, mut payload) = publication_bundle_fixture("HEAD", "sha1");
+        payload["purpose"] = json!("active_checkpoint");
+        let document: CommitBranchDocument = serde_json::from_value(payload.clone()).unwrap();
+        assert!(
+            import_publication_bundle(&workspace, &document, &document.head_commit)
+                .unwrap_err()
+                .to_string()
+                .contains("omitted its original HEAD")
+        );
+        for parent in [
+            Value::Null,
+            json!("-not-a-commit"),
+            json!("a".repeat(64)),
+            payload["source_verification"]["candidate_commit"].clone(),
+        ] {
+            payload["parent_commit"] = parent;
+            let document: CommitBranchDocument = serde_json::from_value(payload.clone()).unwrap();
+            assert!(
+                import_publication_bundle(&workspace, &document, &document.head_commit).is_err(),
+                "invalid parent must not be publication authority: {}",
+                payload["parent_commit"]
+            );
+        }
+    }
+
+    fn replace_checkpoint_bundle_head(
+        workspace: &TemporaryPublisherWorkspace,
+        payload: &mut Value,
+        head: &str,
+        parent: &str,
+    ) {
+        let source = workspace.root.join("source");
+        let reference = owned_bundle_reference();
+        source_git_output(&source, &["update-ref", &reference, head]).unwrap();
+        source_git_output(
+            &source,
+            &[
+                "bundle",
+                "create",
+                path_text(&workspace.bundle).unwrap(),
+                &reference,
+                &format!("^{}", payload["base_commit"].as_str().unwrap()),
+            ],
+        )
+        .unwrap();
+        let bundle = fs::read(&workspace.bundle).unwrap();
+        let tree = git_text(&source, &["rev-parse", &format!("{head}^{{tree}}")]).unwrap();
+        payload["purpose"] = json!("active_checkpoint");
+        payload["parent_commit"] = json!(parent);
+        payload["head_commit"] = json!(head);
+        payload["verified_tree"] = json!(tree);
+        payload["source_verification"]["tree"] = json!(tree);
+        payload["git_bundle_sha256"] = json!(hex::encode(Sha256::digest(&bundle)));
+        payload["git_bundle_base64"] = json!(BASE64.encode(bundle));
+    }
+
+    #[test]
+    fn active_checkpoint_import_rejects_an_export_with_extra_merge_parents() {
+        let (workspace, mut payload) = publication_bundle_fixture("HEAD", "sha1");
+        let source = workspace.root.join("source");
+        let parent = payload["head_commit"].as_str().unwrap().to_owned();
+        let merge = git_text(
+            &source,
+            &[
+                "commit-tree",
+                payload["verified_tree"].as_str().unwrap(),
+                "-p",
+                &parent,
+                "-p",
+                payload["base_commit"].as_str().unwrap(),
+                "-m",
+                "fixture with undeclared extra ancestry",
+            ],
+        )
+        .unwrap();
+        replace_checkpoint_bundle_head(&workspace, &mut payload, &merge, &parent);
+        let document: CommitBranchDocument = serde_json::from_value(payload).unwrap();
+        assert!(
+            import_publication_bundle(&workspace, &document, &document.head_commit)
+                .unwrap_err()
+                .to_string()
+                .contains("exactly its declared original HEAD")
+        );
+    }
+
+    #[test]
+    fn active_checkpoint_import_rejects_history_outside_the_authorized_base() {
+        let (workspace, mut payload) = publication_bundle_fixture("HEAD", "sha1");
+        let source = workspace.root.join("source");
+        let root = git_text(
+            &source,
+            &[
+                "commit-tree",
+                payload["verified_tree"].as_str().unwrap(),
+                "-m",
+                "unrelated fixture root",
+            ],
+        )
+        .unwrap();
+        replace_checkpoint_bundle_head(&workspace, &mut payload, &root, &root);
+        let document: CommitBranchDocument = serde_json::from_value(payload).unwrap();
+        assert!(
+            import_publication_bundle(&workspace, &document, &document.head_commit)
+                .unwrap_err()
+                .to_string()
+                .contains("descends from the authorized base")
+        );
+    }
+
+    #[test]
+    fn active_checkpoint_parent_reuse_rejects_base_and_reverted_source() {
+        let (workspace, mut payload) = publication_bundle_fixture("HEAD", "sha1");
+        let source = workspace.root.join("source");
+        let base = payload["base_commit"].as_str().unwrap().to_owned();
+        let tree = git_text(&source, &["rev-parse", &format!("{base}^{{tree}}")]).unwrap();
+        let reverted = git_text(
+            &source,
+            &[
+                "commit-tree",
+                &tree,
+                "-p",
+                payload["head_commit"].as_str().unwrap(),
+                "-m",
+                "fixture returns to the base tree",
+            ],
+        )
+        .unwrap();
+        for head in [&base, &reverted] {
+            payload["purpose"] = json!("active_checkpoint");
+            payload["parent_commit"] = json!(head);
+            let document: CommitBranchDocument = serde_json::from_value(payload.clone()).unwrap();
+            assert!(
+                validate_imported_parent(&source, &document, head)
+                    .unwrap_err()
+                    .to_string()
+                    .contains("source change from its authorized base")
+            );
+        }
     }
 
     fn owned_bundle_reference() -> String {

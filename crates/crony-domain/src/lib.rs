@@ -16,8 +16,14 @@ pub use planning_cost::{
     MAX_GRAPH_BUDGET_COST_MICROUSD, MAX_TASK_BUDGET_COST_MICROUSD, strategy_cost_budgets,
     validate_factory_cost_policy,
 };
+mod active_checkpoint;
 mod retained_provider_receipt;
 mod source_verification;
+pub use active_checkpoint::{
+    ACTIVE_CHECKPOINT_CAPABILITY, ActiveCheckpointAction, ActiveCheckpointFailureReason,
+    ActiveCheckpointOutcome, ActiveCheckpointPolicy, ActiveCheckpointPublication,
+    ActiveCheckpointReceipt, ActiveCheckpointRequest,
+};
 pub use retained_provider_receipt::{
     MAX_RETAINED_PROVIDER_RECEIPT_BYTES, RETAINED_COPILOT_RECEIPT_FILE,
     RETAINED_COPILOT_RECEIPT_KIND, RetainedProviderReceiptGrant,

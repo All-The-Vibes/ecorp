@@ -123,7 +123,12 @@ pub enum ServerToRunner {
         artifact_role: String,
         sha256: String,
     },
+    ActiveCheckpointPublished {
+        receipt: crony_domain::ActiveCheckpointReceipt,
+    },
     StartRun {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        active_checkpoint: Option<crony_domain::ActiveCheckpointPolicy>,
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         dependency_files: Vec<dependency_files::VerifiedDependencyFile>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -149,6 +154,8 @@ pub enum ServerToRunner {
         secrets: Vec<ResolvedSecret>,
     },
     ResumeRun {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        active_checkpoint: Option<crony_domain::ActiveCheckpointPolicy>,
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         dependency_files: Vec<dependency_files::VerifiedDependencyFile>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -183,6 +190,8 @@ pub enum ServerToRunner {
         secrets: Vec<ResolvedSecret>,
     },
     VerifyRun {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        active_checkpoint: Option<crony_domain::ActiveCheckpointPolicy>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         workspace_connection_id: Option<Uuid>,
         command_id: Uuid,

@@ -278,6 +278,13 @@ if (portableDeliverable) {
     "portable untracked source\n",
     "utf8",
   );
+  if (mission.includes("[active-checkpoint-credentials]")) {
+    // Fixture evidence contains presence booleans only, never credential values.
+    const keys = ["GH_TOKEN", "GITHUB_TOKEN", "ECORP_FAKE_GITHUB_EXPECT_TOKEN",
+      "ECORP_PUBLICATION_PUBLISHER_CREDENTIAL", "ECORP_PUBLICATION_PUBLISHER_CREDENTIAL_FILE"];
+    await writeFile(resolve(workdir, "checkpoint-credential-probe.json"),
+      `${JSON.stringify(Object.fromEntries(keys.map(key => [key, Boolean(process.env[key])])))}\n`, "utf8");
+  }
 }
 
 if (secretProbe && !process.env.CRONY_TEST_SECRET) {

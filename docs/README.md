@@ -18,6 +18,7 @@ real missions. The public tour is illustrative; it is not connected to your runn
 | Review the trust boundary | [Security](SECURITY.md) and [threat model](THREAT_MODEL.md) |
 | Work on ECorp safely | [Contributing](../CONTRIBUTING.md) and [contributor contract](../AGENTS.md) |
 | Operate GitHub issue intake, recovery, and publication | [Dark-factory contributor guide](DARK_FACTORY_CONTRIBUTOR_GUIDE.md) |
+| Preserve active factory source in a remote draft | [Active source checkpoints](ACTIVE_SOURCE_CHECKPOINTS.md) |
 | Change the console or desktop shell | [Web client](../apps/web/README.md) and [desktop shell](../apps/desktop/README.md) |
 | Understand what counts as proof | [Evaluation and real-world testing](EVALS.md) |
 | Review the proposed multiplayer requirements and development/runtime gates | [Replacement multiplayer acceptance v1](MULTIPLAYER_ACCEPTANCE_V1.md) |

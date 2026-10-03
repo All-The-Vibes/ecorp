@@ -259,10 +259,15 @@ test('native source-selection recipe is pinned; drift requires an explicit parit
   const start = nativeSource.indexOf('    for path in &spec.paths {')
   const end = nativeSource.indexOf('    let changes = changed_paths(', start)
   assert.ok(start >= 0 && end > start)
-  // #82 extracts the unchanged selection sequence into select_index and freezes
-  // its tree before checking. cfg!(windows) preserves the same platform-specific
-  // index bases while keeping preserve_head_commit referenced on Linux.
-  assert.equal(hash(nativeSource.slice(start, end)), '22a8887f0f2c84779ac0ae875683da62643eb1358c066a3e4777015050988e10')
+  // #72 shares the existing exact-path-or-descendant predicate with retained-history
+  // validation. The Windows reset still runs only for nonempty selections, so the
+  // helper's empty-list case does not change this recipe or its independent oracle.
+  // Pin the helper too: changes outside select_index must still require parity review.
+  assert.equal(hash(nativeSource.slice(start, end)), '575324ea13d935e33b346dbf7d39ac5a49c178dd96f9f059303e5468ea4dfc7c')
+  const helperStart = nativeSource.indexOf('fn path_is_selected(')
+  const helperEnd = nativeSource.indexOf('fn reject_out_of_scope_changes(', helperStart)
+  assert.ok(helperStart >= 0 && helperEnd > helperStart)
+  assert.equal(hash(nativeSource.slice(helperStart, helperEnd)), '33aa371b77674000ce4ddd572c2ce3fb3968dec4488776cfa6b34ff790084aee')
   const output = nativeSource.slice(nativeSource.indexOf('async fn git_output('))
   assert.match(output, /verification::clear_git_environment\(&mut command\)/)
   assert.match(output, /\.env\(\s*"GIT_INDEX_FILE",\s*crate::workspace::normalize_path\(index\.to_path_buf\(\)\),\s*\)/)
@@ -449,6 +454,22 @@ test('Windows verified-head seeding retains modes and resets every unselected co
     assert.match(f.git(['ls-tree', result.candidateTree, 'tracked.txt']), /^100755/)
   }
   assert.equal(f.git(['show', `${result.candidateTree}:other.txt`]), 'other\n')
+})
+
+test('preserved-head directory selection includes descendants and excludes sibling prefixes', (t) => {
+  const f = fixture(t)
+  f.write('selected/nested/source.txt', 'selected source\n')
+  f.write('selected-extra/source.txt', 'unselected committed source \n')
+  f.git(['add', '-A'])
+  f.git(['commit', '-m', 'provider directory changes'])
+  const preserveHead = f.git(['rev-parse', 'HEAD']).trim()
+  const options = { paths: ['selected'], preserveHead }
+  const result = f.check(options)
+  assert.equal(result.passed, true)
+  assert.deepEqual(result.changes, [{ status: 'A', path: 'selected/nested/source.txt' }])
+  assert.equal(result.candidateTree, nativeCandidate(f, options).tree)
+  assert.equal(f.git(['show', `${result.candidateTree}:selected/nested/source.txt`]), 'selected source\n')
+  assert.equal(f.git(['ls-tree', '-r', '--name-only', result.candidateTree, '--', 'selected-extra']), '')
 })
 
 test('binary blobs use native Git diff behavior, not an independent text scanner', (t) => {

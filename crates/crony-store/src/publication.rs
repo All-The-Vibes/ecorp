@@ -69,6 +69,7 @@ struct PublicationPrerequisites {
     run_ids: Vec<Uuid>,
     evidence_ids: Vec<Uuid>,
     checkpoint: Option<checkpoint_publication::CheckpointPublication>,
+    active_checkpoint: Option<crony_domain::ActiveCheckpointPublication>,
 }
 
 struct PublicationPrerequisiteRequest<'a> {
@@ -336,12 +337,16 @@ impl PgStore {
                     busy: false,
                 });
             }
-            validate_publication_prerequisites(
+            let prerequisites = validate_publication_prerequisites(
                 &mut tx,
                 &PublicationPrerequisiteRequest::from_start(&normalized),
                 true,
             )
             .await?;
+            active_checkpoint::validate_frozen_provenance(
+                &publication.provenance,
+                prerequisites.active_checkpoint.as_ref(),
+            )?;
             if publication
                 .publisher_lease_expires_at
                 .is_some_and(|expiry| expiry > now)
@@ -485,6 +490,7 @@ impl PgStore {
             "verification_evidence_ids": prerequisites.evidence_ids,
             "verification_sha256": prerequisites.verification_sha256,
             "checkpoint": prerequisites.checkpoint.as_ref().map(|checkpoint| checkpoint.provenance()),
+            "active_checkpoint": prerequisites.active_checkpoint,
             "deliverable": {
                 "id": normalized.source_deliverable_id,
                 "artifact_id": prerequisites.artifact_id,
@@ -1045,6 +1051,27 @@ impl PgStore {
                 is_cross_repository,
                 auto_merge_enabled,
             } => {
+                if draft {
+                    return Err(anyhow!(
+                        "final publication requires the authorized ready-for-review transition"
+                    ));
+                }
+                if let Some(checkpoint) = current
+                    .provenance
+                    .get("active_checkpoint")
+                    .filter(|value| !value.is_null())
+                {
+                    let previous = &checkpoint["pull_request"];
+                    if previous["number"] != number
+                        || previous["node_id"] != node_id
+                        || previous["url"] != url
+                        || previous["base_ref"] != base_ref
+                    {
+                        return Err(anyhow!(
+                            "final publication must retain the recorded draft pull request identity"
+                        ));
+                    }
+                }
                 validate_pull_request_identity(
                     &current,
                     number,
@@ -1662,6 +1689,10 @@ async fn revalidate_publication_authority_tx(
     )
     .await?;
     assert_room_membership_tx(tx, publication.corp_id, prerequisites.room_id, actor_id).await?;
+    active_checkpoint::validate_frozen_provenance(
+        &publication.provenance,
+        prerequisites.active_checkpoint.as_ref(),
+    )?;
     let provenance_deliverable_sha = publication
         .provenance
         .pointer("/deliverable/sha256")
@@ -1733,6 +1764,104 @@ async fn revalidate_publication_authority_tx(
     Ok(())
 }
 
+pub(super) struct PublicationTargetAuthority {
+    pub base_commit: String,
+    pub status_before: String,
+    pub review_status: String,
+}
+
+/// Draft and final publication share target and Project authority checks.
+pub(super) fn validate_publication_target(
+    work_item: &FactoryWorkItem,
+    target_repository: &str,
+    base_ref: &str,
+    branch: &str,
+) -> Result<PublicationTargetAuthority> {
+    let policy = work_item
+        .policy
+        .as_object()
+        .context("factory policy snapshot must be an object")?;
+    if policy.get("auto_merge").and_then(Value::as_bool) != Some(false) {
+        return Err(anyhow!(
+            "factory policy must explicitly disable auto_merge before publication"
+        ));
+    }
+    let publication_policy = policy
+        .get("publication")
+        .and_then(Value::as_object)
+        .context("factory policy does not authorize pull-request publication")?;
+    if publication_policy.get("allowed").and_then(Value::as_bool) != Some(true) {
+        return Err(anyhow!(
+            "factory policy does not authorize pull-request publication"
+        ));
+    }
+    let target_allowlist = publication_policy
+        .get("repository_allowlist")
+        .and_then(Value::as_array)
+        .context("publication policy omitted repository_allowlist")?;
+    if !target_allowlist
+        .iter()
+        .filter_map(Value::as_str)
+        .any(|repository| repository.eq_ignore_ascii_case(target_repository))
+    {
+        return Err(anyhow!(
+            "publication target repository is outside the factory policy allowlist"
+        ));
+    }
+    let expected_repository = format!(
+        "{}/{}",
+        work_item.source_repository_owner, work_item.source_repository_name
+    );
+    if target_repository != expected_repository {
+        return Err(anyhow!(
+            "publication target repository must match the claimed source repository"
+        ));
+    }
+    let expected_base_ref = publication_policy
+        .get("base_ref")
+        .and_then(Value::as_str)
+        .filter(|value| !value.trim().is_empty() && value.len() <= 240)
+        .context("publication policy omitted base_ref")?
+        .to_owned();
+    validate_factory_publication_base_ref(&expected_base_ref)?;
+    if base_ref != expected_base_ref {
+        return Err(anyhow!(
+            "publication base ref {} does not match factory policy {}",
+            base_ref,
+            expected_base_ref
+        ));
+    }
+    let expected_base_commit =
+        factory_policy_required_string(policy, "source_base_commit", 64)?.to_ascii_lowercase();
+    validate_factory_base_commit(&expected_base_commit)?;
+    let branch_prefix = publication_policy
+        .get("branch_prefix")
+        .and_then(Value::as_str)
+        .unwrap_or("ecorp/");
+    if !branch.starts_with(branch_prefix) {
+        return Err(anyhow!(
+            "publication branch must start with the authorized prefix {branch_prefix}"
+        ));
+    }
+    let review_status = publication_policy
+        .get("review_status")
+        .and_then(Value::as_str)
+        .filter(|value| !value.trim().is_empty())
+        .context("publication policy omitted review_status")?
+        .to_owned();
+    let project_status_before = publication_policy
+        .get("status_before")
+        .and_then(Value::as_str)
+        .filter(|value| !value.trim().is_empty())
+        .context("publication policy omitted status_before")?
+        .to_owned();
+    Ok(PublicationTargetAuthority {
+        base_commit: expected_base_commit,
+        status_before: project_status_before,
+        review_status,
+    })
+}
+
 async fn validate_publication_prerequisites(
     tx: &mut Transaction<'_, Postgres>,
     request: &PublicationPrerequisiteRequest<'_>,
@@ -1762,84 +1891,16 @@ async fn validate_publication_prerequisites(
         .mission_id
         .context("verified factory work item has no mission")?;
     ensure_factory_mission_verified_tx(tx, request.corp_id, mission_id).await?;
-    let policy = work_item
-        .policy
-        .as_object()
-        .context("factory policy snapshot must be an object")?;
-    if policy.get("auto_merge").and_then(Value::as_bool) != Some(false) {
-        return Err(anyhow!(
-            "factory policy must explicitly disable auto_merge before publication"
-        ));
-    }
-    let publication_policy = policy
-        .get("publication")
-        .and_then(Value::as_object)
-        .context("factory policy does not authorize pull-request publication")?;
-    if publication_policy.get("allowed").and_then(Value::as_bool) != Some(true) {
-        return Err(anyhow!(
-            "factory policy does not authorize pull-request publication"
-        ));
-    }
-    let target_allowlist = publication_policy
-        .get("repository_allowlist")
-        .and_then(Value::as_array)
-        .context("publication policy omitted repository_allowlist")?;
-    if !target_allowlist
-        .iter()
-        .filter_map(Value::as_str)
-        .any(|repository| repository.eq_ignore_ascii_case(request.target_repository))
-    {
-        return Err(anyhow!(
-            "publication target repository is outside the factory policy allowlist"
-        ));
-    }
-    let expected_repository = format!(
-        "{}/{}",
-        work_item.source_repository_owner, work_item.source_repository_name
-    );
-    if request.target_repository != expected_repository {
-        return Err(anyhow!(
-            "publication target repository must match the claimed source repository"
-        ));
-    }
-    let expected_base_ref = publication_policy
-        .get("base_ref")
-        .and_then(Value::as_str)
-        .filter(|value| !value.trim().is_empty() && value.len() <= 240)
-        .context("publication policy omitted base_ref")?
-        .to_owned();
-    validate_factory_publication_base_ref(&expected_base_ref)?;
-    if request.base_ref != expected_base_ref {
-        return Err(anyhow!(
-            "publication base ref {} does not match factory policy {}",
-            request.base_ref,
-            expected_base_ref
-        ));
-    }
-    let expected_base_commit =
-        factory_policy_required_string(policy, "source_base_commit", 64)?.to_ascii_lowercase();
-    validate_factory_base_commit(&expected_base_commit)?;
-    let branch_prefix = publication_policy
-        .get("branch_prefix")
-        .and_then(Value::as_str)
-        .unwrap_or("ecorp/");
-    if !request.branch.starts_with(branch_prefix) {
-        return Err(anyhow!(
-            "publication branch must start with the authorized prefix {branch_prefix}"
-        ));
-    }
-    let review_status = publication_policy
-        .get("review_status")
-        .and_then(Value::as_str)
-        .filter(|value| !value.trim().is_empty())
-        .context("publication policy omitted review_status")?
-        .to_owned();
-    let project_status_before = publication_policy
-        .get("status_before")
-        .and_then(Value::as_str)
-        .filter(|value| !value.trim().is_empty())
-        .context("publication policy omitted status_before")?
-        .to_owned();
+    let PublicationTargetAuthority {
+        base_commit: expected_base_commit,
+        status_before: project_status_before,
+        review_status,
+    } = validate_publication_target(
+        &work_item,
+        request.target_repository,
+        request.base_ref,
+        request.branch,
+    )?;
     if !request.body.contains(&work_item.source_issue_url) {
         return Err(anyhow!(
             "pull request body must link the claimed source issue URL"
@@ -1861,6 +1922,7 @@ async fn validate_publication_prerequisites(
                run.breaker_stage,
                task.status AS task_status,
                task.verification_status AS task_verification_status,
+               task.verification_policy,
                mission.status AS mission_status, mission.room_id
         FROM source_deliverables deliverable
         JOIN artifacts artifact
@@ -2126,6 +2188,25 @@ async fn validate_publication_prerequisites(
             "pull-request publication requires persisted passing verification evidence"
         ));
     }
+    let verification_policy: VerificationPolicy =
+        serde_json::from_value(row.get("verification_policy"))?;
+    let source_branch: String = row.get("branch");
+    let active_checkpoint = active_checkpoint::final_adoption_tx(
+        tx,
+        &work_item,
+        &active_checkpoint::FinalCheckpointSource {
+            task_id: row.get("task_id"),
+            run_id: selected_run_id,
+            commit: &commit_sha,
+            branch: &source_branch,
+            metadata: &artifact_metadata,
+            verification_policy: &verification_policy,
+        },
+        request.target_repository,
+        request.base_ref,
+        request.branch,
+    )
+    .await?;
     Ok(PublicationPrerequisites {
         work_item,
         effective_source_revision,
@@ -2139,13 +2220,14 @@ async fn validate_publication_prerequisites(
         deliverable_sha256,
         verification_sha256,
         base_commit,
-        source_branch: row.get("branch"),
+        source_branch,
         project_status_before,
         review_status,
         task_ids,
         run_ids,
         evidence_ids,
         checkpoint,
+        active_checkpoint,
     })
 }
 
@@ -2489,7 +2571,11 @@ fn validate_pull_request_identity(
     Ok(())
 }
 
-fn github_pull_request_url_matches(url: &str, target_repository: &str, number: i64) -> bool {
+pub(super) fn github_pull_request_url_matches(
+    url: &str,
+    target_repository: &str,
+    number: i64,
+) -> bool {
     let Some(path) = url
         .trim_end_matches('/')
         .strip_prefix("https://github.com/")
@@ -2697,7 +2783,7 @@ const PUBLICATION_PUBLISHER_CREDENTIAL_LOCK_SQL: &str = r#"
     FOR UPDATE
 "#;
 
-async fn revalidate_publication_publisher_credential_tx(
+pub(super) async fn revalidate_publication_publisher_credential_tx(
     tx: &mut Transaction<'_, Postgres>,
     corp_id: Uuid,
     publisher_id: &str,
