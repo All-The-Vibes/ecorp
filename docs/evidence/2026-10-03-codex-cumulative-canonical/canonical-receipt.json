@@ -1,0 +1,406 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "status": "passed",
+  "wrapper_pid": 31880,
+  "purpose": "Run all eleven canonical contributor gates with locked dependencies on the exact reviewed physical source. Preserve real counts, failed or skipped checks, and source identity. This is local validation, not hosted CI or product acceptance.",
+  "started_at_utc": "2026-10-03T17:27:17.4457487Z",
+  "source": "<candidate-checkout>",
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T17:27:19.684Z",
+    "source": "<candidate-checkout>",
+    "head": "03f4629fc57c33f2d91da95240a9da6d6db47256",
+    "tree": "4fdc55f3c244ce790625dcbadf72f781c9cc8c30",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M  crates/crony-runner/src/adapter/codex.rs\nM  docs/USAGE_PROVENANCE.md\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/README.md\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-acceptance-corpus-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-browser-r1.mjs.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-fake-codex-r1.mjs.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-fixture-environment-r1.mjs.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-fixture-environment-r1.ps1.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-prepare-fixture-r1.mjs.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-source-snapshot-r1.mjs.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-stack-cumulative-bounds-r1.ps1.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/run-codex-cumulative-regressions-r1.ps1.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/run-issue236-browser-cumulative-bounds-r1.ps1.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/run-issue236-canonical-r1.ps1.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/run-issue236-native-build-cumulative-bounds-r1.ps1.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/run-issue236-native-cumulative-bounds-r1.ps1.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/evidence.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/browser-stack-stop.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/codex-cumulative-green-r1-all-runner-usage.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/codex-cumulative-green-r1-cumulative-bound.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/codex-cumulative-green-r1-domain-usage.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/codex-cumulative-red-r1-cumulative-bound.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-browser-cumulative-bounds-r1-driver.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-browser-cumulative-bounds-r1-issue236-browser-r1.mjs-check.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-browser-cumulative-bounds-r1-issue236-fake-codex-r1.mjs-check.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-browser-cumulative-bounds-r1-issue236-fixture-environment-r1.mjs-check.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-browser-cumulative-bounds-r1-issue236-prepare-fixture-r1.mjs-check.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-browser-cumulative-bounds-r1-stack-start.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-browser-cumulative-bounds-r1-stack-status.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-build-cumulative-bounds-r1-cache-copy.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-build-cumulative-bounds-r1-local-package-clean.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-build-cumulative-bounds-r1.jsonl.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-cumulative-bounds-green-r1-crony-store-control_accounting_tests-issue87-list.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-cumulative-bounds-green-r1-crony-store-control_accounting_tests-issue87.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-cumulative-bounds-green-r1-crony-store-issue236-list.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-cumulative-bounds-green-r1-crony-store-issue236.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-cumulative-bounds-green-r1-initdb.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/native-stack-stop.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/native-contract.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/provider-artifacts/provider-artifact-codex-cache-and-reasoning-subsets.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/provider-artifacts/provider-artifact-codex-duplicate-and-foreign-turn.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/provider-artifacts/provider-artifact-codex-impossible-cumulative-increase-recovers.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/provider-artifacts/provider-artifact-codex-impossible-initial-total-recovers.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/provider-artifacts/provider-artifact-codex-invalid-first-retains-subtotals.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/provider-artifacts/provider-artifact-codex-missing-input-explicit-zero-output.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/provider-artifacts/provider-artifact-codex-regressing-and-contradictory-cursors.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/browser-observations.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/browser-setup.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/codex-cumulative-green-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/codex-cumulative-red-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/cumulative-acceptance-preparation-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/cumulative-bounds-screenshot-review-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/issue236-browser-cumulative-bounds-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/issue236-native-build-cumulative-bounds-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/issue236-native-cumulative-bounds-green-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/native-protocol-fetch-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/screenshots/usage-codex-cache-and-reasoning-subsets.png\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/screenshots/usage-codex-duplicate-and-foreign-turn.png\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/screenshots/usage-codex-impossible-cumulative-increase-recovers.png\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/screenshots/usage-codex-impossible-initial-total-recovers.png\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/screenshots/usage-codex-invalid-first-retains-subtotals.png\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/screenshots/usage-codex-missing-input-explicit-zero-output.png\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/screenshots/usage-codex-regressing-and-contradictory-cursors.png\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/acceptance-source-manifest.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/browser-source_after.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/browser-source_before.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/build-source_after.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/build-source_before.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/correction.patch.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/green-source_after.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/green-source_before.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/native-source_after.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/native-source_before.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/red-source_after.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/red-source_before.json\nM  docs/evidence/2026-10-03-late-usage-replay/README.md\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/canonical.log.txt\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/evidence.json\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/install-0.log.txt\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/install-1.log.txt\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/issue236-canonical-late-replay-final-r3.json\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/issue236-late-replay-commit-r3.json\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/readiness-report.json\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/source-after.json\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/source-before.json\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/staged-source.json\nM  docs/evidence/2026-10-03-late-usage-replay/evidence.json",
+    "source_file_count": 7806,
+    "source_fingerprint": "6cf180134972b9384be05515e9e878fb3d29e5c63ee6b37e601a835026e1824a",
+    "manifest": "<current-run-records>\\issue236-canonical-cumulative-bounds-final-r1-source-before.json",
+    "manifest_sha256": "a2ba941d631d910fe62fb3b36d7600ccbf4d297326ec72586fe3b8062ba61f97"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T18:25:09.936Z",
+    "source": "<candidate-checkout>",
+    "head": "03f4629fc57c33f2d91da95240a9da6d6db47256",
+    "tree": "4fdc55f3c244ce790625dcbadf72f781c9cc8c30",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M  crates/crony-runner/src/adapter/codex.rs\nM  docs/USAGE_PROVENANCE.md\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/README.md\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-acceptance-corpus-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-browser-r1.mjs.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-fake-codex-r1.mjs.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-fixture-environment-r1.mjs.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-fixture-environment-r1.ps1.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-prepare-fixture-r1.mjs.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-source-snapshot-r1.mjs.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/issue236-stack-cumulative-bounds-r1.ps1.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/run-codex-cumulative-regressions-r1.ps1.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/run-issue236-browser-cumulative-bounds-r1.ps1.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/run-issue236-canonical-r1.ps1.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/run-issue236-native-build-cumulative-bounds-r1.ps1.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/drivers/run-issue236-native-cumulative-bounds-r1.ps1.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/evidence.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/browser-stack-stop.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/codex-cumulative-green-r1-all-runner-usage.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/codex-cumulative-green-r1-cumulative-bound.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/codex-cumulative-green-r1-domain-usage.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/codex-cumulative-red-r1-cumulative-bound.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-browser-cumulative-bounds-r1-driver.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-browser-cumulative-bounds-r1-issue236-browser-r1.mjs-check.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-browser-cumulative-bounds-r1-issue236-fake-codex-r1.mjs-check.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-browser-cumulative-bounds-r1-issue236-fixture-environment-r1.mjs-check.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-browser-cumulative-bounds-r1-issue236-prepare-fixture-r1.mjs-check.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-browser-cumulative-bounds-r1-stack-start.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-browser-cumulative-bounds-r1-stack-status.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-build-cumulative-bounds-r1-cache-copy.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-build-cumulative-bounds-r1-local-package-clean.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-build-cumulative-bounds-r1.jsonl.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-cumulative-bounds-green-r1-crony-store-control_accounting_tests-issue87-list.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-cumulative-bounds-green-r1-crony-store-control_accounting_tests-issue87.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-cumulative-bounds-green-r1-crony-store-issue236-list.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-cumulative-bounds-green-r1-crony-store-issue236.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/issue236-native-cumulative-bounds-green-r1-initdb.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/logs/native-stack-stop.log.txt\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/native-contract.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/provider-artifacts/provider-artifact-codex-cache-and-reasoning-subsets.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/provider-artifacts/provider-artifact-codex-duplicate-and-foreign-turn.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/provider-artifacts/provider-artifact-codex-impossible-cumulative-increase-recovers.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/provider-artifacts/provider-artifact-codex-impossible-initial-total-recovers.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/provider-artifacts/provider-artifact-codex-invalid-first-retains-subtotals.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/provider-artifacts/provider-artifact-codex-missing-input-explicit-zero-output.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/provider-artifacts/provider-artifact-codex-regressing-and-contradictory-cursors.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/browser-observations.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/browser-setup.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/codex-cumulative-green-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/codex-cumulative-red-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/cumulative-acceptance-preparation-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/cumulative-bounds-screenshot-review-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/issue236-browser-cumulative-bounds-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/issue236-native-build-cumulative-bounds-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/issue236-native-cumulative-bounds-green-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/receipts/native-protocol-fetch-r1.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/screenshots/usage-codex-cache-and-reasoning-subsets.png\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/screenshots/usage-codex-duplicate-and-foreign-turn.png\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/screenshots/usage-codex-impossible-cumulative-increase-recovers.png\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/screenshots/usage-codex-impossible-initial-total-recovers.png\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/screenshots/usage-codex-invalid-first-retains-subtotals.png\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/screenshots/usage-codex-missing-input-explicit-zero-output.png\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/screenshots/usage-codex-regressing-and-contradictory-cursors.png\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/acceptance-source-manifest.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/browser-source_after.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/browser-source_before.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/build-source_after.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/build-source_before.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/correction.patch.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/green-source_after.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/green-source_before.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/native-source_after.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/native-source_before.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/red-source_after.json\nA  docs/evidence/2026-10-03-codex-cumulative-bounds/source/red-source_before.json\nM  docs/evidence/2026-10-03-late-usage-replay/README.md\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/canonical.log.txt\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/evidence.json\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/install-0.log.txt\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/install-1.log.txt\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/issue236-canonical-late-replay-final-r3.json\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/issue236-late-replay-commit-r3.json\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/readiness-report.json\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/source-after.json\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/source-before.json\nA  docs/evidence/2026-10-03-late-usage-replay/canonical/staged-source.json\nM  docs/evidence/2026-10-03-late-usage-replay/evidence.json",
+    "source_file_count": 7806,
+    "source_fingerprint": "6cf180134972b9384be05515e9e878fb3d29e5c63ee6b37e601a835026e1824a",
+    "manifest": "<current-run-records>\\issue236-canonical-cumulative-bounds-final-r1-source-after.json",
+    "manifest_sha256": "29632d6190635ddab5149043e327fccf0ee376a95e83e191c81c1198a80a1164"
+  },
+  "source_unchanged": true,
+  "reference_manifest": "<current-run-records>\\cumulative-bounds-staged-source-r1.json",
+  "reference_manifest_sha256": "1a2fd66321f2771b111ee9a786b2e3144affb825e6b4f9a760aaebc81a97e17d",
+  "expected_head": "03f4629fc57c33f2d91da95240a9da6d6db47256",
+  "expected_fingerprint": "6cf180134972b9384be05515e9e878fb3d29e5c63ee6b37e601a835026e1824a",
+  "environment": {
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "RUST_TEST_THREADS": "1",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "<candidate-checkout>\\target\\issue236-review-r5",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_NET_OFFLINE": "true"
+  },
+  "dependency_install": {
+    "command": "pnpm install --frozen-lockfile --offline",
+    "sha256": "eb0f2352f7d1409b2cc41621aac08ac6d3f185ed7bb2b6d4ac87e4ac6ce4e8be",
+    "log": "<current-run-records>\\issue236-canonical-cumulative-bounds-final-r1-install.log",
+    "exit_code": 0
+  },
+  "standalone_steward_installs": [
+    {
+      "command": "npm ci --ignore-scripts --no-audit --no-fund --workspaces=false --offline",
+      "sha256": "731fccdffdae6f9a256697d9912e6532e6efdf35b3456d2402db2d054341740b",
+      "log": "<current-run-records>\\issue236-canonical-cumulative-bounds-final-r1-steward-install-offline.log",
+      "exit_code": 0
+    }
+  ],
+  "canonical": {
+    "status": "passed",
+    "command": "pnpm check",
+    "exit_code": 0,
+    "log_sha256": "4d4ea72e6b98b95e7758db4cfd59a63940d0cfb7efaab07c05d2ac30520c3f3c",
+    "log": "<current-run-records>\\issue236-canonical-cumulative-bounds-final-r1.log",
+    "source_changed": false,
+    "checks": [
+      {
+        "name": "migrations",
+        "argv": [
+          "node",
+          "tools/check_migrations.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 146,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-compatibility",
+        "argv": [
+          "node",
+          "tools/check_state_audit_compatibility.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 115,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "state-audit-evm",
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "crony-audit",
+          "--test",
+          "ethereum_local_chain"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 3765,
+        "counts": {
+          "rust": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "summaries": 1
+          },
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "docs",
+        "argv": [
+          "node",
+          "tools/check_docs.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 101,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "repository-docs",
+        "argv": [
+          "node",
+          "tools/check_documentation.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 117,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "node-tests",
+        "argv": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "--test-timeout=180000",
+          "--test-reporter=tap",
+          ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+          ".github/skills/code-review/tests/executor-state.test.mjs",
+          ".github/skills/code-review/tests/package.test.mjs",
+          "apps/web/src/AgentPinControl.test.mjs",
+          "apps/web/src/DelegatedPanel.test.mjs",
+          "apps/web/src/VerificationPolicyEditor.test.mjs",
+          "apps/web/src/agentPinOperation.test.mjs",
+          "apps/web/src/evidenceNavigation.test.mjs",
+          "apps/web/src/evidenceSelection.test.mjs",
+          "apps/web/src/factoryAuthority.test.mjs",
+          "apps/web/src/factoryAuthorityConnection.test.mjs",
+          "apps/web/src/factoryCheckpointRecovery.test.mjs",
+          "apps/web/src/factoryControllerSelection.test.mjs",
+          "apps/web/src/factoryPolling.test.mjs",
+          "apps/web/src/formText.test.mjs",
+          "apps/web/src/missionCollaboration.test.mjs",
+          "apps/web/src/missionComposer.test.mjs",
+          "apps/web/src/missionOriginContext.test.mjs",
+          "apps/web/src/missionPreview.test.mjs",
+          "apps/web/src/missionProjection.test.mjs",
+          "apps/web/src/missionResultContext.test.mjs",
+          "apps/web/src/missionReviewSummary.test.mjs",
+          "apps/web/src/missionRuntime.test.mjs",
+          "apps/web/src/office/characterAssets.test.mjs",
+          "apps/web/src/office/officeModel.test.mjs",
+          "apps/web/src/runActivity.test.mjs",
+          "apps/web/src/snapshotRefresh.test.mjs",
+          "apps/web/src/verificationPolicy.test.mjs",
+          "apps/web/src/workResultCard.test.mjs",
+          "apps/web/src/workflowContext.test.mjs",
+          "apps/web/src/workspaceConnections.test.mjs",
+          "scenarios/repo-steward/actions.test.mjs",
+          "scenarios/repo-steward/feedback-cli.test.mjs",
+          "scenarios/repo-steward/feedback.test.mjs",
+          "scenarios/repo-steward/maintenance.test.mjs",
+          "scenarios/repo-steward/recurring-audit.test.mjs",
+          "scenarios/repo-steward/steward.test.mjs",
+          "scenarios/repo-steward/teams-host.test.mjs",
+          "tests/readiness/cli.test.js",
+          "tools/budget_fixture.test.mjs",
+          "tools/check_deliverable_diff.test.mjs",
+          "tools/check_documentation.test.mjs",
+          "tools/check_evidence_launch.test.mjs",
+          "tools/check_evidence_native_build.test.mjs",
+          "tools/check_evidence_personal_paths.test.mjs",
+          "tools/check_migrations.test.mjs",
+          "tools/check_replay_source.test.mjs",
+          "tools/checkpoint_application_fixture.test.mjs",
+          "tools/ci_external_adapters_windows.test.mjs",
+          "tools/ci_factory_repository.test.mjs",
+          "tools/ci_maintenance.test.mjs",
+          "tools/ci_owned_test_server.test.mjs",
+          "tools/ci_runner_tests.test.mjs",
+          "tools/consume_operation_receipt.test.mjs",
+          "tools/controlled_runner_fixture.test.mjs",
+          "tools/copilot_fs_wire_observer.test.mjs",
+          "tools/copilot_fs_wire_process.test.mjs",
+          "tools/copilot_probe_boundaries.test.mjs",
+          "tools/copilot_probe_environment.test.mjs",
+          "tools/copilot_probe_native_read.test.mjs",
+          "tools/copilot_probe_process.test.mjs",
+          "tools/coverage_web_models.test.mjs",
+          "tools/delegated_lifecycle.test.mjs",
+          "tools/delegated_qa_root.test.mjs",
+          "tools/e2e_agent_pinning.test.mjs",
+          "tools/e2e_checkpoint_verification.test.mjs",
+          "tools/e2e_evidence_selection.test.mjs",
+          "tools/e2e_external_adapters.test.mjs",
+          "tools/e2e_external_adapters_http.test.mjs",
+          "tools/e2e_factory_budget_recovery.test.mjs",
+          "tools/e2e_late_termination.test.mjs",
+          "tools/e2e_predispatch_failure.test.mjs",
+          "tools/e2e_stopped_source_checkpoint.test.mjs",
+          "tools/e2e_verifier_browser_retention.test.mjs",
+          "tools/e2e_verifier_browser_scope.test.mjs",
+          "tools/factory_budget_fixture_config.test.mjs",
+          "tools/factory_budget_git.test.mjs",
+          "tools/factory_budget_process.test.mjs",
+          "tools/factory_budget_provenance.test.mjs",
+          "tools/factory_budget_start.test.mjs",
+          "tools/fake_codex_budget_stream.test.mjs",
+          "tools/fake_github_quota.test.mjs",
+          "tools/fixture_source_identity.test.mjs",
+          "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+          "tools/identity_fixture.test.mjs",
+          "tools/import_operation_behavior.test.mjs",
+          "tools/issue161/qa-api-provenance.test.mjs",
+          "tools/issue161/qa-plan.test.mjs",
+          "tools/local_source_commit.test.mjs",
+          "tools/local_stack_lifecycle.test.mjs",
+          "tools/local_stack_operation.test.mjs",
+          "tools/native_qualification_attempt.test.mjs",
+          "tools/native_qualification_finality.test.mjs",
+          "tools/native_qualification_trust.test.mjs",
+          "tools/office_model.test.mjs",
+          "tools/operation_feedback.test.mjs",
+          "tools/operation_receipt.test.mjs",
+          "tools/owned_test_stack.test.mjs",
+          "tools/probe_mcp.test.mjs",
+          "tools/qa_multiplayer_object_sources.test.mjs",
+          "tools/readiness_contract.test.mjs",
+          "tools/readiness_replay_contract.test.mjs",
+          "tools/redact_evidence_capabilities.test.mjs",
+          "tools/research_handoff_adversarial.test.mjs",
+          "tools/research_handoff_browser.test.mjs",
+          "tools/research_handoff_native.test.mjs",
+          "tools/runner_ack_fault_relay.test.mjs",
+          "tools/secret_scan.test.mjs",
+          "tools/secret_scan_native.test.mjs",
+          "tools/security_fixtures.test.mjs",
+          "tools/startup_validation_harness.test.mjs",
+          "tools/task_graph_fixture.test.mjs",
+          "tools/verifier_browser.test.mjs",
+          "tools/verify_toolchain.test.mjs"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2317897,
+        "counts": {
+          "rust": null,
+          "node": {
+            "tests": 3105,
+            "passed": 3040,
+            "failed": 0,
+            "skipped": 65,
+            "todo": 0,
+            "cancelled": 0
+          }
+        },
+        "errorCode": null
+      },
+      {
+        "name": "format",
+        "argv": [
+          "cargo",
+          "fmt",
+          "--check"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 3037,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "clippy",
+        "argv": [
+          "cargo",
+          "clippy",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 32083,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "rust-tests",
+        "argv": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--locked"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 1070755,
+        "counts": {
+          "rust": {
+            "passed": 941,
+            "failed": 0,
+            "ignored": 596,
+            "summaries": 41
+          },
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "web-build",
+        "argv": [
+          "pnpm",
+          "build:web"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 7220,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      },
+      {
+        "name": "web-lint",
+        "argv": [
+          "pnpm",
+          "lint:web"
+        ],
+        "exitCode": 0,
+        "passed": true,
+        "durationMs": 2672,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "errorCode": null
+      }
+    ],
+    "not_run": [],
+    "report_sha256": "92877860d2e20ddf4a8b1c6abc955c2b1f0137864d240229ea5bf42b468c4a13",
+    "report": "<candidate-checkout>\\output\\readiness\\2026-10-03T17-27-32-632Z-021d1969-bd6c-40b7-b2f4-f31a253a1957-full.json"
+  },
+  "failure": null,
+  "index_tree_before": "8374dfc972872a54616181b4eded7c6c0976955f",
+  "prior_readiness_reports": [
+    "<candidate-checkout>\\output\\readiness\\2026-10-03T03-41-02-912Z-94892fd4-7594-4009-bdb5-a060ffe3984d-full.json",
+    "<candidate-checkout>\\output\\readiness\\2026-10-03T04-34-29-635Z-00adbf61-4320-4c23-a8ed-243e1e7cf146-full.json",
+    "<candidate-checkout>\\output\\readiness\\2026-10-03T07-34-20-419Z-c6432bc5-aa3d-4fa4-bcf2-1557ec8c63db-full.json",
+    "<candidate-checkout>\\output\\readiness\\2026-10-03T08-39-01-963Z-b6bbd2e6-d3cb-43ea-8fcb-f23829130750-full.json",
+    "<candidate-checkout>\\output\\readiness\\2026-10-03T09-48-57-580Z-00b64c66-a352-4bb1-a1fd-af0e023a105b-full.json",
+    "<candidate-checkout>\\output\\readiness\\2026-10-03T11-09-09-478Z-89a7b496-8d2b-41b1-bdcc-bc3944afa394-full.json",
+    "<candidate-checkout>\\output\\readiness\\2026-10-03T12-37-47-628Z-1bb9a547-491a-4019-ab16-c8cf5fa06bf1-full.json",
+    "<candidate-checkout>\\output\\readiness\\2026-10-03T13-53-44-885Z-e95a6587-33e7-42ca-bfe1-020bfa3fc76e-full.json",
+    "<candidate-checkout>\\output\\readiness\\2026-10-03T15-46-11-367Z-65bd9d2f-9424-401a-a0fc-6e1d05df20f0-full.json"
+  ],
+  "canonical_started_at_utc": "2026-10-03T17:27:30.8064969Z",
+  "index_tree_after": "8374dfc972872a54616181b4eded7c6c0976955f",
+  "finished_at_utc": "2026-10-03T18:25:10.6260510Z"
+}
