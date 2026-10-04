@@ -102,3 +102,10 @@ GitHub Actions was disabled and required hosted results were absent at the last
 remote check; local results do not replace those gates. Historical Cargo advisory
 debt has not been resolved or represented as a clean audit. No production
 deployment, account change, permission bypass or merge is certified here.
+
+
+## Retained browser images
+
+The [original screenshots and their source mapping](screenshots/README.md) were
+added on October 4, 2026 to accompany the existing October 2 browser receipt.
+The three PNGs are unchanged; no new browser execution or human review is claimed.
