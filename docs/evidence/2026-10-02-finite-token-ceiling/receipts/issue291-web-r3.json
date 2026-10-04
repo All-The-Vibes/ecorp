@@ -1,0 +1,79 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 291,
+  "status": "passed",
+  "wrapper_pid": 23336,
+  "started_at_utc": "2026-10-02T04:09:32.4127048Z",
+  "source": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+  "checks": [
+    {
+      "name": "e2e-entrypoint-syntax",
+      "command": "node --check tools/e2e_token_ceiling.mjs",
+      "exit_code": 0,
+      "log": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-e2e-syntax-r3.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "safe-helper-unit-discovery",
+      "command": "node --test --test-reporter=tap tools/token_ceiling.test.mjs",
+      "exit_code": 0,
+      "log": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-helper-unit-r5.log",
+      "sha256": "74516156811a10cb60c87655fe21019b180106fa70a327a700f752d78477ebbc"
+    },
+    {
+      "name": "actual-disposable-web-build",
+      "command": "node tools/test_token_ceiling.mjs --web-gate build <identical-qualified-descriptor>",
+      "exit_code": 0,
+      "log": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-web-build-r3.log",
+      "sha256": "99e93d71eae908d6444cf060b44c2e91dced3c2c7bd03bc292fa3d3cf9d78ce1",
+      "child_receipt": "<USER_HOME>\\AppData\\Local\\Temp\\ecorp-token-ceiling-yQP5bZ\\receipt.json",
+      "child_receipt_sha256": "06f87a38796562a09d79a414a92318d08e5392165d973a038ed4ea0af579ac4a"
+    },
+    {
+      "name": "actual-disposable-web-lint",
+      "command": "node tools/test_token_ceiling.mjs --web-gate lint <identical-qualified-descriptor>",
+      "exit_code": 0,
+      "log": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-web-lint-r3.log",
+      "sha256": "ec4935ccc207f5811debc7529bf22ab2cb5ca240ee200563f52efd41f7b786e3",
+      "child_receipt": "<USER_HOME>\\AppData\\Local\\Temp\\ecorp-token-ceiling-dAbG71\\receipt.json",
+      "child_receipt_sha256": "f2c0ff218e913cf0a2f79aaa7e8edf3873bc5daafa22d490d47b6236f93d0606"
+    }
+  ],
+  "failure": null,
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-02T04:09:37.244Z",
+    "source": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "tree": "70ca1719de097ef9b27819acc847e9dce14b19b2",
+    "branch": "codex/issue291-finite-budget",
+    "status": "M apps/web/src/App.tsx\n M apps/web/src/missionPreview.test.mjs\n M crates/crony-domain/src/lib.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/budget_revision.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/factory_connection_tests.rs\n M crates/crony-store/src/lib.rs\n M db/migrations/manifest.json\n?? crates/crony-store/src/token_ceiling_tests.rs\n?? db/migrations/0057_token_budget_ceiling.sql\n?? tools/e2e_token_ceiling.mjs\n?? tools/test_token_ceiling.mjs\n?? tools/token_ceiling.test.mjs",
+    "clean": false,
+    "source_file_count": 7151,
+    "source_fingerprint": "e366d091bab92043a0e67a4efc30fa84f19e632bf17541d31a8ae6510e218fce",
+    "manifest": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-source-before-web-r3.json",
+    "manifest_sha256": "038f4e096345aab0aee618590c1807b3a129191b64cd9cd68429d29cf3263366"
+  },
+  "descriptor": {
+    "replacements": 0,
+    "sha256": "b324edcdd1f358e09f0d3afec92a55edebefee2c33d50394ef282c6b1c1f804a",
+    "path": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-approved-feed-lock-r3.yaml",
+    "qualification": "Current integrity-only lock copied byte-for-byte. No registry, TLS, versions, integrities or primary lock changes."
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-02T04:16:00.277Z",
+    "source": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "tree": "70ca1719de097ef9b27819acc847e9dce14b19b2",
+    "branch": "codex/issue291-finite-budget",
+    "status": "M apps/web/src/App.tsx\n M apps/web/src/missionPreview.test.mjs\n M crates/crony-domain/src/lib.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/budget_revision.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/factory_connection_tests.rs\n M crates/crony-store/src/lib.rs\n M db/migrations/manifest.json\n?? crates/crony-store/src/token_ceiling_tests.rs\n?? db/migrations/0057_token_budget_ceiling.sql\n?? tools/e2e_token_ceiling.mjs\n?? tools/test_token_ceiling.mjs\n?? tools/token_ceiling.test.mjs",
+    "clean": false,
+    "source_file_count": 7151,
+    "source_fingerprint": "e366d091bab92043a0e67a4efc30fa84f19e632bf17541d31a8ae6510e218fce",
+    "manifest": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-source-after-web-r3.json",
+    "manifest_sha256": "39e9c50d65eabb1c83c983edee8244ba4269d146bdee8035e7c953c583a0588a"
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-10-02T04:16:00.7272098Z"
+}

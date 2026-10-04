@@ -79,6 +79,19 @@ test('one builder preserves the complete current creation payload and retained s
   assert.equal(buildMissionRequest({ ...draft, strategy: 'single' }).strategy, 'single')
 })
 
+test('the exact finite token ceiling survives preview and creation JSON without changing other authority', () => {
+  const ceiling = 999_999_999_999_999
+  assert.ok(Number.isSafeInteger(ceiling))
+  const exact = buildMissionRequest({ ...draft, budgetTokens: ceiling })
+  const scoped = missionRequestScope('corp-a', 'alice', JSON.stringify(exact))
+  assert.equal(JSON.parse(scoped.body).budget_tokens, ceiling)
+  assert.ok(scoped.body.includes('"budget_tokens":999999999999999'))
+  assert.deepEqual({ ...exact, budget_tokens: draft.budgetTokens }, request)
+  for (const smaller of [1, 500_000, 1_000_000, 2_000_000]) {
+    assert.equal(buildMissionRequest({ ...draft, budgetTokens: smaller }).budget_tokens, smaller)
+  }
+})
+
 test('provider defaults, supported reasoning and commit-branch semantics match submission', () => {
   const defaults = buildMissionRequest({ ...draft, selectedModel: undefined, contract: null, customVerification: false })
   assert.equal(defaults.preferred_model, null)
@@ -334,7 +347,9 @@ test('App shares the request body, invalidates keyed preview instances and retai
   assert.match(app, /not a provider billing estimate/)
   assert.match(app, /Preview starts no work and grants no approval/)
   assert.match(app, /useState\('single'\)/)
-  assert.match(app, /useState\(1_000_000\)/)
+  assert.match(app, /const MAX_TOKEN_BUDGET = 999_999_999_999_999/)
+  assert.match(app, /useState\(MAX_TOKEN_BUDGET\)/)
+  assert.match(app, /<option value=\{MAX_TOKEN_BUDGET\}>Finite ceiling • 999,999,999,999,999<\/option>/)
   assert.match(app, /quote\.tasks\.map/)
   assert.match(app, /task\.budget_tokens\.toLocaleString\(\)/)
   assert.ok(app.indexOf('aria-label="Mission settings and allocation"') < app.indexOf('className="button button-primary mission-submit"'))

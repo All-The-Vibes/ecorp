@@ -7,16 +7,16 @@ use anyhow::{Context, Result, anyhow};
 pub use crony_domain::MAX_TASK_ATTEMPTS;
 use crony_domain::{
     Agent, AgentStatus, DeliverableForm, DeliverableSpec, MAX_GRAPH_BUDGET_COST_MICROUSD,
-    MAX_TASK_BUDGET_COST_MICROUSD, ManualVerificationGate, PlannedTask, TaskContract,
-    TaskGraphPlan, TaskSecretReference, VerificationPolicy, VerifierCheck,
+    MAX_TASK_BUDGET_COST_MICROUSD, MAX_TOKEN_BUDGET, ManualVerificationGate, PlannedTask,
+    TaskContract, TaskGraphPlan, TaskSecretReference, VerificationPolicy, VerifierCheck,
     repository_relative_path_is_valid, strategy_cost_budgets, write_scope_is_valid,
 };
 
 pub const MAX_GRAPH_NODES: usize = 8;
 pub const MAX_GRAPH_DEPTH: i32 = 4;
-pub const MAX_TASK_BUDGET_TOKENS: i64 = 2_000_000;
-pub const MAX_GRAPH_BUDGET_TOKENS: i64 = 2_000_000;
-const DEFAULT_SINGLE_TASK_BUDGET_TOKENS: i64 = 1_000_000;
+pub const MAX_TASK_BUDGET_TOKENS: i64 = MAX_TOKEN_BUDGET;
+pub const MAX_GRAPH_BUDGET_TOKENS: i64 = MAX_TOKEN_BUDGET;
+const DEFAULT_SINGLE_TASK_BUDGET_TOKENS: i64 = MAX_TOKEN_BUDGET;
 
 pub fn uses_deterministic_harness(strategy: &str) -> bool {
     matches!(
@@ -82,6 +82,12 @@ impl StrategyRegistry {
         request: &PlanningRequest<'_>,
         agents: &[Agent],
     ) -> Result<TaskGraphPlan> {
+        if request
+            .budget_tokens
+            .is_some_and(|tokens| !(1..=MAX_TOKEN_BUDGET).contains(&tokens))
+        {
+            return Err(anyhow!("task graph budget is invalid"));
+        }
         let strategy = self
             .strategies
             .get(strategy_id)
@@ -189,9 +195,11 @@ impl ManagerStrategy for ParallelSpecialistsStrategy {
         let (synthesis_model, synthesis_reasoning) =
             provider_settings(request, &synthesizer.adapter);
 
-        let total_budget = request.budget_tokens.unwrap_or(280_000);
+        let total_budget = request.budget_tokens.unwrap_or(MAX_TOKEN_BUDGET);
         let total_cost_budget = request.budget_cost_microusd.unwrap_or(3_000_000);
-        let specialist_budget = (total_budget * 2 / 7).max(1);
+        let specialist_budget = i64::try_from(i128::from(total_budget) * 2 / 7)
+            .context("parallel-specialists budget overflow")?
+            .max(1);
         let synthesis_budget = (total_budget - specialist_budget * 2).max(1);
         let costs =
             strategy_cost_budgets(self.id(), total_cost_budget).map_err(anyhow::Error::msg)?;
@@ -411,7 +419,7 @@ impl ManagerStrategy for StudioSwarmStrategy {
         };
         let workers = [visual, gameplay, quality];
         let handoff_root = request.handoff_root.unwrap_or("handoffs");
-        let total_budget = request.budget_tokens.unwrap_or(2_000_000);
+        let total_budget = request.budget_tokens.unwrap_or(MAX_TOKEN_BUDGET);
         let total_cost_budget = request.budget_cost_microusd.unwrap_or(6_000_000);
         let (specialist_budget, integration_budget) = studio_budget_split(total_budget)?;
         let costs =
@@ -547,10 +555,8 @@ fn studio_budget_split(total: i64) -> Result<(i64, i64)> {
     if total < 4 {
         return Err(anyhow!("studio-swarm budget must fund all four tasks"));
     }
-    let specialist = (total
-        .checked_mul(3)
+    let specialist = i64::try_from(i128::from(total) * 3 / 20)
         .context("studio-swarm budget overflow")?
-        / 20)
         .max(1);
     // Assign rounding remainder to integration so the four budgets sum to the request exactly.
     Ok((specialist, total - specialist * 3))
@@ -1291,6 +1297,63 @@ mod tests {
     }
 
     #[test]
+    fn token_ceiling_all_ordinary_strategies_preserve_finite_and_smaller_budgets() {
+        let registry = StrategyRegistry::new();
+        let workers = copilot_workers();
+        for (strategy, minimum, cost) in [
+            ("single", 1, 1_000_000),
+            ("parallel-specialists", 3, 3_000_000),
+            ("studio-swarm", 4, 6_000_000),
+        ] {
+            for budget in [
+                None,
+                Some(minimum),
+                Some(50_003),
+                Some(MAX_TOKEN_BUDGET - 1),
+                Some(MAX_TOKEN_BUDGET),
+            ] {
+                let request = PlanningRequest {
+                    budget_tokens: budget,
+                    ..studio_request()
+                };
+                let plan = registry.plan(strategy, &request, &workers).unwrap();
+                assert_eq!(plan.budget_tokens, budget.unwrap_or(999_999_999_999_999));
+                assert_eq!(
+                    plan.tasks
+                        .iter()
+                        .map(|t| t.contract.budget_tokens)
+                        .sum::<i64>(),
+                    plan.budget_tokens
+                );
+                assert!(
+                    plan.tasks
+                        .iter()
+                        .all(|t| (1..=MAX_TOKEN_BUDGET).contains(&t.contract.budget_tokens))
+                );
+                assert_eq!(plan.budget_cost_microusd, cost);
+                assert_eq!(
+                    plan.tasks
+                        .iter()
+                        .map(|t| t.contract.budget_cost_microusd)
+                        .sum::<i64>(),
+                    cost
+                );
+                assert!(plan.tasks.iter().all(|t| t.max_attempts == 2));
+            }
+            for invalid in [i64::MIN, -1, 0, MAX_TOKEN_BUDGET + 1, i64::MAX] {
+                let request = PlanningRequest {
+                    budget_tokens: Some(invalid),
+                    ..studio_request()
+                };
+                assert!(
+                    registry.plan(strategy, &request, &workers).is_err(),
+                    "{strategy}: {invalid}"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn issue297_research_roots_declare_exact_verified_notes_and_probes() {
         let registry = StrategyRegistry::new();
         let request = PlanningRequest {
@@ -1785,7 +1848,12 @@ mod tests {
             (
                 None,
                 None,
-                [300_000, 300_000, 300_000, 1_100_000],
+                [
+                    149_999_999_999_999,
+                    149_999_999_999_999,
+                    149_999_999_999_999,
+                    550_000_000_000_002,
+                ],
                 [900_000, 900_000, 900_000, 3_300_000],
             ),
             (

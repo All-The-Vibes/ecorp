@@ -1,0 +1,317 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 291,
+  "source": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+  "status": "passed",
+  "wrapper_pid": 41944,
+  "started_at_utc": "2026-10-02T04:06:46.1050650Z",
+  "qa_root": "<USER_HOME>\\code\\qa\\issue224-planned-attempts-20261002-issue291-r2",
+  "checks": [
+    {
+      "exit_code": 0,
+      "sha256": "07f705daafbcd69c746faae9eb8414246d08715dee2511974ae4a879b8076226",
+      "command": "node tools/test_token_ceiling.mjs",
+      "name": "actual-numeric-regression-helper",
+      "log": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-native-r2-numeric-helper.log"
+    },
+    {
+      "exit_code": 0,
+      "sha256": "a1acdf332f970f8fe03fc3d5106a5eb151e951c9b16688274097f9e174846156",
+      "command": "cargo build --locked --offline --message-format=json -p crony-server -p crony-runner",
+      "name": "actual-native-binary-build",
+      "log": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-native-r2-build.stderr.log"
+    },
+    {
+      "exit_code": 0,
+      "sha256": "9b9cd7dc5160456fb3332e896baefb08c1ea94768218f281eb78705ab26bf2c6",
+      "command": "CRONY_TOKEN_CEILING_TEST=1 node tools/e2e_token_ceiling.mjs <owned-fixture> <actual-build-receipt>",
+      "name": "owned-browser-to-server-to-runner-finite-budget-regression",
+      "log": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-native-r2-browser.log"
+    }
+  ],
+  "failure": null,
+  "cleanup": "All exact owned stack processes verified stopped; source, database, worktrees, private credential files and evidence preserved.",
+  "scope": "Prospective contributor regression. Native browser/server/PostgreSQL/runner with the existing synthetic Codex protocol peer. No real-provider, native Factory publication or independent human outcome acceptance.",
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-02T04:06:50.225Z",
+    "source": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "tree": "70ca1719de097ef9b27819acc847e9dce14b19b2",
+    "branch": "codex/issue291-finite-budget",
+    "status": "M apps/web/src/App.tsx\n M apps/web/src/missionPreview.test.mjs\n M crates/crony-domain/src/lib.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/budget_revision.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/factory_connection_tests.rs\n M crates/crony-store/src/lib.rs\n M db/migrations/manifest.json\n?? crates/crony-store/src/token_ceiling_tests.rs\n?? db/migrations/0057_token_budget_ceiling.sql\n?? tools/e2e_token_ceiling.mjs\n?? tools/test_token_ceiling.mjs\n?? tools/token_ceiling.test.mjs",
+    "clean": false,
+    "source_file_count": 7151,
+    "source_fingerprint": "e366d091bab92043a0e67a4efc30fa84f19e632bf17541d31a8ae6510e218fce",
+    "manifest": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-native-r2-source-before.json",
+    "manifest_sha256": "a4b36aa7e0307e0298ca6981f81a2f6652fd9e2edd120543a78883a6bb4f1d6d"
+  },
+  "database_receipt": {
+    "path": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-native-database-r3.json",
+    "sha256": "0b5a5921c9fd456282c3f5a8d4d46a0821589605cb771e5f440daf19b74cc254"
+  },
+  "supervisor": {
+    "path": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue224-stack-r1.ps1",
+    "sha256": "9ca372976e6c507a93b3484b119b9513a296b403691a4d899a659cd8189fa90f"
+  },
+  "numeric_receipt": {
+    "path": "<USER_HOME>\\AppData\\Local\\Temp\\ecorp-token-ceiling-9lUNw2\\receipt.json",
+    "commands": [
+      {
+        "label": "store-numeric",
+        "program": "cargo",
+        "args": [
+          "test",
+          "--locked",
+          "--offline",
+          "-p",
+          "crony-store",
+          "token_ceiling",
+          "--",
+          "--test-threads=1"
+        ],
+        "cwd": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+        "started_at": "2026-10-02T04:06:52.902Z",
+        "finished_at": "2026-10-02T04:06:54.539Z",
+        "exit_code": 0,
+        "signal": null,
+        "error": null,
+        "log": "<USER_HOME>\\AppData\\Local\\Temp\\ecorp-token-ceiling-9lUNw2\\store-numeric.log",
+        "log_sha256": "a9789e91cca00cc2ee0ebc85a1d0cf6353d133628a970b697e73811bb5c9792b"
+      },
+      {
+        "label": "planning",
+        "program": "cargo",
+        "args": [
+          "test",
+          "--locked",
+          "--offline",
+          "-p",
+          "crony-server",
+          "--bin",
+          "crony-server",
+          "token_ceiling_all_ordinary_strategies",
+          "--",
+          "--test-threads=1"
+        ],
+        "cwd": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+        "started_at": "2026-10-02T04:06:54.539Z",
+        "finished_at": "2026-10-02T04:06:56.227Z",
+        "exit_code": 0,
+        "signal": null,
+        "error": null,
+        "log": "<USER_HOME>\\AppData\\Local\\Temp\\ecorp-token-ceiling-9lUNw2\\planning.log",
+        "log_sha256": "8034ac8c089a88e59a4ac32f35a510fb1b36a73110900b8b182a57f6143b6771"
+      },
+      {
+        "label": "frontend",
+        "program": "<USER_HOME>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "args": [
+          "--test",
+          "apps/web/src/missionPreview.test.mjs"
+        ],
+        "cwd": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+        "started_at": "2026-10-02T04:06:56.227Z",
+        "finished_at": "2026-10-02T04:06:56.552Z",
+        "exit_code": 0,
+        "signal": null,
+        "error": null,
+        "log": "<USER_HOME>\\AppData\\Local\\Temp\\ecorp-token-ceiling-9lUNw2\\frontend.log",
+        "log_sha256": "7563411d5ad14543bfc91a884cd4f2572454a3b38192b5276ecad36ce2a0744f"
+      }
+    ],
+    "sha256": "32d47e557cbe681f035f16a778f6ea26eeaa9e5eb79d0a93161067de2579b008"
+  },
+  "build_receipt": {
+    "path": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-native-r2-build.json",
+    "sha256": "3dc5663bd9a9dc9d63b9460ec1e55dbc7ab6d4d5088e73abb4238d3ca836d633"
+  },
+  "stack_started": {
+    "log": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-native-r2-stack-start.log",
+    "sha256": "539903d9e789d1192e3385f369ad59c65759966edee0a97f529e615f185a8aee"
+  },
+  "browser_receipt": {
+    "path": "<USER_HOME>\\code\\qa\\issue224-planned-attempts-20261002-issue291-r2\\evidence\\token-ceiling\\receipt.json",
+    "sha256": "278849afea8007ddb759c008b5634dc9c5dd4941bf46acdd52b198f8d9d81754",
+    "status": "passed"
+  },
+  "browser_cases": [
+    {
+      "label": "exact-ceiling",
+      "mission_id": "ec3ee44a-5b8d-4fe9-93fd-2554584a1c61",
+      "run_id": "4f0df860-13fb-4f50-a4e4-ade72225c60c",
+      "persisted": {
+        "input_tokens": 10,
+        "output_tokens": 2,
+        "budget_tokens_limit": 999999999999999,
+        "budget_cost_microusd_limit": 1000000
+      },
+      "prior_history_unchanged": true,
+      "artifact": {
+        "id": "c38ca646-75e2-4020-9d91-9fd4d0cc0ed7",
+        "bytes": 935,
+        "sha256": "dcd8da5392005358f610a1a9b87379734edd0f5873ca90f641d669924729bcb4"
+      },
+      "verification_status": "passed",
+      "max_attempts": 2
+    },
+    {
+      "label": "requester-remainder",
+      "mission_id": "32dba825-fdbc-4cb6-9494-69b06af13844",
+      "run_id": "e4f9558b-3cc3-4db6-b577-ee393428468b",
+      "persisted": {
+        "input_tokens": 10,
+        "output_tokens": 2,
+        "budget_tokens_limit": 20,
+        "budget_cost_microusd_limit": 1000000
+      },
+      "prior_history_unchanged": true,
+      "artifact": {
+        "id": "c9b9e482-92f5-433d-93ea-b534065137b8",
+        "bytes": 935,
+        "sha256": "1b8da6aebc388a808f9d71ea9069f13568094e73ed4ba2db25707235e06a622b"
+      },
+      "verification_status": "passed",
+      "max_attempts": 2
+    },
+    {
+      "label": "corp-remainder",
+      "mission_id": "2d873573-02f1-44ff-b09c-be8ed6915332",
+      "run_id": "bc3cb5c2-3b2b-468e-887b-d2feb824c1f3",
+      "persisted": {
+        "input_tokens": 10,
+        "output_tokens": 2,
+        "budget_tokens_limit": 20,
+        "budget_cost_microusd_limit": 1000000
+      },
+      "prior_history_unchanged": true,
+      "artifact": {
+        "id": "396c67eb-cf47-4b12-afd4-520a5d849e07",
+        "bytes": 935,
+        "sha256": "34d9e4a3cc793362d1c448fa0d08cbdffd9f006316d91a1c1e51397aca3e24c3"
+      },
+      "verification_status": "passed",
+      "max_attempts": 2
+    },
+    {
+      "label": "zero-remainder",
+      "status": 409,
+      "attempts_consumed": 0,
+      "runs_created": 0
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions/preview",
+      "value": 0,
+      "status": 400,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions",
+      "value": 0,
+      "status": 400,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions/preview",
+      "value": -1,
+      "status": 400,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions",
+      "value": -1,
+      "status": 400,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions/preview",
+      "value": 1000000000000000,
+      "status": 400,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions",
+      "value": 1000000000000000,
+      "status": 400,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions/preview",
+      "value": 1.5,
+      "status": 422,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions",
+      "value": 1.5,
+      "status": 422,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions/preview",
+      "value": "malformed",
+      "status": 422,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions",
+      "value": "malformed",
+      "status": 422,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions/preview",
+      "value": "999999999999999",
+      "status": 422,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions",
+      "value": "999999999999999",
+      "status": 422,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions/preview",
+      "value": 1E+30,
+      "status": 422,
+      "ledger_unchanged": true
+    },
+    {
+      "label": "invalid-input",
+      "endpoint": "/missions",
+      "value": 1E+30,
+      "status": 422,
+      "ledger_unchanged": true
+    }
+  ],
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-02T04:08:47.009Z",
+    "source": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "tree": "70ca1719de097ef9b27819acc847e9dce14b19b2",
+    "branch": "codex/issue291-finite-budget",
+    "status": "M apps/web/src/App.tsx\n M apps/web/src/missionPreview.test.mjs\n M crates/crony-domain/src/lib.rs\n M crates/crony-server/src/planning.rs\n M crates/crony-store/src/aggregate_breaker.rs\n M crates/crony-store/src/budget_revision.rs\n M crates/crony-store/src/contract_revision.rs\n M crates/crony-store/src/factory_connection_tests.rs\n M crates/crony-store/src/lib.rs\n M db/migrations/manifest.json\n?? crates/crony-store/src/token_ceiling_tests.rs\n?? db/migrations/0057_token_budget_ceiling.sql\n?? tools/e2e_token_ceiling.mjs\n?? tools/test_token_ceiling.mjs\n?? tools/token_ceiling.test.mjs",
+    "clean": false,
+    "source_file_count": 7151,
+    "source_fingerprint": "e366d091bab92043a0e67a4efc30fa84f19e632bf17541d31a8ae6510e218fce",
+    "manifest": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-native-r2-source-after.json",
+    "manifest_sha256": "db355d53d262757c6b83c53b5badb9124159e8ada4a2d5b455f507bed994f0b1"
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-10-02T04:08:47.4305591Z"
+}

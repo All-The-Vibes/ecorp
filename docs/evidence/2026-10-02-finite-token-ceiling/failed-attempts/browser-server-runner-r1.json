@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "issue": 291,
+  "status": "failed",
+  "source": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp",
+  "qa_root": "<USER_HOME>\\code\\qa\\issue224-planned-attempts-20261002-issue291-r1",
+  "started_at": "2026-10-02T04:03:12.692Z",
+  "cases": [],
+  "scope": "Real browser, server, PostgreSQL and runner with the existing synthetic Codex protocol peer. No vendor inference, independent human review, Factory acceptance, publication or merge claim.",
+  "source_before": "ea074a1307056061c5dee1a94b14eff8b13cc66095bbcf8ee2d1594f3032b722",
+  "ownership_sha256": "1553e24ab3d859aa09a3e301c08e3fcf46c77879e547f47b685e772581880f2a",
+  "build": {
+    "receipt": "<USER_HOME>\\code\\ecorp\\output\\issue-completion\\20261002T023252Z\\issue291-native-r1-build.json",
+    "receipt_sha256": "151361223748b0abdcceb75fd17defabbc3b16f71b0070e5fd43df4951e7efa1",
+    "cargo_json_sha256": "c4f884a9e64507a4415fa29427009c69e0691dfe47031ccf946611440a3932e3",
+    "binaries": [
+      {
+        "role": "server",
+        "executable": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp\\target\\debug\\crony-server.exe",
+        "sha256": "9bd273e8c58a8c5da905d24566bed7a62039a14699d9942efef17d56042bc68d",
+        "compiler_fresh": false
+      },
+      {
+        "role": "runner",
+        "executable": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp\\target\\debug\\crony-runner.exe",
+        "sha256": "b3b3813104776f392b91ef2b1711075113abf1e9b50674d97992d06a48893c21",
+        "compiler_fresh": false
+      }
+    ]
+  },
+  "processes_before": {
+    "server": {
+      "creation": "2026-10-02T04:03:05.1707463Z",
+      "port_owned": true,
+      "pid": 24016,
+      "native_creation_ticks": "639265105851707463",
+      "platform": "win32",
+      "executable": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp\\target\\debug\\crony-server.exe"
+    },
+    "runner": {
+      "creation": "2026-10-02T04:03:08.1925239Z",
+      "port_owned": false,
+      "pid": 12872,
+      "native_creation_ticks": "639265105881925239",
+      "platform": "win32",
+      "executable": "<USER_HOME>\\.codex\\worktrees\\issue291-finite-budget\\ecorp\\target\\debug\\crony-runner.exe"
+    },
+    "web": {
+      "creation": "2026-10-02T04:03:08.2270821Z",
+      "port_owned": true,
+      "pid": 13448,
+      "native_creation_ticks": "639265105882270821",
+      "platform": "win32",
+      "executable": "<USER_HOME>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe"
+    },
+    "postgres": {
+      "creation": "2026-10-02T04:03:01.9672108Z",
+      "port_owned": true,
+      "pid": 12040,
+      "native_creation_ticks": "639265105819672108",
+      "platform": "win32",
+      "executable": "<USER_HOME>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe"
+    }
+  },
+  "fixture_source": {
+    "repository": "ecorp-fixture/planned-attempts-fixture",
+    "base_ref": "main",
+    "base_commit": "cc073a0a7857839fe2eaf89c2979edbc9a63a872"
+  },
+  "original_policy_defaults": {
+    "actor_tokens_per_24h": 999999999999999,
+    "actor_cost_microusd_per_24h": 10000000,
+    "corp_tokens_per_24h": 999999999999999,
+    "corp_cost_microusd_per_24h": 100000000,
+    "no_progress_event_limit": 8,
+    "repeated_tool_limit": 5
+  },
+  "served_app": {
+    "url": "http://127.0.0.1:16085/src/App.tsx",
+    "served_sha256": "a5c976082913aaaa2f1e9b7eb0a15911f2282453ac07cca45f22b86f4945ef14",
+    "original_sha256": "2bd60cd3328f762a921ce9429410ec7de305b668550d9897f19555f4f6da1478",
+    "binding": "Actual browser response source-map bytes equal the physical reviewed source"
+  },
+  "failure": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'New mission', exact: true })\u001b[22m\n",
+  "source_after": "ea074a1307056061c5dee1a94b14eff8b13cc66095bbcf8ee2d1594f3032b722",
+  "finished_at": "2026-10-02T04:04:07.100Z"
+}
