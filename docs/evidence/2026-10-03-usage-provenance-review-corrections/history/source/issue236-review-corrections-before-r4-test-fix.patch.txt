@@ -1,0 +1,465 @@
+diff --git a/crates/crony-runner/src/adapter/codex.rs b/crates/crony-runner/src/adapter/codex.rs
+index 33bb2ec6..732b4da0 100644
+--- a/crates/crony-runner/src/adapter/codex.rs
++++ b/crates/crony-runner/src/adapter/codex.rs
+@@ -592,29 +592,29 @@ fn record_usage(params: &Value, parsed: &mut ParsedRun) -> Option<UsageSnapshot>
+         add_usage(&mut parsed.usage, &usage);
+         return Some(usage);
+     };
+-    if let Some(previous) = parsed.last_usage_total {
+-        if total_tokens < previous {
+-            return None;
+-        }
+-        if total_tokens == previous {
+-            if parsed
++    if let Some(previous) = parsed.last_usage_total
++        && total_tokens <= previous
++    {
++        if total_tokens == previous
++            && parsed
+                 .last_usage_report
+                 .as_ref()
+                 .is_some_and(|previous| previous.same_observation(&usage))
+-            {
+-                return None;
+-            }
+-            usage
+-                .usage_provenance
+-                .as_mut()
+-                .expect("native usage provenance")
+-                .invalidate(
+-                    "cumulative_total_tokens",
+-                    crony_domain::InvalidUsageReason::ConflictingObservation,
+-                );
+-            add_usage(&mut parsed.usage, &usage);
+-            return Some(usage);
++        {
++            return None;
+         }
++        // Retain regressions and contradictory equal-cursor reports without
++        // rewinding the accepted cursor or charging their quantities.
++        usage
++            .usage_provenance
++            .as_mut()
++            .expect("native usage provenance")
++            .invalidate(
++                "cumulative_total_tokens",
++                crony_domain::InvalidUsageReason::ConflictingObservation,
++            );
++        add_usage(&mut parsed.usage, &usage);
++        return Some(usage);
+     }
+     // App-server reports `last` for the latest model API call and `total` cumulatively for the
+     // thread. Use the monotonic total as the duplicate cursor, but account and emit `last` once.
+@@ -1415,6 +1415,46 @@ mod tests {
+         assert_eq!(parsed.usage.coverage()["tokens"], "invalid");
+     }
+
++    #[test]
++    fn regressing_usage_cursor_is_retained_without_charging_or_rewinding() {
++        let mut parsed = ParsedRun {
++            thread_id: Some("thread-1".to_owned()),
++            turn_id: Some("turn-1".to_owned()),
++            ..ParsedRun::default()
++        };
++        let first_frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
++            "total":{"totalTokens":12},"last":{"inputTokens":10,"outputTokens":2}
++        }});
++        let first = record_usage(&first_frame, &mut parsed).unwrap();
++        for lower in [10, 0] {
++            let mut frame = first_frame.clone();
++            frame["tokenUsage"] =
++                json!({"total":{"totalTokens":lower},"last":{"inputTokens":8,"outputTokens":2}});
++            let conflict = record_usage(&frame, &mut parsed)
++                .expect("retain the active turn's regressing cursor as evidence");
++            assert!(conflict.validate().is_err());
++            assert_eq!(conflict.coverage()["tokens"], "invalid");
++            assert_eq!(
++                serde_json::to_value(&conflict).unwrap()["usage_provenance"]["invalid_fields"],
++                json!([{"field":"cumulative_total_tokens","reason":"conflicting_observation"}])
++            );
++            assert_eq!(parsed.last_usage_total, Some(12));
++            assert_eq!(parsed.last_usage_report.as_ref(), Some(&first));
++            assert_eq!(parsed.usage.input_tokens, Some(10));
++            assert_eq!(parsed.usage.output_tokens, Some(2));
++            assert!(record_usage(&first_frame, &mut parsed).is_none());
++        }
++        let next = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
++            "total":{"totalTokens":20},"last":{"inputTokens":6,"outputTokens":2}
++        }});
++        assert!(record_usage(&next, &mut parsed).unwrap().validate().is_ok());
++        assert!(record_usage(&next, &mut parsed).is_none());
++        assert_eq!(parsed.last_usage_total, Some(20));
++        assert_eq!(parsed.usage.input_tokens, Some(16));
++        assert_eq!(parsed.usage.output_tokens, Some(4));
++        assert_eq!(parsed.usage.coverage()["tokens"], "invalid");
++    }
++
+     #[test]
+     fn invalid_usage_does_not_advance_the_cursor_and_explicit_zero_is_reported() {
+         for malformed in [
+diff --git a/crates/crony-runner/src/bin/crony-evidence-paths.rs b/crates/crony-runner/src/bin/crony-evidence-paths.rs
+index e28a8c11..358695c8 100644
+--- a/crates/crony-runner/src/bin/crony-evidence-paths.rs
++++ b/crates/crony-runner/src/bin/crony-evidence-paths.rs
+@@ -207,6 +207,13 @@ impl Root {
+ }
+
+ fn has_personal_path(text: &str) -> bool {
++    // Captured Windows commands caret-escape separators and punctuation. Keep
++    // the literal check too, including a username that itself contains a caret.
++    has_literal_personal_path(text)
++        || (text.contains('^') && has_literal_personal_path(&text.replace('^', "")))
++}
++
++fn has_literal_personal_path(text: &str) -> bool {
+     text.char_indices().any(|(index, character)| {
+         if !matches!(character, '/' | '\\') {
+             return false;
+@@ -802,6 +809,9 @@ mod tests {
+             r"c:\uSeRs/<synthetic-user>",
+             "/Users/<synthetic-user>",
+             "d:/users/<synthetic-user>/source",
++            r#"^"C^:^\Users^\<synthetic-user>^\source^""#,
++            r"^\Users^\<synthetic-user>",
++            r"C:\Users\<literal-caret-fixture>",
+             "/Users/<unicode-fixture>",
+         ] {
+             assert!(has_personal_path(value), "{value:?}");
+@@ -813,6 +823,7 @@ mod tests {
+             "Users can review evidence.",
+             "source/users.test.mjs",
+             "C:/Users/",
++            r#"^"C^:^\Users^\<original-user>^\source^""#,
+             "/Users/<unicode-fixture>",
+             "/Users/<unicode-fixture>",
+             "/Users/<unicode-fixture>",
+@@ -831,9 +842,18 @@ mod tests {
+         )
+         .unwrap();
+         fs::write(fixture.path("safe.txt"), "<local-user>").unwrap();
++        fs::write(
++            fixture.path("startup.log"),
++            r#"^"C^:^\Users^\<synthetic-user>^\source^""#,
++        )
++        .unwrap();
+         let findings = scan_with_hook(&fixture.0, &mut |_, _, _| {}).unwrap();
+-        assert_eq!(findings, ["packet/nested/receipt.json"]);
++        assert_eq!(
++            findings,
++            ["packet/nested/receipt.json", "packet/startup.log"]
++        );
+         assert!(!findings.join(" ").contains("<synthetic-user>"));
++        assert!(!findings.join(" ").contains("<synthetic-user>"));
+     }
+
+     #[test]
+diff --git a/crates/crony-store/src/usage_accounting.rs b/crates/crony-store/src/usage_accounting.rs
+index 61dc7c10..f17a0059 100644
+--- a/crates/crony-store/src/usage_accounting.rs
++++ b/crates/crony-store/src/usage_accounting.rs
+@@ -160,6 +160,15 @@ pub(super) async fn admit_usage_tx(
+     }
+     payload["usage_validation"] =
+         json!({"policy":"native_usage_v1","disposition":disposition,"reason":reason});
++    // Call identity describes the admitted, persisted session scope, not merely
++    // an identifier supplied by the runner. Keep quantity coverage and original
++    // provenance separate from this structural admission and from hard controls.
++    payload["usage_coverage"]["call_identity"] =
++        if matches!(disposition, "accepted" | "duplicate") && !identity_keys.is_empty() {
++            json!("reported")
++        } else {
++            json!("unavailable")
++        };
+     if matches!(disposition, "accepted" | "duplicate") {
+         payload["usage_identity_keys"] = json!(identity_keys);
+         payload["usage_origin_event_id"] = json!(origin_event_id);
+diff --git a/crates/crony-store/src/usage_accounting_tests.rs b/crates/crony-store/src/usage_accounting_tests.rs
+index 0d108dca..641b3839 100644
+--- a/crates/crony-store/src/usage_accounting_tests.rs
++++ b/crates/crony-store/src/usage_accounting_tests.rs
+@@ -74,6 +74,13 @@ fn assert_uncharged(observed: &DomainEvent, disposition: &str) {
+     );
+     assert_eq!(observed.payload["accounting"]["charged"], false);
+     assert_eq!(observed.payload["accounting"]["known_subtotal_only"], true);
++    if !matches!(disposition, "accepted" | "duplicate") {
++        assert_eq!(
++            observed.payload["usage_coverage"]["call_identity"],
++            "unavailable"
++        );
++        assert!(observed.payload.get("usage_identity_keys").is_none());
++    }
+ }
+
+ #[sqlx::test(migrations = "../../db/migrations")]
+@@ -259,6 +266,7 @@ async fn issue236_usage_optional_session_uses_fenced_run_identity_without_rewrit
+     omitted["usage_provenance"]["provider_session_id"] = Value::Null;
+     let first = observe(&store, 0, omitted.clone()).await;
+     assert_eq!(first.event_type, "run.usage");
++    assert_eq!(first.payload["usage_coverage"]["call_identity"], "reported");
+     assert_eq!(
+         first.payload["usage_provenance"]["provider_session_id"],
+         Value::Null
+@@ -268,6 +276,10 @@ async fn issue236_usage_optional_session_uses_fenced_run_identity_without_rewrit
+         let replay = observe(&store, 0, payload).await;
+         assert_uncharged(&replay, "duplicate");
+         assert_eq!(replay.payload["usage_origin_event_id"], json!(first.id));
++        assert_eq!(
++            replay.payload["usage_coverage"]["call_identity"],
++            "reported"
++        );
+     }
+     let mut api_only = report(Some(10), Some(2), None, Some("api-a"));
+     api_only["usage_provenance"]["provider_session_id"] = Value::Null;
+@@ -293,6 +305,46 @@ async fn issue236_usage_optional_session_uses_fenced_run_identity_without_rewrit
+     assert_eq!(counters(&store, 1).await, (0, 0, 0));
+ }
+
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires an explicitly owned disposable PostgreSQL database"]
++async fn issue236_usage_last_call_identity_coverage_uses_the_admitted_session(pool: PgPool) {
++    let store = usage_fixture(pool).await;
++    let mut payload = report(Some(10), Some(2), None, None);
++    payload["usage_provenance"]["scope"] = json!("last_call");
++    payload["usage_provenance"]["provider_session_id"] = Value::Null;
++    payload["usage_provenance"]["turn_id"] = json!("turn-1");
++    payload["usage_provenance"]["cumulative_total_tokens"] = json!(12);
++    let accepted = observe(&store, 0, payload.clone()).await;
++    assert_eq!(accepted.event_type, "run.usage");
++    assert_eq!(
++        accepted.payload["usage_coverage"]["call_identity"],
++        "reported"
++    );
++    assert_eq!(
++        accepted.payload["usage_identity_keys"]
++            .as_array()
++            .unwrap()
++            .len(),
++        1
++    );
++    assert!(accepted.payload["usage_provenance"]["provider_session_id"].is_null());
++    let replay = observe(&store, 0, payload.clone()).await;
++    assert_uncharged(&replay, "duplicate");
++    assert_eq!(
++        replay.payload["usage_coverage"]["call_identity"],
++        "reported"
++    );
++    assert_eq!(replay.payload["usage_origin_event_id"], json!(accepted.id));
++    payload["usage_provenance"]["provider_session_id"] = json!("other-session");
++    let rejected = observe(&store, 0, payload).await;
++    assert_uncharged(&rejected, "unattributed");
++    assert_eq!(
++        rejected.payload["usage_validation"]["reason"],
++        "usage_session_mismatch"
++    );
++    assert_eq!(counters(&store, 0).await, (10, 2, 0));
++}
++
+ #[sqlx::test(migrations = "../../db/migrations")]
+ #[ignore = "requires an explicitly owned disposable PostgreSQL database"]
+ async fn issue236_usage_partial_tokens_and_native_units_never_fabricate_free_usd(pool: PgPool) {
+diff --git a/docs/USAGE_PROVENANCE.md b/docs/USAGE_PROVENANCE.md
+index 9434c362..94c2aa40 100644
+--- a/docs/USAGE_PROVENANCE.md
++++ b/docs/USAGE_PROVENANCE.md
+@@ -59,10 +59,20 @@ the persisted session supplies only the identity comparison scope, without
+ rewriting the original provenance. An absent stored session cannot establish
+ native per-call attribution.
+
++Persisted `call_identity` coverage is `reported` only for an accepted or duplicate
++observation with admitted identity keys. Rejected sessions, conflicts, invalid
++reports, aggregates, overflows, and observations without native identity remain
++`unavailable`. An omitted session may still establish an identity through the
++persisted run session; the journal keeps the originally reported provenance.
++
+ Journal event replay remains idempotent. Available native event/API/provider
+ call aliases identify additional replays within the same assigned run. Matching
+ replays may enrich aliases transitively; contradictory observations cannot claim
+ new aliases or overwrite a prior quantity. Equal counts never identify a call.
++Within the active Codex turn, a regressing cumulative cursor and a contradictory
++report at the same cursor retain invalid, uncharged evidence without rewinding
++the accepted cursor. An exact duplicate at the accepted cursor is suppressed;
++a later increasing cursor can still contribute its call delta once.
+ Without native IDs, distinct journal frames remain distinct and identity
+ coverage stays unavailable. Four distinct worker/retry/auditor/failed-call
+ observations of 100/20, 30/10, 10/5, and 7/3 total 147 input plus 38 output,
+diff --git a/docs/evidence/2026-10-03-usage-provenance/README.md b/docs/evidence/2026-10-03-usage-provenance/README.md
+index f5b8d436..fe1ffba8 100644
+--- a/docs/evidence/2026-10-03-usage-provenance/README.md
++++ b/docs/evidence/2026-10-03-usage-provenance/README.md
+@@ -118,3 +118,10 @@ versions remove trailing spaces/tabs and final blank lines, as listed in
+ `evidence.json`; original logs, reference drivers, rejected copies and the failed
+ check remain preserved in the durable records. No outcomes, quantities or
+ screenshot bytes changed.
++
++A later review found that both retained startup logs still contained an initdb
++operator name and Windows caret-escaped local paths. Only published lines 23
++and 44 were normalized; `evidence.json` records the original, previous published,
++and corrected hashes and exact transformations. The original logs and historical
++validation outcomes remain retained. This correction does not upgrade historical
++acceptance to the subsequently reviewed implementation.
+diff --git a/docs/evidence/2026-10-03-usage-provenance/evidence.json b/docs/evidence/2026-10-03-usage-provenance/evidence.json
+index 4bbe94a8..03e5097f 100644
+--- a/docs/evidence/2026-10-03-usage-provenance/evidence.json
++++ b/docs/evidence/2026-10-03-usage-provenance/evidence.json
+@@ -567,8 +567,9 @@
+     {
+       "path": "logs/browser-r3/issue236-browser-r3-stack-start.log",
+       "original_sha256": "0a1700e54f47a8c6575f612ca5596b825dcbf63dbd2e641e94f7634d7c9ef956",
+-      "published_sha256": "b8ac89c80c56533fe51153c8b4b28dfd2211e47aa7102b31aa5521194b448ef4",
+-      "transformation": "local paths and UTF-8/LF normalization"
++      "published_sha256": "5a38a0f8b00aacd9a7beca0262694dc7fb060b6d9e39084e808f0b67b4d8b31b",
++      "transformation": "Existing UTF-8/LF and local-path normalization retained; line 23 operator name replaced with <local-user>; line 44 Windows caret quoting removed and absolute tool/QA roots replaced with <pinned-toolchain>/<owned-qa-root>. Outcomes, commands and quantities unchanged.",
++      "previous_published_sha256": "b8ac89c80c56533fe51153c8b4b28dfd2211e47aa7102b31aa5521194b448ef4"
+     },
+     {
+       "path": "logs/browser-r3/issue236-browser-r3-stack-status.log",
+@@ -609,8 +610,9 @@
+     {
+       "path": "history/browser-r2/logs/issue236-browser-r2-stack-start.log",
+       "original_sha256": "827b30fabf19aebdea1f6c6f1b92dbce6c27a329a45a2422f95e19a6ddbf74dc",
+-      "published_sha256": "711f606e4a99267e626c7eca7adfe443fb9984ba2e2c4e240c44a95ba02b08d9",
+-      "transformation": "local paths and UTF-8/LF normalization"
++      "published_sha256": "9462781340a95e4244388e51697d98b9d4268b7f1285368893d951ae1e7c1404",
++      "transformation": "Existing UTF-8/LF and local-path normalization retained; line 23 operator name replaced with <local-user>; line 44 Windows caret quoting removed and absolute tool/QA roots replaced with <pinned-toolchain>/<owned-qa-root>. Outcomes, commands and quantities unchanged.",
++      "previous_published_sha256": "711f606e4a99267e626c7eca7adfe443fb9984ba2e2c4e240c44a95ba02b08d9"
+     },
+     {
+       "path": "history/browser-r2/logs/issue236-browser-r2-stack-status.log",
+@@ -873,5 +875,34 @@
+     "drivers/issue236-fixture-environment-r1.mjs.txt",
+     "logs/issue236-native-build-r2-cache-copy.log",
+     "logs/native-sql-r1.log"
+-  ]
++  ],
++  "review_path_correction": {
++    "recorded_at_utc": "2026-10-03T07:24:33.025222+00:00",
++    "scope": "Two published startup-log copies only. Original logs and historical outcomes retained.",
++    "finding": "Windows caret-escaped paths and the initdb operator line escaped the earlier normalization check.",
++    "files": [
++      {
++        "path": "history/browser-r2/logs/issue236-browser-r2-stack-start.log",
++        "original_sha256": "827b30fabf19aebdea1f6c6f1b92dbce6c27a329a45a2422f95e19a6ddbf74dc",
++        "previous_published_sha256": "711f606e4a99267e626c7eca7adfe443fb9984ba2e2c4e240c44a95ba02b08d9",
++        "published_sha256": "9462781340a95e4244388e51697d98b9d4268b7f1285368893d951ae1e7c1404",
++        "changed_lines": [
++          23,
++          44
++        ],
++        "transformation": "Existing UTF-8/LF and local-path normalization retained; line 23 operator name replaced with <local-user>; line 44 Windows caret quoting removed and absolute tool/QA roots replaced with <pinned-toolchain>/<owned-qa-root>. Outcomes, commands and quantities unchanged."
++      },
++      {
++        "path": "logs/browser-r3/issue236-browser-r3-stack-start.log",
++        "original_sha256": "0a1700e54f47a8c6575f612ca5596b825dcbf63dbd2e641e94f7634d7c9ef956",
++        "previous_published_sha256": "b8ac89c80c56533fe51153c8b4b28dfd2211e47aa7102b31aa5521194b448ef4",
++        "published_sha256": "5a38a0f8b00aacd9a7beca0262694dc7fb060b6d9e39084e808f0b67b4d8b31b",
++        "changed_lines": [
++          23,
++          44
++        ],
++        "transformation": "Existing UTF-8/LF and local-path normalization retained; line 23 operator name replaced with <local-user>; line 44 Windows caret quoting removed and absolute tool/QA roots replaced with <pinned-toolchain>/<owned-qa-root>. Outcomes, commands and quantities unchanged."
++      }
++    ]
++  }
+ }
+diff --git a/docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-start.log b/docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-start.log
+index 41458dab..f91f9da9 100644
+--- a/docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-start.log
++++ b/docs/evidence/2026-10-03-usage-provenance/history/browser-r2/logs/issue236-browser-r2-stack-start.log
+@@ -20,7 +20,7 @@
+   "build_required": false
+ }
+ {"implementation_head":"fb13446f099ddc550a653ed6c4b13800169ba599","source_repository":"ecorp-fixture/usage-provenance-fixture","source_commit":"3ca8830d15a0946b56852bbe0050fe8ee2b15f7a","source_tree":"c3ee36abd63bd01424851f63530e37623975a86d","readme_sha256":"2656d9a412f038d931f5a879a5b8de7c9d1c6bbcaaf8dd15c1b2c4996a947f4b","independent_synthetic_source":true}
+-The files belonging to this database system will be owned by user "<local-user>".
++The files belonging to this database system will be owned by user "<local-user>".
+ This user must also own the server process.
+
+ The database cluster will be initialized with locale "C".
+@@ -41,6 +41,6 @@ syncing data to disk ... ok
+
+ Success. You can now start the database server using:
+
+-    ^"<pinned-toolchain>^\postgresql^-17^.10^\pgsql^\bin^\pg^_ctl^" -D ^"<owned-qa-root>^\issue236^-usage^-provenance^-20261003^-r1^\database^" -l logfile start
++    "<pinned-toolchain>\postgresql-17.10\pgsql\bin\pg_ctl" -D "<owned-qa-root>\database" -l logfile start
+
+ Owned deterministic stack ready. Non-secret receipt: <failed-browser-fixture>\ownership.json
+diff --git a/docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-start.log b/docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-start.log
+index 84867d2b..a92262a2 100644
+--- a/docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-start.log
++++ b/docs/evidence/2026-10-03-usage-provenance/logs/browser-r3/issue236-browser-r3-stack-start.log
+@@ -20,7 +20,7 @@
+   "build_required": false
+ }
+ {"implementation_head":"fb13446f099ddc550a653ed6c4b13800169ba599","source_repository":"ecorp-fixture/usage-provenance-fixture","source_commit":"8f4230258ba7013b0e92d63c0b8fe0b47935ef84","source_tree":"c3ee36abd63bd01424851f63530e37623975a86d","readme_sha256":"2656d9a412f038d931f5a879a5b8de7c9d1c6bbcaaf8dd15c1b2c4996a947f4b","independent_synthetic_source":true}
+-The files belonging to this database system will be owned by user "<local-user>".
++The files belonging to this database system will be owned by user "<local-user>".
+ This user must also own the server process.
+
+ The database cluster will be initialized with locale "C".
+@@ -41,6 +41,6 @@ syncing data to disk ... ok
+
+ Success. You can now start the database server using:
+
+-    ^"<pinned-toolchain>^\postgresql^-17^.10^\pgsql^\bin^\pg^_ctl^" -D ^"<owned-qa-root>^\issue236^-usage^-provenance^-20261003^-r2^\database^" -l logfile start
++    "<pinned-toolchain>\postgresql-17.10\pgsql\bin\pg_ctl" -D "<owned-qa-root>\database" -l logfile start
+
+ Owned deterministic stack ready. Non-secret receipt: <browser-fixture>\ownership.json
+diff --git a/tools/check_evidence_personal_paths.mjs b/tools/check_evidence_personal_paths.mjs
+index f23b9fa8..d2b05891 100644
+--- a/tools/check_evidence_personal_paths.mjs
++++ b/tools/check_evidence_personal_paths.mjs
+@@ -64,9 +64,12 @@ export function defaultEvidenceDirectories() {
+ }
+
+ // Repeated separators cover both native paths and JSON-escaped paths. A drive
+-// prefix is optional because Windows HOMEPATH normally omits the drive.
++// prefix is optional because Windows HOMEPATH normally omits the drive. Captured
++// Windows commands may caret-escape separators and punctuation. Check the literal
++// form first so a literal caret in a username still counts as personal evidence.
+ export function hasPersonalUserPath(text) {
+-  return /(?:[a-z]:)?[/\\]+Users[/\\]+[^/\\\s"'<>]+/i.test(text)
++  const personalPath = /(?:[a-z]:)?[/\\]+Users[/\\]+[^/\\\s"'<>]+/i
++  return personalPath.test(text) || (text.includes('^') && personalPath.test(text.replaceAll('^', '')))
+ }
+
+ export function isContainedEvidencePath(root, candidate, pathApi = path) {
+diff --git a/tools/check_evidence_personal_paths.test.mjs b/tools/check_evidence_personal_paths.test.mjs
+index c5d4e963..9b4b72bf 100644
+--- a/tools/check_evidence_personal_paths.test.mjs
++++ b/tools/check_evidence_personal_paths.test.mjs
+@@ -15,6 +15,8 @@ test('personal paths include drive-relative, prefixed, escaped and alternate sep
+     String.raw`D:\\Users\\<synthetic-user>`, String.raw`\\Users\\<synthetic-user>`,
+     '/Users/<synthetic-user>', 'd:/users/<synthetic-user>/source',
+     String.raw`c:\uSeRs/<synthetic-user>`, JSON.stringify({ HOMEPATH: String.raw`\Users\<synthetic-user>` }),
++    String.raw`^"C^:^\Users^\<synthetic-user>^\source^"`,
++    String.raw`^\Users^\<synthetic-user>`, String.raw`C:\Users\<literal-caret-fixture>`,
+     '/Users/<unicode-fixture>',
+   ]) assert.equal(hasPersonalUserPath(path), true, 'personal path was not detected')
+ })
+@@ -23,6 +25,7 @@ test('normalized placeholders and ordinary prose remain valid', () => {
+   for (const text of [
+     '<original-user>', '<local-user>/source', String.raw`C:\Users\<original-user>\source`,
+     'Users can review evidence.', 'source/users.test.mjs', 'C:/Users/',
++    String.raw`^"C^:^\Users^\<original-user>^\source^"`,
+     '/Users/<unicode-fixture>', '/Users/<unicode-fixture>', '/Users/<unicode-fixture>',
+   ]) assert.equal(hasPersonalUserPath(text), false)
+ })
+@@ -33,13 +36,17 @@ test('recursive packet scan and CLI reject a leak without printing its value', t
+   mkdirSync(join(root, 'prior-attempts'))
+   const receipt = join(root, 'prior-attempts', 'environment.json')
+   writeFileSync(receipt, JSON.stringify({ HOMEPATH: String.raw`\Users\<synthetic-user>` }))
+-  assert.equal(findPersonalPathFiles([root]).length, 1)
++  const startup = join(root, 'startup.log')
++  writeFileSync(startup, String.raw`^"C^:^\Users^\<synthetic-user>^\source^"`)
++  assert.equal(findPersonalPathFiles([root]).length, 2)
+   const tool = fileURLToPath(new URL('./check_evidence_personal_paths.mjs', import.meta.url))
+   const failed = spawnSync(process.execPath, [tool, root], { encoding: 'utf8', windowsHide: true })
+   assert.equal(failed.status, 1, failed.stderr)
+   assert.equal(JSON.parse(failed.stdout).status, 'failed')
+   assert.equal(failed.stdout.includes('<synthetic-user>'), false)
++  assert.equal(failed.stdout.includes('<synthetic-user>'), false)
+   writeFileSync(receipt, JSON.stringify({ HOMEPATH: '<original-user>' }))
++  writeFileSync(startup, '<candidate-checkout>')
+   assert.deepEqual(findPersonalPathFiles([root]), [])
+   const passed = spawnSync(process.execPath, [tool, root], { encoding: 'utf8', windowsHide: true })
+   assert.equal(passed.status, 0, passed.stderr)

@@ -1,0 +1,88 @@
+TAP version 13
+# Subtest: personal paths include drive-relative, prefixed, escaped and alternate separators
+ok 1 - personal paths include drive-relative, prefixed, escaped and alternate separators
+  ---
+  duration_ms: 2.1664
+  type: 'test'
+  ...
+# Subtest: normalized placeholders and ordinary prose remain valid
+ok 2 - normalized placeholders and ordinary prose remain valid
+  ---
+  duration_ms: 0.371
+  type: 'test'
+  ...
+# Subtest: personal paths include caret-LF continuations
+ok 3 - personal paths include caret-LF continuations
+  ---
+  duration_ms: 0.2058
+  type: 'test'
+  ...
+# Subtest: personal paths include caret-CRLF continuations
+ok 4 - personal paths include caret-CRLF continuations
+  ---
+  duration_ms: 0.1508
+  type: 'test'
+  ...
+# Subtest: recursive packet scan and CLI reject a leak without printing its value
+ok 5 - recursive packet scan and CLI reject a leak without printing its value
+  ---
+  duration_ms: 7932.2255
+  type: 'test'
+  ...
+# Subtest: every retained PR226 packet including the latest correction is scanned
+ok 6 - every retained PR226 packet including the latest correction is scanned
+  ---
+  duration_ms: 2067.6698
+  type: 'test'
+  ...
+# Subtest: root and ancestor directory links cannot redirect an evidence scan
+ok 7 - root and ancestor directory links cannot redirect an evidence scan
+  ---
+  duration_ms: 650.8298
+  type: 'test'
+  ...
+# Subtest: nested and dangling directory links fail closed
+ok 8 - nested and dangling directory links fail closed
+  ---
+  duration_ms: 423.9091
+  type: 'test'
+  ...
+# Subtest: canonical containment rejects absolute cross-drive and UNC relative results
+ok 9 - canonical containment rejects absolute cross-drive and UNC relative results
+  ---
+  duration_ms: 0.4178
+  type: 'test'
+  ...
+# Subtest: actual Windows short alias succeeds while a linked ancestor still fails
+ok 10 - actual Windows short alias succeeds while a linked ancestor still fails
+  ---
+  duration_ms: 817.303
+  type: 'test'
+  ...
+# Subtest: native scanner rejects oversize sparse evidence
+ok 11 - native scanner rejects oversize sparse evidence
+  ---
+  duration_ms: 215.2157
+  type: 'test'
+  ...
+# Subtest: empty evidence and a file at the byte limit are accepted
+ok 12 - empty evidence and a file at the byte limit are accepted
+  ---
+  duration_ms: 687.8049
+  type: 'test'
+  ...
+# Subtest: native scanner rejects hard-linked evidence and preserves the shared file
+ok 13 - native scanner rejects hard-linked evidence and preserves the shared file
+  ---
+  duration_ms: 219.5734
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13163.9063

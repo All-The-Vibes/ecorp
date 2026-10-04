@@ -1,0 +1,39 @@
+//! Test-only instrumentation shared byte-for-byte by both frozen comparison arms.
+use super::*;
+
+// The baseline has no coverage API. Null here records that API's absence; it
+// does not infer coverage or billing from the baseline's numeric zero defaults.
+#[allow(dead_code)]
+trait AbsentCoverageApi {
+    fn coverage(&self) -> Value {
+        json!({"tokens":null,"usd":null,"complete_provider_bill":null})
+    }
+}
+impl AbsentCoverageApi for UsageSnapshot {}
+
+#[test]
+fn issue236_frozen_native_case() {
+    let corpus: Value = serde_json::from_str(include_str!("issue236-paired-corpus-r1.json")).unwrap();
+    let index: usize = std::env::var("ISSUE236_COMPARE_CASE").unwrap().parse().unwrap();
+    let case = &corpus["cases"][index];
+    assert!(case.is_object());
+    let mut parsed = ParsedRun {
+        thread_id: Some(case["thread_id"].as_str().unwrap().to_owned()),
+        turn_id: Some(case["turn_id"].as_str().unwrap().to_owned()),
+        ..ParsedRun::default()
+    };
+    let emitted = case["notifications"].as_array().unwrap().iter()
+        .filter_map(|frame| record_usage(frame, &mut parsed)).count();
+    let coverage = parsed.usage.coverage();
+    let actual = json!({
+        "emitted":emitted,
+        "input_tokens":parsed.usage.input_tokens,
+        "output_tokens":parsed.usage.output_tokens,
+        "cost_microusd":parsed.usage.cost_microusd,
+        "token_coverage":coverage["tokens"],
+        "usd_coverage":coverage["usd"],
+        "complete_provider_bill":coverage["complete_provider_bill"],
+    });
+    println!("ISSUE236_OBSERVATION={}", json!({"case":case["id"],"actual":actual,"expected":case["expected"]}));
+    assert_eq!(actual, case["expected"], "frozen case {}", case["id"]);
+}

@@ -9,6 +9,7 @@ use std::{
 
 use anyhow::{Context, anyhow};
 use async_trait::async_trait;
+use crony_domain::UsageAccumulator;
 use dashmap::DashMap;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -43,7 +44,7 @@ pub struct CodexAdapter {
     command: PathBuf,
     prefix_args: Arc<Vec<OsString>>,
     available: bool,
-    usage: Arc<DashMap<String, UsageSnapshot>>,
+    usage: Arc<DashMap<String, UsageAccumulator>>,
     profile: Option<super::connection::ProfileEnvironment>,
 }
 
@@ -78,8 +79,9 @@ struct ParsedRun {
     thread_id: Option<String>,
     turn_id: Option<String>,
     final_message: String,
-    usage: UsageSnapshot,
+    usage: UsageAccumulator,
     last_usage_total: Option<u64>,
+    last_usage_report: Option<UsageSnapshot>,
     last_usage_observed_at: Option<String>,
     streamed_command_items: HashSet<String>,
 }
@@ -188,7 +190,7 @@ impl CodexAdapter {
         if let Some(thread_id) = parsed.thread_id.as_deref() {
             self.usage
                 .entry(thread_id.to_owned())
-                .and_modify(|usage| add_usage(usage, &parsed.usage))
+                .and_modify(|usage| usage.merge(&parsed.usage))
                 .or_insert_with(|| parsed.usage.clone());
         }
         let (status, summary) = match &outcome {
@@ -209,7 +211,7 @@ impl CodexAdapter {
                 parsed.thread_id.as_deref(),
                 status,
                 &summary,
-                &parsed.usage,
+                parsed.usage.report(),
             ),
             &mut controls,
             &mut controls_open,
@@ -331,7 +333,7 @@ impl AgentAdapter for CodexAdapter {
     async fn collect_usage(&self, session_id: &str) -> Result<UsageSnapshot, AdapterError> {
         self.usage
             .get(session_id)
-            .map(|entry| entry.clone())
+            .map(|entry| entry.report().clone())
             .ok_or_else(|| {
                 AdapterError::Runtime(anyhow!("no usage recorded for session {session_id}"))
             })
@@ -464,7 +466,7 @@ fn handle_notification(value: &Value, parsed: &mut ParsedRun, sink: Arc<dyn Adap
         }
         "thread/tokenUsage/updated" => {
             if let Some(usage) = record_usage(params, parsed) {
-                sink.emit(AdapterEvent::Usage(usage));
+                sink.emit(AdapterEvent::Usage(Box::new(usage)));
             }
         }
         "warning" => {
@@ -575,29 +577,76 @@ fn record_usage(params: &Value, parsed: &mut ParsedRun) -> Option<UsageSnapshot>
     {
         return None;
     }
-    let total_tokens = params
-        .pointer("/tokenUsage/total/totalTokens")
-        .and_then(Value::as_u64)?;
-    if parsed
-        .last_usage_total
-        .is_some_and(|previous| total_tokens <= previous)
+    let mut usage = super::usage::codex(params);
+    if usage.validate().is_err() {
+        // Invalid evidence must not advance the accepted cursor or increase
+        // the collected subtotal, so a later valid report can still be admitted.
+        parsed.usage.observe(&usage);
+        return Some(usage);
+    }
+    let Some(total_tokens) = usage
+        .usage_provenance
+        .as_ref()
+        .and_then(|provenance| provenance.cumulative_total_tokens)
+    else {
+        // Retain an invalid observation instead of silently making it free work.
+        parsed.usage.observe(&usage);
+        return Some(usage);
+    };
+    if parsed.last_usage_total == Some(total_tokens)
+        && parsed
+            .last_usage_report
+            .as_ref()
+            .is_some_and(|previous| previous.same_observation(&usage))
     {
         return None;
     }
+    let provenance = usage
+        .usage_provenance
+        .as_ref()
+        .expect("native usage provenance");
+    // Native `total` includes `last.totalTokens`, which can exceed the known
+    // component sum. Known subsets also bound a missing parent, but neither
+    // bound supplies a missing quantity or implies disjoint cache categories.
+    let known_input = usage
+        .input_tokens
+        .max(provenance.cached_input_tokens)
+        .max(provenance.cache_write_input_tokens)
+        .unwrap_or(0);
+    let known_output = usage
+        .output_tokens
+        .max(provenance.reasoning_output_tokens)
+        .unwrap_or(0);
+    let covers_last_call = total_tokens
+        .checked_sub(parsed.last_usage_total.unwrap_or(0))
+        .zip(known_input.checked_add(known_output))
+        .is_some_and(|(increase, known)| {
+            increase >= known.max(provenance.last_total_tokens.unwrap_or(0))
+        });
+    if parsed
+        .last_usage_total
+        .is_some_and(|previous| total_tokens <= previous)
+        || !covers_last_call
+    {
+        // Retain regressions, contradictory equal-cursor reports and impossible
+        // totals without changing the accepted cursor or charging quantities.
+        usage
+            .usage_provenance
+            .as_mut()
+            .expect("native usage provenance")
+            .invalidate(
+                "cumulative_total_tokens",
+                crony_domain::InvalidUsageReason::ConflictingObservation,
+            );
+        parsed.usage.observe(&usage);
+        return Some(usage);
+    }
     // App-server reports `last` for the latest model API call and `total` cumulatively for the
     // thread. Use the monotonic total as the duplicate cursor, but account and emit `last` once.
-    let last = params.pointer("/tokenUsage/last").unwrap_or(&Value::Null);
-    let usage = UsageSnapshot {
-        input_tokens: last.get("inputTokens").and_then(Value::as_u64).unwrap_or(0),
-        output_tokens: last
-            .get("outputTokens")
-            .and_then(Value::as_u64)
-            .unwrap_or(0),
-        cost_microusd: 0,
-    };
-    add_usage(&mut parsed.usage, &usage);
+    parsed.usage.observe(&usage);
     parsed.last_usage_total = Some(total_tokens);
-    (usage.input_tokens > 0 || usage.output_tokens > 0 || usage.cost_microusd > 0).then_some(usage)
+    parsed.last_usage_report = Some(usage.clone());
+    Some(usage)
 }
 
 fn rpc_error(value: &Value) -> Option<String> {
@@ -615,12 +664,6 @@ fn terminal_reason(request: &TerminationRequest) -> String {
         TerminationKind::Interrupt => format!("interrupted: {}", request.reason),
         TerminationKind::Stop => request.reason.clone(),
     }
-}
-
-fn add_usage(target: &mut UsageSnapshot, addition: &UsageSnapshot) {
-    target.input_tokens = target.input_tokens.saturating_add(addition.input_tokens);
-    target.output_tokens = target.output_tokens.saturating_add(addition.output_tokens);
-    target.cost_microusd = target.cost_microusd.saturating_add(addition.cost_microusd);
 }
 
 async fn ensure_git_workspace(workspace: &Path) -> Result<(), AdapterError> {
@@ -724,7 +767,9 @@ async fn write_evidence(
         "usage": {
             "input_tokens": usage.input_tokens,
             "output_tokens": usage.output_tokens,
-            "cost_microusd": usage.cost_microusd
+            "cost_microusd": usage.cost_microusd,
+            "usage_provenance": usage.usage_provenance,
+            "usage_coverage": usage.coverage()
         }
     }))
     .context("serialize Codex evidence")?;
@@ -965,7 +1010,7 @@ mod tests {
                 |event| matches!(event, AdapterEvent::Output { stream, .. } if stream == "terminal")
             ));
             assert!(events.iter().any(
-                |event| matches!(event, AdapterEvent::Usage(usage) if usage.input_tokens > 0)
+                |event| matches!(event, AdapterEvent::Usage(usage) if usage.input_tokens.is_some_and(|count| count > 0))
             ));
             assert!(
                 events
@@ -1004,8 +1049,79 @@ mod tests {
             .collect_usage(&session_id(&sink))
             .await
             .expect("collect usage");
-        assert!(usage.input_tokens > 0);
+        assert!(usage.input_tokens.is_some_and(|count| count > 0));
         let _ = std::fs::remove_dir_all(workspace);
+    }
+
+    #[tokio::test]
+    async fn resumed_session_retains_subtotals_after_invalid_first_usage() {
+        let adapter = test_adapter();
+        let request = test_request("[usage-invalid-first] retain accepted usage");
+        let workspace = request.workspace.clone();
+        assert!(!workspace.exists(), "the fixture must own a new workspace");
+        let mut original_session: Option<String> = None;
+        for attempt in 0..2 {
+            let sink = Arc::new(RecordingSink::default());
+            let (_tx, rx) = mpsc::unbounded_channel();
+            let mut run_request = request.clone();
+            run_request.run_id = Uuid::new_v4();
+            let exit = tokio::time::timeout(Duration::from_secs(12), async {
+                if let Some(session) = &original_session {
+                    adapter.resume(run_request, session, rx, sink.clone()).await
+                } else {
+                    adapter.execute(run_request, rx, sink.clone()).await
+                }
+            })
+            .await
+            .expect("bounded synthetic session")
+            .expect("execute synthetic session");
+            assert_eq!(exit, AdapterExit::Completed);
+            let session = session_id(&sink);
+            if let Some(original) = &original_session {
+                assert_eq!(&session, original);
+            } else {
+                original_session = Some(session.clone());
+            }
+            let collected = adapter.collect_usage(&session).await.unwrap();
+            assert_eq!(collected.input_tokens, Some((attempt + 1) * 10));
+            assert_eq!(collected.output_tokens, Some((attempt + 1) * 2));
+            assert_eq!(collected.cost_microusd, None);
+            assert_eq!(collected.coverage()["tokens"], "invalid");
+
+            let artifact_path = {
+                let events = sink.events.lock().unwrap();
+                let observations: Vec<_> = events
+                    .iter()
+                    .filter_map(|event| match event {
+                        AdapterEvent::Usage(usage) => Some(usage),
+                        _ => None,
+                    })
+                    .collect();
+                assert_eq!(observations.len(), 2);
+                assert!(observations[0].validate().is_err());
+                assert!(observations[1].validate().is_ok());
+                assert_eq!(observations[1].input_tokens, Some(10));
+                assert_eq!(observations[1].output_tokens, Some(2));
+                assert!(events.iter().any(|event| matches!(event,
+                    AdapterEvent::ControlObservation { phase: "process_terminated", detail, .. }
+                    if detail["adapter_input_tokens"] == 10 && detail["adapter_output_tokens"] == 2
+                )));
+                events
+                    .iter()
+                    .find_map(|event| match event {
+                        AdapterEvent::Artifact(artifact) => Some(artifact.path.clone()),
+                        _ => None,
+                    })
+                    .expect("per-run evidence")
+            };
+            let evidence: Value =
+                serde_json::from_slice(&tokio::fs::read(artifact_path).await.unwrap()).unwrap();
+            assert_eq!(evidence["usage"]["input_tokens"], 10);
+            assert_eq!(evidence["usage"]["output_tokens"], 2);
+            assert!(evidence["usage"]["cost_microusd"].is_null());
+            assert_eq!(evidence["usage"]["usage_coverage"]["tokens"], "invalid");
+        }
+        std::fs::remove_dir_all(workspace).expect("remove successful owned fixture");
     }
 
     #[cfg(windows)]
@@ -1288,8 +1404,8 @@ mod tests {
             }
         });
         let first = record_usage(&notification, &mut parsed).expect("first usage");
-        assert_eq!(first.input_tokens, 10);
-        assert_eq!(first.output_tokens, 2);
+        assert_eq!(first.input_tokens, Some(10));
+        assert_eq!(first.output_tokens, Some(2));
         assert!(record_usage(&notification, &mut parsed).is_none());
         let second = record_usage(
             &json!({
@@ -1303,8 +1419,8 @@ mod tests {
             &mut parsed,
         )
         .expect("second usage");
-        assert_eq!(second.input_tokens, 6);
-        assert_eq!(second.output_tokens, 2);
+        assert_eq!(second.input_tokens, Some(6));
+        assert_eq!(second.output_tokens, Some(2));
         assert!(
             record_usage(
                 &json!({
@@ -1319,7 +1435,664 @@ mod tests {
             )
             .is_none()
         );
-        assert_eq!(parsed.usage.input_tokens, 16);
-        assert_eq!(parsed.usage.output_tokens, 4);
+        assert_eq!(parsed.usage.report().input_tokens, Some(16));
+        assert_eq!(parsed.usage.report().output_tokens, Some(4));
+        assert_eq!(parsed.usage.report().cost_microusd, None);
+    }
+
+    #[test]
+    fn usage_provenance_corpus_preserves_native_quantities_and_scope() {
+        let corpus: Value = serde_json::from_str(include_str!(
+            "../../tests/fixtures/usage-provenance-v1.json"
+        ))
+        .unwrap();
+        assert_eq!(corpus["schema_version"], 1);
+        for case in corpus["cases"].as_array().unwrap() {
+            let mut parsed = ParsedRun {
+                thread_id: Some(case["thread_id"].as_str().unwrap().to_owned()),
+                turn_id: Some(case["turn_id"].as_str().unwrap().to_owned()),
+                ..ParsedRun::default()
+            };
+            let emitted = case["notifications"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter_map(|frame| record_usage(frame, &mut parsed))
+                .count();
+            let coverage = parsed.usage.report().coverage();
+            let actual = json!({
+                "emitted": emitted,
+                "input_tokens": parsed.usage.report().input_tokens,
+                "output_tokens": parsed.usage.report().output_tokens,
+                "cost_microusd": parsed.usage.report().cost_microusd,
+                "token_coverage": coverage["tokens"],
+                "usd_coverage": coverage["usd"],
+                "complete_provider_bill": coverage["complete_provider_bill"],
+            });
+            assert_eq!(actual, case["expected"], "{}", case["id"]);
+        }
+    }
+
+    #[test]
+    fn conflicting_usage_at_the_same_cursor_is_evidence_without_another_charge() {
+        let mut parsed = ParsedRun {
+            thread_id: Some("thread-1".to_owned()),
+            turn_id: Some("turn-1".to_owned()),
+            ..ParsedRun::default()
+        };
+        let mut frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":12},"last":{"inputTokens":10,"outputTokens":2}
+        }});
+        let first = record_usage(&frame, &mut parsed).unwrap();
+        frame["tokenUsage"]["last"]["inputTokens"] = json!(11);
+        let conflict =
+            record_usage(&frame, &mut parsed).expect("retain contradictory native evidence");
+        assert_eq!(conflict.coverage()["tokens"], "invalid");
+        assert_eq!(parsed.last_usage_total, Some(12));
+        assert_eq!(parsed.last_usage_report, Some(first));
+        assert_eq!(parsed.usage.report().input_tokens, Some(10));
+        assert_eq!(parsed.usage.report().output_tokens, Some(2));
+        frame["tokenUsage"]["last"]["inputTokens"] = json!(10);
+        assert!(record_usage(&frame, &mut parsed).is_none());
+        frame["tokenUsage"] =
+            json!({"total":{"totalTokens":20},"last":{"inputTokens":6,"outputTokens":2}});
+        assert!(
+            record_usage(&frame, &mut parsed)
+                .unwrap()
+                .validate()
+                .is_ok()
+        );
+        assert_eq!(parsed.usage.report().input_tokens, Some(16));
+        assert_eq!(parsed.usage.report().output_tokens, Some(4));
+        assert_eq!(parsed.usage.report().coverage()["tokens"], "invalid");
+    }
+
+    #[test]
+    fn regressing_usage_cursor_is_retained_without_charging_or_rewinding() {
+        let mut parsed = ParsedRun {
+            thread_id: Some("thread-1".to_owned()),
+            turn_id: Some("turn-1".to_owned()),
+            ..ParsedRun::default()
+        };
+        let first_frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":12},"last":{"inputTokens":10,"outputTokens":2}
+        }});
+        let first = record_usage(&first_frame, &mut parsed).unwrap();
+        for lower in [10, 0] {
+            let mut frame = first_frame.clone();
+            frame["tokenUsage"] =
+                json!({"total":{"totalTokens":lower},"last":{"inputTokens":8,"outputTokens":2}});
+            let conflict = record_usage(&frame, &mut parsed)
+                .expect("retain the active turn's regressing cursor as evidence");
+            assert!(conflict.validate().is_err());
+            assert_eq!(conflict.coverage()["tokens"], "invalid");
+            assert_eq!(
+                serde_json::to_value(&conflict).unwrap()["usage_provenance"]["invalid_fields"],
+                json!([{"field":"cumulative_total_tokens","reason":"conflicting_observation"}])
+            );
+            assert_eq!(parsed.last_usage_total, Some(12));
+            assert_eq!(parsed.last_usage_report.as_ref(), Some(&first));
+            assert_eq!(parsed.usage.report().input_tokens, Some(10));
+            assert_eq!(parsed.usage.report().output_tokens, Some(2));
+            assert!(record_usage(&first_frame, &mut parsed).is_none());
+        }
+        let next = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":20},"last":{"inputTokens":6,"outputTokens":2}
+        }});
+        assert!(record_usage(&next, &mut parsed).unwrap().validate().is_ok());
+        assert!(record_usage(&next, &mut parsed).is_none());
+        assert_eq!(parsed.last_usage_total, Some(20));
+        assert_eq!(parsed.usage.report().input_tokens, Some(16));
+        assert_eq!(parsed.usage.report().output_tokens, Some(4));
+        assert_eq!(parsed.usage.report().coverage()["tokens"], "invalid");
+    }
+
+    #[test]
+    fn usage_cumulative_total_must_cover_an_initial_call() {
+        for (total, last) in [
+            (7, json!({"inputTokens":6,"outputTokens":2})),
+            (5, json!({"inputTokens":6})),
+            (1, json!({"outputTokens":2})),
+            (3, json!({"cachedInputTokens":4})),
+            (3, json!({"cacheWriteInputTokens":4})),
+            (1, json!({"reasoningOutputTokens":2})),
+            (7, json!({"inputTokens":6,"reasoningOutputTokens":2})),
+            (7, json!({"cachedInputTokens":6,"outputTokens":2})),
+        ] {
+            let mut parsed = ParsedRun {
+                thread_id: Some("thread-1".to_owned()),
+                turn_id: Some("turn-1".to_owned()),
+                ..ParsedRun::default()
+            };
+            let frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":total},"last":last
+            }});
+            let conflict = record_usage(&frame, &mut parsed).expect("retain impossible first call");
+            assert!(conflict.validate().is_err(), "{frame}");
+            assert_eq!(
+                serde_json::to_value(&conflict).unwrap()["usage_provenance"]["invalid_fields"],
+                json!([{"field":"cumulative_total_tokens","reason":"conflicting_observation"}])
+            );
+            assert_eq!(parsed.last_usage_total, None);
+            assert_eq!(parsed.last_usage_report, None);
+            assert_eq!(parsed.usage.report().input_tokens, None);
+            assert_eq!(parsed.usage.report().output_tokens, None);
+
+            let correction = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":12},"last":{"inputTokens":10,"outputTokens":2}
+            }});
+            assert!(
+                record_usage(&correction, &mut parsed)
+                    .unwrap()
+                    .validate()
+                    .is_ok()
+            );
+            assert!(record_usage(&correction, &mut parsed).is_none());
+            assert_eq!(parsed.last_usage_total, Some(12));
+            assert_eq!(parsed.usage.report().input_tokens, Some(10));
+            assert_eq!(parsed.usage.report().output_tokens, Some(2));
+            assert_eq!(parsed.usage.report().coverage()["tokens"], "invalid");
+        }
+    }
+
+    #[test]
+    fn usage_cumulative_total_increase_must_cover_the_next_call() {
+        let mut parsed = ParsedRun {
+            thread_id: Some("thread-1".to_owned()),
+            turn_id: Some("turn-1".to_owned()),
+            ..ParsedRun::default()
+        };
+        let first_frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":12},"last":{"inputTokens":10,"outputTokens":2}
+        }});
+        let first = record_usage(&first_frame, &mut parsed).unwrap();
+        for total in 13..20 {
+            let frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":total},"last":{"inputTokens":6,"outputTokens":2}
+            }});
+            let conflict = record_usage(&frame, &mut parsed).expect("retain contradictory delta");
+            assert!(conflict.validate().is_err(), "{frame}");
+            assert_eq!(
+                serde_json::to_value(&conflict).unwrap()["usage_provenance"]["invalid_fields"],
+                json!([{"field":"cumulative_total_tokens","reason":"conflicting_observation"}])
+            );
+            assert_eq!(parsed.last_usage_total, Some(12));
+            assert_eq!(parsed.last_usage_report.as_ref(), Some(&first));
+            assert_eq!(parsed.usage.report().input_tokens, Some(10));
+            assert_eq!(parsed.usage.report().output_tokens, Some(2));
+            assert!(record_usage(&first_frame, &mut parsed).is_none());
+        }
+        let correction = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":20},"last":{"inputTokens":6,"outputTokens":2}
+        }});
+        assert!(
+            record_usage(&correction, &mut parsed)
+                .unwrap()
+                .validate()
+                .is_ok()
+        );
+        assert!(record_usage(&correction, &mut parsed).is_none());
+        assert_eq!(parsed.last_usage_total, Some(20));
+        assert_eq!(parsed.usage.report().input_tokens, Some(16));
+        assert_eq!(parsed.usage.report().output_tokens, Some(4));
+        assert_eq!(parsed.usage.report().coverage()["tokens"], "invalid");
+    }
+
+    #[test]
+    fn usage_cumulative_total_bound_preserves_missing_quantities_and_subsets() {
+        for (total, last, input, output) in [
+            (6, json!({"inputTokens":6}), Some(6), None),
+            (2, json!({"outputTokens":2}), None, Some(2)),
+            (
+                6,
+                json!({"cachedInputTokens":6,"cacheWriteInputTokens":5}),
+                None,
+                None,
+            ),
+            (
+                5,
+                json!({"inputTokens":2,"reasoningOutputTokens":3}),
+                Some(2),
+                None,
+            ),
+            (0, json!({"outputTokens":0}), None, Some(0)),
+            (0, json!({}), None, None),
+            (
+                120,
+                json!({"inputTokens":100,"outputTokens":20,"cachedInputTokens":100,
+                "cacheWriteInputTokens":100,"reasoningOutputTokens":20}),
+                Some(100),
+                Some(20),
+            ),
+        ] {
+            let mut parsed = ParsedRun {
+                thread_id: Some("thread-1".to_owned()),
+                turn_id: Some("turn-1".to_owned()),
+                ..ParsedRun::default()
+            };
+            let frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":total},"last":last
+            }});
+            let report = record_usage(&frame, &mut parsed).expect("retain known lower bound");
+            assert!(report.validate().is_ok(), "{frame}");
+            assert_eq!(report.input_tokens, input);
+            assert_eq!(report.output_tokens, output);
+            assert_eq!(parsed.usage.report().input_tokens, input);
+            assert_eq!(parsed.usage.report().output_tokens, output);
+            assert_eq!(parsed.usage.report().cost_microusd, None);
+            assert_eq!(parsed.last_usage_total, Some(total));
+            assert!(record_usage(&frame, &mut parsed).is_none());
+        }
+    }
+
+    #[test]
+    fn usage_cumulative_total_bound_allows_prior_history_and_checked_limits() {
+        let mut parsed = ParsedRun {
+            thread_id: Some("thread-1".to_owned()),
+            turn_id: Some("turn-1".to_owned()),
+            ..ParsedRun::default()
+        };
+        let ceiling = i64::MAX as u64;
+        let frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":ceiling-8},"last":{"inputTokens":10,"outputTokens":2}
+        }});
+        assert!(
+            record_usage(&frame, &mut parsed)
+                .unwrap()
+                .validate()
+                .is_ok()
+        );
+        let mut next = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":ceiling-7},"last":{"inputTokens":6,"outputTokens":2}
+        }});
+        assert!(
+            record_usage(&next, &mut parsed)
+                .unwrap()
+                .validate()
+                .is_err()
+        );
+        assert_eq!(parsed.last_usage_total, Some(ceiling - 8));
+        next["tokenUsage"]["total"]["totalTokens"] = json!(ceiling);
+        assert!(record_usage(&next, &mut parsed).unwrap().validate().is_ok());
+        assert_eq!(parsed.usage.report().input_tokens, Some(16));
+        assert_eq!(parsed.usage.report().output_tokens, Some(4));
+
+        for last in [
+            json!({"inputTokens":ceiling,"outputTokens":1}),
+            json!({"cachedInputTokens":ceiling,"reasoningOutputTokens":ceiling}),
+            json!({"inputTokens":u64::MAX}),
+        ] {
+            let mut parsed = ParsedRun {
+                thread_id: Some("thread-1".to_owned()),
+                turn_id: Some("turn-1".to_owned()),
+                ..ParsedRun::default()
+            };
+            let frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":ceiling},"last":last
+            }});
+            assert!(
+                record_usage(&frame, &mut parsed)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+            assert_eq!(parsed.last_usage_total, None);
+            assert_eq!(parsed.usage.report().input_tokens, None);
+            assert_eq!(parsed.usage.report().output_tokens, None);
+        }
+    }
+
+    #[test]
+    fn usage_last_total_must_fit_initial_and_incremental_cursors() {
+        for previous in [None, Some(10)] {
+            let mut parsed = ParsedRun {
+                thread_id: Some("thread-1".to_owned()),
+                turn_id: Some("turn-1".to_owned()),
+                ..ParsedRun::default()
+            };
+            if previous.is_some() {
+                let baseline = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                    "total":{"totalTokens":10},"last":{"totalTokens":10,"inputTokens":8,"outputTokens":2}
+                }});
+                assert!(
+                    record_usage(&baseline, &mut parsed)
+                        .unwrap()
+                        .validate()
+                        .is_ok()
+                );
+            }
+            let accepted = parsed.last_usage_report.clone();
+            for last in [
+                json!({"totalTokens":100,"inputTokens":1,"outputTokens":1}),
+                json!({"totalTokens":100}),
+            ] {
+                let frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                    "total":{"totalTokens":previous.unwrap_or(0)+2},"last":last
+                }});
+                let conflict =
+                    record_usage(&frame, &mut parsed).expect("retain impossible native total");
+                assert!(conflict.validate().is_err());
+                assert_eq!(
+                    serde_json::to_value(&conflict).unwrap()["usage_provenance"]["invalid_fields"],
+                    json!([{"field":"cumulative_total_tokens","reason":"conflicting_observation"}])
+                );
+                assert_eq!(parsed.last_usage_total, previous);
+                assert_eq!(parsed.last_usage_report, accepted);
+                assert_eq!(parsed.usage.report().input_tokens, previous.map(|_| 8));
+                assert_eq!(parsed.usage.report().output_tokens, previous.map(|_| 2));
+            }
+            let correction = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":previous.unwrap_or(0)+2},
+                "last":{"totalTokens":2,"inputTokens":1,"outputTokens":1}
+            }});
+            assert!(
+                record_usage(&correction, &mut parsed)
+                    .unwrap()
+                    .validate()
+                    .is_ok()
+            );
+            assert!(record_usage(&correction, &mut parsed).is_none());
+            assert_eq!(
+                parsed.usage.report().input_tokens,
+                Some(previous.map_or(1, |_| 9))
+            );
+            assert_eq!(
+                parsed.usage.report().output_tokens,
+                Some(previous.map_or(1, |_| 3))
+            );
+            assert_eq!(parsed.usage.report().coverage()["tokens"], "invalid");
+        }
+    }
+
+    fn assert_last_total_component_conflict(previous_total: Option<u64>) {
+        let mut parsed = ParsedRun {
+            thread_id: Some("thread-1".to_owned()),
+            turn_id: Some("turn-1".to_owned()),
+            ..ParsedRun::default()
+        };
+        if let Some(total) = previous_total {
+            let previous = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":total},"last":{"totalTokens":2,"inputTokens":1,"outputTokens":1}
+            }});
+            assert!(
+                record_usage(&previous, &mut parsed)
+                    .unwrap()
+                    .validate()
+                    .is_ok()
+            );
+        }
+        let accepted_report = parsed.last_usage_report.clone();
+        let accepted_input = parsed.usage.report().input_tokens;
+        let accepted_output = parsed.usage.report().output_tokens;
+        let cursor = previous_total.unwrap_or(0) + 12;
+        let mut frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":cursor},"last":{"totalTokens":1,"inputTokens":10,"outputTokens":2}
+        }});
+        for total in [1, 0, 11] {
+            frame["tokenUsage"]["last"]["totalTokens"] = json!(total);
+            let invalid =
+                record_usage(&frame, &mut parsed).expect("retain contradictory native total");
+            assert!(invalid.validate().is_err());
+            assert_eq!(invalid.coverage()["tokens"], "invalid");
+            assert_eq!(
+                serde_json::to_value(&invalid).unwrap()["usage_provenance"]["last_total_tokens"],
+                total
+            );
+            assert_eq!(parsed.last_usage_total, previous_total);
+            assert_eq!(parsed.last_usage_report, accepted_report);
+            assert_eq!(parsed.usage.report().input_tokens, accepted_input);
+            assert_eq!(parsed.usage.report().output_tokens, accepted_output);
+        }
+        frame["tokenUsage"]["last"]["totalTokens"] = json!(12);
+        assert!(
+            record_usage(&frame, &mut parsed)
+                .unwrap()
+                .validate()
+                .is_ok()
+        );
+        assert_eq!(parsed.last_usage_total, Some(cursor));
+        assert_eq!(
+            parsed.usage.report().input_tokens,
+            Some(accepted_input.unwrap_or(0) + 10)
+        );
+        assert_eq!(
+            parsed.usage.report().output_tokens,
+            Some(accepted_output.unwrap_or(0) + 2)
+        );
+        assert!(record_usage(&frame, &mut parsed).is_none());
+    }
+
+    #[test]
+    fn usage_last_total_components_reject_an_initial_conflict_then_admit_correction_once() {
+        assert_last_total_component_conflict(None);
+    }
+
+    #[test]
+    fn usage_last_total_components_preserve_the_previous_cursor_until_correction() {
+        assert_last_total_component_conflict(Some(100));
+    }
+
+    #[test]
+    fn usage_last_total_components_cover_subsets_when_parent_quantities_are_unknown() {
+        let mut parsed = ParsedRun {
+            thread_id: Some("thread-1".to_owned()),
+            turn_id: Some("turn-1".to_owned()),
+            ..ParsedRun::default()
+        };
+        let mut frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":11},"last":{
+                "totalTokens":10,"cachedInputTokens":7,"cacheWriteInputTokens":8,"reasoningOutputTokens":3
+            }
+        }});
+        let invalid = record_usage(&frame, &mut parsed).unwrap();
+        assert!(invalid.validate().is_err());
+        assert_eq!(parsed.last_usage_total, None);
+        assert_eq!(parsed.last_usage_report, None);
+        assert_eq!(parsed.usage.report().input_tokens, None);
+        assert_eq!(parsed.usage.report().output_tokens, None);
+        frame["tokenUsage"]["last"]["totalTokens"] = json!(11);
+        let correction = record_usage(&frame, &mut parsed).unwrap();
+        assert_eq!(correction.validate(), Ok(()));
+        assert_eq!(correction.coverage()["tokens"], "unavailable");
+        assert_eq!(parsed.last_usage_total, Some(11));
+        assert_eq!(parsed.usage.report().input_tokens, None);
+        assert_eq!(parsed.usage.report().output_tokens, None);
+        assert!(record_usage(&frame, &mut parsed).is_none());
+    }
+
+    #[test]
+    fn usage_last_total_malformed_is_evidence_without_charging() {
+        for malformed in [
+            json!(null),
+            json!(-1),
+            json!(1.5),
+            json!(u64::MAX),
+            json!("SENSITIVE_SENTINEL"),
+            json!({"secret":"SENSITIVE_SENTINEL"}),
+            json!([]),
+            json!(true),
+        ] {
+            let mut parsed = ParsedRun {
+                thread_id: Some("thread-1".to_owned()),
+                turn_id: Some("turn-1".to_owned()),
+                ..ParsedRun::default()
+            };
+            let mut frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":12},"last":{"totalTokens":malformed,"inputTokens":10,"outputTokens":2}
+            }});
+            let invalid =
+                record_usage(&frame, &mut parsed).expect("retain malformed latest-call total");
+            assert!(invalid.validate().is_err());
+            assert_eq!(parsed.last_usage_total, None);
+            assert_eq!(parsed.last_usage_report, None);
+            assert_eq!(parsed.usage.report().input_tokens, None);
+            assert_eq!(parsed.usage.report().output_tokens, None);
+            let retained = serde_json::to_value(&invalid).unwrap();
+            assert_eq!(
+                retained["usage_provenance"]["invalid_fields"][0]["field"],
+                "last_total_tokens"
+            );
+            assert!(retained["usage_provenance"]["last_total_tokens"].is_null());
+            assert!(!retained.to_string().contains("SENSITIVE_SENTINEL"));
+            frame["tokenUsage"]["last"]["totalTokens"] = json!(12);
+            assert!(
+                record_usage(&frame, &mut parsed)
+                    .unwrap()
+                    .validate()
+                    .is_ok()
+            );
+            assert!(record_usage(&frame, &mut parsed).is_none());
+            assert_eq!(parsed.usage.report().input_tokens, Some(10));
+            assert_eq!(parsed.usage.report().output_tokens, Some(2));
+        }
+    }
+
+    #[test]
+    fn usage_last_total_changes_at_the_same_cursor_are_not_duplicates() {
+        let mut parsed = ParsedRun {
+            thread_id: Some("thread-1".to_owned()),
+            turn_id: Some("turn-1".to_owned()),
+            ..ParsedRun::default()
+        };
+        let mut frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":100},"last":{"totalTokens":10,"inputTokens":1,"outputTokens":1}
+        }});
+        let accepted = record_usage(&frame, &mut parsed).unwrap();
+        assert!(accepted.validate().is_ok());
+        for changed in [json!(9), json!(101), json!(null)] {
+            frame["tokenUsage"]["last"]["totalTokens"] = changed;
+            let conflict =
+                record_usage(&frame, &mut parsed).expect("changed total is new evidence");
+            assert!(conflict.validate().is_err());
+            assert_eq!(parsed.last_usage_total, Some(100));
+            assert_eq!(parsed.last_usage_report.as_ref(), Some(&accepted));
+            assert_eq!(parsed.usage.report().input_tokens, Some(1));
+            assert_eq!(parsed.usage.report().output_tokens, Some(1));
+        }
+        frame["tokenUsage"]["last"]["totalTokens"] = json!(10);
+        assert!(record_usage(&frame, &mut parsed).is_none());
+    }
+
+    #[test]
+    fn usage_last_total_is_retained_without_charging_or_inventing_quantities() {
+        for (total, last, input, output, expected_total) in [
+            (
+                100,
+                json!({"totalTokens":10,"inputTokens":1,"outputTokens":1}),
+                Some(1),
+                Some(1),
+                10,
+            ),
+            (10, json!({"totalTokens":10}), None, None, 10),
+            (
+                0,
+                json!({"totalTokens":0,"outputTokens":0}),
+                None,
+                Some(0),
+                0,
+            ),
+            (
+                i64::MAX as u64,
+                json!({"totalTokens":i64::MAX}),
+                None,
+                None,
+                i64::MAX as u64,
+            ),
+        ] {
+            let mut parsed = ParsedRun {
+                thread_id: Some("thread-1".to_owned()),
+                turn_id: Some("turn-1".to_owned()),
+                ..ParsedRun::default()
+            };
+            let frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":total},"last":last
+            }});
+            let report = record_usage(&frame, &mut parsed).unwrap();
+            assert!(report.validate().is_ok());
+            assert_eq!(
+                serde_json::to_value(&report).unwrap()["usage_provenance"]["last_total_tokens"],
+                expected_total
+            );
+            assert_eq!(parsed.usage.report().input_tokens, input);
+            assert_eq!(parsed.usage.report().output_tokens, output);
+            assert_eq!(parsed.usage.report().cost_microusd, None);
+            assert!(record_usage(&frame, &mut parsed).is_none());
+        }
+    }
+
+    #[test]
+    fn usage_last_total_legacy_absence_preserves_partial_reports() {
+        let mut parsed = ParsedRun {
+            thread_id: Some("thread-1".to_owned()),
+            turn_id: Some("turn-1".to_owned()),
+            ..ParsedRun::default()
+        };
+        let frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":0},"last":{"outputTokens":0}
+        }});
+        let report = record_usage(&frame, &mut parsed).unwrap();
+        assert!(report.validate().is_ok());
+        assert!(
+            serde_json::to_value(&report).unwrap()["usage_provenance"]["last_total_tokens"]
+                .is_null()
+        );
+        assert_eq!(report.input_tokens, None);
+        assert_eq!(report.output_tokens, Some(0));
+        assert_eq!(report.coverage()["tokens"], "partial");
+        assert!(record_usage(&frame, &mut parsed).is_none());
+    }
+
+    #[test]
+    fn invalid_usage_does_not_advance_the_cursor_and_explicit_zero_is_reported() {
+        for malformed in [
+            json!({"total":{"totalTokens":null},"last":{"inputTokens":10,"outputTokens":2}}),
+            json!({"total":{"totalTokens":12},"last":{"inputTokens":-1,"outputTokens":2}}),
+            json!({"total":{"totalTokens":12},"last":"SENSITIVE_SENTINEL"}),
+        ] {
+            let mut parsed = ParsedRun {
+                thread_id: Some("thread-1".to_owned()),
+                turn_id: Some("turn-1".to_owned()),
+                ..ParsedRun::default()
+            };
+            let mut frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":malformed});
+            let invalid =
+                record_usage(&frame, &mut parsed).expect("retain malformed native evidence");
+            assert!(invalid.validate().is_err());
+            assert_eq!(parsed.last_usage_total, None);
+            assert_eq!(parsed.last_usage_report, None);
+            assert_eq!(parsed.usage.report().input_tokens, None);
+            assert!(
+                !serde_json::to_string(&invalid)
+                    .unwrap()
+                    .contains("SENSITIVE_SENTINEL")
+            );
+            frame["tokenUsage"] =
+                json!({"total":{"totalTokens":12},"last":{"inputTokens":10,"outputTokens":2}});
+            let recovered =
+                record_usage(&frame, &mut parsed).expect("admit the later valid native report");
+            assert_eq!(recovered.validate(), Ok(()));
+            assert_eq!(parsed.last_usage_total, Some(12));
+            assert_eq!(parsed.usage.report().input_tokens, Some(10));
+            assert_eq!(parsed.usage.report().output_tokens, Some(2));
+            assert_eq!(parsed.usage.report().cost_microusd, None);
+            assert_eq!(parsed.usage.report().coverage()["tokens"], "invalid");
+        }
+        let mut parsed = ParsedRun {
+            thread_id: Some("thread-1".to_owned()),
+            turn_id: Some("turn-1".to_owned()),
+            ..ParsedRun::default()
+        };
+        let zero = record_usage(
+            &json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":0},"last":{"inputTokens":0,"outputTokens":0}
+            }}),
+            &mut parsed,
+        )
+        .expect("an explicit zero is an observation");
+        assert_eq!(zero.input_tokens, Some(0));
+        assert_eq!(zero.output_tokens, Some(0));
+        assert_eq!(zero.cost_microusd, None);
+        assert_eq!(zero.coverage()["tokens"], "reported");
+        assert_eq!(zero.coverage()["usd"], "unavailable");
     }
 }

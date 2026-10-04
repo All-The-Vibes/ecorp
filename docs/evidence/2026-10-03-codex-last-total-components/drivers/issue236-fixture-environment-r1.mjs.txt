@@ -1,0 +1,50 @@
+// Reviewed allowlist from PR401 e4c8a00. Fixture support, no product changes.
+import assert from 'node:assert/strict'
+import path from 'node:path'
+import { lstat, realpath, mkdir, writeFile } from 'node:fs/promises'
+async function canonicalDirectory(value) {
+  const declared = path.resolve(value), info = await lstat(declared)
+  assert.ok(info.isDirectory() && !info.isSymbolicLink(), 'Owned directories cannot be links')
+  assert.equal(path.resolve(await realpath(declared)), declared, 'Owned paths cannot use aliases')
+  return declared
+}
+export function usageChildEnvironment(inherited) {
+  const names = new Map([['PATH', 'PATH'], ['PATHEXT', 'PATHEXT'], ['SYSTEMROOT', 'SystemRoot'],
+    ['SYSTEMDRIVE', 'SystemDrive'], ['WINDIR', 'WINDIR'], ['COMSPEC', 'ComSpec']])
+  const environment = {}
+  for (const [key, value] of Object.entries(inherited)) {
+    const name = names.get(key.toUpperCase())
+    if (!name) continue
+    assert.ok(!Object.hasOwn(environment, name), 'Ambiguous environment variable casing')
+    assert.equal(typeof value, 'string', 'Executable lookup and OS variables must be strings')
+    environment[name] = value
+  }
+  return environment
+}
+export async function usageFixtureEnvironment(inherited, directory) {
+  const environment = usageChildEnvironment(inherited)
+  assert.ok(path.isAbsolute(directory), 'An absolute owned environment directory is required')
+  const parent = await canonicalDirectory(path.dirname(directory))
+  const root = path.resolve(directory)
+  assert.equal(path.dirname(root), parent)
+  // No recursive mkdir: an existing directory, file or link must never be adopted.
+  await mkdir(root, { mode: 0o700 })
+  await canonicalDirectory(root)
+  for (const name of ['home', 'config', 'cache', 'data', 'state', 'runtime', 'tmp']) {
+    await mkdir(path.join(root, name), { mode: 0o700 })
+  }
+  // Windows native known-folder lookup expands USERPROFILE, not APPDATA overrides.
+  const appData = path.join(root, 'home', 'AppData')
+  await mkdir(appData, { mode: 0o700 })
+  for (const name of ['Roaming', 'Local']) await mkdir(path.join(appData, name), { mode: 0o700 })
+  const globalConfig = path.join(root, 'empty-gitconfig')
+  await writeFile(globalConfig, '', { flag: 'wx', mode: 0o600 })
+  return { ...environment, HOME: path.join(root, 'home'), USERPROFILE: path.join(root, 'home'),
+    APPDATA: path.join(appData, 'Roaming'), LOCALAPPDATA: path.join(appData, 'Local'),
+    XDG_CONFIG_HOME: path.join(root, 'config'), XDG_CACHE_HOME: path.join(root, 'cache'),
+    XDG_DATA_HOME: path.join(root, 'data'), XDG_STATE_HOME: path.join(root, 'state'),
+    XDG_RUNTIME_DIR: path.join(root, 'runtime'), TEMP: path.join(root, 'tmp'),
+    TMP: path.join(root, 'tmp'), TMPDIR: path.join(root, 'tmp'),
+    GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: globalConfig,
+    GIT_TERMINAL_PROMPT: '0', GIT_ALLOW_PROTOCOL: 'file' }
+}

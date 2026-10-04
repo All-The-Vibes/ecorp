@@ -1,0 +1,57 @@
+{
+  "status": "prepared",
+  "recorded_at_utc": "2026-10-03T23:16:27.616797+00:00",
+  "repository": "All-The-Vibes/ecorp",
+  "pr": 402,
+  "issue": 236,
+  "failure": {
+    "path": "<current-run-records>\\issue236-native-last-total-components-green-r1.json",
+    "sha256": "73cc62e786c45d70f4f5f13f04e3cea598b8d0b436a214c0d9c8468259e66e90",
+    "counts": {
+      "passed": 15,
+      "failed": 1,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 571,
+      "summaries": 1
+    },
+    "log_sha256": "9d73e8ac3ddc61b568df7e80782013548889ecfc4cdd02c7d26a92900fa2af67"
+  },
+  "finding": "The new SQL fixture expected rejected native values to survive admission. Existing admit_usage_tx deliberately replaces invalid input with a bounded redacted observation.",
+  "correction": "Only the SQL regression assertions change: require missing provenance and identity, unknown quantities, invalid_usage reason, unchanged counters and exact persisted rejection. Production admission remains unchanged; valid same-cursor correction and replay assertions remain.",
+  "validation": "Not run by this preparation. Both native lanes require a new owned SCRAM fixture; previous failure is retained.",
+  "helpers": [
+    {
+      "original": "run-codex-last-total-components-regressions-r1.ps1",
+      "original_sha256": "8420fc5382dfa5fb9fba18079e8cc16156af8be5c2f964e65f63733276e42af1",
+      "prepared": "run-codex-last-total-components-regressions-r2.ps1",
+      "prepared_sha256": "6b9ddfcceefba5853276098331833ae0f6b44274c9bbdabf67b1e64d4c09b24f",
+      "replacements": [
+        [
+          "codex-last-total-components-$Phase-r1",
+          "codex-last-total-components-$Phase-r2"
+        ]
+      ]
+    },
+    {
+      "original": "run-issue236-native-last-total-components-r1.ps1",
+      "original_sha256": "a1a0ce7a40639bc3cca80e62fc91afa4a91e91866d1c8943689089e325ec9530",
+      "prepared": "run-issue236-native-last-total-components-r2.ps1",
+      "prepared_sha256": "97cb62c9a3d532efcf0c76f3f30efea56e7e2602caf81127ff236eeffa51e768",
+      "replacements": [
+        [
+          "issue236-native-usage-last-total-components-20261003-$Phase-r1",
+          "issue236-native-usage-last-total-components-20261003-$Phase-r2"
+        ],
+        [
+          "issue236-native-last-total-components-$Phase-r1",
+          "issue236-native-last-total-components-$Phase-r2"
+        ],
+        [
+          "$port = 59418",
+          "$port = 59420"
+        ]
+      ]
+    }
+  ]
+}

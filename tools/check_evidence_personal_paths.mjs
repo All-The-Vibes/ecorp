@@ -64,9 +64,14 @@ export function defaultEvidenceDirectories() {
 }
 
 // Repeated separators cover both native paths and JSON-escaped paths. A drive
-// prefix is optional because Windows HOMEPATH normally omits the drive.
+// prefix is optional because Windows HOMEPATH normally omits the drive. Captured
+// Windows commands may caret-escape separators, punctuation and line endings.
+// Check the literal form first so a literal caret in a username still counts as
+// personal evidence, then join continued lines before removing remaining carets.
 export function hasPersonalUserPath(text) {
-  return /(?:[a-z]:)?[/\\]+Users[/\\]+[^/\\\s"'<>]+/i.test(text)
+  const personalPath = /(?:[a-z]:)?[/\\]+Users[/\\]+[^/\\\s"'<>]+/i
+  return personalPath.test(text)
+    || (text.includes('^') && personalPath.test(text.replace(/\^\r?\n/g, '').replaceAll('^', '')))
 }
 
 export function isContainedEvidencePath(root, candidate, pathApi = path) {

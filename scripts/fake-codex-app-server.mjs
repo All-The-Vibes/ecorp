@@ -178,7 +178,21 @@ function startTurn(message) {
     writeCheckpointApplication(workspace)
   }
 
-  if (resumed && prompt.includes('[budget-recovery-finish]')) {
+  if (prompt.includes('[usage-invalid-first]')) {
+    // Opt-in accounting regression: malformed evidence must not consume the
+    // accepted cursor or erase the later valid subtotal, including on resume.
+    emitUsageOnFinish = false
+    usageTotal = resumed ? 12 : 0
+    emit('thread/tokenUsage/updated', {
+      threadId, turnId,
+      tokenUsage: {
+        total: { totalTokens: usageTotal + 12 },
+        last: { totalTokens: 12, inputTokens: -1, outputTokens: 2 },
+      },
+    })
+    emitUsage(10, 2)
+    finish('completed')
+  } else if (resumed && prompt.includes('[budget-recovery-finish]')) {
     // An explicit synthetic finish avoids replaying the original budget marker
     // retained in the native resume contract. Existing stream cases are unchanged.
     completionTimer = setTimeout(() => finish('completed'), 300)

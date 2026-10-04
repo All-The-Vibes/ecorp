@@ -23,7 +23,7 @@ use uuid::Uuid;
 
 use super::{
     AdapterArtifact, AdapterCapabilities, AdapterControl, AdapterError, AdapterEvent,
-    AdapterEventSink, AdapterExit, AdapterRunRequest, AgentAdapter, FeatureSupport, UsageSnapshot,
+    AdapterEventSink, AdapterExit, AdapterRunRequest, AgentAdapter, FeatureSupport,
     permission::{bounded_text, path_is_inside_workspace},
     process_tree::{OwnedProcessTree, OwnedProcessTreeSpawn},
 };
@@ -845,11 +845,9 @@ impl ExternalCliAdapter {
                                 }
                             }
                             if let Some(usage) = value.get("usage") {
-                                sink.emit(AdapterEvent::Usage(UsageSnapshot {
-                                    input_tokens: find_u64(usage, &["input_tokens", "inputTokens"]).unwrap_or_default(),
-                                    output_tokens: find_u64(usage, &["output_tokens", "outputTokens"]).unwrap_or_default(),
-                                    cost_microusd: find_u64(usage, &["cost_microusd", "costMicrousd"]).unwrap_or_default(),
-                                }));
+                                sink.emit(AdapterEvent::Usage(Box::new(super::usage::external(
+                                    usage, &format!("external_{}_usage_v1", self.flavor.id()),
+                                ))));
                             }
                             if let Some(text) = find_string(&value, &["text", "content", "message"]) {
                                 sink.emit(AdapterEvent::Output {
@@ -1505,12 +1503,6 @@ fn find_string(value: &Value, keys: &[&str]) -> Option<String> {
             Value::Object(value) => value.get("text").and_then(Value::as_str).map(str::to_owned),
             _ => None,
         })
-}
-
-fn find_u64(value: &Value, keys: &[&str]) -> Option<u64> {
-    keys.iter()
-        .find_map(|key| value.get(*key))
-        .and_then(Value::as_u64)
 }
 
 #[cfg(all(test, unix))]

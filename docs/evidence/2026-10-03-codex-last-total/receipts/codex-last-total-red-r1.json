@@ -1,0 +1,58 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "comment": 4174776187,
+  "phase": "red",
+  "status": "reproduced",
+  "wrapper_pid": 8372,
+  "started_at_utc": "2026-10-03T20:57:50.1342259Z",
+  "checks": [
+    {
+      "started_at_utc": "2026-10-03T20:57:53.1153416Z",
+      "counts": {
+        "filtered": 326,
+        "ignored": 0,
+        "passed": 1,
+        "failed": 4
+      },
+      "sha256": "5dca84f4e9b6594a70c64aee7491d4594a67dc9066b04b40025b7754822126ff",
+      "command": "cargo test --locked --offline -p crony-runner --bin crony-runner usage_last_total_ -- --test-threads=1",
+      "exit_code": 101,
+      "log": "<current-run-records>\\codex-last-total-red-r1-last-total.log",
+      "name": "last-total",
+      "finished_at_utc": "2026-10-03T20:58:41.7328415Z"
+    }
+  ],
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T20:57:52.536Z",
+    "source": "<candidate-checkout>",
+    "head": "9cbac5bb6fd5892799f1ec668c9cd6955e20ec6c",
+    "tree": "8374dfc972872a54616181b4eded7c6c0976955f",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs",
+    "source_file_count": 7806,
+    "source_fingerprint": "b3174887fec8f54fce341607262c05d0c11f60c1c66d45d6f99c04e3acefa8f3",
+    "manifest": "<current-run-records>\\codex-last-total-red-r1-source-before.json",
+    "manifest_sha256": "4aca49a8f008094ca12c2e2cfdf10aa2a77093414598ac4ffe82b1229582143f"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T20:58:44.267Z",
+    "source": "<candidate-checkout>",
+    "head": "9cbac5bb6fd5892799f1ec668c9cd6955e20ec6c",
+    "tree": "8374dfc972872a54616181b4eded7c6c0976955f",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs",
+    "source_file_count": 7806,
+    "source_fingerprint": "b3174887fec8f54fce341607262c05d0c11f60c1c66d45d6f99c04e3acefa8f3",
+    "manifest": "<current-run-records>\\codex-last-total-red-r1-source-after.json",
+    "manifest_sha256": "ab77cd349ce8b988b6b79975cf04c7aff0f3162ad94975898180e4df1f9a6ec7"
+  },
+  "source_unchanged": true,
+  "reference_manifest": "<current-run-records>\\codex-last-total-red-source-r1.json",
+  "reference_sha256": "22e1cb1a14b08feed126c2d0b47086a1dc8f8c9759607ab2b69af18b4a7b12bc",
+  "purpose": "Reproduce and correct ignored Codex latest-call totals: retain the native quantity, reject malformed and conflicting values without charging or advancing accepted cursors, preserve exact duplicates and unknown quantities, and validate initial/incremental lower bounds.",
+  "finished_at_utc": "2026-10-03T20:58:44.8332222Z"
+}

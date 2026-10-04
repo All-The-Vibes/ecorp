@@ -1,0 +1,74 @@
+{
+  "qa_root": "<owned-qa-root>\\issue236-usage-provenance-last-total-components-20261003-r1",
+  "source_commit": "d88f83e11679285d32963df5b34fb9c1ef037b91",
+  "server_url": "http://127.0.0.1:19391",
+  "demo": {
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "room_id": "00000000-0000-4000-8000-000000000041",
+    "alice_actor_id": "00000000-0000-4000-8000-000000000011",
+    "bob_actor_id": "00000000-0000-4000-8000-000000000012",
+    "eve_actor_id": "00000000-0000-4000-8000-000000000013",
+    "manager_agent_id": "00000000-0000-4000-8000-000000000031",
+    "worker_agent_id": "00000000-0000-4000-8000-000000000032",
+    "codex_agent_id": "00000000-0000-4000-8000-000000000033"
+  },
+  "repository": "<candidate-checkout>",
+  "source_binding": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T23:25:13.875Z",
+    "source": "<candidate-checkout>",
+    "head": "08a057fd89ca0dae7904c00a22fd295bd76c3d0d",
+    "tree": "16a8966d7b2da15b29746932025d8b472868c6aa",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-domain/src/usage.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md",
+    "source_file_count": 7890,
+    "source_fingerprint": "72d2db239e539bf44d58ce11192555e7bb7580b9d724c1612e26d543591c8469",
+    "manifest": "<current-run-records>\\issue236-source-before-browser-last-total-components-r1.json",
+    "manifest_sha256": "330ef7cab559bfb8376b0c0dcee412d9ba955e0f9513339e88b6c43141848d43"
+  },
+  "provider_fixture": "native-codex-usage-corpus",
+  "runner_id": "issue236-usage-qa",
+  "test_owned": true,
+  "processes": {
+    "postgres": {
+      "stderr": "<owned-qa-root>\\issue236-usage-provenance-last-total-components-20261003-r1\\logs\\postgres-20261003T232526190-ac64238191e745e2beb17ccd372a899b.stderr.log",
+      "pid": 31932,
+      "role": "postgres",
+      "started_utc": "2026-10-03T23:25:26.258063Z",
+      "executable": "<pinned-toolchain>\\postgresql-17.10\\pgsql\\bin\\postgres.exe",
+      "stdout": "<owned-qa-root>\\issue236-usage-provenance-last-total-components-20261003-r1\\logs\\postgres-20261003T232526190-ac64238191e745e2beb17ccd372a899b.stdout.log",
+      "workspace": "<owned-qa-root>\\issue236-usage-provenance-last-total-components-20261003-r1"
+    },
+    "runner": {
+      "stderr": "<owned-qa-root>\\issue236-usage-provenance-last-total-components-20261003-r1\\logs\\runner-20261003T232530576-d1609409fc4e4f688f8906aa6ac49e44.stderr.log",
+      "pid": 36060,
+      "role": "runner",
+      "started_utc": "2026-10-03T23:25:31.7335832Z",
+      "executable": "<owned-qa-root>\\issue236-native-build-last-total-components-20261003-r1\\target\\debug\\crony-runner.exe",
+      "stdout": "<owned-qa-root>\\issue236-usage-provenance-last-total-components-20261003-r1\\logs\\runner-20261003T232530576-d1609409fc4e4f688f8906aa6ac49e44.stdout.log",
+      "workspace": "<owned-qa-root>\\issue236-usage-provenance-last-total-components-20261003-r1"
+    },
+    "web": {
+      "stderr": "<owned-qa-root>\\issue236-usage-provenance-last-total-components-20261003-r1\\logs\\web-20261003T232531758-c27c7c09628d4818aa8dd736a8b8b375.stderr.log",
+      "pid": 37612,
+      "role": "web",
+      "started_utc": "2026-10-03T23:25:31.7690764Z",
+      "executable": "<pinned-toolchain>\\node-v24.21.0-win-x64\\node.exe",
+      "stdout": "<owned-qa-root>\\issue236-usage-provenance-last-total-components-20261003-r1\\logs\\web-20261003T232531758-c27c7c09628d4818aa8dd736a8b8b375.stdout.log",
+      "workspace": "<owned-qa-root>\\issue236-usage-provenance-last-total-components-20261003-r1"
+    },
+    "server": {
+      "stderr": "<owned-qa-root>\\issue236-usage-provenance-last-total-components-20261003-r1\\logs\\server-20261003T232527629-48106e4a41f8417aa580979060428cf5.stderr.log",
+      "pid": 43952,
+      "role": "server",
+      "started_utc": "2026-10-03T23:25:28.6799158Z",
+      "executable": "<owned-qa-root>\\issue236-native-build-last-total-components-20261003-r1\\target\\debug\\crony-server.exe",
+      "stdout": "<owned-qa-root>\\issue236-usage-provenance-last-total-components-20261003-r1\\logs\\server-20261003T232527629-48106e4a41f8417aa580979060428cf5.stdout.log",
+      "workspace": "<owned-qa-root>\\issue236-usage-provenance-last-total-components-20261003-r1"
+    }
+  },
+  "source": "<owned-qa-root>\\issue236-usage-provenance-last-total-components-20261003-r1\\source",
+  "web_url": "http://127.0.0.1:16391",
+  "corpus_sha256": "a3ca525511a668c3ca00e3acd640059fdf104bfcd69f637246a087f97295828d",
+  "source_repository": "ecorp-fixture/usage-provenance-fixture"
+}

@@ -1,0 +1,29 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "recorded_at_utc": "2026-10-03T04:29:37.910872+00:00",
+  "finding": "BUILD-236-001",
+  "observed_in": "issue236-canonical-r1.json",
+  "failed_gate": "clippy",
+  "exit_code": 101,
+  "diagnostic": "AdapterEvent::Usage contains 416 bytes versus the next largest 144-byte variant; -D warnings rejects clippy::large_enum_variant.",
+  "source_before_fingerprint": "404b434a975849964ea3feeeaff2197b0aba424f41e69c90edab1ff9b8241836",
+  "source_after_fingerprint": "243ad077f92ffb062da5761a182d51cfd0f7c38ecd32680b896aa4dc5817c32b",
+  "source_after_manifest": "issue236-source-after-event-fix-r1.json",
+  "fix": "Box UsageSnapshot only at internal AdapterEvent::Usage emission sites; retain original usage types, native normalization, quantities, wire payload and accounting.",
+  "canonical_r1_counts": {
+    "node_total": 3103,
+    "node_passed": 3038,
+    "node_failed": 0,
+    "node_skipped": 65,
+    "evm_passed": 1
+  },
+  "canonical_r1_unexecuted": [
+    "rust-tests",
+    "web-build",
+    "web-lint"
+  ],
+  "focused_validation": "prepared, not executed",
+  "canonical_r2": "prepared, not executed",
+  "comparison": "Prepared drivers only; no source freeze, checkout, comparison build or replay has run."
+}

@@ -3,6 +3,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
 
+mod usage;
+pub use usage::{
+    InvalidUsageField, InvalidUsageReason, UsageAccumulator, UsageProvenance, UsageReport,
+    UsageScope, valid_usage_identifier,
+};
+
 mod workspace_connections;
 pub use workspace_connections::*;
 mod factory_connection;

@@ -1,0 +1,138 @@
+"""Stage or commit only the verified correction packet; never push or merge."""
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import sys
+
+RUN = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location('correction_validation', RUN / 'validate-issue236-correction-publication-r3.py')
+v = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(v)
+STAGE = 'issue236-correction-evidence-stage-r3.json'
+REVIEW = 'issue236-correction-publication-review-r3.json'
+COMMIT = 'issue236-correction-evidence-commit-r3.json'
+
+
+def staged_paths():
+    return sorted(p for p in v.git('diff', '--cached', '--name-only', '-z').decode().split('\0') if p)
+
+
+def validated():
+    commit, files, paths, captures = v.packet()
+    receipt = v.read(RUN / v.VALIDATION)
+    v.require(receipt['status'] == 'passed' and receipt['implementation_unchanged'] is True
+              and receipt['head'] == commit['head'] and receipt['tree'] == commit['tree']
+              and receipt['physical_source_fingerprint'] == v.FINGERPRINT
+              and receipt['packet_receipt_sha256'] == v.sha(RUN / v.PACKAGE)
+              and receipt['captures'] == captures, 'Publication validation no longer applies.')
+    for check in receipt['checks']:
+        v.require(check['exit_code'] == 0 and v.sha(check['log']) == check['sha256'],
+                  'A publication check changed.')
+    return commit, files, paths
+
+
+def snapshot(name):
+    result = v.run([v.NODE, RUN / 'issue236-source-snapshot-r1.mjs', v.WT, RUN / name])
+    v.require(result.returncode == 0, 'Cannot bind the complete staged source.')
+    return json.loads(result.stdout)
+
+
+def stage():
+    v.require(not (RUN / STAGE).exists(), 'Preserve the existing staging receipt.')
+    commit, files, paths = validated()
+    v.require(not staged_paths(), 'Preserve existing staged work.')
+    result = v.run(['git', '-c', 'core.longpaths=true', 'add', '-f',
+                    '--pathspec-from-file=-', '--pathspec-file-nul'],
+                   data=('\0'.join(paths) + '\0').encode())
+    v.write(RUN / 'issue236-correction-evidence-stage-r3.log', result.stdout + result.stderr)
+    v.require(result.returncode == 0 and staged_paths() == paths, 'Unexpected staged inventory; preserve it.')
+    whitespace = v.run(['git', 'diff', '--cached', '--check'])
+    v.write(RUN / 'issue236-correction-evidence-whitespace-r3.log', whitespace.stdout + whitespace.stderr)
+    v.require(whitespace.returncode == 0, 'Staged whitespace check failed; preserve its log.')
+    index = []
+    for name in paths:
+        physical = v.safe_file(v.WT, name)
+        blob = v.text('rev-parse', ':' + name)
+        raw = v.git('cat-file', 'blob', blob)
+        v.require(raw == physical.read_bytes(), 'Staged evidence bytes differ from validated bytes.')
+        index.append({'path': name, 'blob': blob, 'physical_sha256': v.sha(physical), 'bytes': len(raw)})
+    v.require(validated() == (commit, files, paths) and not v.git('diff', '--name-only').strip(),
+              'Source changed during staging.')
+    binding = snapshot('issue236-source-staged-correction-evidence-r3.json')
+    v.write(RUN / STAGE, {
+        'repository': 'All-The-Vibes/ecorp', 'issue': 236, 'pr': 402,
+        'status': 'staged_and_verified', 'recorded_at_utc': v.now(),
+        'source': str(v.WT), 'branch': v.BRANCH, 'parent': commit['head'],
+        'implementation_tree': commit['tree'], 'staged_tree': v.text('write-tree'),
+        'validation_receipt': v.VALIDATION, 'validation_receipt_sha256': v.sha(RUN / v.VALIDATION),
+        'packet_receipt': v.PACKAGE, 'packet_receipt_sha256': v.sha(RUN / v.PACKAGE),
+        'source_binding': binding, 'files': index,
+        'staged_whitespace_exit_code': whitespace.returncode,
+        'evidence_blob_bytes_equal_physical': True,
+        'final_canonical_required_before_commit': 'issue236-canonical-r8.json'})
+    print(json.dumps({'status': 'staged_and_verified', 'files': len(paths),
+                      'staged_tree': v.text('write-tree'),
+                      'source_fingerprint': binding['source_fingerprint']}))
+
+
+def commit():
+    v.require(not (RUN / COMMIT).exists(), 'Preserve the existing commit attempt.')
+    parent, files, paths = validated()
+    stage_record = v.read(RUN / STAGE)
+    review = v.read(RUN / REVIEW)
+    binding = stage_record['source_binding']
+    canonical = v.canonical('issue236-canonical-r8.json', binding['source_fingerprint'])
+    v.require(stage_record['status'] == 'staged_and_verified'
+              and stage_record['staged_tree'] == v.text('write-tree')
+              and stage_record['validation_receipt_sha256'] == v.sha(RUN / v.VALIDATION)
+              and staged_paths() == paths and not v.git('diff', '--name-only').strip(),
+              'Staged evidence changed before commit.')
+    v.require(review['status'] == 'reviewed_for_partial_draft_publication'
+              and review['implementation_head'] == parent['head'] and review['base'] == v.BASE
+              and review['staged_tree'] == stage_record['staged_tree']
+              and review['stage_receipt_sha256'] == v.sha(RUN / STAGE)
+              and review['canonical_receipt_sha256'] == v.sha(RUN / 'issue236-canonical-r8.json')
+              and review['self_approval'] is False and review['issue_completed'] is False,
+              'Source-bound partial-draft publication review is required.')
+    for reference in review['receipts']:
+        v.require(v.sha(RUN / reference['path']) == reference['sha256'], 'Reviewed evidence changed.')
+    complete_files = v.read(canonical['source_after']['manifest'])['files']
+    v.require(v.helpers.physical_manifest(v.WT) == complete_files,
+              'Current bytes differ from final canonical validation.')
+    for row in stage_record['files']:
+        v.require(v.sha(v.safe_file(v.WT, row['path'])) == row['physical_sha256'],
+                  'A staged packet file changed.')
+    result = v.run(['git', 'commit', '-m', 'docs: retain reviewed usage provenance correction evidence'])
+    log = RUN / 'issue236-correction-evidence-commit-r3.log'
+    v.write(log, result.stdout + result.stderr)
+    v.require(result.returncode == 0, 'Commit failed; preserve index and work.')
+    head = v.text('rev-parse', 'HEAD')
+    v.require(v.text('rev-parse', 'HEAD^') == parent['head']
+              and v.text('rev-parse', 'HEAD^{tree}') == stage_record['staged_tree']
+              and v.text('branch', '--show-current') == v.BRANCH
+              and not v.git('status', '--porcelain=v1', '--untracked-files=all').strip()
+              and v.helpers.physical_manifest(v.WT) == complete_files,
+              'Unexpected post-commit source; preserve the new commit.')
+    v.require(sorted(p for p in v.git('diff', '--name-only', '-z', parent['head'], head).decode().split('\0') if p) == paths,
+              'Evidence commit changed unexpected paths.')
+    v.write(RUN / COMMIT, {
+        'repository': 'All-The-Vibes/ecorp', 'issue': 236, 'pr': 402, 'status': 'committed',
+        'recorded_at_utc': v.now(), 'source': str(v.WT), 'branch': v.BRANCH,
+        'head': head, 'tree': stage_record['staged_tree'], 'parent': parent['head'],
+        'dependency_head': v.BASE, 'implementation_tree': parent['tree'],
+        'physical_implementation_fingerprint': v.FINGERPRINT,
+        'physical_source_fingerprint': binding['source_fingerprint'],
+        'stage_receipt': STAGE, 'stage_receipt_sha256': v.sha(RUN / STAGE),
+        'review_receipt': REVIEW, 'review_receipt_sha256': v.sha(RUN / REVIEW),
+        'canonical_receipt': 'issue236-canonical-r8.json',
+        'canonical_receipt_sha256': v.sha(RUN / 'issue236-canonical-r8.json'),
+        'files': stage_record['files'], 'log': log.name, 'log_sha256': v.sha(log),
+        'full_execution_repeated': True, 'implementation_unchanged': True})
+    print(json.dumps({'status': 'committed', 'head': head,
+                      'tree': stage_record['staged_tree'], 'evidence_files': len(paths)}))
+
+
+if __name__ == '__main__':
+    v.require(len(sys.argv) == 2 and sys.argv[1] in ('stage', 'commit'), 'Choose stage or commit.')
+    {'stage': stage, 'commit': commit}[sys.argv[1]]()

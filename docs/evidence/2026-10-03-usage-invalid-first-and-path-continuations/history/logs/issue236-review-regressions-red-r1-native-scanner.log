@@ -1,0 +1,64 @@
+   Compiling crony-domain v0.1.0 (<candidate-checkout>\crates\crony-domain)
+   Compiling crony-protocol v0.1.0 (<candidate-checkout>\crates\crony-protocol)
+   Compiling crony-runner v0.1.0 (<candidate-checkout>\crates\crony-runner)
+    Finished `test` profile [unoptimized] target(s) in 24.21s
+     Running unittests src\bin\crony-evidence-paths.rs (target\issue236-review-r5\debug\deps\crony_evidence_paths-eefad51ac185f636.exe)
+
+running 27 tests
+test tests::attribute_only_reparse_mutation_during_scan_is_rejected ... ok
+test tests::bounded_scan_reports_names_and_never_personal_values ... FAILED
+test tests::cumulative_read_budget_is_shared_across_nested_directories ... ok
+test tests::detector_joins_caret_crlf_continuations ... FAILED
+test tests::detector_joins_caret_lf_continuations ... FAILED
+test tests::detector_matches_javascript_whitespace_and_path_variants ... ok
+test tests::discovery_includes_every_completion_packet_and_ignores_other_prs ... ok
+test tests::discovery_rejects_a_packet_added_after_enumeration ... ok
+test tests::discovery_rejects_nonunicode_completion_packet_instead_of_skipping_it ... ok
+test tests::empty_files_and_exact_byte_limit_are_accepted ... ok
+test tests::enumerated_directory_replacement_cannot_redirect_read ... ok
+test tests::enumerated_regular_file_replacement_cannot_redirect_read ... ok
+test tests::existing_writer_prevents_read_acquisition ... ok
+test tests::hard_links_are_refused_before_the_read_window ... ok
+test tests::held_ancestor_fences_replacement_before_enumeration ... ok
+test tests::held_directory_fences_replacement_before_enumeration ... ok
+test tests::held_file_cannot_be_replaced_by_an_outside_link ... ok
+test tests::held_file_cannot_be_replaced_by_regular_outside_bytes ... ok
+test tests::held_file_detects_or_prevents_growth ... ok
+test tests::held_root_fences_replacement_before_enumeration ... ok
+test tests::missing_packets_and_file_in_packet_namespace_fail_closed ... ok
+test tests::native_nonjunction_reparse_directory_is_rejected ... ok
+test tests::nonunicode_child_paths_return_errors_without_lossy_names_or_json_panics ... ok
+test tests::nonunicode_completion_names_are_recognized_but_not_serialized ... ok
+test tests::nonunicode_explicit_roots_fail_before_filesystem_access ... ok
+test tests::output_budget_rejects_before_appending_an_oversized_finding ... ok
+test tests::oversized_files_are_refused_before_the_read_window ... ok
+
+failures:
+
+---- tests::bounded_scan_reports_names_and_never_personal_values stdout ----
+
+thread 'tests::bounded_scan_reports_names_and_never_personal_values' (27284) panicked at crates\crony-runner\src\bin\crony-evidence-paths.rs:877:9:
+assertion `left == right` failed
+  left: ["packet/nested/receipt.json", "packet/startup.log"]
+ right: ["packet/continued-crlf.log", "packet/continued-lf.log", "packet/nested/receipt.json", "packet/startup.log"]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tests::detector_joins_caret_crlf_continuations stdout ----
+
+thread 'tests::detector_joins_caret_crlf_continuations' (40200) panicked at crates\crony-runner\src\bin\crony-evidence-paths.rs:845:9:
+assertion failed: has_personal_path("C^:^\\Us^\r\ners^\\<synthetic-user>")
+
+---- tests::detector_joins_caret_lf_continuations stdout ----
+
+thread 'tests::detector_joins_caret_lf_continuations' (40840) panicked at crates\crony-runner\src\bin\crony-evidence-paths.rs:837:9:
+assertion failed: has_personal_path("C^:^\\Us^\ners^\\<synthetic-user>")
+
+
+failures:
+    tests::bounded_scan_reports_names_and_never_personal_values
+    tests::detector_joins_caret_crlf_continuations
+    tests::detector_joins_caret_lf_continuations
+
+test result: FAILED. 24 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.80s
+
+error: test failed, to rerun pass `-p crony-runner --bin crony-evidence-paths`

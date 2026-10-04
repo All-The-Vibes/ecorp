@@ -1,0 +1,46 @@
+   Compiling crony-runner v0.1.0 (<candidate-checkout>\crates\crony-runner)
+    Finished `test` profile [unoptimized] target(s) in 47.08s
+     Running unittests src\main.rs (target\issue236-review-r5\debug\deps\crony_runner-02b0585a373d56cb.exe)
+
+running 5 tests
+test adapter::codex::tests::usage_last_total_changes_at_the_same_cursor_are_not_duplicates ... FAILED
+test adapter::codex::tests::usage_last_total_is_retained_without_charging_or_inventing_quantities ... FAILED
+test adapter::codex::tests::usage_last_total_legacy_absence_preserves_partial_reports ... ok
+test adapter::codex::tests::usage_last_total_malformed_is_evidence_without_charging ... FAILED
+test adapter::codex::tests::usage_last_total_must_fit_initial_and_incremental_cursors ... FAILED
+
+failures:
+
+---- adapter::codex::tests::usage_last_total_changes_at_the_same_cursor_are_not_duplicates stdout ----
+
+thread 'adapter::codex::tests::usage_last_total_changes_at_the_same_cursor_are_not_duplicates' (36292) panicked at crates\crony-runner\src\adapter\codex.rs:1866:51:
+changed total is new evidence
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- adapter::codex::tests::usage_last_total_is_retained_without_charging_or_inventing_quantities stdout ----
+
+thread 'adapter::codex::tests::usage_last_total_is_retained_without_charging_or_inventing_quantities' (30264) panicked at crates\crony-runner\src\adapter\codex.rs:1913:13:
+assertion `left == right` failed
+  left: Null
+ right: 10
+
+---- adapter::codex::tests::usage_last_total_malformed_is_evidence_without_charging stdout ----
+
+thread 'adapter::codex::tests::usage_last_total_malformed_is_evidence_without_charging' (28768) panicked at crates\crony-runner\src\adapter\codex.rs:1826:13:
+assertion failed: invalid.validate().is_err()
+
+---- adapter::codex::tests::usage_last_total_must_fit_initial_and_incremental_cursors stdout ----
+
+thread 'adapter::codex::tests::usage_last_total_must_fit_initial_and_incremental_cursors' (19700) panicked at crates\crony-runner\src\adapter\codex.rs:1771:17:
+assertion failed: conflict.validate().is_err()
+
+
+failures:
+    adapter::codex::tests::usage_last_total_changes_at_the_same_cursor_are_not_duplicates
+    adapter::codex::tests::usage_last_total_is_retained_without_charging_or_inventing_quantities
+    adapter::codex::tests::usage_last_total_malformed_is_evidence_without_charging
+    adapter::codex::tests::usage_last_total_must_fit_initial_and_incremental_cursors
+
+test result: FAILED. 1 passed; 4 failed; 0 ignored; 0 measured; 326 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p crony-runner --bin crony-runner`

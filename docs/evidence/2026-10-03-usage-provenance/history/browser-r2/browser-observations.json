@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "issue": 236,
+  "status": "failed",
+  "started_at_utc": "2026-10-03T06:15:51.656Z",
+  "source_binding": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T06:15:25.496Z",
+    "source": "<candidate-checkout>",
+    "head": "fb13446f099ddc550a653ed6c4b13800169ba599",
+    "tree": "78370df4797a84ae363b5df9d2cafd3e898887de",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "",
+    "source_file_count": 7421,
+    "source_fingerprint": "243ad077f92ffb062da5761a182d51cfd0f7c38ecd32680b896aa4dc5817c32b",
+    "manifest": "<run-records>\\issue236-source-before-browser-r2.json",
+    "manifest_sha256": "dc81e933f932f1a8fe2d7480fe2340e2e36cc04e335405b1820feca10bbd0c70"
+  },
+  "corpus_sha256": "58f005cb45216ef73792aa8ffa6b79fa443a8bf01db0e4ae078de902f2adf225",
+  "assertions": [
+    {
+      "name": "Configured synthetic source starts clean at the recorded commit",
+      "passed": true
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "codex-duplicate-and-foreign-turn",
+      "status": "failed",
+      "expected": {
+        "emitted": 2,
+        "input_tokens": 16,
+        "output_tokens": 4,
+        "cost_microusd": null,
+        "token_coverage": "reported",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false
+      },
+      "title": "Usage provenance codex-duplicate-and-foreign-turn"
+    }
+  ],
+  "http_results": [
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "method": "POST",
+      "status": 400
+    }
+  ],
+  "blocked_requests": [],
+  "page_errors": [],
+  "screenshots": [
+    {
+      "path": "<failed-browser-fixture>\\evidence\\usage-failure.png",
+      "sha256": "0cf0a9b3befae57dedda7ac4740c7e59faf792ae88cd431c06b62e83f06ff143"
+    }
+  ],
+  "assurance": "Owned deterministic transport in actual Edge, native server/runner and fresh SCRAM PostgreSQL. No provider inference, billing verification, auditor decision, hosted gate or independent outcome review.",
+  "failure": "/api/corps/00000000-0000-4000-8000-000000000001/missions: unexpected HTTP status\n\n400 !== 200\n",
+  "finished_at_utc": "2026-10-03T06:15:55.308Z",
+  "counts": {
+    "passed": 1,
+    "failed": 0,
+    "scenarios_passed": 0,
+    "scenarios_unexecuted": 2
+  }
+}

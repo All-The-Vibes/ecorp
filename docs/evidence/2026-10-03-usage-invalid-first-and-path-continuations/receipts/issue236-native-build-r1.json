@@ -1,0 +1,175 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "source": "<candidate-checkout>",
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T13:42:22.335Z",
+    "source": "<candidate-checkout>",
+    "head": "49a5c47d3fda8ca9e3925647639677f912bdeef2",
+    "tree": "47a09075cbd44f8dc9e47ad2e143e71de291a2a1",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "",
+    "source_file_count": 7597,
+    "source_fingerprint": "da95d33bc3706d1a67ec8cc260392780f466b6d0866f2009326225ace87707ce",
+    "manifest": "<run-records>\\issue236-source-before-native-build-r1.json",
+    "manifest_sha256": "25b866f4a5fb6ac93d1f2d063e8490fd2127230d68d9a69cad33dc55e5abc905"
+  },
+  "started_at_utc": "2026-10-03T13:42:23.0666318Z",
+  "pid": 36928,
+  "status": "passed",
+  "source_unchanged": true,
+  "expected_head": "49a5c47d3fda8ca9e3925647639677f912bdeef2",
+  "command": "cargo build --locked --offline -p crony-server -p crony-runner --message-format=json",
+  "binaries": [
+    {
+      "sha256": "b81beeffe32e60a2271d4ed4700626ad2894dc9b350583286d0c54c985a703a5",
+      "compiler_artifact": {
+        "reason": "compiler-artifact",
+        "package_id": "path+file:///<candidate-checkout>/crates/crony-server#0.1.0",
+        "manifest_path": "<candidate-checkout>\\crates\\crony-server\\Cargo.toml",
+        "target": {
+          "kind": [
+            "bin"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "crony-server",
+          "src_path": "<candidate-checkout>\\crates\\crony-server\\src\\main.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": false
+        },
+        "features": [
+          "default"
+        ],
+        "filenames": [
+          "<native-build-fixture>\\target\\debug\\crony-server.exe",
+          "<native-build-fixture>\\target\\debug\\crony_server.pdb"
+        ],
+        "executable": "<native-build-fixture>\\target\\debug\\crony-server.exe",
+        "fresh": false
+      },
+      "path": "<native-build-fixture>\\target\\debug\\crony-server.exe"
+    },
+    {
+      "sha256": "a5aa67bda41d81e89e3df12bcc8f5970f5d8468ca1830d5b91d62ce82b10c406",
+      "compiler_artifact": {
+        "reason": "compiler-artifact",
+        "package_id": "path+file:///<candidate-checkout>/crates/crony-runner#0.1.0",
+        "manifest_path": "<candidate-checkout>\\crates\\crony-runner\\Cargo.toml",
+        "target": {
+          "kind": [
+            "bin"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "crony-runner",
+          "src_path": "<candidate-checkout>\\crates\\crony-runner\\src\\main.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": false
+        },
+        "features": [],
+        "filenames": [
+          "<native-build-fixture>\\target\\debug\\crony-runner.exe",
+          "<native-build-fixture>\\target\\debug\\crony_runner.pdb"
+        ],
+        "executable": "<native-build-fixture>\\target\\debug\\crony-runner.exe",
+        "fresh": false
+      },
+      "path": "<native-build-fixture>\\target\\debug\\crony-runner.exe"
+    }
+  ],
+  "qa_root": "<native-build-fixture>",
+  "target_directory": "<native-build-fixture>\\target",
+  "scope": "Exact candidate executables for owned usage-provenance acceptance. Separate owned cache; invalidate all local path packages. Build only, with no acceptance or provider inference claim.",
+  "cache_copy": {
+    "sha256": "67e69477b700edf66894ab62b67ca467a8d27c8731cb1f09f113f37386f60d5d",
+    "exit_code": 1,
+    "seed_read_only": "<candidate-checkout>\\target\\issue236-review-r5",
+    "log": "<run-records>\\issue236-native-build-r1-cache-copy.log"
+  },
+  "local_package_clean": {
+    "sha256": "422b075a516c7b22c298824f236cc512001679c1ea127fc409666845105142de",
+    "exit_code": 0,
+    "log": "<run-records>\\issue236-native-build-r1-local-package-clean.log",
+    "command": [
+      "clean",
+      "--locked",
+      "--offline",
+      "--target-dir",
+      "<native-build-fixture>\\target",
+      "--package",
+      "crony-audit",
+      "--package",
+      "crony-base",
+      "--package",
+      "crony-base-gateway",
+      "--package",
+      "crony-cli",
+      "--package",
+      "crony-domain",
+      "--package",
+      "crony-gateways",
+      "--package",
+      "crony-protocol",
+      "--package",
+      "crony-runner",
+      "--package",
+      "crony-server",
+      "--package",
+      "crony-store"
+    ],
+    "verified_owned_target": "<native-build-fixture>\\target",
+    "packages": [
+      "crony-audit",
+      "crony-base",
+      "crony-base-gateway",
+      "crony-cli",
+      "crony-domain",
+      "crony-gateways",
+      "crony-protocol",
+      "crony-runner",
+      "crony-server",
+      "crony-store"
+    ]
+  },
+  "build": {
+    "sha256": "9c020f8154612f583bb4c9df8faa0d9edc8c9bd2c5cd79f5257a9771c6a22570",
+    "exit_code": 0,
+    "log": "<run-records>\\issue236-native-build-r1.jsonl"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T13:46:06.054Z",
+    "source": "<candidate-checkout>",
+    "head": "49a5c47d3fda8ca9e3925647639677f912bdeef2",
+    "tree": "47a09075cbd44f8dc9e47ad2e143e71de291a2a1",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "",
+    "source_file_count": 7597,
+    "source_fingerprint": "da95d33bc3706d1a67ec8cc260392780f466b6d0866f2009326225ace87707ce",
+    "manifest": "<run-records>\\issue236-source-after-native-build-r1.json",
+    "manifest_sha256": "3de30b3cc1308a5869f8af1f842ce0bcb215e190e0a66ef225c052c3d94ef90c"
+  },
+  "finished_at_utc": "2026-10-03T13:46:06.6421873Z"
+}

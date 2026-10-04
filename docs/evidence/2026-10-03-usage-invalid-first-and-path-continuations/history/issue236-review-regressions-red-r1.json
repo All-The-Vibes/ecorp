@@ -1,0 +1,104 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "status": "regressions_reproduced",
+  "phase": "red",
+  "wrapper_pid": 43048,
+  "purpose": "Observed regressions for review comments 4173113909, 4173113933 and 4173113950, plus retained-session aggregation. Test results are local correctness evidence, not product acceptance or hosted validation.",
+  "started_at_utc": "2026-10-03T12:27:47.4285138Z",
+  "source": "<candidate-checkout>",
+  "checks": [
+    {
+      "sha256": "e0c4b996dcd28aa63086329f3352bbb00ea9f2809b2874661c4c8709691b98b3",
+      "started_at_utc": "2026-10-03T12:27:50.0471452Z",
+      "name": "native-scanner",
+      "finished_at_utc": "2026-10-03T12:28:15.4865097Z",
+      "command": "cargo.exe test --locked --offline -p crony-runner --bin crony-evidence-paths -- --test-threads=1",
+      "counts": {
+        "filtered": 0,
+        "ignored": 0,
+        "failed": 3,
+        "passed": 24
+      },
+      "exit_code": 101,
+      "log": "<run-records>\\issue236-review-regressions-red-r1-native-scanner.log"
+    },
+    {
+      "sha256": "f5a1726b430c082de1b32c4a12b996021353815c5a2ef49f28580cfa24678a82",
+      "started_at_utc": "2026-10-03T12:28:15.5034818Z",
+      "name": "node-scanner",
+      "finished_at_utc": "2026-10-03T12:28:23.3477309Z",
+      "command": "node.exe --test --test-reporter=tap tools/check_evidence_personal_paths.test.mjs",
+      "counts": {
+        "cancelled": 0,
+        "skipped": 0,
+        "fail": 3,
+        "todo": 0,
+        "pass": 10,
+        "tests": 13
+      },
+      "exit_code": 1,
+      "log": "<run-records>\\issue236-review-regressions-red-r1-node-scanner.log"
+    },
+    {
+      "sha256": "c7255b198a7f8b98b144f086258fd14c2d646f6f1470a923e91cc1856b77b960",
+      "started_at_utc": "2026-10-03T12:28:23.3510090Z",
+      "name": "domain-usage",
+      "finished_at_utc": "2026-10-03T12:28:29.3500022Z",
+      "command": "cargo.exe test --locked --offline -p crony-domain usage::tests -- --test-threads=1",
+      "counts": {
+        "filtered": 25,
+        "ignored": 0,
+        "failed": 4,
+        "passed": 10
+      },
+      "exit_code": 101,
+      "log": "<run-records>\\issue236-review-regressions-red-r1-domain-usage.log"
+    },
+    {
+      "sha256": "13dc28a0405109cfb6b144211fcc0fa21dab9a23c3129b4dd3513912d0388e3c",
+      "started_at_utc": "2026-10-03T12:28:29.3525495Z",
+      "name": "codex-invalid-first",
+      "finished_at_utc": "2026-10-03T12:29:06.7702641Z",
+      "command": "cargo.exe test --locked --offline -p crony-runner --bin crony-runner adapter::codex::tests::invalid_usage_does_not_advance_the_cursor_and_explicit_zero_is_reported -- --exact --test-threads=1",
+      "counts": {
+        "filtered": 320,
+        "ignored": 0,
+        "failed": 1,
+        "passed": 0
+      },
+      "exit_code": 101,
+      "log": "<run-records>\\issue236-review-regressions-red-r1-codex-invalid-first.log"
+    }
+  ],
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T12:27:49.464Z",
+    "source": "<candidate-checkout>",
+    "head": "ac3a6764638406af0e13fa118ea68767a093324b",
+    "tree": "2247b049815efda2708f1c2d4e234bf082c70dce",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-domain/src/usage.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/bin/crony-evidence-paths.rs\n M tools/check_evidence_personal_paths.test.mjs",
+    "source_file_count": 7597,
+    "source_fingerprint": "6cfbc338f03fa31e26a69326a14f3590217d85c3bf754262daa321fa71d1b618",
+    "manifest": "<run-records>\\issue236-review-regressions-red-r1-source-before.json",
+    "manifest_sha256": "509414488d6ffca33803881b7c3580e6dbffd18522bf7cbf1863813c1d537c40"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T12:29:08.956Z",
+    "source": "<candidate-checkout>",
+    "head": "ac3a6764638406af0e13fa118ea68767a093324b",
+    "tree": "2247b049815efda2708f1c2d4e234bf082c70dce",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-domain/src/usage.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/bin/crony-evidence-paths.rs\n M tools/check_evidence_personal_paths.test.mjs",
+    "source_file_count": 7597,
+    "source_fingerprint": "6cfbc338f03fa31e26a69326a14f3590217d85c3bf754262daa321fa71d1b618",
+    "manifest": "<run-records>\\issue236-review-regressions-red-r1-source-after.json",
+    "manifest_sha256": "6f518345c2a9ae75d1dba96458d87411153a0a12e5e414a221fa9448006ffef2"
+  },
+  "source_unchanged": true,
+  "failure": null,
+  "finished_at_utc": "2026-10-03T12:29:09.5317610Z"
+}

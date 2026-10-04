@@ -226,20 +226,9 @@ impl AgentAdapter for FakeProcessAdapter {
                                     .to_owned(),
                             }));
                         }
-                        "usage" => sink.emit(AdapterEvent::Usage(super::UsageSnapshot {
-                            input_tokens: event
-                                .get("input_tokens")
-                                .and_then(Value::as_u64)
-                                .unwrap_or_default(),
-                            output_tokens: event
-                                .get("output_tokens")
-                                .and_then(Value::as_u64)
-                                .unwrap_or_default(),
-                            cost_microusd: event
-                                .get("cost_microusd")
-                                .and_then(Value::as_u64)
-                                .unwrap_or_default(),
-                        })),
+                        "usage" => sink.emit(AdapterEvent::Usage(Box::new(super::usage::external(
+                            &event, "fake_process_usage_v1",
+                        )))),
                         "approval_requested" => {
                             let approval_id = event
                                 .get("approval_id")

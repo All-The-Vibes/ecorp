@@ -490,10 +490,18 @@ fn issue87_cumulative_regressions_cannot_charge_again() {
         turn_id: Some("turn-1".into()),
         ..Default::default()
     };
-    assert!(record_usage(&usage_frame("thread-1", 12), &mut parsed).is_some());
-    assert!(record_usage(&usage_frame("thread-1", 10), &mut parsed).is_none());
+    let accepted = record_usage(&usage_frame("thread-1", 12), &mut parsed).unwrap();
+    assert!(accepted.validate().is_ok());
+    let regression = record_usage(&usage_frame("thread-1", 10), &mut parsed)
+        .expect("retain regressing usage as invalid, uncharged evidence");
+    assert!(regression.validate().is_err());
+    assert_eq!(regression.coverage()["tokens"], "invalid");
+    assert_eq!(parsed.last_usage_total, Some(12));
+    assert_eq!(parsed.last_usage_report.as_ref(), Some(&accepted));
     assert!(record_usage(&usage_frame("thread-1", 12), &mut parsed).is_none());
-    assert_eq!(parsed.usage.input_tokens, 10);
+    assert_eq!(parsed.usage.report().input_tokens, Some(10));
+    assert_eq!(parsed.usage.report().output_tokens, Some(2));
+    assert_eq!(parsed.usage.report().coverage()["tokens"], "invalid");
 }
 
 #[test]

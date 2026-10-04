@@ -1,0 +1,25 @@
+{
+  "tag": "rust-v0.159.2",
+  "source_url": "https://raw.githubusercontent.com/openai/codex/rust-v0.159.2/codex-rs/protocol/src/protocol.rs",
+  "source_sha256": "d3d3d384da91b2824c10091de4331a2bc26ec5474887ed0aef1e3f3c4ae110f4",
+  "excerpts": [
+    {
+      "start_line": 2239,
+      "end_line": 2254,
+      "exact_excerpt": "\n#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq, Eq, JsonSchema, TS)]\npub struct TokenUsage {\n    #[ts(type = \"number\")]\n    pub input_tokens: i64,\n    #[ts(type = \"number\")]\n    pub cached_input_tokens: i64,\n    #[serde(default)]\n    #[ts(type = \"number\")]\n    pub cache_write_input_tokens: i64,\n    #[ts(type = \"number\")]\n    pub output_tokens: i64,\n    #[ts(type = \"number\")]\n    pub reasoning_output_tokens: i64,\n    #[ts(type = \"number\")]\n    pub total_tokens: i64,"
+    },
+    {
+      "start_line": 2311,
+      "end_line": 2329,
+      "exact_excerpt": "    pub fn append_last_usage(&mut self, last: &TokenUsage) {\n        self.total_token_usage.add_assign(last);\n        self.last_token_usage = last.clone();\n    }\n\n    pub fn fill_to_context_window(&mut self, context_window: i64) {\n        let previous_total = self.total_token_usage.total_tokens;\n        let delta = (context_window - previous_total).max(0);\n\n        self.model_context_window = Some(context_window);\n        self.total_token_usage = TokenUsage {\n            total_tokens: context_window,\n            ..TokenUsage::default()\n        };\n        self.last_token_usage = TokenUsage {\n            total_tokens: delta,\n            ..TokenUsage::default()\n        };\n    }"
+    },
+    {
+      "start_line": 2467,
+      "end_line": 2476,
+      "exact_excerpt": "    pub fn add_assign(&mut self, other: &TokenUsage) {\n        self.input_tokens += other.input_tokens;\n        self.cached_input_tokens += other.cached_input_tokens;\n        self.cache_write_input_tokens += other.cache_write_input_tokens;\n        self.output_tokens += other.output_tokens;\n        self.reasoning_output_tokens += other.reasoning_output_tokens;\n        self.total_tokens += other.total_tokens;\n    }\n}\n"
+    }
+  ],
+  "installed_version": "0.159.2",
+  "adapter_enforces_exact_binary_pin": false,
+  "interpretation": "A supplied native last.totalTokens must cover max(input, cached_input, cache_write_input) + max(output, reasoning_output), considering only known components. Initial and incremental cumulative totals must also cover the supplied last-call total. Larger totals and missing parent quantities remain valid; this never creates a charge or requires exact component equality."
+}

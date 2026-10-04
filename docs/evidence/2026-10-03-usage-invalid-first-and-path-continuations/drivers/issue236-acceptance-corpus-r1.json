@@ -1,0 +1,407 @@
+{
+  "schema_version": 1,
+  "scope": "Synthetic Codex native notification replay; no provider inference or auditor decision",
+  "cases": [
+    {
+      "id": "codex-duplicate-and-foreign-turn",
+      "thread_id": "thread-1",
+      "turn_id": "turn-1",
+      "notifications": [
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 12
+            },
+            "last": {
+              "inputTokens": 10,
+              "outputTokens": 2
+            }
+          }
+        },
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 12
+            },
+            "last": {
+              "inputTokens": 10,
+              "outputTokens": 2
+            }
+          }
+        },
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 20
+            },
+            "last": {
+              "inputTokens": 6,
+              "outputTokens": 2
+            }
+          }
+        },
+        {
+          "threadId": "thread-1",
+          "turnId": "other-turn",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 28
+            },
+            "last": {
+              "inputTokens": 5,
+              "outputTokens": 3
+            }
+          }
+        },
+        {
+          "threadId": "other-thread",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 28
+            },
+            "last": {
+              "inputTokens": 5,
+              "outputTokens": 3
+            }
+          }
+        }
+      ],
+      "expected": {
+        "emitted": 2,
+        "input_tokens": 16,
+        "output_tokens": 4,
+        "cost_microusd": null,
+        "token_coverage": "reported",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false,
+        "accepted": 2,
+        "invalid": 0,
+        "dispositions": [
+          "accepted",
+          "accepted"
+        ],
+        "artifact_token_coverage": "reported",
+        "artifact_usd_coverage": "unavailable"
+      }
+    },
+    {
+      "id": "codex-cache-and-reasoning-subsets",
+      "thread_id": "thread-1",
+      "turn_id": "turn-1",
+      "notifications": [
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 120
+            },
+            "last": {
+              "inputTokens": 100,
+              "outputTokens": 20,
+              "cachedInputTokens": 40,
+              "cacheWriteInputTokens": 10,
+              "reasoningOutputTokens": 5
+            }
+          }
+        }
+      ],
+      "expected": {
+        "emitted": 1,
+        "input_tokens": 100,
+        "output_tokens": 20,
+        "cost_microusd": null,
+        "token_coverage": "reported",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false,
+        "accepted": 1,
+        "invalid": 0,
+        "dispositions": [
+          "accepted"
+        ],
+        "artifact_token_coverage": "reported",
+        "artifact_usd_coverage": "unavailable"
+      }
+    },
+    {
+      "id": "codex-missing-input-explicit-zero-output",
+      "thread_id": "thread-1",
+      "turn_id": "turn-1",
+      "notifications": [
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 0
+            },
+            "last": {
+              "outputTokens": 0
+            }
+          }
+        }
+      ],
+      "expected": {
+        "emitted": 1,
+        "input_tokens": null,
+        "output_tokens": 0,
+        "cost_microusd": null,
+        "token_coverage": "partial",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false,
+        "accepted": 1,
+        "invalid": 0,
+        "dispositions": [
+          "accepted"
+        ],
+        "artifact_token_coverage": "partial",
+        "artifact_usd_coverage": "unavailable"
+      }
+    },
+    {
+      "id": "codex-regressing-and-contradictory-cursors",
+      "thread_id": "thread-1",
+      "turn_id": "turn-1",
+      "notifications": [
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 12
+            },
+            "last": {
+              "inputTokens": 10,
+              "outputTokens": 2
+            }
+          }
+        },
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 10
+            },
+            "last": {
+              "inputTokens": 8,
+              "outputTokens": 2
+            }
+          }
+        },
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 0
+            },
+            "last": {
+              "inputTokens": 0,
+              "outputTokens": 0
+            }
+          }
+        },
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 12
+            },
+            "last": {
+              "inputTokens": 9,
+              "outputTokens": 3
+            }
+          }
+        },
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 12
+            },
+            "last": {
+              "inputTokens": 10,
+              "outputTokens": 2
+            }
+          }
+        },
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 20
+            },
+            "last": {
+              "inputTokens": 6,
+              "outputTokens": 2
+            }
+          }
+        },
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 20
+            },
+            "last": {
+              "inputTokens": 6,
+              "outputTokens": 2
+            }
+          }
+        }
+      ],
+      "expected": {
+        "emitted": 5,
+        "accepted": 2,
+        "invalid": 3,
+        "dispositions": [
+          "accepted",
+          "invalid",
+          "invalid",
+          "invalid",
+          "accepted"
+        ],
+        "accepted_cursors": [
+          12,
+          20
+        ],
+        "accepted_quantities": [
+          [
+            10,
+            2
+          ],
+          [
+            6,
+            2
+          ]
+        ],
+        "input_tokens": 16,
+        "output_tokens": 4,
+        "cost_microusd": null,
+        "token_coverage": "reported",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false,
+        "artifact_token_coverage": "invalid",
+        "artifact_usd_coverage": "invalid"
+      }
+    },
+    {
+      "id": "codex-invalid-first-retains-subtotals",
+      "thread_id": "thread-1",
+      "turn_id": "turn-1",
+      "notifications": [
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 12
+            },
+            "last": {
+              "inputTokens": -1,
+              "outputTokens": 2
+            }
+          }
+        },
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 12
+            },
+            "last": {
+              "inputTokens": 10,
+              "outputTokens": 2
+            }
+          }
+        },
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 12
+            },
+            "last": {
+              "inputTokens": 10,
+              "outputTokens": 2
+            }
+          }
+        },
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 20
+            },
+            "last": {
+              "inputTokens": 6,
+              "outputTokens": 2
+            }
+          }
+        },
+        {
+          "threadId": "thread-1",
+          "turnId": "turn-1",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 20
+            },
+            "last": {
+              "inputTokens": 6,
+              "outputTokens": 2
+            }
+          }
+        }
+      ],
+      "expected": {
+        "emitted": 3,
+        "accepted": 2,
+        "invalid": 1,
+        "dispositions": [
+          "invalid",
+          "accepted",
+          "accepted"
+        ],
+        "accepted_cursors": [
+          12,
+          20
+        ],
+        "accepted_quantities": [
+          [
+            10,
+            2
+          ],
+          [
+            6,
+            2
+          ]
+        ],
+        "input_tokens": 16,
+        "output_tokens": 4,
+        "cost_microusd": null,
+        "token_coverage": "reported",
+        "usd_coverage": "unavailable",
+        "complete_provider_bill": false,
+        "artifact_token_coverage": "invalid",
+        "artifact_usd_coverage": "invalid"
+      }
+    }
+  ],
+  "parent_corpus_sha256": "434c1de12c928ae7a7484e970e01694feeaaa7ddd450e6fa81e9f031156325d1",
+  "added_case": "codex-invalid-first-retains-subtotals"
+}

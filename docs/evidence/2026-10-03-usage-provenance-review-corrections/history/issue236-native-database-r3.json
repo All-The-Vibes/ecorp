@@ -1,0 +1,104 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "related_issues": [
+    56,
+    87,
+    261
+  ],
+  "status": "failed",
+  "wrapper_pid": 31692,
+  "purpose": "Fresh owned PostgreSQL usage presence, units, exact-assignment identity, replay, aliases, overflow, redaction, hard-control and revoked-read regressions. Synthetic accounting observations only; no budget grant, auditor execution, stopped experiment, real-provider, browser or hosted acceptance claimed.",
+  "source": "<candidate-checkout>",
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T07:17:13.394Z",
+    "source": "<candidate-checkout>",
+    "head": "ffe61f19e6a5f309f363102f0e76aea8a96e3bf2",
+    "tree": "d8233b76147023e50dd9d0fc2e4c8a18844999b4",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-store/src/usage_accounting_tests.rs",
+    "source_file_count": 7498,
+    "source_fingerprint": "91d4e7df8ae37a619e8152e69a003e2089495d1bb862effb77f524367f03848c",
+    "manifest": "<run-records>\\issue236-source-before-native-db-r3.json",
+    "manifest_sha256": "56f721c9d26a662ef788709d78cea6fed54321d8cd43c8d771f7d1e931e8d395"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T07:21:51.645Z",
+    "source": "<candidate-checkout>",
+    "head": "ffe61f19e6a5f309f363102f0e76aea8a96e3bf2",
+    "tree": "d8233b76147023e50dd9d0fc2e4c8a18844999b4",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-store/src/usage_accounting_tests.rs",
+    "source_file_count": 7498,
+    "source_fingerprint": "91d4e7df8ae37a619e8152e69a003e2089495d1bb862effb77f524367f03848c",
+    "manifest": "<run-records>\\issue236-source-after-native-db-r3.json",
+    "manifest_sha256": "3962a176dc58f8771975c084c44b4b813cfffa01b9a0a1d5ee66c8086f3a7a92"
+  },
+  "source_unchanged": true,
+  "qa_root": "<owned-qa-root>\\issue236-native-usage-20261003-r3",
+  "started_at_utc": "2026-10-03T07:17:14.0016470Z",
+  "environment": {
+    "CARGO_TARGET_DIR": "<candidate-checkout>\\target\\issue236-review-r5",
+    "RUST_TEST_THREADS": "1",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_BUILD_JOBS": "2"
+  },
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "command": "initdb --auth=scram-sha-256 (private pwfile)",
+      "exit_code": 0,
+      "log": "<run-records>\\issue236-native-database-r3-initdb.log",
+      "sha256": "5d108e90184231567adc8464f5867f27a8eee49d5c9580154e1c6c0d23cd2243",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0,
+        "summaries": 0
+      },
+      "passed_test_names": []
+    },
+    {
+      "name": "usage-provenance-transactions",
+      "command": "cargo test --locked --offline -p crony-store issue236_ -- --ignored --test-threads=1",
+      "exit_code": 101,
+      "log": "<run-records>\\issue236-native-database-r3-crony-store-issue236.log",
+      "sha256": "83fff895da70bc3b83f3f978bfcfdbdc0baf6a4a0f4031e6a6c5eaf905ab99f0",
+      "counts": {
+        "passed": 9,
+        "failed": 4,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 571,
+        "summaries": 1
+      },
+      "passed_test_names": [
+        "usage_accounting_tests::issue236_usage_aggregate_range_uses_the_existing_rolling_window",
+        "usage_accounting_tests::issue236_usage_equal_counts_and_missing_ids_do_not_collapse_calls",
+        "usage_accounting_tests::issue236_usage_four_scoped_calls_sum_once_with_replays_and_terminal_evidence",
+        "usage_accounting_tests::issue236_usage_hard_control_still_prevents_new_charges",
+        "usage_accounting_tests::issue236_usage_integer_subtotal_overflow_never_partially_updates_counters",
+        "usage_accounting_tests::issue236_usage_invalid_reports_are_redacted_without_any_partial_charge",
+        "usage_accounting_tests::issue236_usage_mission_aggregate_overflow_keeps_the_journal_frame",
+        "usage_accounting_tests::issue236_usage_partial_tokens_and_native_units_never_fabricate_free_usd",
+        "usage_accounting_tests::issue236_usage_room_revocation_hides_evidence_without_deleting_accounting"
+      ]
+    }
+  ],
+  "cleanup": "Exact owned PostgreSQL stopped and fixture port verified inactive; database, private credentials and logs preserved.",
+  "failure": "usage-provenance-transactions did not satisfy its native regression requirement.",
+  "authentication": {
+    "method": "scram-sha-256",
+    "delivery": "Private fixture credential files for PostgreSQL clients. SQLx environment-only delivery is reduced assurance.",
+    "wrong_password_rejected": true,
+    "authenticated_query": true
+  },
+  "finished_at_utc": "2026-10-03T07:21:53.0118294Z"
+}

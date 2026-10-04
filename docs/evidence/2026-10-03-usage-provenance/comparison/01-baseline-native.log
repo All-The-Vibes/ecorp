@@ -1,0 +1,17 @@
+
+running 1 test
+test adapter::codex::issue236_comparison_probe::issue236_frozen_native_case ... ISSUE236_OBSERVATION={"actual":{"complete_provider_bill":null,"cost_microusd":0,"emitted":3,"input_tokens":21,"output_tokens":7,"token_coverage":null,"usd_coverage":null},"case":"codex-duplicate-and-foreign-turn","expected":{"complete_provider_bill":false,"cost_microusd":null,"emitted":2,"input_tokens":16,"output_tokens":4,"token_coverage":"reported","usd_coverage":"unavailable"}}
+
+thread 'adapter::codex::issue236_comparison_probe::issue236_frozen_native_case' (24396) panicked at crates\crony-runner\src\adapter\issue236_comparison_probe.rs:38:5:
+assertion `left == right` failed: frozen case "codex-duplicate-and-foreign-turn"
+  left: Object {"complete_provider_bill": Null, "cost_microusd": Number(0), "emitted": Number(3), "input_tokens": Number(21), "output_tokens": Number(7), "token_coverage": Null, "usd_coverage": Null}
+ right: Object {"complete_provider_bill": Bool(false), "cost_microusd": Null, "emitted": Number(2), "input_tokens": Number(16), "output_tokens": Number(4), "token_coverage": String("reported"), "usd_coverage": String("unavailable")}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    adapter::codex::issue236_comparison_probe::issue236_frozen_native_case
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 286 filtered out; finished in 0.00s

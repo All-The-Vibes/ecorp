@@ -1,0 +1,193 @@
+"""Bind the reviewed correction bytes to complete validation before committing."""
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+
+RUN = Path(__file__).resolve().parent
+SOURCE = Path(r'<candidate-checkout>')
+HISTORY = RUN.parent / '20261002T023252Z'
+PARENT = 'ac3a6764638406af0e13fa118ea68767a093324b'
+BASE = 'ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01'
+MAIN = '878a1774774b0630c904cbaf4b05e1b346777817'
+BRANCH = 'codex/issue236-usage-provenance'
+FINGERPRINT = 'da95d33bc3706d1a67ec8cc260392780f466b6d0866f2009326225ace87707ce'
+FILES = sorted([
+    'crates/crony-domain/src/lib.rs',
+    'crates/crony-domain/src/usage.rs',
+    'crates/crony-runner/src/adapter/codex.rs',
+    'crates/crony-runner/src/adapter/codex_runtime.rs',
+    'crates/crony-runner/src/adapter/codex_stop_tests.rs',
+    'crates/crony-runner/src/bin/crony-evidence-paths.rs',
+    'scripts/fake-codex-app-server.mjs',
+    'tools/check_evidence_personal_paths.mjs',
+    'tools/check_evidence_personal_paths.test.mjs',
+])
+PLAN = ['migrations', 'state-audit-compatibility', 'state-audit-evm', 'docs',
+        'repository-docs', 'node-tests', 'format', 'clippy', 'rust-tests',
+        'web-build', 'web-lint']
+CANONICAL = RUN / 'issue236-canonical-code-r1.json'
+GREEN = RUN / 'issue236-review-regressions-green-r2.json'
+REVIEW = RUN / 'issue236-review-fixes-review-r1.json'
+STAGE = RUN / 'issue236-review-fixes-stage-r1.json'
+COMMIT = RUN / 'issue236-review-fixes-commit-r1.json'
+spec = importlib.util.spec_from_file_location('issue236_local_helpers', HISTORY / 'prepare-issue236-comparison-r1.py')
+helpers = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(helpers)
+sha = helpers.sha
+git = lambda *args: helpers.git(SOURCE, *args)
+
+
+def read(path):
+    return json.loads(Path(path).read_text(encoding='utf-8-sig'))
+
+
+def require(condition, message):
+    if not condition:
+        raise RuntimeError(message)
+
+
+def identity():
+    return {'head': git('rev-parse', 'HEAD').decode().strip(),
+            'tree': git('rev-parse', 'HEAD^{tree}').decode().strip(),
+            'branch': git('branch', '--show-current').decode().strip()}
+
+
+def validate():
+    canonical = read(CANONICAL)
+    result = canonical['canonical']
+    require(canonical['status'] == 'passed' and canonical['source_unchanged'] is True
+            and result['exit_code'] == 0 and result['source_changed'] is False
+            and not result['not_run'] and [c['name'] for c in result['checks']] == PLAN
+            and all(c['passed'] and c['exitCode'] == 0 for c in result['checks']),
+            'All eleven canonical gates must finish successfully before source mutation.')
+    require(canonical['dependency_install']['exit_code'] == 0
+            and '--frozen-lockfile' in canonical['dependency_install']['command']
+            and canonical['standalone_steward_installs'][-1]['exit_code'] == 0,
+            'Locked workspace and standalone fixture installs must pass.')
+    for kind in ('log', 'report'):
+        require(sha(result[kind]) == result[kind + '_sha256'], 'Canonical evidence changed.')
+    validated = canonical['source_after']
+    manifest = read(validated['manifest'])
+    require(sha(validated['manifest']) == validated['manifest_sha256']
+            and validated['source_fingerprint'] == FINGERPRINT
+            and manifest['source_fingerprint'] == FINGERPRINT
+            and helpers.physical_manifest(SOURCE) == manifest['files'],
+            'Current physical bytes differ from the complete canonical validation.')
+    green = read(GREEN)
+    require(green['status'] == 'passed' and green['source_unchanged'] is True
+            and green['source_after']['source_fingerprint'] == FINGERPRINT,
+            'Focused regression evidence no longer applies.')
+    expected = [('native-scanner', 27), ('node-scanner', 13), ('domain-usage', 18),
+                ('codex-invalid-first', 1), ('codex-retained-session', 1)]
+    require(len(green['checks']) == len(expected), 'Focused regression inventory changed.')
+    for check, (name, count) in zip(green['checks'], expected):
+        counts = check['counts']
+        require(check['name'] == name and check['exit_code'] == 0
+                and counts.get('passed', counts.get('pass')) == count
+                and counts.get('failed', counts.get('fail')) == 0
+                and counts.get('ignored', counts.get('skipped')) == 0
+                and sha(check['log']) == check['sha256'], 'Focused results changed.')
+    before = identity()
+    require(before['head'] == PARENT and before['branch'] == BRANCH, 'Source parent or branch changed.')
+    dirty = git('status', '--porcelain=v1', '--untracked-files=all', '-z').decode().split('\0')
+    require(sorted(row[3:] for row in dirty if row) == FILES,
+            'Unexpected dirty paths; preserve all work and the existing index.')
+    return canonical, manifest, before
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('phase', choices=['review', 'stage', 'commit'])
+    phase = parser.parse_args().phase
+    canonical, manifest, before = validate()
+    common = {'repository': 'All-The-Vibes/ecorp', 'issue': 236, 'pr': 402,
+              'recorded_at_utc': datetime.now(timezone.utc).isoformat(),
+              'source': str(SOURCE), 'branch': BRANCH, 'parent': PARENT,
+              'base': BASE, 'main': MAIN, 'files': FILES, 'source_fingerprint': FINGERPRINT,
+              'canonical_receipt': str(CANONICAL), 'canonical_receipt_sha256': sha(CANONICAL)}
+    if phase == 'review':
+        require(not REVIEW.exists() and not git('diff', '--cached', '--name-only', '-z').strip(),
+                'Preserve the existing review or staged work.')
+        review = dict(common, status='reviewed_for_commit', reviewer='Codex local source review',
+            self_approval=False, independent_review=False, issue_completed=False,
+            review_comment_ids=[4173113909, 4173113933, 4173113950],
+            validation_receipts=[{'file': p.name, 'sha256': sha(p)} for p in [
+                CANONICAL, GREEN, RUN / 'issue236-review-regressions-red-r1.json']],
+            findings=[
+                {'comments': [4173113909, 4173113933],
+                 'resolution': 'Both scanners join CMD caret LF and CRLF continuations before removing remaining carets. Literal detection, placeholder handling, retained-handle containment and value-free diagnostics are preserved. Native and Node regressions reproduce the bypass before correction and pass afterward.'},
+                {'comments': [4173113950],
+                 'resolution': 'Private nonserialized UsageAccumulator state distinguishes empty, invalid-only and accepted unknown observations. Invalid observations retain invalid coverage without charging quantities; the first accepted report seeds subtotals. Trusted retained-session merges keep accepted subtotals from invalid-marked runs. Unknown components and overflow remain monotonic. Artifact, termination and collect_usage paths read the same report; UsageReport wire format is unchanged.'}],
+            reviewed_surrounding_behavior=[
+                'UsageReport range, provenance, subset, identity and coverage validation',
+                'Codex turn/session correlation, duplicate cursors and contradictory observations',
+                'execute/resume, per-run evidence, retained-session collection and process termination',
+                'Node and native evidence scanner literal and normalized paths, containment and reporting',
+                'Scoped opt-in synthetic transport behavior; no new provider execution or permissions'],
+            harness_boundary='Existing pinned app-server execution, sessions, tools and permission integration retained; only ECorp evidence aggregation changes.',
+            limitations=[
+                'Full fresh database and five-scenario browser/server/runner acceptance still required on the committed candidate.',
+                'This is a partial usage-provenance prerequisite for #236; no auditor grants, $10 assurance, issue completion or independent outcome review claim.',
+                'PR #402 remains draft on #392. Organization-disabled Actions prevent required hosted CI/CodeQL/quality/security validation and merging.'])
+        helpers.save(REVIEW, review, True)
+        print(json.dumps({'status': review['status'], 'reviewed_files': len(FILES), 'source_fingerprint': FINGERPRINT}))
+        return
+    review = read(REVIEW)
+    require(review['status'] == 'reviewed_for_commit' and review['parent'] == PARENT
+            and review['source_fingerprint'] == FINGERPRINT
+            and review['canonical_receipt_sha256'] == sha(CANONICAL), 'Local source review changed.')
+    for reference in review['validation_receipts']:
+        require(sha(RUN / reference['file']) == reference['sha256'], 'A reviewed receipt changed.')
+    common.update(review_receipt=str(REVIEW), review_receipt_sha256=sha(REVIEW),
+                  source_manifest=canonical['source_after']['manifest'],
+                  source_manifest_sha256=canonical['source_after']['manifest_sha256'],
+                  validated_source_fingerprint=FINGERPRINT)
+    if phase == 'stage':
+        require(not STAGE.exists() and not git('diff', '--cached', '--name-only', '-z').strip(),
+                'Preserve existing staged work or staging receipt.')
+        git('add', '--', *FILES)
+        git('diff', '--cached', '--check')
+        staged = sorted(filter(None, git('diff', '--cached', '--name-only', '-z').decode().split('\0')))
+        require(staged == FILES and helpers.physical_manifest(SOURCE) == manifest['files'],
+                'Unexpected staged bytes; preserve the index for inspection.')
+        record = dict(common, status='staged', tree=git('write-tree').decode().strip(),
+                      staged_diff_sha256=hashlib.sha256(git('diff', '--cached', '--binary')).hexdigest())
+        helpers.save(STAGE, record, True)
+        print(json.dumps({'status': 'staged', 'files': len(FILES), 'tree': record['tree']}))
+        return
+    stage = read(STAGE)
+    require(stage['status'] == 'staged' and stage['canonical_receipt_sha256'] == sha(CANONICAL)
+            and stage['review_receipt_sha256'] == sha(REVIEW)
+            and stage['tree'] == git('write-tree').decode().strip()
+            and stage['staged_diff_sha256'] == hashlib.sha256(git('diff', '--cached', '--binary')).hexdigest(),
+            'The staged source differs from its reviewed receipt.')
+    git('diff', '--cached', '--check')
+    record = dict(common, status='committing', stage_receipt_sha256=sha(STAGE))
+    helpers.save(COMMIT, record, True)
+    try:
+        result = git('commit', '-m', 'Preserve accepted usage after invalid observations and join CMD continuations')
+        log = RUN / 'issue236-review-fixes-commit-r1.log'
+        log.write_bytes(result)
+        after = identity()
+        record.update(after)
+        require(git('rev-parse', 'HEAD^').decode().strip() == PARENT
+                and after['tree'] == stage['tree'] and after['branch'] == BRANCH
+                and not git('status', '--porcelain=v1', '--untracked-files=all').strip()
+                and helpers.physical_manifest(SOURCE) == manifest['files'],
+                'Unexpected post-commit state; preserve the new commit.')
+        record.update(status='committed', physical_source_unchanged=True,
+                      commit_log=str(log), commit_log_sha256=sha(log))
+    except Exception as exc:
+        record.update(status='failed', failure=str(exc), observed_source=identity())
+        raise
+    finally:
+        record['finished_at_utc'] = datetime.now(timezone.utc).isoformat()
+        helpers.save(COMMIT, record)
+    print(json.dumps({k: record[k] for k in ['status', 'head', 'tree', 'validated_source_fingerprint']}))
+
+
+if __name__ == '__main__':
+    main()

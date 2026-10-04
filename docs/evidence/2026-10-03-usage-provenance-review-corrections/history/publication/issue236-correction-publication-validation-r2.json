@@ -1,0 +1,52 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "status": "failed",
+  "recorded_at_utc": "2026-10-03T11:04:49.003557+00:00",
+  "head": "609463ae65771b0763ae9de563c5f25cb1332f8b",
+  "tree": "05b2f80f369e7d07a89c7ea8e53c4b41c836b397",
+  "packet_receipt": "issue236-correction-evidence-package-r2.json",
+  "packet_receipt_sha256": "632ccca04146cdfd441fac82ee61e817d92e86aa6050ff02b4eb002bb605aec0",
+  "wrapper_exit_code": 1,
+  "checks": [
+    {
+      "name": "issue236-correction-doc-contract-r2",
+      "command": [
+        "<pinned-toolchain>\\node-v24.21.0-win-x64\\node.exe",
+        "tools/check_documentation.mjs"
+      ],
+      "exit_code": 0,
+      "log": "<run-records>\\issue236-correction-doc-contract-r2.log",
+      "sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d"
+    },
+    {
+      "name": "issue236-correction-generated-docs-r2",
+      "command": [
+        "<pinned-toolchain>\\node-v24.21.0-win-x64\\node.exe",
+        "tools/check_docs.mjs"
+      ],
+      "exit_code": 0,
+      "log": "<run-records>\\issue236-correction-generated-docs-r2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "issue236-correction-personal-paths-r2",
+      "command": [
+        "<pinned-toolchain>\\node-v24.21.0-win-x64\\node.exe",
+        "tools/check_evidence_personal_paths.mjs",
+        "<candidate-checkout>\\docs\\evidence\\2026-10-03-usage-provenance-review-corrections",
+        "<candidate-checkout>\\docs\\evidence\\2026-10-03-usage-provenance"
+      ],
+      "exit_code": 1,
+      "log": "<run-records>\\issue236-correction-personal-paths-r2.log",
+      "sha256": "c372ba5b49d7c373803411f4d0e5112db8c47f7c98d63e68a2faa4fd4bce229a"
+    }
+  ],
+  "failed_check": "issue236-correction-personal-paths-r2",
+  "not_run": [
+    "gitleaks"
+  ],
+  "implementation_unchanged": true,
+  "diagnosis": "Three unpublished historical files retain synthetic scanner path examples. Normalize copies explicitly and preserve original bytes; do not change the detector or test outcomes."
+}

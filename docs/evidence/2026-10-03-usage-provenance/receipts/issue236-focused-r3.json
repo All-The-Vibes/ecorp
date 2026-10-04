@@ -1,0 +1,109 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "status": "passed",
+  "wrapper_pid": 2592,
+  "purpose": "Verify the observed canonical large-enum defect is fixed by boxing only the internal adapter usage event. Check strict runner clippy and all fourteen usage regressions, including the newly added corpus. No accounting, native mapping, wire schema, grant, database or stopped experiment changes.",
+  "started_at_utc": "2026-10-03T04:31:36.1727215Z",
+  "source": "<candidate-checkout>",
+  "parent": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+  "dependency_pr": 392,
+  "source_before_format": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T04:31:38.142Z",
+    "source": "<candidate-checkout>",
+    "head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+    "tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-domain/src/lib.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/adapter/codex_stop_tests.rs\n M crates/crony-runner/src/adapter/copilot.rs\n M crates/crony-runner/src/adapter/external.rs\n M crates/crony-runner/src/adapter/fake.rs\n M crates/crony-runner/src/adapter/mod.rs\n M crates/crony-runner/src/main.rs\n M crates/crony-store/src/lib.rs\n?? crates/crony-domain/src/usage.rs\n?? crates/crony-runner/src/adapter/usage.rs\n?? crates/crony-runner/tests/\n?? crates/crony-store/src/usage_accounting.rs\n?? crates/crony-store/src/usage_accounting_tests.rs\n?? docs/USAGE_PROVENANCE.md",
+    "source_file_count": 7421,
+    "source_fingerprint": "243ad077f92ffb062da5761a182d51cfd0f7c38ecd32680b896aa4dc5817c32b",
+    "manifest": "<run-records>\\issue236-source-before-format-focused-r3.json",
+    "manifest_sha256": "af2fdd63d7d8dd799f352bb361d3ac8137a5402743539eb904d2bc5b16332f21"
+  },
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T04:31:43.678Z",
+    "source": "<candidate-checkout>",
+    "head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+    "tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-domain/src/lib.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/adapter/codex_stop_tests.rs\n M crates/crony-runner/src/adapter/copilot.rs\n M crates/crony-runner/src/adapter/external.rs\n M crates/crony-runner/src/adapter/fake.rs\n M crates/crony-runner/src/adapter/mod.rs\n M crates/crony-runner/src/main.rs\n M crates/crony-store/src/lib.rs\n?? crates/crony-domain/src/usage.rs\n?? crates/crony-runner/src/adapter/usage.rs\n?? crates/crony-runner/tests/\n?? crates/crony-store/src/usage_accounting.rs\n?? crates/crony-store/src/usage_accounting_tests.rs\n?? docs/USAGE_PROVENANCE.md",
+    "source_file_count": 7421,
+    "source_fingerprint": "243ad077f92ffb062da5761a182d51cfd0f7c38ecd32680b896aa4dc5817c32b",
+    "manifest": "<run-records>\\issue236-source-before-focused-r3.json",
+    "manifest_sha256": "cec67c770ea73621b903eb2d9629e8a9ded1a210eb866f8a6f1d8e0bdde6bcca"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T04:33:50.734Z",
+    "source": "<candidate-checkout>",
+    "head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+    "tree": "a543d166d7e806ba62f124ee709e3a46936c6f3d",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-domain/src/lib.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-runner/src/adapter/codex_stop_tests.rs\n M crates/crony-runner/src/adapter/copilot.rs\n M crates/crony-runner/src/adapter/external.rs\n M crates/crony-runner/src/adapter/fake.rs\n M crates/crony-runner/src/adapter/mod.rs\n M crates/crony-runner/src/main.rs\n M crates/crony-store/src/lib.rs\n?? crates/crony-domain/src/usage.rs\n?? crates/crony-runner/src/adapter/usage.rs\n?? crates/crony-runner/tests/\n?? crates/crony-store/src/usage_accounting.rs\n?? crates/crony-store/src/usage_accounting_tests.rs\n?? docs/USAGE_PROVENANCE.md",
+    "source_file_count": 7421,
+    "source_fingerprint": "243ad077f92ffb062da5761a182d51cfd0f7c38ecd32680b896aa4dc5817c32b",
+    "manifest": "<run-records>\\issue236-source-after-focused-r3.json",
+    "manifest_sha256": "083ab267c12cd5da08650af44d54934366b0868c67187358151a639de6f2833f"
+  },
+  "source_unchanged": true,
+  "environment": {
+    "RUST_TEST_THREADS": "1",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_INCREMENTAL": "0"
+  },
+  "checks": [
+    {
+      "exit_code": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "log": "<run-records>\\issue236-focused-r3-format.log",
+      "command": "cargo fmt --check",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0,
+        "summaries": 0
+      },
+      "name": "format-check"
+    },
+    {
+      "exit_code": 0,
+      "sha256": "629d63d01476aab3d41f95adc9dd5fc9a4536e7e385b57ebca636418f7de90b3",
+      "log": "<run-records>\\issue236-focused-r3-runner-clippy.log",
+      "command": "cargo clippy --locked --offline -p crony-runner --all-targets -- -D warnings",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0,
+        "summaries": 0
+      },
+      "name": "runner-clippy"
+    },
+    {
+      "exit_code": 0,
+      "sha256": "34ad5178bb6ef993ea270e8fce746edf26dc8f702c6958378e2299a4d1cc4879",
+      "log": "<run-records>\\issue236-focused-r3-runner-usage.log",
+      "command": "cargo test --locked --offline -p crony-runner usage -- --test-threads=1",
+      "counts": {
+        "passed": 14,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 331,
+        "summaries": 2
+      },
+      "name": "runner-usage"
+    }
+  ],
+  "failure": null,
+  "active_check": null,
+  "finished_at_utc": "2026-10-03T04:33:51.2843778Z"
+}

@@ -1,0 +1,115 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "review_comment_id": 4175209381,
+  "phase": "green",
+  "related_issues": [
+    56,
+    87,
+    261
+  ],
+  "status": "failed",
+  "wrapper_pid": 36788,
+  "purpose": "Source-bound usage and hard-control SQL regressions on the native last.totalTokens consistency correction. Includes persisted latest-total evidence, conflicting replays, overflow, unknown quantities and exactly-once accepted charges. Run both full discovered lanes. Fresh owned PostgreSQL usage presence, units, exact-assignment identity, replay, aliases, overflow, redaction, hard-control and revoked-read regressions. Synthetic accounting observations only; no budget grant, auditor execution, stopped experiment, real-provider, browser or hosted acceptance claimed.",
+  "source": "<candidate-checkout>",
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T23:11:26.42Z",
+    "source": "<candidate-checkout>",
+    "head": "08a057fd89ca0dae7904c00a22fd295bd76c3d0d",
+    "tree": "16a8966d7b2da15b29746932025d8b472868c6aa",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-domain/src/usage.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md",
+    "source_file_count": 7890,
+    "source_fingerprint": "406cc5a993da0b7e944076b9cc65e36bdae29c6cb68876f87f2838f527ed39a9",
+    "manifest": "<current-run-records>\\issue236-native-last-total-components-green-r1-source-before.json",
+    "manifest_sha256": "8f268db196a3d797ba9bce2c0a350f0d9aa34e953e9beaaf94fcaf13cf860c9e"
+  },
+  "reference_manifest": "<current-run-records>\\last-total-components-runtime-source-r1.json",
+  "reference_manifest_sha256": "0108932570b0299835111dd268a88eedbfa1053d9373f07f48938e236cf7b1f2",
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T23:14:38.644Z",
+    "source": "<candidate-checkout>",
+    "head": "08a057fd89ca0dae7904c00a22fd295bd76c3d0d",
+    "tree": "16a8966d7b2da15b29746932025d8b472868c6aa",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-domain/src/usage.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md",
+    "source_file_count": 7890,
+    "source_fingerprint": "406cc5a993da0b7e944076b9cc65e36bdae29c6cb68876f87f2838f527ed39a9",
+    "manifest": "<current-run-records>\\issue236-native-last-total-components-green-r1-source-after.json",
+    "manifest_sha256": "64c3709acbae1f5e5966d12d9c6c0fed6f510fca6cd9ddeea593f20b49818b6f"
+  },
+  "source_unchanged": true,
+  "qa_root": "<owned-qa-root>\\issue236-native-usage-last-total-components-20261003-green-r1",
+  "started_at_utc": "2026-10-03T23:11:27.1136706Z",
+  "environment": {
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_INCREMENTAL": "0",
+    "RUST_TEST_THREADS": "1",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TARGET_DIR": "<candidate-checkout>\\target\\issue236-review-r5"
+  },
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "command": "initdb --auth=scram-sha-256 (private pwfile)",
+      "exit_code": 0,
+      "log": "<current-run-records>\\issue236-native-last-total-components-green-r1-initdb.log",
+      "sha256": "3f763f1e13f0a44d2e8e5e26fee02acc7063761a9add3a30d099c0a027eba1be",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0,
+        "summaries": 0
+      },
+      "passed_test_names": []
+    },
+    {
+      "name": "usage-provenance-transactions",
+      "command": "cargo test --locked --offline -p crony-store issue236_ -- --ignored --test-threads=1",
+      "exit_code": 101,
+      "log": "<current-run-records>\\issue236-native-last-total-components-green-r1-crony-store-issue236.log",
+      "sha256": "9d73e8ac3ddc61b568df7e80782013548889ecfc4cdd02c7d26a92900fa2af67",
+      "counts": {
+        "passed": 15,
+        "failed": 1,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 571,
+        "summaries": 1
+      },
+      "passed_test_names": [
+        "usage_accounting_tests::issue236_usage_aggregate_range_uses_the_existing_rolling_window",
+        "usage_accounting_tests::issue236_usage_alias_enrichment_is_transitive_and_conflicts_cannot_claim_aliases",
+        "usage_accounting_tests::issue236_usage_equal_counts_and_missing_ids_do_not_collapse_calls",
+        "usage_accounting_tests::issue236_usage_four_scoped_calls_sum_once_with_replays_and_terminal_evidence",
+        "usage_accounting_tests::issue236_usage_hard_control_still_prevents_new_charges",
+        "usage_accounting_tests::issue236_usage_integer_subtotal_overflow_never_partially_updates_counters",
+        "usage_accounting_tests::issue236_usage_invalid_reports_are_redacted_without_any_partial_charge",
+        "usage_accounting_tests::issue236_usage_last_call_identity_coverage_uses_the_admitted_session",
+        "usage_accounting_tests::issue236_usage_last_total_survives_storage_and_conflicting_replays",
+        "usage_accounting_tests::issue236_usage_mission_aggregate_overflow_keeps_the_journal_frame",
+        "usage_accounting_tests::issue236_usage_optional_session_uses_fenced_run_identity_without_rewriting_provenance",
+        "usage_accounting_tests::issue236_usage_partial_tokens_and_native_units_never_fabricate_free_usd",
+        "usage_accounting_tests::issue236_usage_requires_exact_assignment_and_matching_native_session",
+        "usage_accounting_tests::issue236_usage_room_revocation_hides_evidence_without_deleting_accounting",
+        "usage_accounting_tests::issue236_usage_uncharged_replays_preserve_origins_aliases_and_hard_boundaries"
+      ]
+    }
+  ],
+  "cleanup": "Exact owned PostgreSQL stopped and fixture port verified inactive; database, private credentials and logs preserved.",
+  "failure": "usage-provenance-transactions did not satisfy its native regression requirement.",
+  "authentication": {
+    "method": "scram-sha-256",
+    "delivery": "Private fixture credential files for PostgreSQL clients. SQLx environment-only delivery is reduced assurance.",
+    "authenticated_query": true,
+    "wrong_password_rejected": true
+  },
+  "finished_at_utc": "2026-10-03T23:14:40.0527191Z"
+}

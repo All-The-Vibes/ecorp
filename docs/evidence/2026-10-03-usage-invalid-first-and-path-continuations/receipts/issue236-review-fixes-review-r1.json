@@ -1,0 +1,77 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "recorded_at_utc": "2026-10-03T13:41:30.394234+00:00",
+  "source": "<candidate-checkout>",
+  "branch": "codex/issue236-usage-provenance",
+  "parent": "ac3a6764638406af0e13fa118ea68767a093324b",
+  "base": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+  "main": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "files": [
+    "crates/crony-domain/src/lib.rs",
+    "crates/crony-domain/src/usage.rs",
+    "crates/crony-runner/src/adapter/codex.rs",
+    "crates/crony-runner/src/adapter/codex_runtime.rs",
+    "crates/crony-runner/src/adapter/codex_stop_tests.rs",
+    "crates/crony-runner/src/bin/crony-evidence-paths.rs",
+    "scripts/fake-codex-app-server.mjs",
+    "tools/check_evidence_personal_paths.mjs",
+    "tools/check_evidence_personal_paths.test.mjs"
+  ],
+  "source_fingerprint": "da95d33bc3706d1a67ec8cc260392780f466b6d0866f2009326225ace87707ce",
+  "canonical_receipt": "<run-records>\\issue236-canonical-code-r1.json",
+  "canonical_receipt_sha256": "7a2b467df71f4eb1e4e5e347fa3228fc6b4cbb085358e71ee0ce335ee02662af",
+  "status": "reviewed_for_commit",
+  "reviewer": "Codex local source review",
+  "self_approval": false,
+  "independent_review": false,
+  "issue_completed": false,
+  "review_comment_ids": [
+    4173113909,
+    4173113933,
+    4173113950
+  ],
+  "validation_receipts": [
+    {
+      "file": "issue236-canonical-code-r1.json",
+      "sha256": "7a2b467df71f4eb1e4e5e347fa3228fc6b4cbb085358e71ee0ce335ee02662af"
+    },
+    {
+      "file": "issue236-review-regressions-green-r2.json",
+      "sha256": "31ac8c2ec6fd30ff676c697b4e74af489d0c146b2e41e442fb3854308071ab49"
+    },
+    {
+      "file": "issue236-review-regressions-red-r1.json",
+      "sha256": "2239801c068b45477a2c98a807c546469bc542ed7babe9b95e7a9036f1c96c3f"
+    }
+  ],
+  "findings": [
+    {
+      "comments": [
+        4173113909,
+        4173113933
+      ],
+      "resolution": "Both scanners join CMD caret LF and CRLF continuations before removing remaining carets. Literal detection, placeholder handling, retained-handle containment and value-free diagnostics are preserved. Native and Node regressions reproduce the bypass before correction and pass afterward."
+    },
+    {
+      "comments": [
+        4173113950
+      ],
+      "resolution": "Private nonserialized UsageAccumulator state distinguishes empty, invalid-only and accepted unknown observations. Invalid observations retain invalid coverage without charging quantities; the first accepted report seeds subtotals. Trusted retained-session merges keep accepted subtotals from invalid-marked runs. Unknown components and overflow remain monotonic. Artifact, termination and collect_usage paths read the same report; UsageReport wire format is unchanged."
+    }
+  ],
+  "reviewed_surrounding_behavior": [
+    "UsageReport range, provenance, subset, identity and coverage validation",
+    "Codex turn/session correlation, duplicate cursors and contradictory observations",
+    "execute/resume, per-run evidence, retained-session collection and process termination",
+    "Node and native evidence scanner literal and normalized paths, containment and reporting",
+    "Scoped opt-in synthetic transport behavior; no new provider execution or permissions"
+  ],
+  "harness_boundary": "Existing pinned app-server execution, sessions, tools and permission integration retained; only ECorp evidence aggregation changes.",
+  "limitations": [
+    "Full fresh database and five-scenario browser/server/runner acceptance still required on the committed candidate.",
+    "This is a partial usage-provenance prerequisite for #236; no auditor grants, $10 assurance, issue completion or independent outcome review claim.",
+    "PR #402 remains draft on #392. Organization-disabled Actions prevent required hosted CI/CodeQL/quality/security validation and merging."
+  ]
+}

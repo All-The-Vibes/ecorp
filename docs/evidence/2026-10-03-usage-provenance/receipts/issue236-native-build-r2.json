@@ -1,0 +1,175 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "source": "<candidate-checkout>",
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T06:11:18.383Z",
+    "source": "<candidate-checkout>",
+    "head": "fb13446f099ddc550a653ed6c4b13800169ba599",
+    "tree": "78370df4797a84ae363b5df9d2cafd3e898887de",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "",
+    "source_file_count": 7421,
+    "source_fingerprint": "243ad077f92ffb062da5761a182d51cfd0f7c38ecd32680b896aa4dc5817c32b",
+    "manifest": "<run-records>\\issue236-source-before-native-build-r2.json",
+    "manifest_sha256": "6f35c78a3e54ebc553fdf0a5c1a9afe1a1d9dee873e78fa395030c9c2d34fa4e"
+  },
+  "started_at_utc": "2026-10-03T06:11:19.0636564Z",
+  "pid": 17360,
+  "status": "passed",
+  "source_unchanged": true,
+  "expected_head": "fb13446f099ddc550a653ed6c4b13800169ba599",
+  "command": "cargo build --locked --offline -p crony-server -p crony-runner --message-format=json",
+  "binaries": [
+    {
+      "sha256": "499c5780e53ed9e1b46de40786de5d4da2f3ff2432d71569481686c6e7a773c0",
+      "compiler_artifact": {
+        "reason": "compiler-artifact",
+        "package_id": "path+file:///<candidate-checkout>/crates/crony-server#0.1.0",
+        "manifest_path": "<candidate-checkout>\\crates\\crony-server\\Cargo.toml",
+        "target": {
+          "kind": [
+            "bin"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "crony-server",
+          "src_path": "<candidate-checkout>\\crates\\crony-server\\src\\main.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": false
+        },
+        "features": [
+          "default"
+        ],
+        "filenames": [
+          "<operator-home>\\code\\qa\\issue236-native-build-20261003-r2\\target\\debug\\crony-server.exe",
+          "<operator-home>\\code\\qa\\issue236-native-build-20261003-r2\\target\\debug\\crony_server.pdb"
+        ],
+        "executable": "<operator-home>\\code\\qa\\issue236-native-build-20261003-r2\\target\\debug\\crony-server.exe",
+        "fresh": false
+      },
+      "path": "<operator-home>\\code\\qa\\issue236-native-build-20261003-r2\\target\\debug\\crony-server.exe"
+    },
+    {
+      "sha256": "e107f7df50caf4479c1da0c4506f57425fa96879b9268c8f996823af0e3a0d6e",
+      "compiler_artifact": {
+        "reason": "compiler-artifact",
+        "package_id": "path+file:///<candidate-checkout>/crates/crony-runner#0.1.0",
+        "manifest_path": "<candidate-checkout>\\crates\\crony-runner\\Cargo.toml",
+        "target": {
+          "kind": [
+            "bin"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "crony-runner",
+          "src_path": "<candidate-checkout>\\crates\\crony-runner\\src\\main.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": false
+        },
+        "features": [],
+        "filenames": [
+          "<operator-home>\\code\\qa\\issue236-native-build-20261003-r2\\target\\debug\\crony-runner.exe",
+          "<operator-home>\\code\\qa\\issue236-native-build-20261003-r2\\target\\debug\\crony_runner.pdb"
+        ],
+        "executable": "<operator-home>\\code\\qa\\issue236-native-build-20261003-r2\\target\\debug\\crony-runner.exe",
+        "fresh": false
+      },
+      "path": "<operator-home>\\code\\qa\\issue236-native-build-20261003-r2\\target\\debug\\crony-runner.exe"
+    }
+  ],
+  "qa_root": "<operator-home>\\code\\qa\\issue236-native-build-20261003-r2",
+  "target_directory": "<operator-home>\\code\\qa\\issue236-native-build-20261003-r2\\target",
+  "scope": "Exact candidate executables for owned usage-provenance acceptance. Separate owned cache; invalidate all local path packages. Build only, with no acceptance or provider inference claim.",
+  "cache_copy": {
+    "seed_read_only": "<candidate-checkout>\\target",
+    "sha256": "a301d172bc3418747e7ca991401441ebd224752e246d8237b0d0b516d8c5356b",
+    "log": "<run-records>\\issue236-native-build-r2-cache-copy.log",
+    "exit_code": 1
+  },
+  "local_package_clean": {
+    "verified_owned_target": "<operator-home>\\code\\qa\\issue236-native-build-20261003-r2\\target",
+    "exit_code": 0,
+    "command": [
+      "clean",
+      "--locked",
+      "--offline",
+      "--target-dir",
+      "<operator-home>\\code\\qa\\issue236-native-build-20261003-r2\\target",
+      "--package",
+      "crony-audit",
+      "--package",
+      "crony-base",
+      "--package",
+      "crony-base-gateway",
+      "--package",
+      "crony-cli",
+      "--package",
+      "crony-domain",
+      "--package",
+      "crony-gateways",
+      "--package",
+      "crony-protocol",
+      "--package",
+      "crony-runner",
+      "--package",
+      "crony-server",
+      "--package",
+      "crony-store"
+    ],
+    "log": "<run-records>\\issue236-native-build-r2-local-package-clean.log",
+    "packages": [
+      "crony-audit",
+      "crony-base",
+      "crony-base-gateway",
+      "crony-cli",
+      "crony-domain",
+      "crony-gateways",
+      "crony-protocol",
+      "crony-runner",
+      "crony-server",
+      "crony-store"
+    ],
+    "sha256": "386247134ee0e62447d9ceaab1a7d4dbd7eefd0a83839c01dc30e1ded6129269"
+  },
+  "build": {
+    "sha256": "cdd0f28a0e5efe29f7b4f4bc65e619f168f46fc6692a01b0ddf3922d8d8ab7cb",
+    "log": "<run-records>\\issue236-native-build-r2.jsonl",
+    "exit_code": 0
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T06:14:58.924Z",
+    "source": "<candidate-checkout>",
+    "head": "fb13446f099ddc550a653ed6c4b13800169ba599",
+    "tree": "78370df4797a84ae363b5df9d2cafd3e898887de",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "",
+    "source_file_count": 7421,
+    "source_fingerprint": "243ad077f92ffb062da5761a182d51cfd0f7c38ecd32680b896aa4dc5817c32b",
+    "manifest": "<run-records>\\issue236-source-after-native-build-r2.json",
+    "manifest_sha256": "68171e4ec7106401d0161efd91e465bab92943daea7851c9cb87a6b7e21d70a7"
+  },
+  "finished_at_utc": "2026-10-03T06:14:59.4850903Z"
+}

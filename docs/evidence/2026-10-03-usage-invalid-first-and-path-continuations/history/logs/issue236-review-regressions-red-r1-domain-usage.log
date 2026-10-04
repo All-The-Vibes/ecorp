@@ -1,0 +1,61 @@
+   Compiling crony-domain v0.1.0 (<candidate-checkout>\crates\crony-domain)
+    Finished `test` profile [unoptimized] target(s) in 5.64s
+     Running unittests src\lib.rs (target\issue236-review-r5\debug\deps\crony_domain-ffaf8d42afae68b2.exe)
+
+running 14 tests
+test usage::tests::absent_input_and_explicit_zero_output_are_partial ... ok
+test usage::tests::aggregate_retains_invalidity_and_never_repairs_overflow ... ok
+test usage::tests::enriching_identity_retains_original_alias_and_does_not_change_quantities ... ok
+test usage::tests::explicit_zero_cost_needs_provenance_and_native_units_are_not_dollars ... ok
+test usage::tests::invalid_before_explicit_zero_keeps_zero_as_an_observation ... FAILED
+test usage::tests::invalid_first_observations_preserve_later_valid_subtotals ... FAILED
+test usage::tests::invalid_observations_do_not_increase_collect_only_subtotals ... ok
+test usage::tests::invalid_only_run_does_not_erase_later_session_totals ... FAILED
+test usage::tests::native_identity_never_uses_equal_quantities ... ok
+test usage::tests::reject_out_of_range_totals_subsets_and_native_units ... ok
+test usage::tests::retained_session_merge_keeps_valid_subtotals_from_invalid_run ... FAILED
+test usage::tests::subsets_never_add_to_the_enforcement_denominator ... ok
+test usage::tests::unknown_components_remain_unknown_in_collect_only_aggregates ... ok
+test usage::tests::valid_all_unknown_observation_is_not_empty_accumulator_state ... ok
+
+failures:
+
+---- usage::tests::invalid_before_explicit_zero_keeps_zero_as_an_observation stdout ----
+
+thread 'usage::tests::invalid_before_explicit_zero_keeps_zero_as_an_observation' (44148) panicked at crates\crony-domain\src\usage.rs:502:9:
+assertion `left == right` failed
+  left: None
+ right: Some(0)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- usage::tests::invalid_first_observations_preserve_later_valid_subtotals stdout ----
+
+thread 'usage::tests::invalid_first_observations_preserve_later_valid_subtotals' (40480) panicked at crates\crony-domain\src\usage.rs:482:9:
+assertion `left == right` failed
+  left: None
+ right: Some(10)
+
+---- usage::tests::invalid_only_run_does_not_erase_later_session_totals stdout ----
+
+thread 'usage::tests::invalid_only_run_does_not_erase_later_session_totals' (25272) panicked at crates\crony-domain\src\usage.rs:550:9:
+assertion `left == right` failed
+  left: None
+ right: Some(6)
+
+---- usage::tests::retained_session_merge_keeps_valid_subtotals_from_invalid_run stdout ----
+
+thread 'usage::tests::retained_session_merge_keeps_valid_subtotals_from_invalid_run' (42460) panicked at crates\crony-domain\src\usage.rs:534:13:
+assertion `left == right` failed
+  left: None
+ right: Some(6)
+
+
+failures:
+    usage::tests::invalid_before_explicit_zero_keeps_zero_as_an_observation
+    usage::tests::invalid_first_observations_preserve_later_valid_subtotals
+    usage::tests::invalid_only_run_does_not_erase_later_session_totals
+    usage::tests::retained_session_merge_keeps_valid_subtotals_from_invalid_run
+
+test result: FAILED. 10 passed; 4 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p crony-domain --lib`
