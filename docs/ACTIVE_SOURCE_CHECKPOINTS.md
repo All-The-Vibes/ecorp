@@ -41,6 +41,12 @@ and recorded failures release the lease; a crashed
 publisher can be restarted after natural lease expiry to reconcile the exact partial
 effect. The watcher never treats its own deadline as proof that a draft was published.
 
+Before pushing, both checkpoint and final publication revalidate the resolved branch
+and its verified commit. If a policy uses `HEAD`, switching the remote default branch
+at the same commit fails that attempt before the push. A retry resolves the current
+policy base and still respects any previously persisted branch identity. This native
+Git check is a pre-push observation, not an atomic lock on remote branch configuration.
+
 Read `/api/corps/CORP_ID/factory/work-items/FACTORY_WORK_ITEM_ID/active-checkpoint?actor_id=ACTOR_ID`
 for the authenticated checkpoint artifact, publication phase, current gate body and
 whether final publication has taken ownership. Source-bound comments distinguish focused
@@ -121,7 +127,11 @@ The driver uses the existing deterministic `fake-process` adapter, a local bare 
 remote and fake GitHub. It exercises branch-push and draft-create crashes, natural
 lease expiry, idempotent restart, pending/passed/failed gates, final draft adoption and
 preservation of uncommittable work. Readiness recovery tests also cover retained shared
-text, changed source, uncertain remote effects and compensation authority. A fixture
+text, changed source, uncertain remote effects and compensation authority. A native
+Git hook also switches the default branch at the same commit during bundle
+import; the publisher must reject the stale resolution before pushing and safely
+retry against the currently resolved branch. The hook touches only the owned local
+remote and is supplied only to that fixture publisher. A fixture
 owner clicks Accept evidence through the
 actual browser; that is a synthetic test decision, never evidence of a human or an
 independent review. A boolean-only credential probe checks the producer environment.

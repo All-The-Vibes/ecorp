@@ -569,16 +569,7 @@ async fn execute_publication(
             "branch-push",
         )
         .await?;
-        let current_base = ensure_remote_base(&workspace.repository, plan, &document.base_commit)?;
-        if current_base != resolved_base {
-            bail!(
-                "remote publication base changed from {} at {} to {} at {}",
-                resolved_base.pull_request_base_ref,
-                resolved_base.commit,
-                current_base.pull_request_base_ref,
-                current_base.commit
-            );
-        }
+        ensure_remote_base(&workspace.repository, plan, &resolved_base)?;
         push_or_adopt_branch(&workspace.repository, plan)?;
         test_crash("after_branch_remote");
         checkpoint(
@@ -1207,17 +1198,27 @@ fn add_publication_remote(repository: &Path, target_repository: &str) -> Result<
 fn ensure_remote_base(
     repository: &Path,
     plan: &PublicationTarget,
-    expected_commit: &str,
-) -> Result<ResolvedRemoteBase> {
+    expected: &ResolvedRemoteBase,
+) -> Result<()> {
     let resolved = resolve_remote_base(repository, &plan.base_ref)?;
-    if !resolved.commit.eq_ignore_ascii_case(expected_commit) {
+    if !resolved.commit.eq_ignore_ascii_case(&expected.commit) {
         bail!(
-            "remote base {} moved from verified commit {expected_commit} to {}",
+            "remote base {} moved from verified commit {} to {}",
+            resolved.pull_request_base_ref,
+            expected.commit,
+            resolved.commit
+        );
+    }
+    if resolved != *expected {
+        bail!(
+            "remote publication base changed from {} at {} to {} at {}",
+            expected.pull_request_base_ref,
+            expected.commit,
             resolved.pull_request_base_ref,
             resolved.commit
         );
     }
-    Ok(resolved)
+    Ok(())
 }
 
 fn resolve_remote_base(repository: &Path, base_ref: &str) -> Result<ResolvedRemoteBase> {
@@ -2616,6 +2617,85 @@ mod tests {
             remote_base_reference("refs/heads/release"),
             "refs/heads/release"
         );
+    }
+
+    fn publication_remote_base_fixture() -> (TemporaryPublisherWorkspace, PathBuf, PublicationTarget)
+    {
+        let (workspace, payload) = publication_bundle_fixture("HEAD", "sha1");
+        let remote = workspace.root.join("remote.git");
+        source_git_output(
+            &workspace.root,
+            &[
+                "clone",
+                "--bare",
+                "--no-hardlinks",
+                path_text(&workspace.root.join("source")).unwrap(),
+                path_text(&remote).unwrap(),
+            ],
+        )
+        .unwrap();
+        let base = payload["base_commit"].as_str().unwrap();
+        for reference in ["refs/heads/main", "refs/heads/stable"] {
+            source_git_output(&remote, &["update-ref", reference, base]).unwrap();
+        }
+        source_git_output(&remote, &["symbolic-ref", "HEAD", "refs/heads/main"]).unwrap();
+        source_git_output(
+            &workspace.repository,
+            &["remote", "add", "origin", path_text(&remote).unwrap()],
+        )
+        .unwrap();
+        let plan = PublicationTarget {
+            target_repository: "fixture/base-identity".to_owned(),
+            base_ref: "HEAD".to_owned(),
+            verified_base_commit: base.to_owned(),
+            branch: "codex/base-identity-fixture".to_owned(),
+            commit_sha: payload["head_commit"].as_str().unwrap().to_owned(),
+            title: "Base identity fixture".to_owned(),
+            body: "Native Git base revalidation".to_owned(),
+            project_owner: "fixture".to_owned(),
+            project_number: 1,
+            project_item_id: "fixture-item".to_owned(),
+            project_status_before: "In Progress".to_owned(),
+            project_review_status: "In Review".to_owned(),
+        };
+        (workspace, remote, plan)
+    }
+
+    #[test]
+    fn remote_base_revalidation_rejects_default_branch_switch_at_same_commit() {
+        let (workspace, remote, plan) = publication_remote_base_fixture();
+        let expected = resolve_remote_base(&workspace.repository, &plan.base_ref).unwrap();
+        assert_eq!(expected.pull_request_base_ref, "main");
+        ensure_remote_base(&workspace.repository, &plan, &expected).unwrap();
+        source_git_output(&remote, &["symbolic-ref", "HEAD", "refs/heads/stable"]).unwrap();
+        let changed = resolve_remote_base(&workspace.repository, &plan.base_ref).unwrap();
+        assert_eq!(changed.commit, expected.commit);
+        assert_eq!(changed.pull_request_base_ref, "stable");
+        let error = ensure_remote_base(&workspace.repository, &plan, &expected).unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("remote publication base changed")
+        );
+        assert!(error.to_string().contains("main"));
+        assert!(error.to_string().contains("stable"));
+    }
+
+    #[test]
+    fn remote_base_revalidation_keeps_explicit_branch_bound_to_verified_commit() {
+        let (workspace, remote, mut plan) = publication_remote_base_fixture();
+        plan.base_ref = "refs/heads/main".to_owned();
+        let expected = resolve_remote_base(&workspace.repository, &plan.base_ref).unwrap();
+        source_git_output(&remote, &["symbolic-ref", "HEAD", "refs/heads/stable"]).unwrap();
+        ensure_remote_base(&workspace.repository, &plan, &expected).unwrap();
+        source_git_output(
+            &remote,
+            &["update-ref", "refs/heads/main", &plan.commit_sha],
+        )
+        .unwrap();
+        assert!(ensure_remote_base(&workspace.repository, &plan, &expected).is_err());
+        source_git_output(&remote, &["update-ref", "-d", "refs/heads/main"]).unwrap();
+        assert!(ensure_remote_base(&workspace.repository, &plan, &expected).is_err());
     }
 
     #[test]

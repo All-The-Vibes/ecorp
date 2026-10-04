@@ -402,7 +402,7 @@ async fn execute(
                 true,
             )?;
         }
-        ensure_remote_base(&workspace.repository, &plan, &document.base_commit)?;
+        ensure_remote_base(&workspace.repository, &plan, &base)?;
         push_checkpoint(
             &workspace.repository,
             &plan,

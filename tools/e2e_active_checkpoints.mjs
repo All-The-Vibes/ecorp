@@ -211,17 +211,17 @@ export async function runCheckpointAcceptance(setupPath, optIn) {
   function factoryArgs(scenario) {
     return ['factory', setup.demo.corp_id, setup.demo.alice_actor_id, '--owner', 'acme', '--project-number', '7',
       '--repository', setup.source_repository, '--source-repository-path', setup.source, '--source-base-ref', 'main',
-      '--publication-base-ref', 'main', '--adapter', 'fake-process', '--strategy', 'single', '--budget-tokens', '20000',
+      '--publication-base-ref', scenario.publication_base_ref, '--adapter', 'fake-process', '--strategy', 'single', '--budget-tokens', '20000',
       '--budget-cost-microusd', '1000000', '--lease-seconds', '300', '--issue', String(scenario.issue),
       '--verification-policy-file', scenario.policy_file, '--checkpoint-check-index', '0', '--github-cli', process.execPath]
   }
   let publisherEnvironment, credentialPath
-  async function publish(scenario, crashAfter, expected = [0]) {
+  async function publish(scenario, crashAfter, expected = [0], nativeEnvironment = {}) {
     return command('checkpoint-publisher', binary, ['factory-checkpoint', setup.demo.corp_id,
       setup.demo.alice_actor_id, scenario.work_item_id, '--publisher-id', 'owned-checkpoint-publisher',
       '--publisher-credential-file', credentialPath, '--github-cli', process.execPath,
       '--wait-seconds', '1', '--poll-seconds', '1'], { ...publisherEnvironment,
-      ...(crashAfter ? { ECORP_PUBLICATION_TEST_CRASH_AFTER: crashAfter } : {}) }, expected)
+      ...(crashAfter ? { ECORP_PUBLICATION_TEST_CRASH_AFTER: crashAfter } : {}), ...nativeEnvironment }, expected)
   }
   const finalArgs = scenario => ['factory-publish', setup.demo.corp_id, setup.demo.alice_actor_id, scenario.work_item_id,
     '--authorization-id', scenario.authorization_id, '--authorization-reason', 'Synthetic fixture review publication; no merge or deployment.',
@@ -239,9 +239,9 @@ export async function runCheckpointAcceptance(setupPath, optIn) {
     // Do not rewrite stored clocks to manufacture restart authority.
     while (Date.now() <= expiry + 400) await delay(Math.min(1000, expiry + 401 - Date.now()))
   }
-  async function launch(issue, name, focusedPass, fullPass, manual) {
+  async function launch(issue, name, focusedPass, fullPass, manual, publicationBaseRef = 'main') {
     phase = `launch ${name}`
-    const scenario = { issue, name, authorization_id: randomUUID(),
+    const scenario = { issue, name, authorization_id: randomUUID(), publication_base_ref: publicationBaseRef,
       policy_file: path.join(output, `policy-${issue}.json`) }
     report.scenarios.push(scenario); currentScenario = scenario
     const policy = { checks: [{ type: 'file', path: focusedPass ? 'README.md' : 'missing-focused.txt', min_bytes: 1 },
@@ -372,7 +372,7 @@ export async function runCheckpointAcceptance(setupPath, optIn) {
     await assert.rejects(lstat(remotePath), { code: 'ENOENT' })
     await git(['clone', '--quiet', '--bare', '--no-hardlinks', setup.source, remotePath])
     assert.equal(await git(['--git-dir', remotePath, 'symbolic-ref', '--short', 'HEAD']), 'main')
-    const issues = Array.from({ length: 9 }, (_, index) => 7201 + index).map((number, index) => ({ id: `I_ACTIVE_${number}`, number,
+    const issues = Array.from({ length: 10 }, (_, index) => 7201 + index).map((number, index) => ({ id: `I_ACTIVE_${number}`, number,
       title: `Owned active checkpoint scenario ${index + 1}`, state: 'OPEN',
       body: '## Outcome\n\nExercise owned native source checkpoint acceptance. [active-checkpoint-credentials]\n\n## Acceptance criteria\n\n- [ ] Keep a source-bound draft without granting merge authority.\n\n## Dependencies\n\nNo blockers.\n',
       url: `https://github.com/${setup.source_repository}/issues/${number}`,
@@ -646,14 +646,84 @@ export async function runCheckpointAcceptance(setupPath, optIn) {
     assert.deepEqual(draftEffects(await readFake(), unacknowledged), draftEffects(recovery.fake, unacknowledged))
     await showMission(unacknowledged); await screenshot('unacknowledged-ready-crash-blocked')
 
+    const baseRace = await launch(7210, 'same-commit-default-branch-change', true, true, false, 'HEAD')
+    phase = 'native default branch changes after initial resolution and before checkpoint push'
+    const baseArtifact = await until('signed source checkpoint', () => context(baseRace), value => value.artifacts.length === 1)
+    baseRace.artifact = baseArtifact.artifacts[0]
+    baseRace.commit = baseRace.artifact.metadata.head_commit
+    baseRace.branch = `${baseArtifact.work_item.policy.publication.branch_prefix}issue-${baseRace.issue}-${baseRace.work_item_id.slice(0, 8)}`
+    fake = await readFake(); fake.branch_heads[baseRace.branch] = baseRace.commit; await writeFake(fake)
+    await git(['--git-dir', remotePath, 'update-ref', 'refs/heads/stable', setup.source_commit])
+    assert.equal(await git(['--git-dir', remotePath, 'symbolic-ref', '--short', 'HEAD']), 'main')
+    const hooks = path.join(output, 'base-switch-hooks'), marker = path.join(output, 'base-switch-observed.txt')
+    await mkdir(hooks, { mode: 0o700 })
+    const quote = value => `'${value.replaceAll('\\', '/').replaceAll("'", "'\"'\"'")}'`
+    // Git resolves HEAD before importing the bundle. A native reference-transaction
+    // hook changes only this owned remote at that import, without a product hook.
+    const hook = `#!/bin/sh
+set -eu
+[ "$1" = committed ] || exit 0
+while read -r old new ref; do
+  [ "$ref" = refs/heads/ecorp-import ] && [ "$new" = ${quote(baseRace.commit)} ] || continue
+  [ ! -e ${quote(marker)} ] || exit 0
+  [ "$(git --git-dir ${quote(remotePath)} symbolic-ref --short HEAD)" = main ]
+  [ "$(git --git-dir ${quote(remotePath)} rev-parse refs/heads/main)" = ${quote(setup.source_commit)} ]
+  [ "$(git --git-dir ${quote(remotePath)} rev-parse refs/heads/stable)" = ${quote(setup.source_commit)} ]
+  git --git-dir ${quote(remotePath)} symbolic-ref HEAD refs/heads/stable
+  printf '%s\\n' ${quote(setup.source_commit)} > ${quote(marker)}
+done
+`
+    const hookPath = path.join(hooks, 'reference-transaction')
+    await writeFile(hookPath, hook, { flag: 'wx', mode: 0o700 })
+    baseRace.native_base_switch = { hook: hookPath, sha256: hash(await readFile(hookPath)), marker,
+      trigger: 'committed refs/heads/ecorp-import at the signed checkpoint commit', from: 'main', to: 'stable', commit: setup.source_commit }
+    const rejectedBase = await publish(baseRace, undefined, [1], {
+      GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'core.hooksPath', GIT_CONFIG_VALUE_0: hooks })
+    assert.equal((await readFile(marker, 'utf8')).trim(), setup.source_commit)
+    assert.equal(await git(['--git-dir', remotePath, 'symbolic-ref', '--short', 'HEAD']), 'stable')
+    assert.equal(await git(['--git-dir', remotePath, 'rev-parse', 'refs/heads/main']), setup.source_commit)
+    assert.equal(await git(['--git-dir', remotePath, 'rev-parse', 'refs/heads/stable']), setup.source_commit)
+    await command('base-switch-no-checkpoint-branch', 'git', ['--git-dir', remotePath, 'show-ref', '--verify', '--quiet',
+      `refs/heads/${baseRace.branch}`], baseEnvironment, [1])
+    const rejectedContext = await context(baseRace), rejectedRemote = await readFake(), rejectedState = await snapshot()
+    check('A same-commit default-branch change fails before a branch, PR or draft receipt exists', () => {
+      assert.match(rejectedBase.stderr, /remote publication base changed from main at [0-9a-f]+ to stable at [0-9a-f]+/u)
+      assert.equal(rejectedContext.publication.phase, 'pending')
+      assert.equal(rejectedContext.publication.pull_request_base_ref ?? null, null)
+      assert.equal(rejectedContext.publication.pull_request ?? null, null)
+      assert.ok(rejectedContext.publication.failure_detail)
+      assert.equal(rejectedRemote.pull_requests.filter(pr => pr.headRefName === baseRace.branch).length, 0)
+      assert.equal(rejectedRemote.items.find(item => item.content.number === baseRace.issue).status, 'In Progress')
+      assert.equal(terminal(runs(rejectedState, baseRace)[0]), false)
+    })
+    baseRace.rejected_publication = rejectedContext.publication
+    await showMission(baseRace); await screenshot('default-branch-change-before-push-blocked')
+    await publish(baseRace)
+    await until('persisted completed verification', snapshot, state => runs(state, baseRace)[0]?.status === 'completed')
+    await command('base-switch-factory-refresh', binary, factoryArgs(baseRace), environment)
+    await publish(baseRace)
+    const acceptedContext = await context(baseRace), acceptedRemote = await readFake()
+    baseRace.initial_pr = structuredClone(remoteFor(acceptedRemote, baseRace))
+    check('Retry resolves the current authorized HEAD and retains one source-bound draft on stable', () => {
+      assert.equal(acceptedContext.publication.id, rejectedContext.publication.id)
+      assert.equal(acceptedContext.publication.phase, 'project_synchronized')
+      assert.equal(acceptedContext.publication.failure_detail, null)
+      assert.equal(acceptedContext.publication.pull_request_base_ref, 'stable')
+      assert.equal(baseRace.initial_pr.baseRefName, 'stable')
+      assert.equal(baseRace.initial_pr.headRefOid, baseRace.commit)
+      assert.equal(baseRace.initial_pr.isDraft, true)
+      assert.ok(acceptedContext.publication.pull_request.evidence_comment)
+    })
+    await showMission(baseRace); await screenshot('default-branch-change-retry-verified-draft')
+
     const finalState = await snapshot()
-    check('Fixture is bounded and leaves the configured source and native base unchanged', () => {
-      assert.equal(finalState.snapshot.missions.length, 9); assert.equal(finalState.snapshot.runs.length, 9)
+    check('Fixture is bounded and leaves the configured source and verified base commits unchanged', () => {
+      assert.equal(finalState.snapshot.missions.length, 10); assert.equal(finalState.snapshot.runs.length, 10)
       assert.deepEqual(report.page_errors, []); assert.deepEqual(report.blocked_requests, [])
     })
     fake = await readFake()
     check('All scenarios keep one PR and one commit per successful checkpoint without PR body edits or merges', () => {
-      assert.equal(fake.pull_requests.length, 8); assert.equal(fake.pr_create_calls, 8)
+      assert.equal(fake.pull_requests.length, 9); assert.equal(fake.pr_create_calls, 9)
       assert.equal(fake.pr_edit_calls ?? 0, 0)
       assert.ok(fake.pull_requests.every(pr => pr.state === 'OPEN' && pr.autoMergeRequest === null))
     })
