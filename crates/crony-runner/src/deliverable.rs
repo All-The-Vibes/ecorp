@@ -8,8 +8,8 @@ use std::{
 use anyhow::{Context, Result, anyhow};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use crony_domain::{
-    DeliverableForm, DeliverableSpec, repository_relative_path_is_valid, write_scope_allows_path,
-    write_scope_is_valid,
+    ActiveCheckpointPolicy, DeliverableForm, DeliverableSpec, repository_relative_path_is_valid,
+    write_scope_allows_path, write_scope_is_valid,
 };
 use serde::Serialize;
 use serde_json::json;
@@ -24,6 +24,13 @@ use crate::{adapter::AdapterArtifact, verifier::VerificationReport, workspace::W
 #[path = "deliverable_verification.rs"]
 mod verification;
 pub(crate) use verification::isolate_git_environment;
+
+#[path = "deliverable_history.rs"]
+mod history;
+
+#[cfg(test)]
+#[path = "deliverable_history_tests.rs"]
+mod history_tests;
 
 #[cfg(test)]
 #[path = "deliverable_verification_tests.rs"]
@@ -63,6 +70,8 @@ pub struct PreparedDeliverable {
     changes: Vec<(String, String)>,
     provider_artifacts: Vec<AdapterArtifact>,
     verified_report_sha256: Option<String>,
+    checkpoint_policy: Option<ActiveCheckpointPolicy>,
+    checkpoint_verification_policy: Option<crony_domain::VerificationPolicy>,
 }
 
 impl Drop for PreparedDeliverable {
@@ -86,22 +95,62 @@ impl PreparedDeliverable {
         cancellation: &mut tokio::sync::watch::Receiver<bool>,
     ) -> Result<Option<VerificationReport>> {
         self.verified_report_sha256 = None;
+        if let Some(checkpoint) = &self.checkpoint_policy {
+            let full = self
+                .checkpoint_verification_policy
+                .as_ref()
+                .context("checkpoint omitted its complete verification policy")?;
+            if checkpoint
+                .focused_policy(full)
+                .map_err(anyhow::Error::msg)?
+                != *policy
+            {
+                return Err(anyhow!(
+                    "checkpoint verification must use its exact selected focused checks"
+                ));
+            }
+        }
         let report = verification::verify(self, policy, artifacts, cancellation).await?;
         self.verified_report_sha256 = report
             .as_ref()
             .filter(|report| report.passed)
-            .map(|report| {
-                serde_json::to_vec(report).map(|bytes| hex::encode(Sha256::digest(bytes)))
-            })
+            .map(|report| report_digest(report, self.checkpoint_policy.is_some()))
             .transpose()?;
         Ok(report)
     }
 
     pub async fn export(&self, report: &VerificationReport) -> Result<ExportedDeliverable> {
+        if self.checkpoint_policy.is_some() {
+            return Err(anyhow!(
+                "a focused checkpoint cannot be exported as a final deliverable"
+            ));
+        }
+        self.export_verified(report).await
+    }
+
+    pub async fn export_checkpoint(
+        &self,
+        report: &VerificationReport,
+    ) -> Result<ExportedDeliverable> {
+        let checkpoint = self
+            .checkpoint_policy
+            .as_ref()
+            .context("checkpoint export requires its separately selected focused policy")?;
+        let full = self
+            .checkpoint_verification_policy
+            .as_ref()
+            .context("checkpoint export omitted its complete verification policy")?;
+        checkpoint
+            .validate_report(full, &serde_json::to_value(report)?)
+            .map_err(anyhow::Error::msg)?;
+        self.export_verified(report).await
+    }
+
+    async fn export_verified(&self, report: &VerificationReport) -> Result<ExportedDeliverable> {
         if !report.passed
             || report.source.is_none()
             || self.verified_report_sha256.as_ref()
-                != Some(&hex::encode(Sha256::digest(serde_json::to_vec(report)?)))
+                != Some(&report_digest(report, self.checkpoint_policy.is_some())?)
             || report
                 .source
                 .as_ref()
@@ -225,6 +274,8 @@ pub async fn prepare(
         changes: Vec::new(),
         provider_artifacts: provider_artifacts.to_vec(),
         verified_report_sha256: None,
+        checkpoint_policy: None,
+        checkpoint_verification_policy: None,
     };
     prepared.original_head = git_text(
         &prepared.workspace_root,
@@ -248,6 +299,88 @@ pub async fn prepare(
         &["write-tree".into()],
     )
     .await?;
+    Ok(prepared)
+}
+
+fn report_digest(report: &VerificationReport, checkpoint: bool) -> serde_json::Result<String> {
+    // A checkpoint embeds its report as JSON and the server verifies that parsed value.
+    // Canonical map ordering keeps the digest stable across struct -> Value round trips.
+    let bytes = if checkpoint {
+        serde_json::to_vec(&serde_json::to_value(report)?)?
+    } else {
+        serde_json::to_vec(report)?
+    };
+    Ok(hex::encode(Sha256::digest(bytes)))
+}
+
+/// The same private Git index and isolated native verifier are used for checkpoints.
+/// This purpose never grants final publication or accepted completion authority.
+pub async fn prepare_checkpoint(
+    run_id: Uuid,
+    spec: &DeliverableSpec,
+    workspace: &WorkspaceLease,
+    provider_artifacts: &[AdapterArtifact],
+    write_scope: &[String],
+    policy: &ActiveCheckpointPolicy,
+    verification_policy: &crony_domain::VerificationPolicy,
+) -> Result<PreparedDeliverable> {
+    policy
+        .focused_policy(verification_policy)
+        .map_err(anyhow::Error::msg)?;
+    if spec.form != DeliverableForm::CommitBranch {
+        return Err(anyhow!(
+            "active checkpoints require a commit/branch task deliverable"
+        ));
+    }
+    let mut prepared = prepare(
+        run_id,
+        spec,
+        workspace,
+        provider_artifacts,
+        write_scope,
+        None,
+    )
+    .await?;
+    #[cfg(windows)]
+    {
+        // Seed the private index from the existing native HEAD to retain executable bits;
+        // selection still restores excluded paths to the immutable workspace base.
+        prepared.changes = select_index(
+            spec,
+            workspace,
+            &prepared.workspace_root,
+            provider_artifacts,
+            write_scope,
+            Some(&prepared.original_head),
+            &prepared.index,
+        )
+        .await?;
+        prepared.tree = git_text(
+            &prepared.workspace_root,
+            &prepared.index,
+            &["write-tree".into()],
+        )
+        .await?;
+    }
+    let base_tree = git_text(
+        &prepared.workspace_root,
+        &prepared.index,
+        &[
+            "rev-parse".into(),
+            format!("{}^{{tree}}", workspace.base_commit).into(),
+        ],
+    )
+    .await?;
+    if prepared.tree == base_tree {
+        return Err(anyhow!(
+            "active checkpoint has no source change beyond its base; preserve the worktree without inventing an empty commit"
+        ));
+    }
+    history::validate(&prepared, write_scope).await.context(
+        "active checkpoint retained history is not safe to publish; preserve the worktree",
+    )?;
+    prepared.checkpoint_policy = Some(policy.clone());
+    prepared.checkpoint_verification_policy = Some(verification_policy.clone());
     Ok(prepared)
 }
 
@@ -287,11 +420,7 @@ async fn select_index(
             OsString::from("--"),
         ];
         for (_, path) in changed_paths(workspace_root, index, &workspace.base_commit).await? {
-            if !spec
-                .paths
-                .iter()
-                .any(|selected| path == *selected || path.starts_with(&format!("{selected}/")))
-            {
+            if !path_is_selected(spec, &path) {
                 reset_args.push(OsString::from(path));
             }
         }
@@ -362,9 +491,8 @@ async fn export_prepared(
         bundle: &prepared.bundle,
         bundle_ref: &prepared.bundle_ref,
     };
-    let verification_bytes =
-        serde_json::to_vec(report).context("serialize verification report for linkage")?;
-    let verification_sha256 = hex::encode(Sha256::digest(&verification_bytes));
+    let verification_sha256 = report_digest(report, prepared.checkpoint_policy.is_some())
+        .context("serialize verification report for linkage")?;
 
     let should_commit =
         spec.commit_after_verification || spec.form == DeliverableForm::CommitBranch;
@@ -414,57 +542,79 @@ async fn export_prepared(
         .as_ref()
         .map(|bundle| hex::encode(Sha256::digest(bundle)));
 
-    let (bytes, file_name, media_type) = match spec.form {
-        DeliverableForm::Patch => (
-            patch,
-            "ecorp-deliverable.patch".to_owned(),
-            "text/x-diff".to_owned(),
-        ),
-        form => {
-            let include_content = matches!(
-                form,
-                DeliverableForm::Archive
-                    | DeliverableForm::TypedArtifactSet
-                    | DeliverableForm::CommitBranch
-            );
-            let archived = archive_changes(
-                workspace_root,
-                temporary_paths.index,
-                &prepared.tree,
-                changes,
-                include_content,
-            )
-            .await?;
-            let document = json!({
-                "schema_version": 1,
-                "form": form.as_str(),
-                "base_commit": workspace.base_commit,
-                "head_commit": head_commit,
-                "branch": workspace.branch,
-                "verification_sha256": verification_sha256,
-                "verified_tree": prepared.tree,
-                "source_verification": report.source,
-                "patch_sha256": hex::encode(Sha256::digest(&patch)),
-                "patch_base64": include_content.then(|| BASE64.encode(&patch)),
-                "git_bundle_sha256": git_bundle_sha256,
-                "git_bundle_base64": git_bundle.as_ref().map(|bundle| BASE64.encode(bundle)),
-                "changes": archived,
-            });
-            let name = match form {
-                DeliverableForm::Archive => "ecorp-source-archive.json",
-                DeliverableForm::TypedArtifactSet => "ecorp-artifact-set.json",
-                DeliverableForm::CommitBranch => "ecorp-commit-branch.json",
-                DeliverableForm::ReviewOnlyReport => "ecorp-review-report.json",
-                DeliverableForm::Patch => unreachable!(),
-            };
-            (
-                serde_json::to_vec_pretty(&document)
-                    .context("serialize deterministic deliverable")?,
-                name.to_owned(),
-                "application/vnd.ecorp.deliverable+json".to_owned(),
-            )
-        }
-    };
+    let (bytes, file_name, media_type) =
+        match spec.form {
+            DeliverableForm::Patch => (
+                patch,
+                "ecorp-deliverable.patch".to_owned(),
+                "text/x-diff".to_owned(),
+            ),
+            form => {
+                let include_content = matches!(
+                    form,
+                    DeliverableForm::Archive
+                        | DeliverableForm::TypedArtifactSet
+                        | DeliverableForm::CommitBranch
+                );
+                let archived = archive_changes(
+                    workspace_root,
+                    temporary_paths.index,
+                    &prepared.tree,
+                    changes,
+                    include_content,
+                )
+                .await?;
+                let mut document = json!({
+                    "schema_version": 1,
+                    "form": form.as_str(),
+                    "base_commit": workspace.base_commit,
+                    "head_commit": head_commit,
+                    "branch": workspace.branch,
+                    "verification_sha256": verification_sha256,
+                    "verified_tree": prepared.tree,
+                    "source_verification": report.source,
+                    "patch_sha256": hex::encode(Sha256::digest(&patch)),
+                    "patch_base64": include_content.then(|| BASE64.encode(&patch)),
+                    "git_bundle_sha256": git_bundle_sha256,
+                    "git_bundle_base64": git_bundle.as_ref().map(|bundle| BASE64.encode(bundle)),
+                    "changes": archived,
+                });
+                if let Some(policy) = &prepared.checkpoint_policy {
+                    document["purpose"] = json!("active_checkpoint");
+                    document["checkpoint_policy"] = json!(policy);
+                    document["verification_policy"] =
+                        json!(prepared.checkpoint_verification_policy.as_ref().context(
+                            "checkpoint envelope omitted its complete verification policy"
+                        )?);
+                    document["checkpoint_report"] = json!(report);
+                    document["parent_commit"] = json!(prepared.original_head);
+                    document["publication_ready"] = json!(false);
+                }
+                let name = match form {
+                    DeliverableForm::Archive => "ecorp-source-archive.json",
+                    DeliverableForm::TypedArtifactSet => "ecorp-artifact-set.json",
+                    DeliverableForm::CommitBranch => "ecorp-commit-branch.json",
+                    DeliverableForm::ReviewOnlyReport => "ecorp-review-report.json",
+                    DeliverableForm::Patch => unreachable!(),
+                };
+                (
+                    serde_json::to_vec_pretty(&document)
+                        .context("serialize deterministic deliverable")?,
+                    if prepared.checkpoint_policy.is_some() {
+                        "ecorp-active-checkpoint.json"
+                    } else {
+                        name
+                    }
+                    .to_owned(),
+                    if prepared.checkpoint_policy.is_some() {
+                        "application/vnd.ecorp.checkpoint+json"
+                    } else {
+                        "application/vnd.ecorp.deliverable+json"
+                    }
+                    .to_owned(),
+                )
+            }
+        };
     if bytes.is_empty() {
         return Err(anyhow!("deliverable export produced no bytes"));
     }
@@ -486,7 +636,8 @@ async fn export_prepared(
         head_commit,
         branch: workspace.branch.clone(),
         git_bundle_sha256,
-        publication_ready: spec.form == DeliverableForm::CommitBranch,
+        publication_ready: spec.form == DeliverableForm::CommitBranch
+            && prepared.checkpoint_policy.is_none(),
         verified_tree: prepared.tree.clone(),
     })
 }
@@ -748,12 +899,17 @@ async fn commit_prepared(
     let lease = &prepared.workspace;
     let tree = &prepared.tree;
     let changes = &prepared.changes;
+    let parent = if prepared.checkpoint_policy.is_some() {
+        &prepared.original_head
+    } else {
+        &lease.base_commit
+    };
     let base_tree = git_text(
         workspace,
         index,
         &[
             OsString::from("rev-parse"),
-            OsString::from(format!("{}^{{tree}}", lease.base_commit)),
+            OsString::from(format!("{parent}^{{tree}}")),
         ],
     )
     .await?;
@@ -781,10 +937,14 @@ async fn commit_prepared(
         return Ok(Some(expected_head.to_owned()));
     }
     let commit = if tree == &base_tree {
-        lease.base_commit.clone()
+        parent.clone()
     } else {
-        let message =
-            format!("ECorp verified deliverable\n\nVerification-SHA256: {verification_sha256}\n");
+        let purpose = if prepared.checkpoint_policy.is_some() {
+            "ECorp focused source checkpoint (final verification pending)"
+        } else {
+            "ECorp verified deliverable"
+        };
+        let message = format!("{purpose}\n\nVerification-SHA256: {verification_sha256}\n");
         git_text_with_env(
             workspace,
             index,
@@ -792,7 +952,7 @@ async fn commit_prepared(
                 OsString::from("commit-tree"),
                 OsString::from(tree),
                 OsString::from("-p"),
-                OsString::from(&lease.base_commit),
+                OsString::from(parent),
                 OsString::from("-m"),
                 OsString::from(message),
             ],
@@ -846,6 +1006,14 @@ fn validate_relative(value: &str) -> Result<()> {
         return Err(anyhow!("deliverable path must stay inside the worktree"));
     }
     Ok(())
+}
+
+fn path_is_selected(spec: &DeliverableSpec, path: &str) -> bool {
+    spec.paths.is_empty()
+        || spec
+            .paths
+            .iter()
+            .any(|selected| path == selected || path.starts_with(&format!("{selected}/")))
 }
 
 fn reject_out_of_scope_changes(changes: &[(String, String)], write_scope: &[String]) -> Result<()> {
@@ -1096,7 +1264,7 @@ mod tests {
     use super::*;
     use crate::verifier::{VerificationCheckResult, VerificationReport};
 
-    fn git(repo: &Path, args: &[&str]) -> String {
+    pub(super) fn git(repo: &Path, args: &[&str]) -> String {
         let output = Command::new("git")
             .args(args)
             .current_dir(repo)
@@ -1111,7 +1279,7 @@ mod tests {
         String::from_utf8_lossy(&output.stdout).trim().to_owned()
     }
 
-    fn fixture() -> (PathBuf, WorkspaceLease, VerificationReport) {
+    pub(super) fn fixture() -> (PathBuf, WorkspaceLease, VerificationReport) {
         let root = std::env::temp_dir().join(format!("ecorp-deliverable-test-{}", Uuid::new_v4()));
         fs::create_dir_all(&root).expect("create fixture");
         git(&root, &["init", "-b", "main"]);
@@ -1319,6 +1487,127 @@ mod tests {
             // Preserve actual native export, diagnostics, and source fixtures,
             // including failures and any trace file produced by old code.
         }
+    }
+
+    #[tokio::test]
+    async fn active_checkpoint_rejects_deleted_secret_in_retained_history() {
+        let (root, lease, _) = fixture();
+        let synthetic = b"ECORP_FIXTURE_ONLY=not-a-real-credential\n";
+        fs::write(root.join(".env"), synthetic).expect("synthetic excluded file");
+        git(&root, &["add", "--", ".env"]);
+        git(&root, &["commit", "-m", "synthetic excluded history"]);
+        let unsafe_commit = git(&root, &["rev-parse", "HEAD"]);
+        git(&root, &["rm", "--", ".env"]);
+        git(
+            &root,
+            &["commit", "-m", "delete excluded file from the tip"],
+        );
+        let original = git(&root, &["rev-parse", "HEAD"]);
+        fs::write(root.join("tracked.txt"), b"safe final source\n").unwrap();
+        let before_status = git(&root, &["status", "--porcelain=v1"]);
+        let policy = crony_domain::VerificationPolicy {
+            checks: vec![crony_domain::VerifierCheck::File {
+                path: "tracked.txt".into(),
+                min_bytes: 1,
+            }],
+            manual_gate: None,
+        };
+        let checkpoint = ActiveCheckpointPolicy {
+            check_indices: vec![0],
+        };
+        let prepared = prepare_checkpoint(
+            Uuid::new_v4(),
+            &DeliverableSpec {
+                form: DeliverableForm::CommitBranch,
+                commit_after_verification: true,
+                paths: vec!["tracked.txt".into()],
+            },
+            &lease,
+            &[],
+            &["tracked.txt".into()],
+            &checkpoint,
+            &policy,
+        )
+        .await;
+        match prepared {
+            Err(error) => {
+                assert!(format!("{error:#}").contains("history"), "{error:#}");
+                assert_eq!(git(&root, &["rev-parse", "HEAD"]), original);
+                assert_eq!(git(&root, &["status", "--porcelain=v1"]), before_status);
+                assert_eq!(
+                    fs::read(root.join("tracked.txt")).unwrap(),
+                    b"safe final source\n"
+                );
+            }
+            Ok(mut prepared) => {
+                // On an unsafe implementation, retain a native bundle/import proof instead of
+                // inferring a disclosure solely from prepare accepting a clean tip tree.
+                let (_sender, mut cancellation) = tokio::sync::watch::channel(false);
+                let report = prepared
+                    .verify(&policy, &[], &mut cancellation)
+                    .await
+                    .unwrap()
+                    .unwrap();
+                let exported = prepared.export_checkpoint(&report).await.unwrap();
+                let document: Value = serde_json::from_slice(&exported.bytes).unwrap();
+                let bundle = root.join("retained-history.bundle");
+                fs::write(
+                    &bundle,
+                    BASE64
+                        .decode(document["git_bundle_base64"].as_str().unwrap())
+                        .unwrap(),
+                )
+                .unwrap();
+                let imported = root.join("retained-history-import.git");
+                fs::create_dir(&imported).unwrap();
+                git(&imported, &["init", "--bare"]);
+                git(
+                    &imported,
+                    &[
+                        "fetch",
+                        "--no-tags",
+                        root.to_str().unwrap(),
+                        &lease.base_commit,
+                    ],
+                );
+                let advertised = git(
+                    &imported,
+                    &["bundle", "list-heads", bundle.to_str().unwrap()],
+                );
+                let bundle_ref = advertised.split_whitespace().nth(1).unwrap();
+                git(
+                    &imported,
+                    &[
+                        "fetch",
+                        "--no-tags",
+                        bundle.to_str().unwrap(),
+                        &format!("{bundle_ref}:refs/heads/checkpoint"),
+                    ],
+                );
+                assert_eq!(
+                    git(&imported, &["show", &format!("{unsafe_commit}:.env")]),
+                    String::from_utf8_lossy(synthetic).trim()
+                );
+                fs::write(
+                    root.join("retained-history-reproduction.json"),
+                    serde_json::to_vec_pretty(&json!({
+                        "synthetic_only": true,
+                        "original_head": original,
+                        "excluded_commit": unsafe_commit,
+                        "exported_head": exported.head_commit,
+                        "excluded_blob_reachable_from_exported_bundle": true,
+                    }))
+                    .unwrap(),
+                )
+                .unwrap();
+                panic!(
+                    "checkpoint exported a deleted excluded file through retained history; native fixture preserved at {}",
+                    root.display()
+                );
+            }
+        }
+        // Preserve the native source/history, including the failing implementation's bundle.
+        println!("retained-history regression fixture: {}", root.display());
     }
 
     #[tokio::test]

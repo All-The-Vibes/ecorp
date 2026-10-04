@@ -698,6 +698,10 @@ async fn run_server() -> anyhow::Result<()> {
             get(get_factory_publication_context),
         )
         .route(
+            "/api/corps/{corp_id}/factory/work-items/{work_item_id}/active-checkpoint",
+            get(get_active_checkpoint_context).post(mutate_active_checkpoint),
+        )
+        .route(
             "/api/corps/{corp_id}/factory/publication-publishers/credentials",
             post(create_publication_publisher_credential),
         )
@@ -712,6 +716,10 @@ async fn run_server() -> anyhow::Result<()> {
         .route(
             "/api/corps/{corp_id}/factory/publications/{publication_id}/checkpoint",
             post(record_pull_request_publication_checkpoint),
+        )
+        .route(
+            "/api/corps/{corp_id}/factory/publications/{publication_id}/readiness",
+            post(mutate_publication_readiness),
         )
         .route(
             "/api/corps/{corp_id}/rooms/{room_id}/messages",
@@ -1607,11 +1615,15 @@ enum RunnerDispatchError {
     UnsupportedVerifierPolicy,
     UnsupportedDependencyFiles,
     UnsupportedCanonicalSource,
+    UnsupportedActiveCheckpoint,
 }
 
 impl RunnerDispatchError {
     fn detail(&self) -> &'static str {
         match self {
+            Self::UnsupportedActiveCheckpoint => {
+                "runner requires active-source-checkpoint-v1 before accepting a draft checkpoint policy"
+            }
             Self::UnsupportedCanonicalSource => {
                 "runner requires canonical-source-verification-v1 before accepting a source deliverable"
             }
@@ -1649,6 +1661,14 @@ fn runner_supports_canonical_source(capabilities: &[RunnerCapability]) -> bool {
     capabilities.iter().any(|cap| {
         cap.workspace_connection_id.is_none()
             && cap.name == crony_domain::CANONICAL_SOURCE_VERIFICATION_CAPABILITY
+            && cap.available
+    })
+}
+
+fn runner_supports_active_checkpoint(capabilities: &[RunnerCapability]) -> bool {
+    capabilities.iter().any(|cap| {
+        cap.workspace_connection_id.is_none()
+            && cap.name == crony_domain::ACTIVE_CHECKPOINT_CAPABILITY
             && cap.available
     })
 }
@@ -1698,6 +1718,21 @@ fn send_command_to_current_runner(
     {
         return Err(RunnerDispatchError::UnsupportedVerifierPolicy);
     }
+    let active_checkpoint = match &command {
+        ServerToRunner::StartRun {
+            active_checkpoint, ..
+        }
+        | ServerToRunner::ResumeRun {
+            active_checkpoint, ..
+        }
+        | ServerToRunner::VerifyRun {
+            active_checkpoint, ..
+        } => active_checkpoint.is_some(),
+        _ => false,
+    };
+    if active_checkpoint && !runner_supports_active_checkpoint(&connection.capabilities) {
+        return Err(RunnerDispatchError::UnsupportedActiveCheckpoint);
+    }
     if matches!(
         &command,
         ServerToRunner::StartRun {
@@ -1732,6 +1767,7 @@ fn send_command_to_current_runner(
             &connection,
             *corp_id,
             &RunnerRequirements {
+                active_checkpoint,
                 dependency_files: !dependency_files.is_empty(),
                 adapter,
                 model: model.as_deref(),
@@ -2125,6 +2161,10 @@ async fn decode_recovery_runner_command(
                         return Ok(None);
                     }
                     Ok(Some(ServerToRunner::ResumeRun {
+                        active_checkpoint: state
+                            .store
+                            .active_checkpoint_policy(payload.corp_id, payload.task_id)
+                            .await?,
                         dependency_files: dependencies.files,
                         workspace_connection_id: payload.workspace_connection_id,
                         command_id: Some(command.id),
@@ -2200,6 +2240,10 @@ async fn decode_recovery_runner_command(
                         return Ok(None);
                     }
                     Ok(Some(ServerToRunner::VerifyRun {
+                        active_checkpoint: state
+                            .store
+                            .active_checkpoint_policy(payload.corp_id, payload.task_id)
+                            .await?,
                         workspace_connection_id: payload.workspace_connection_id,
                         command_id: command.id,
                         corp_id: payload.corp_id,
@@ -2896,6 +2940,7 @@ async fn plan_mission(
                     state,
                     corp_id,
                     &RunnerRequirements {
+                        active_checkpoint: false,
                         dependency_files: false,
                         adapter,
                         model: preferred_model,
@@ -4004,6 +4049,10 @@ async fn preflight_factory_mission(
         crony_domain::factory_max_task_attempts(&request.policy).map_err(ApiError::bad_request)?,
         request.max_task_attempts,
     )?;
+    let active_checkpoint =
+        crony_domain::ActiveCheckpointPolicy::validate_factory_policy(&request.policy)
+            .map_err(ApiError::bad_request)?
+            .is_some();
     let workspace_connection_id = crony_domain::factory_workspace_connection_id(&request.policy)
         .map_err(ApiError::bad_request)?;
     let staffing_source = if workspace_connection_id.is_some()
@@ -4085,7 +4134,8 @@ async fn preflight_factory_mission(
         .await
         .map_err(map_store_error)?;
     let preview = mission_preview_response(&constrained_plan);
-    let dispatch_readiness = factory_readiness::observe(&state, corp_id, &constrained_plan);
+    let dispatch_readiness =
+        factory_readiness::observe(&state, corp_id, &constrained_plan, active_checkpoint);
     if request.require_dispatch_ready
         && let crony_protocol::FactoryDispatchReadiness::NotReady { reason } = &dispatch_readiness
     {
@@ -4406,6 +4456,66 @@ async fn get_factory_publication_context(
     }))
 }
 
+async fn get_active_checkpoint_context(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path((corp_id, work_item_id)): Path<(Uuid, Uuid)>,
+    Query(query): Query<SnapshotQuery>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let actor_id = authorize_actor(
+        &state,
+        &principal,
+        corp_id,
+        Some(query.actor_id),
+        Permission::Operate,
+    )
+    .await?;
+    Ok(Json(
+        state
+            .store
+            .active_checkpoint_context(corp_id, actor_id, work_item_id)
+            .await
+            .map_err(map_store_error)?,
+    ))
+}
+
+async fn mutate_active_checkpoint(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path((corp_id, work_item_id)): Path<(Uuid, Uuid)>,
+    headers: HeaderMap,
+    Json(mut request): Json<crony_domain::ActiveCheckpointRequest>,
+) -> Result<Json<crony_domain::ActiveCheckpointOutcome>, ApiError> {
+    request.actor_id = authorize_actor(
+        &state,
+        &principal,
+        corp_id,
+        Some(request.actor_id),
+        Permission::Publish,
+    )
+    .await?;
+    let publisher = authenticate_publication_publisher(&state, &headers, corp_id).await?;
+    if request.publisher_id != publisher.publisher_id {
+        return Err(ApiError::forbidden(
+            "trusted checkpoint publisher identity does not match",
+        ));
+    }
+    let outcome = state
+        .store
+        .mutate_active_checkpoint(crony_store::ActiveCheckpointMutation {
+            corp_id,
+            work_item_id,
+            publisher_credential_hash: publisher.credential_hash,
+            request,
+        })
+        .await
+        .map_err(map_store_error)?;
+    for event in outcome.events {
+        publish(&state, event);
+    }
+    Ok(Json(outcome.response))
+}
+
 async fn create_publication_publisher_credential(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
@@ -4596,6 +4706,56 @@ async fn renew_pull_request_publication(
     Ok(Json(publication_response(outcome)))
 }
 
+fn publication_readiness_permission(
+    action: &crony_domain::PublicationReadinessAction,
+) -> Permission {
+    match action {
+        crony_domain::PublicationReadinessAction::Prepare { .. } => Permission::Publish,
+        // The store restricts acknowledgement and compensation to the original
+        // scoped actor, publisher credential, intent and private capabilities.
+        // Loss of forward publish permission must not prevent draft restoration.
+        _ => Permission::Read,
+    }
+}
+
+async fn mutate_publication_readiness(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path((corp_id, publication_id)): Path<(Uuid, Uuid)>,
+    headers: HeaderMap,
+    Json(mut request): Json<crony_domain::PublicationReadinessRequest>,
+) -> Result<Json<crony_protocol::PublicationReadinessResponse>, ApiError> {
+    request.actor_id = authorize_actor(
+        &state,
+        &principal,
+        corp_id,
+        Some(request.actor_id),
+        publication_readiness_permission(&request.action),
+    )
+    .await?;
+    let publisher = authenticate_publication_publisher(&state, &headers, corp_id).await?;
+    let outcome = state
+        .store
+        .mutate_publication_readiness(crony_store::PublicationReadinessInput {
+            corp_id,
+            publication_id,
+            publisher_id: publisher.publisher_id,
+            publisher_credential_hash: publisher.credential_hash,
+            request,
+        })
+        .await
+        .map_err(map_store_error)?;
+    for event in outcome.events {
+        publish(&state, event);
+    }
+    Ok(Json(crony_protocol::PublicationReadinessResponse {
+        publication: outcome.publication,
+        recovery_token: outcome.recovery_token,
+        replayed: outcome.replayed,
+        busy: outcome.busy,
+    }))
+}
+
 fn publication_checkpoint_permission(checkpoint: &PullRequestPublicationCheckpoint) -> Permission {
     match checkpoint {
         // A demoted actor may close its already-owned attempt, not publish.
@@ -4611,6 +4771,43 @@ fn publication_checkpoint_permission(checkpoint: &PullRequestPublicationCheckpoi
 #[cfg(test)]
 mod publication_checkpoint_permission_tests {
     use super::*;
+
+    #[test]
+    fn readiness_recovery_permissions_do_not_authorize_forward_promotion() {
+        use crony_domain::PublicationReadinessAction;
+        let token = Uuid::new_v4();
+        let draft = json!({"number":72,"node_id":"PR_fixture72",
+            "url":"https://github.com/fixture/source/pull/72","state":"OPEN","draft":true,
+            "title":"Retained title","body":"Retained text","head_ref":"codex/fixture72",
+            "base_ref":"main","head_sha":"a".repeat(40),"head_repository_owner":"fixture",
+            "is_cross_repository":false,"auto_merge":false});
+        let prepare: PublicationReadinessAction = serde_json::from_value(json!({
+            "kind":"prepare","publisher_token":token,"expected_version":1,
+            "pull_request":draft,"evidence_comment":{"id":1,"node_id":"IC_fixture1",
+                "url":"https://github.com/fixture/source/pull/72#issuecomment-1",
+                "author_id":1,"author_login":"fixture","body":"source evidence"}
+        }))
+        .unwrap();
+        assert!(matches!(
+            publication_readiness_permission(&prepare),
+            Permission::Publish
+        ));
+        assert!(!CorpRole::Member.allows(publication_readiness_permission(&prepare)));
+        for action in [
+            json!({"kind":"ready_succeeded","publisher_token":token}),
+            json!({"kind":"recover","publisher_token":null,"expected_version":1,"acquisition_id":Uuid::new_v4()}),
+            json!({"kind":"undo_prepared","recovery_token":token,"expected_version":1,"dispatch_id":Uuid::new_v4()}),
+            json!({"kind":"undo_succeeded","recovery_token":token,"dispatch_id":Uuid::new_v4()}),
+            json!({"kind":"draft_observed","recovery_token":token,"expected_version":1,"pull_request":draft}),
+        ] {
+            let action: PublicationReadinessAction = serde_json::from_value(action).unwrap();
+            assert!(matches!(
+                publication_readiness_permission(&action),
+                Permission::Read
+            ));
+            assert!(CorpRole::Member.allows(publication_readiness_permission(&action)));
+        }
+    }
 
     #[test]
     fn owned_failure_reporting_does_not_grant_effect_permission() {
@@ -4899,7 +5096,12 @@ async fn schedule_ready_tasks(
                     continue;
                 }
             };
+        let active_checkpoint = state
+            .store
+            .active_checkpoint_policy(corp_id, candidate.task_id)
+            .await?;
         let requirements = RunnerRequirements {
+            active_checkpoint: active_checkpoint.is_some(),
             dependency_files: candidate.requires_dependency_files,
             canonical_source: candidate.requires_canonical_source,
             adapter: &candidate.required_adapter,
@@ -5025,6 +5227,7 @@ async fn schedule_ready_tasks(
                         &runner_id,
                         connection_epoch,
                         ServerToRunner::StartRun {
+                            active_checkpoint,
                             dependency_files: dependency_context.files,
                             workspace_connection_id: record.workspace_connection_id,
                             corp_id: record.corp_id,
@@ -5474,6 +5677,7 @@ fn runner_requirement_mismatch(
 }
 
 struct RunnerRequirements<'a> {
+    active_checkpoint: bool,
     dependency_files: bool,
     canonical_source: bool,
     adapter: &'a str,
@@ -5489,6 +5693,7 @@ struct RunnerRequirements<'a> {
 impl<'a> RunnerRequirements<'a> {
     fn for_planned_task(task: &'a crony_domain::PlannedTask, plan: &TaskGraphPlan) -> Self {
         Self {
+            active_checkpoint: false,
             canonical_source: task.contract.deliverable.is_some(),
             dependency_files: plan.tasks.iter().any(|parent| {
                 task.depends_on.contains(&parent.key)
@@ -5524,6 +5729,8 @@ fn runner_satisfies_requirements(
         && (!requirements.dependency_files || supports_dependency_files(&connection.capabilities))
         && (!requirements.canonical_source
             || runner_supports_canonical_source(&connection.capabilities))
+        && (!requirements.active_checkpoint
+            || runner_supports_active_checkpoint(&connection.capabilities))
         && (!requirements.requires_cache_suppression
             || runner_supports_cache_suppression(&connection.capabilities))
         && runner_workspace_satisfies_requirement(
@@ -5796,6 +6003,11 @@ async fn resume_run(
     }
     let connection_epoch = runner.connection_epoch;
     drop(runner);
+    let active_checkpoint = state
+        .store
+        .active_checkpoint_policy(corp_id, record.task_id)
+        .await
+        .map_err(map_store_error)?;
     let launch_record = LaunchRecord {
         corp_id: record.corp_id,
         room_id: record.room_id,
@@ -5883,6 +6095,7 @@ async fn resume_run(
                     &record.runner_id,
                     connection_epoch,
                     ServerToRunner::ResumeRun {
+                        active_checkpoint,
                         dependency_files: dependencies.files,
                         workspace_connection_id: record.workspace_connection_id,
                         command_id: None,
@@ -7033,11 +7246,32 @@ async fn runner_socket(socket: WebSocket, state: AppState) {
                     event_type: event_type.clone(),
                     payload,
                 };
+                if event_type == "run.checkpoint_poll" {
+                    if let Some(digest) = input
+                        .payload
+                        .get("sha256")
+                        .and_then(serde_json::Value::as_str)
+                        && digest.len() == 64
+                        && digest.bytes().all(|byte| byte.is_ascii_hexdigit())
+                    {
+                        match state.store.active_checkpoint_receipt(&input, digest).await {
+                            Ok(Some(receipt)) => {
+                                let _ = command_tx
+                                    .send(ServerToRunner::ActiveCheckpointPublished { receipt });
+                            }
+                            Ok(None) => {}
+                            Err(error) => {
+                                warn!(%error, %run_id, "checkpoint receipt lookup failed")
+                            }
+                        }
+                    }
+                    continue;
+                }
                 let mut applied_event_type = event_type.clone();
                 let mut result = process_runner_event(&state, input).await;
                 if matches!(
                     event_type.as_str(),
-                    "run.artifact_upload" | "run.deliverable_upload"
+                    "run.artifact_upload" | "run.deliverable_upload" | "run.checkpoint_upload"
                 ) && let Err(error) = &result
                 {
                     if retained_receipt_upload && retained_receipt_upload_error_is_retryable(error)
@@ -7059,7 +7293,11 @@ async fn runner_socket(socket: WebSocket, state: AppState) {
                             agent_id,
                             assignment_token,
                             event_type: applied_event_type.clone(),
-                            payload: json!({"error": reason}),
+                            payload: if event_type == "run.checkpoint_upload" {
+                                json!({"error": reason, "failure_kind": crony_domain::RunFailureKind::DeliverableExport})
+                            } else {
+                                json!({"error": reason})
+                            },
                         })
                         .await;
                 }
@@ -7072,6 +7310,7 @@ async fn runner_socket(socket: WebSocket, state: AppState) {
                         } = outcome;
                         if let Some(event) = event {
                             if (event.event_type == "run.deliverable"
+                                || event.event_type == "run.checkpoint_stored"
                                 || (retained_receipt_upload && event.event_type == "run.artifact"))
                                 && let (Some(artifact_id), Some(artifact_role), Some(sha256)) = (
                                     event
@@ -7274,7 +7513,7 @@ async fn process_runner_event(
 ) -> anyhow::Result<RunnerEventOutcome> {
     if !matches!(
         input.event_type.as_str(),
-        "run.artifact_upload" | "run.deliverable_upload"
+        "run.artifact_upload" | "run.deliverable_upload" | "run.checkpoint_upload"
     ) {
         return state.store.apply_runner_event(input).await;
     }
@@ -7398,6 +7637,7 @@ fn artifact_upload_ack(
 ) -> Option<(&'static str, String)> {
     let role = match event_type {
         "run.deliverable_upload" => "source_deliverable",
+        "run.checkpoint_upload" => "source_checkpoint",
         "run.artifact_upload"
             if payload.get("retained_provider_receipt").is_some()
                 && payload
@@ -8293,6 +8533,7 @@ mod tests {
         });
         runners.insert("runner".to_owned(), connection);
         let mut requirements = RunnerRequirements {
+            active_checkpoint: false,
             requires_cache_suppression: false,
             canonical_source: false,
             dependency_files: true,
@@ -9009,6 +9250,7 @@ mod tests {
         let corp_id = connection.corp_id;
         runners.insert("runner".to_owned(), connection);
         let requirements = RunnerRequirements {
+            active_checkpoint: false,
             requires_cache_suppression: false,
             canonical_source: false,
             workspace_connection_id: None,
@@ -9338,6 +9580,7 @@ mod tests {
             let runners = Arc::new(DashMap::new());
             runners.insert("runner".to_owned(), connection);
             let requirements = RunnerRequirements {
+                active_checkpoint: false,
                 dependency_files: false,
                 canonical_source: false,
                 requires_cache_suppression: false,
@@ -9352,6 +9595,7 @@ mod tests {
             let (runner_id, selected_epoch) =
                 select_ready_runner(&runners, corp_id, &requirements).unwrap();
             let command = ServerToRunner::StartRun {
+                active_checkpoint: None,
                 dependency_files: Vec::new(),
                 workspace_connection_id: workspace,
                 corp_id,
@@ -10053,6 +10297,7 @@ mod cache_admission_tests {
         let (runner, _rx) = connection(epoch, vec![capability("fake-process")]);
         runners.insert("runner".to_owned(), runner);
         let mut requirements = RunnerRequirements {
+            active_checkpoint: false,
             dependency_files: false,
             canonical_source: true,
             adapter: "fake-process",
@@ -10170,6 +10415,7 @@ mod cache_admission_tests {
         let (runner, _rx) = connection(epoch, vec![capability("fake-process")]);
         runners.insert("runner".to_owned(), runner);
         let mut requirements = RunnerRequirements {
+            active_checkpoint: false,
             dependency_files: false,
             canonical_source: false,
             adapter: "fake-process",

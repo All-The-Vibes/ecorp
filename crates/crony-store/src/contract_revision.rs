@@ -221,21 +221,34 @@ impl PgStore {
                     &replacement_contract,
                     &required_adapter,
                 )?;
-                let factory_linked: bool = sqlx::query_scalar(
-                    "SELECT EXISTS(
-                        SELECT 1 FROM factory_work_items
-                        WHERE corp_id = $1 AND mission_id = $2
-                    )",
+                let factory_policy: Option<Value> = sqlx::query_scalar(
+                    "SELECT policy FROM factory_work_items
+                     WHERE corp_id = $1 AND mission_id = $2",
                 )
                 .bind(input.corp_id)
                 .bind(input.mission_id)
-                .fetch_one(&mut *tx)
+                .fetch_optional(&mut *tx)
                 .await?;
-                if factory_linked {
+                if let Some(factory_policy) = factory_policy {
                     ensure_factory_recovery_verification_policy_not_weakened(
                         &current_verification_policy,
                         &input.verification_policy,
                     )?;
+                    if let Some(checkpoint) =
+                        crony_domain::ActiveCheckpointPolicy::validate_factory_policy(
+                            &factory_policy,
+                        )
+                        .map_err(anyhow::Error::msg)?
+                    {
+                        let original: VerificationPolicy =
+                            serde_json::from_value(factory_policy["verification_policy"].clone())?;
+                        checkpoint
+                            .validate_verification_replacement(
+                                &original,
+                                &input.verification_policy,
+                            )
+                            .map_err(anyhow::Error::msg)?;
+                    }
                 }
             }
         }

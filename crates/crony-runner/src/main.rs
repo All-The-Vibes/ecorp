@@ -1,3 +1,4 @@
+mod active_checkpoint;
 mod adapter;
 mod connections;
 mod deliverable;
@@ -179,6 +180,7 @@ struct Args {
 
 #[derive(Debug, Clone)]
 struct Assignment {
+    active_checkpoint: Option<crony_domain::ActiveCheckpointPolicy>,
     dependency_files: Vec<crony_protocol::dependency_files::VerifiedDependencyFile>,
     corp_id: Uuid,
     connection_epoch: Uuid,
@@ -822,6 +824,19 @@ async fn run_connection(
     });
     capabilities.push(RunnerCapability {
         workspace_connection_id: None,
+        name: crony_domain::ACTIVE_CHECKPOINT_CAPABILITY.to_owned(),
+        available: true,
+        detail: Some(
+            "Focused native verification and remote draft receipt before final verification"
+                .to_owned(),
+        ),
+        models: Vec::new(),
+        source_repository: None,
+        source_base_ref: None,
+        source_base_commit: None,
+    });
+    capabilities.push(RunnerCapability {
+        workspace_connection_id: None,
         name: "retained-provider-receipt-v1".to_owned(),
         available: true,
         detail: Some(
@@ -1088,7 +1103,18 @@ async fn run_connection(
                     });
                 }
             }
+            ServerToRunner::ActiveCheckpointPublished { receipt } => {
+                if let Some(active) = active_runs.get(&receipt.run_id) {
+                    let _ = active.artifact_ack.send(ArtifactAck {
+                        run_id: receipt.run_id,
+                        artifact_id: receipt.artifact_id,
+                        artifact_role: "remote_source_checkpoint".into(),
+                        sha256: receipt.sha256,
+                    });
+                }
+            }
             ServerToRunner::StartRun {
+                active_checkpoint,
                 dependency_files,
                 workspace_connection_id,
                 corp_id,
@@ -1111,6 +1137,7 @@ async fn run_connection(
                 secrets,
             } => {
                 let assignment = Assignment {
+                    active_checkpoint,
                     dependency_files,
                     corp_id,
                     connection_epoch,
@@ -1232,6 +1259,7 @@ async fn run_connection(
                 });
             }
             ServerToRunner::ResumeRun {
+                active_checkpoint,
                 dependency_files,
                 workspace_connection_id,
                 command_id,
@@ -1271,6 +1299,7 @@ async fn run_connection(
                     continue;
                 }
                 let assignment = Assignment {
+                    active_checkpoint,
                     corp_id,
                     connection_epoch,
                     room_id,
@@ -1438,6 +1467,7 @@ async fn run_connection(
                 );
             }
             ServerToRunner::VerifyRun {
+                active_checkpoint,
                 workspace_connection_id,
                 command_id,
                 corp_id,
@@ -1473,6 +1503,7 @@ async fn run_connection(
                     continue;
                 }
                 let assignment = Assignment {
+                    active_checkpoint,
                     dependency_files: Vec::new(),
                     corp_id,
                     connection_epoch,
@@ -1635,6 +1666,7 @@ async fn run_connection(
                     continue;
                 }
                 let assignment = Assignment {
+                    active_checkpoint: None,
                     dependency_files: Vec::new(),
                     corp_id,
                     connection_epoch,
@@ -3240,9 +3272,9 @@ async fn send_verification_events(
     assignment: &Assignment,
     workspace: &WorkspaceLease,
     workspaces: &WorkspaceManager,
-    verification_baseline: Option<&mut VerificationSnapshot>,
-    active_check_snapshot: Option<&mut Option<VerificationSnapshot>>,
-    artifact_snapshot: Option<&mut Option<VerificationSnapshot>>,
+    mut verification_baseline: Option<&mut VerificationSnapshot>,
+    mut active_check_snapshot: Option<&mut Option<VerificationSnapshot>>,
+    mut artifact_snapshot: Option<&mut Option<VerificationSnapshot>>,
     artifacts: &Arc<Mutex<Vec<AdapterArtifact>>>,
     source_artifacts: Option<&[AdapterArtifact]>,
     artifact_acks: &mut mpsc::UnboundedReceiver<ArtifactAck>,
@@ -3252,15 +3284,6 @@ async fn send_verification_events(
     mut cleanup_head_commit: Option<&mut Option<String>>,
     mut cancellation: Option<&mut watch::Receiver<bool>>,
 ) -> VerificationRunOutcome {
-    send_run_event(
-        outbound,
-        runner_id,
-        assignment,
-        "run.verification_started",
-        json!({
-            "check_count": assignment.verification_policy.checks.len(),
-        }),
-    );
     // Admission still binds the original checkpoint HEAD. Only the exporter may
     // replace it with the exact runner-owned verification commit after checks.
     let mut completion_head_commit = preserve_head_commit
@@ -3285,6 +3308,73 @@ async fn send_verification_events(
         .lock()
         .map(|artifacts| artifacts.clone())
         .unwrap_or_default();
+    if assignment.active_checkpoint.is_some() {
+        let (_sender, mut uncancelled) = watch::channel(false);
+        let checkpoint = active_checkpoint::publish(
+            outbound,
+            runner_id,
+            assignment,
+            workspace,
+            workspaces,
+            &artifacts,
+            source_artifacts.unwrap_or(&artifacts),
+            artifact_acks,
+            expected_workspace_fingerprint,
+            &mut completion_head_commit,
+            cancellation.as_deref_mut().unwrap_or(&mut uncancelled),
+        )
+        .await;
+        // Export may have advanced HEAD before cancellation, a timeout or a rejected receipt.
+        // Keep its exact runner-owned commit as the cleanup seal in every outcome.
+        if let Some(cleanup_guard) = cleanup_head_commit.as_mut() {
+            **cleanup_guard = completion_head_commit.clone();
+        }
+        if !matches!(checkpoint, Ok(true)) {
+            let cleanup = match (
+                verification_baseline.as_deref_mut(),
+                active_check_snapshot.as_deref_mut(),
+                artifact_snapshot.as_deref_mut(),
+            ) {
+                (Some(baseline), Some(active), Some(artifacts)) => {
+                    cleanup_verification_snapshots(active, baseline, artifacts).await
+                }
+                (None, None, None) => Ok(()),
+                _ => Err(anyhow!("verifier snapshot state was incomplete")),
+            };
+            let integrity = checkpoint
+                .as_ref()
+                .err()
+                .is_some_and(|failure| failure.integrity);
+            let was_cancelled = matches!(checkpoint, Ok(false));
+            if was_cancelled && cleanup.is_ok() {
+                return VerificationRunOutcome::Cancelled;
+            }
+            send_run_event(
+                outbound,
+                runner_id,
+                assignment,
+                "run.failed",
+                json!({
+                    "failure_kind": RunFailureKind::DeliverableExport,
+                    "error": format!("Active checkpoint is blocked: {}. Keep the preserved source; automatic fresh-worktree retry is disabled.{}",
+                        checkpoint.err().map_or_else(|| "checkpoint cancelled".to_owned(), |failure| format!("{:#}", failure.error)),
+                        cleanup.err().map_or_else(String::new, |error| format!(" Snapshot cleanup also failed: {error:#}"))),
+                }),
+            );
+            return if integrity {
+                VerificationRunOutcome::IntegrityFailed
+            } else {
+                VerificationRunOutcome::Failed
+            };
+        }
+    }
+    send_run_event(
+        outbound,
+        runner_id,
+        assignment,
+        "run.verification_started",
+        json!({"check_count": assignment.verification_policy.checks.len()}),
+    );
     let mut prepared = if let Some(spec) = &assignment.deliverable {
         match deliverable::prepare(
             assignment.run_id,
@@ -3292,7 +3382,11 @@ async fn send_verification_events(
             workspace,
             source_artifacts.unwrap_or(&artifacts),
             &assignment.write_scope,
-            preserve_head_commit,
+            if assignment.active_checkpoint.is_some() {
+                completion_head_commit.as_deref()
+            } else {
+                preserve_head_commit
+            },
         )
         .await
         {
@@ -3493,6 +3587,8 @@ async fn send_verification_events(
             json!({
                 "error": report.summary,
                 "completion_summary": completion_summary,
+                "verified_tree": report.source.as_ref().map(|source| &source.tree),
+                "source_verification": report.source,
             }),
         );
         return if integrity_failed {
@@ -4088,6 +4184,7 @@ mod tests {
 
     fn verification_assignment(workspace: &WorkspaceLease, run_id: Uuid) -> Assignment {
         Assignment {
+            active_checkpoint: None,
             dependency_files: Vec::new(),
             workspace_connection_id: None,
             corp_id: Uuid::new_v4(),
@@ -5646,6 +5743,7 @@ mod tests {
     #[test]
     fn teardown_fail_closed_preserves_workspace_without_false_terminal_claim() {
         let assignment = Assignment {
+            active_checkpoint: None,
             dependency_files: Vec::new(),
             workspace_connection_id: None,
             corp_id: Uuid::new_v4(),
@@ -5769,6 +5867,7 @@ mod tests {
         );
         let base_commit = workspaces.base_commit().to_owned();
         let assignment = Assignment {
+            active_checkpoint: None,
             dependency_files: Vec::new(),
             workspace_connection_id: None,
             corp_id: Uuid::new_v4(),

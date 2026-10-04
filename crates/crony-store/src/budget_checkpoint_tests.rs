@@ -18,6 +18,9 @@ mod retained_receipts;
 #[path = "canonical_source_verification_tests.rs"]
 mod canonical_source;
 
+#[path = "publication_readiness_tests.rs"]
+mod readiness_recovery;
+
 const CORP: Uuid = Uuid::from_u128(1);
 const MISSION: Uuid = Uuid::from_u128(2);
 const TASK: Uuid = Uuid::from_u128(3);

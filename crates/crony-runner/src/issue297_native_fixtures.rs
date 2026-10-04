@@ -299,6 +299,7 @@ impl Fixture {
             verification_command_id: None,
             retained_provider_receipt: None,
             checkpoint_verification: false,
+            active_checkpoint: None,
             hard_boundary_checkpoint: Arc::default(),
         }
     }

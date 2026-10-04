@@ -338,7 +338,10 @@ impl ArtifactStore {
             .get("artifact_role")
             .and_then(Value::as_str)
             .unwrap_or("provider_evidence");
-        if !matches!(artifact_role, "provider_evidence" | "source_deliverable") {
+        if !matches!(
+            artifact_role,
+            "provider_evidence" | "source_deliverable" | "source_checkpoint"
+        ) {
             return Err(anyhow!("artifact role is invalid"));
         }
         let file_name = payload
@@ -367,6 +370,8 @@ impl ArtifactStore {
                 ));
             }
             metadata
+        } else if artifact_role == "source_checkpoint" {
+            active_checkpoint_metadata(payload, &bytes)?
         } else if artifact_role == "source_deliverable" {
             let metadata = source_deliverable_metadata(payload)?;
             validate_source_deliverable_envelope(&metadata, &bytes)?;
@@ -686,6 +691,84 @@ fn provenance_message(artifact: &StoredArtifact) -> String {
 }
 
 fn source_deliverable_metadata(payload: &Value) -> Result<Value> {
+    source_metadata(payload, false)
+}
+
+fn active_checkpoint_metadata(payload: &Value, bytes: &[u8]) -> Result<Value> {
+    let mut metadata = source_metadata(payload, true)?;
+    let envelope: Value =
+        serde_json::from_slice(bytes).context("checkpoint envelope is not JSON")?;
+    if envelope["purpose"] != "active_checkpoint"
+        || envelope["publication_ready"] != false
+        || payload["publication_ready"] != false
+    {
+        return Err(anyhow!(
+            "checkpoint must explicitly exclude final publication authority"
+        ));
+    }
+    let policy: crony_domain::ActiveCheckpointPolicy =
+        serde_json::from_value(envelope["checkpoint_policy"].clone())
+            .context("checkpoint omitted its focused policy")?;
+    let full: crony_domain::VerificationPolicy =
+        serde_json::from_value(envelope["verification_policy"].clone())
+            .context("checkpoint omitted its complete verification policy")?;
+    for field in [
+        "purpose",
+        "checkpoint_policy",
+        "verification_policy",
+        "checkpoint_report",
+        "parent_commit",
+    ] {
+        if envelope.get(field).is_none_or(Value::is_null)
+            || payload.get(field) != envelope.get(field)
+        {
+            return Err(anyhow!(
+                "checkpoint envelope and authenticated payload disagree on {field}"
+            ));
+        }
+    }
+    let report = &envelope["checkpoint_report"];
+    policy
+        .validate_report(&full, report)
+        .map_err(anyhow::Error::msg)?;
+    let parent = envelope["parent_commit"]
+        .as_str()
+        .context("checkpoint omitted parent commit")?;
+    let source =
+        crony_domain::SourceVerification::from_payload(&metadata).map_err(anyhow::Error::msg)?;
+    // Verification uses a temporary commit with the canonical tree. The export
+    // parents the real workspace HEAD instead; native Git verifies that parent
+    // when the trusted publisher imports the bundle.
+    if !valid_hex(parent, source.tree.len(), source.tree.len())
+        || report["passed"] != true
+        || report["source"] != metadata["source_verification"]
+        || metadata["verification_sha256"]
+            != hex::encode(Sha256::digest(serde_json::to_vec(report)?))
+    {
+        return Err(anyhow!(
+            "checkpoint report, parent or verification digest does not match its source"
+        ));
+    }
+    // The store separately compares this policy/report with the immutable task contract.
+    metadata["purpose"] = json!("active_checkpoint");
+    metadata["checkpoint_policy"] = json!(policy);
+    metadata["verification_policy"] = json!(full);
+    metadata["checkpoint_report"] = report.clone();
+    metadata["parent_commit"] = json!(parent);
+    validate_source_envelope(&metadata, &envelope)?;
+    let bundle = envelope["git_bundle_base64"]
+        .as_str()
+        .context("checkpoint omitted portable bundle")?;
+    let bundle = BASE64
+        .decode(bundle)
+        .context("checkpoint bundle is not base64")?;
+    if bundle.is_empty() || metadata["git_bundle_sha256"] != hex::encode(Sha256::digest(&bundle)) {
+        return Err(anyhow!("checkpoint portable bundle digest does not match"));
+    }
+    Ok(metadata)
+}
+
+fn source_metadata(payload: &Value, checkpoint: bool) -> Result<Value> {
     let required = |name: &str| {
         payload
             .get(name)
@@ -716,17 +799,21 @@ fn source_deliverable_metadata(payload: &Value) -> Result<Value> {
         || head_commit.is_some_and(|value| !valid_hex(value, source.tree.len(), source.tree.len()))
         || branch.is_empty()
         || branch.len() > 512
-        || !matches!(
-            integration_state,
-            "not_applicable" | "ready_for_review" | "published" | "integrated"
-        )
+        || if checkpoint {
+            integration_state != "checkpoint_pending"
+        } else {
+            !matches!(
+                integration_state,
+                "not_applicable" | "ready_for_review" | "published" | "integrated"
+            )
+        }
     {
         return Err(anyhow!("source deliverable metadata is invalid"));
     }
     if form == "commit_branch" {
         if head_commit.is_none()
             || git_bundle_sha256.is_none_or(|value| !valid_hex(value, 64, 64))
-            || !publication_ready
+            || publication_ready == checkpoint
         {
             return Err(anyhow!(
                 "commit/branch deliverable omitted its portable publication bundle"
@@ -736,6 +823,9 @@ fn source_deliverable_metadata(payload: &Value) -> Result<Value> {
         return Err(anyhow!(
             "only commit/branch deliverables may be publication-ready"
         ));
+    }
+    if checkpoint && form != "commit_branch" {
+        return Err(anyhow!("checkpoint requires a commit/branch envelope"));
     }
     Ok(json!({
         "form": form,
@@ -759,10 +849,19 @@ fn validate_source_deliverable_envelope(metadata: &Value, bytes: &[u8]) -> Resul
     }
     let envelope: Value =
         serde_json::from_slice(bytes).context("source deliverable envelope is not JSON")?;
+    if envelope.get("purpose").is_some() {
+        return Err(anyhow!(
+            "checkpoint-purpose evidence cannot be stored as a final source deliverable"
+        ));
+    }
+    validate_source_envelope(metadata, &envelope)
+}
+
+fn validate_source_envelope(metadata: &Value, envelope: &Value) -> Result<()> {
     if envelope["schema_version"] != 1 {
         return Err(anyhow!("source deliverable envelope schema is unsupported"));
     }
-    crony_domain::SourceVerification::from_payload(&envelope).map_err(anyhow::Error::msg)?;
+    crony_domain::SourceVerification::from_payload(envelope).map_err(anyhow::Error::msg)?;
     for field in [
         "form",
         "base_commit",

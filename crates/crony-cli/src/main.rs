@@ -86,6 +86,11 @@ enum Command {
         #[command(flatten)]
         args: Box<publish::FactoryPublishArgs>,
     },
+    /// Preserve active factory source in a draft PR before final verification.
+    FactoryCheckpoint {
+        #[command(flatten)]
+        args: Box<publish::active_checkpoint::FactoryCheckpointArgs>,
+    },
     Mission {
         corp_id: Uuid,
         actor_id: Uuid,
@@ -356,6 +361,9 @@ async fn main() -> Result<()> {
         Command::FactoryPublish { args: publish_args } => {
             publish::run(&client, &args.server, *publish_args).await?
         }
+        Command::FactoryCheckpoint {
+            args: checkpoint_args,
+        } => publish::active_checkpoint::run(&client, &args.server, *checkpoint_args).await?,
         Command::Mission {
             corp_id,
             actor_id,
