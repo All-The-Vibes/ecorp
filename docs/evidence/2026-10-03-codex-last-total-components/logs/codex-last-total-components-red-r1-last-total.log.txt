@@ -1,0 +1,43 @@
+   Compiling crony-domain v0.1.0 (<candidate-checkout>\crates\crony-domain)
+   Compiling crony-protocol v0.1.0 (<candidate-checkout>\crates\crony-protocol)
+   Compiling crony-runner v0.1.0 (<candidate-checkout>\crates\crony-runner)
+    Finished `test` profile [unoptimized] target(s) in 49.48s
+     Running unittests src\main.rs (target\issue236-review-r5\debug\deps\crony_runner-02b0585a373d56cb.exe)
+
+running 8 tests
+test adapter::codex::tests::usage_last_total_changes_at_the_same_cursor_are_not_duplicates ... ok
+test adapter::codex::tests::usage_last_total_components_cover_subsets_when_parent_quantities_are_unknown ... FAILED
+test adapter::codex::tests::usage_last_total_components_preserve_the_previous_cursor_until_correction ... FAILED
+test adapter::codex::tests::usage_last_total_components_reject_an_initial_conflict_then_admit_correction_once ... FAILED
+test adapter::codex::tests::usage_last_total_is_retained_without_charging_or_inventing_quantities ... ok
+test adapter::codex::tests::usage_last_total_legacy_absence_preserves_partial_reports ... ok
+test adapter::codex::tests::usage_last_total_malformed_is_evidence_without_charging ... ok
+test adapter::codex::tests::usage_last_total_must_fit_initial_and_incremental_cursors ... ok
+
+failures:
+
+---- adapter::codex::tests::usage_last_total_components_cover_subsets_when_parent_quantities_are_unknown stdout ----
+
+thread 'adapter::codex::tests::usage_last_total_components_cover_subsets_when_parent_quantities_are_unknown' (33336) panicked at crates\crony-runner\src\adapter\codex.rs:1888:9:
+assertion failed: invalid.validate().is_err()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- adapter::codex::tests::usage_last_total_components_preserve_the_previous_cursor_until_correction stdout ----
+
+thread 'adapter::codex::tests::usage_last_total_components_preserve_the_previous_cursor_until_correction' (25924) panicked at crates\crony-runner\src\adapter\codex.rs:1835:13:
+assertion failed: invalid.validate().is_err()
+
+---- adapter::codex::tests::usage_last_total_components_reject_an_initial_conflict_then_admit_correction_once stdout ----
+
+thread 'adapter::codex::tests::usage_last_total_components_reject_an_initial_conflict_then_admit_correction_once' (36840) panicked at crates\crony-runner\src\adapter\codex.rs:1835:13:
+assertion failed: invalid.validate().is_err()
+
+
+failures:
+    adapter::codex::tests::usage_last_total_components_cover_subsets_when_parent_quantities_are_unknown
+    adapter::codex::tests::usage_last_total_components_preserve_the_previous_cursor_until_correction
+    adapter::codex::tests::usage_last_total_components_reject_an_initial_conflict_then_admit_correction_once
+
+test result: FAILED. 5 passed; 3 failed; 0 ignored; 0 measured; 326 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p crony-runner --bin crony-runner`

@@ -1,0 +1,58 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "comment": 4175209381,
+  "phase": "red",
+  "status": "reproduced",
+  "wrapper_pid": 12904,
+  "started_at_utc": "2026-10-03T23:04:42.1457882Z",
+  "checks": [
+    {
+      "log": "<current-run-records>\\codex-last-total-components-red-r1-last-total.log",
+      "sha256": "a8c4fce67330aca8123025ad7f526701b241f370a1a89558485446033d43f2b7",
+      "exit_code": 101,
+      "name": "last-total",
+      "command": "cargo test --locked --offline -p crony-runner --bin crony-runner usage_last_total_ -- --test-threads=1",
+      "started_at_utc": "2026-10-03T23:04:45.1606708Z",
+      "finished_at_utc": "2026-10-03T23:05:36.0405340Z",
+      "counts": {
+        "failed": 3,
+        "passed": 5,
+        "ignored": 0,
+        "filtered": 326
+      }
+    }
+  ],
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T23:04:44.596Z",
+    "source": "<candidate-checkout>",
+    "head": "08a057fd89ca0dae7904c00a22fd295bd76c3d0d",
+    "tree": "16a8966d7b2da15b29746932025d8b472868c6aa",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-domain/src/usage.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-store/src/usage_accounting_tests.rs",
+    "source_file_count": 7890,
+    "source_fingerprint": "f9c9a0a526d859033d53acf29199b9731ebdeaac3e9f05c76fcd23e6e25cacea",
+    "manifest": "<current-run-records>\\codex-last-total-components-red-r1-source-before.json",
+    "manifest_sha256": "f57efe0cdebe94dcdbb7a9205f2659c41b3a1a99ec0a9051812b1b0879cdedde"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T23:05:38.359Z",
+    "source": "<candidate-checkout>",
+    "head": "08a057fd89ca0dae7904c00a22fd295bd76c3d0d",
+    "tree": "16a8966d7b2da15b29746932025d8b472868c6aa",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-domain/src/usage.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-store/src/usage_accounting_tests.rs",
+    "source_file_count": 7890,
+    "source_fingerprint": "f9c9a0a526d859033d53acf29199b9731ebdeaac3e9f05c76fcd23e6e25cacea",
+    "manifest": "<current-run-records>\\codex-last-total-components-red-r1-source-after.json",
+    "manifest_sha256": "59307004546249ebd85c520397282ad95dce615480c1cdf009377a656ae3ffe5"
+  },
+  "source_unchanged": true,
+  "reference_manifest": "<current-run-records>\\last-total-components-red-source-r1.json",
+  "reference_sha256": "57680c31f458f12233d2e6c321a05a8108a8462d607259bdd6af6fa1b4aa6565",
+  "purpose": "Reproduce and correct native last-call totals below their known component lower bound, including initial, incremental and missing-parent subset observations. Retain invalid evidence without charging or advancing accepted cursors; admit valid corrections once and preserve unknown quantities.",
+  "finished_at_utc": "2026-10-03T23:05:38.9339731Z"
+}

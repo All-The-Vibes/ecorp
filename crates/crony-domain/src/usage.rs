@@ -197,6 +197,23 @@ impl UsageReport {
                 return Err("native usage quantity exceeds the accounting range");
             }
         }
+        if let Some(last_total) = provenance.last_total_tokens {
+            let known_input = self
+                .input_tokens
+                .max(provenance.cached_input_tokens)
+                .max(provenance.cache_write_input_tokens)
+                .unwrap_or(0);
+            let known_output = self
+                .output_tokens
+                .max(provenance.reasoning_output_tokens)
+                .unwrap_or(0);
+            if known_input
+                .checked_add(known_output)
+                .is_none_or(|minimum| last_total < minimum)
+            {
+                return Err("native last-call total contradicts known usage");
+            }
+        }
         if [provenance.model_multiplier, provenance.nano_aiu]
             .into_iter()
             .flatten()
@@ -454,6 +471,62 @@ mod tests {
             .unwrap()
             .last_total_tokens = Some(u64::MAX);
         assert!(with_total.validate().is_err());
+    }
+
+    #[test]
+    fn last_total_components_cannot_exceed_the_native_total() {
+        let mut usage = report(Some(10), Some(2));
+        usage.usage_provenance.as_mut().unwrap().last_total_tokens = Some(1);
+        assert!(usage.validate().is_err());
+        assert_eq!(usage.coverage()["tokens"], "invalid");
+        assert_eq!(
+            serde_json::to_value(&usage).unwrap()["usage_provenance"]["last_total_tokens"],
+            1
+        );
+        let mut accumulated = UsageAccumulator::default();
+        accumulated.observe(&report(Some(1), Some(1)));
+        accumulated.observe(&usage);
+        assert_eq!(accumulated.report().input_tokens, Some(1));
+        assert_eq!(accumulated.report().output_tokens, Some(1));
+        assert_eq!(accumulated.report().coverage()["tokens"], "invalid");
+    }
+
+    #[test]
+    fn last_total_components_bound_unknown_parents_without_adding_cache_categories() {
+        let mut usage = report(None, None);
+        let provenance = usage.usage_provenance.as_mut().unwrap();
+        provenance.cached_input_tokens = Some(7);
+        provenance.cache_write_input_tokens = Some(8);
+        provenance.reasoning_output_tokens = Some(3);
+        provenance.cache_tokens_are_input_subsets = true;
+        provenance.reasoning_tokens_are_output_subsets = true;
+        provenance.last_total_tokens = Some(10);
+        assert!(usage.validate().is_err());
+        for total in [11, 12] {
+            usage.usage_provenance.as_mut().unwrap().last_total_tokens = Some(total);
+            assert_eq!(usage.validate(), Ok(()));
+            assert_eq!(usage.input_tokens, None);
+            assert_eq!(usage.output_tokens, None);
+            assert_eq!(usage.coverage()["tokens"], "unavailable");
+        }
+    }
+
+    #[test]
+    fn last_total_components_respect_the_combined_accounting_limit() {
+        let mut usage = report(None, None);
+        let provenance = usage.usage_provenance.as_mut().unwrap();
+        provenance.cached_input_tokens = Some(i64::MAX as u64);
+        provenance.reasoning_output_tokens = Some(1);
+        provenance.last_total_tokens = Some(i64::MAX as u64);
+        assert!(usage.validate().is_err());
+        usage
+            .usage_provenance
+            .as_mut()
+            .unwrap()
+            .reasoning_output_tokens = Some(0);
+        assert_eq!(usage.validate(), Ok(()));
+        assert_eq!(usage.input_tokens, None);
+        assert_eq!(usage.output_tokens, None);
     }
 
     #[test]

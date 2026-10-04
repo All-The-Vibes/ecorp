@@ -1,0 +1,26 @@
+{
+  "status": "failed",
+  "observed_at_utc": "2026-10-03T23:31:50.523416+00:00",
+  "phase": "package",
+  "helper": "<current-run-records>\\publish-last-total-components-fix-r1.py",
+  "helper_sha256": "0c3f30c120ea399d03ba0a7c0e718076805402ca3c30e33fffa2ec2f9c3236db",
+  "tool_session": 42233,
+  "completion_chunk": "7b055a",
+  "exit_code": 1,
+  "error": "KeyError: 'discovery_log' at publish-last-total-components-fix-r1.py:226",
+  "cause": "The failed native SQL receipt records its failed execution but does not include discovery_log fields, which are added only after passing a lane. The standalone discovery file exists.",
+  "correction": "Keep both required passing lanes bound to their receipt discovery hashes. Capture the failed attempt discovery log separately by its observed path and hash without asserting that the failed lane passed.",
+  "source_parent": "08a057fd89ca0dae7904c00a22fd295bd76c3d0d",
+  "acceptance_fingerprint": "72d2db239e539bf44d58ce11192555e7bb7580b9d724c1612e26d543591c8469",
+  "preexisting_source_unchanged": true,
+  "staged_files": 0,
+  "partial_files": 51,
+  "partial_packet_manifest": "<current-run-records>\\last-total-components-partial-packet-r1.json",
+  "preserve_destination": "<current-run-records>\\last-total-components-failed-packet-r1",
+  "failed_native_discovery": {
+    "path": "<current-run-records>\\issue236-native-last-total-components-green-r1-crony-store-issue236-list.log",
+    "sha256": "c791eae1dcf1789537f693b4333d988edf3f3a0f14b0b42372f414b34bc99537"
+  },
+  "validation_rerun_required_for_packager_fix": false,
+  "canonical_required_before_commit": true
+}

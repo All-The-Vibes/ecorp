@@ -1,0 +1,88 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "comment": 4175209381,
+  "phase": "green",
+  "status": "passed",
+  "wrapper_pid": 43516,
+  "started_at_utc": "2026-10-03T23:16:38.9809394Z",
+  "checks": [
+    {
+      "name": "last-total",
+      "sha256": "dad653ff46b6a96ce341d22ea13daaedeb557341176533271eea21d27cc141ac",
+      "log": "<current-run-records>\\codex-last-total-components-green-r2-last-total.log",
+      "started_at_utc": "2026-10-03T23:16:41.7212245Z",
+      "finished_at_utc": "2026-10-03T23:16:47.7152482Z",
+      "command": "cargo test --locked --offline -p crony-runner --bin crony-runner usage_last_total_ -- --test-threads=1",
+      "counts": {
+        "ignored": 0,
+        "passed": 8,
+        "filtered": 326,
+        "failed": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "name": "domain-usage",
+      "sha256": "6609be26cde98507c9b6fc2787ca489fef587d5cf430e25c5246086f63596bb2",
+      "log": "<current-run-records>\\codex-last-total-components-green-r2-domain-usage.log",
+      "started_at_utc": "2026-10-03T23:16:47.7236670Z",
+      "finished_at_utc": "2026-10-03T23:16:48.7650231Z",
+      "command": "cargo test --locked --offline -p crony-domain usage::tests -- --test-threads=1",
+      "counts": {
+        "ignored": 0,
+        "passed": 22,
+        "filtered": 25,
+        "failed": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "name": "all-runner-usage",
+      "sha256": "902b87043cba799ca99fc10f902fa656781e4830d30a473757f9d11139474739",
+      "log": "<current-run-records>\\codex-last-total-components-green-r2-all-runner-usage.log",
+      "started_at_utc": "2026-10-03T23:16:48.7679757Z",
+      "finished_at_utc": "2026-10-03T23:16:57.7661677Z",
+      "command": "cargo test --locked --offline -p crony-runner --bin crony-runner usage -- --test-threads=1",
+      "counts": {
+        "ignored": 0,
+        "passed": 28,
+        "filtered": 306,
+        "failed": 0
+      },
+      "exit_code": 0
+    }
+  ],
+  "source_before": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T23:16:41.147Z",
+    "source": "<candidate-checkout>",
+    "head": "08a057fd89ca0dae7904c00a22fd295bd76c3d0d",
+    "tree": "16a8966d7b2da15b29746932025d8b472868c6aa",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-domain/src/usage.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md",
+    "source_file_count": 7890,
+    "source_fingerprint": "72d2db239e539bf44d58ce11192555e7bb7580b9d724c1612e26d543591c8469",
+    "manifest": "<current-run-records>\\codex-last-total-components-green-r2-source-before.json",
+    "manifest_sha256": "8ced59ea1f8f894133e5dbd4f9cfa705e8a80234007240bc77ba3ba1c1356afc"
+  },
+  "source_after": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-10-03T23:17:00.005Z",
+    "source": "<candidate-checkout>",
+    "head": "08a057fd89ca0dae7904c00a22fd295bd76c3d0d",
+    "tree": "16a8966d7b2da15b29746932025d8b472868c6aa",
+    "branch": "codex/issue236-usage-provenance",
+    "status": "M crates/crony-domain/src/usage.rs\n M crates/crony-runner/src/adapter/codex.rs\n M crates/crony-store/src/usage_accounting_tests.rs\n M docs/USAGE_PROVENANCE.md",
+    "source_file_count": 7890,
+    "source_fingerprint": "72d2db239e539bf44d58ce11192555e7bb7580b9d724c1612e26d543591c8469",
+    "manifest": "<current-run-records>\\codex-last-total-components-green-r2-source-after.json",
+    "manifest_sha256": "1805df57cb924502d7170caa6bfaeefa481ea630b7cb9585c004a8c4bef12d21"
+  },
+  "source_unchanged": true,
+  "reference_manifest": "<current-run-records>\\last-total-components-runtime-source-r2.json",
+  "reference_sha256": "d540d33e162ee761f286e593c9a927b14f1dda18d4b9d9689b14facf3ee306d7",
+  "purpose": "Reproduce and correct native last-call totals below their known component lower bound, including initial, incremental and missing-parent subset observations. Retain invalid evidence without charging or advancing accepted cursors; admit valid corrections once and preserve unknown quantities.",
+  "finished_at_utc": "2026-10-03T23:17:00.5833504Z"
+}

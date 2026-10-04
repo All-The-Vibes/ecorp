@@ -1,0 +1,782 @@
+{
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 236,
+  "pr": 402,
+  "recorded_at_utc": "2026-10-03T23:32:53.771203+00:00",
+  "review_comment": 4175209381,
+  "parent": "08a057fd89ca0dae7904c00a22fd295bd76c3d0d",
+  "parent_tree": "16a8966d7b2da15b29746932025d8b472868c6aa",
+  "main": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "dependency_pr": 392,
+  "dependency_head": "ddc24c427c90773ee6a3c5d46d4a5a1becc9cf01",
+  "source": {
+    "red_fingerprint": "f9c9a0a526d859033d53acf29199b9731ebdeaac3e9f05c76fcd23e6e25cacea",
+    "acceptance_fingerprint": "72d2db239e539bf44d58ce11192555e7bb7580b9d724c1612e26d543591c8469",
+    "acceptance_files": 7890,
+    "physical_manifest": "source/acceptance-source-manifest.json",
+    "patch": "source/correction.patch.json",
+    "binding": "Focused green, native SQL, rebuilt binaries and browser acceptance use identical physical source. Only this evidence packet is added afterward; full canonical validation binds the final staged Git tree."
+  },
+  "before_correction": {
+    "status": "reproduced",
+    "counts": {
+      "failed": 3,
+      "passed": 5,
+      "ignored": 0,
+      "filtered": 326
+    },
+    "exit_code": 101,
+    "this_is_not_a_passing_check": true
+  },
+  "retained_failed_attempt": {
+    "receipt": "receipts/issue236-native-last-total-components-green-r1.json",
+    "status": "failed",
+    "counts": {
+      "passed": 15,
+      "failed": 1,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 571,
+      "summaries": 1
+    },
+    "exit_code": 101,
+    "unexecuted_lane": "hard-control-transactions",
+    "cause": "The new SQL fixture incorrectly expected rejected raw last-call values to remain stored. Admission deliberately preserves a bounded redacted invalid observation.",
+    "correction": "Only SQL regression assertions changed. The fixture now requires absent provenance and identity, unknown quantities, invalid_usage reason, unchanged counters and exact persisted redacted payload. Production admission behavior is unchanged.",
+    "applicability": "Prior focused and failed SQL evidence bind their own source fingerprint. The complete R2 native lanes, R2 focused tests, rebuild and browser evidence bind the corrected fixture."
+  },
+  "focused": [
+    {
+      "name": "last-total",
+      "command": "cargo test --locked --offline -p crony-runner --bin crony-runner usage_last_total_ -- --test-threads=1",
+      "exit_code": 0,
+      "counts": {
+        "ignored": 0,
+        "passed": 8,
+        "filtered": 326,
+        "failed": 0
+      }
+    },
+    {
+      "name": "domain-usage",
+      "command": "cargo test --locked --offline -p crony-domain usage::tests -- --test-threads=1",
+      "exit_code": 0,
+      "counts": {
+        "ignored": 0,
+        "passed": 22,
+        "filtered": 25,
+        "failed": 0
+      }
+    },
+    {
+      "name": "all-runner-usage",
+      "command": "cargo test --locked --offline -p crony-runner --bin crony-runner usage -- --test-threads=1",
+      "exit_code": 0,
+      "counts": {
+        "ignored": 0,
+        "passed": 28,
+        "filtered": 306,
+        "failed": 0
+      }
+    }
+  ],
+  "native_sql": [
+    {
+      "name": "usage-provenance-transactions",
+      "counts": {
+        "passed": 16,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 571,
+        "summaries": 1
+      },
+      "complete_discovered_lane_executed": true
+    },
+    {
+      "name": "hard-control-transactions",
+      "counts": {
+        "passed": 14,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 573,
+        "summaries": 1
+      },
+      "complete_discovered_lane_executed": true
+    }
+  ],
+  "browser": {
+    "counts": {
+      "passed": 154,
+      "failed": 0,
+      "execution_errors": 0,
+      "scenarios_failed": 0,
+      "scenarios_passed": 15,
+      "scenarios_unexecuted": 0
+    },
+    "corpus_sha256": "a3ca525511a668c3ca00e3acd640059fdf104bfcd69f637246a087f97295828d",
+    "scope": "Actual Edge, rebuilt native server/runner, fresh owned SCRAM PostgreSQL, deterministic Codex protocol transport.",
+    "cleanup": "Verified every exact owned process stopped. Database, synthetic source, credentials, ownership and evidence retained."
+  },
+  "canonical": {
+    "required_command": "pnpm check",
+    "required_named_plan": [
+      "migrations",
+      "state-audit-compatibility",
+      "state-audit-evm",
+      "docs",
+      "repository-docs",
+      "node-tests",
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ],
+    "publication": "The complete staged tree must pass before commit. Observed final counts, source identity and receipt/log/report digests are recorded in the PR validation comment; complete original canonical files are retained in the local run records. No future result is asserted here."
+  },
+  "historical_validation": {
+    "validated_commit": "08a057fd89ca0dae7904c00a22fd295bd76c3d0d",
+    "earlier_bounds_commit": "9cbac5bb6fd5892799f1ec668c9cd6955e20ec6c",
+    "earlier_bounds_evidence_commit": "12c3022b4ebe2b0f7cf16bfa66ce4e2a392a77d3",
+    "scope": "Historical only; not validation of this correction."
+  },
+  "issue_completed": false,
+  "ready_for_merge": false,
+  "independent_outcome_review": false,
+  "limitations": [
+    "This fixes usage consistency in partial prerequisite PR #402; issue #236 remains incomplete and the PR remains draft.",
+    "Auditor execution, early audits/headroom, durable decisions, bounded atomic grants/revalidation, same-lineage continuation, operating UI and concurrency/revocation acceptance remain incomplete.",
+    "Dependency PR #392 is unmerged. Independent outcome review is unavailable. The retained $10 assurance is unknown.",
+    "Required hosted CI, CodeQL, security and quality remain unavailable under the organization Actions restriction. Historical Cargo advisory debt is unresolved.",
+    "Deterministic protocol acceptance is not real provider inference or billing. Environment-only fixture credentials are reduced assurance; private credential files are excluded.",
+    "The #193/#235 paired R4 comparison remains permanently stopped."
+  ],
+  "files": [
+    {
+      "path": "receipts/codex-last-total-components-red-r1.json",
+      "original_sha256": "09670caead2530d066348e957fd56b561768e4b4f0eccf89114618a090be655d",
+      "published_sha256": "d946d92e144f703acc21d62fd65645445b51a1ef44bb67a5a2aa0cd688cee55a",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/codex-last-total-components-green-r2.json",
+      "original_sha256": "12c6549d6e826bd9c7369eeff5d9782eb64e913b1bcf0813e7119846529474f0",
+      "published_sha256": "fb5d8a4de3344ecefe7e34bb1c8f8acb89c38e0500ca2d43e3cd385e97e0e0d3",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-native-last-total-components-green-r2.json",
+      "original_sha256": "b35238d660b4a2d694ad5869b4b893acd32f7ca2f8fa3268fdd21bc4ee0a3731",
+      "published_sha256": "cbdbb5ca886f6db24a9c078cef6e3b016d2afe96da49fe8d6b5a9f67d0c5e241",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-native-build-last-total-components-r1.json",
+      "original_sha256": "ebc9b0de4fe9e689b837d8614c5e0d78bb34286d353c26a7a5b250d5e85fafe5",
+      "published_sha256": "265e29b637f1ea66a43cfe47d6a656fc7aab19b4d2ae542d352737ec56f80ab2",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-browser-last-total-components-r1.json",
+      "original_sha256": "813a35af533cc747f2b58f5ecd087e309911a5e95627fac5bcd584f3dab32a1c",
+      "published_sha256": "c8919679f50ebe043122af55eec46b2a85f67aad20741c9f3930ff6ff9c1bdd6",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/last-total-components-screenshot-review-r1.json",
+      "original_sha256": "e4cb4016ff35cbeb5495739444fe7d3608805e80d86287d76e91c15af09d1a30",
+      "published_sha256": "6764aa0c978f35f5157cebf3c0721e9ffab167f5b4350be0b8803f061dadd7f0",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/last-total-components-acceptance-preparation-r1.json",
+      "original_sha256": "4fcdb23d88c4471efbdb3ce476a1e71dc30925db8b0c4f5585461db04cd887fc",
+      "published_sha256": "344c9e81ba99b1e8243ed02ffcb276d8a3beffc2a56bfd944b4383afef9235f5",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/last-total-components-retry-preparation-r2.json",
+      "original_sha256": "4c113ce5e1033c1bc6ad807e46e17a503091a54982733a7243e30a866d449233",
+      "published_sha256": "d95bf83f4e3492616a4a9cc4a5f09aced585200857a2efc8f80ef90c35841222",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/codex-last-total-components-green-r1.json",
+      "original_sha256": "6e136a2627bf8426bc1cf98a54d896868e4ab2244683c23fc2982417702746c6",
+      "published_sha256": "a6f92d3497ededa2134f56582b94d140cc458879abc5dd9f2189e2783a880d4e",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/issue236-native-last-total-components-green-r1.json",
+      "original_sha256": "73cc62e786c45d70f4f5f13f04e3cea598b8d0b436a214c0d9c8468259e66e90",
+      "published_sha256": "33c75ce87aba27f923605f753dba5f53a7e34ac82abe229765553f9836886a72",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/native-protocol-fetch-r1.json",
+      "original_sha256": "dd63c9d183e330e9851528a0c43e179b08c7db4f44fd458c323e16edc07bcd48",
+      "published_sha256": "c40375eb9e89d3c4b6db819a99f0b67d192a56c86dc2aa5228a167ef9f2e02c9",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/red-source_before.json",
+      "original_sha256": "f57efe0cdebe94dcdbb7a9205f2659c41b3a1a99ec0a9051812b1b0879cdedde",
+      "published_sha256": "32a4d03e71dfb4f36eee8d85d37f15b661b3221566135ae4e265f2e1bc511b0d",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/red-source_after.json",
+      "original_sha256": "59307004546249ebd85c520397282ad95dce615480c1cdf009377a656ae3ffe5",
+      "published_sha256": "a96e8668dd57961c6aad9d2da719666d098a255bed5eda05e2bcb53b43c2eef4",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/green-source_before.json",
+      "original_sha256": "8ced59ea1f8f894133e5dbd4f9cfa705e8a80234007240bc77ba3ba1c1356afc",
+      "published_sha256": "52acadf0ecbffb3eca51c1be64715cbb0bb09e7ac1acd32de36fef6ddda572eb",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/green-source_after.json",
+      "original_sha256": "1805df57cb924502d7170caa6bfaeefa481ea630b7cb9585c004a8c4bef12d21",
+      "published_sha256": "4999d302b937b1184b34399f1b0531385d8d9cfd8c9dc4a99f1bf77ba7bcd0a1",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/native-source_before.json",
+      "original_sha256": "e117b566b323571e69d8f42405cf6d52401302b55571c18e1f4ad760a36a26ba",
+      "published_sha256": "806dc524ee749096ed08254080aedee354019d5d1cb6844a248ac687a813b8a7",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/native-source_after.json",
+      "original_sha256": "22b1f9ba3cb01f7468b9f6fb5b20bc1bad651012c51f0f6252cdba3cef7384f6",
+      "published_sha256": "75fb5aabfe290d99d2cbfc84d0ea112449a32779fc0980e2f05efcea33f5f309",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/build-source_before.json",
+      "original_sha256": "41f8a6f88d3c1c02726d5b57bc94cfbb38144d8c69af3988d936d3d49c598b43",
+      "published_sha256": "9b5b28e9a33ddf9f2eaecda24011f9b7a74150f8c34c2c48922b1042a3088a0f",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/build-source_after.json",
+      "original_sha256": "1af5cf8f12ddc9d487125f834be35d5322afe93d37d2e2ce0a84cfda72af54e8",
+      "published_sha256": "fdfccee45cbd8bdfad40db4e24d2142455308984f25c1c0e904d4e7316bbb61c",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/browser-source_before.json",
+      "original_sha256": "330ef7cab559bfb8376b0c0dcee412d9ba955e0f9513339e88b6c43141848d43",
+      "published_sha256": "b4f0833dd673763cb575b2e657f2ba2961dfe893515717abfcd68edca5bec2ce",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/browser-source_after.json",
+      "original_sha256": "249779c50faf56d6a79b43dfb52c9a393b0f53de1e7781d0c3d286cd89e395e2",
+      "published_sha256": "9fcf7132f02df13e4d09457caf2f7febb3c1ca73bffb98d0776a335d27ee07b6",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/prior-green-source_before.json",
+      "original_sha256": "fb3f3d09e0716dfc0bd4ef9a7c783c802af6393633fdb6ae60731ce495f1a4e3",
+      "published_sha256": "27fbbe9c6f588db6a8fc53c93ef60df6e5b439b35974c744758eb4e4d10d0a0f",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/prior-green-source_after.json",
+      "original_sha256": "c965c6992ce28cdfb7c99a4576efc1df1474beafc7f7917cef754556fbd4db15",
+      "published_sha256": "33bb1c8d7c513a3efcb52e4901d0162a6cc689414376e65180cbffae1ea88754",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/failed-native-source_before.json",
+      "original_sha256": "8f268db196a3d797ba9bce2c0a350f0d9aa34e953e9beaaf94fcaf13cf860c9e",
+      "published_sha256": "95d069d4f934b47846114b44ccf2e2f63e40eb3cfca9f8fba0e16fbf2c5c918c",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/failed-native-source_after.json",
+      "original_sha256": "64c3709acbae1f5e5966d12d9c6c0fed6f510fca6cd9ddeea593f20b49818b6f",
+      "published_sha256": "cbaee70b06dc430ba58d8c8de6fb52814ae95b22760e3b69c4c16fd7403dda94",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/acceptance-source-manifest.json",
+      "original_sha256": "d540d33e162ee761f286e593c9a927b14f1dda18d4b9d9689b14facf3ee306d7",
+      "published_sha256": "aa6532bd3716a688e14355ce63e759c4d4376e356cb7eb3bf42a1664b53f849d",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "source/correction.patch.json",
+      "original_sha256": "bd22321bbe6c066ccca1f041084edfdd53828f3a7fec8fe3b5b7821daa9e2213",
+      "published_sha256": "89b04ae723ee23ec63e4da2297ce5770771e1e3fb3617d95be1c0e8143e2907d",
+      "transformation": "UTF-8 patch encoded as a reversible JSON string; decoded bytes unchanged"
+    },
+    {
+      "path": "logs/codex-last-total-components-red-r1-last-total.log.txt",
+      "original_sha256": "a8c4fce67330aca8123025ad7f526701b241f370a1a89558485446033d43f2b7",
+      "published_sha256": "198afd9b92c110f7e14ee8e07ecab65e3861939e39c6448baa2b31c88b79d395",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/codex-last-total-components-green-r2-last-total.log.txt",
+      "original_sha256": "dad653ff46b6a96ce341d22ea13daaedeb557341176533271eea21d27cc141ac",
+      "published_sha256": "59549bae38461777bdb2dba389265174af7431333b0442807350ec9807bd702e",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/codex-last-total-components-green-r2-domain-usage.log.txt",
+      "original_sha256": "6609be26cde98507c9b6fc2787ca489fef587d5cf430e25c5246086f63596bb2",
+      "published_sha256": "cb52d885630fdedce588f8fda82489cb24a2ccba682c91eccf8b8562cc255d92",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/codex-last-total-components-green-r2-all-runner-usage.log.txt",
+      "original_sha256": "902b87043cba799ca99fc10f902fa656781e4830d30a473757f9d11139474739",
+      "published_sha256": "61803b4c3d0221b338961b9a206c109e24579c4facec76e5be29beede2702870",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-last-total-components-green-r2-initdb.log.txt",
+      "original_sha256": "97a6552a5117f18514838c6cd4708bd11a850d8c6a716a65ac27caaba89897fc",
+      "published_sha256": "b258f798823f561729f75dacca74127f7a9c3a9e445563c67f5bc7b9e5cb097a",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-last-total-components-green-r2-crony-store-issue236.log.txt",
+      "original_sha256": "fd278e77ccaff9426d61821d9636f230c763d6a5e2203392eda0a14f56474270",
+      "published_sha256": "73a6f990a36f8e3337bd4073292a35094b6c3747cddad8a11c00353b63f1335a",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-last-total-components-green-r2-crony-store-control_accounting_tests-issue87.log.txt",
+      "original_sha256": "cb7253c112a4bfd243a57a4bdfae7ce16e0af6a03d60e2bb62f115fee12fbf24",
+      "published_sha256": "b6a8b494d458207491f11c5ca669b26b94eed3fe352fb8bff9df05325d418148",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-last-total-components-r1-issue236-last-total-components-browser-r1.mjs-check.log.txt",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-last-total-components-r1-issue236-last-total-components-fake-codex-r1.mjs-check.log.txt",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-last-total-components-r1-issue236-prepare-fixture-r1.mjs-check.log.txt",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-last-total-components-r1-issue236-fixture-environment-r1.mjs-check.log.txt",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-last-total-components-r1-stack-start.log.txt",
+      "original_sha256": "bc4cffb2deb138647138c1560f4d2cb944ac79854598e1c4879f519d8db1e9ca",
+      "published_sha256": "f902853f48d427e002d5bf28fec429561145532eae7d74002f797404343beebc",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-last-total-components-r1-stack-status.log.txt",
+      "original_sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+      "published_sha256": "966c9259b3b566cbe8b61427223cdc5679afcabc998acac1a04abf93a5fa164f",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-browser-last-total-components-r1-driver.log.txt",
+      "original_sha256": "6455447eb8899609863f3bb42e5006ef66da8fd20dcb80544d1f303004a77f66",
+      "published_sha256": "c1d44b09105190cb85ac1b4daef8c9460e78923cef7b8d15ac2c2ec02f5ae249",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/codex-last-total-components-green-r1-last-total.log.txt",
+      "original_sha256": "5fae73e4be7fa34d533fae5df1d4ab97bd6e3e1c3f80859591b7b7f03dd30d48",
+      "published_sha256": "f020736917db68dc919623fd94064498959341455191fa7d883e5bded9f88432",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/codex-last-total-components-green-r1-domain-usage.log.txt",
+      "original_sha256": "8aa81fb4f35d8ceba8e2c298aa7a5d3a3fc44b6cb80e661bb4c4db36f0ce4c5b",
+      "published_sha256": "f83584865d0642d4b67c947637719aa13439583bc073d12e540fa5dacba8eead",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/codex-last-total-components-green-r1-all-runner-usage.log.txt",
+      "original_sha256": "8b796cd7b3aa14d6d0b880caca3520648d6164240acccdb352cf5d06a35a0771",
+      "published_sha256": "30e48642c3af5987fd389530b68d18b2f943fe1ee43ff95ad4315a108f0f584e",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-last-total-components-green-r1-initdb.log.txt",
+      "original_sha256": "3f763f1e13f0a44d2e8e5e26fee02acc7063761a9add3a30d099c0a027eba1be",
+      "published_sha256": "54f5d4703bffc8ff2a74dba9e32ef7511c0b3edef057540a9895bb1d6d22a384",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-last-total-components-green-r1-crony-store-issue236.log.txt",
+      "original_sha256": "9d73e8ac3ddc61b568df7e80782013548889ecfc4cdd02c7d26a92900fa2af67",
+      "published_sha256": "5fe468cb69b2ed2254a875d08f70fe532e9549a125a77ccda1a6b85e1aa89036",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-build-last-total-components-r1.jsonl.txt",
+      "original_sha256": "cfe7fda43b105c3b6f914a07c3aea1cf372239d6f932668d1783209cc84db9d0",
+      "published_sha256": "44a7e45c1f6ca9a226d14bf2e8ac4a9f4810699e97ca912de2abd36f8c386aef",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-build-last-total-components-r1-cache-copy.log.txt",
+      "original_sha256": "ec1fe6f24d01ccb90ef9907270fc36e440336400718e7d0f4537ca9bd1ab45f8",
+      "published_sha256": "357b23d430dbe185c6e7a80ba172a26032eb1f9b0d6584f3e815c290d3941cf9",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-build-last-total-components-r1-local-package-clean.log.txt",
+      "original_sha256": "422b075a516c7b22c298824f236cc512001679c1ea127fc409666845105142de",
+      "published_sha256": "6e00800adbaf0e20f3d8e4a2aa156dba858b89c3ef49a40a763c52130929dcea",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-last-total-components-green-r2-crony-store-issue236-list.log.txt",
+      "original_sha256": "1e12a52538342bb529be0e80fb21c95d5447ea5ad3a9238d42d6c215d9fddb7a",
+      "published_sha256": "50206f73822fbb712fb39e30f1741f9c3b04bd1a3d0d40a38e11ed5ad3832118",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-last-total-components-green-r2-crony-store-control_accounting_tests-issue87-list.log.txt",
+      "original_sha256": "cb9691aa1309e5a04f19c39a4f613396ca3bb42987e9cdc8ef397e9adf52f60e",
+      "published_sha256": "d28eb773c8ce7863cbff1d5553e96faa2f4bf70de6a5c0ffbaca2d3fac826be6",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/issue236-native-last-total-components-green-r1-crony-store-issue236-list.log.txt",
+      "original_sha256": "c791eae1dcf1789537f693b4333d988edf3f3a0f14b0b42372f414b34bc99537",
+      "published_sha256": "a1d89f3bcd71c9f8953190f177e77085fdfcafef9fb488367333fb25ecd873b4",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/last-total-components-packaging-failure-r1.json",
+      "original_sha256": "ddf4fdc0bf93aa14fd45038ae35c56b23648ce4a452f09a056f7107ae1d09c0e",
+      "published_sha256": "8c1788b94ce166153365657ff78bd348eb765eadbba631adeb1b50d2f35b0bcc",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/browser-observations.json",
+      "original_sha256": "03d4d01fd5e1e88d6b3531b2d8fdcc641a040ee514c1f8817b55fb43819e9192",
+      "published_sha256": "76127b33d048d7e5ad4d3aef39fb08b4ca6b1c86da0519cb1e8d766745d1701c",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "receipts/browser-setup.json",
+      "original_sha256": "82b885ebaec7d62def7956a5b37d7cdd637fb2f1b865f2f4d529672ac2b987c2",
+      "published_sha256": "543e781772a72abca03ac39ca928f2ca4c89951789119b1ae5f3671ef7b38e33",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/browser-stack-stop.log.txt",
+      "original_sha256": "65abe6fe9cb60eacc967eff94e7f98a3a958644944f9ce7caffa07021c10ae9e",
+      "published_sha256": "bc62835e86fcb405eb6122ad5603e60ac28b75f0640f2e2f4df1681a1744c9e2",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/native-stack-stop.log.txt",
+      "original_sha256": "3589d2bd01f8295cc7c9ec3f5e07625fcd347ccb6f33f2d80edafe5f5217c1fb",
+      "published_sha256": "ca19178a35ab4153b75b494963b66ce8243e1b94c173107c87b44d09db23652d",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "logs/failed-native-stack-stop.log.txt",
+      "original_sha256": "3589d2bd01f8295cc7c9ec3f5e07625fcd347ccb6f33f2d80edafe5f5217c1fb",
+      "published_sha256": "ca19178a35ab4153b75b494963b66ce8243e1b94c173107c87b44d09db23652d",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "screenshots/usage-codex-duplicate-and-foreign-turn.png",
+      "original_sha256": "3ba8a8d6dbe9265c82958050a2b2d4055d0f8a5726383f0d06d3a946221d2e94",
+      "published_sha256": "3ba8a8d6dbe9265c82958050a2b2d4055d0f8a5726383f0d06d3a946221d2e94",
+      "transformation": "none"
+    },
+    {
+      "path": "screenshots/usage-codex-cache-and-reasoning-subsets.png",
+      "original_sha256": "f77664dec8d956d9b75ac5bc004459d029c072ba6d336c55881cf675a0ca17ba",
+      "published_sha256": "f77664dec8d956d9b75ac5bc004459d029c072ba6d336c55881cf675a0ca17ba",
+      "transformation": "none"
+    },
+    {
+      "path": "screenshots/usage-codex-missing-input-explicit-zero-output.png",
+      "original_sha256": "32510692b0c9c2bc1e718fcc0aa28ae6d828cda3b02e6cf0f56219d609fd9c30",
+      "published_sha256": "32510692b0c9c2bc1e718fcc0aa28ae6d828cda3b02e6cf0f56219d609fd9c30",
+      "transformation": "none"
+    },
+    {
+      "path": "screenshots/usage-codex-regressing-and-contradictory-cursors.png",
+      "original_sha256": "f39c307d2246599a13f02799442d2d3019f5e17112e2d6a78a7ad4b5073dc0fc",
+      "published_sha256": "f39c307d2246599a13f02799442d2d3019f5e17112e2d6a78a7ad4b5073dc0fc",
+      "transformation": "none"
+    },
+    {
+      "path": "screenshots/usage-codex-invalid-first-retains-subtotals.png",
+      "original_sha256": "6b0a2fb8785b23fbc4fda7b89821f521b515fa3251c30e50c71c18e750b2cd08",
+      "published_sha256": "6b0a2fb8785b23fbc4fda7b89821f521b515fa3251c30e50c71c18e750b2cd08",
+      "transformation": "none"
+    },
+    {
+      "path": "screenshots/usage-codex-impossible-initial-total-recovers.png",
+      "original_sha256": "d6c481254a0bf0986c6dbc01b7c808025660096bcc93f11443efde62f730d4ca",
+      "published_sha256": "d6c481254a0bf0986c6dbc01b7c808025660096bcc93f11443efde62f730d4ca",
+      "transformation": "none"
+    },
+    {
+      "path": "screenshots/usage-codex-impossible-cumulative-increase-recovers.png",
+      "original_sha256": "69666f3c0c2209fba2169f4c85d543ce1f30a9ffd42e8f286c4023cede93bb7b",
+      "published_sha256": "69666f3c0c2209fba2169f4c85d543ce1f30a9ffd42e8f286c4023cede93bb7b",
+      "transformation": "none"
+    },
+    {
+      "path": "screenshots/usage-codex-last-total-initial-conflict-recovers.png",
+      "original_sha256": "a709b8d885391206fe947d89476fad514185c64c66d4138dcead0606305fff97",
+      "published_sha256": "a709b8d885391206fe947d89476fad514185c64c66d4138dcead0606305fff97",
+      "transformation": "none"
+    },
+    {
+      "path": "screenshots/usage-codex-last-total-increment-conflict-recovers.png",
+      "original_sha256": "a1ebe7fe6db3427ef279bc73d76952cfa007458c65fa8a405fceb058c01cc233",
+      "published_sha256": "a1ebe7fe6db3427ef279bc73d76952cfa007458c65fa8a405fceb058c01cc233",
+      "transformation": "none"
+    },
+    {
+      "path": "screenshots/usage-codex-last-total-malformed-recovers.png",
+      "original_sha256": "5f21e7153cf5c48abbad6879c85f6aaaa5fbebef2b931209f794c83512f1ce28",
+      "published_sha256": "5f21e7153cf5c48abbad6879c85f6aaaa5fbebef2b931209f794c83512f1ce28",
+      "transformation": "none"
+    },
+    {
+      "path": "screenshots/usage-codex-last-total-replay-conflict-recovers.png",
+      "original_sha256": "2498536ffc2ada8df29c812b88d60a8c09602ee9a6ad5c862019745c50a5543f",
+      "published_sha256": "2498536ffc2ada8df29c812b88d60a8c09602ee9a6ad5c862019745c50a5543f",
+      "transformation": "none"
+    },
+    {
+      "path": "screenshots/usage-codex-last-total-with-unknown-components.png",
+      "original_sha256": "d347fac48d121ea157285185651ceede1c9a8793d54485657b1a0fb8523ffff4",
+      "published_sha256": "d347fac48d121ea157285185651ceede1c9a8793d54485657b1a0fb8523ffff4",
+      "transformation": "none"
+    },
+    {
+      "path": "screenshots/usage-codex-last-total-components-initial-conflict-recovers.png",
+      "original_sha256": "47f780e9ad25c25a4c2f58ac33a2e78a92faded11226568c3673cd803e0c9332",
+      "published_sha256": "47f780e9ad25c25a4c2f58ac33a2e78a92faded11226568c3673cd803e0c9332",
+      "transformation": "none"
+    },
+    {
+      "path": "screenshots/usage-codex-last-total-components-increment-conflict-recovers.png",
+      "original_sha256": "f1b072657ec958450dd88703e7bc2d6788e8b6b6a9b59cacc10e57f5693538cd",
+      "published_sha256": "f1b072657ec958450dd88703e7bc2d6788e8b6b6a9b59cacc10e57f5693538cd",
+      "transformation": "none"
+    },
+    {
+      "path": "screenshots/usage-codex-last-total-components-with-unknown-parents.png",
+      "original_sha256": "4dc08794d6da28edb4675cb1cbc49fba76ea42d6c9cf4710a29cb68110f40850",
+      "published_sha256": "4dc08794d6da28edb4675cb1cbc49fba76ea42d6c9cf4710a29cb68110f40850",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-duplicate-and-foreign-turn.json",
+      "original_sha256": "a8b25421530d1a0a413b9446dc7dca31bb1f2cb3b8bddfef4d4098475d4674a1",
+      "published_sha256": "a8b25421530d1a0a413b9446dc7dca31bb1f2cb3b8bddfef4d4098475d4674a1",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-cache-and-reasoning-subsets.json",
+      "original_sha256": "8adb35af8c7cb559565d54e455abe5434eeabe83f4ace4b3570c98acfd5439c2",
+      "published_sha256": "8adb35af8c7cb559565d54e455abe5434eeabe83f4ace4b3570c98acfd5439c2",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-missing-input-explicit-zero-output.json",
+      "original_sha256": "98a39aa203f4126efba24b8f96b69a212fe18d2c466d7e40dae7dbf0a471f857",
+      "published_sha256": "98a39aa203f4126efba24b8f96b69a212fe18d2c466d7e40dae7dbf0a471f857",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-regressing-and-contradictory-cursors.json",
+      "original_sha256": "dfda77302c55d63170576db7b03823be7ba7b8ae59448f7cc47e17003c051274",
+      "published_sha256": "dfda77302c55d63170576db7b03823be7ba7b8ae59448f7cc47e17003c051274",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-invalid-first-retains-subtotals.json",
+      "original_sha256": "08ec6852c4ea00dc162f9a292461040bd170cea0a5ad1f4ca4b4dba33a0363ae",
+      "published_sha256": "08ec6852c4ea00dc162f9a292461040bd170cea0a5ad1f4ca4b4dba33a0363ae",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-impossible-initial-total-recovers.json",
+      "original_sha256": "90e8e0a3e151fac4233e4cb498fab908db28e0a5a00ac1502654e9bac1745e03",
+      "published_sha256": "90e8e0a3e151fac4233e4cb498fab908db28e0a5a00ac1502654e9bac1745e03",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-impossible-cumulative-increase-recovers.json",
+      "original_sha256": "f75bc94d11b28422ee48ee93dcfcd908d346ad7766d08c05cec5dd4baa7d1d78",
+      "published_sha256": "f75bc94d11b28422ee48ee93dcfcd908d346ad7766d08c05cec5dd4baa7d1d78",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-last-total-initial-conflict-recovers.json",
+      "original_sha256": "85391369248f4b58918dbe61b727edc3ed8a134874c68580cd8a0275f9d26626",
+      "published_sha256": "85391369248f4b58918dbe61b727edc3ed8a134874c68580cd8a0275f9d26626",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-last-total-increment-conflict-recovers.json",
+      "original_sha256": "c624af7d9d4e846cfc37ba9a29afd52f56f07628b0bf6e4e4812d70c6c968881",
+      "published_sha256": "c624af7d9d4e846cfc37ba9a29afd52f56f07628b0bf6e4e4812d70c6c968881",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-last-total-malformed-recovers.json",
+      "original_sha256": "55e1416f73a81539983f0f86ed8facaa38bda8701cad65b9247ddd532394c6d8",
+      "published_sha256": "55e1416f73a81539983f0f86ed8facaa38bda8701cad65b9247ddd532394c6d8",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-last-total-replay-conflict-recovers.json",
+      "original_sha256": "e0d815834fc5556f14946483e54aab439c62fe0275ebe8d372413ede01884ec2",
+      "published_sha256": "e0d815834fc5556f14946483e54aab439c62fe0275ebe8d372413ede01884ec2",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-last-total-with-unknown-components.json",
+      "original_sha256": "c6078cf269576ac6897a90339bc50288d584e8b5fbd9754b451daef1d1ed3781",
+      "published_sha256": "c6078cf269576ac6897a90339bc50288d584e8b5fbd9754b451daef1d1ed3781",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-last-total-components-initial-conflict-recovers.json",
+      "original_sha256": "30d55b48bd6947c80b591ce818d6408ad9cdf0e6d72e7f96c1d22fa4ac08b7cc",
+      "published_sha256": "30d55b48bd6947c80b591ce818d6408ad9cdf0e6d72e7f96c1d22fa4ac08b7cc",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-last-total-components-increment-conflict-recovers.json",
+      "original_sha256": "a6e8c2ebf5b0b240784bba420dbbde2dbff8bed0bb9207ab171c1f5f5f97491c",
+      "published_sha256": "a6e8c2ebf5b0b240784bba420dbbde2dbff8bed0bb9207ab171c1f5f5f97491c",
+      "transformation": "none"
+    },
+    {
+      "path": "provider-artifacts/provider-artifact-codex-last-total-components-with-unknown-parents.json",
+      "original_sha256": "ac469f1a441286c89308c1d6a8f46bc88b75beb19e47f666b615dfd638e40fb4",
+      "published_sha256": "ac469f1a441286c89308c1d6a8f46bc88b75beb19e47f666b615dfd638e40fb4",
+      "transformation": "none"
+    },
+    {
+      "path": "drivers/issue236-last-total-components-acceptance-corpus-r1.json",
+      "original_sha256": "a3ca525511a668c3ca00e3acd640059fdf104bfcd69f637246a087f97295828d",
+      "published_sha256": "a3ca525511a668c3ca00e3acd640059fdf104bfcd69f637246a087f97295828d",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-last-total-components-browser-r1.mjs.txt",
+      "original_sha256": "cae295ebcaa917587d7f4e0e0dccc760c2e67c7d12a5816f6d6e9d7ed4ae1412",
+      "published_sha256": "cae295ebcaa917587d7f4e0e0dccc760c2e67c7d12a5816f6d6e9d7ed4ae1412",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-last-total-components-fake-codex-r1.mjs.txt",
+      "original_sha256": "8850ffb27578375304f6873e3faac7aa8f39828cfb1bb801ac616c63ae3b2946",
+      "published_sha256": "8850ffb27578375304f6873e3faac7aa8f39828cfb1bb801ac616c63ae3b2946",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-prepare-fixture-r1.mjs.txt",
+      "original_sha256": "0b2088abf98aec948041b5a381f1e8dd77b7cc57670ebd21ca076723b609a1ff",
+      "published_sha256": "0b2088abf98aec948041b5a381f1e8dd77b7cc57670ebd21ca076723b609a1ff",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-fixture-environment-r1.mjs.txt",
+      "original_sha256": "dec8204cea74646da860998fd749603dfdd1e9e44d149d7404201687dad744a4",
+      "published_sha256": "a4c490b0a369270c37fb280a8649d15ed2bfe75adef91ee46e799b83aa1c7b21",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-fixture-environment-r1.ps1.txt",
+      "original_sha256": "03316c1fcd1d9830a98a3aa6e212335084386084a12356ed307070719416a448",
+      "published_sha256": "ffdfeb106ad0a707cfe0899ebe909d515040bef3b4264dd2674d8eb1f85a5897",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-stack-last-total-components-r1.ps1.txt",
+      "original_sha256": "fe788dd9567d5e084459d8836b572c8e6d2bea3fd950409e1f08af948f9f6675",
+      "published_sha256": "5eda9bbae3669a6496556116882e49b2633d75939d20fac47e3a32d4730706a7",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-issue236-browser-last-total-components-r1.ps1.txt",
+      "original_sha256": "00559f0ca786fede47a3b40a7899226277fb8434c136e1691cfdc02e25240a6d",
+      "published_sha256": "a53b2ebc8e4bd42ce2268e14c9db92c40475371c78b9ca073ef36e5062e80724",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-issue236-native-build-last-total-components-r1.ps1.txt",
+      "original_sha256": "6f55830cc47c6acb613a950076375c77700a699d077ea6962ba20b51ab4ccbde",
+      "published_sha256": "04ba891ec180789e3be684303b91feebecd08c00d18dbd1f608499624c38dad2",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-issue236-native-last-total-components-r1.ps1.txt",
+      "original_sha256": "a1a0ce7a40639bc3cca80e62fc91afa4a91e91866d1c8943689089e325ec9530",
+      "published_sha256": "f43216707d2c000101f2eb4cfd756c9db2375c2a83e7662dc8758c400be31f5a",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-issue236-native-last-total-components-r2.ps1.txt",
+      "original_sha256": "97cb62c9a3d532efcf0c76f3f30efea56e7e2602caf81127ff236eeffa51e768",
+      "published_sha256": "f1b168a2397698211f3c9a660fa40d952d86fcfcbcd0d81a390505c5c589c371",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-codex-last-total-components-regressions-r1.ps1.txt",
+      "original_sha256": "8420fc5382dfa5fb9fba18079e8cc16156af8be5c2f964e65f63733276e42af1",
+      "published_sha256": "5df5dd768f19ad2eb23b0b7cf53fb2a91939c47fe37c8adc1573a0a955da87a5",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-codex-last-total-components-regressions-r2.ps1.txt",
+      "original_sha256": "6b9ddfcceefba5853276098331833ae0f6b44274c9bbdabf67b1e64d4c09b24f",
+      "published_sha256": "41d574580f9061c2457ef714d4fe6c3e8ea5680eaa99c0a96922620d36ee81d2",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/prepare-last-total-components-retry-r2.py.txt",
+      "original_sha256": "2a8271f8d3e63795bea3007dac1030ce0ea85dc83de73781447c0df52a86f9bd",
+      "published_sha256": "2a8271f8d3e63795bea3007dac1030ce0ea85dc83de73781447c0df52a86f9bd",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/issue236-source-snapshot-r1.mjs.txt",
+      "original_sha256": "1658bc1a3bedaa0413c438e536880fb213600357a0314a9d23d3d08841fd3b07",
+      "published_sha256": "befc9dfaf5cc21aa729f3c6a14f743df9eb581fcc3677aa2ba32330ee8b1ce17",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    },
+    {
+      "path": "drivers/run-issue236-canonical-r1.ps1.txt",
+      "original_sha256": "b60f52ddee5626955172a5bc60c970d12e9f4d1b95812d790f74ad7b306e493b",
+      "published_sha256": "dce6ee1c6a2c7e7e85b92accd45ecd88b7fc18cc8144eac9052cdc1cb4ae7b05",
+      "transformation": "exact local roots including JSON and caret escapes; standalone local operator name; explicit synthetic-user placeholders in copied examples; UTF-8/LF; trailing whitespace and final blank lines"
+    }
+  ]
+}

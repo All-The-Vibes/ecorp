@@ -82,7 +82,12 @@ each accepted increase must cover both the reported native `last.totalTokens`
 and the largest known input/cache subset plus the largest known output/reasoning
 subset, using checked arithmetic. The latest-call total is retained as
 `last_total_tokens` for validation and replay comparison, never charged or used
-to supply missing input/output quantities. A malformed present total, including
+to supply missing input/output quantities. When present, that latest-call total
+must itself cover the same known component lower bound, including cache or
+reasoning subsets whose parent quantity is unknown. A contradictory latest-call
+total remains invalid, uncharged evidence even when the cumulative increase is
+large enough; it cannot claim an accepted cursor or prevent a consistent
+correction from being admitted once. A malformed present total, including
 null, stays invalid; omission in a legacy partial observation remains unknown.
 Subsets are never added to their parents or assumed disjoint. A larger cumulative
 gap remains valid because the thread may include prior or unobserved calls. An exact duplicate at the

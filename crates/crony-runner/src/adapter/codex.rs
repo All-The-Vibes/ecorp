@@ -1804,6 +1804,102 @@ mod tests {
         }
     }
 
+    fn assert_last_total_component_conflict(previous_total: Option<u64>) {
+        let mut parsed = ParsedRun {
+            thread_id: Some("thread-1".to_owned()),
+            turn_id: Some("turn-1".to_owned()),
+            ..ParsedRun::default()
+        };
+        if let Some(total) = previous_total {
+            let previous = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+                "total":{"totalTokens":total},"last":{"totalTokens":2,"inputTokens":1,"outputTokens":1}
+            }});
+            assert!(
+                record_usage(&previous, &mut parsed)
+                    .unwrap()
+                    .validate()
+                    .is_ok()
+            );
+        }
+        let accepted_report = parsed.last_usage_report.clone();
+        let accepted_input = parsed.usage.report().input_tokens;
+        let accepted_output = parsed.usage.report().output_tokens;
+        let cursor = previous_total.unwrap_or(0) + 12;
+        let mut frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":cursor},"last":{"totalTokens":1,"inputTokens":10,"outputTokens":2}
+        }});
+        for total in [1, 0, 11] {
+            frame["tokenUsage"]["last"]["totalTokens"] = json!(total);
+            let invalid =
+                record_usage(&frame, &mut parsed).expect("retain contradictory native total");
+            assert!(invalid.validate().is_err());
+            assert_eq!(invalid.coverage()["tokens"], "invalid");
+            assert_eq!(
+                serde_json::to_value(&invalid).unwrap()["usage_provenance"]["last_total_tokens"],
+                total
+            );
+            assert_eq!(parsed.last_usage_total, previous_total);
+            assert_eq!(parsed.last_usage_report, accepted_report);
+            assert_eq!(parsed.usage.report().input_tokens, accepted_input);
+            assert_eq!(parsed.usage.report().output_tokens, accepted_output);
+        }
+        frame["tokenUsage"]["last"]["totalTokens"] = json!(12);
+        assert!(
+            record_usage(&frame, &mut parsed)
+                .unwrap()
+                .validate()
+                .is_ok()
+        );
+        assert_eq!(parsed.last_usage_total, Some(cursor));
+        assert_eq!(
+            parsed.usage.report().input_tokens,
+            Some(accepted_input.unwrap_or(0) + 10)
+        );
+        assert_eq!(
+            parsed.usage.report().output_tokens,
+            Some(accepted_output.unwrap_or(0) + 2)
+        );
+        assert!(record_usage(&frame, &mut parsed).is_none());
+    }
+
+    #[test]
+    fn usage_last_total_components_reject_an_initial_conflict_then_admit_correction_once() {
+        assert_last_total_component_conflict(None);
+    }
+
+    #[test]
+    fn usage_last_total_components_preserve_the_previous_cursor_until_correction() {
+        assert_last_total_component_conflict(Some(100));
+    }
+
+    #[test]
+    fn usage_last_total_components_cover_subsets_when_parent_quantities_are_unknown() {
+        let mut parsed = ParsedRun {
+            thread_id: Some("thread-1".to_owned()),
+            turn_id: Some("turn-1".to_owned()),
+            ..ParsedRun::default()
+        };
+        let mut frame = json!({"threadId":"thread-1","turnId":"turn-1","tokenUsage":{
+            "total":{"totalTokens":11},"last":{
+                "totalTokens":10,"cachedInputTokens":7,"cacheWriteInputTokens":8,"reasoningOutputTokens":3
+            }
+        }});
+        let invalid = record_usage(&frame, &mut parsed).unwrap();
+        assert!(invalid.validate().is_err());
+        assert_eq!(parsed.last_usage_total, None);
+        assert_eq!(parsed.last_usage_report, None);
+        assert_eq!(parsed.usage.report().input_tokens, None);
+        assert_eq!(parsed.usage.report().output_tokens, None);
+        frame["tokenUsage"]["last"]["totalTokens"] = json!(11);
+        let correction = record_usage(&frame, &mut parsed).unwrap();
+        assert_eq!(correction.validate(), Ok(()));
+        assert_eq!(correction.coverage()["tokens"], "unavailable");
+        assert_eq!(parsed.last_usage_total, Some(11));
+        assert_eq!(parsed.usage.report().input_tokens, None);
+        assert_eq!(parsed.usage.report().output_tokens, None);
+        assert!(record_usage(&frame, &mut parsed).is_none());
+    }
+
     #[test]
     fn usage_last_total_malformed_is_evidence_without_charging() {
         for malformed in [

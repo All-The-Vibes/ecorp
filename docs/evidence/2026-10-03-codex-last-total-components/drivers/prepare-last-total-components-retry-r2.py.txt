@@ -1,0 +1,75 @@
+"""Preserve failed SQL evidence and prepare a fresh, bounded fixture retry."""
+import hashlib
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+run = Path(__file__).resolve().parent
+
+
+def read(name):
+    return json.loads((run / name).read_text(encoding='utf-8-sig'))
+
+
+def sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def require(ok, message):
+    if not ok:
+        raise RuntimeError(message)
+
+
+failed_path = run / 'issue236-native-last-total-components-green-r1.json'
+failed = read(failed_path.name)
+require(failed['status'] == 'failed' and failed['source_unchanged'] is True
+        and failed['cleanup'].startswith('Exact owned PostgreSQL stopped'),
+        'Retain a completed, source-bound failure and verified shutdown first.')
+lane = failed['checks'][1]
+require(lane['exit_code'] == 101 and lane['counts']['passed'] == 15
+        and lane['counts']['failed'] == 1 and sha(lane['log']) == lane['sha256'],
+        'Unexpected failure evidence.')
+log = Path(lane['log']).read_text(encoding='utf-8-sig')
+require('usage_last_total_component_conflicts_never_claim_a_cursor ... FAILED' in log
+        and 'left: Null' in log and 'right: 1' in log,
+        'This retry only addresses the observed invalid-payload fixture assumption.')
+
+files = []
+for old, new, replacements in [
+    ('run-codex-last-total-components-regressions-r1.ps1',
+     'run-codex-last-total-components-regressions-r2.ps1',
+     [('codex-last-total-components-$Phase-r1', 'codex-last-total-components-$Phase-r2')]),
+    ('run-issue236-native-last-total-components-r1.ps1',
+     'run-issue236-native-last-total-components-r2.ps1',
+     [('issue236-native-usage-last-total-components-20261003-$Phase-r1',
+       'issue236-native-usage-last-total-components-20261003-$Phase-r2'),
+      ('issue236-native-last-total-components-$Phase-r1',
+       'issue236-native-last-total-components-$Phase-r2'),
+      ('$port = 59418', '$port = 59420')]),
+]:
+    source = run / old
+    content = source.read_text(encoding='utf-8-sig')
+    for before, after in replacements:
+        require(content.count(before) == 1, 'Unexpected helper substitution: ' + before)
+        content = content.replace(before, after)
+    destination = run / new
+    with destination.open('x', encoding='utf-8', newline='\n') as output:
+        output.write(content)
+    files.append({'original': old, 'original_sha256': sha(source),
+                  'prepared': new, 'prepared_sha256': sha(destination),
+                  'replacements': replacements})
+
+receipt = {
+    'status': 'prepared', 'recorded_at_utc': datetime.now(timezone.utc).isoformat(),
+    'repository': 'All-The-Vibes/ecorp', 'pr': 402, 'issue': 236,
+    'failure': {'path': str(failed_path), 'sha256': sha(failed_path),
+                'counts': lane['counts'], 'log_sha256': lane['sha256']},
+    'finding': 'The new SQL fixture expected rejected native values to survive admission. Existing admit_usage_tx deliberately replaces invalid input with a bounded redacted observation.',
+    'correction': 'Only the SQL regression assertions change: require missing provenance and identity, unknown quantities, invalid_usage reason, unchanged counters and exact persisted rejection. Production admission remains unchanged; valid same-cursor correction and replay assertions remain.',
+    'validation': 'Not run by this preparation. Both native lanes require a new owned SCRAM fixture; previous failure is retained.',
+    'helpers': files,
+}
+with (run / 'last-total-components-retry-preparation-r2.json').open('x', encoding='utf-8') as output:
+    json.dump(receipt, output, indent=2)
+    output.write('\n')
+print(json.dumps({'status': 'prepared', 'files': len(files), 'prior_failure_preserved': True}))

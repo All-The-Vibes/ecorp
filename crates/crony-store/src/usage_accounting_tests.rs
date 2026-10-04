@@ -563,6 +563,84 @@ async fn issue236_usage_last_total_survives_storage_and_conflicting_replays(pool
 
 #[sqlx::test(migrations = "../../db/migrations")]
 #[ignore = "requires an explicitly owned disposable PostgreSQL database"]
+async fn issue236_usage_last_total_component_conflicts_never_claim_a_cursor(pool: PgPool) {
+    let store = usage_fixture(pool).await;
+    for index in 0..2 {
+        let previous = if index == 0 { 0 } else { 100 };
+        let initial_charge = if index == 0 { 0 } else { 1 };
+        let mut payload = report(Some(1), Some(1), None, None);
+        payload["usage_provenance"]["scope"] = json!("last_call");
+        payload["usage_provenance"]["turn_id"] = json!("turn-1");
+        payload["usage_provenance"]["cumulative_total_tokens"] = json!(previous);
+        payload["usage_provenance"]["last_total_tokens"] = json!(2);
+        if index != 0 {
+            assert_eq!(
+                observe(&store, index, payload.clone()).await.event_type,
+                "run.usage"
+            );
+        }
+        payload["input_tokens"] = json!(10);
+        payload["output_tokens"] = json!(2);
+        payload["usage_provenance"]["cumulative_total_tokens"] = json!(previous + 12);
+        for total in [1, 0, 11] {
+            payload["usage_provenance"]["last_total_tokens"] = json!(total);
+            let invalid = observe(&store, index, payload.clone()).await;
+            assert_uncharged(&invalid, "invalid");
+            assert!(invalid.payload.get("usage_origin_event_id").is_none());
+            assert!(invalid.payload.get("usage_identity_keys").is_none());
+            // Invalid reports retain the bounded rejection, not untrusted values.
+            assert!(invalid.payload.get("usage_provenance").is_none());
+            assert!(invalid.payload["input_tokens"].is_null());
+            assert!(invalid.payload["output_tokens"].is_null());
+            assert_eq!(
+                invalid.payload["usage_validation"]["reason"],
+                "invalid_usage"
+            );
+            assert_eq!(
+                counters(&store, index).await,
+                (initial_charge, initial_charge, 0)
+            );
+            let persisted: Value =
+                sqlx::query_scalar("SELECT payload FROM events WHERE corp_id=$1 AND id=$2")
+                    .bind(CORP)
+                    .bind(invalid.id)
+                    .fetch_one(&store.pool)
+                    .await
+                    .unwrap();
+            assert_eq!(persisted["usage_validation"]["disposition"], "invalid");
+            assert_eq!(persisted, invalid.payload);
+        }
+        payload["usage_provenance"]["last_total_tokens"] = json!(12);
+        let corrected = observe(&store, index, payload.clone()).await;
+        assert_eq!(corrected.event_type, "run.usage");
+        let replay = observe(&store, index, payload.clone()).await;
+        assert_uncharged(&replay, "duplicate");
+        assert_eq!(replay.payload["usage_origin_event_id"], json!(corrected.id));
+        let charged = (initial_charge + 10, initial_charge + 2, 0);
+        assert_eq!(counters(&store, index).await, charged);
+
+        payload["input_tokens"] = Value::Null;
+        payload["output_tokens"] = Value::Null;
+        payload["usage_provenance"]["cumulative_total_tokens"] = json!(previous + 23);
+        payload["usage_provenance"]["cached_input_tokens"] = json!(7);
+        payload["usage_provenance"]["cache_write_input_tokens"] = json!(8);
+        payload["usage_provenance"]["reasoning_output_tokens"] = json!(3);
+        payload["usage_provenance"]["last_total_tokens"] = json!(10);
+        assert_uncharged(&observe(&store, index, payload.clone()).await, "invalid");
+        assert_eq!(counters(&store, index).await, charged);
+        payload["usage_provenance"]["last_total_tokens"] = json!(11);
+        let partial = observe(&store, index, payload.clone()).await;
+        assert_eq!(partial.event_type, "run.usage");
+        assert_eq!(partial.payload["usage_coverage"]["tokens"], "unavailable");
+        assert!(partial.payload["input_tokens"].is_null());
+        assert!(partial.payload["output_tokens"].is_null());
+        assert_uncharged(&observe(&store, index, payload).await, "duplicate");
+        assert_eq!(counters(&store, index).await, charged);
+    }
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires an explicitly owned disposable PostgreSQL database"]
 async fn issue236_usage_partial_tokens_and_native_units_never_fabricate_free_usd(pool: PgPool) {
     let store = usage_fixture(pool).await;
     let mut partial = report(None, Some(0), Some("partial"), None);
