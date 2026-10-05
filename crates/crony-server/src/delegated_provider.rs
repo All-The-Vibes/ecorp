@@ -840,6 +840,11 @@ async fn read_json<T: serde::de::DeserializeOwned>(
 #[cfg(test)]
 pub(super) mod tests {
     use super::*;
+    use aws_lc_rs::{
+        encoding::{AsDer, Pkcs8V1Der},
+        rsa::KeySize,
+        signature::{KeyPair, RsaKeyPair, RsaPublicKeyComponents},
+    };
     use axum::{
         Json, Router,
         extract::State,
@@ -847,7 +852,6 @@ pub(super) mod tests {
         response::IntoResponse,
         routing::{get, post},
     };
-    use rsa::{RsaPrivateKey, pkcs1::EncodeRsaPrivateKey, traits::PublicKeyParts};
     use serde_json::{Value, json};
     use std::sync::{Arc, Mutex, OnceLock};
 
@@ -861,13 +865,16 @@ pub(super) mod tests {
         static KEY: OnceLock<(jsonwebtoken::EncodingKey, Value)> = OnceLock::new();
         KEY.get_or_init(|| {
             use base64::Engine;
-            let key = RsaPrivateKey::new(&mut rsa::rand_core::OsRng, 2048).unwrap();
-            let encoding =
-                jsonwebtoken::EncodingKey::from_rsa_der(key.to_pkcs1_der().unwrap().as_bytes());
+            let key = RsaKeyPair::generate(KeySize::Rsa2048).unwrap();
+            let der: Pkcs8V1Der<'static> = key.as_der().unwrap();
+            // jsonwebtoken's native signer accepts the PKCS#1 payload inside PKCS#8.
+            let private = pkcs8::PrivateKeyInfo::try_from(der.as_ref()).unwrap();
+            let encoding = jsonwebtoken::EncodingKey::from_rsa_der(private.private_key);
+            let public = RsaPublicKeyComponents::<Vec<u8>>::from(key.public_key());
             let jwk = json!({
                 "kid":"offline-test", "kty":"RSA", "alg":"RS256", "use":"sig",
-                "n":base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(key.n().to_bytes_be()),
-                "e":base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(key.e().to_bytes_be())
+                "n":base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(public.n),
+                "e":base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(public.e)
             });
             (encoding, jwk)
         })

@@ -24,6 +24,8 @@ required-features = ["native-qualification"]
 alloy = { version = "=1.8.3", default-features = false, features = ["signer-local"], optional = true }
 anyhow.workspace = true
 async-trait.workspace = true
+# Match rustls's native Windows assembly support for standalone server builds.
+aws-lc-rs = { version = "1.18", features = ["prebuilt-nasm"] }
 axum.workspace = true
 base64.workspace = true
 bytes.workspace = true
@@ -40,7 +42,7 @@ dotenvy.workspace = true
 futures-util.workspace = true
 hex.workspace = true
 hmac.workspace = true
-jsonwebtoken = { version = "10", default-features = false, features = ["rust_crypto"] }
+jsonwebtoken = { version = "10", default-features = false, features = ["aws_lc_rs"] }
 mime.workspace = true
 object_store.workspace = true
 reqwest.workspace = true
@@ -58,4 +60,4 @@ uuid.workspace = true
 [dev-dependencies]
 alloy = { version = "=1.8.3", default-features = false, features = ["signer-local"] }
 crony-base = { path = "../crony-base", features = ["gateway-service", "test-support"] }
-rsa = "0.9"
+pkcs8 = "0.10"

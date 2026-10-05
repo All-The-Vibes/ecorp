@@ -20,6 +20,12 @@ For Entra this separate link uses the tenant's stable `oid`. Normal ECorp login
 continues to use the issuer and pairwise `sub` in `human_identities`.
 
 The provider validates signed JWTs using bounded, issuer-pinned JWKS requests.
+RS256 verification uses jsonwebtoken's native AWS-LC backend, already used by
+ECorp's TLS stack. Local signed-token tests generate ephemeral RSA keys with
+AWS-LC; the server does not issue provider JWTs. Algorithm, key size, issuer,
+audience, human identity and delegated-scope checks remain mandatory.
+Standalone server builds enable the same AWS-LC prebuilt Windows assembly
+support as rustls, so a separate NASM installation is not required.
 Initial public-client **authorization code + PKCE is not OBO**. The Entra adapter
 then actually submits a separate middle-tier OBO exchange using the confidential
 broker client, JWT bearer grant, and `requested_token_use=on_behalf_of`. Keycloak
