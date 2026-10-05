@@ -352,9 +352,14 @@ pub async fn serve(config: GatewayConfig, trust: ManifestTrust) -> Result<()> {
             "journal snapshot incomplete or outside configured Corp scope",
         ));
     }
+    #[allow(
+        deprecated,
+        reason = "Keep the existing behavior pin; newer defaults enable environment proxy routing"
+    )]
+    let behavior = aws_config::BehaviorVersion::v2025_01_17();
     let shared = tokio::time::timeout(
         Duration::from_secs(30),
-        aws_config::defaults(aws_config::BehaviorVersion::v2025_01_17())
+        aws_config::defaults(behavior)
             .region(aws_sdk_kms::config::Region::new(config.aws_region.clone()))
             .load(),
     )

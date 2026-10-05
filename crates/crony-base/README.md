@@ -187,14 +187,16 @@ Receipt L1 fee absence retains an accounting warning/liability upstream.
 
 ## Dependencies and local evidence
 
-Alloy is pinned to 0.8.3 to preserve V1's REVM 19 / c-kzg 1 native-link
-compatibility. Alloy 1.x conflicted with that frozen dependency. The AWS
-SDK is pinned to 1.77.0 and its compatible Smithy cohort is pinned in the
-workspace lockfile: unconstrained current Smithy releases are not
-source-compatible with that SDK. Do not refresh those pins without the
-all-feature compilation lane and upstream/security review.
+Alloy is pinned to 1.8.3. The optional AWS KMS SDK is pinned to 1.93.0,
+which includes the region validation fix for
+[GHSA-g59m-gf8j-gjf5](https://github.com/awslabs/aws-sdk-rust/security/advisories/GHSA-g59m-gf8j-gjf5).
+The SDK uses its native `default-https-client` feature (Hyper 1 / Rustls 0.23),
+and the Rust 1.94-compatible Smithy dependencies are retained in `Cargo.lock`.
+The legacy `rustls` SDK feature would retain the obsolete Hyper 0.14 /
+Rustls 0.21 connector. Refresh these pins only with the all-feature
+compilation lane and upstream/security review.
 
-Run `cargo test -p crony-base --all-features` for local protocol/HTTP
+Run `cargo test --locked -p crony-base --all-features` for local protocol/HTTP
 fixtures and optional adapter compilation. The PostgreSQL journal
 regression is deliberately ignored in ordinary runs; explicitly select
 it against a dedicated local QA maintenance database. It does not prove

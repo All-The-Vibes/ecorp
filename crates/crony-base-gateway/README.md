@@ -111,6 +111,18 @@ No tests invoke production KMS or public Base RPC. Compilation and local tests
 are not evidence of customer IAM, TLS ingress, provider independence, actual
 fee-model activation, or cross-system restore safety.
 
-The `aws-config`/STS versions and Smithy query/XML cohort are pinned alongside the
-existing KMS-compatible runtime in `Cargo.lock`; newer nominally compatible
-Smithy releases changed document types and fail this SDK's compilation.
+The gateway pins `aws-config` 1.8.1, KMS 1.93.0, and STS 1.91.0, including the
+SDK region validation fix for
+[GHSA-g59m-gf8j-gjf5](https://github.com/awslabs/aws-sdk-rust/security/advisories/GHSA-g59m-gf8j-gjf5).
+It selects the SDK's native `default-https-client` feature and retains the
+Rust 1.94-compatible Smithy cohort in `Cargo.lock`. The January 2025 behavior
+version remains explicit: this dependency refresh does not opt into later
+environment proxy defaults.
+
+`tests/aws_sdk.rs` uses Smithy's native capture/replay transport with synthetic
+credentials and signatures. It checks KMS/STS rejection of URI delimiters in
+regions before transport, signed STS query/XML compatibility, and the Alloy
+KMS path through key metadata, public-key decoding, digest signing, and local
+transaction validation. It also checks that an incorrect key identity, key
+metadata, or publisher stops before signing. These fixtures make no HTTP requests
+and do not establish live KMS, credential refresh, IAM, or TLS qualification.
