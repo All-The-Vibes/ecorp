@@ -32,6 +32,14 @@ and transitive package to a public registry URL and integrity digest. Setup uses
 `npm ci --ignore-scripts` from that standalone package directory. The native
 compiler download is independently SHA-256 verified.
 
+The standalone npm package overrides only `solc@0.8.30`'s `tmp` dependency to
+`0.2.6`, which addresses GHSA-52f5-9888-hmc6 and GHSA-ph9p-34f9-6g65. Keep this
+override in the standalone package: npm does not inherit root-workspace
+overrides for this installation. Solc's SMT helper uses `tmp.fileSync` with a
+fixed `.smt2` suffix and its cleanup callback; the registry artifact builder
+uses the solc library without that helper. This development-tool dependency
+update preserves the compiler, Foundry, source, and bytecode pins above.
+
 From the repository root:
 
 ```powershell
